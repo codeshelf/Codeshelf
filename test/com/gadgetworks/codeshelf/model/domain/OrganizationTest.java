@@ -6,7 +6,7 @@ public class OrganizationTest extends DomainTestABC {
 
 	
 	@Test
-	public void createFacility() {
+	public void testFacilityCreation() {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization("ORG");

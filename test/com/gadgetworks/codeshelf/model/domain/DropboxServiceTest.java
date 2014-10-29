@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -59,68 +60,17 @@ public class DropboxServiceTest {
 		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
 		dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
 
-		ICsvOrderImporter orderImporter = Mockito.mock(ICsvOrderImporter.class);
+		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		Mockito.when(
 				orderImporter.importOrdersFromCsvStream(any(InputStreamReader.class), any(Facility.class), any(Timestamp.class)))
 				.thenReturn(generateFailureResult());
 
-		ICsvInventoryImporter inventoryImporter = new ICsvInventoryImporter() {
-
-			@Override
-			public boolean importSlottedInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-
-			@Override
-			public boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvLocationAliasImporter locationImporter = new ICsvLocationAliasImporter() {
-
-			@Override
-			public boolean importLocationAliasesFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvOrderLocationImporter orderLocationImporter = new ICsvOrderLocationImporter() {
-
-			@Override
-			public boolean importOrderLocationsFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvCrossBatchImporter crossBatchImporter = new ICsvCrossBatchImporter() {
-
-			@Override
-			public boolean importCrossBatchesFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
-		ICsvAislesFileImporter aislesFileImporter = new ICsvAislesFileImporter() {
-
-			@Override
-			public boolean importAislesFileFromCsvStream(InputStreamReader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) {
-				return false;
-			}
-		};
-
+		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
+		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
+		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
+		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
+		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
+		
 		dropboxService.getUpdatesFromHost(orderImporter,
 			orderLocationImporter,
 			inventoryImporter,

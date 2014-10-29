@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 
 /**
  * Sequences work instructions in an order that they should be executed.  The strategy could be custom per facility, che, path, etc. over time
@@ -24,23 +25,22 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionSequencerABC.class);
 
 	/**
-	 * Sort WorkInstructions by their posAlongPath.
+	 * Sort WorkInstructions by their posAlongPath. This is identical to CheDeviceLogic.WiDistanceComparator
 	 */
 	private class PosAlongPathComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			Double pos1 = inWi1.getPosAlongPath();
-			Double pos2 = inWi2.getPosAlongPath();
-			// watch out for uninitialized values
-			if (pos1 == null && pos2 != null)
-				return -1;
-			else if (pos2 == null && pos1 != null)
-				return 1;
-			else if (pos2 == null && pos1 == null)
-				return 0;
-			else {
-				return pos1.compareTo(pos2);
-			}
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
+
+			Double wi1Pos = inWi1.getPosAlongPath();
+			Double wi2Pos = inWi2.getPosAlongPath();
+			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
+			if (value != 0)
+				return value;
+			
+			return wi1Pos.compareTo(wi2Pos);
 		}
 	}
 

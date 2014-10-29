@@ -379,27 +379,39 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
+	/* Returns something like A2.B1.T3.S5. Needs to call recursively up the chain.
+	 * This is private helper for getNominalLocationId()
+	 * 
 	 */
-	public final String getNominalLocationId() {
+	private final String getNominalLocationIdWithoutBracket() {
 		String result;
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
 		if (this.getClass().equals(Facility.class))
 			return "";
-
-		@SuppressWarnings("unchecked")
-		ILocation<P> checkParent = (ILocation<P>) getParent();
+		
+		@SuppressWarnings("rawtypes")
+		LocationABC checkParent = (LocationABC) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
 			// This is the last child  we want.
 			result = getLocationId();
 		} else {
 			// The current parent is not the class we want so recurse up the hierarchy.
-			result = checkParent.getNominalLocationId();
+			result = checkParent.getNominalLocationIdWithoutBracket();
 			result = result + "." + getLocationId();
 		}
+		return result;
+	}
+	
+	// --------------------------------------------------------------------------
+	/* Returns something like A2.B1.T3.S5. Or if the location is inactive, <A2.B1.T3.S5>
+	 * 
+	 */
+	public final String getNominalLocationId() {
+		String result = getNominalLocationIdWithoutBracket();
+		if (!this.isActive())
+			result = "<" + result + ">";
 		return result;
 	}
 
@@ -496,8 +508,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocation(java.lang.String)
+	/* 
+	 * Normally called via facility.findSubLocationById(). If no dots in the name, calls this, which first looks for alias, but only if at the facility level.
+	 * Aside from the facility/alias special case, it looks directly for domainId, which may be useful only for looking for direct children.
+	 * for example, facility.findLocationById("A2") would find the aisle.
+	 * bay bay.findLocationById("T3") would find the tier.
+	 * This may return null
 	 */
 	public final ISubLocation<?> findLocationById(String inLocationId) {
 		if (this.getClass().equals(Facility.class)) {
@@ -554,8 +570,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getSubLocationById(java.lang.String)
+	/* 
+	 * Normally called as facility.findSubLocationById(). If no dots in the name, calls findLocationById(), which first looks for alias, but only if at the facility level.
+	 * This will return "deleted" location, but if it does so, it will log a WARN.
 	 */
 	public final ISubLocation<?> findSubLocationById(final String inLocationId) {
 		ISubLocation<?> result = null;
@@ -573,6 +590,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}
 		}
+		if (result != null)
+			if (!result.isActive())
+				LOGGER.warn("findSubLocationById succeeded with an inactive location. Is this business case intentional?");
 		return result;
 	}
 
@@ -601,12 +621,45 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return "";
 	}
 
+	/**
+	 * This gets the associated channel. Or if indirect via getEffectiveController, then parenthesis around it.
+	 */
+	public final String getLedChannelUi() {
+		Short theValue = getLedChannel();
+		if (theValue != null) {
+			return theValue.toString();
+		} else {
+			theValue = getEffectiveLedChannel();
+			if (theValue != null)
+				return "(" + theValue.toString() + ")";
+		}
+		return "";
+	}
+
+	/**
+	 * This directly get the associated controller only
+	 */
 	public final String getLedControllerId() {
 		// to support list view meta-field ledControllerId
 		LedController aLedController = getLedController();
 
 		if (aLedController != null) {
 			return aLedController.getDomainId();
+		}
+		return "";
+	}
+
+	/**
+	 * This gets the associated controller. Or if indirect via getEffectiveController, then parenthesis around it.
+	 */
+	public final String getLedControllerIdUi() {
+		LedController aLedController = getLedController();
+		if (aLedController != null) {
+			return aLedController.getDomainId();
+		} else {
+			aLedController = getEffectiveLedController();
+			if (aLedController != null)
+				return "(" + aLedController.getDomainId() + ")";
 		}
 		return "";
 	}
@@ -631,7 +684,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// to support list view meta-field
 		LocationAlias theAlias = getPrimaryAlias();
 		if (theAlias != null) {
-			return theAlias.getAlias();
+			if (this.isActive())
+				return theAlias.getAlias();
+			else
+				return "<" + theAlias.getAlias() + ">"; // new from v8. If location is inactive, surround with <>
 		}
 		return "";
 	}
@@ -716,6 +772,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// why not just ask the item for its domainId?
 
 		Item returnItem = storedItems.get(domainId);
+		return returnItem;
+	}
+
+	public final Item getStoredItemFromLocationAndMasterIdAndUom(final String inLocationName,
+		final String inItemMasterId,
+		final String inUom) {
+		Item returnItem = null;
+		ISubLocation<?> location = this.findSubLocationById(inLocationName);
+		if (location != null)
+			returnItem = location.getStoredItemFromMasterIdAndUom(inItemMasterId, inUom);
 		return returnItem;
 	}
 

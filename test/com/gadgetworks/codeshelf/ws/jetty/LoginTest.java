@@ -58,7 +58,6 @@ public class LoginTest {
 		organization.addUser(user);
 
 		LoginRequest request = new LoginRequest();
-		request.setOrganizationId(organization.getDomainId());
 		request.setUserId(user.getDomainId());
 		request.setPassword(password);
 		
@@ -97,7 +96,6 @@ public class LoginTest {
 		organization.addUser(user);
 		
 		LoginRequest request = new LoginRequest();
-		request.setOrganizationId(organization.getDomainId());
 		request.setUserId("user@invalid.com");
 		request.setPassword(password);
 		
@@ -135,7 +133,6 @@ public class LoginTest {
 		organization.addUser(user);
 
 		LoginRequest request = new LoginRequest();
-		request.setOrganizationId(organization.getDomainId());
 		request.setUserId(user.getDomainId());
 		request.setPassword("invalid");
 		

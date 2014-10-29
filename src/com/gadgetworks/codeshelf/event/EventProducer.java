@@ -7,9 +7,10 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.validation.Errors;
 import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
 
 /**
  * Helper class for producing events of concern at a business level and sent in an implementation specific way for collection and analysis.  
@@ -22,35 +23,57 @@ public class EventProducer {
 	//May need to turn tags into a set of enums
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventProducer.class);
-	
-	public static Set<String> tags(String... inTags) {
-		return Sets.newHashSet(inTags);
-	}
 
-	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException) {
-		produceEvent(inTags, inSeverity, inException, null);
+	public void produceEvent(Set<EventTag> inTags, EventSeverity inEventSeverity, Object inRelatedObject) {
+		produceEvent(EventInterval.INSTANTANEOUS, inTags, inEventSeverity, inRelatedObject);
 	}
 	
-	public void produceEvent(Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
-		produceEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inException, inRelatedObject);
+	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+		produceExceptionEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inException, inRelatedObject);
 	}
 
-	private void produceEvent(EventInterval inInterval, Set<String> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
-		Map<String, ?> namedValues = Collections.emptyMap();
-		if (inRelatedObject != null) {
-			namedValues = ImmutableMap.of("relatedObject", inRelatedObject);
-		}
-		String logMessage = Objects.toStringHelper("Event")
-			.add("tags", inTags)
-			.add("severity", inSeverity)
-			.add("interval", inInterval)
-			.add("namedValues", namedValues).toString();
+	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, Errors inErrors, Object inRelatedObject) {
+		produceErrorsEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inErrors, inRelatedObject);
+	}
+
+	private void produceErrorsEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Errors inErrors, Object inRelatedObject) {
+		ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
 		
-		if (inException != null) {
-			LOGGER.error(logMessage, inException);
+		String logMessage = messageHelper.add("violations", inErrors).toString();
+		
+		if (inSeverity.equals(EventSeverity.WARN)) {
+			LOGGER.warn(logMessage);
+		} else if (inSeverity.equals(EventSeverity.ERROR)){
+			LOGGER.error(logMessage);
 		} else {
 			LOGGER.info(logMessage);
 		}
+	}
+	
+	private void produceExceptionEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+		ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
+		String logMessage = messageHelper.toString();
+		
+		if (inException != null) {
+			if (inSeverity.equals(EventSeverity.WARN)) {
+				LOGGER.warn(logMessage, inException);
+			} else {
+				LOGGER.error(logMessage, inException);
+			}
+		} else {
+			if (inSeverity.equals(EventSeverity.WARN)) {
+				LOGGER.warn(logMessage, inException);
+			} else if (inSeverity.equals(EventSeverity.ERROR)){
+				LOGGER.error(logMessage, inException);
+			} else {
+				LOGGER.info(logMessage);
+			}
+		}
+	}
+
+	private void produceEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
+		ToStringHelper messageHelper = baseEventSerialization(EventInterval.INSTANTANEOUS, inTags, EventSeverity.INFO, inRelatedObject);
+		LOGGER.info(messageHelper.toString());
 	}
 	
 	/**
@@ -65,14 +88,14 @@ public class EventProducer {
 	 *  Which will produce a begin and end event with the same event context information
 	 * 
 	 */
-	public EventIntervalContext produceEventInterval(final Set<String> inTags, final EventSeverity inEventSeverity, final Object inRelatedObject) {
-		produceEvent(EventInterval.BEGIN, inTags, inEventSeverity, null, inRelatedObject);
+	public EventIntervalContext produceEventInterval(final Set<EventTag> inTags, final EventSeverity inEventSeverity, final Object inRelatedObject) {
+		produceEvent(EventInterval.BEGIN, inTags, inEventSeverity, inRelatedObject);
 
 		return new EventIntervalContext() {
 			
 			@Override
 			public void end() {
-				produceEvent(EventInterval.END, inTags, inEventSeverity, null, inRelatedObject);
+				produceEvent(EventInterval.END, inTags, inEventSeverity, inRelatedObject);
 			}
 		};
 	}
@@ -88,6 +111,18 @@ public class EventProducer {
 		public void close() {
 			end();
 		}
+	}
+
+	private ToStringHelper baseEventSerialization(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
+		Map<String, ?> namedValues = Collections.emptyMap();
+		if (inRelatedObject != null) {
+			namedValues = ImmutableMap.of("relatedObject", inRelatedObject);
+		}
+		return Objects.toStringHelper("Event")
+			.add("tags", inTags)
+			.add("severity", inSeverity)
+			.add("interval", inInterval)
+			.add("namedValues", namedValues);
 	}
 	
 	/* Unused at the moment but planned for validation violations 

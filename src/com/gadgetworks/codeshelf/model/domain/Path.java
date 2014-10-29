@@ -36,6 +36,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -109,6 +110,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@MapKey(name = "segmentOrder")
 	//	@Getter
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
+
 	// private Map<Integer, PathSegment>	segments					= null;
 /*
 	public static final Path create(Facility parent, String inDomainId) {
@@ -272,7 +274,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
-		
+
 		/* TODO a zero distance path segment isn't useful and unrealistic
 		if (inHead.equals(inTail)) {
 			throw new IllegalArgumentException("inHead and inPath points should not be the same");
@@ -301,7 +303,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Is the passed in location on this path?
+	 * Is the passed in location on this path?  Important: deleted location is not on path
 	 * @return
 	 */
 	public final Boolean isLocationOnPath(final ILocation<?> inLocation) {
@@ -311,6 +313,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		// that makes it impossible to search down the graph and then back up for nested classes.
 		//		ISubLocation<?> parentLocation = (ISubLocation<?>) inLocation.getParent();
 		//		ISubLocation<?> location = parentLocation.getLocation(inLocation.getLocationId());
+		if (!inLocation.isActive()) {
+			// Note: if we had to report out on otherwise good order locations or items, then we could still do the code below 
+			// here and if satisfied log the warning or generate a business event.
+			return false;
+		}
 
 		Aisle aisle = inLocation.<Aisle> getParentAtLevel(Aisle.class);
 		if (aisle != null) {
@@ -323,27 +330,25 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	/**
-	 * Comparator for WI sorting.
+	 * Comparator for WI sorting. This is identical to CheDeviceLogic.WiDistanceComparator
 	 *
 	 */
 	private class WiComparable implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
 
-			if ((inWi1 == null) && (inWi2 == null)) {
-				return 0;
-			} else if (inWi2 == null) {
-				return -1;
-			} else if (inWi1 == null) {
-				return 1;
-			} else if (inWi1.getPosAlongPath() < inWi2.getPosAlongPath()) {
-				return -1;
-			} else if (inWi1.getPosAlongPath() > inWi2.getPosAlongPath()) {
-				return 1;
-			} else {
-				return 0;
-			}
+			Double wi1Pos = inWi1.getPosAlongPath();
+			Double wi2Pos = inWi2.getPosAlongPath();
+			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
+			if (value != 0)
+				return value;
+
+			return wi1Pos.compareTo(wi2Pos);
 		}
+
 	}
 
 	// --------------------------------------------------------------------------

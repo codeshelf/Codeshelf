@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 
 import org.junit.Assert;
@@ -91,14 +92,8 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,,03333,,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer4 = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
-		importer4.importOrdersFromCsvStream(toReader(csvString4), facility, ediProcessTime4);
+		ICsvOrderImporter importer4 = createOrderImporter();
+		importer4.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
 
 		order1111 = facility.getOrderHeader("01111");
 		Assert.assertNotNull(order1111);
@@ -397,8 +392,8 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order4444.addOrderLocation(orderLocation5555);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
-		boolean result = importer.importOrderLocationsFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		boolean result = importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		Assert.assertTrue(result);
 		
 		// Make sure we can lookup all of the locations for order O1111.
@@ -555,7 +550,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
 		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can lookup all of the locations for order O1111.
@@ -687,19 +682,11 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertTrue(importLocationAliases(facility, locationsCsv));
 	}
 	
-	private InputStreamReader toReader(String csvString) {
-		byte[] csvArray = csvString.getBytes();
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-		return reader;
-	}
-
-	
 	private boolean importAisles(Facility facility, String csvString) {
 		// **************
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
-		return importer.importAislesFileFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		return importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		
 	}
 	
@@ -707,8 +694,8 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
-		boolean result = importer.importLocationAliasesFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		ICsvLocationAliasImporter importer = createLocationAliasImporter();
+		boolean result = importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return result;
 	}
 	
@@ -716,8 +703,8 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
-		return importer.importOrderLocationsFromCsvStream(toReader(csvString), facility, ediProcessTime);
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
 

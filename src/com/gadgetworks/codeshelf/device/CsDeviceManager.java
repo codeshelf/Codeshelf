@@ -257,10 +257,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public void connected() {
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
-		LoginRequest loginRequest = new LoginRequest();
-		loginRequest.setUserId(username);
-		loginRequest.setPassword(password);
-
+		LoginRequest loginRequest = new LoginRequest(username, password);
 		client.sendMessage(loginRequest);
 	}
 

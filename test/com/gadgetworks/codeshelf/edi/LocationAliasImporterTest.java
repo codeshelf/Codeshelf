@@ -5,19 +5,30 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.EnumSet;
+import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.event.EventSeverity;
+import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.validation.Errors;
 
 /**
  * @author jeffw
@@ -26,8 +37,65 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 public class LocationAliasImporterTest extends EdiTestABC {
 
 	@Test
-	public final void testLocationAliasImporterFromCsvStream() {
-		this.getPersistenceService().beginTenantTransaction();
+	public final void successEventsProduced() {
+		String csvString = "mappedLocationId,locationAlias\r\n" //
+				+ "A1, AisleA\r\n" //
+				+ "A2.B2, B34\r\n"; //
+	
+		Facility facility = createFacility();
+		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
+		aisleA1.getDao().store(aisleA1);
+
+		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
+		aisleA2.getDao().store(aisleA2);
+
+		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
+		bay2.getDao().store(bay2);
+		
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		EventProducer producer = mock(EventProducer.class);
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
+	}
+
+	@Test
+	public final void violationEventProducedWhenLocationInactive() {
+		String csvString = "mappedLocationId,locationAlias\r\n" //
+				+ "A1, AisleA\r\n";
+		
+		Facility facility = createFacility();
+		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
+		aisleA1.setActive(false);
+		aisleA1.getDao().store(aisleA1);
+				
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		EventProducer producer = mock(EventProducer.class);
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
+	}
+
+	@Test
+	public final void violationEventProducedWhenLocationNotFound() {
+		String csvString = "mappedLocationId,locationAlias\r\n" //
+				+ "ANOTTHERE, AisleA\r\n";
+		
+		Facility facility = createFacility();
+				
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		EventProducer producer = mock(EventProducer.class);
+		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer, mLocationAliasDao);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
+		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
+	}
+
+	
+	@Test
+	public final void findLocationByIdAfterImport() {
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -36,17 +104,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 				+ "A2.B2, B34\r\n" //
 				+ "A3, AisleC\r\n";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-LOCS.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-LOCS.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-LOCS.1");
+		Facility facility = createFacility();
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mAisleDao.store(aisleA1);
@@ -61,8 +119,8 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		mBayDao.store(bay2);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(mLocationAliasDao);
-		importer.importLocationAliasesFromCsvStream(reader, facility, ediProcessTime);
+		ICsvLocationAliasImporter importer = createLocationAliasImporter();
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
 		this.getPersistenceService().endTenantTransaction();
 		

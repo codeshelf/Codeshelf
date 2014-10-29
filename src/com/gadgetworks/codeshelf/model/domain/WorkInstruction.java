@@ -392,6 +392,23 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
+	public final String getPickInstructionUi() {
+		String theStr = getPickInstruction();
+		if (theStr != null) {
+			ILocation<?> loc = this.getLocation();
+			if (loc != null && !loc.isActive())
+				return "<" + theStr + ">";
+			else
+				return theStr;
+		}
+		return "";
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
 	public final String getAssignedCheName() {
 		Che theChe = getAssignedChe();
 		if (theChe != null)
@@ -414,15 +431,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return ""; // 0.0 happens for short plans to facility
 		else
 			return StringUIConverter.doubleToTwoDecimalsString(wiPosValue);
-
-		/* old code
-		ILocation<?> theLoc = this.getLocation();
-		if (theLoc != null)
-			return StringUIConverter.doubleToTwoDecimalsString(theLoc.getPosAlongPath());
-		else {
-			return "";
-		}
-		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -533,13 +541,13 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		}
 		return returnStr;
 	}
-	
+
 	// convenience method. This may return null! Normally returns something only for pick wi
-	public Item getWiItem(){
+	public Item getWiItem() {
 		ILocation<?> theWiLocation = this.getLocation();
 		if (theWiLocation == null)
 			return null; // should not happen
-		
+
 		LocationABC<?> theLocation = (LocationABC<?>) theWiLocation;
 		if (theLocation instanceof Facility)
 			return null;

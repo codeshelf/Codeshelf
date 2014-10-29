@@ -44,6 +44,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
+import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -61,6 +62,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
@@ -68,6 +70,8 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -86,10 +90,9 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends SubLocationABC<ISubLocation<?>> {
 
-	@SuppressWarnings("unused")
-	private static final long	serialVersionUID	= 1L;
+	private static final long			serialVersionUID	= 1L;
 
-	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
+	private static final String			IRONMQ_DOMAINID		= "IRONMQ";
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -119,8 +122,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	/*
 	@OneToMany(mappedBy = "parent",targetEntity=SubLocationABC.class)
-	@Getter
-	private List<Aisle>						aisles			= new ArrayList<Aisle>();
 	*/
 	
 	@OneToMany(mappedBy = "parent")
@@ -538,7 +539,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		network.setChannel(channel);
 		network.getDao().store(network);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inProtoBayWidthMeters
@@ -945,23 +946,23 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
+		// Sort the WIs by their sort code. This is identical to CheDeviceLogic.WiGroupSortComparator
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			// watch for uninitialized data
-			String sort1 = inWi1.getGroupAndSortCode();
-			String sort2 = inWi2.getGroupAndSortCode();
-			if (sort1 == null) {
-				if (sort2 == null)
-					return 0;
-				else
-					return -1;
-			}
-			if (sort2 == null)
-				return 1;
-			else
-				return sort1.compareTo(sort2);
+
+			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
+			if (value != 0)
+				return value;
+
+			String w1Sort = inWi1.getGroupAndSortCode();
+			String w2Sort = inWi2.getGroupAndSortCode();
+			value = CompareNullChecker.compareNulls(w1Sort, w2Sort);
+			if (value != 0)
+				return value;
+
+			return w1Sort.compareTo(w2Sort);
 		}
-	};
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1026,7 +1027,17 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
 		
 		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
-			wiResultList.add(wi);
+			// Very unlikely. But if some wiLocations were deleted between start work and scan starting location, let's not give out the "deleted" wis
+			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
+			// Not ambiguous for picks.
+			ILocation<?> loc = wi.getLocation();
+			// so far, wi must have a location. Even housekeeping and shorts
+			if (loc == null)
+				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
+			else if (loc.isActive())
+				wiResultList.add(wi);
+			else
+				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}
 
 		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
@@ -1109,9 +1120,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		} else {
 			for (Path path : getPaths()) {
 				boolean foundOne = false;
-				// Item item = itemMaster.getFirstItemOnPath(path); // was this before v3
 				String uomStr = inOrderDetail.getUomMasterId();
-				Item item = itemMaster.getFirstItemMatchingUomOnPath(path, uomStr);
+				Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
 
 				if (item != null) {
 					resultWi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -1207,45 +1217,26 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			// Iterate over all active CROSS orders on the path.
 			OrderHeader crossOrder = container.getCurrentOrderHeader();
 			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
-				// Iterate over all active OUTBOUND on the path.
-				for (OrderHeader outOrder : getOrderHeaders()) {
-					if ((outOrder.getOrderType().equals(OrderTypeEnum.OUTBOUND)) && (outOrder.getActive())) {
-						// Only use orders without an order group, or orders in the same order group as the cross order.
-						if (((outOrder.getOrderGroup() == null) && (crossOrder.getOrderGroup() == null))
-								|| (outOrder.getOrderGroup() != null)
-								&& (outOrder.getOrderGroup().equals(crossOrder.getOrderGroup()))) {
-							// OK, we have an OUTBOUND order on the same path as the CROSS order.
-							// Check to see if any of the active CROSS order detail items match OUTBOUND order details.
-							for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-								if (crossOrderDetail.getActive()) {
-									for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
-										if ((outOrderDetail.getItemMaster().equals(crossOrderDetail.getItemMaster()))
-												&& (outOrderDetail.getActive())) {
-											// Now make sure the UOM matches.
-											if (UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),
-												crossOrderDetail.getUomMasterId())) {
-												for (Path path : getPaths()) {
-													OrderLocation firstOutOrderLoc = outOrder.getFirstOrderLocationOnPath(path);
+				for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+					if (crossOrderDetail.getActive()) {
+						List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
+						//if (empty?) Error
+						for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
+							List<ISubLocation<?>> firstLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+							//if (locations.empty) Error
+							for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
+								WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+									WorkInstructionTypeEnum.PLAN,
+									matchingOutboundOrderDetail,
+									container,
+									inChe,
+									(LocationABC<?>) firstLocationOnPath,
+									inTime);
 
-													if (firstOutOrderLoc != null) {
-														WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-															WorkInstructionTypeEnum.PLAN,
-															outOrderDetail,
-															container,
-															inChe,
-															(LocationABC<?>) (firstOutOrderLoc.getLocation()),
-															inTime);
-
-														// If we created a WI then add it to the list.
-														if (wi != null) {
-															setWiPickInstruction(wi, outOrder);
-															wiList.add(wi);
-														}
-													}
-												}
-											}
-										}
-									}
+								// If we created a WI then add it to the list.
+								if (wi != null) {
+									setWiPickInstruction(wi, matchingOutboundOrderDetail.getParent());
+									wiList.add(wi);
 								}
 							}
 						}
@@ -1254,6 +1245,48 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			}
 		}
 		return wiList;
+	}
+
+	/**
+	 * toPossibleLocations will return a list, but the list may be empty
+	 */
+	private List<ISubLocation<?>> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
+		ArrayList<ISubLocation<?>> locations = new ArrayList<ISubLocation<?>>();
+		for (Path path : getPaths()) {
+			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
+			if (firstOutOrderLoc != null)
+				locations.add(firstOutOrderLoc.getLocation());
+		}
+		return locations;
+	}
+
+	private List<OrderDetail> getMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
+		Preconditions.checkNotNull(crossbatchOrderDetail);
+		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
+		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS));
+
+		List<OrderDetail> matchingOutboundOrderDetail = new ArrayList<OrderDetail>();
+		for (OrderHeader outOrder : getOrderHeaders()) {
+			boolean match = true;
+			match &= outOrder.getOrderType().equals(OrderTypeEnum.OUTBOUND);
+			match &= outOrder.getActive();
+			match &= Objects.equal(crossbatchOrderDetail.getParent().getOrderGroup(), outOrder.getOrderGroup());
+			if (match) {
+				for (OrderDetail outOrderDetail : outOrder.getOrderDetails()) {
+					if (outOrderDetail.getActive()) {
+						boolean matchDetail = true;
+						matchDetail &= outOrderDetail.getItemMaster().equals(crossbatchOrderDetail.getItemMaster());
+						matchDetail &= UomNormalizer.normalizedEquals(outOrderDetail.getUomMasterId(),
+							crossbatchOrderDetail.getUomMasterId());
+						if (matchDetail) {
+							matchingOutboundOrderDetail.add(outOrderDetail);
+						}
+					}
+
+				}
+			}
+		}
+		return matchingOutboundOrderDetail;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1267,17 +1300,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		// For DEV-315, if more than one location, sort them.
 		List<String> locIdList = new ArrayList<String>();
 
-		// old way. Not sorted. Just took the locations on the order in whatever order they were.
-		/*
-		for (OrderLocation orderLocation : inOrder.getOrderLocations()) {
-			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
-			if (locAlias != null) {
-				locationString += locAlias.getAlias() + " ";
-			} else {
-				locationString += orderLocation.getLocation().getLocationId();
-			}
-		}
-		*/
 		for (OrderLocation orderLocation : inOrder.getActiveOrderLocations()) {
 			LocationAlias locAlias = orderLocation.getLocation().getPrimaryAlias();
 			if (locAlias != null) {
@@ -1403,6 +1425,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
 				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
+				// getOrderLocations or getActiveOrderLocations? Let's assume if any orderlocations at all for this order header, then crossbatch
 				if (passedInDetailParent.getOrderLocations().size() == 0) {
 					isInventoryPickInstruction = true;
 					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
@@ -1929,20 +1952,17 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @return
+	 * Not currently used. An old stitch-fix feature.  Remember that getActiveChildren() is recursive, so it returns bays, tiers, or slots--whatever has the Ddc.
 	 */
 	private List<ILocation<?>> getDdcLocations() {
 		LOGGER.debug("DDC get locations");
 		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
-		for (ILocation<?> aisle : this.getLocations().values()) {
-			if(aisle.getClass().equals(Aisle.class)) {
-				for (ILocation<?> location : aisle.getActiveChildren()) {
-					if (location.getFirstDdcId() != null) {
-						ddcLocations.add(location);
-					}
+		for (ISubLocation<?> aisle : getActiveChildrenAtLevel(Aisle.class)) {
+			// no actual need for above line. facility.getActiveChildren would work equally
+			for (ILocation<?> location : aisle.getActiveChildren()) {
+				if (location.getFirstDdcId() != null) {
+					ddcLocations.add(location);
 				}
-			} else {
-				LOGGER.error("Child "+aisle.getDomainId()+" of facility is not an Aisle but a "+aisle.getClassName());
 			}
 		}
 		return ddcLocations;
@@ -2113,7 +2133,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
 
-		InventoryCsvImporter importer = new InventoryCsvImporter(ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, this);
 
 		ItemMaster itemMaster = this.getItemMaster(itemId);
@@ -2126,10 +2146,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
 			Errors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", ErrorCode.FIELD_NOT_FOUND, "storedLocation was not found");
+			errors.rejectValue("storedLocation", ErrorCode.FIELD_REFERENCE_NOT_FOUND, "storedLocation was not found");
 			throw new InputValidationException(errors);
 		}
-		
+
 		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,

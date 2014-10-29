@@ -22,8 +22,10 @@ import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -39,11 +41,11 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * 
  * 
  */
-public class LocationDeleteTest extends DomainTestABC {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationDeleteTest.class);
-	
-	private final boolean LARGER_FACILITY = true;
-	private final boolean SMALLER_FACILITY = true;
+public class LocationDeleteTest extends EdiTestABC {
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(LocationDeleteTest.class);
+
+	private final boolean		LARGER_FACILITY		= true;
+	private final boolean		SMALLER_FACILITY	= false;
 
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName, boolean inWhichFacility) {
@@ -63,9 +65,9 @@ public class LocationDeleteTest extends DomainTestABC {
 
 		if (inWhichFacility == LARGER_FACILITY)
 			readStandardAisleFile(facility);
-		else 
+		else
 			readSmallerAisleFile(facility);
-	
+
 		// Get the aisles
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -79,6 +81,33 @@ public class LocationDeleteTest extends DomainTestABC {
 		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
+
+		readLocationAliases(facility);
+
+		String nName = "N-" + inOrganizationName;
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		//Che che = 
+		network.createChe("CHE1", new NetGuid("0x00000001"));
+		network.createChe("CHE2", new NetGuid("0x00000002"));
+
+		Che che1 = network.getChe("CHE1");
+		che1.setColor(ColorEnum.GREEN);
+		Che che2 = network.getChe("CHE2");
+		che1.setColor(ColorEnum.MAGENTA);
+
+		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		aisle1.setLedController(controller1);
+		aisle2.setLedController(controller2);
+
+		return facility;
+
+	}
+
+	private void readLocationAliases(Facility inFacility) {
+		// Notice that as we read the location aliases, some of the positions are invalid. Either deleted or never came. Should get
+		// appropriate WARNS at a first, and soon business events.
+		// One bogus line should always report that it could not map: "A9.B9.T9.S9, X-999\r\n", but never that it existed before but is now inactive.
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T2.S5,D-1\r\n" //
@@ -120,6 +149,7 @@ public class LocationDeleteTest extends DomainTestABC {
 				+ "A2.B2.T1.S4, D-37\r\n" //
 				+ "A2.B2.T1.S3, D-38\r\n" //
 				+ "A2.B2.T1.S2, D-39\r\n" //
+				+ "A9.B9.T9.S9, X-999\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
 
 		byte[] csvArray2 = csvString2.getBytes();
@@ -128,30 +158,11 @@ public class LocationDeleteTest extends DomainTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mLocationAliasDao);
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		//Che che = 
-		network.createChe("CHE1", new NetGuid("0x00000001"));
-		network.createChe("CHE2", new NetGuid("0x00000002"));
-
-		Che che1 = network.getChe("CHE1");
-		che1.setColor(ColorEnum.GREEN);
-		Che che2 = network.getChe("CHE2");
-		che1.setColor(ColorEnum.MAGENTA);
-
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
-		aisle1.setLedController(controller1);
-		aisle2.setLedController(controller2);
-
-		return facility;
-
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
+		importer2.importLocationAliasesFromCsvStream(reader2, inFacility, ediProcessTime2);		
 	}
-	
-	private void readStandardAisleFile(Facility inFacility){
+
+	private void readStandardAisleFile(Facility inFacility) {
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
 				+ "Bay,B1,112,,,,,\r\n" //
@@ -174,16 +185,16 @@ public class LocationDeleteTest extends DomainTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
-	private void readSmallerAisleFile(Facility inFacility){
+	private void readSmallerAisleFile(Facility inFacility) {
 		// Compared to the standard, this is missing:
 		// A1.B1.T2  (one tier, five slots missing)
 		// A1.B2.T1.S5 (one more slot missing) = 7 fewer locations in A1
 		// A2.B2 (one bay, two tiers, 10 slots missing) = 13 fewer locations in A2
-		
+
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
 				+ "Bay,B1,112,,,,,\r\n" //
@@ -202,8 +213,26 @@ public class LocationDeleteTest extends DomainTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
+	}
+
+	private void readInventory(Facility inFacility) {
+		// This puts some inventory in good locations, locations deleted if the small aisle file is dropped over the larger one, and unresolvable locations.
+
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "9923,D-26,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,\r\n" //
+				+ "9937,X-999,8 oz Paper Bowl Lids - Comp Case of 1000,3,CS,6/25/14 12:00,\r\n" //
+				+ "9993,D-6,PARK RANGER Doll,40,EA,6/25/14 12:00,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
 	@SuppressWarnings("unused")
@@ -229,13 +258,7 @@ public class LocationDeleteTest extends DomainTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter orderImporter = createOrderImporter();
 		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
 
 		// Slotting file
@@ -248,7 +271,7 @@ public class LocationDeleteTest extends DomainTestABC {
 		byte[] csvArray2 = csvString2.getBytes();
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mOrderLocationDao);
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
@@ -268,12 +291,7 @@ public class LocationDeleteTest extends DomainTestABC {
 		InputStreamReader reader3 = new InputStreamReader(stream3);
 
 		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		CrossBatchCsvImporter importer3 = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
+		ICsvCrossBatchImporter importer3 = createCrossBatchImporter();
 		importer3.importCrossBatchesFromCsvStream(reader3, inFacility, thirdEdiProcessTime);
 
 	}
@@ -281,7 +299,7 @@ public class LocationDeleteTest extends DomainTestABC {
 	@Test
 	public final void locationDelete1() throws IOException {
 		// The idea is to setup, then delete an aisle that has order locations, complete and active work instruction, associated path and controller.
-		// Make no throws as those things are accessed.
+		// Make sure  no throws as those things are accessed.
 		// Bring it back
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -327,7 +345,7 @@ public class LocationDeleteTest extends DomainTestABC {
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
 		HousekeepingInjector.restoreHKDefaults();
-		
+
 		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
@@ -340,11 +358,11 @@ public class LocationDeleteTest extends DomainTestABC {
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
-		
+
 		// Now the test starts. Delete aisle A1
 		Aisle aisle1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertTrue(aisle1.getActive());
-		
+
 		LOGGER.info("Making aisle A1 inactive, with its children");
 		aisle1.makeInactiveAndAllChildren();
 		// fetch again as the earlier reference is probably stale
@@ -376,67 +394,142 @@ public class LocationDeleteTest extends DomainTestABC {
 
 		this.getPersistenceService().endTenantTransaction();
 	}
-	
+
 	@Test
 	public final void locationDelete2() throws IOException {
 		// The idea is to setup, then redo "smaller" aisle file that results in deleted bays, tiers, and slots.
 		// Bring it back with original
 		this.getPersistenceService().beginTenantTransaction();
 
-		
+
 		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD02", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
-		
+
 		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
 		readStandardAisleFile(facility);
 
 		LOGGER.info("And another reread."); // Reread case is covered in AisleImporterTest
 		readStandardAisleFile(facility);
 
-		// Note: this does not make locations inactive yet.
 		LOGGER.info("reading aisles file that should remove bay, tier, and slot");
 		readSmallerAisleFile(facility);
-		// Look at the normal and deleted locations.
-		
-		// Why does this next one throw on obscure method not found?
+
+		LOGGER.info("A1.B2.T1.S5 should be inactive now. findSubLocationById succeeds, but should warn");
+		LocationABC<?> locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5");
+		Assert.assertNotNull(locationA1B2T1S5);
+		Assert.assertFalse(locationA1B2T1S5.isActive());
+		// Location alias was D-26 for this. Should still know it. However, display comes with brackets.
+		Assert.assertEquals("<D-26>", locationA1B2T1S5.getPrimaryAliasId());
+		// If you ask by the mapped name, should still get the location
+		ILocation<?> mappedLocation = facility.findSubLocationById("D-26");
+		Assert.assertEquals(locationA1B2T1S5, mappedLocation);
+		// Nominal positions also come with brackets
+		Assert.assertEquals("<A1.B2.T1.S5>", locationA1B2T1S5.getNominalLocationId());
+
+		LOGGER.info("Reading location aliases again should warn about A1.B2.T1.S5 and other being inactive");
+		readLocationAliases(facility);
+
+		// This used to generate an ebeans optimistic commit error
 		LOGGER.info("reading original aisles file that should restore the bay, tier, and slot");
 		readStandardAisleFile(facility);
-		// Look at the normal and deleted locations.
+		locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5"); // get it again; our ebeans reference would be stale
+		Assert.assertNotNull(locationA1B2T1S5);
+		Assert.assertTrue(locationA1B2T1S5.isActive());
 
 		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void locationDelete3() throws IOException {
-		// The purpose of this is to investigate "java.lang.NoSuchMethodException: com.gadgetworks.codeshelf.model.domain.Aisle.setPickFaceEndPosX(java.lang.Double)"
-		// That we see in locationDelete2. This just flips the larger and smaller aisle file reads to see if that matters.
-		
-		// Also note, if you have this exception as a breakpoint, you will catch it during all facility setup during IronMQ setup. That should be cleaned up.
+		// This test starts with the smaller file. Do D-25/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
+		// One of the order locations is for D-25
+		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
+		Facility facility = setUpSimpleSlottedFacility("LD03", SMALLER_FACILITY);
+		setUpGroup1OrdersAndSlotting(facility);
 
+	}
+
+	@Test
+	public final void locationDelete4() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
-		Facility facility = setUpSimpleSlottedFacility("LD02", SMALLER_FACILITY);
+		// This test starts with the smaller file. So D-26/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
+		LOGGER.info("DeleteLocation Test4 . Part 1. Start by setting up smaller aisle A1 and A2");
+		Facility facility = setUpSimpleSlottedFacility("LD04", SMALLER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
-		
-		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
-		readSmallerAisleFile(facility);
 
-		LOGGER.info("And another reread."); 
-		readSmallerAisleFile(facility);
+		readInventory(facility);
+		/*
+		 item 9923 at D-26, CS.  Present in large facility only.
+		 item 9937 at X-999, CS Not present in either
+		 item 9993 at D-6, ea present in both
+		 
+			+ "9923,D-25,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,\r\n" //
+			+ "9937,X-999,8 oz Paper Bowl Lids - Comp Case of 1000,3,CS,6/25/14 12:00,\r\n" //
+			+ "9993,D-6,PARK RANGER Doll,40,EA,6/25/14 12:00,\r\n"; //
 
-		LOGGER.info("reading larger aisles file that should add bay, tier, and slot");
+		 */
+		// prove what is there and what isn't
+		ISubLocation<?> locD26 = facility.findSubLocationById("D-26");
+		Assert.assertNull(locD26);
+		ISubLocation<?> locX999 = facility.findSubLocationById("X-999");
+		Assert.assertNull(locX999);
+		ISubLocation<?> locD6 = facility.findSubLocationById("D-6");
+		Assert.assertNotNull(locD6);
+
+		Item item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
+		Assert.assertNull(item9923);
+
+		Item item9937 = facility.getStoredItemFromLocationAndMasterIdAndUom("X-999", "9937", "CS");
+		Assert.assertNull(item9937);
+		Item item9937b = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9937", "CS"); // just fishing for bugs
+		Assert.assertNull(item9937b);
+
+		Item item9993 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-6", "9993", "ea");
+		Assert.assertNotNull(item9993);
+		Item item9993b = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9993", "ea"); // just fishing for bugs
+		Assert.assertNull(item9993b);
+
+		LOGGER.info("DeleteLocation Test4 . Part 2. Read over larger aisles. Also must reread locations file");
 		readStandardAisleFile(facility);
+		// D-26 will not resolve be when locations file was read, the slot did not exist.
+		locD26 = facility.findSubLocationById("D-26");
+		Assert.assertNull(locD26);
+		
+		// Reread locations will get it
+		readLocationAliases(facility);
+		locD26 = facility.findSubLocationById("D-26");
+		Assert.assertNotNull(locD26);
+		
+		// Do not reread inventory.  D-26 will now exist, but it will not have any inventory.
+		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
+		Assert.assertNull(item9923);
 
-		// BIZARRE! comment these two lines. Then there will be a throw in readSmallerAisleFile()
-		// LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
-		// readStandardAisleFile(facility);
+		// Now reread the inventory file. Now we get it.
+		readInventory(facility);
+		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
+		Assert.assertNotNull(item9923);
+		// Just validating the D-6 is still there and X-999 is not
+		item9937 = facility.getStoredItemFromLocationAndMasterIdAndUom("X-999", "9937", "CS");
+		Assert.assertNull(item9937);
+		item9993 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-6", "9993", "ea");
+		Assert.assertNotNull(item9993);
 
-		// Why does this next one throw on obscure method not found?
-		// Note: this does not make locations inactive yet.
-		LOGGER.info("reading original aisles file that should make the added bay, tier, and slot inactive");
+		LOGGER.info("DeleteLocation Test4 . Part 3. Read over smaller aisle which will delete/archive D-26.");
 		readSmallerAisleFile(facility);
+		// D-26 will resolve to deleted location. There will be a logged warning.
+		locD26 = facility.findSubLocationById("D-26");
+		Assert.assertNotNull(locD26);
+		// Inventory will still resolve
+		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
+		Assert.assertNotNull(item9923);
+
+		// read inventory again. Although the D-26 inventory would not be created anew, the old inventory is left alone
+		// During the inventory read, there are business events (WARN) generated
+		readInventory(facility);
+		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
+		Assert.assertNotNull(item9923);		
 
 		this.getPersistenceService().endTenantTransaction();
 	}

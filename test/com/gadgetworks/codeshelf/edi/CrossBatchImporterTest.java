@@ -8,7 +8,9 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -30,7 +32,21 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
  * 
  */
 public class CrossBatchImporterTest extends EdiTestABC {
+	
+	private Facility mFacility;
+	
+	@Override
+	public void doBefore() {
+		Organization organization = new Organization();
+		organization.setDomainId("O-" + testName .getMethodName());
+		mOrganizationDao.store(organization);
 
+		String facilityId = "F-" + testName.getMethodName();
+		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility(facilityId);
+		mFacility = facility;
+	}
+	
 	private ItemMaster createItemMaster(final String inItemMasterId, final String inUom, final Facility inFacility) {
 		ItemMaster result = null;
 
@@ -54,10 +70,61 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		return result;
 	}
 
+	
+	private int importCsvString(Facility inFacility, String csvString, Timestamp ediProcessTime) {
+		ICsvCrossBatchImporter importer = createCrossBatchImporter();
+		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), inFacility, ediProcessTime);
+	}
+
+	@Test
+	public final void testMissingItemMaster() {
+		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ ",C111,I111.valid,100,ea\r\n" //
+				+ ",C111,I111.missing,200,ea\r\n"; //
+		
+		createItemMaster("I111.valid", "ea", mFacility);
+		
+		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
+		Assert.assertEquals(1,  count);
+	}
+
+	@Test
+	public final void testEmptyItemMaster() {
+		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ ",C111,I111.valid,100,ea\r\n" //
+				+ ",C111,,200,ea\r\n"; //
+		
+		createItemMaster("I111.valid", "ea", mFacility);
+		
+		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
+		Assert.assertEquals(1,  count);
+	}
+
+	@Test
+	public final void testInvalidQuantity() {
+		String[] invalidQuantities = new String[]{"0", "-1", "NaN", "1.1"};
+
+		String csvStringTemplate = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ ",C111,I111.1,{0},ea\r\n" //
+				+ ",C111,I111.2,200,ea\r\n"; //
+
+		createItemMaster("I111.1", "ea", mFacility);
+		createItemMaster("I111.2", "ea", mFacility);
+		
+		for (String invalidQuantity: invalidQuantities) {
+			String csvString = MessageFormat.format(csvStringTemplate, invalidQuantity);
+			int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
+			Assert.assertEquals(1,  count);
+			Assert.assertTrue("Did not contain quantity: " + csvString, csvString.contains(invalidQuantity));// sanity check
+		}
+	}
+
 	@Test
 	public final void testCrossBatchImporter() {
-		this.getPersistenceService().beginTenantTransaction();
-
+		Facility facility = mFacility;
+		HeaderCounts theCounts = facility.countCrossOrders();
+		Assert.assertTrue(theCounts.mTotalHeaders == 0);
+		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.1,100,ea\r\n" //
 				+ ",C111,I111.2,200,ea\r\n" //
@@ -65,21 +132,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ ",C111,I111.4,400,ea\r\n" //
 				+ ",C222,I222.1,100,ea\r\n" //
 				+ ",C222,I222.2,200,ea\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS1");
-		
-		HeaderCounts theCounts = facility.countCrossOrders();
-		Assert.assertTrue(theCounts.mTotalHeaders == 0);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -90,13 +142,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		importCsvString(mFacility, csvString, ediProcessTime);		
 
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
 		HeaderCounts theCounts2 = facility.countCrossOrders();
@@ -125,7 +171,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testCrossBatchOrderGroups() {
 		this.getPersistenceService().beginTenantTransaction();
-
+		Facility facility = mFacility;
+		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C333,I333.1,100,ea\r\n" //
 				+ "G1,C333,I333.2,200,ea\r\n" //
@@ -133,18 +180,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,C333,I333.4,400,ea\r\n" //
 				+ "G1,C444,I444.1,100,ea\r\n" //
 				+ "G1,C444,I444.2,200,ea\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS2");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS2", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS2");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I333.1", "ea", facility);
@@ -155,14 +190,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I444.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
-
+		int count = importCsvString(facility, csvString, ediProcessTime);
+		Assert.assertEquals(6, count);
+		
 		OrderGroup group = facility.getOrderGroup("G1");
 		Assert.assertNotNull(group);
 
@@ -176,7 +206,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
 		this.getPersistenceService().beginTenantTransaction();
-
+		Facility facility = mFacility;
+		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C555,I555.1,100,ea\r\n" //
 				+ "G1,C555,I555.2,200,ea\r\n" //
@@ -185,17 +216,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,C666,I666.1,400,ea\r\n" //
 				+ "G1,C666,I666.2,400,ea\r\n";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS3");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS3", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS3");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I555.1", "ea", facility);
@@ -206,13 +226,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I666.2", "ea", facility);
 
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
+		int count = importCsvString(facility, csvString, firstEdiProcessTime);
+		Assert.assertEquals(6, count);
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
 		HeaderCounts theCounts = facility.countCrossOrders();
@@ -230,19 +245,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,C666,I666.1,400,ea\r\n" //
 				+ "G1,C666,I666.2,400,ea\r\n";
 
-		csvArray = csvString.getBytes();
-
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
 		Timestamp secondEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, secondEdiProcessTime);
+		int secondCount = importCsvString(facility, csvString, secondEdiProcessTime);
+		Assert.assertEquals(5, secondCount);
 		
 		// The reimport resulted in inactivation of previous order headers for those containers
 		// Then we get new stuff.
@@ -275,7 +280,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testResendCrossBatchAddItem() {
 		this.getPersistenceService().beginTenantTransaction();
-
+		Facility facility = mFacility;
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C777,I777.1,100,ea\r\n" //
 				+ "G1,C777,I777.2,200,ea\r\n" //
@@ -283,18 +288,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,C777,I777.4,400,ea\r\n" //
 				+ "G1,C888,I888.1,100,ea\r\n" //
 				+ "G1,C888,I888.2,200,ea\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS4");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS4", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS4");
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I777.1", "ea", facility);
@@ -306,13 +299,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I888.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		int count = importCsvString(facility, csvString, ediProcessTime);
+		Assert.assertEquals(6, count);
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
 		HeaderCounts theCounts = facility.countCrossOrders();
@@ -333,19 +321,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,C888,I888.1,100,ea\r\n" //
 				+ "G1,C888,I888.2,200,ea\r\n";
 
-		csvArray = csvString.getBytes();
-
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		count = importCsvString(facility, csvString, ediProcessTime);
+		Assert.assertEquals(7, count);
 		
 		HeaderCounts theCounts2 = facility.countCrossOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
@@ -377,17 +355,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,CAAA,IAAA.1,100,ea\r\n" //
 				+ "G1,CAAA,IAAA.2,200,ea\r\n";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS5");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS5", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS5");
+		Facility facility = mFacility; 
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I999.1", "ea", facility);
@@ -398,13 +366,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("IAAA.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		int count = importCsvString(facility, csvString, ediProcessTime);
+		Assert.assertEquals(6, count);
 
 		// Now re-import the interchange changing the count on item 3.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -415,19 +378,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,CAAA,IAAA.1,100,ea\r\n" //
 				+ "G1,CAAA,IAAA.2,200,ea\r\n";
 
-		csvArray = csvString.getBytes();
-
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		count = importCsvString(facility, csvString, ediProcessTime);
+		Assert.assertEquals(6, count);
 
 		// Make sure that order detail item I999.3 still exists, but has quantity 0.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C999", ediProcessTime));
@@ -455,17 +408,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ ",C222,I222.1,100,ea\r\n" //
 				+ ",C222,I222.2,200,ea\r\n";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS6");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS6", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS6");
+		Facility facility = mFacility;
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -476,14 +419,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp crossBatchEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, crossBatchEdiProcessTime);
-
+		int count = importCsvString(facility, csvString, crossBatchEdiProcessTime);
+		Assert.assertEquals(6, count);
+		
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -497,19 +435,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte orderCsvArray[] = orderCsvString.getBytes();
 
-		stream = new ByteArrayInputStream(orderCsvArray);
-		reader = new InputStreamReader(stream);
+		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(orderCsvString.getBytes()));
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter orderImporter = createOrderImporter();
 		orderImporter.importOrdersFromCsvStream(reader, facility, ordersEdiProcessTime);
 
 		// Make sure we imported the outbound order.
@@ -548,17 +478,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "xx,C222,I222.1,100,ea\r\n" //
 				+ "xx,C222,I222.2,200,ea\r\n";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS7");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS7", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS7");
+		Facility facility = mFacility; 
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -569,14 +489,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
-
+		int count = importCsvString(facility, csvString, ediProcessTime);
+		Assert.assertEquals(6,  count);
+		
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
 		Assert.assertNotNull(order);
@@ -597,27 +512,17 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
 		
 		// Now re-import the interchange removing item 4.
-		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+		String csvStringRemoval = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "xx,C111,I111.1,100,ea\r\n" //
 				+ "xx,C111,I111.2,200,ea\r\n" //
 				+ "xx,C111,I111.3,300,ea\r\n" //
 				+ "xx,C222,I222.1,100,ea\r\n" //
 				+ "xx,C222,I222.2,200,ea\r\n";
 
-		csvArray = csvString.getBytes();
-
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
-
+		count = importCsvString(facility, csvStringRemoval, ediProcessTime);
+		Assert.assertEquals(5,  count);
+		
 		HeaderCounts theCounts2 = facility.countCrossOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
@@ -626,7 +531,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		// The next bit is a minor test for DEV-278, adding uom to the default domain name.
 		// Re-import, with two difference. Duplicate one detail with different uom. And change a uom.
-		String csvString3 = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+		String csvStringUomChange = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "xx,C111,I111.1,100,ea\r\n" //
 				+ "xx,C111,I111.2,200,ea\r\n" //
 				+ "xx,C111,I111.3,300,ea\r\n" //
@@ -634,19 +539,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "xx,C222,I222.1,5,cs\r\n" //
 				+ "xx,C222,I222.2,200,cs\r\n";
 
-		csvArray = csvString3.getBytes();
-
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		CrossBatchCsvImporter importer3 = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer3.importCrossBatchesFromCsvStream(reader, facility, ediProcessTime);
+		count = importCsvString(facility, csvStringUomChange, ediProcessTime);
+		Assert.assertEquals(6,  count);
 
 		// JR for DEV-278. Just making it pass now.
 		// 5 details. After change, we might get 6 there are both ea and cs orders for I222.1 in C2222
@@ -665,12 +560,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-CROSS8");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CROSS8", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CROSS8");
+		Facility facility = mFacility;
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -688,19 +578,9 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ ",C222,I222.1,100,ea\r\n" //
 				+ ",C222,I222.2,200,ea\r\n";
 
-		byte[] firstCsvArray = firstCsvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, firstEdiProcessTime);
+		int count = importCsvString(facility, firstCsvString, firstEdiProcessTime);
+		Assert.assertEquals(6,  count);
 
 		this.getPersistenceService().endTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
@@ -736,19 +616,10 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ ",C444,I222.1,100,ea\r\n" //
 				+ ",C444,I222.2,200,ea\r\n";
 
-		byte[] secondCsvArray = secondCsvString.getBytes();
-
-		stream = new ByteArrayInputStream(secondCsvArray);
-		reader = new InputStreamReader(stream);
 
 		Timestamp secondEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = new CrossBatchCsvImporter(mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
-		importer.importCrossBatchesFromCsvStream(reader, facility, secondEdiProcessTime);
+		int secondCount = importCsvString(facility, secondCsvString, secondEdiProcessTime);
+		Assert.assertEquals(6,  secondCount);
 
 		// Make sure we created an order with the container's ID.
 		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));

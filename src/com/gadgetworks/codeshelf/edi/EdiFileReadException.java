@@ -21,4 +21,9 @@ public class EdiFileReadException extends RuntimeException {
 	public EdiFileReadException(final String inMsg) {
 		super(inMsg);
 	}
+
+	public EdiFileReadException(final String inMsg, Throwable cause) {
+		super(inMsg, cause);
+	}
+
 }

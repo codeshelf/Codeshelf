@@ -6,9 +6,6 @@ import lombok.Setter;
 public class LoginRequest extends RequestABC {
 
 	@Getter @Setter
-	String organizationId;
-	
-	@Getter @Setter
 	String userId;
 	
 	@Getter @Setter
@@ -17,8 +14,7 @@ public class LoginRequest extends RequestABC {
 	public LoginRequest() {
 	}
 	
-	public LoginRequest(String organizationId, String userId, String password) {
-		this.organizationId = organizationId;
+	public LoginRequest(String userId, String password) {
 		this.userId = userId;
 		this.password = password;
 	}

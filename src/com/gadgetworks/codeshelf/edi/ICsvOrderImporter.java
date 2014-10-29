@@ -6,7 +6,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.Reader;
 import java.sql.Timestamp;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -17,6 +17,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderImporter {
 
-	ImportResult importOrdersFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
+	ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
 
 }

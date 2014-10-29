@@ -20,7 +20,6 @@ import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
@@ -39,8 +38,7 @@ import com.gadgetworks.flyweight.command.NetGuid;
  * @author ranstrom
  * Also see createAisleTest() in FacilityTest.java
  */
-public class AisleImporterTest extends DomainTestABC {
-
+public class AisleImporterTest extends EdiTestABC {
 
 	@Test
 	@Ignore // TODO: figure out why this failing test causes next test to hang 
@@ -71,7 +69,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE9");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check the aisle
@@ -177,7 +175,6 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(slotAnchorX > 0.54); // value about ..54m: 3rd starts after 2nd of 9 slots across 244 cm.
 		slotAnchorX = ((Slot) slotB2T2S3).getAnchorPosX();
 
-
 		// Check some vertices. The aisle and each bay should have 4 vertices.
 		// aisle defined as an ISublocation. Cannot event cast it to call getVerticesInOrder()
 		List<Vertex> vList1 = aisle2.getVerticesInOrder();
@@ -187,15 +184,15 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// New side effect: creates some LED controllers. But if no network in our test system, may not happen
 		// Assert.assertTrue(facility.countLedControllers() > 0);
-		
+
 		// Check that the locations know which side has lower led numbers.
 		// as a tierB1S1Side aisle, tier and slot have lower led number on anchor side.
-		
+
 		Assert.assertTrue(tierB2T1.isLowerLedNearAnchor());
 		Assert.assertTrue(slotB1T1S8.isLowerLedNearAnchor());
 		// Not so meaningful, but check these
 		Assert.assertTrue(bayA9B2.isLowerLedNearAnchor());
-		Assert.assertTrue(aisle2.isLowerLedNearAnchor());	
+		Assert.assertTrue(aisle2.isLowerLedNearAnchor());
 
 		this.getPersistenceService().endTenantTransaction();
 
@@ -234,7 +231,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE10");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		/* getLocationIdToParentLevel gives "" for this. You might argue it should give "F1". 
@@ -320,7 +317,7 @@ public class AisleImporterTest extends DomainTestABC {
 		thirdV = (Vertex) vList2.get(2);
 		xValue = thirdV.getPosX();
 		yValue = thirdV.getPosY();
-		Assert.assertTrue(xValue == 4.88);		// two bays of 144 cm.
+		Assert.assertTrue(xValue == 4.88); // two bays of 144 cm.
 		Assert.assertTrue(yValue == 1.2); // just the depth, relative to anchor as 0,0
 
 		// Check that led computation occurred for last aisle in the file
@@ -346,7 +343,7 @@ public class AisleImporterTest extends DomainTestABC {
 		thirdV = (Vertex) vList4.get(2);
 		xValue = thirdV.getPosX();
 		yValue = thirdV.getPosY();
-		Assert.assertTrue(yValue == 1.2);		
+		Assert.assertTrue(yValue == 1.2);
 		Assert.assertTrue(xValue == 4.88);
 
 		// Reread. We had a last bay and last aisle vertices bug on re-read
@@ -365,17 +362,16 @@ public class AisleImporterTest extends DomainTestABC {
 		yValue = thirdV.getPosY();
 		Assert.assertTrue(yValue == 1.2);
 		Assert.assertTrue(xValue == 4.88);
-		
+
 		// Check that the locations know which side has lower led numbers.
 		// as a tierNotB1S1Side aisle, tier and slot have higher led number on anchor side.		
 		Assert.assertFalse(tierA20B1T1.isLowerLedNearAnchor());
 		Assert.assertFalse(slotB1T1S6.isLowerLedNearAnchor());
 		// Not so meaningful, but check these
 		Assert.assertTrue(bayA10B1.isLowerLedNearAnchor());
-		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
+		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
 		this.getPersistenceService().endTenantTransaction();
-
 
 	}
 
@@ -427,7 +423,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE11");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -550,7 +546,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-SPARSE91");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -668,7 +664,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE12");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -714,10 +710,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertFalse(tierB2T2.isLowerLedNearAnchor());
 		Assert.assertTrue(tierB1T1.isLowerLedNearAnchor());
 		Assert.assertTrue(slotB1T1S1.isLowerLedNearAnchor());
-		Assert.assertFalse(slotB2T2S5.isLowerLedNearAnchor());		
+		Assert.assertFalse(slotB2T2S5.isLowerLedNearAnchor());
 		// Not so meaningful, but check these
 		Assert.assertTrue(bayA12B1.isLowerLedNearAnchor());
-		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
+		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
 		this.getPersistenceService().endTenantTransaction();
 
@@ -752,7 +748,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE13");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -812,7 +808,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Double xValue = thirdV.getPosX();
 		Double yValue = thirdV.getPosY();
 		Assert.assertTrue(xValue == 1.2); // Just the depth:120 cm. Relative aisle vertex at the anchor: (0,0)
-		
+
 		Assert.assertTrue(yValue == 2.3); // two bays of 115 cm. Again, relative to anchor as 0,0
 
 		List<Vertex> vList2 = bayA13B1.getVerticesInOrder();
@@ -830,17 +826,17 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertTrue(tierB1T3First == 97);
 		short tierB2T3First = tierB2T3.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB2T3First == 1);
-		
+
 		// Check that the locations know which side has lower led numbers.
 		// as a zigzagNotB1S1Side aisle, top tier (3) will have tier and slot have higher led number on anchor side. (2) opposite, and tier1 same again.	
 		Assert.assertFalse(tierB1T3.isLowerLedNearAnchor());
 		Assert.assertTrue(tierB2T2.isLowerLedNearAnchor());
 		Assert.assertFalse(tierB1T1.isLowerLedNearAnchor());
 		Assert.assertFalse(slotB1T1S1.isLowerLedNearAnchor());
-		Assert.assertTrue(slotB2T2S5.isLowerLedNearAnchor());		
+		Assert.assertTrue(slotB2T2S5.isLowerLedNearAnchor());
 		// Not so meaningful, but check these
 		Assert.assertTrue(bayA13B1.isLowerLedNearAnchor());
-		Assert.assertTrue(aisle.isLowerLedNearAnchor());	
+		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
 		this.getPersistenceService().endTenantTransaction();
 
@@ -882,7 +878,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE2X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -969,7 +965,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE14");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got from this bad file
@@ -1032,7 +1028,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE15");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -1068,7 +1064,7 @@ public class AisleImporterTest extends DomainTestABC {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer2 = createAisleFileImporter();
 		importer2.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 
 		aisle = Aisle.DAO.findByDomainId(facility, "A15");
@@ -1122,7 +1118,7 @@ public class AisleImporterTest extends DomainTestABC {
 		InputStreamReader reader3 = new InputStreamReader(stream3);
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer3 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer3 = createAisleFileImporter();
 		importer3.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
 
 		// Check what we got
@@ -1185,7 +1181,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE16");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the objects we will use
@@ -1211,8 +1207,9 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(network);
 
 		// There are led controllers, but we will make a new one. If it exists already, no harm.
-		String cntlrId = "0x000026";
-		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(cntlrId));
+		String cntlrId = "000026";
+		String guidId = "0x000026";
+		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(guidId));
 		Assert.assertNotNull(ledController);
 		LedController aController = network.getLedController(cntlrId); // make sure we can get it as we might
 		Assert.assertNotNull(aController);
@@ -1255,8 +1252,9 @@ public class AisleImporterTest extends DomainTestABC {
 
 		
 		// New from v8. Setting controller on aisle should clear the earlier tier set.
-		String cntlrId2 = "0x000066";
-		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(cntlrId2));
+		String cntlrId2 = "000066";
+		String guidId2 = "0x000066";
+		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(guidId2));
 		Assert.assertNotNull(ledController2);
 		LedController aController2 = network.getLedController(cntlrId2); // make sure we can get it as we might
 		Assert.assertNotNull(aController2);
@@ -1272,6 +1270,16 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNull(tierB1T1.getLedChannel());
 		Assert.assertEquals(ledController2, tierB1T1.getEffectiveLedController());
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
+		// and the new v8 UI fields
+		// Aisle has the direct association, so no parenthesis around it. Tier is indirect via getEffective.
+		String aisleCntrlUiField = aisle16.getLedControllerIdUi();
+		String aisleChannelUiField = aisle16.getLedChannelUi();
+		Assert.assertEquals("000066", aisleCntrlUiField);
+		Assert.assertEquals("2", aisleChannelUiField);
+		String tierCntrlUiField = tierB1T1.getLedControllerIdUi();
+		String tierChannelUiField = tierB1T1.getLedChannelUi();
+		Assert.assertEquals("(000066)", tierCntrlUiField);
+		Assert.assertEquals("(2)", tierChannelUiField);
 
 		this.getPersistenceService().endTenantTransaction();
 
@@ -1306,7 +1314,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE21");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
@@ -1336,7 +1344,7 @@ public class AisleImporterTest extends DomainTestABC {
 
 	}
 
-	private Double helperGetPosAlongSegment(PathSegment inSegment, Double inX, Double inY){
+	private Double helperGetPosAlongSegment(PathSegment inSegment, Double inX, Double inY) {
 		Point testPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, inX, inY, 0.0);
 		return inSegment.computeNormalizedPositionAlongPath(testPoint);
 	}
@@ -1366,11 +1374,11 @@ public class AisleImporterTest extends DomainTestABC {
 		List<Path> paths = facility.getPaths();
 		int countPaths = paths.size();
 		Assert.assertTrue(countPaths == 1);
-		
+
 		// Take this chance to unit test the path segment position calculator for X oriented segment.
-		Double posAlongPath = segment0.getStartPosAlongPath(); 
+		Double posAlongPath = segment0.getStartPosAlongPath();
 		Assert.assertEquals(posAlongPath, (Double) 0.0);
-		
+
 		// case 1: beyond the start. Give the path segment's starting value. In this case zero.
 		Double value = helperGetPosAlongSegment(segment0, 25.0, 43.45);
 		Assert.assertEquals(value, (Double) 0.0);
@@ -1386,12 +1394,11 @@ public class AisleImporterTest extends DomainTestABC {
 		// case 5: beyond the end. Give the path segment's ending value, or at least the x component of it.
 		value = helperGetPosAlongSegment(segment0, 8.0, 43.45);
 		Assert.assertEquals(value, (Double) 10.0);
-	
 
 		// And the Y oriented segment. Note that the Y start with distance 10.00 along path
-		 posAlongPath = segment1.getStartPosAlongPath(); 
-		 Assert.assertEquals(posAlongPath, (Double) 10.0);
-		 
+		posAlongPath = segment1.getStartPosAlongPath();
+		Assert.assertEquals(posAlongPath, (Double) 10.0);
+
 		// case 1: beyond the start. Give the path segment's starting value. In this case zero.
 		value = helperGetPosAlongSegment(segment1, 25.0, 43.45);
 		Assert.assertEquals(value, (Double) 10.0);
@@ -1406,12 +1413,12 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(value, (Double) 20.0);
 		// case 5: beyond the end. Give the path segment's ending value, or at least the x component of it.
 		value = helperGetPosAlongSegment(segment1, 25.0, 62.0);
-		Assert.assertEquals(value, (Double) 20.0);		
+		Assert.assertEquals(value, (Double) 20.0);
 
 		this.getPersistenceService().endTenantTransaction();
 
 	}
-	
+
 	@Test
 	public final void simplestPathTest() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -1434,7 +1441,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE5X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A31
@@ -1443,19 +1450,19 @@ public class AisleImporterTest extends DomainTestABC {
 
 		Path aPath = createPathForTest("F5X.1", facility);
 		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.00, 48.45);
-		
+
 		String persistStr = segment0.getPersistentId().toString();
 		aisle51.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
 		// Although the old reference to aisle before path association would not.
-		
+
 		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
 		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
 		Slot slotS1 = Slot.DAO.findByDomainId(tierA51B1T1, "S1");
 		Assert.assertNotNull(slotS1);
 		Slot slotS4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
 		Assert.assertNotNull(slotS4);
-		
+
 		Double bayMeters = bayA51B1.getPosAlongPath();
 		Double tierMeters = tierA51B1T1.getPosAlongPath();
 		Assert.assertNotNull(bayMeters);
@@ -1464,21 +1471,17 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNotNull(slot1Meters);
 		Double slot4Meters = slotS4.getPosAlongPath();
 		Assert.assertNotNull(slot4Meters);
-		
+
 		// Not be necessary as associatePathSegment() called it. But convenient to debug as it computes again.
 		facility.recomputeLocationPathDistances(aPath);
-		
-		
+
 		Assert.assertNotEquals(slot1Meters, slot4Meters); // one of these should be further along the path
 		Assert.assertTrue(slot1Meters > slot4Meters); // path goes right to left, so S4 lowest.
 
-
 		this.getPersistenceService().endTenantTransaction();
 
-
-
 	}
-	
+
 	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPath() {
@@ -1518,7 +1521,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE3X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A31
@@ -1538,26 +1541,24 @@ public class AisleImporterTest extends DomainTestABC {
 		Bay bayA32B1 = Bay.DAO.findByDomainId(aisle32, "B1");
 		Bay bayA32B2 = Bay.DAO.findByDomainId(aisle32, "B2");
 		Tier tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
-		Tier tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");	
-		
+		Tier tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");
+
 		// There is no path yet. Try to find positionAlongPath values.
 		Double tierA32B1T1Value = tierA32B1T1.getPosAlongPath();
 		Assert.assertNull(tierA32B1T1Value);
-	
-		
+
 		// Now Pathing. Simulate UI doing  path between the aisles, right to left.
 		// For A31, B2 will be at the start of the path. And pos along path should be about the same for pairs of slots from A31 and A32
 		// For A32, B1 will be at the start of the path
 
 		Path aPath = createPathForTest("F3X.1", facility);
 		PathSegment segment0 = addPathSegmentForTest("F3X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
-		
+
 		// Mostly check the parent relationship these 4 lines
 		TravelDirectionEnum direction1 = aPath.getTravelDirEnum();
 		Assert.assertEquals(direction1, TravelDirectionEnum.FORWARD);
 		TravelDirectionEnum direction2 = segment0.getParent().getTravelDirEnum();
 		Assert.assertEquals(direction2, TravelDirectionEnum.FORWARD);
-
 
 		Path bPath = facility.getPath("F3X.1");
 		Assert.assertEquals(aPath, bPath);
@@ -1583,7 +1584,7 @@ public class AisleImporterTest extends DomainTestABC {
 		// Let's check locations on the path segment, derived different ways
 		// original aPath return while created:
 		PathSegment aPathSegment = aPath.getPathSegment(0);
-		int countLocationsA = aPathSegment.getLocations().size(); 
+		int countLocationsA = aPathSegment.getLocations().size();
 		Assert.assertEquals(aPathSegment, segment00);
 		Assert.assertEquals(1, countLocationsA); // if this fails, may be irrelevant; just a stale reference.
 
@@ -1593,11 +1594,10 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(bPathSegment, segment00);
 		Assert.assertEquals(1, countLocationsB); // if this fails, may be irrelevant; just a stale reference.
 
-
 		// cPath from the facility now (after associating aisle to path segment)
 		Path cPath = facility.getPath("F3X.1");
 		PathSegment cPathSegment = cPath.getPathSegment(0);
-		int countLocationsC = cPathSegment.getLocations().size(); 
+		int countLocationsC = cPathSegment.getLocations().size();
 		Assert.assertEquals(cPathSegment, segment00);
 		Assert.assertEquals(1, countLocationsC); // if this fails, may be irrelevant; just a stale reference.
 
@@ -1606,16 +1606,16 @@ public class AisleImporterTest extends DomainTestABC {
 		// Check in the same manner
 		UUID persistentId = UUID.fromString(persistStr);
 		PathSegment dPathSegment = PathSegment.DAO.findByPersistentId(persistentId);
-		int countLocationsD = dPathSegment.getLocations().size(); 
+		int countLocationsD = dPathSegment.getLocations().size();
 		Assert.assertEquals(dPathSegment, segment00);
-		Assert.assertEquals(2, countLocationsD); 
+		Assert.assertEquals(2, countLocationsD);
 
 		// this segment should have two locations now
 		//However, the old reference is stale and would only have one aisle. Need to re-get.
 		PathSegment segment000 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
 		List<LocationABC> locations2 = segment000.getLocations();
 		int countLocations2 = locations2.size();
-		Assert.assertEquals(2, countLocations2);  
+		Assert.assertEquals(2, countLocations2);
 
 		// Just checking if the getParent() returns fully hydrated path. Used to NPE from this.
 		Path dPath = dPathSegment.getParent();
@@ -1625,11 +1625,11 @@ public class AisleImporterTest extends DomainTestABC {
 
 		// This should not be necessary as associatePathSegment() called it
 		facility.recomputeLocationPathDistances(aPath);
-		
+
 		// Lowest path values at A31B2T1S5 and A32B2T1S5
 		// Lowest LED values should be A31B1T1S1 and A32B2T1S5
 		Slot firstA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
-		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S5");	
+		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S5");
 		Slot lastA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
 		Slot lastA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S1");
 
@@ -1637,29 +1637,29 @@ public class AisleImporterTest extends DomainTestABC {
 		Double valueFirst32 = firstA32SlotOnPath.getPosAlongPath();
 		Double valueLast31 = lastA31SlotOnPath.getPosAlongPath();
 		Double valueLast32 = lastA32SlotOnPath.getPosAlongPath();
-		
+
 		Short lowestLEDforA32 = firstA32SlotOnPath.getFirstLedNumAlongPath();
 		Assert.assertTrue(lowestLEDforA32 < 4);
 		Slot lowestA31LedSLot = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
 		Short lowestLEDforA31 = lowestA31LedSLot.getFirstLedNumAlongPath();
 		Assert.assertTrue(lowestLEDforA31 < 4);
-		
+
 		// old bug got the same position for first two bays. Check that.
 		Double a31b1Value = tierA31B1T1.getPosAlongPath();
-		Double a31b2Value = tierA31B2T1.getPosAlongPath();	
+		Double a31b2Value = tierA31B2T1.getPosAlongPath();
 		// Values are null. Lets get new tier references after the path was applied, as the posAlongPath is null on old reference
 		tierA31B1T1 = Tier.DAO.findByDomainId(bayA31B1, "T1");
 		tierA31B2T1 = Tier.DAO.findByDomainId(bayA31B2, "T1");
 		tierA32B1T1 = Tier.DAO.findByDomainId(bayA32B1, "T1");
 		tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");
-		
-		Double valueTierA31B1T1  = tierA31B1T1.getAnchorPosX();
-		Double valueTierA31B2T1  = tierA31B2T1.getAnchorPosX();
-		Double valueTierA32B1T1  = tierA32B1T1.getAnchorPosX();
-		Double valueTierA32B2T1  = tierA32B2T1.getAnchorPosX();
+
+		Double valueTierA31B1T1 = tierA31B1T1.getAnchorPosX();
+		Double valueTierA31B2T1 = tierA31B2T1.getAnchorPosX();
+		Double valueTierA32B1T1 = tierA32B1T1.getAnchorPosX();
+		Double valueTierA32B2T1 = tierA32B2T1.getAnchorPosX();
 		Assert.assertEquals((Double) 0.0, valueTierA31B1T1);
 		Assert.assertEquals((Double) 0.0, valueTierA32B2T1);
-		
+
 		// Slots increase the same way in A32. So S1 anchor will always be 0 and S5 anchor will not
 		Slot slotA31B1T1S1 = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
 		Slot slotA31B1T1S5 = Slot.DAO.findByDomainId(tierA31B1T1, "S5");
@@ -1670,36 +1670,36 @@ public class AisleImporterTest extends DomainTestABC {
 		Slot slotA32B2T1S1 = Slot.DAO.findByDomainId(tierA32B2T1, "S1");
 		Slot slotA32B2T1S5 = Slot.DAO.findByDomainId(tierA32B2T1, "S5");
 
-		Double valueSlotA31B1T1S1  = slotA31B1T1S1.getAnchorPosX();
+		Double valueSlotA31B1T1S1 = slotA31B1T1S1.getAnchorPosX();
 		Assert.assertEquals((Double) 0.0, valueSlotA31B1T1S1); // first slot in A31
-		Double valueSlotA31B1T1S5  = slotA31B1T1S5.getAnchorPosX();
-		Assert.assertNotEquals((Double) 0.0, valueSlotA31B1T1S5); 
-		Double valueSlotA31B2T1S1  = slotA31B2T1S1.getAnchorPosX();
+		Double valueSlotA31B1T1S5 = slotA31B1T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA31B1T1S5);
+		Double valueSlotA31B2T1S1 = slotA31B2T1S1.getAnchorPosX();
 		Assert.assertEquals((Double) 0.0, valueSlotA31B2T1S1);
-		Double valueSlotA31B2T1S5  = slotA31B2T1S5.getAnchorPosX();
-		Assert.assertNotEquals((Double) 0.0, valueSlotA31B2T1S5); 
+		Double valueSlotA31B2T1S5 = slotA31B2T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA31B2T1S5);
 
-		Double valueSlotA32B1T1S1  = slotA32B1T1S1.getAnchorPosX();
+		Double valueSlotA32B1T1S1 = slotA32B1T1S1.getAnchorPosX();
 		Assert.assertEquals((Double) 0.0, valueSlotA32B1T1S1); // first slot in A32
-		Double valueSlotA32B1T1S5  = slotA32B1T1S5.getAnchorPosX();
-		Assert.assertNotEquals((Double) 0.0, valueSlotA32B1T1S5); 
-		Double valueSlotA32B2T1S1  = slotA32B2T1S1.getAnchorPosX();
+		Double valueSlotA32B1T1S5 = slotA32B1T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA32B1T1S5);
+		Double valueSlotA32B2T1S1 = slotA32B2T1S1.getAnchorPosX();
 		Assert.assertEquals((Double) 0.0, valueSlotA32B2T1S1);
-		Double valueSlotA32B2T1S5  = slotA32B2T1S5.getAnchorPosX();
-		Assert.assertNotEquals((Double) 0.0, valueSlotA32B2T1S5); 
+		Double valueSlotA32B2T1S5 = slotA32B2T1S5.getAnchorPosX();
+		Assert.assertNotEquals((Double) 0.0, valueSlotA32B2T1S5);
 
 		// As the path goes right to left between A31 and A32,
 		// lowest values for meters along path are at A31B2T1S5 and A32B1T1S5
 		Double slotA31B2T1S5Value = slotA31B2T1S5.getPosAlongPath();
 		Double slotA31B2T1S1Value = slotA31B2T1S1.getPosAlongPath();
 		Assert.assertTrue(slotA31B2T1S1Value > slotA31B2T1S5Value); // S1 further along path than S5 in any tier. (if path runs right to left there)
-	
+
 		Double slotA31B1T1S5Value = slotA31B1T1S5.getPosAlongPath();
 		Double slotA31B1T1S1Value = slotA31B1T1S1.getPosAlongPath();
 		Assert.assertTrue(slotA31B1T1S1Value > slotA31B1T1S5Value); // S1 further in B1 also
 
 		Assert.assertTrue(slotA31B1T1S5Value > slotA31B2T1S1Value); // first bay last slot further along path than second bay first slot
-		
+
 		// lowest at A32B1T1S5
 		Double slotA32B1T1S5Value = slotA32B1T1S5.getPosAlongPath();
 		Double slotA32B1T1S1Value = slotA32B1T1S1.getPosAlongPath();
@@ -1708,7 +1708,7 @@ public class AisleImporterTest extends DomainTestABC {
 		this.getPersistenceService().endTenantTransaction();
 
 	}
-	
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void nonSlottedTest() {
@@ -1739,7 +1739,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Facility facility = organization.getFacility("F-AISLE6X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
@@ -1757,16 +1757,16 @@ public class AisleImporterTest extends DomainTestABC {
 		Double aisleCorrectedEndX = aisleAnchorX + aislePickEndX;
 		Assert.assertTrue(segmentLeftMostX < aisleAnchorX);
 		Assert.assertTrue(segmentRightMostX > aisleCorrectedEndX);
-		
+
 		String persistStr = segment0.getPersistentId().toString();
 		aisle61.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should have position now
 		// Although the old reference to aisle before path association would not.
-		
+
 		aisle61 = Aisle.DAO.findByDomainId(facility, "A61");
 		Bay bayA61B1 = Bay.DAO.findByDomainId(aisle61, "B1");
 		Bay bayA61B2 = Bay.DAO.findByDomainId(aisle61, "B2");
-		
+
 		// Check some of the functions called by computePosAlongPath
 		Point aisle61AnchorPoint = aisle61.getAbsoluteAnchorPoint();
 		Point bay1AnchorPoint = bayA61B1.getAbsoluteAnchorPoint();
@@ -1775,7 +1775,7 @@ public class AisleImporterTest extends DomainTestABC {
 		Point bay1PickFaceEndPoint = bayA61B1.getAbsolutePickFaceEndPoint();
 		Point bay2PickFaceEndPoint = bayA61B2.getAbsolutePickFaceEndPoint();
 		// Manual check here. The bay1 and bay2 points are correct.		
-		
+
 		// pickface end values are critical. This simple test should cover in a non-confusing way.
 		// Aisle anchor is 12.85,43.45
 		String aislePickEnd = aisle61.getPickFaceEndPosXui();
@@ -1790,15 +1790,14 @@ public class AisleImporterTest extends DomainTestABC {
 		String bay2PosAlongPath = bayA61B2.getPosAlongPathui();
 		Assert.assertNotEquals(bay1PosAlongPath, bay2PosAlongPath);
 		Assert.assertEquals(aislePosAlongPath, bay2PosAlongPath);
-	
-		
+
 		Tier tierA61B1T1 = Tier.DAO.findByDomainId(bayA61B1, "T1");
 		Assert.assertNotNull(tierA61B1T1);
 		Tier tierA61B2T1 = Tier.DAO.findByDomainId(bayA61B2, "T1");
 		Assert.assertNotNull(tierA61B2T1);
 		Slot slotS1 = Slot.DAO.findByDomainId(tierA61B1T1, "S1");
 		Assert.assertNull(slotS1); // no slots
-		
+
 		String tierB1Meters = tierA61B1T1.getPosAlongPathui();
 		String tierB2Meters = tierA61B2T1.getPosAlongPathui();
 		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same

@@ -9,6 +9,8 @@ import lombok.Getter;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
@@ -78,6 +80,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public abstract class DAOTestABC {
+	@Rule
+	public TestName testName = new TestName();
 	
 	static {
 		Configuration.loadConfig("test");
