@@ -514,9 +514,20 @@ public class LocationDeleteTest extends EdiTestABC {
 		// D-26 will resolve to deleted location. There will be a logged warning.
 		locD26 = facility.findSubLocationById("D-26");
 		Assert.assertNotNull(locD26);
-		// Inventory will still resolve
+		Boolean activeValuelocD26 = locD26.isActive();
+		// Assert.assertFalse(activeValue);  fails. ebean bug, hibernate fix?
+		ISubLocation<?> locD26b = facility.findSubLocationById("A1.B2.T1.S5");
+		Assert.assertNotNull(locD26b);
+		Boolean activeValuelocD26b = locD26b.isActive();
+		Assert.assertEquals(locD26, locD26b);
+		Assert.assertFalse(activeValuelocD26b);
+		
+		
+		// Inventory will still resolve. Important note: ebeans bug. Item has storedLocation field, that may well be stale
 		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
 		Assert.assertNotNull(item9923);
+		Item item9923b = facility.getStoredItemFromLocationAndMasterIdAndUom("A1.B2.T1.S5", "9923", "CS");
+		Assert.assertNotNull(item9923b);
 
 		// read inventory again. Although the D-26 inventory would not be created anew, the old inventory is left alone
 		// During the inventory read, there are business events (WARN) generated
