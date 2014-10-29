@@ -125,6 +125,7 @@ public abstract class DAOTestABC {
 	@Before
 	public final void setup() throws Exception {
 		this.persistenceService = PersistenceService.getInstance();
+		persistenceService.start();
 
 		mOrganizationDao = new OrganizationDao(persistenceService);
 		Organization.DAO = mOrganizationDao;

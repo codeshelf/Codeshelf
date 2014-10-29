@@ -55,7 +55,7 @@ public class PersistenceService extends Service {
 	Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>(); 
 	Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>(); 
 	
-	public PersistenceService() {
+	private PersistenceService() {
 		setInstance();
 		fixedTenant = new Tenant();
 		fixedTenant.setName("Tenant #1");
@@ -176,43 +176,47 @@ public class PersistenceService extends Service {
 	
 	@Override
 	public final boolean start() {
-		LOGGER.info("Starting "+PersistenceService.class.getSimpleName());
-		
-		/*
-		Properties probs = System.getProperties();
-		for (Entry<Object, Object> e : probs.entrySet()) {
-			LOGGER.debug(e.getKey()+" - "+e.getValue());
+		if(this.isInitialized()) {
+			LOGGER.error("Attempted to start persistence service twice");
+		} else {
+			LOGGER.info("Starting "+PersistenceService.class.getSimpleName());
+			
+			/*
+			Properties probs = System.getProperties();
+			for (Entry<Object, Object> e : probs.entrySet()) {
+				LOGGER.debug(e.getKey()+" - "+e.getValue());
+			}
+			*/
+			
+			// fetch database config from properties file
+			this.hostName = System.getProperty("db.address");
+			if (this.hostName==null) {
+				LOGGER.error("Database host is not defined.");
+				System.exit(-1);
+			}
+			String portStr = System.getProperty("db.portnum");
+			if (portStr==null) {
+				LOGGER.warn("Database port not defined in sytem properties file.  Using ");
+				this.port = DEFAULT_PORT;
+			}
+			else {
+				this.port = Integer.parseInt(portStr);
+			}
+			this.databaseName = System.getProperty("db.name");
+			if (this.databaseName==null) {
+				LOGGER.error("Database name not defined.");
+				System.exit(-1);
+			}
+			this.schemaName = System.getProperty("db.schemaname");
+			this.userId = System.getProperty("db.userid");
+			if (this.userId==null) {
+				LOGGER.error("Database User ID is not defined.");
+				System.exit(-1);
+			}
+			this.password = System.getProperty("db.password");
+			this.setInitialized(true);
+			LOGGER.info(PersistenceService.class.getSimpleName()+" started");
 		}
-		*/
-		
-		// fetch database config from properties file
-		this.hostName = System.getProperty("db.address");
-		if (this.hostName==null) {
-			LOGGER.error("Database host is not defined.");
-			System.exit(-1);
-		}
-		String portStr = System.getProperty("db.portnum");
-		if (portStr==null) {
-			LOGGER.warn("Database port not defined in sytem properties file.  Using ");
-			this.port = DEFAULT_PORT;
-		}
-		else {
-			this.port = Integer.parseInt(portStr);
-		}
-		this.databaseName = System.getProperty("db.name");
-		if (this.databaseName==null) {
-			LOGGER.error("Database name not defined.");
-			System.exit(-1);
-		}
-		this.schemaName = System.getProperty("db.schemaname");
-		this.userId = System.getProperty("db.userid");
-		if (this.userId==null) {
-			LOGGER.error("Database User ID is not defined.");
-			System.exit(-1);
-		}
-		this.password = System.getProperty("db.password");
-		this.setInitialized(true);
-		LOGGER.info(PersistenceService.class.getSimpleName()+" started");
 		return true;
 	}
 

@@ -1253,8 +1253,6 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertEquals(b2T1Controller, slotB2T1S1.getEffectiveLedController());
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
 
-		this.getPersistenceService().endTenantTransaction();
-
 		
 		// New from v8. Setting controller on aisle should clear the earlier tier set.
 		String cntlrId2 = "0x000066";
@@ -1274,6 +1272,8 @@ public class AisleImporterTest extends DomainTestABC {
 		Assert.assertNull(tierB1T1.getLedChannel());
 		Assert.assertEquals(ledController2, tierB1T1.getEffectiveLedController());
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
+
+		this.getPersistenceService().endTenantTransaction();
 
 	}
 

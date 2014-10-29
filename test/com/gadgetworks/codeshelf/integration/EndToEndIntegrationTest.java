@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
+import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
@@ -143,21 +144,17 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 		User scUser = network.createDefaultSiteControllerUser();
 		che1 = network.getChe(cheId1);
 		if (che1==null) {
-			che1 = new Che();
-			che1.setParent(network);
-			che1.setDomainId(cheId1);
-			che1.setDeviceGuidStr(cheGuid1.getHexStringWithPrefix());
-			mCheDao.store(che1);
+			network.createChe(cheId1, cheGuid1);
 		}
 		che2 = network.getChe(cheId2);
 		if (che2==null) {
-			che2 = new Che();
-			che2.setParent(network);
-			che2.setDomainId(cheId2);
-			che2.setDeviceGuidStr(cheGuid2.getHexStringWithPrefix());
-			mCheDao.store(che2);
+			network.createChe(cheId2, cheGuid2);
 		}
 
+		
+		this.getPersistenceService().endTenantTransaction();
+
+		
 		// start web socket server
 		webSocketServer = websocketServerInjector.getInstance(JettyWebSocketServer.class);
 		try {
@@ -170,6 +167,8 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 
 		// start site controller
 		//TODO future just use a different IGateway implementation instead of disableRadio
+		siteController = CsSiteControllerMain.createApplication(new CsSiteControllerMain.DefaultModule());
+
 		try {
 			siteController.startApplication();
 		} catch (Exception e) {
@@ -204,7 +203,11 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 				throw new RuntimeException("Failed to receive network update in allowed time");
 			}
 		}
+		
+		
 		// verify that che is in site controller's device list
+		this.getPersistenceService().beginTenantTransaction();
+
 		CheDeviceLogic cheDeviceLogic1 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
 		Assert.assertNotNull("Che-1 device logic not found",cheDeviceLogic1);
 		CheDeviceLogic cheDeviceLogic2 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid2);
@@ -212,6 +215,7 @@ public abstract class EndToEndIntegrationTest extends DomainTestABC {
 
 		LOGGER.debug("Embedded site controller and server connected");
 		LOGGER.debug("-------------- Environment created");
+
 		this.getPersistenceService().endTenantTransaction();
 	}
 

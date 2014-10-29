@@ -68,7 +68,7 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
-		WorkService workService = new WorkService(this.getPersistenceService()).start();
+		WorkService workService = new WorkService().start();
 		List<WiSetSummary> workSummaries  = workService.workSummary("testCheId", "testFacilityId");
 
 		//since each timestamp is unique they will each get summarized into their own summary object

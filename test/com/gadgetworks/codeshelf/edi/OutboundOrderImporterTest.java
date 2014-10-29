@@ -639,6 +639,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testMinMaxBoundariesCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"

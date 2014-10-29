@@ -53,9 +53,8 @@ public class WorkService {
 	@Getter
 	PersistenceService persistenceService;
 	
-	@Inject
-	public WorkService(PersistenceService persistenceService) {
-		init(persistenceService, new IEdiExportServiceProvider() {
+	public WorkService() {
+		init(new IEdiExportServiceProvider() {
 										@Override
 										public IEdiService getWorkInstructionExporter(Facility facility) {
 											return facility.getEdiExportService();
@@ -64,11 +63,11 @@ public class WorkService {
 	}
 	
 	public WorkService(PersistenceService persistenceService,IEdiExportServiceProvider exportServiceProvider) {
-		init(persistenceService,exportServiceProvider);
+		init(exportServiceProvider);
 	}
 
-	private void init(PersistenceService persistenceService,IEdiExportServiceProvider exportServiceProvider) {
-		this.persistenceService = persistenceService;
+	private void init(IEdiExportServiceProvider exportServiceProvider) {
+		this.persistenceService = PersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
 
 		this.retryDelay = DEFAULT_RETRY_DELAY;
