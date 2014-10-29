@@ -442,12 +442,14 @@ public class LocationDeleteTest extends EdiTestABC {
 
 	@Test
 	public final void locationDelete3() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
 		// This test starts with the smaller file. Do D-25/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
 		// One of the order locations is for D-25
 		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD03", SMALLER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test

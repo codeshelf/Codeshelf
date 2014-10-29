@@ -145,15 +145,15 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			}
 
 			if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
+				// create a new alias
 				result = new LocationAlias();
 				result.setDomainId(locationAliasId);
 				inFacility.addLocationAlias(result);
-			}
+			} 
 
-			// If we were able to get/create an item then update it.
 			if (result != null) {
-				result.setLocationAlias(locationAliasId);
-				result.setMappedLocation(mappedLocation);
+				// If we were able to get/create an item then update it.
+				mappedLocation.addAlias(result);
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
 				mLocationAliasDao.store(result);
