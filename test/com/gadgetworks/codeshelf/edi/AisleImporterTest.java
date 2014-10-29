@@ -1250,11 +1250,11 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(b2T1Controller, slotB2T1S1.getEffectiveLedController());
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
 
-		
 		// New from v8. Setting controller on aisle should clear the earlier tier set.
 		String cntlrId2 = "000066";
 		String guidId2 = "0x000066";
 		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(guidId2));
+
 		Assert.assertNotNull(ledController2);
 		LedController aController2 = network.getLedController(cntlrId2); // make sure we can get it as we might
 		Assert.assertNotNull(aController2);
@@ -1280,6 +1280,8 @@ public class AisleImporterTest extends EdiTestABC {
 		String tierChannelUiField = tierB1T1.getLedChannelUi();
 		Assert.assertEquals("(000066)", tierCntrlUiField);
 		Assert.assertEquals("(2)", tierChannelUiField);
+
+		this.getPersistenceService().endTenantTransaction();
 
 		this.getPersistenceService().endTenantTransaction();
 
