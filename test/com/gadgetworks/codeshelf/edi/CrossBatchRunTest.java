@@ -329,10 +329,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 7, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
+
+		Integer wiCount = aList.size();
+		Assert.assertEquals((Integer) 6, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 
 		WorkInstruction wi1 = aList.get(0);
 		WorkInstruction wi2 = aList.get(1);
@@ -340,15 +341,13 @@ public class CrossBatchRunTest extends EdiTestABC {
 		WorkInstruction wi4 = aList.get(3);
 		WorkInstruction wi5 = aList.get(4);
 		WorkInstruction wi6 = aList.get(5);
-		WorkInstruction wi7 = aList.get(6);
 
 		String wi2Desc = wi2.getDescription();
 		String wi5Desc = wi5.getDescription();
-		String wi6Desc = wi6.getDescription();
 
 		Assert.assertEquals("Bay Change", wi2Desc);
-		Assert.assertEquals("Repeat Container", wi5Desc);
-		Assert.assertEquals("Bay Change", wi6Desc);
+		// We qualify for both bayChange and repeat container before wi6. But only get a baychange from version v8 and DEV-478
+		Assert.assertEquals("Bay Change", wi5Desc);
 
 	}
 
