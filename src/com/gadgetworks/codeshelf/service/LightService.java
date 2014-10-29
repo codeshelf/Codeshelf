@@ -1,11 +1,20 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -30,24 +39,29 @@ import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ForwardingFuture;
 
-public class LightService {
+public class LightService implements IApiService {
 	
 	private static final int	LIGHT_LOCATION_DURATION_SECS = 20;
 	private static final Logger	LOGGER				    	 = LoggerFactory.getLogger(LightService.class);
 	
 	private final SessionManager sessionManager;
+	private final ScheduledExecutorService mExecutorService;
+	private Future<?>	mLastChaserFuture;
 	
 	public LightService() {
-		this(SessionManager.getInstance());
+		this(SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
+	
 	}
 
-	public LightService(SessionManager sessionManager) {
+	public LightService(SessionManager sessionManager, ScheduledExecutorService executorService) {
 		this.sessionManager = sessionManager;
+		this.mExecutorService = executorService;
 	}
 
 	public void lightAllControllers(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
@@ -77,6 +91,8 @@ public class LightService {
 			LOGGER.error("lightAllControllers called with location with no tiers");
 			return;
 		}
+		
+		//Last tier within bay per controller
 		for (Tier tier : tiers) {
 			ControllerChannelBayKey key = new ControllerChannelBayKey(tier.getEffectiveLedController(), tier.getEffectiveLedChannel(), (Bay) tier.getParent());
 			ISubLocation<?> lastLocation = lastLocationWithinBay.get(key);
@@ -86,18 +102,9 @@ public class LightService {
 			}
 		}
 		
-		ArrayList<LedCmdGroup> ledCmdGroups = new ArrayList<LedCmdGroup>();
-		for (Entry<ControllerChannelBayKey, Tier> keyedTier : lastLocationWithinBay.entrySet()) {
-			Tier lastTierInBayForControllerChannel = keyedTier.getValue();
-			List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocation(2, theColor, lastTierInBayForControllerChannel);
-			ledCmdGroups.addAll(ledCmdGroupList);
-		} 
-		
-		if (ledCmdGroups.size() == 0) {
-			LOGGER.info("light a location for each controller channel called with incomplete LED configuration");
-			return;
-		}
-		sendToAllSiteControllers(facility, ledCmdGroups);
+		List<Tier> sortedTiers = Lists.newArrayList(lastLocationWithinBay.values());
+		Collections.sort(sortedTiers, new LocationABC.LocationWorkingOrderComparator());
+		lightLocations(theColor, facility.getPersistentId(), sortedTiers);
 	}
 	
 	// --------------------------------------------------------------------------
@@ -137,6 +144,36 @@ public class LightService {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent. 
+	 */
+	public void lightChildLocations(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
+				
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			LOGGER.error("lightOneLocation called with unknown color: " + theColor);
+			return;
+		}
+
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		if (facility == null) {
+			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
+			return;
+		}
+
+		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
+			return;
+		}
+
+		List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
+		lightLocations(theColor, facility.getPersistentId(), children);
+	}
+
+	
+	// --------------------------------------------------------------------------
+	/**
 	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent.
 	 */
@@ -172,6 +209,39 @@ public class LightService {
 
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes"})
+	public Future<?> lightLocations(final ColorEnum inColorStr, final UUID facilityPersistentId, final Collection<? extends ISubLocation> inLocations) {
+		if (mLastChaserFuture != null) {
+			mLastChaserFuture.cancel(true);
+		}
+		
+		long millisToSleep = 2250;
+		final LinkedList<ISubLocation> chaseListToFire = Lists.newLinkedList(inLocations);
+		
+		//Future that ends on exception when pop returns nothing
+		Future<?> scheduledFuture = mExecutorService.scheduleWithFixedDelay(new Runnable() {
+			public void run() {
+				ILocation<?> ledChase = chaseListToFire.pop();
+				lightOneLocation(inColorStr.toString(), facilityPersistentId.toString(), ledChase.getNominalLocationId());			}
+		}, 0, millisToSleep, TimeUnit.MILLISECONDS);
+		
+		//Wrap in a future that hides the NoSuchElementException semantics
+		mLastChaserFuture = new ForwardingFuture.SimpleForwardingFuture(scheduledFuture) {
+			
+			public Object get() throws ExecutionException, InterruptedException {
+				try {
+					return delegate().get();
+				} catch (ExecutionException e) {
+					if (!(e.getCause() instanceof NoSuchElementException)) {
+						throw e;
+					}
+				}
+				return null;
+			}
+		};
+		return mLastChaserFuture;
+	}
+
 	private final void sendToAllSiteControllers(Facility facility, List<LedCmdGroup> ledCmdGroupList) {
 		ArrayListMultimap<String, LedCmdGroup> byController = ArrayListMultimap.<String, LedCmdGroup>create();
 		for (LedCmdGroup ledCmdGroup : ledCmdGroupList) {
@@ -189,13 +259,9 @@ public class LightService {
 
 	}
 	
-	private final int sendToAllSiteControllers(Facility facility, MessageABC message) {
+	final int sendToAllSiteControllers(Facility facility, MessageABC message) {
 		Set<User> users = this.getSiteControllerUsers(facility);
-		Set<CsSession> sessions = this.sessionManager.getSessions(users);
-		for (CsSession session : sessions) {
-			session.sendMessage(message);
-		}
-		return sessions.size();
+		return this.sessionManager.sendMessage(users, message);
 	}
 	
 	private final Set<SiteController> getSiteControllers(Facility facility) {

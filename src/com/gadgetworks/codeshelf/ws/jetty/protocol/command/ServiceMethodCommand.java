@@ -7,6 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.service.IApiService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -63,7 +64,8 @@ public class ServiceMethodCommand extends CommandABC {
 		try {
 			Method method = null;
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(className);
+			@SuppressWarnings("unchecked")
+			Class<IApiService> classObject = (Class<IApiService>) Class.forName(className).asSubclass(IApiService.class);
 			for (Method classMethod : classObject.getMethods()) {
 				if (classMethod.getName().equals(methodName)) {
 					if (methodArgs.size() == classMethod.getParameterTypes().length) {
