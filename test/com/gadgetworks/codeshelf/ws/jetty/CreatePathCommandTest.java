@@ -2,7 +2,6 @@ package com.gadgetworks.codeshelf.ws.jetty;
 
 import static com.natpryce.makeiteasy.MakeItEasy.a;
 import static com.natpryce.makeiteasy.MakeItEasy.make;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -31,7 +30,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
-import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -47,6 +46,9 @@ public class CreatePathCommandTest extends DAOTestABC {
 
 	@Mock
 	private IDaoProvider mockDaoProvider;
+	
+	@Mock
+	private ServiceFactory mockServiceFactory;
 
 	@Test
 	public void testPojo() throws JsonGenerationException, JsonMappingException, IOException {
@@ -93,7 +95,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		CsSession session = Mockito.mock(CsSession.class);
 		session.setSessionId("test-session");
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider, mockServiceFactory);
 		ResponseABC response = processor.handleRequest(session, request);
 
 		Assert.assertTrue(response instanceof CreatePathResponse);
@@ -134,7 +136,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		session.setSessionId("test-session");
 
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider, mockServiceFactory);
 
 		ResponseABC response = processor.handleRequest(session, request);
 

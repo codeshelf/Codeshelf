@@ -12,7 +12,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -56,7 +56,7 @@ public class LoginTest {
 		request.setUserId(user.getDomainId());
 		request.setPassword(password);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
@@ -93,7 +93,7 @@ public class LoginTest {
 		request.setUserId("user@invalid.com");
 		request.setPassword(password);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
@@ -129,7 +129,7 @@ public class LoginTest {
 		request.setUserId(user.getDomainId());
 		request.setPassword("invalid");
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(CsSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);

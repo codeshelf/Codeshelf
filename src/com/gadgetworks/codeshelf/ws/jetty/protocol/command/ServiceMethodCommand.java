@@ -7,6 +7,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -23,10 +24,13 @@ public class ServiceMethodCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServiceMethodCommand.class);
 
 	private ServiceMethodRequest	request;
+
+	private ServiceFactory	serviceFactory;
 	
-	public ServiceMethodCommand(CsSession session, ServiceMethodRequest request) {
+	public ServiceMethodCommand(CsSession session, ServiceMethodRequest request, ServiceFactory serviceFactory) {
 		super(session);
 		this.request = request;
+		this.serviceFactory = serviceFactory;
 	}
 	
 	@Override
@@ -70,7 +74,7 @@ public class ServiceMethodCommand extends CommandABC {
 			};	
 			if (method != null) {
 				try {
-					Object serviceObject = getServiceInstance(session, classObject);
+					Object serviceObject = serviceFactory.getServiceInstance(classObject);
 					Object methodResult = method.invoke(serviceObject, methodArgs.toArray());
 					response.setResults(methodResult);
 					response.setStatus(ResponseStatus.Success);
@@ -114,9 +118,4 @@ public class ServiceMethodCommand extends CommandABC {
 		}
 		return response;
 	}
-
-	private Object getServiceInstance(CsSession session, Class <?> classObject) throws InstantiationException, IllegalAccessException {
-		return classObject.newInstance();
-	}
-	
 }
