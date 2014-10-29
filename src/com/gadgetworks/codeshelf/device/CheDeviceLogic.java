@@ -254,7 +254,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			descriptionLine[2] = "DECREMENT POSITION";
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
-		sendDisplayCommand(inPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
+		// GoodEggs many locations orders hitting too long case
+		String cleanedPickInstructions = inPickInstructions;
+		if (cleanedPickInstructions.length() > 19)
+			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
+		sendDisplayCommand(cleanedPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
 	}
 
 	// --------------------------------------------------------------------------
@@ -624,8 +628,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				/* New attempts, but left as the default.  Test cases
 				 * Short a housekeeping work instruction. (All E's is bad.)
 				 * Yes or No on a normal pick
-				 */				
-				
+				 */
+
 				// positionControllerToSendTo =  just the one, if we can figure it out. Or
 				// sendPositionControllerInstructions = false;
 				break;
