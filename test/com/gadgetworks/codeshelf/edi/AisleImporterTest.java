@@ -1283,8 +1283,6 @@ public class AisleImporterTest extends EdiTestABC {
 
 		this.getPersistenceService().endTenantTransaction();
 
-		this.getPersistenceService().endTenantTransaction();
-
 	}
 
 	@Test
