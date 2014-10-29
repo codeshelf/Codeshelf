@@ -255,6 +255,14 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get all of the children (one level down) of this location, in working order.
+	 * Working order is top-to-bottom and then down-path.
+	 * @return
+	 */
+	List<ISubLocation> getChildrenInWorkingOrder();
+	
+	// --------------------------------------------------------------------------
+	/**
 	 * Recompute the path distance of this location (and recursively for all of its child locations).
 	 */
 	void computePosAlongPath(PathSegment inPathSegment);

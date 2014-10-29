@@ -47,6 +47,7 @@ import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -814,7 +815,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 *
 	 */
 	@SuppressWarnings("rawtypes")
-	private class LocationWorkingOrderComparator implements Comparator<ILocation> {
+	public static class LocationWorkingOrderComparator implements Comparator<ILocation> {
 
 		public int compare(ILocation inLoc1, ILocation inLoc2) {
 			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
@@ -842,6 +843,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			result.addAll(childLocation.getSubLocationsInWorkingOrder());
 		}
 		return result;
+	}
+	
+	@Override
+	public List<ISubLocation> getChildrenInWorkingOrder() {
+		@SuppressWarnings("rawtypes")
+		List<ISubLocation> childLocations = getActiveChildren();
+		Collections.sort(childLocations, new LocationWorkingOrderComparator());
+		return childLocations;
 	}
 
 	private class VertexOrderComparator implements Comparator<Vertex> {

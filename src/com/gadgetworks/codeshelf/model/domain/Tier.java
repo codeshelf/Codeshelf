@@ -24,10 +24,11 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.gadgetworks.codeshelf.model.LedChaser;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.service.LedChaser;
+import com.gadgetworks.codeshelf.service.LightService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -250,22 +251,4 @@ public class Tier extends SubLocationABC<Bay> {
 			}
 		}
 	}
-	
-	//--------------------------------------------------------------------------
-	/**
-	* This will light each inventory item in turn
-	*/
-	public void chaseInventoryLeds(){
-		List<Item> aList = getInventorySortedByPosAlongPath();
-		if (aList.size() == 0)
-			return;
-		Facility facility = this.getParentAtLevel(Facility.class);
-		LedChaser aChaser = new LedChaser(facility, ColorEnum.RED);
-		for (Item item : aList) {
-			aChaser.addChaseForItem(item);
-		}
-		LOGGER.info("Firing LedChaser for tier " + this.getNominalLocationId());
-		aChaser.fireTheChaser(false); // false = not log only
-	}
-
 }
