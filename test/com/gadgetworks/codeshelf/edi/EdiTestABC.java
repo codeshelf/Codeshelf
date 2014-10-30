@@ -5,13 +5,21 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
+import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public abstract class EdiTestABC extends DomainTestABC {
-	
-	private EventProducer mEventProducer = new EventProducer();
-	
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
+
+	private EventProducer		mEventProducer	= new EventProducer();
+
 	protected AislesFileCsvImporter createAisleFileImporter() {
 		return new AislesFileCsvImporter(mEventProducer, mAisleDao, mBayDao, mTierDao, mSlotDao);
 	}
@@ -52,4 +60,18 @@ public abstract class EdiTestABC extends DomainTestABC {
 	protected ICsvInventoryImporter createInventoryImporter() {
 		return new InventoryCsvImporter(mEventProducer, mItemMasterDao, mItemDao, mUomMasterDao);
 	}
+
+	public void logWiList(List<WorkInstruction> inList) {
+		for (WorkInstruction wi : inList)
+			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
+					+ wi.getPickInstruction() + " count: " + wi.getPlanQuantity() + " order: " + wi.getOrderId() + " desc.: "
+					+ wi.getDescription());
+	}
+
+	public void logItemList(List<Item> inList) {
+		for (Item item : inList)
+			LOGGER.debug("SKU: " + item.getItemMasterId() + " cm: " + item.getCmFromLeft() + " posAlongPath: "
+					+ item.getPosAlongPathui() + " desc.: " + item.getItemDescription());
+	}
+
 }

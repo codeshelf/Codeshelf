@@ -46,6 +46,7 @@ import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -967,24 +968,22 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	private class InventoryPositionComparator implements Comparator<Item> {
+		// We want this to sort from low to high
 
 		public int compare(Item item1, Item item2) {
+			int value = CompareNullChecker.compareNulls(item1, item2);
+			if (value != 0)
+				return value;
+
 			Double item1Pos = item1.getPosAlongPath();
 			Double item2Pos = item2.getPosAlongPath();
+			value = CompareNullChecker.compareNulls(item1Pos, item2Pos);
+			if (value != 0)
+				return value;
 
-			if (item1Pos == null && item2Pos == null)
-				return 0;
-			else if (item1Pos == null)
-				return 1;
-			else if (item2Pos == null)
-				return -1;
-
-			if (item1Pos > item2Pos)
-				return -1;
-			else if (item1Pos < item2Pos)
-				return 1;
-			return 0;
+			return item1Pos.compareTo(item2Pos);
 		}
+		
 	}
 
 	// --------------------------------------------------------------------------
