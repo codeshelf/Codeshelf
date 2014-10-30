@@ -293,9 +293,9 @@ public class CrossBatchRunTest extends EdiTestABC {
 		facility.setUpCheContainerFromString(theChe, "11");
 		HousekeepingInjector.restoreHKDefaults();
 
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 		// Just some quick log output to see it
