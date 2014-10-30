@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -15,49 +17,143 @@ import java.util.concurrent.Future;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import com.gadgetworks.codeshelf.device.LedCmdGroup;
+import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
+import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
+import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
+import com.gadgetworks.codeshelf.edi.InventoryGenerator;
+import com.gadgetworks.codeshelf.edi.VirtualSlottedFacilityGenerator;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 
 public class LightServiceTest extends EdiTestABC {
+	
+	@Test
+	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException {
+
+		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
+			createLocationAliasImporter(),
+			createOrderImporter());
+		Facility facility = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		Aisle aisle = (Aisle) facility.getChildren().get(0);
+		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
+		int itemsPerTier = 5;
+
+		
+		InventoryGenerator inventoryGenerator = new InventoryGenerator((InventoryCsvImporter) createInventoryImporter());
+		inventoryGenerator.setupVirtuallySlottedInventory(aisle, itemsPerTier);
+
+		aisle = aisle.getDao().findByPersistentId(aisle.getPersistentId());
+
+		List<Item> items = aisle.getInventoryInWorkingOrder();
+		Assert.assertNotEquals(0,  items.size());
+		
+		SessionManager sessionManager = mock(SessionManager.class);
+		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
+		Future<?> complete = lightService.lightInventory(ColorEnum.RED, facility.getPersistentId(), aisle);
+		complete.get();
+		
+		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
+		verify(sessionManager, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
+		
+		List<MessageABC> messages = messagesCaptor.getAllValues();
+		Iterator<Item> itemIterator = items.iterator();
+		for (MessageABC messageABC : messages) {
+			LightLedsMessage message = (LightLedsMessage) messageABC;
+			assertWillLightItem(itemIterator.next(), message);
+		}
+	}
+
 
 	@Test
-	public final void checkLedChaserTiming() throws IOException, InterruptedException, ExecutionException {
+	public final void checkLedChaserLocationSequence() throws IOException, InterruptedException, ExecutionException {
 		Facility facility = setUpSimpleSlottedFacility("XB06");
 		ISubLocation<?> locationS1 = facility.findSubLocationById("A1.B1.T2.S1");
 		ISubLocation<?> locationS2 = facility.findSubLocationById("A1.B1.T2.S2");
 		ISubLocation<?> locationS3 = facility.findSubLocationById("A1.B1.T2.S3");
 		ISubLocation<?> locationS4 = facility.findSubLocationById("A1.B1.T2.S4");
 		ISubLocation<?> locationS5 = facility.findSubLocationById("A1.B1.T2.S5");
-
+		List<ISubLocation<?>> sublocations = ImmutableList.<ISubLocation<?>>of(
+			locationS1,
+			locationS2,
+			locationS3,
+			locationS4,
+			locationS5);
 		SessionManager sessionManager = mock(SessionManager.class);
 		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
-		Future<?> complete = lightService.lightLocations(ColorEnum.RED, facility.getPersistentId(), ImmutableList.<ISubLocation<?>>of(
-				locationS1,
-				locationS2,
-				locationS3,
-				locationS4,
-				locationS5));
+		Future<?> complete = lightService.lightLocations(ColorEnum.RED, facility.getPersistentId(), sublocations);
 		complete.get();
-		verify(sessionManager, times(5)).sendMessage(any(Set.class), any(MessageABC.class));
+		
+		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
+		verify(sessionManager, times(5)).sendMessage(any(Set.class), messagesCaptor.capture());
+		
+		List<MessageABC> messages = messagesCaptor.getAllValues();
+		Iterator<ISubLocation<?>> locations = sublocations.iterator();
+		for (MessageABC messageABC : messages) {
+			LightLedsMessage message = (LightLedsMessage) messageABC;
+			assertWillLightsLocation(locations.next(), message);
+		}
+	}
+	
+
+	private void assertWillLightsLocation(ISubLocation<?> location, LightLedsMessage ledMessage) {
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
+		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
+			for(LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+				short pos = ledSample.getPosition();
+				short first = location.getFirstLedNumAlongPath();
+				short last = location.getLastLedNumAlongPath();
+				String message = Objects.toStringHelper("Failed")
+					.add("first", first)
+					.add("pos", pos)
+					.add("last", last)
+					.add("location", location).toString();
+
+				Assert.assertTrue(message ,  first <= pos && pos <= last);
+			}
+		}
+		
 	}
 
+	
+
+	private void assertWillLightItem(Item item, LightLedsMessage ledMessage) {
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
+		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
+			Assert.assertEquals(item.getStoredLocation().getEffectiveLedController().getDeviceGuidStr(),
+								ledCmdGroup.getControllerId());
+
+			Assert.assertEquals(item.getStoredLocation().getEffectiveLedChannel(),
+								ledCmdGroup.getChannelNum());
+
+			for(LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+				item.getFirstLastLedsForItem().isWithin(ledSample.getPosition());
+			}			
+		}	
+	}
+	
 	// Important: BayChangeExceptSamePathDistance is not tested here. Need positive and negative tests
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {

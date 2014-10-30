@@ -171,6 +171,27 @@ public class LightService implements IApiService {
 		lightLocations(theColor, facility.getPersistentId(), children);
 	}
 
+	public void lightInventory(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			LOGGER.error("lightOneLocation called with unknown color: " + theColor);
+			return;
+		}
+
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		if (facility == null) {
+			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
+			return;
+		}
+
+		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
+			return;
+		}
+		lightInventory(theColor, facility.getPersistentId(), theLocation);
+
+	}
 	
 	// --------------------------------------------------------------------------
 	/**
@@ -207,6 +228,38 @@ public class LightService implements IApiService {
 			sendToAllSiteControllers(facility, ledCmdGroupList);
 		}
 
+	}
+	
+	Future<?> lightInventory(final ColorEnum inColorStr, final UUID facilityPersistentId, final ILocation<?> inLocation) {
+		if (mLastChaserFuture != null) {
+			mLastChaserFuture.cancel(true);
+		}
+		
+		long millisToSleep = 2250;
+		final LinkedList<Item> chaseListToFire = Lists.newLinkedList(inLocation.getInventoryInWorkingOrder());
+		
+		//Future that ends on exception when pop returns nothing
+		Future<?> scheduledFuture = mExecutorService.scheduleWithFixedDelay(new Runnable() {
+			public void run() {
+				Item item = chaseListToFire.pop();
+				lightOneItem(inColorStr.toString(), facilityPersistentId.toString(), item.getPersistentId().toString());			}
+		}, 0, millisToSleep, TimeUnit.MILLISECONDS);
+		
+		//Wrap in a future that hides the NoSuchElementException semantics
+		mLastChaserFuture = new ForwardingFuture.SimpleForwardingFuture(scheduledFuture) {
+			
+			public Object get() throws ExecutionException, InterruptedException {
+				try {
+					return delegate().get();
+				} catch (ExecutionException e) {
+					if (!(e.getCause() instanceof NoSuchElementException)) {
+						throw e;
+					}
+				}
+				return null;
+			}
+		};
+		return mLastChaserFuture;
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes"})
@@ -273,7 +326,7 @@ public class LightService implements IApiService {
 		return siteControllers;
 	}
 
-	public final Set<User> getSiteControllerUsers(Facility facility) {
+	private final Set<User> getSiteControllerUsers(Facility facility) {
 		Set<User> users = new HashSet<User>();
 
 		for (SiteController sitecon : this.getSiteControllers(facility)) {

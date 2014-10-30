@@ -49,6 +49,8 @@ import com.google.inject.Singleton;
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
 
+	private static final long	serialVersionUID	= 1L;
+
 	@Inject
 	public static ITypedDao<Item>	DAO;
 
@@ -301,23 +303,26 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		else {
 			Double value = 0.0;
 			ILocation<?> theLocation = this.getStoredLocation();
-			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
-			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
-			if (theLocation.isLeftSideTowardsAnchor()) {
-				value = inCmFromLeft / 100.0;
+			if (theLocation instanceof SubLocationABC) {
+				SubLocationABC<?> asSubLocation = (SubLocationABC<?>) theLocation;
+				Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
+				if (asSubLocation.isLeftSideTowardsAnchor()) {
+					value = inCmFromLeft / 100.0;
+				} else {
+					value = pickEndWidthMeters - (inCmFromLeft / 100.0);
+				}
+				if (value > pickEndWidthMeters) {
+					LOGGER.error("setPositionFromLeft value out of range");
+					value = pickEndWidthMeters;
+				}
+				if (value < 0.0) {
+					LOGGER.error("ssetPositionFromLeft value out of range");
+					value = 0.0;
+				}
+				setMetersFromAnchor(value);
 			} else {
-				value = pickEnd - (inCmFromLeft / 100.0);
+				LOGGER.error("unexpected setPositionFromLeft on location that isn't a sublocation");
 			}
-			if (value > pickEnd) {
-				LOGGER.error("setPositionFromLeft value out of range");
-				value = pickEnd;
-			}
-			if (value < 0.0) {
-				LOGGER.error("ssetPositionFromLeft value out of range");
-				value = 0.0;
-			}
-			setMetersFromAnchor(value);
 		}
 	}
 
@@ -328,28 +333,25 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		} else if (inCmFromLeft != null && inCmFromLeft < 0) {
 			// if the cm value is wider than that bay/tier, or negative
 			result = "Negative cm value not allowed";
-		} else {
-			Double pickEnd = ((SubLocationABC<?>) inLocation).getPickFaceEndPosX();
-			if (pickEnd != null) {
-				if (pickEnd == 0.0)
-					pickEnd = ((SubLocationABC<?>) inLocation).getPickFaceEndPosY();
-				if (pickEnd != null) {
-					if (inCmFromLeft != null) {
-						if (pickEnd < inCmFromLeft / 100.0) {
-							result = "Cm value too large. Location is not that wide.";
-						}
-					} else {
-						LOGGER.error("inCmFromLeft was null");
-						result = "invalid null value (inCmFromLeft)";
+		} else if (inLocation instanceof SubLocationABC) {
+			SubLocationABC<?> asSubLocation = (SubLocationABC<?>) inLocation;
+			Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
+			if (pickEndWidthMeters != null) {
+				if (inCmFromLeft != null) {
+					if (pickEndWidthMeters < inCmFromLeft / 100.0) {
+						result = "Cm value too large. Location is not that wide.";
 					}
 				} else {
-					LOGGER.error("getPickFaceEndPosY returned null");
-					result = "invalid null value (getPickFaceEndPosY)";
+					LOGGER.error("inCmFromLeft was null");
+					result = "invalid null value (inCmFromLeft)";
 				}
 			} else {
-				LOGGER.error("getPickFaceEndPosX returned null");
-				result = "invalid null value (getPickFaceEndPosX)";
+				LOGGER.error("getPickFaceEndPosY returned null");
+				result = "invalid null value (getPickFaceEndPosY)";
 			}
+		} else {
+			LOGGER.error("location not a sublocation");
+			result = "location not a sublocation";
 		}
 		return result;
 
@@ -366,14 +368,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (theLocation.isLeftSideTowardsAnchor()) {
 			value = (int) Math.round(meters * 100.0);
 		} else { // cm back from the pickface end
-			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
-			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
-			if (pickEnd < meters) {
+			Double pickEndWidthMeters = ((SubLocationABC<?>)theLocation).getLocationWidthMeters();
+			if (pickEndWidthMeters < meters) {
 				LOGGER.error("Bug found: getCmFromLeft in non-slotted inventory model");
-				value = (int) Math.round(pickEnd * 100.0);
+				value = (int) Math.round(pickEndWidthMeters * 100.0);
 			} else {
-				value = (int) Math.round((pickEnd - meters) * 100.0);
+				value = (int) Math.round((pickEndWidthMeters - meters) * 100.0);
 			}
 		}
 
@@ -406,14 +406,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			returnValue += meters;
 		else {
 			// if path opposing the anchor, then the pickface end corresponds to the location value. We have to convert before adding.
-			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
-			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
-			if (pickEnd < meters) {
+			Double pickEndWidthMeters = ((SubLocationABC<?>)theLocation).getLocationWidthMeters();
+			if (pickEndWidthMeters < meters) {
 				LOGGER.error("Bug found: Item.getPosAlongPath in non-slotted inventory model");
 				// let it return the location's posAlongPath
 			} else {
-				Double correctedMeters = pickEnd - meters;
+				Double correctedMeters = pickEndWidthMeters - meters;
 				returnValue += correctedMeters;
 			}
 		}

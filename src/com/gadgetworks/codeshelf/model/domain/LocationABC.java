@@ -983,23 +983,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Gets inventory in its, and its direct children only. Most useful tier and/or slot
+	 * Gets inventory for this instance and all of its descendents then sorts along path. 
 	 * Public mainly for testability
 	 * 
 	 */
-	public List<Item> getInventorySortedByPosAlongPath() {
-		ArrayList<Item> aList = new ArrayList<Item>();
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<Item> getInventoryInWorkingOrder() {
+		ArrayList<Item> aList = Lists.newArrayList();
 		// Add my inventory
-		for (Item item : getStoredItems().values()) {
-			aList.add(item);
-		}
+		aList.addAll(getStoredItems().values());
 		// Add my children's inventory
 		for (SubLocationABC location : locations.values()) {
-			LocationABC childLocation = (LocationABC) location;
-			for (Object anObject : childLocation.getStoredItems().values()) {
-				Item theItem = (Item) anObject;
-				aList.add(theItem);
-			}
+			aList.addAll(location.getInventoryInWorkingOrder());
 		}
 		// Sort as we want it
 		Collections.sort(aList, new InventoryPositionComparator());
