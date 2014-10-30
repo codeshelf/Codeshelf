@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
+import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.LedChaser;
@@ -64,16 +65,20 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,120,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,120,,\r\n" //
 				+ "Aisle,A2,,,,,tierB1S1Side,12.85,55.45,X,120\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,120,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
-				+ "Tier,T2,,0,80,120,,\r\n"; //
+				+ "Tier,T2,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,120,,\r\n"; //
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -115,7 +120,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "A2.B1.T2, D-30\r\n" //
 				+ "A2.B1.T1, D-31\r\n" //
 				+ "A2.B2.T2, D-32\r\n" //
-				+ "A2.B2.T1, D-33\r\n"; //
+				+ "A2.B2.T1, D-33\r\n" //
+				+ "A1.B1.T3, D-71\r\n" //
+				+ "A1.B2.T3, D-72\r\n" //
+				+ "A2.B1.T3, D-73\r\n" //
+				+ "A2.B2.T3, D-74\r\n"; //
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -146,7 +155,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Tier tierA2B1T2 = (Tier) facility.findSubLocationById("D-30");
 		Tier tierA2B1T1 = (Tier) facility.findSubLocationById("D-31");
 		String channel1Str = "1";
-		
+
 		tierA1B1T2.setControllerChannel(controller1.getPersistentId().toString(), channel1Str, "aisle");// ALL_TIERS_IN_AISLE is private to tier
 		tierA1B1T1.setControllerChannel(controller2.getPersistentId().toString(), channel1Str, "aisle");
 		tierA2B1T2.setControllerChannel(controller3.getPersistentId().toString(), channel1Str, "aisle");
@@ -155,14 +164,16 @@ public class InventoryPickRunTest extends EdiTestABC {
 		return facility;
 
 	}
-	
-	private void readOrderForA1(Facility inFacility) throws IOException {
+
+	private void readOrdersForA1(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// SKU 1123 needed for 12000
 		// SKU 1123 needed for 12010
 		// Each product needed for 12345
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each"
+				+ "\r\n,USF314,TARGET,12000,12000,1830,Shorts-large,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each"
@@ -181,13 +192,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
-	
+
 	private void readInventoryForA1(Facility inFacility) throws IOException {
 		// A1.B1.T2 is D-26.  A1.B2.T2 is D-28
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
 		// In D-28, left to right are SKUs 1522,1525,1523,1524
-		// A1.B1.T1 is D-27.  Left to right are SKUs  1830, 1831
-		
+		// A1.B1.T1 is D-27.  Left to right are SKUs  1831, 1830
+
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
 				+ "1124,D-26,12 oz Bowl Lids,0,ea,6/25/14 12:00,8\r\n" //
@@ -197,8 +208,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "1523,D-28,Tshirt-med,,ea,,190\r\n" //
 				+ "1524,D-28,Tshirt-large,0,ea,6/25/14 12:00,214\r\n" //
 				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
-				+ "1830,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
-				+ "1831,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
+				+ "1831,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1830,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -214,8 +225,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 	@Test
 	public final void testSequenceAlongTier() throws IOException {
 		Assert.assertTrue(true);
-		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");		
-		
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
 		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27"); // just using alias a little.
 		Assert.assertNotNull(tierA1B1T1.getLedController());
@@ -224,8 +235,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// Check the path direction	
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
-		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());	
-		
+		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
+
+		// Inventory
 		readInventoryForA1(facility);
 		List<Item> aList = tierA1B1T2.getInventorySortedByPosAlongPath();
 		Assert.assertTrue(aList.size() == 4);
@@ -233,11 +245,49 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Item firstOnPath = aList.get(0);
 		String firstSku = firstOnPath.getItemMasterId();
 		Assert.assertEquals("1124", firstSku);
-		
 
-		
-		
+		// Orders
+		readOrdersForA1(facility);
+
+		// Now ready to run the cart
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		HousekeepingInjector.turnOffHK();
+		facility.setUpCheContainerFromString(theChe, "12000");
+
+		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		logWiList(wiList);
+		Integer theSize = wiList.size();
+		Assert.assertEquals((Integer) 10, theSize);
+		WorkInstruction wi1 = wiList.get(0);
+		WorkInstruction wi5 = wiList.get(4);
+		WorkInstruction wi10 = wiList.get(9);
+		Assert.assertEquals("1124", wi1.getItemMasterId());
+		Assert.assertEquals("1831", wi5.getItemMasterId());
+		Assert.assertEquals("1524", wi10.getItemMasterId());
+
+		// Check again with the Accu sequencer
+		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
+		Che theChe2 = theNetwork.getChe("CHE2");
+
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
+		facility.setUpCheContainerFromString(theChe2, "12000");
+		List<WorkInstruction> wiList2 = facility.getWorkInstructions(theChe2, ""); // This returns them in working order.
+		logWiList(wiList2);
+		wi1 = wiList2.get(0);
+		wi5 = wiList2.get(4);
+		wi10 = wiList2.get(9);
+		// All wrong!
+		// Assert.assertEquals("1124", wi1.getItemMasterId());
+		// Assert.assertEquals("1831", wi5.getItemMasterId());
+		// Assert.assertEquals("1524", wi10.getItemMasterId());
+
+		HousekeepingInjector.restoreHKDefaults();
+
+		// Need more cases for BayDistanceTopLast.
+
 	}
-
 
 }

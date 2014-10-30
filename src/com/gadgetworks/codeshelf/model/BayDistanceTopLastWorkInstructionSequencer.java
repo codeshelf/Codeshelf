@@ -63,7 +63,7 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 					while (wiIterator.hasNext()) {
 						WorkInstruction wi = wiIterator.next();
 						if (wi.getLocation().equals(workLocation)) {
-							LOGGER.debug("Adding WI "+wi+" at "+workLocation);
+							// LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 							wiResultList.add(wi);
 							// WorkInstructionSequencerABC sets the sort code and persists
 							wiIterator.remove();

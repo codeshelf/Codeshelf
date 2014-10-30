@@ -8,6 +8,8 @@ public class WorkInstructionSequencerFactory {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkInstructionSequencerFactory.class);
 
 	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
+		LOGGER.info("Using " + type.toString() + " sequencer");
+
 		if (type==WorkInstructionSequencerType.BayDistance) {
 			return new BayDistanceWorkInstructionSequencer();
 		}

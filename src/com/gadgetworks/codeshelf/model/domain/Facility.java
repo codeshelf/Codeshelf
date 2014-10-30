@@ -803,7 +803,7 @@ public class Facility extends SubLocationABC<Facility> {
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
-		return WorkInstructionSequencerFactory.createSequencer(Facility.sequencerType);
+		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
