@@ -245,18 +245,6 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			@Override
-			public Object getFieldValueByName(String inFieldName) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setFieldValueByName(String inFieldName, Object inFieldValue) {
-				// TODO Auto-generated method stub
-				
-			}
-
-			@Override
 			public Organization getOrganization() {
 				// TODO Auto-generated method stub
 				return null;
@@ -377,18 +365,6 @@ public class EdiProcessorTest extends EdiTestABC {
 			public <T extends IDomainObject> ITypedDao<T> getDao() {
 				// TODO Auto-generated method stub
 				return null;
-			}
-
-			@Override
-			public Object getFieldValueByName(String inFieldName) {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setFieldValueByName(String inFieldName, Object inFieldValue) {
-				// TODO Auto-generated method stub
-				
 			}
 
 			@Override

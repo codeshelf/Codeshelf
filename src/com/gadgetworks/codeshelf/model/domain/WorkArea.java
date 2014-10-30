@@ -39,7 +39,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "work_area")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class WorkArea extends DomainObjectTreeABC<Path> {
 

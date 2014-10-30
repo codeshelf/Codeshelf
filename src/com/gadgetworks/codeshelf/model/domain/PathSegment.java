@@ -43,10 +43,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "path_segment")
-//@CacheStrategy(useBeanCache = true)
-//@JsonAutoDetect(fieldVisibility = Visibility.ANY)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true, exclude = { "parent" })
 public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	/**

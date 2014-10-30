@@ -36,8 +36,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "ledcontrollers")
-//@DiscriminatorValue("LEDCONTROLLER")
+@Table(name = "led_controller")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LedController extends WirelessDeviceABC {
 

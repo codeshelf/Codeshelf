@@ -39,7 +39,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_location")
-//@CacheStrategy(useBeanCache=false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "location", "parent", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {

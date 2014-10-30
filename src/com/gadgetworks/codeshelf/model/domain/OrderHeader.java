@@ -51,7 +51,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_header")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "orderType", "status", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {

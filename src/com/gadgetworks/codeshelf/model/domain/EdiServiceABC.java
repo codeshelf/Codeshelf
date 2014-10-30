@@ -47,12 +47,10 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-//@MappedSuperclass
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "edi_service")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue("ABC")
-//@ToString(doNotUseGetters = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 

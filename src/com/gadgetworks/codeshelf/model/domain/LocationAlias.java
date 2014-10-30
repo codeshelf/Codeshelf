@@ -38,7 +38,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "location_alias")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {

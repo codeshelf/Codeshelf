@@ -601,7 +601,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			LOGGER.info("Aisle " + inAisle.getDomainId() + " has " + howManyFewerLocations
 					+ " fewer locations that will become inactive.");
 
-			for (ILocation location : mAisleLocationsMapThatMayBecomeInactive.values()) {
+			for (ILocation<?> location : mAisleLocationsMapThatMayBecomeInactive.values()) {
 				String deletingStr = "archiving location " + location.getNominalLocationId();
 				LOGGER.info(deletingStr);
 				try {

@@ -51,7 +51,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item_master")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 

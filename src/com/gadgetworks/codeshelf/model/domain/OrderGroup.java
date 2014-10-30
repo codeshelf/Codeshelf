@@ -46,7 +46,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_group")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class OrderGroup extends DomainObjectTreeABC<Facility> {
 

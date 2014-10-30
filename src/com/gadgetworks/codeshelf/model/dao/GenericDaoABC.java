@@ -250,46 +250,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		// TODO: need to add change property intercepter and versioning
 		Session session = getCurrentSession();
 		session.persist(inDomainObject);
-		/*
-		EntityBean bean = (EntityBean) inDomainObject;
-		Set<String> changedProps = bean._ebean_getIntercept().getChangedProps();
-		Map<String, Object> changedValues = new HashMap<String, Object>();
-		try {
-			if (inDomainObject.getPersistentId() == null) {
-				mServer.save(inDomainObject);
-				privateBroadcastAdd(inDomainObject);
-			} else {
-				if (changedProps != null) {
-					for (String propName : changedProps) {
-						if (!propName.equals("version")) {
-							changedValues.put(propName, inDomainObject.getFieldValueByName(propName));
-						}
-					}
-				}
-				mServer.save(inDomainObject);
-				privateBroadcastUpdate(inDomainObject, changedProps);
-			}
-		} catch (OptimisticLockException e) {
-			// We tried to save the object, but the DB version was later than ours.
-			// We saved the old, changed values above, so refresh this object, restore the values and try to save again.
-			mServer.refresh(inDomainObject);
-			// Restore the changed props into the saved object and re-save it.
-			if (changedValues.size() > 0) {
-				for (Entry<String, Object> entry : changedValues.entrySet()) {
-					inDomainObject.setFieldValueByName(entry.getKey(), entry.getValue());
-				}
-				try {
-					// Now cause the object to seem dirty/stale, so that it gets saved.
-					//inDomainObject.setVersion(inDomainObject.getVersion());
-					mServer.save(inDomainObject);
-				} catch (OptimisticLockException e1) {
-					// If there is another error, well, that will just go up to the application to deal with it.
-					LOGGER.error("Failed to store object", e1);
-					throw new DaoException("Couldn't recover from optimistic lock exception.");
-				}
-			}
-		}
-		*/
 	}
 
 	// --------------------------------------------------------------------------

@@ -155,45 +155,4 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * This allows us to get a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
-	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
-	 * @param inFieldName
-	 * @return
-	 */
-	public final Object getFieldValueByName(final String inFieldName) {
-		throw new NotImplementedException();
-		/*
-		Object result = null;
-
-		boolean interceptingWas = ((EntityBean) this)._ebean_getIntercept().isIntercepting();
-		((EntityBean) this)._ebean_getIntercept().setIntercepting(false);
-		try {
-			Method method = getClass().getMethod("get" + WordUtils.capitalize(inFieldName), (Class<?>[]) null);
-			result = method.invoke(this, (Object[]) null);
-		} catch (InvocationTargetException | IllegalAccessException | NoSuchMethodException | SecurityException e) {
-			LOGGER.error("Caught exception invoking getter by name", e);
-		}
-		((EntityBean) this)._ebean_getIntercept().setIntercepting(interceptingWas);
-
-		return result;
-		*/
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * This allows us to set a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
-	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
-	 * @param inFieldName
-	 * @param inFieldValue
-	 */
-	public final void setFieldValueByName(final String inFieldName, final Object inFieldValue) {
-		try {
-			PropertyUtils.setProperty(this, inFieldName, inFieldValue);
-		} catch (InvocationTargetException | NoSuchMethodException | SecurityException | IllegalArgumentException
-				| IllegalAccessException e) {
-			LOGGER.error("Caught exception invoking setter by name", e);
-		}
-	}
 }

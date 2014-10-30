@@ -18,6 +18,7 @@ import java.util.Locale;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -62,9 +63,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-//@Table(name = "edi_service")
 @DiscriminatorValue("DROPBOX")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 

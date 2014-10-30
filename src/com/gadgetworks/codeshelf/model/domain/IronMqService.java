@@ -53,9 +53,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-//@Table(name = "edi_service")
 @DiscriminatorValue("IRONMQ")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IronMqService extends EdiServiceABC {
 

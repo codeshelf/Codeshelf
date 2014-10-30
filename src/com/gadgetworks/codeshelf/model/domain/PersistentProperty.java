@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.model.domain;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,9 +31,8 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-//@CacheStrategy(useBeanCache = true)@Table(name = "persistent_property")
+@Table(name = "persistent_property")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 
 	@Inject

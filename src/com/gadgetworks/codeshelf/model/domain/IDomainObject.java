@@ -84,7 +84,7 @@ public interface IDomainObject {
 	 * @param inFieldName
 	 * @param inFieldValue
 	 */
-	Object getFieldValueByName(final String inFieldName);
+	//Object getFieldValueByName(final String inFieldName);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -93,7 +93,7 @@ public interface IDomainObject {
 	 * @param inFieldName
 	 * @param inFieldValue
 	 */
-	void setFieldValueByName(final String inFieldName, final Object inFieldValue);
+	//void setFieldValueByName(final String inFieldName, final Object inFieldValue);
 
 	abstract Organization getOrganization();
 	abstract Facility getFacility();

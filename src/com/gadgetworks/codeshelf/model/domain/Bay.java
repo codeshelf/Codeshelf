@@ -36,7 +36,6 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("BAY")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public class Bay extends SubLocationABC<Aisle> {
 
 

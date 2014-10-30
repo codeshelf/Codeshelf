@@ -40,9 +40,6 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 @MappedSuperclass
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-//@Table(name = "devices")
-//@DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNetwork> {
 
 	public static final int						MAC_ADDR_BYTES		= 8;

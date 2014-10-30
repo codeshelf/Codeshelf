@@ -43,7 +43,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "item")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {

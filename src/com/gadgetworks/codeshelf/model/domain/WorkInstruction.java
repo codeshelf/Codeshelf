@@ -60,7 +60,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "work_instruction")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })

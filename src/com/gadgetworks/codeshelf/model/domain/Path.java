@@ -51,9 +51,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "path")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true, exclude = { "parent" })
 public class Path extends DomainObjectTreeABC<Facility> {
 
 	@Inject

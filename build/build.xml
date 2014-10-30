@@ -58,9 +58,6 @@
 
 	<property name="appjar.build.dir" value="${target}/appjar" />
 
-	<property name="ebean.build.dir" value="${basedir}/build" />
-	<property name="ebean.lib.dir" value="${ebean.build.dir}/lib" />
-
 	<!-- Define the compile set -->
 	<path id="compile-libs">
 		<fileset dir="${target.lib}" includes="*.jar" />
@@ -150,7 +147,6 @@
 				<include name="version.properties" />
 
 				<include name="commons-logging.properties" />
-				<include name="ebean.properties" />
 				<include name="logging.properties" />
 				
 				<include name="hibernate.tenant.xml" />
@@ -215,28 +211,6 @@
 		</jar>
 	</target>
 
-	<!-- enhance =================================================================================== -->
-	<target name="ebean-enhance" description="Enhance classes">
-
-		<echo message="===================================================================" />
-		<echo message="Enhancing the MODULE files" />
-		<echo message="===================================================================" />
-
-		<!-- define the task enhancer -->
-		<taskdef name="ebeanEnhance" classname="com.avaje.ebean.enhance.ant.AntEnhanceTask">
-			<classpath>
-				<pathelement location="${ebean.lib.dir}/avaje-ebeanorm-agent-3.2.3-SNAPSHOT.jar" />
-				<pathelement location="${target.classes}" />
-				<path refid="compile-libs" />
-			</classpath>
-		</taskdef>
-
-		<!-- enhance -->
-		<echo>"${target.enhanced.classes}"</echo>
-		<ebeanEnhance packages="com.gadgetworks.codeshelf.model.domain" classDestination="x${target.enhanced.classes}" classSource="${target.classes}" transformargs="debug=1" classpath="${target.lib}/*.jar" />
-
-	</target>
-
 	<!-- sign-jars-dist =================================================================================== -->
 	<target name="sign-jars-dist">
 		<echo level="info">Signing JARS...</echo>
@@ -284,8 +258,6 @@
 		<copy todir="${appjar.build.dir}/lib/native">
 			<fileset dir="${target.lib}/native" />
 		</copy>
-
-		<!-- <antcall target="ebean-enhance" /> -->
 
 		<!-- Prep the CLASSPATH variable for the manifest. -->
 		<fileset id="jardir" dir="${target.lib}">

@@ -71,18 +71,6 @@ public class MockModel implements IDomainObject {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	@Override
-	public Object getFieldValueByName(String inFieldName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setFieldValueByName(String inFieldName, Object inFieldValue) {
-		// TODO Auto-generated method stub
-		
-	}
 	
 	public void testMethod(String testParam) throws Exception {
 		

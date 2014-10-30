@@ -21,7 +21,7 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "site_controller")
-@DiscriminatorValue("SITECONTROLLER")
+//@DiscriminatorValue("SITECONTROLLER")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class SiteController extends WirelessDeviceABC {
 

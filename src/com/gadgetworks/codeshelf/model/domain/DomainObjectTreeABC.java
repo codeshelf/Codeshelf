@@ -18,10 +18,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *
  */
 
-//@Entity
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public abstract class DomainObjectTreeABC<P extends IDomainObject> extends DomainObjectABC implements IDomainObjectTree<P> {
 
 	@SuppressWarnings("unused")

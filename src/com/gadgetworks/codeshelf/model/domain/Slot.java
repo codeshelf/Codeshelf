@@ -29,7 +29,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @DiscriminatorValue("SLOT")
-//@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Slot extends SubLocationABC<Tier> {
 

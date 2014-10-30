@@ -40,7 +40,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "edi_document_locator")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 

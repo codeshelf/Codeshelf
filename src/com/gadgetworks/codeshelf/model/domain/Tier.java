@@ -54,7 +54,6 @@ final class TierIds {
 
 @Entity
 @DiscriminatorValue("TIER")
-//@CacheStrategy(useBeanCache = false)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Tier extends SubLocationABC<Bay> {
 

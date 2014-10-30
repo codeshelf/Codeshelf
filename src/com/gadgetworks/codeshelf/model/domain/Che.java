@@ -46,7 +46,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "che")
-//@DiscriminatorValue("CHE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Che extends WirelessDeviceABC {
 

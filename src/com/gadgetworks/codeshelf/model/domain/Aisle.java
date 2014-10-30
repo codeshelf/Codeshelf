@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Table;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +35,6 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("AISLE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-//@ToString(doNotUseGetters = true)
 public class Aisle extends SubLocationABC<Facility> {
 	
 	@Inject

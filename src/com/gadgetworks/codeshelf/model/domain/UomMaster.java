@@ -31,7 +31,6 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "uom_master")
-//@CacheStrategy(useBeanCache = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class UomMaster extends DomainObjectTreeABC<Facility> {
 
