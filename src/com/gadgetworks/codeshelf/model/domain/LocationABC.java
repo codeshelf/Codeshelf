@@ -32,6 +32,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.collections.comparators.ComparatorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,9 @@ import com.gadgetworks.codeshelf.model.dao.IDatabase;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -966,21 +969,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private class InventoryPositionComparator implements Comparator<Item> {
 
 		public int compare(Item item1, Item item2) {
-			Double item1Pos = item1.getPosAlongPath();
-			Double item2Pos = item2.getPosAlongPath();
-
-			if (item1Pos == null && item2Pos == null)
-				return 0;
-			else if (item1Pos == null)
-				return 1;
-			else if (item2Pos == null)
-				return -1;
-
-			if (item1Pos > item2Pos)
-				return -1;
-			else if (item1Pos < item2Pos)
-				return 1;
-			return 0;
+		     int result = ComparisonChain.start()
+		             .compare(item1.getPosAlongPath(), item2.getPosAlongPath(), Ordering.natural().nullsLast())
+		             .result();
+		    return result;		
 		}
 	}
 
