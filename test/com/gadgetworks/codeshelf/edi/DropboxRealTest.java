@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
@@ -298,11 +299,11 @@ public class DropboxRealTest extends EdiTestABC {
 			// Provide a wrapper for CsvOrderImporter
 			ICsvOrderImporter testImporter = new ICsvOrderImporter() {
 				@Override
-				public ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader,
+				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
 					Facility inFacility,
 					Timestamp inProcessTime) throws IOException {
 
-					ImportResult result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
+					BatchResult<Object> result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
 					LOGGER.info("Anonymous Order Importer just finished");
 					//file manipulation here
 					String csvString2 = csvString1

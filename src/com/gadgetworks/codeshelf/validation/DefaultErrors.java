@@ -10,6 +10,7 @@ import lombok.Getter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.edi.OutboundOrderCsvBean;
 
 @JsonAutoDetect(fieldVisibility = Visibility.NONE, getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE)
 public class DefaultErrors extends AbstractErrors {
@@ -54,7 +55,7 @@ public class DefaultErrors extends AbstractErrors {
 	public void bindViolation(String field, String rejectedValue, Class<?> type) {
 		addFieldError(field, new FieldError(getObjectName(), field, rejectedValue, true, new ErrorCode[]{ErrorCode.FIELD_WRONG_TYPE}, new Object[]{}, ErrorCode.FIELD_WRONG_TYPE.toDefaultMessage(field, rejectedValue)));
 	}
-
+	
 	private void addFieldError(String field, FieldError error) {
 		List<FieldError> fieldErrorsForField = this.fieldErrors.get(field);
 		if (fieldErrorsForField == null) {

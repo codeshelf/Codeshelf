@@ -63,11 +63,13 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -821,7 +823,7 @@ public class Facility extends SubLocationABC<Facility> {
 		wiResultList.addAll(generateOutboundInstructions(inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
-		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
+		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime).getResult());
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
@@ -1092,36 +1094,58 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe,
+	private BatchResult<WorkInstruction>  generateCrossWallInstructions(final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
-		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
-
+		BatchResult<WorkInstruction> wiResults = new BatchResult<WorkInstruction>();
 		for (Container container : inContainerList) {
-			// Iterate over all active CROSS orders on the path.
-			OrderHeader crossOrder = container.getCurrentOrderHeader();
-			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
-				for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-					if (crossOrderDetail.getActive()) {
-						List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
-						//if (empty?) Error
+			BatchResult<Work> result = determineWorkForContainer(container);
+			if (result.isSuccessful()) {
+				for (Work work : result.getResult()) {
+					WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+						WorkInstructionTypeEnum.PLAN,
+						work.getOutboundOrderDetail(),
+						work.getContainer(),
+						inChe,
+						work.getFirstLocationOnPath(),
+						inTime);
+
+					// If we created a WI then add it to the list.
+					if (wi != null) {
+						setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
+						wiResults.add(wi);
+					}
+				}
+			}
+			else {
+				wiResults.addAllViolations(result);
+			}
+		}
+		return wiResults;
+	}
+
+	public BatchResult<Work> determineWorkForContainer(Container container) {
+		// Iterate over all active CROSS orders on the path.
+		BatchResult<Work> batchResult = new BatchResult<Work>();
+		OrderHeader crossOrder = container.getCurrentOrderHeader();
+		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+			for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
+				if (crossOrderDetail.getActive()) {
+					List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
+					if (matchingOrderDetails.isEmpty()) {
+						batchResult.addViolation(crossOrderDetail, "no matching outbound order details");
+					}
+					else {
 						for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
 							List<ISubLocation<?>> firstLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
-							//if (locations.empty) Error
-							for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
-								WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-									WorkInstructionTypeEnum.PLAN,
-									matchingOutboundOrderDetail,
-									container,
-									inChe,
-									(LocationABC<?>) firstLocationOnPath,
-									inTime);
-
-								// If we created a WI then add it to the list.
-								if (wi != null) {
-									setWiPickInstruction(wi, matchingOutboundOrderDetail.getParent());
-									wiList.add(wi);
+							if (firstLocationPerPath.isEmpty()) {
+								batchResult.addViolation(matchingOutboundOrderDetail, "no matching order locations on any path");
+							}
+							else {
+								for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
+									Work work = new Work(container, matchingOutboundOrderDetail, firstLocationOnPath);
+									batchResult.add(work);
 								}
 							}
 						}
@@ -1129,7 +1153,7 @@ public class Facility extends SubLocationABC<Facility> {
 				}
 			}
 		}
-		return wiList;
+		return batchResult;
 	}
 
 	/**
@@ -1195,14 +1219,12 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 		// new way. Not sorted. Simple alpha sort. Will fail on D-10 D-11 D-9
 		Collections.sort(locIdList);
-		for (String aString : locIdList) {
-			locationString += aString + " ";
-		}
+		locationString = Joiner.on(" ").join(locIdList);
 		// end DEV-315 modification
 
 		inWi.setPickInstruction(locationString);
 
-		try {
+		try { 
 			WorkInstruction.DAO.store(inWi);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -2037,5 +2059,24 @@ public class Facility extends SubLocationABC<Facility> {
 	// TO come from configuration
 	public ColorEnum getDiagnosticColor() {
 		return ColorEnum.RED;
+	}
+	
+	public static class Work {
+		@Getter
+		private OrderDetail outboundOrderDetail;
+		
+		@Getter
+		private ISubLocation<?> firstLocationOnPath;
+		
+		@Getter
+		private Container container;
+
+		public Work(Container container, OrderDetail outboundOrderDetail, ISubLocation<?> firstLocationOnPath) {
+			super();
+			this.container = container;
+			this.outboundOrderDetail = outboundOrderDetail;
+			this.firstLocationOnPath = firstLocationOnPath;
+		}
+		
 	}
 }

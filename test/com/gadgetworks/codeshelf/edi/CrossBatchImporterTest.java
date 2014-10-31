@@ -147,8 +147,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importCsvString(mFacility, csvString, ediProcessTime);		
-
+		int count = importCsvString(mFacility, csvString, ediProcessTime);		
+		Assert.assertEquals(6, count);
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
 		HeaderCounts theCounts2 = facility.countCrossOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 2);

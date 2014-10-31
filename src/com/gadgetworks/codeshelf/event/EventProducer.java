@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.event;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -8,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.validation.Errors;
+import com.gadgetworks.codeshelf.validation.Violation;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.ImmutableMap;
@@ -19,8 +21,6 @@ import com.google.common.collect.ImmutableMap;
 public class EventProducer {
 	//Currently only this one implementation. The design is expected to evolve to extract "EventProducer" as an interface and make a different implementation
 	//// For instance this would be a LoggingEventProducer if it is worthwhile to keep around
-	
-	//May need to turn tags into a set of enums
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(EventProducer.class);
 
@@ -36,18 +36,15 @@ public class EventProducer {
 		produceErrorsEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inErrors, inRelatedObject);
 	}
 
-	private void produceErrorsEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Errors inErrors, Object inRelatedObject) {
+	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, List<Violation> inViolations, Object inRelatedObject) {
+		produceErrorsEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inViolations, inRelatedObject);
+	}
+
+	private void produceErrorsEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inErrors, Object inRelatedObject) {
 		ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
 		
 		String logMessage = messageHelper.add("violations", inErrors).toString();
-		
-		if (inSeverity.equals(EventSeverity.WARN)) {
-			LOGGER.warn(logMessage);
-		} else if (inSeverity.equals(EventSeverity.ERROR)){
-			LOGGER.error(logMessage);
-		} else {
-			LOGGER.info(logMessage);
-		}
+		log(inSeverity, logMessage);
 	}
 	
 	private void produceExceptionEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
@@ -74,6 +71,16 @@ public class EventProducer {
 	private void produceEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
 		ToStringHelper messageHelper = baseEventSerialization(EventInterval.INSTANTANEOUS, inTags, EventSeverity.INFO, inRelatedObject);
 		LOGGER.info(messageHelper.toString());
+	}
+
+	private void log(EventSeverity inSeverity, String logMessage) {
+		if (inSeverity.equals(EventSeverity.WARN)) {
+			LOGGER.warn(logMessage);
+		} else if (inSeverity.equals(EventSeverity.ERROR)){
+			LOGGER.error(logMessage);
+		} else {
+			LOGGER.info(logMessage);
+		}
 	}
 	
 	/**
