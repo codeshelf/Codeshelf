@@ -254,9 +254,9 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		facility.setUpCheContainerFromString(che1, "12345");
 		HousekeepingInjector.restoreHKDefaults();
 
-		List<WorkInstruction> aList = che1.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		List<WorkInstruction> aList = facility.getWorkInstructions(che1, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(che1, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();

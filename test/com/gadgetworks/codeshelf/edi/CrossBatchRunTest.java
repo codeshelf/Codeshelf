@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.LedChaser;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -287,9 +286,9 @@ public class CrossBatchRunTest extends EdiTestABC {
 		facility.setUpCheContainerFromString(theChe, "11");
 		HousekeepingInjector.restoreHKDefaults();
 
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 		// Just some quick log output to see it
@@ -409,51 +408,5 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertEquals("Repeat Container", wi4Desc);
 
 	}
-
-	@Test
-	public final void checkLedChaserTiming() throws IOException {
-		Facility facility = setUpSimpleSlottedFacility("XB06");
-		LocationABC<?> locationS1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S1");
-		LocationABC<?> locationS2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S2");
-		LocationABC<?> locationS3 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S3");
-		LocationABC<?> locationS4 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
-		LocationABC<?> locationS5 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S5");
-
-		LedChaser aChaser = new LedChaser(facility, ColorEnum.RED);
-		aChaser.addChaseForLocation(locationS1);
-		aChaser.addChaseForLocation(locationS2);
-		aChaser.addChaseForLocation(locationS3);
-		aChaser.addChaseForLocation(locationS4);
-		aChaser.addChaseForLocation(locationS5);
-
-		// This test test (non-automated) checks to see if the LedChaser runs its business on a separate thread without bothering the main thread.
-		LOGGER.info("Firing test LedChaser now");
-		aChaser.fireTheChaser(true); // true = log only
-		LOGGER.info("Message1 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message2 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message3 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message4 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message5 after firing test LedChaser");
-	// If this is right, there will be some interleaving of "MessageN after firing test LedChaser" and "send one chase"
-
-	}
-
-	// Important: BayChangeExceptSamePathDistance is not tested here. Need positive and negative tests
 
 }

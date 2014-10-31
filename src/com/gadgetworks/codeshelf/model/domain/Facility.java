@@ -1883,38 +1883,9 @@ public class Facility extends SubLocationABC<Facility> {
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
 
 		if (containersIdList.size() > 0) {
-			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
+			this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
-
-			if (wiCount > 0) {
-				// debug aid. Does the CHE know its work instructions?
-				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions(); // This gets all, including shorts
-				Integer cheCountGot = cheWiList.size();
-				if (cheCountGot < wiCount) {
-					LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?");
-					// if there are shorts cheCountGot might be greater.
-				}
-
-				//  /*
-
-				// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
-				List<WorkInstruction> wiListAfterScanBlank = this.getWorkInstructions(inChe, ""); // cannot really scan blank, but this is how our UI simulation works
-				Integer wiCountGot = wiListAfterScanBlank.size();
-				// getWorkInstructions() does a new filtered query from db
-				// Only PLAN and housekeeping types come
-				if (wiCountGot > 0) {
-					// debug aid. Does the CHE know its work instructions?
-					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
-					Integer cheCountGot2 = cheWiList2.size();
-					if (cheCountGot2 < wiCountGot) {
-						LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?");
-					}
-
-				}
-				//  */
-
-			}
 		}
 	}
 
@@ -2008,5 +1979,33 @@ public class Facility extends SubLocationABC<Facility> {
 			itemMaster,
 			uomMaster);
 		return returnItem;
+	}
+	
+	private final Set<SiteController> getSiteControllers() {
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+
+		for (CodeshelfNetwork network : this.getNetworks()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}
+		return siteControllers;
+	}
+
+	public final Set<User> getSiteControllerUsers() {
+		Set<User> users = new HashSet<User>();
+
+		for (SiteController sitecon : this.getSiteControllers()) {
+			User user = sitecon.getAuthenticationUser();
+			if (user != null) {
+				users.add(user);
+			} else {
+				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
+			}
+		}
+		return users;
+	}
+
+	// TO come from configuration
+	public ColorEnum getDiagnosticColor() {
+		return ColorEnum.RED;
 	}
 }

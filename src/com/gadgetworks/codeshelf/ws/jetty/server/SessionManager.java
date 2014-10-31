@@ -1,8 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.websocket.Session;
@@ -14,6 +15,7 @@ import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession.State;
 
 public class SessionManager {
@@ -72,23 +74,13 @@ public class SessionManager {
 		return this.activeSessions.get(sessionId);
 	}
 	
-	public CsSession getSession(User user) {
+	private CsSession getSession(User user) {
 		for (CsSession session : this.getSessions()) {
 			if(session.getUser().equals(user)) {
 				return session;
 			}
 		}
 		return null;
-	}
-	
-	public Set<CsSession> getSessions(Set<User> users) {
-		Set<CsSession> userSessions = new HashSet<CsSession>();
-		for (CsSession session : this.getSessions()) {
-			if(users.contains(session.getUser())) {
-				userSessions.add(session);
-			}
-		}
-		return userSessions;
 	}
 	
 	public final Collection<CsSession> getSessions() {
@@ -136,5 +128,25 @@ public class SessionManager {
 		activeSiteControlerSessionsCounter.inc(activeSiteController-c);		
 		c = activeSessionsCounter.getCount();
 		activeSessionsCounter.inc(numActiveSessions-c);
+	}
+
+	public int sendMessage(Set<User> users, MessageABC message) {
+		List<User> sent = new ArrayList<User>();
+		for (User user : users) {
+			if (sendMessage(user, message)) {
+				sent.add(user);
+			}
+		} 
+		return sent.size();
+	}
+
+	private boolean sendMessage(User user, MessageABC message) {
+		CsSession session = getSession(user);// TODO Auto-generated method stub
+		if (session != null) {
+			session.sendMessage(message);
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

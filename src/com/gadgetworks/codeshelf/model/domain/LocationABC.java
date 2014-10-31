@@ -32,6 +32,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.collections.comparators.ComparatorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,9 @@ import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
+import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -396,7 +400,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	// --------------------------------------------------------------------------
 	/* Returns something like A2.B1.T3.S5. Needs to call recursively up the chain.
 	 * This is private helper for getNominalLocationId()
-	 * 
+	 *
 	 */
 	public final String getNominalLocationIdExcludeBracket() {
 		String result;
@@ -405,7 +409,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// Let's not NPE.
 		if (this.getClass().equals(Facility.class))
 			return "";
-		
+
 		@SuppressWarnings("rawtypes")
 		LocationABC checkParent = (LocationABC) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
@@ -418,10 +422,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* Returns something like A2.B1.T3.S5. Or if the location is inactive, <A2.B1.T3.S5>
-	 * 
+	 *
 	 */
 	public final String getNominalLocationId() {
 		String result = getNominalLocationIdExcludeBracket();
@@ -519,7 +523,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* 
+	/*
 	 * Normally called via facility.findSubLocationById(). If no dots in the name, calls this, which first looks for alias, but only if at the facility level.
 	 * Aside from the facility/alias special case, it looks directly for domainId, which may be useful only for looking for direct children.
 	 * for example, facility.findLocationById("A2") would find the aisle.
@@ -566,7 +570,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* 
+	/*
 	 * Normally called as facility.findSubLocationById(). If no dots in the name, calls findLocationById(), which first looks for alias, but only if at the facility level.
 	 * This will return "deleted" location, but if it does so, it will log a WARN.
 	 */
@@ -830,7 +834,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 *
 	 */
 	@SuppressWarnings("rawtypes")
-	private class LocationWorkingOrderComparator implements Comparator<ILocation> {
+	public static class LocationWorkingOrderComparator implements Comparator<ILocation> {
 
 		public int compare(ILocation inLoc1, ILocation inLoc2) {
 			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
@@ -858,6 +862,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			result.addAll(childLocation.getSubLocationsInWorkingOrder());
 		}
 		return result;
+	}
+
+	@Override
+	public List<ISubLocation> getChildrenInWorkingOrder() {
+		@SuppressWarnings("rawtypes")
+		List<ISubLocation> childLocations = getActiveChildren();
+		Collections.sort(childLocations, new LocationWorkingOrderComparator());
+		return childLocations;
 	}
 
 	private class VertexOrderComparator implements Comparator<Vertex> {
@@ -954,8 +966,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public LedRange getFirstLastLedsForLocation() {
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
 		// to compute, we need the locations first and last led positions
-		int firstLocLed = getFirstLedNumAlongPath();
-		int lastLocLed = getLastLedNumAlongPath();
+		Short firstLocLed = getFirstLedNumAlongPath();
+		Short lastLocLed = getLastLedNumAlongPath();
+		if (firstLocLed == null || lastLocLed == null) {
+			throw new UnsupportedOperationException(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ", this, firstLocLed, lastLocLed));
+		}
 		// following cast not safe if the stored location is facility
 		if (this instanceof Facility)
 			return LedRange.zero(); // was initialized to give values of 0,0
@@ -971,40 +986,28 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// We want this to sort from low to high
 
 		public int compare(Item item1, Item item2) {
-			int value = CompareNullChecker.compareNulls(item1, item2);
-			if (value != 0)
-				return value;
-
-			Double item1Pos = item1.getPosAlongPath();
-			Double item2Pos = item2.getPosAlongPath();
-			value = CompareNullChecker.compareNulls(item1Pos, item2Pos);
-			if (value != 0)
-				return value;
-
-			return item1Pos.compareTo(item2Pos);
+			int result = ComparisonChain.start()
+		             .compare(item1.getPosAlongPath(), item2.getPosAlongPath(), Ordering.natural().nullsLast())
+		             .result();
+			return result;
 		}
-		
+
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Gets inventory in its, and its direct children only. Most useful tier and/or slot
+	 * Gets inventory for this instance and all of its descendents then sorts along path.
 	 * Public mainly for testability
-	 * 
+	 *
 	 */
-	public List<Item> getInventorySortedByPosAlongPath() {
-		ArrayList<Item> aList = new ArrayList<Item>();
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<Item> getInventoryInWorkingOrder() {
+		ArrayList<Item> aList = Lists.newArrayList();
 		// Add my inventory
-		for (Item item : getStoredItems().values()) {
-			aList.add(item);
-		}
+		aList.addAll(getStoredItems().values());
 		// Add my children's inventory
 		for (SubLocationABC location : locations.values()) {
-			LocationABC childLocation = (LocationABC) location;
-			for (Object anObject : childLocation.getStoredItems().values()) {
-				Item theItem = (Item) anObject;
-				aList.add(theItem);
-			}
+			aList.addAll(location.getInventoryInWorkingOrder());
 		}
 		// Sort as we want it
 		Collections.sort(aList, new InventoryPositionComparator());

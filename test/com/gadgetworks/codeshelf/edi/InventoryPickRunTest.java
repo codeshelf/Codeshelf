@@ -17,21 +17,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.LedChaser;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -239,7 +232,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Inventory
 		readInventoryForA1(facility);
-		List<Item> aList = tierA1B1T2.getInventorySortedByPosAlongPath();
+		List<Item> aList = tierA1B1T2.getInventoryInWorkingOrder();
 		Assert.assertTrue(aList.size() == 4);
 		logItemList(aList);
 		Item firstOnPath = aList.get(0);

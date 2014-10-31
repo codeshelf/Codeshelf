@@ -119,10 +119,16 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
-		boolean result = true;
 
 		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
-
+		return importSlottedInventory(inventoryBeanList, inFacility, inProcessTime);
+		
+	}
+	public boolean importSlottedInventory(List<InventorySlottedCsvBean> inventoryBeanList,
+		Facility inFacility,
+		Timestamp inProcessTime) {
+		boolean result = true;
+			// TODO Auto-generated method stub
 		if (inventoryBeanList.size() > 0) {
 
 			LOGGER.debug("Begin slotted inventory import.");

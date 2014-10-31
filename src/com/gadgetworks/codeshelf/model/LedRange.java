@@ -87,7 +87,12 @@ public class LedRange {
 		return (short) mLastLedToLight;
 	}
 
-	
+	/**
+	 * Inclusive
+	 */
+	public boolean isWithin(short ledPosition) {
+		return (mFirstLedToLight <= ledPosition && ledPosition <= mLastLedToLight);
+	}
 	
 	private static LedRange _computeLedsToLight(int inFirstLocationLed, int inLastLocationLed, boolean inFirstLedNearAnchor, double inLocationWidth, double inMetersFromAnchor) {
 		// Note mLocationWidth = 0 may be commonly used by computeLedsToLightForLocationNoOffset. There is a width, but does not matter to the computation. So passed as 0.

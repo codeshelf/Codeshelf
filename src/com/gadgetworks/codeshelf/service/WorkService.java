@@ -27,7 +27,7 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
 
-public class WorkService {
+public class WorkService implements IApiService {
 
 	private static final Logger						LOGGER	= LoggerFactory.getLogger(WorkService.class);
 	private final BlockingQueue<WorkInstruction>	completedWorkInstructions;

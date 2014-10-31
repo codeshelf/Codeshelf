@@ -189,9 +189,9 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		facility.setUpCheContainerFromString(theChe, "12345");
 		HousekeepingInjector.restoreHKDefaults();
 				
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 4, wiCount);
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(4, wiCount);
 		
 		// paths is expected to be backwards from b2 to b1, see set-up method
 		for (WorkInstruction wi : aList) {
@@ -288,9 +288,9 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		facility.setUpCheContainerFromString(theChe, "12345");
 		HousekeepingInjector.restoreHKDefaults();
 				
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 4, wiCount);
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(4, wiCount);
 		
 		// paths is expected to be backwards from b2 to b1, see set-up method
 		for (WorkInstruction wi : aList) {

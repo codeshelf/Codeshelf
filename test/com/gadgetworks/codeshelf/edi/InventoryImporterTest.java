@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,6 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -38,12 +38,7 @@ import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
-import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
@@ -51,7 +46,6 @@ import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
 /**
@@ -65,15 +59,26 @@ public class InventoryImporterTest extends EdiTestABC {
 		Configuration.loadConfig("test");
 	}
 
+	Facility facilityForVirtualSlotting;
+	
+	protected void doBefore() {
+		VirtualSlottedFacilityGenerator facilityGenerator =
+					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
+														createLocationAliasImporter(),
+														createOrderImporter());
+		
+		facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		
+	}
+	
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
-		Facility facility = setupInventoryData("testInventoryImporterFromCsvStream", csvString);
+		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 
-		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Item item = facility.findSubLocationById("A1.B1").getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
-
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
@@ -83,7 +88,9 @@ public class InventoryImporterTest extends EdiTestABC {
 	public final void testEmptyUom() {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
-		Facility facility = setupInventoryData("testEmptyUom", csvString);
+		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
+
+
 
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
 		Assert.assertNull(item);
@@ -93,9 +100,10 @@ public class InventoryImporterTest extends EdiTestABC {
 	public final void testAlphaQuantity() {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
-		Facility facility = setupInventoryData("testAlphaQuantity", csvString);
+		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
+		
 
-		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Item item = facility.findSubLocationById("A1.B1").getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
 
@@ -107,9 +115,8 @@ public class InventoryImporterTest extends EdiTestABC {
 	public final void testNegativeQuantity() {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,-2,each,A1.B1,111,2012-09-26 11:31:01\r\n";
-		Facility facility = setupInventoryData("testNegativeQuantity", csvString);
-
-		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "each");
+		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
+		Item item = facility.findSubLocationById("A1.B1").getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		Assert.assertEquals(0.0d, item.getQuantity(), 0.0d);
 
@@ -123,39 +130,16 @@ public class InventoryImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
-
+		Facility facility = facilityForVirtualSlotting;
+		
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B2,111,2012-09-26 11:31:01\r\n";
 
-		byte[] csvArray = csvString.getBytes();
+		setupInventoryData(facility, csvString);
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-INV2.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-INV2.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-INV2.1");
-		mFacilityDao.store(facility);
-
-		Aisle aisleA1 = new Aisle(facility, "A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(aisleA1);
-
-		Bay bay1 = new Bay(aisleA1, "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bay1);
-
-		Bay bay2 = new Bay(aisleA1, "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mSubLocationDao.store(bay2);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-
-		bay1 = (Bay) facility.findSubLocationById("A1.B1");
-		bay2 = (Bay) facility.findSubLocationById("A1.B2");
+		Bay bay1 = (Bay) facility.findSubLocationById("A1.B1");
+		Bay bay2 = (Bay) facility.findSubLocationById("A1.B2");
 
 		Item item = bay1.getStoredItemFromMasterIdAndUom("3001", "case");
 		Assert.assertNotNull(item);
@@ -174,14 +158,7 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "3001,3001,Widget,200,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
 				+ "3001,3001,Widget,200,case,A1.B2,111,2012-09-26 11:31:01\r\n";
 
-		csvArray = csvString.getBytes();
-
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		setupInventoryData(facility, csvString);
 
 		bay1 = (Bay) facility.findSubLocationById("A1.B1");
 		bay2 = (Bay) facility.findSubLocationById("A1.B2");
@@ -196,131 +173,12 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
-	@SuppressWarnings("rawtypes")
-	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
-		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
-		//   With location alias for first baytier only, not second.
-		// The organization will get "O-" prepended to the name. Facility F-
-		// Caller must use a different organization name each time this is used
-		// Valid tier names: A1.B1.T1 = D101, and A1.B2.T1
-		// Also, A1.B1 has alias D100
-		// Just for variance, bay3 has 4 slots
-		// Aisle 2 associated to same path segment. But with aisle controller on the other side
-		// Aisle 3 will be on a separate path.
-		// All tiers have controllers associated.
-		// There is a single CHE called CHE1
-
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
-				+ "Bay,B1,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n" //
-				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n" //
-				+ "Bay,B3,230,,,,,\r\n" //
-				+ "Tier,T1,,4,80,0,,\r\n" //
-				+ "Aisle,A2,,,,,tierNotB1S1Side,12.85,55.45,X,120,Y\r\n" //
-				+ "Bay,B1,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"//
-				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n" //
-				+ "Aisle,A3,,,,,tierNotB1S1Side,12.85,65.45,X,120,Y\r\n" //
-				+ "Bay,B1,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"//
-				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-
-		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
-		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
-		Assert.assertNotNull(aisle1);
-
-		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 10.85, 48.45);
-
-		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
-
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
-		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
-
-		Path path2 = createPathForTest("F5X.3", facility);
-		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 10.85, 58.45);
-
-		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A3");
-		Assert.assertNotNull(aisle3);
-		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr2);
-
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
-				+ "A1.B1, D100\r\n" //
-				+ "A1.B1.T1, D101\r\n" //
-				+ "A1.B1.T1.S1, D301\r\n" //
-				+ "A1.B1.T1.S2, D302\r\n" //
-				+ "A1.B1.T1.S3, D303\r\n" //
-				+ "A1.B1.T1.S4, D304\r\n" //
-				+ "A2.B1.T1, D402\r\n" //
-				+ "A2.B2.T1, D403\r\n"//
-				+ "A3.B1.T1, D502\r\n" //
-				+ "A3.B2.T1, D503\r\n";//
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		//Che che = 
-		network.createChe("CHE1", new NetGuid("0x00000001"));
-
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
-		String uuid1 = controller1.getPersistentId().toString();
-		String uuid2 = controller2.getPersistentId().toString();
-		String uuid3 = controller3.getPersistentId().toString();
-
-		SubLocationABC tier = (SubLocationABC) facility.findSubLocationById("A1.B1.T1");
-
-		((Tier) tier).setControllerChannel(uuid1, "1", "aisle"); // all A1 T1
-
-		tier = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
-		((Tier) tier).setControllerChannel(uuid2, "1", "aisle"); // all A2 T1
-
-		tier = (SubLocationABC) facility.findSubLocationById("A3.B1.T1");
-		((Tier) tier).setControllerChannel(uuid3, "1", "aisle"); // all A3 T1
-
-		return facility;
-
-	}
-
+	
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testBayAnchors() {
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
-		Facility facility = setUpSimpleNoSlotFacility("XX01");
+		Facility facility = facilityForVirtualSlotting;
 		SubLocationABC locationB1 = (SubLocationABC) facility.findSubLocationById("A1.B1");
 		Assert.assertNotNull(locationB1);
 		SubLocationABC locationB2 = (SubLocationABC) facility.findSubLocationById("A1.B2");
@@ -374,7 +232,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedInventory() {
 
-		Facility facility = setUpSimpleNoSlotFacility("XX02");
+		Facility facility = facilityForVirtualSlotting;
 
 		// leave out the optional lot, and organize the file as we are telling Accu. Note: there is no such thing as itemDetailId
 		// D102 (item 1522) will not resolve
@@ -390,14 +248,8 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "1546,,BAD KITTY BBP,10,EA,6/25/14 12:00,89\r\n"//
 				+ "1123,D403,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
+		setupInventoryData(facility, csvString);
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		// How do you find the inventory items made?
 		// other unit tests do it like this:
@@ -485,20 +337,14 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedInventory2() {
 
-		Facility facility = setUpSimpleNoSlotFacility("XX03");
+		Facility facility = facilityForVirtualSlotting;
 
 		// Very small test checking leds for this one inventory item
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
+		setupInventoryData(facility, csvString);
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		// item1123 for EA in D402 which is the A2.B1.T1. 135 cm from left of 230 cm aisle
 		LocationABC locationA2B2T1 = (LocationABC) facility.findSubLocationById("A2.B2.T1");
@@ -536,7 +382,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedInventory3() {
 
-		Facility facility = setUpSimpleNoSlotFacility("XX04");
+		Facility facility = facilityForVirtualSlotting;
 
 		// Very small test checking multiple inventory items for same SKU
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -544,14 +390,8 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8\r\n" //
 				+ "1123,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
+		setupInventoryData(facility, csvString);
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
@@ -570,31 +410,16 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
-	private Facility setupInventoryData(String organizationId, String csvString) {
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId(organizationId);
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-INV1.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-INV1.1");
-
+	private Facility setupInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		return facility;
+		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		return facility.getDao().findByPersistentId(facility.getPersistentId());
 	}
 
 	@SuppressWarnings({ "rawtypes", "unused" })
 	@Test
 	public final void testNonSlottedPick() throws IOException {
-
-		Facility facility = setUpSimpleNoSlotFacility("XX05");
-
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -605,25 +430,18 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 
-		byte[] csvArray = csvString.getBytes();
+		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-
-		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
-		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
-		LocationABC locationD502 = (LocationABC) facility.findSubLocationById("D502");
-		LocationABC locationD503 = (LocationABC) facility.findSubLocationById("D503");
+		LocationABC<?> locationD403 = (LocationABC) facility.findSubLocationById("D403");
+		LocationABC<?> locationD402 = (LocationABC) facility.findSubLocationById("D402");
+		LocationABC<?> locationD502 = (LocationABC) facility.findSubLocationById("D502");
+		LocationABC<?> locationD503 = (LocationABC) facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 
 		// A brief side trip to check the list we use for lighting inventory in a tier
-		List<Item>  invList = locationD502.getInventorySortedByPosAlongPath();
+		List<Item>  invList = locationD502.getInventoryInWorkingOrder();
 		Assert.assertTrue(invList.size() == 2);
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
@@ -632,7 +450,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Item 1522 exists in case and each.
 		// And extra lines  with variant endings just for fun
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -640,20 +458,14 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "\r"
 				+ "\r\n" + "\n";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime2);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = facility.getOrderHeader("12345");
 		Assert.assertNotNull(order);
-		Integer detailCount = order.getOrderDetails().size();
-		Assert.assertEquals((Integer) 3, detailCount);
+		Assert.assertEquals(3, order.getOrderDetails().size());
 
 		List<String> itemLocations = new ArrayList<String>();
 		for (OrderDetail detail : order.getOrderDetails()) {
@@ -672,17 +484,20 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		HousekeepingInjector.turnOffHK();
+
+		List<WorkInstruction> wiListBeginningOfPath = facility.getWorkInstructions(theChe, "");
+		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12345");
 
+		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
-
 		HousekeepingInjector.restoreHKDefaults();
 
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 3, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		List<WorkInstruction> wiListBeginningOfPathAfterSetup = facility.getWorkInstructions(theChe, "");
+		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 		Integer wiCountAfterScan = wiListAfterScan.size();
@@ -740,7 +555,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testSameProductPick() throws IOException {
 
-		Facility facility = setUpSimpleNoSlotFacility("XX06");
+		Facility facility = facilityForVirtualSlotting;
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -748,13 +563,8 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 
-		byte[] csvArray = csvString.getBytes();
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
+		setupInventoryData(facility, csvString);
 
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
 		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
