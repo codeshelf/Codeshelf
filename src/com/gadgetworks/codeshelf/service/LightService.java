@@ -1,23 +1,14 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,22 +17,17 @@ import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.SiteController;
-import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ForwardingFuture;
 
@@ -52,8 +38,8 @@ public class LightService implements IApiService {
 	
 	private final SessionManager sessionManager;
 	private final ScheduledExecutorService mExecutorService;
-	private Future<?>	mLastChaserFuture;
-	
+	private Future<Void> mLastChaserFuture;
+
 	public LightService() {
 		this(SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
 	
@@ -63,7 +49,216 @@ public class LightService implements IApiService {
 		this.sessionManager = sessionManager;
 		this.mExecutorService = executorService;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent. 
+	 */
+	public void lightOneLocation(final String facilityPersistentId, final String inLocationNominalId) {
+				
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		if (facility == null) {
+			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
+			return;
+		}
 
+		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
+			return;
+		}
+
+		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
+		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent.
+	 */
+	public void lightOneItem(final String facilityPersistentId, final String inItemPersistentId) {
+
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		if (facility == null) {
+			LOGGER.error("lightOneItem called with unknown facility");
+			return;
+		}
+		
+		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
+		if (theItem == null) {
+			LOGGER.error("lightOneItem called with unknown item");
+			return;
+		}
+
+		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
+		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theItem));
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent. 
+	 */
+	public Future<Void> lightChildLocations(final String facilityPersistentId, final String inLocationNominalId) {
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		if (facility == null) {
+			throw new IllegalArgumentException("lightChildLocations called with unknown facility: " + facilityPersistentId);
+		}
+
+		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			throw new IllegalArgumentException("lightChildLocations called with unknown location: " + theLocation);
+		}
+
+		List<LightLedsMessage> ledMessages = Lists.newArrayList(); 
+		for (@SuppressWarnings("rawtypes") ISubLocation child : theLocation.getChildrenInWorkingOrder()) {
+			ledMessages.add(toLedsMessage(4, facility.getDiagnosticColor(), child));
+		}
+		return chaserLight(facility, ledMessages);
+	}
+
+	public Future<Void> lightInventory(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
+		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
+		if (theColor == ColorEnum.INVALID) {
+			throw new IllegalArgumentException("lightInventory called with unknown color: " + theColor);
+		}
+
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		if (facility == null) {
+			throw new IllegalArgumentException("lightInventory called with unknown facility: " + facilityPersistentId);
+		}
+
+		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+		if (theLocation == null || theLocation instanceof Facility) {
+			throw new IllegalArgumentException("lightInventory called with unknown location: " + theLocation);
+		}
+
+		List<LightLedsMessage> messages = Lists.newArrayList();
+		for (Item item : theLocation.getInventoryInWorkingOrder()) {
+			messages.add(toLedsMessage(3, theColor, item));
+		}
+		return chaserLight(facility, messages);
+	}
+
+	Future<Void> chaserLight(final Facility facility, final List<LightLedsMessage> messageSequence) {
+		long millisToSleep = 2250;
+		final TerminatingScheduledRunnable lightLocationRunnable = new TerminatingScheduledRunnable() {
+
+			private LinkedList<LightLedsMessage> chaseListToFire = Lists.newLinkedList(messageSequence);
+			
+			@Override
+			public void run() {
+				LightLedsMessage message = chaseListToFire.poll(); 
+				if (message == null) {
+					terminate();
+				}
+				sendToAllSiteControllers(facility, message);
+			}
+		};
+		return scheduleChaserRunnable(lightLocationRunnable, millisToSleep, TimeUnit.MILLISECONDS);
+	}
+
+	private int sendToAllSiteControllers(Facility facility, LightLedsMessage message) {
+		Set<User> users = facility.getSiteControllerUsers();
+		return this.sessionManager.sendMessage(users, message);
+	}
+
+	private LightLedsMessage toLedsMessage(int maxNumLeds, final ColorEnum inColor, final Item inItem) {
+		// Use our utility function to get the leds for the item
+		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
+		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inItem.getStoredLocation(), theRange);
+		if (message == null) {
+			throw new IllegalArgumentException("inItem with incomplete LED configuration: " + inItem);
+		} else {
+			return message;
+		}
+	}
+
+	private LightLedsMessage toLedsMessage(int maxNumLeds, final ColorEnum inColor, final ILocation<?> inLocation) {
+		LedRange theRange = ((LocationABC<?>) inLocation).getFirstLastLedsForLocation().capLeds(maxNumLeds);
+		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inLocation, theRange);
+		if (message == null) {
+			throw new IllegalArgumentException("location with incomplete LED configuration: " + inLocation);
+		} else {
+			return message;
+		}
+	}
+	
+	/**
+	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
+	 * Called now for setting WI LED pattern for inventory pick.
+	 * Also called for directly lighting inventory item or location
+	 * @param inNetGuidStr
+	 * @param inItem
+	 * @param inColor
+	 */
+	private LightLedsMessage getLedCmdGroupListForRange(final ColorEnum inColor, ILocation<?> inLocation, final LedRange ledRange) {
+		LedController controller = inLocation.getEffectiveLedController();
+		short controllerChannel = inLocation.getEffectiveLedChannel();
+		
+		short firstLedPosNum = ledRange.getFirstLedToLight();
+		short lastLedPosNum = ledRange.getLastLedToLight();
+		if (firstLedPosNum == 0)
+			return null;
+
+		// This is how we send LED data to the remote controller. In this case, only one led sample range.
+		List<LedSample> ledSamples = new ArrayList<LedSample>();
+		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
+			LedSample ledSample = new LedSample(ledPos, inColor);
+			ledSamples.add(ledSample);
+		}
+		LedCmdGroup ledCmdGroup = new LedCmdGroup(controller.getDeviceGuidStr(), controllerChannel, firstLedPosNum, ledSamples);
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ImmutableList.of(ledCmdGroup));
+		return new LightLedsMessage(controller.getDeviceGuidStr(), LIGHT_LOCATION_DURATION_SECS, theLedCommands);
+	}
+
+	private Future<Void> scheduleChaserRunnable(final TerminatingScheduledRunnable runPerPeriod,  long intervalToSleep, TimeUnit intervalUnit) {
+		if (mLastChaserFuture != null) {
+			mLastChaserFuture.cancel(true);
+		}
+		
+		//Future that ends on exception when pop returns nothing
+		@SuppressWarnings({"unchecked" })
+		Future<Void> scheduledFuture = (Future<Void>) mExecutorService.scheduleWithFixedDelay(runPerPeriod, 0, intervalToSleep, intervalUnit);
+		
+		//Wrap in a future that hides the NoSuchElementException semantics
+		Future<Void> chaserFuture = new ForwardingFuture.SimpleForwardingFuture<Void>(scheduledFuture) {
+			public Void get() throws ExecutionException, InterruptedException {
+				try {
+					return delegate().get();
+				} catch (ExecutionException e) {
+					if (!runPerPeriod.isTerminatingException(e.getCause())) {
+						throw e;
+					}
+				}
+				return null;
+			}
+		};
+		mLastChaserFuture = chaserFuture;
+		return mLastChaserFuture;
+	}
+	
+	private static abstract class TerminatingScheduledRunnable implements Runnable {
+
+		private RuntimeException	terminatingException;
+
+		public TerminatingScheduledRunnable() {
+			this.terminatingException = new RuntimeException("normal termination");
+		}
+		
+		public boolean isTerminatingException(Throwable e) {
+			return this.terminatingException.equals(e);
+		}
+		
+		protected void terminate() {
+			throw this.terminatingException;
+		}
+	}
+
+/*	
+	/*
 	public void lightAllControllers(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
 		
 		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
@@ -104,286 +299,27 @@ public class LightService implements IApiService {
 		
 		List<Tier> sortedTiers = Lists.newArrayList(lastLocationWithinBay.values());
 		Collections.sort(sortedTiers, new LocationABC.LocationWorkingOrderComparator());
+	
 		lightLocations(theColor, facility.getPersistentId(), sortedTiers);
 	}
 	
-	// --------------------------------------------------------------------------
-	/**
-	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent. 
-	 */
-	public void lightOneLocation(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
-				
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneLocation called with unknown color: " + theColor);
-			return;
-		}
-
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
-			return;
-		}
-
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
-			return;
-		}
-
-		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocation(3, theColor, theLocation);
-		if (ledCmdGroupList.size() == 0) {
-			LOGGER.info("lightOneLocation called for location with incomplete LED configuration: " + theLocation);
-			return;
-		} 
+	private final List<LightLedsMessage> toLedMessages(List<LedCmdGroup> ledCmdGroupList) {
+		List<LightLedsMessage> ledMessages = Lists.newArrayList();
 		
-		sendToAllSiteControllers(facility, ledCmdGroupList);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent. 
-	 */
-	public void lightChildLocations(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
-				
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneLocation called with unknown color: " + theColor);
-			return;
-		}
-
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
-			return;
-		}
-
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
-			return;
-		}
-
-		List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
-		lightLocations(theColor, facility.getPersistentId(), children);
-	}
-
-	public void lightInventory(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneLocation called with unknown color: " + theColor);
-			return;
-		}
-
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
-			return;
-		}
-
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
-			return;
-		}
-		lightInventory(theColor, facility.getPersistentId(), theLocation);
-
-	}
-	
-	// --------------------------------------------------------------------------
-	/**
-	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent.
-	 */
-	public void lightOneItem(final String inColorStr, final String facilityPersistentId, final String inItemPersistentId) {
-
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			LOGGER.error("lightOneItem called with unknown color");
-			return;
-		}
-
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			LOGGER.error("lightOneItem called with unknown facility");
-			return;
-		}
-		
-		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
-		if (theItem == null) {
-			LOGGER.error("lightOneItem called with unknown item");
-			return;
-		}
-
-		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItem(3, theColor, theItem);
-		if (ledCmdGroupList.size() == 0) {
-			LOGGER.info("lightOneItem called for location with incomplete LED configuration: " + theItem);
-			return;
-		}
-		else {
-			sendToAllSiteControllers(facility, ledCmdGroupList);
-		}
-
-	}
-	
-	Future<?> lightInventory(final ColorEnum inColorStr, final UUID facilityPersistentId, final ILocation<?> inLocation) {
-		if (mLastChaserFuture != null) {
-			mLastChaserFuture.cancel(true);
-		}
-		
-		long millisToSleep = 2250;
-		final LinkedList<Item> chaseListToFire = Lists.newLinkedList(inLocation.getInventoryInWorkingOrder());
-		
-		//Future that ends on exception when pop returns nothing
-		Future<?> scheduledFuture = mExecutorService.scheduleWithFixedDelay(new Runnable() {
-			public void run() {
-				Item item = chaseListToFire.pop();
-				lightOneItem(inColorStr.toString(), facilityPersistentId.toString(), item.getPersistentId().toString());			}
-		}, 0, millisToSleep, TimeUnit.MILLISECONDS);
-		
-		//Wrap in a future that hides the NoSuchElementException semantics
-		mLastChaserFuture = new ForwardingFuture.SimpleForwardingFuture(scheduledFuture) {
-			
-			public Object get() throws ExecutionException, InterruptedException {
-				try {
-					return delegate().get();
-				} catch (ExecutionException e) {
-					if (!(e.getCause() instanceof NoSuchElementException)) {
-						throw e;
-					}
-				}
-				return null;
-			}
-		};
-		return mLastChaserFuture;
-	}
-
-	@SuppressWarnings({ "unchecked", "rawtypes"})
-	public Future<?> lightLocations(final ColorEnum inColorStr, final UUID facilityPersistentId, final Collection<? extends ISubLocation> inLocations) {
-		if (mLastChaserFuture != null) {
-			mLastChaserFuture.cancel(true);
-		}
-		
-		long millisToSleep = 2250;
-		final LinkedList<ISubLocation> chaseListToFire = Lists.newLinkedList(inLocations);
-		
-		//Future that ends on exception when pop returns nothing
-		Future<?> scheduledFuture = mExecutorService.scheduleWithFixedDelay(new Runnable() {
-			public void run() {
-				ILocation<?> ledChase = chaseListToFire.pop();
-				lightOneLocation(inColorStr.toString(), facilityPersistentId.toString(), ledChase.getNominalLocationId());			}
-		}, 0, millisToSleep, TimeUnit.MILLISECONDS);
-		
-		//Wrap in a future that hides the NoSuchElementException semantics
-		mLastChaserFuture = new ForwardingFuture.SimpleForwardingFuture(scheduledFuture) {
-			
-			public Object get() throws ExecutionException, InterruptedException {
-				try {
-					return delegate().get();
-				} catch (ExecutionException e) {
-					if (!(e.getCause() instanceof NoSuchElementException)) {
-						throw e;
-					}
-				}
-				return null;
-			}
-		};
-		return mLastChaserFuture;
-	}
-
-	private final void sendToAllSiteControllers(Facility facility, List<LedCmdGroup> ledCmdGroupList) {
-		ArrayListMultimap<String, LedCmdGroup> byController = ArrayListMultimap.<String, LedCmdGroup>create();
+		ArrayListMultimap<String, LedCmdGroup> byLedController = ArrayListMultimap.<String, LedCmdGroup>create();
 		for (LedCmdGroup ledCmdGroup : ledCmdGroupList) {
-			byController.put(ledCmdGroup.getControllerId(), ledCmdGroup);
+			byLedController.put(ledCmdGroup.getControllerId(), ledCmdGroup);
 		}
 		
-		for (String theGuidStr : byController.keys()) {
-			List<LedCmdGroup> ledCmdGroups = byController.get(theGuidStr);
+		for (String theGuidStr : byLedController.keys()) {
+			List<LedCmdGroup> ledCmdGroups = byLedController.get(theGuidStr);
 			
 			String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroups);
 			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, LIGHT_LOCATION_DURATION_SECS, theLedCommands);
-			LOGGER.debug("Sending LightLedsMessage to all site controllers: " + theMessage);
-			sendToAllSiteControllers(facility, theMessage);
+			ledMessages.add(theMessage);
 		}
-
+		return ledMessages;
 	}
-	
-	final int sendToAllSiteControllers(Facility facility, MessageABC message) {
-		Set<User> users = this.getSiteControllerUsers(facility);
-		return this.sessionManager.sendMessage(users, message);
-	}
-	
-	private final Set<SiteController> getSiteControllers(Facility facility) {
-		Set<SiteController> siteControllers = new HashSet<SiteController>();
-
-		for (CodeshelfNetwork network : facility.getNetworks()) {
-			siteControllers.addAll(network.getSiteControllers().values());
-		}
-		return siteControllers;
-	}
-
-	private final Set<User> getSiteControllerUsers(Facility facility) {
-		Set<User> users = new HashSet<User>();
-
-		for (SiteController sitecon : this.getSiteControllers(facility)) {
-			User user = User.DAO.findByDomainId(sitecon.getParent().getParent().getParentOrganization(), sitecon.getDomainId());
-			if (user != null) {
-				users.add(user);
-			} else {
-				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
-			}
-		}
-		return users;
-	}
-
-	private List<LedCmdGroup> getLedCmdGroupListForItem(int maxNumLeds, final ColorEnum inColor, final Item inItem) {
-		// Use our utility function to get the leds for the item
-		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
-		LocationABC<?> locationABC = inItem.getStoredLocation();
-		return getLedCmdGroupListForRange(inColor, locationABC.getEffectiveLedController(), locationABC.getEffectiveLedChannel(), theRange);
-	}
-
-	
-	private List<LedCmdGroup> getLedCmdGroupListForLocation(int maxNumLeds, final ColorEnum inColor, final ILocation<?> inLocation) {
-		LedRange theRange = ((LocationABC<?>) inLocation).getFirstLastLedsForLocation().capLeds(maxNumLeds);;
-		LedController theLedController = inLocation.getEffectiveLedController();
-		inLocation.getEffectiveLedChannel();
-		return getLedCmdGroupListForRange(inColor, theLedController, inLocation.getEffectiveLedChannel(), theRange);
-	}
-	/**
-	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
-	 * Called now for setting WI LED pattern for inventory pick.
-	 * Also called for directly lighting inventory item or location
-	 * @param inNetGuidStr
-	 * @param inItem
-	 * @param inColor
-	 */
-	private List<LedCmdGroup> getLedCmdGroupListForRange(final ColorEnum inColor, LedController controller, short controllerChannel, final LedRange ledRange) {
-
-		short firstLedPosNum = ledRange.getFirstLedToLight();
-		short lastLedPosNum = ledRange.getLastLedToLight();
-		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
-
-
-		// if the led number is zero, we do not have tubes or lasers there. Do not proceed.
-		if (firstLedPosNum == 0)
-			return ledCmdGroupList;
-
-		// This is how we send LED data to the remote controller. In this case, only one led sample range.
-		List<LedSample> ledSamples = new ArrayList<LedSample>();
-		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
-			LedSample ledSample = new LedSample(ledPos, inColor);
-			ledSamples.add(ledSample);
-		}
-		LedCmdGroup ledCmdGroup = new LedCmdGroup(controller.getDeviceGuidStr(), controllerChannel, firstLedPosNum, ledSamples);
-		ledCmdGroupList.add(ledCmdGroup);
-		return ledCmdGroupList;
-	}
-
 	
 	@EqualsAndHashCode
 	private class ControllerChannelBayKey  {
@@ -401,5 +337,5 @@ public class LightService implements IApiService {
 			this.bayId = bay.getLocationId();
 		}
 	}
-	
+*/
 }

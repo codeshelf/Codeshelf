@@ -72,7 +72,7 @@ public class LightServiceTest extends EdiTestABC {
 		
 		SessionManager sessionManager = mock(SessionManager.class);
 		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
-		Future<?> complete = lightService.lightInventory(ColorEnum.RED, facility.getPersistentId(), aisle);
+		Future<Void> complete = lightService.lightInventory(ColorEnum.RED.toString(), facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
@@ -90,27 +90,20 @@ public class LightServiceTest extends EdiTestABC {
 	@Test
 	public final void checkLedChaserLocationSequence() throws IOException, InterruptedException, ExecutionException {
 		Facility facility = setUpSimpleSlottedFacility("XB06");
-		ISubLocation<?> locationS1 = facility.findSubLocationById("A1.B1.T2.S1");
-		ISubLocation<?> locationS2 = facility.findSubLocationById("A1.B1.T2.S2");
-		ISubLocation<?> locationS3 = facility.findSubLocationById("A1.B1.T2.S3");
-		ISubLocation<?> locationS4 = facility.findSubLocationById("A1.B1.T2.S4");
-		ISubLocation<?> locationS5 = facility.findSubLocationById("A1.B1.T2.S5");
-		List<ISubLocation<?>> sublocations = ImmutableList.<ISubLocation<?>>of(
-			locationS1,
-			locationS2,
-			locationS3,
-			locationS4,
-			locationS5);
+		Tier tierT2 = (Tier) facility.findSubLocationById("A1.B1.T2");
+		List<ISubLocation> sublocations = tierT2.getChildrenInWorkingOrder();
+		Assert.assertTrue(sublocations.size() > 4);// test a reasonable amount
 		SessionManager sessionManager = mock(SessionManager.class);
+		
 		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
-		Future<?> complete = lightService.lightLocations(ColorEnum.RED, facility.getPersistentId(), sublocations);
-		complete.get();
+		Future<?> complete = lightService.lightChildLocations(facility.getPersistentId().toString(), tierT2.getNominalLocationId());
+		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(sessionManager, times(5)).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(sessionManager, times(sublocations.size())).sendMessage(any(Set.class), messagesCaptor.capture());
 		
 		List<MessageABC> messages = messagesCaptor.getAllValues();
-		Iterator<ISubLocation<?>> locations = sublocations.iterator();
+		Iterator<ISubLocation> locations = sublocations.iterator();
 		for (MessageABC messageABC : messages) {
 			LightLedsMessage message = (LightLedsMessage) messageABC;
 			assertWillLightsLocation(locations.next(), message);

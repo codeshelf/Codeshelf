@@ -64,13 +64,17 @@ public class SiteController extends WirelessDeviceABC {
 		this.describeLocation = defaultLocationDescription;
 	}
 	
-	public final static void setDao(ITypedDao<SiteController> dao) {
-		SiteController.DAO = dao;
+	public User getAuthenticationUser() {
+		return User.DAO.findByDomainId(getParent().getParent().getParentOrganization(), getDomainId());
 	}
 
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "SC";
+	}
+
+	public final static void setDao(ITypedDao<SiteController> dao) {
+		SiteController.DAO = dao;
 	}
 
 	@SuppressWarnings("unchecked")

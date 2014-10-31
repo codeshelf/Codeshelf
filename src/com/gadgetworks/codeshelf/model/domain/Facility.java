@@ -1987,4 +1987,32 @@ public class Facility extends SubLocationABC<Facility> {
 			uomMaster);
 		return returnItem;
 	}
+	
+	private final Set<SiteController> getSiteControllers() {
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+
+		for (CodeshelfNetwork network : this.getNetworks()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}
+		return siteControllers;
+	}
+
+	public final Set<User> getSiteControllerUsers() {
+		Set<User> users = new HashSet<User>();
+
+		for (SiteController sitecon : this.getSiteControllers()) {
+			User user = sitecon.getAuthenticationUser();
+			if (user != null) {
+				users.add(user);
+			} else {
+				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
+			}
+		}
+		return users;
+	}
+
+	// TO come from configuration
+	public ColorEnum getDiagnosticColor() {
+		return ColorEnum.RED;
+	}
 }
