@@ -150,6 +150,7 @@
 				<include name="logging.properties" />
 				
 				<include name="hibernate.tenant.xml" />
+				<include name="hibernate.test.xml" />
 			</fileset>
 		</copy>
 		<!--copy todir="${target.resources}/images">

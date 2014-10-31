@@ -5,28 +5,24 @@
  
 <hibernate-configuration>
     <session-factory>
+        <!-- automatic session context management -->
+        <property name="current_session_context_class">thread</property>
 
         <!-- Database connection settings -->
         <property name="connection.driver_class">org.postgresql.Driver</property>
         <property name="dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
-
+        <property name="hbm2ddl.auto">validate</property>
 
         <!-- JDBC connection pool (use the built-in) -->
         <property name="connection.pool_size">10</property>
-        
 
-        <!-- Enable Hibernate's automatic session context management -->
-        <property name="current_session_context_class">thread</property>
-
-        <!-- Disable the second-level cache  -->
+        <!-- Disable the second-level cache for now  -->
         <property name="cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
         
         <!-- Echo all executed SQL to stdout -->
         <property name="show_sql">false</property>
         
-		<!-- <property name="hbm2ddl.auto">validate</property> -->
-        <property name="hbm2ddl.auto">create</property>
-        
+		<!-- Map these classes (by annotation) -->
         <mapping class="com.gadgetworks.codeshelf.model.domain.LocationABC"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.SubLocationABC"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Facility"/>

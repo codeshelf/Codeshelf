@@ -29,9 +29,7 @@ import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.PostgresSchemaManager;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -167,19 +165,6 @@ public final class ServerMain {
 			protected void configure() {
 				bind(PersistenceService.class).toInstance(PersistenceService.getInstance());
 				
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_NAME_PROPERTY))
-					.toInstance(System.getProperty("db.name"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_SCHEMANAME_PROPERTY))
-					.toInstance(System.getProperty("db.schemaname"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_USERID_PROPERTY))
-					.toInstance(System.getProperty("db.userid"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PASSWORD_PROPERTY))
-					.toInstance(System.getProperty("db.password"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_ADDRESS_PROPERTY))
-					.toInstance(System.getProperty("db.address"));
-				bind(String.class).annotatedWith(Names.named(ISchemaManager.DATABASE_PORTNUM_PROPERTY))
-					.toInstance(System.getProperty("db.portnum"));
-
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY))
 					.toInstance(System.getProperty("keystore.path"));
 				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY))
@@ -197,7 +182,6 @@ public final class ServerMain {
 					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
 
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
-				bind(ISchemaManager.class).to(PostgresSchemaManager.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);

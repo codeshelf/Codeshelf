@@ -6,7 +6,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,8 +22,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.atteo.classindex.IndexSubclasses;
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
@@ -63,8 +60,9 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	@Type(type="org.hibernate.type.PostgresUUIDType")
-	// private UUID persistentId;
+	// TODO: fix to use the dynamic UUID type!
+//	@Type(type="com/gadgetworks/codeshelf/model/domain/DialectUUIDType")
+	@Type(type="uuid-char")
 	private UUID persistentId = UUID.randomUUID();
 
 

@@ -1,7 +1,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 
