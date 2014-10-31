@@ -947,8 +947,11 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public LedRange getFirstLastLedsForLocation() {
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
 		// to compute, we need the locations first and last led positions
-		int firstLocLed = getFirstLedNumAlongPath();
-		int lastLocLed = getLastLedNumAlongPath();
+		Short firstLocLed = getFirstLedNumAlongPath();
+		Short lastLocLed = getLastLedNumAlongPath();
+		if (firstLocLed == null || lastLocLed == null) {
+			throw new UnsupportedOperationException(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ", this, firstLocLed, lastLocLed));
+		}
 		// following cast not safe if the stored location is facility
 		if (this instanceof Facility)
 			return LedRange.zero(); // was initialized to give values of 0,0

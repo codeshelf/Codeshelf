@@ -90,6 +90,14 @@ public class ServiceMethodCommand extends CommandABC {
 						response.setErrors(errors);
 						return response;
 						
+					} else {
+						String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject; 
+						LOGGER.error(message, e);
+						response.setStatus(ResponseStatus.Fail);
+						response.setStatusMessage(message);
+						errors.reject(ErrorCode.GENERAL, message);
+						response.setErrors(errors);
+						return response;
 					}
 				} catch (Exception e) {
 					String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject; 
@@ -118,6 +126,5 @@ public class ServiceMethodCommand extends CommandABC {
 			response.setErrors(errors);
 			return response;
 		}
-		return response;
 	}
 }

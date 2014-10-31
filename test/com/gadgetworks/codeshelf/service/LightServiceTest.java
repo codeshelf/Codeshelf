@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -29,12 +30,14 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventoryGenerator;
 import com.gadgetworks.codeshelf.edi.VirtualSlottedFacilityGenerator;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -46,7 +49,6 @@ import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
 
 public class LightServiceTest extends EdiTestABC {
 	
@@ -72,7 +74,7 @@ public class LightServiceTest extends EdiTestABC {
 		
 		SessionManager sessionManager = mock(SessionManager.class);
 		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
-		Future<Void> complete = lightService.lightInventory(ColorEnum.RED.toString(), facility.getPersistentId().toString(), aisle.getLocationId());
+		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
@@ -88,15 +90,36 @@ public class LightServiceTest extends EdiTestABC {
 
 
 	@Test
-	public final void checkLedChaserLocationSequence() throws IOException, InterruptedException, ExecutionException {
-		Facility facility = setUpSimpleSlottedFacility("XB06");
-		Tier tierT2 = (Tier) facility.findSubLocationById("A1.B1.T2");
-		List<ISubLocation> sublocations = tierT2.getChildrenInWorkingOrder();
-		Assert.assertTrue(sublocations.size() > 4);// test a reasonable amount
+	public final void checkChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
+		Facility facility = setupPhysicalSlottedFacility("XB06");
+		String[] locations = new String[]{"A1.B1.T2", "A1.B1"};
+		for (String locationId : locations) {
+			ISubLocation parent = facility.findSubLocationById(locationId);
+			List<ISubLocation> sublocations = parent.getChildrenInWorkingOrder();
+			assertLightSequence(facility, parent, sublocations);
+		}
+		
+	}
+
+	/**
+	 * Special cased for now
+	 */
+	@Test
+	public final void checkChildLocationSequenceForAisle() throws IOException, InterruptedException, ExecutionException {
+		Facility facility = setupPhysicalSlottedFacility("XB06");
+		ISubLocation parent = facility.findSubLocationById("A1");
+		List<ISubLocation> sublocations = parent.getActiveChildrenAtLevel(Tier.class);
+		Collections.sort(sublocations, new LocationABC.LocationWorkingOrderComparator());
+		assertLightSequence(facility, parent, sublocations);
+	}
+
+	
+	private void assertLightSequence(Facility facility, ISubLocation parent, List<ISubLocation> sublocations) throws InterruptedException, ExecutionException {
+		Assert.assertTrue(sublocations.size() > 0);// test a reasonable amount
 		SessionManager sessionManager = mock(SessionManager.class);
 		
 		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
-		Future<?> complete = lightService.lightChildLocations(facility.getPersistentId().toString(), tierT2.getNominalLocationId());
+		Future<Void> complete = lightService.lightChildLocations(facility, parent);
 		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
@@ -108,9 +131,9 @@ public class LightServiceTest extends EdiTestABC {
 			LightLedsMessage message = (LightLedsMessage) messageABC;
 			assertWillLightsLocation(locations.next(), message);
 		}
-	}
-	
 
+	}
+		
 	private void assertWillLightsLocation(ISubLocation<?> location, LightLedsMessage ledMessage) {
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
 		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
@@ -118,7 +141,7 @@ public class LightServiceTest extends EdiTestABC {
 				short pos = ledSample.getPosition();
 				short first = location.getFirstLedNumAlongPath();
 				short last = location.getLastLedNumAlongPath();
-				String message = Objects.toStringHelper("Failed")
+				String message = Objects.toStringHelper("Failed probably lit out of order ")
 					.add("first", first)
 					.add("pos", pos)
 					.add("last", last)
@@ -148,8 +171,7 @@ public class LightServiceTest extends EdiTestABC {
 	}
 	
 	// Important: BayChangeExceptSamePathDistance is not tested here. Need positive and negative tests
-	@SuppressWarnings({ "unused" })
-	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
+	private Facility setupPhysicalSlottedFacility(String inOrganizationName) {
 		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
 		// 1) same position on cart
 		// 2) Bay done/change bay

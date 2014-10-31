@@ -27,9 +27,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ISchemaManager;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.service.LedChaser;
-import com.gadgetworks.codeshelf.service.LightService;
-import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

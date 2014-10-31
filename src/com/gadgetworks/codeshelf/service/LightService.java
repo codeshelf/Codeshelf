@@ -1,6 +1,9 @@
 package com.gadgetworks.codeshelf.service;
 
+import static com.google.common.base.Preconditions.*;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -17,12 +20,14 @@ import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.LedRange;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
@@ -52,94 +57,77 @@ public class LightService implements IApiService {
 	
 	// --------------------------------------------------------------------------
 	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 * May be called with BLACK to clear whatever you just sent.
+	 */
+	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
+
+		Facility facility = checkFacility(facilityPersistentId);
+		
+		Item theItem = checkNotNull(Item.DAO.findByPersistentId(inItemPersistentId), "persistented id for item not found: %s", inItemPersistentId);
+
+		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
+		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theItem));
+	}
+
+	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
+		
+		Facility facility = checkFacility(facilityPersistentId);
+
+		ISubLocation<?> theLocation = checkLocation(facility, inLocationNominalId);
+		if (theLocation.getActiveChildren().isEmpty()) {
+			lightOneLocation(facility, theLocation);
+		} else {
+			lightChildLocations(facility, theLocation);
+		}
+	}
+
+	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
+		Facility facility = checkFacility(facilityPersistentId);
+
+		ISubLocation<?> theLocation = checkLocation(facility, inLocationNominalId);
+
+		List<LightLedsMessage> messages = Lists.newArrayList();
+		for (Item item : theLocation.getInventoryInWorkingOrder()) {
+			messages.add(toLedsMessage(3, facility.getDiagnosticColor(), item));
+		}
+		return chaserLight(facility, messages);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
-	public void lightOneLocation(final String facilityPersistentId, final String inLocationNominalId) {
+	private void lightOneLocation(final Facility facility, final ISubLocation<?> theLocation) {
 				
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			LOGGER.error("lightOneLocation called with unknown facility: " + facilityPersistentId);
-			return;
-		}
-
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			LOGGER.error("lightOneLocation called with unknown location: " + theLocation);
-			return;
-		}
-
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent.
-	 */
-	public void lightOneItem(final String facilityPersistentId, final String inItemPersistentId) {
-
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			LOGGER.error("lightOneItem called with unknown facility");
-			return;
-		}
-		
-		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
-		if (theItem == null) {
-			LOGGER.error("lightOneItem called with unknown item");
-			return;
-		}
-
-		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theItem));
-	}
-	
-	// --------------------------------------------------------------------------
-	/**
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
-	public Future<Void> lightChildLocations(final String facilityPersistentId, final String inLocationNominalId) {
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			throw new IllegalArgumentException("lightChildLocations called with unknown facility: " + facilityPersistentId);
-		}
-
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			throw new IllegalArgumentException("lightChildLocations called with unknown location: " + theLocation);
-		}
+	Future<Void> lightChildLocations(final Facility facility, final ISubLocation<?> theLocation) {
 
 		List<LightLedsMessage> ledMessages = Lists.newArrayList(); 
-		for (@SuppressWarnings("rawtypes") ISubLocation child : theLocation.getChildrenInWorkingOrder()) {
-			ledMessages.add(toLedsMessage(4, facility.getDiagnosticColor(), child));
+		if (theLocation instanceof Aisle) { //TODO lost the OO here
+			List<ISubLocation<?>> children = theLocation.getActiveChildrenAtLevel(Tier.class);
+			Collections.sort(children, new LocationABC.LocationWorkingOrderComparator());
+			for (@SuppressWarnings("rawtypes") ISubLocation child : children) {
+				ledMessages.add(toLedsMessage(4, facility.getDiagnosticColor(), child));
+			}
+			return chaserLight(facility, ledMessages);
+		} else {
+			List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
+			for (@SuppressWarnings("rawtypes") ISubLocation child : children) {
+				ledMessages.add(toLedsMessage(4, facility.getDiagnosticColor(), child));
+			}
+			return chaserLight(facility, ledMessages);
 		}
-		return chaserLight(facility, ledMessages);
-	}
-
-	public Future<Void> lightInventory(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
-		ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-		if (theColor == ColorEnum.INVALID) {
-			throw new IllegalArgumentException("lightInventory called with unknown color: " + theColor);
-		}
-
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
-		if (facility == null) {
-			throw new IllegalArgumentException("lightInventory called with unknown facility: " + facilityPersistentId);
-		}
-
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
-		if (theLocation == null || theLocation instanceof Facility) {
-			throw new IllegalArgumentException("lightInventory called with unknown location: " + theLocation);
-		}
-
-		List<LightLedsMessage> messages = Lists.newArrayList();
-		for (Item item : theLocation.getInventoryInWorkingOrder()) {
-			messages.add(toLedsMessage(3, theColor, item));
-		}
-		return chaserLight(facility, messages);
+		
 	}
 
 	Future<Void> chaserLight(final Facility facility, final List<LightLedsMessage> messageSequence) {
@@ -214,6 +202,16 @@ public class LightService implements IApiService {
 		return new LightLedsMessage(controller.getDeviceGuidStr(), LIGHT_LOCATION_DURATION_SECS, theLedCommands);
 	}
 
+	private Facility checkFacility(final String facilityPersistentId) {
+		return checkNotNull(Facility.DAO.findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
+	}
+
+	private ISubLocation<?> checkLocation(Facility facility, final String inLocationNominalId) {
+		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+		checkArgument(theLocation != null && !(theLocation instanceof Facility), "Location nominalId unknown: %s", inLocationNominalId);
+		return theLocation;
+	}
+	
 	private Future<Void> scheduleChaserRunnable(final TerminatingScheduledRunnable runPerPeriod,  long intervalToSleep, TimeUnit intervalUnit) {
 		if (mLastChaserFuture != null) {
 			mLastChaserFuture.cancel(true);
