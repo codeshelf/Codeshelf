@@ -9,6 +9,7 @@ import com.google.common.base.Preconditions;
  */
 public class UomNormalizer {
 
+	// Once set, these shall never change as they are in the database as part of item domainId.
 	public static final String EACH = "EA";
 	public static final String CASE = "CS";
 	
@@ -16,13 +17,15 @@ public class UomNormalizer {
 
 	}
 
-	// So far, only case and each.  In english, also may need carton, jar, box
+	// So far, only case and each.  In english, also may need carton, jar, box, pack or package. Notice potential conflict with "pick".
 	public static String normalizeString(String inUomStr) {
 		String returnStr = inUomStr;
 		
 		if (inUomStr.equalsIgnoreCase("cs") || inUomStr.equalsIgnoreCase("case"))
 			returnStr = CASE;
 		else if (inUomStr.equalsIgnoreCase("ea") || inUomStr.equalsIgnoreCase("each"))
+			returnStr = EACH;
+		else if (inUomStr.equalsIgnoreCase("pk") || inUomStr.equalsIgnoreCase("pick")) // sort of a kludge for Accu-Logistics
 			returnStr = EACH;
 		else 
 			returnStr = inUomStr.toUpperCase();
