@@ -1,11 +1,18 @@
 package com.gadgetworks.codeshelf.validation;
 
+import lombok.Getter;
 import lombok.ToString;
 
 @ToString() 
 public class Violation {
+	
+	@Getter
 	private Object failedLine;
+	
+	@Getter
 	private Exception failure;
+	
+	@Getter
 	private String failureDescription;
 	
 	public Violation(Object failedLine, String failureDescription) {
@@ -25,4 +32,6 @@ public class Violation {
 		this.failureDescription = furtherDetail;
 		this.failure = inException;
 	}
+	
+	
 }

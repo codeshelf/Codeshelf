@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -19,8 +20,10 @@ import org.junit.rules.TestName;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
+import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Facility.Work;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -28,6 +31,8 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.service.ContainerService;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 
 /**
  * @author jeffw
@@ -91,6 +96,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
+
 	}
 
 	@Test
@@ -127,8 +133,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testCrossBatchImporter() {
 		Facility facility = mFacility;
-		HeaderCounts theCounts = facility.countCrossOrders();
-		Assert.assertTrue(theCounts.mTotalHeaders == 0);
+		Assert.assertEquals(0, facility.countCrossOrders().mTotalHeaders);
 		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.1,100,ea\r\n" //
@@ -148,6 +153,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		int count = importCsvString(mFacility, csvString, ediProcessTime);		
+
 		Assert.assertEquals(6, count);
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
 		HeaderCounts theCounts2 = facility.countCrossOrders();
@@ -231,10 +237,10 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
 		HeaderCounts theCounts = facility.countCrossOrders();
-		Assert.assertTrue(theCounts.mTotalHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts.mActiveDetails == 6);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 2);
+		Assert.assertEquals(2, theCounts.mTotalHeaders);
+		Assert.assertEquals(2, theCounts.mActiveHeaders);
+		Assert.assertEquals(6, theCounts.mActiveDetails);
+		Assert.assertEquals(2, theCounts.mActiveCntrUses);
 
 
 		// Now re-import the interchange with one order missing a single item.
@@ -252,10 +258,10 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// The reimport resulted in inactivation of previous order headers for those containers
 		// Then we get new stuff.
 		HeaderCounts theCounts2 = facility.countCrossOrders();
-		Assert.assertTrue(theCounts2.mTotalHeaders == 4);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts2.mActiveDetails == 5);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
+		Assert.assertEquals(4, theCounts2.mTotalHeaders);
+		Assert.assertEquals(2, theCounts2.mActiveHeaders);
+		Assert.assertEquals(5, theCounts2.mActiveDetails);
+		Assert.assertEquals(2, theCounts2.mActiveCntrUses);
 
 
 		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
@@ -272,6 +278,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertEquals(true, order.getActive());
 		orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNull(orderDetail);
+
+		ContainerService service  = new ContainerService();	
+		
+		Map<Container, BatchResult<Work>> results = service.containersWithViolations(mFacility.getPersistentId().toString());
+		Assert.assertTrue(results.toString(), results.isEmpty());
 
 	}
 
