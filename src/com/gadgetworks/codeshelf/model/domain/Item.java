@@ -283,6 +283,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		String quantStr;
 
 		// for each or case, make sure we do not return the foolish looking 2.0 EA.
+		// UomNormalizer equivalents also return a 2 PK.  Other units sill may look foolish, such as
+		// 3.0 box. We would need the table of Uom to know if the units are discrete or not.
 		
 		//It was deemed that zero in the system is the unknown quantity in this system 
 		//   the system is not inventory tracking system so zero quantity in item does not mean you 
@@ -290,7 +292,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (Math.abs(quant.doubleValue() - 0.0d) < 0.000001) {//zero essentially
 			quantStr = "?";
 			
-		} else if (uom.equalsIgnoreCase("EA") || uom.equalsIgnoreCase("CS")) {
+		} else if (UomNormalizer.normalizedEquals(uom, UomNormalizer.CASE) || UomNormalizer.normalizedEquals(uom, UomNormalizer.EACH)) { 
 			quantStr = Integer.toString((int) quant.doubleValue());
 		} else {
 			quantStr = Double.toString(quant);
