@@ -789,7 +789,13 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 		// DEV-492 remove previous container uses.
+		// just to avoid a long hang after this first runs against old data with hundreds of stale uses, limit to 50.
+		int cleanCount = 0;
+		final int lkMostUsesToConsider = 50;
 		for (ContainerUse oldUse : priorCntrUses) {
+			cleanCount ++;
+			if (cleanCount >= lkMostUsesToConsider)
+				break;
 			if (!newCntrUses.contains(oldUse)) {
 				oldUse.setCurrentChe(null);
 				inChe.removeContainerUse(oldUse);
