@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -407,6 +408,45 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		Assert.assertEquals("Repeat Container", wi4Desc);
 
+	}
+
+	@Test
+	public final void containerAssignmentTest() throws IOException {
+		// This uses the cross batch setup because the container are convenient.
+		Facility facility = setUpSimpleSlottedFacility("XB06");
+		setUpGroup1OrdersAndSlotting(facility);
+
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
+		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
+		HousekeepingInjector.turnOffHK();
+		facility.setUpCheContainerFromString(theChe, "11,12,13");
+		
+		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
+		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		int usesCount = theChe.getUses().size();
+		Assert.assertTrue(usesCount == 3);
+		// Just exploring: see what happens if we add the same use several times.
+		// Probably no need to port this bit to hibernate branch as this does not match the new pattern.
+		ContainerUse aUse = theChe.getUses().get(0);
+		theChe.addContainerUse(aUse);
+		theChe.addContainerUse(aUse);
+		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		usesCount = theChe.getUses().size();
+		Assert.assertTrue(usesCount == 3);
+		// We just proved that adding the same object extra times to CHE uses does not
+		// not result in duplicates in the list. Probably true for most ebeans relationships
+		
+		// Now the new part for DEV-492. Show that we remove prior run uses
+		facility.setUpCheContainerFromString(theChe, "14");
+		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		Assert.assertTrue(theChe.getUses().size() == 1);		
+		// BUG! at least with ebeans. If we used 12 above instead of 14, it throws on an ebeans
+		// lazy load exception on work instruction
+
+		HousekeepingInjector.restoreHKDefaults(); // set it back
 	}
 
 }

@@ -760,6 +760,12 @@ public class Facility extends SubLocationABC<Facility> {
 			}
 		}
 
+		// DEV-492 identify previous container uses
+		ArrayList<ContainerUse> priorCntrUses = new ArrayList<ContainerUse>();
+		priorCntrUses.addAll(inChe.getUses());
+		ArrayList<ContainerUse> newCntrUses = new ArrayList<ContainerUse>();
+
+		// Set new uses on the CHE.
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
 			Container container = getContainer(containerId);
@@ -769,6 +775,7 @@ public class Facility extends SubLocationABC<Facility> {
 				// Set the CHE on the containerUse
 				ContainerUse thisUse = container.getCurrentContainerUse();
 				if (thisUse != null) {
+					newCntrUses.add(thisUse); // DEV-492 bit
 					if (thisUse.getCurrentChe() != null) {
 						changedChes.add(thisUse.getCurrentChe());
 					}
@@ -779,13 +786,28 @@ public class Facility extends SubLocationABC<Facility> {
 						LOGGER.error("", e);
 					}
 				}
-
+			}
+		}
+		// DEV-492 remove previous container uses.
+		for (ContainerUse oldUse : priorCntrUses) {
+			if (!newCntrUses.contains(oldUse)) {
+				oldUse.setCurrentChe(null);
+				inChe.removeContainerUse(oldUse);
+				try {
+					ContainerUse.DAO.store(oldUse);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
 			}
 		}
 
+		// Work around serious ebeans problem. See CHE uses field not correct.
+		Che.DAO.clearAllCaches();
+		
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
+		// Unfortunately, the above still does not push an update to CHE list in UI
 
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
@@ -799,6 +821,8 @@ public class Facility extends SubLocationABC<Facility> {
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 
 		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
+
+		
 		return finalWIResults.size();
 	}
 
@@ -1980,7 +2004,7 @@ public class Facility extends SubLocationABC<Facility> {
 			uomMaster);
 		return returnItem;
 	}
-	
+
 	private final Set<SiteController> getSiteControllers() {
 		Set<SiteController> siteControllers = new HashSet<SiteController>();
 
