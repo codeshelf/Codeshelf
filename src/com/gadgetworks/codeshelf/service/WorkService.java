@@ -94,7 +94,7 @@ public class WorkService implements IApiService {
 		UUID wiId = updatedWi.getPersistentId();
 		WorkInstruction storedWi = WorkInstruction.DAO.findByPersistentId(wiId);
 		if (storedWi == null) {
-			throw new InputValidationException(updatedWi, "persistentId", ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
 		storedWi.setPickerId(updatedWi.getPickerId());
 		storedWi.setActualQuantity(updatedWi.getActualQuantity());

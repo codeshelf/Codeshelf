@@ -37,7 +37,7 @@ public class ServiceMethodCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		ServiceMethodResponse response = new ServiceMethodResponse();
-		Errors errors = new DefaultErrors(this.getClass());
+		DefaultErrors errors = new DefaultErrors(this.getClass());
 		String className = request.getClassName();
 		if (className==null) {
 			LOGGER.error("Class name is undefined");

@@ -218,7 +218,7 @@ public class EdiProcessorTest extends EdiTestABC {
 				Facility inFacility,
 				Timestamp inProcessTime) throws IOException {
 				BatchResult result = new BatchResult();
-				result.addViolation("bad", "bad");
+				result.addViolation("bad", "bad", "msg");
 				return result;
 			}
 		};

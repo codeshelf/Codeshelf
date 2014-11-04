@@ -82,7 +82,7 @@ public class DropboxServiceTest {
 
 	private BatchResult<Object> generateFailureResult() {
 		BatchResult<Object> result = new BatchResult<Object>();
-		result.addViolation("bad", "badbad");
+		result.addViolation("bad", "bad", "msg");
 		return result;
 	}
 }

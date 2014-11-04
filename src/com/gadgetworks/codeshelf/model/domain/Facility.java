@@ -66,13 +66,13 @@ import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -823,7 +823,7 @@ public class Facility extends SubLocationABC<Facility> {
 		wiResultList.addAll(generateOutboundInstructions(inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
-		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime).getResult());
+		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
@@ -1094,35 +1094,30 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private BatchResult<WorkInstruction>  generateCrossWallInstructions(final Che inChe,
+	private List<WorkInstruction>  generateCrossWallInstructions(final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
-		BatchResult<WorkInstruction> wiResults = new BatchResult<WorkInstruction>();
+		List<WorkInstruction> wiList = Lists.newArrayList();
 		for (Container container : inContainerList) {
 			BatchResult<Work> result = determineWorkForContainer(container);
-			if (result.isSuccessful()) {
-				for (Work work : result.getResult()) {
-					WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-						WorkInstructionTypeEnum.PLAN,
-						work.getOutboundOrderDetail(),
-						work.getContainer(),
-						inChe,
-						work.getFirstLocationOnPath(),
-						inTime);
+			for (Work work : result.getResult()) {
+				WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+					WorkInstructionTypeEnum.PLAN,
+					work.getOutboundOrderDetail(),
+					work.getContainer(),
+					inChe,
+					work.getFirstLocationOnPath(),
+					inTime);
 
-					// If we created a WI then add it to the list.
-					if (wi != null) {
-						setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
-						wiResults.add(wi);
-					}
+				// If we created a WI then add it to the list.
+				if (wi != null) {
+					setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
+					wiList.add(wi);
 				}
 			}
-			else {
-				wiResults.addAllViolations(result);
-			}
 		}
-		return wiResults;
+		return wiList;
 	}
 
 	public BatchResult<Work> determineWorkForContainer(Container container) {
@@ -1130,32 +1125,24 @@ public class Facility extends SubLocationABC<Facility> {
 		BatchResult<Work> batchResult = new BatchResult<Work>();
 		OrderHeader crossOrder = container.getCurrentOrderHeader();
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
-			for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-				if (crossOrderDetail.getActive()) {
-					List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
-					if (matchingOrderDetails.isEmpty()) {
-						batchResult.addViolation(crossOrderDetail, "no matching outbound order details");
-					}
-					else {
-						for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
-							List<ISubLocation<?>> firstLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
-							if (firstLocationPerPath.isEmpty()) {
-								batchResult.addViolation(matchingOutboundOrderDetail, "no matching order locations on any path");
-							}
-							else {
-								for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
-									Work work = new Work(container, matchingOutboundOrderDetail, firstLocationOnPath);
-									batchResult.add(work);
-								}
-							}
-						}
-					}
+			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(crossOrder);
+			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
+				List<ISubLocation<?>> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+				for (ISubLocation<?> aLocationOnPath : firstOrderLocationPerPath) {
+					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
+					batchResult.add(work);
+				} /* for else */ if (firstOrderLocationPerPath.isEmpty()) {
+					batchResult.addViolation("matchingOutboundOrderDetail", matchingOutboundOrderDetail, "did not have a matching order location on any path");
 				}
+			} /* for else */ if (matchingOrderDetails.isEmpty()) {
+				batchResult.addViolation("currentOrderHeader", crossOrder, "no matching outbound order detail");
 			}
+		} else {
+			batchResult.addViolation("currentOrderHeader", container.getCurrentOrderHeader(), ErrorCode.FIELD_REFERENCE_INACTIVE);
 		}
 		return batchResult;
 	}
-
+	
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
@@ -1169,7 +1156,19 @@ public class Facility extends SubLocationABC<Facility> {
 		return locations;
 	}
 
-	private List<OrderDetail> getMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
+	private List<OrderDetail> toAllMatchingOutboundOrderDetails(OrderHeader crossbatchOrder) {
+		List<OrderDetail> allMatchingOrderDetails = Lists.newArrayList();
+		for (OrderDetail crossOrderDetail : crossbatchOrder.getOrderDetails()) {
+			if (crossOrderDetail.getActive()) {
+				List<OrderDetail> matchingOrderDetails = toMatchingOutboundOrderDetail(crossOrderDetail);
+				allMatchingOrderDetails.addAll(matchingOrderDetails);
+			}		
+		}
+		return allMatchingOrderDetails;
+	}
+
+	
+	private List<OrderDetail> toMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
 		Preconditions.checkNotNull(crossbatchOrderDetail);
 		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
 		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS));
@@ -2019,8 +2018,8 @@ public class Facility extends SubLocationABC<Facility> {
 		itemBean.setUom(inUomId);
 		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
-			Errors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", ErrorCode.FIELD_REFERENCE_NOT_FOUND, "storedLocation was not found");
+			DefaultErrors errors = new DefaultErrors(Item.class);
+			errors.rejectValue("storedLocation", storedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			throw new InputValidationException(errors);
 		}
 

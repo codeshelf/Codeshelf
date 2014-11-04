@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.validation.Errors;
-import com.gadgetworks.codeshelf.validation.Violation;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.collect.ImmutableMap;
@@ -36,7 +35,7 @@ public class EventProducer {
 		produceErrorsEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inErrors, inRelatedObject);
 	}
 
-	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, List<Violation> inViolations, Object inRelatedObject) {
+	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, List<?> inViolations, Object inRelatedObject) {
 		produceErrorsEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inViolations, inRelatedObject);
 	}
 
@@ -131,7 +130,7 @@ public class EventProducer {
 			.add("interval", inInterval)
 			.add("namedValues", namedValues);
 	}
-	
+
 	/* Unused at the moment but planned for validation violations 
 	private <T> void produceEvent(Set<ConstraintViolation<T>> violations, List<String> tags, T importBean) {
 		String logMessage = Objects.toStringHelper("Event")

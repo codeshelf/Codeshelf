@@ -3,27 +3,26 @@ package com.gadgetworks.codeshelf.service;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.List;
-import java.util.Map;
 
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Facility.Work;
 import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 
 public class ContainerService implements IApiService {
 
-	public Map<Container, BatchResult<Work>> containersWithViolations(String facilityPersistentId) {
+	public List<ContainerStatus> containersWithViolations(String facilityPersistentId) {
 		Facility facility = checkFacility(facilityPersistentId);
-		Map<Container, BatchResult<Work>> results = Maps.newHashMap();
+		List<ContainerStatus> containerStatuses = Lists.newArrayList();
 		List<Container> containers = facility.getContainers();
 		for (Container container : containers) {
 			BatchResult<Work> workResults = facility.determineWorkForContainer(container);
 			//if (!workResults.isSuccessful()) {
-				results.put(container, workResults);
+			containerStatuses.add(new ContainerStatus(container, workResults));
 			//}
 		}
-		return results;
+		return containerStatuses;
 	}
 	
 	private Facility checkFacility(final String facilityPersistentId) {

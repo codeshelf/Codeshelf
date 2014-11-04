@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.sql.Timestamp;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 /**
@@ -32,6 +33,7 @@ public interface IDomainObject {
 	 * Return the short domain ID for this object (that is unique among all of the objects under this parent).
 	 * @return
 	 */
+	@JsonGetter
 	String getDomainId();
 
 	// --------------------------------------------------------------------------

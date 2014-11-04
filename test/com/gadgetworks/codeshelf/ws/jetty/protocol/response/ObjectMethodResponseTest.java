@@ -10,15 +10,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.Errors;
 
 public class ObjectMethodResponseTest {
 
 	@Test
 	public void testSerialization() throws IOException {
 		ObjectMethodResponse response = new ObjectMethodResponse();
-		Errors errors = new DefaultErrors(Item.class);
-		errors.rejectValue("quantity", ErrorCode.FIELD_REQUIRED, "quantity is required");
+		DefaultErrors errors = new DefaultErrors(Item.class);
+		errors.rejectValue("quantity", null, ErrorCode.FIELD_REQUIRED);
 		response.setErrors(errors);
 		ObjectMapper mapper = new ObjectMapper();
 		String result = mapper.writeValueAsString(response);

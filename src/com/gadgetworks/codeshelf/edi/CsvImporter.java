@@ -16,7 +16,6 @@ import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.validation.Violation;
 
 public abstract class CsvImporter<T> {
 
@@ -44,7 +43,7 @@ public abstract class CsvImporter<T> {
 		mEventProducer.produceEvent(getEventTagsForImporter(), EventSeverity.INFO, inRelatedObject);
 	}
 
-	protected void produceRecordViolationEvent(EventSeverity inSeverity, List<Violation> violations, Object inRelatedObject) {
+	protected void produceRecordViolationEvent(EventSeverity inSeverity, List<?> violations, Object inRelatedObject) {
 		mEventProducer.produceViolationEvent(getEventTagsForImporter(), inSeverity, violations, inRelatedObject);
 	}
 

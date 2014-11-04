@@ -201,7 +201,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
-			Assert.assertTrue(e.hasViolationForProperty("positionFromLeft"));
+			Assert.assertTrue(e.hasViolationForProperty("cmFromLeft"));
 		}
 	}
 	
