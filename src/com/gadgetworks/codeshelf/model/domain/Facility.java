@@ -740,8 +740,8 @@ public class Facility extends SubLocationABC<Facility> {
 		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
 		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
 		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",
-			filterParams)) {
+		List<WorkInstruction> workInstructions = WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",filterParams);
+		for (WorkInstruction wi : workInstructions) {
 			try {
 
 				Che assignedChe = wi.getAssignedChe();

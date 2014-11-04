@@ -58,20 +58,20 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
-				+ "Tier,T3,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,240,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
-				+ "Tier,T3,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,240,,\r\n" //
 				+ "Aisle,A2,,,,,tierB1S1Side,12.85,55.45,X,120\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
-				+ "Tier,T3,,0,80,120,,\r\n" //
+				+ "Tier,T3,,0,80,240,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,120,,\r\n" //
-				+ "Tier,T3,,0,80,120,,\r\n"; //
+				+ "Tier,T3,,0,80,240,,\r\n"; //
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -155,7 +155,6 @@ public class InventoryPickRunTest extends EdiTestABC {
 		tierA2B1T1.setControllerChannel(controller4.getPersistentId().toString(), channel1Str, "aisle");
 
 		return facility;
-
 	}
 
 	private void readOrdersForA1(Facility inFacility) throws IOException {
@@ -186,11 +185,15 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 	}
 
-	private void readInventoryForA1(Facility inFacility) throws IOException {
-		// A1.B1.T2 is D-26.  A1.B2.T2 is D-28
+	private void readInventoryWithoutTop(Facility inFacility) throws IOException {
+		// A1.B1.T2 is D-26.  
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
+
+		// A1.B2.T2 is D-28		
 		// In D-28, left to right are SKUs 1522,1525,1523,1524
-		// A1.B1.T1 is D-27.  Left to right are SKUs  1831, 1830
+		
+		// A1.B1.T1 is D-27.  
+		// In D-27, left to right are SKUs  1831, 1830
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
@@ -212,13 +215,50 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
-
 	}
+	
+	private void readInventoryWithTop(Facility inFacility) throws IOException {
+		// A1.B1.T2 is D-26.  
+		// In D-26, left to right are SKUs 1124,1126,1123,1125
+
+		// A1.B2.T2 is D-28		
+		// In D-28, left to right are SKUs 1522,1525
+		
+		// A1.B1.T3 is D-71		
+		// In D-71, left to right are SKUs 1523
+
+		// A1.B2.T3 is D-72		
+		// In D-72, left to right are SKUs 1524
+		
+		// A1.B1.T1 is D-27.  
+		// In D-27, left to right are SKUs  1831, 1830
+
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
+				+ "1124,D-26,12 oz Bowl Lids,0,ea,6/25/14 12:00,8\r\n" //
+				+ "1125,D-26,16 oz Bowl Lids,,each,6/25/14 12:00,185\r\n" //
+				+ "1126,D-26,24 oz Bowl Lids,80,each,6/25/14 12:00,55\r\n" //
+				+ "1522,D-28,Tshirt-small,,ea,,3\r\n" //
+				+ "1523,D-71,Tshirt-med,,ea,,190\r\n" //
+				+ "1524,D-72,Tshirt-large,0,ea,6/25/14 12:00,214\r\n" //
+				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1831,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1830,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+	}	
 
 	@Test
-	public final void testSequenceAlongTier() throws IOException {
-		Assert.assertTrue(true);
+	public final void testSequenceAlongTierWithoutTop() throws IOException {
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
 
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
 		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27"); // just using alias a little.
@@ -231,7 +271,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
 
 		// Inventory
-		readInventoryForA1(facility);
+		readInventoryWithoutTop(facility);
 		List<Item> aList = tierA1B1T2.getInventoryInWorkingOrder();
 		Assert.assertTrue(aList.size() == 4);
 		logItemList(aList);
@@ -248,6 +288,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		HousekeepingInjector.turnOffHK();
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		facility.setUpCheContainerFromString(theChe, "12000");
 
 		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
@@ -273,14 +314,80 @@ public class InventoryPickRunTest extends EdiTestABC {
 		wi5 = wiList2.get(4);
 		wi10 = wiList2.get(9);
 		// All wrong!
-		// Assert.assertEquals("1124", wi1.getItemMasterId());
-		// Assert.assertEquals("1831", wi5.getItemMasterId());
-		// Assert.assertEquals("1524", wi10.getItemMasterId());
+		Assert.assertEquals("1124", wi1.getItemMasterId());
+		Assert.assertEquals("1831", wi5.getItemMasterId());
+		Assert.assertEquals("1524", wi10.getItemMasterId());
 
 		HousekeepingInjector.restoreHKDefaults();
 
 		// Need more cases for BayDistanceTopLast.
 
 	}
+	
+	@Test
+	public final void testSequenceAlongTierWithTop() throws IOException {
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_02");
+		Assert.assertNotNull(facility);		
+		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
+		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27"); // just using alias a little.
+		Assert.assertNotNull(tierA1B1T1.getLedController());
+		Tier tierA1B2T1 = (Tier) facility.findSubLocationById("A1.B2.T1");
+		Assert.assertNotNull(tierA1B1T1.getLedController());
+		
+		// Check the path direction	
+		String posA1B1 = tierA1B1T1.getPosAlongPathui();
+		String posA2B1 = tierA1B2T1.getPosAlongPathui();
+		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
+
+		// Inventory
+		readInventoryWithTop(facility);
+		List<Item> aList = tierA1B1T2.getInventoryInWorkingOrder();
+		Assert.assertTrue(aList.size() == 4);
+		logItemList(aList);
+		Item firstOnPath = aList.get(0);
+		String firstSku = firstOnPath.getItemMasterId();
+		Assert.assertEquals("1124", firstSku);
+
+		// Orders
+		readOrdersForA1(facility);
+
+		// Now ready to run the cart
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		HousekeepingInjector.turnOffHK();
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		facility.setUpCheContainerFromString(theChe, "12000");
+
+		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		logWiList(wiList);
+		Integer theSize = wiList.size();
+		Assert.assertEquals((Integer) 10, theSize);
+		WorkInstruction wi1 = wiList.get(0);
+		WorkInstruction wi5 = wiList.get(4);
+		WorkInstruction wi10 = wiList.get(9);
+		Assert.assertEquals("1523", wi1.getItemMasterId());
+		Assert.assertEquals("1125", wi5.getItemMasterId());
+		Assert.assertEquals("1525", wi10.getItemMasterId());
+
+		// Check again with the Accu sequencer
+		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
+		Che theChe2 = theNetwork.getChe("CHE2");
+
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
+		facility.setUpCheContainerFromString(theChe2, "12000");
+		List<WorkInstruction> wiList2 = facility.getWorkInstructions(theChe2, ""); // This returns them in working order.
+		logWiList(wiList2);
+		wi1 = wiList2.get(0);
+		wi5 = wiList2.get(4);
+		wi10 = wiList2.get(9);
+		// All wrong!
+		Assert.assertEquals("1124", wi1.getItemMasterId());
+		Assert.assertEquals("1831", wi5.getItemMasterId());
+		Assert.assertEquals("1524", wi10.getItemMasterId());
+
+		HousekeepingInjector.restoreHKDefaults();
+	}	
 
 }
