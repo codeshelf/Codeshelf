@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.dropbox.core.DbxAccountInfo;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxClient;
@@ -57,9 +58,9 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * Dropbox Service
- * 
+ *
  * An EDI service allows the system to import/export EDI documentLocators to/from Dropbox.
- * 
+ *
  * @author jeffw
  */
 
@@ -165,6 +166,25 @@ public class DropboxService extends EdiServiceABC {
 		return result;
 	}
 
+	/**
+	 * Returns false if and only if it is configured and it fails to get account info
+	 */
+	public boolean checkConnectivity() {
+		try {
+			DbxClient client = getClient();
+			if(client != null) {
+				DbxAccountInfo info = client.getAccountInfo();
+				if (info == null) {
+					LOGGER.warn("Dropbox connectivity check failed, account info null");
+					return false;
+				}
+			}
+		} catch(Exception e) {
+			LOGGER.warn("Dropbox connectivity check failed", e);
+			return false;
+		}
+		return true;
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inClientSession
@@ -590,17 +610,17 @@ public class DropboxService extends EdiServiceABC {
 			String filepath = inEntry.lcPath;
 
 			/*  Warning: this is called rather indiscriminately. Whatever Dropbox sees anywhere (even in export and processed folders) gets called here.
-			 * 
+			 *
 			 *  New protocol deals with file redrop of the same name before we finish processing. See DropboxRealTest.java
 			 * 1) Just skip the file if .FAILED
 			 * 2) just after converting file to stream, rename the file as ".processing". But not if already .processing.
-			 * 3) Process the file, which as two main parts you do not fully see here: 
+			 * 3) Process the file, which as two main parts you do not fully see here:
 			 * 3a) Convert to bean list
 			 * 3b) Process the bean list
 			 * 4) On success, move to processed folder and rename removing the .processing
 			 * 4b) On fail, rename to .FAILED and leave in import
 			 * 4c) On exception, rename to .FAILED and leave in import
-			 * 
+			 *
 			 * Goals to achieve with all this:
 			 * New files get processed.
 			 * New file overwritten with the same name gets processed. (The name will change in the processed folder to avoid duplicate)
@@ -750,7 +770,7 @@ public class DropboxService extends EdiServiceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 * Rename implemented as a "move" to different path. This adds the "dot".
-	 * If the file name already ends in the appendStr, another is not added. 
+	 * If the file name already ends in the appendStr, another is not added.
 	 * Returns the new file path. Will attempt a modification if intended file name already exists in target directory
 	 * @param inClient
 	 * @param inExistingFilePath
@@ -779,7 +799,7 @@ public class DropboxService extends EdiServiceABC {
 			String suffix = "." + inAppendStr;
 			if (!toPath.endsWith(suffix))
 				toPath = toPath + "." + inAppendStr;
-			else 
+			else
 				LOGGER.warn("file already had the suffix " + suffix + " ; not adding again"); // happens in some exceptions
 		}
 

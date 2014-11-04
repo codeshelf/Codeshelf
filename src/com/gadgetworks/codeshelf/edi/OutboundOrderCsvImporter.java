@@ -137,7 +137,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		for (OrderHeader order : inOrderList) {
 			for (OrderDetail orderDetail : order.getOrderDetails()) {
 				if (!orderDetail.getUpdated().equals(inProcessTime)) {
-					LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+					LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
 					orderDetail.setActive(false);
 					//orderDetail.setQuantity(0);
 					//orderDetail.setMinQuantity(0);
@@ -164,7 +164,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			// Iterate all of the order groups to see if they're still active.
 			for (OrderGroup group : inFacility.getOrderGroups()) {
 				if (!group.getUpdated().equals(inProcessTime)) {
-					LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
+					LOGGER.trace("Archive old order group: " + group.getOrderGroupId());
 					group.setActive(false);
 					mOrderGroupDao.store(group);
 				}
@@ -182,7 +182,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 								if (orderDetail.getUpdated().equals(inProcessTime)) {
 									orderHeaderIsActive = true;
 								} else {
-									LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+									LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
 									orderDetail.setActive(false);
 									// orderDetail.setQuantity(0);
 									// orderDetail.setMinQuantity(0);
@@ -196,7 +196,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 						}
 
 						if (!orderHeaderIsActive) {
-							LOGGER.debug("Archive old order header: " + order.getOrderId());
+							LOGGER.trace("Archive old order header: " + order.getOrderId());
 							order.setActive(false);
 							mOrderHeaderDao.store(order);
 						}

@@ -34,7 +34,7 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 	@Override
 	public List<WorkInstruction> sort(Facility facility, List<WorkInstruction> inWiList) {
 		
-		// preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
+		preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
 		
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
 		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();

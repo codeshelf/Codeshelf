@@ -64,7 +64,7 @@ public abstract class EdiTestABC extends DomainTestABC {
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList)
 			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
-					+ wi.getPickInstruction() + " count: " + wi.getPlanQuantity() + " SKU: " + wi.getItemMasterId() + " order: "
+					+ wi.getPickInstruction() +"("+wi.getNominalLocationId()+")"+ " count: " + wi.getPlanQuantity() + " SKU: " + wi.getItemMasterId() + " order: "
 					+ wi.getOrderId() + " desc.: " + wi.getDescription());
 	}
 
