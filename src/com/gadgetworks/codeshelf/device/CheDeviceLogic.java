@@ -798,10 +798,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/**
 	 * The inShortWi was just shorted.
-	 * Is inProposedWi later in sequence, and is it the same product such that it should be shorted also?
+	 * Is inProposedWi later in sequence?
 	 */
-	private Boolean laterWi(final WorkInstruction inProposedWi, WorkInstruction inShortWi) {
-		Boolean returnVal = false;
+	private Boolean laterWi(final WorkInstruction inProposedWi, final WorkInstruction inShortWi) {
 		String proposedSort = inProposedWi.getGroupAndSortCode();
 		String shortedSort = inShortWi.getGroupAndSortCode();
 		if (proposedSort == null) {
@@ -811,37 +810,86 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (shortedSort.compareTo(proposedSort) < 0)
 			return true;
 
-		return returnVal;
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Is this an uncompleted housekeeping WI, that if just ahead of a short-ahead job is no longer needed?
+	 * Calling context is just ahead of short-ahead, so this does not need to try to check that. But knowing that, can look for other possible errors.
+	 */
+	private Boolean unCompletedUnneededHousekeep(final WorkInstruction inWi) {
+		// Keep in mind this odd-ball case:
+		// One short will short ahead and get some shorts and repeatPos.
+		// A later short will short ahead and look for more. It is possible that one of the earlier short ahead is complete and just before it.
+		WorkInstructionTypeEnum theType = inWi.getTypeEnum();
+		WorkInstructionStatusEnum theStatus = inWi.getStatusEnum();
+		if (theStatus != WorkInstructionStatusEnum.NEW && theStatus != WorkInstructionStatusEnum.SHORT) {
+			LOGGER.error("bad calling context 1 for unCompletedUnneededHousekeep");
+			return false;
+		}
+
+		if (theType == WorkInstructionTypeEnum.HK_REPEATPOS) {
+			return true;
+		}
+		// More checks for proper context. Try to avoid unanticipated cases and future bugs.
+		else if (theType == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+			LOGGER.error("bad calling context 2 for unCompletedUnneededHousekeep");
+		}
+
+		return false;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * The inShortWi was just shorted.
-	 * Compare later wis to that. If the same product, short those also
+	 * Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
 	 */
 	private void doShortAheads(final WorkInstruction inShortWi) {
 		// Look for more wis in the CHE's job list that must short also if this one did.
 		// Short and notify them, and remove so the worker will not encounter them. 
-		// Also remove unnecessary repeats and bay changes. (How?)
+		// Also remove unnecessary repeats and bay changes. The algorithm for housekeep removal is:
+		// - There are no bay changes. Only repeat containers. And only one housekeep between at a time (for now--this may break)
+		// - So track the previous work instruction as we iterate. If there is a repeat right before a short ahead, we can guarantee it is not needed.
 
 		Integer laterCount = 0;
 		Integer toShortCount = 0;
+		Integer removeHousekeepCount = 0;
 		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
 		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
+		WorkInstruction prevWi = null;
 		for (WorkInstruction wi : mAllPicksWiList) {
 			if (laterWi(wi, inShortWi)) {
 				laterCount++;
 				if (sameProductLotEtc(wi, inShortWi)) {
-					toShortCount++;
-					if (mActivePickWiList.contains(wi))
-						mActivePickWiList.remove(wi);
-					// Short aheads will always set the actual pick quantity to zero.
-					doShortTransaction(wi, 0);
+					// When simultaneous pick work instructions return, we must not short ahead within the simultaneous pick. See CD_0043 for details.
+					if (!mActivePickWiList.contains(wi)) {
+						toShortCount++;
+						// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
+						if (unCompletedUnneededHousekeep(prevWi)) {
+							if (mActivePickWiList.contains(prevWi))
+								LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
+							removeHousekeepCount++;
+							doCompleteUnneededHousekeep(prevWi);
+						}
+						// Short aheads will always set the actual pick quantity to zero.
+						doShortTransaction(wi, 0);
+					}
 				}
 			}
+			prevWi = wi;
 		}
-		if (laterCount > 0)
-			LOGGER.info("Considered " + laterCount + " later jobs. Shorted " + toShortCount + ".");
+
+		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
+		if (toShortCount > 0) {
+			String reportShortAheadDetails = "Considered " + laterCount + " later jobs for short-ahead.";
+			if (toShortCount > 0)
+				reportShortAheadDetails += " Shorted " + toShortCount + " more.";
+			if (removeHousekeepCount > 0)
+				reportShortAheadDetails += " Also removed " + removeHousekeepCount + " housekeeping instructions.";
+			LOGGER.info(reportShortAheadDetails);
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -857,10 +905,30 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		inWi.setPickerId(mUserId);
 		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
 		inWi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
-		mActivePickWiList.remove(inWi);
+
+		// normal short will be in mActivePickWiList.
+		// short-aheads will not be.
+		if (mActivePickWiList.contains(inWi))
+			mActivePickWiList.remove(inWi);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Update the WI fields to complete-ahead an unneeded housekeep, and call out to mDeviceManager to share it back to the server.
+	 */
+	private void doCompleteUnneededHousekeep(final WorkInstruction inWi) {
+			// Add it to the list of completed WIs.
+			mCompletedWiList.add(inWi);
+
+			inWi.setActualQuantity(0);
+			inWi.setPickerId(mUserId);
+			inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+			inWi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+
+			mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
 
 	// --------------------------------------------------------------------------
