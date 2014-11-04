@@ -213,9 +213,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 					if (aCommand != null && aCommand.getCommandTypeEnum() == CommandGroupEnum.NETMGMT)
 						isMerelyNetManagementTraffic = true;
 					if (isMerelyNetManagementTraffic)
-						LOGGER.debug("Receive packet: " + result.toString());
+						LOGGER.trace("Receive packet: " + result.toString());
 					else
-						LOGGER.info("Receive packet: " + result.toString());
+						LOGGER.debug("Receive packet: " + result.toString());
 					hexDumpArray(nextFrameArray);
 				} catch (Exception e) {
 					LOGGER.error("", e);
@@ -453,9 +453,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 		// The CommandAssocABC and CommandNetMagmtCheck commands have a mGuid field. Others do not; there is no convenient way to know the GUID.
 		if (isMerelyNetManagementTraffic)
-			LOGGER.debug("Send packet:    " + inPacket.toString());
+			LOGGER.trace("Send packet:    " + inPacket.toString());
 		else
-			LOGGER.info("Send packet:    " + inPacket.toString());
+			LOGGER.debug("Send packet:    " + inPacket.toString());
 		//if (LOGGER.isDebugEnabled()) {
 		//	try {
 		//		hexDumpArray(packetBytes);

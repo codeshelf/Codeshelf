@@ -776,6 +776,95 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi equivalent enough that it should also short?
+	 */
+	private Boolean sameProductLotEtc(final WorkInstruction inProposedWi, WorkInstruction inShortWi) {
+		// Initially, just look at the denormalized item Id.
+		String shortId = inShortWi.getItemId();
+		String proposedId = inProposedWi.getItemId();
+		if (shortId == null || proposedId == null) {
+			LOGGER.error("sameProductLotEtc has null value");
+			return false;
+		}
+		if (shortId.compareTo(proposedId) == 0) {
+			LOGGER.info("SHORT AHEAD " + inProposedWi);
+			return true;
+		}
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi later in sequence, and is it the same product such that it should be shorted also?
+	 */
+	private Boolean laterWi(final WorkInstruction inProposedWi, WorkInstruction inShortWi) {
+		Boolean returnVal = false;
+		String proposedSort = inProposedWi.getGroupAndSortCode();
+		String shortedSort = inShortWi.getGroupAndSortCode();
+		if (proposedSort == null) {
+			LOGGER.error("laterWiSameProduct has wi with no sort code");
+			return false;
+		}
+		if (shortedSort.compareTo(proposedSort) < 0)
+			return true;
+
+		return returnVal;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Compare later wis to that. If the same product, short those also
+	 */
+	private void doShortAheads(final WorkInstruction inShortWi) {
+		// Look for more wis in the CHE's job list that must short also if this one did.
+		// Short and notify them, and remove so the worker will not encounter them. 
+		// Also remove unnecessary repeats and bay changes. (How?)
+
+		Integer laterCount = 0;
+		Integer toShortCount = 0;
+		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
+		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
+		for (WorkInstruction wi : mAllPicksWiList) {
+			if (laterWi(wi, inShortWi)) {
+				laterCount++;
+				if (sameProductLotEtc(wi, inShortWi)) {
+					toShortCount++;
+					if (mActivePickWiList.contains(wi))
+						mActivePickWiList.remove(wi);
+					// Short aheads will always set the actual pick quantity to zero.
+					doShortTransaction(wi, 0);
+				}
+			}
+		}
+		if (laterCount > 0)
+			LOGGER.info("Considered " + laterCount + " later jobs. Shorted " + toShortCount + ".");
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The guts of the short transaction
+	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
+	 */
+	private void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
+		// Add it to the list of completed WIs.
+		mCompletedWiList.add(inWi);
+
+		inWi.setActualQuantity(inActualPickQuantity);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
+		mActivePickWiList.remove(inWi);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * YES or NO confirm the short pick.
 	 * @param inScanStr
 	 */
@@ -787,6 +876,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			WorkInstruction wi = mShortPickWi;
 			;
 			if (wi != null) {
+				doShortTransaction(wi, mShortPickQty);
+				/*
 				// Add it to the list of completed WIs.
 				mCompletedWiList.add(wi);
 
@@ -797,9 +888,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				mActivePickWiList.remove(wi);
 
 				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
+				*/
 				LOGGER.info("Pick shorted: " + wi);
 
 				clearLedControllersForWi(wi);
+
+				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.
@@ -874,13 +968,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
 			if (value != 0)
 				return value;
-			
+
 			String w1Sort = inWi1.getGroupAndSortCode();
 			String w2Sort = inWi2.getGroupAndSortCode();
 			value = CompareNullChecker.compareNulls(w1Sort, w2Sort);
 			if (value != 0)
 				return value;
-			
+
 			return w1Sort.compareTo(w2Sort);
 		}
 	};
@@ -1214,6 +1308,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
+				String itemId = wi.getItemId();
+				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
