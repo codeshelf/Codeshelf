@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
+import com.dropbox.core.DbxAccountInfo;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxClient;
@@ -165,6 +166,24 @@ public class DropboxService extends EdiServiceABC {
 		return result;
 	}
 
+	/**
+	 * Returns false if and only if it is configured and it fails to get account info
+	 */
+	public boolean checkConnectivity() {
+		try {
+			DbxClient client = getClient();
+			if(client != null) {
+				DbxAccountInfo info = client.getAccountInfo();
+				if (info == null) {
+					return false;
+				}
+			}
+		} catch(Exception e) {
+			LOGGER.warn("Connectivity check failed", e);
+			return false;
+		}
+		return true;
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inClientSession

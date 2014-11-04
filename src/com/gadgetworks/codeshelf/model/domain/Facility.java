@@ -651,8 +651,8 @@ public class Facility extends SubLocationABC<Facility> {
 		for (IEdiService ediService : getEdiServices()) {
 			if (ediService instanceof DropboxService) {
 				result = (DropboxService) ediService;
+				break;
 			}
-			break;
 		}
 		return result;
 	}
