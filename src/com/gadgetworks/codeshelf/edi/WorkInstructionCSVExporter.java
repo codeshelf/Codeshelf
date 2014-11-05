@@ -103,8 +103,14 @@ public class WorkInstructionCSVExporter {
 			}
 
 			properties[PICKERID_POS] = wi.getPickerId();
-			properties[PLAN_QTY_POS] = Integer.toString(wi.getPlanQuantity());
-			properties[ACT_QTY_POS] = Integer.toString(wi.getActualQuantity());
+
+			if (wi.getPlanQuantity() != null) {
+				properties[PLAN_QTY_POS] = String.valueOf(wi.getPlanQuantity());
+			}
+			if (wi.getActualQuantity() != null) {
+				properties[ACT_QTY_POS] = String.valueOf(wi.getActualQuantity());
+			}
+
 			properties[CHEID_POS] = wi.getAssignedCheName();
 			properties[ASSIGNED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getAssigned());
 			properties[STARTED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getStarted());
