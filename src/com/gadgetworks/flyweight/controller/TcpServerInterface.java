@@ -39,7 +39,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	 * 
 	 */
 	public TcpServerInterface() {
-		
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -52,6 +52,9 @@ public class TcpServerInterface extends SerialInterfaceABC {
 
 		try {
 			mServerSocket = new ServerSocket(PORT_NUM);
+		} catch (java.net.BindException e) {
+			LOGGER.error("Address/port number in use during doSetupConnection", e);
+			result = false;
 		} catch (IOException e) {
 			LOGGER.error("", e);
 			result = false;
@@ -121,7 +124,10 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	@Override
 	protected void doStopInterface() {
 		try {
-			mServerSocket.close();
+			// see a NPE here on tearing down integration test. Example IntegrationTest1.java
+			if (mServerSocket != null)
+				mServerSocket.close();
+
 			doSetupConnection();
 		} catch (IOException e1) {
 			LOGGER.error("", e1);

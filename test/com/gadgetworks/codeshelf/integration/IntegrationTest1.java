@@ -49,10 +49,10 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 	static {
 		Configuration.loadConfig("test");
 	}
-	
+
 	public IntegrationTest1() {
 	}
-	
+
 	@SuppressWarnings({ "rawtypes" })
 	private Facility setUpSimpleNoSlotFacility() {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
@@ -133,10 +133,9 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
 				+ "A1.B1.T1, D101\r\n" //
-				+ "A1.B1.T1.S1, D301\r\n" //
-				+ "A1.B1.T1.S2, D302\r\n" //
-				+ "A1.B1.T1.S3, D303\r\n" //
-				+ "A1.B1.T1.S4, D304\r\n" //
+				+ "A1.B2.T1, D301\r\n" //
+				+ "A1.B2.T1, D302\r\n" //
+				+ "A1.B3.T1, D303\r\n" //
 				+ "A2.B1.T1, D402\r\n" //
 				+ "A2.B2.T1, D403\r\n"//
 				+ "A3.B1.T1, D502\r\n" //
@@ -161,13 +160,16 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		CodeshelfNetwork network = getNetwork();
 		Organization organization = getOrganization();
 		String organizationId = organization.getDomainId();
-		
+
 		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
+
 		SubLocationABC tier = (SubLocationABC) getFacility().findSubLocationById("A1.B1.T1");
 		tier.setLedController(controller1);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
+		tier.setLedController(controller1);
+		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B3.T1");
 		tier.setLedController(controller1);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B1.T1");
 		tier.setLedController(controller2);
@@ -179,6 +181,51 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		tier.setLedController(controller3);
 
 		return getFacility();
+	}
+
+	private void setUpSmallInventoryAndOrders(Facility inFacility) throws IOException {
+		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
+		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1122,D302,8 oz Bowl Lids -PLA Compostable,,ea,6/25/14 12:00,80\r\n" //
+				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,,EA,6/25/14 12:00,135\r\n" //
+				+ "1124,D303,8 oz Bowls -PLA Compostable,,ea,6/25/14 12:00,55\r\n" //
+				+ "1493,D301,PARK RANGER Doll,,ea,6/25/14 12:00,66\r\n" //
+				+ "1522,D302,Butterfly Yoyo,,ea,6/25/14 12:00,3\r\n" //
+				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,3\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Item 1123 exists in case and each.
+		// Item 1493 exists in case only. Order for each should short.
+		// Item 1522 exists in case and each.
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,12345,12345,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,1111,1122,8 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,1111,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,1111,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,1111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+
 	}
 
 	@SuppressWarnings({ "unused", "rawtypes" })
@@ -263,7 +310,7 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Double posOf402 = locationD402.getPosAlongPath();
 		Double posOf403 = locationD403.getPosAlongPath();
 		Assert.assertTrue(posOf402 > posOf403);
-		
+
 		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 402 should be there. The item in 403 is earlier on the path.
 		// See which work instruction is which
 		WorkInstruction wi1 = wiListAfterScan.get(0);
@@ -272,8 +319,8 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Double wi1Pos = wi1.getPosAlongPath();
 
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().workSummary(che1.getPersistentId().toString(),
-			facility.getPersistentId().toString());
+		List<WiSetSummary> summaries = new WorkService().workSummary(che1.getPersistentId().toString(), facility.getPersistentId()
+			.toString());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
 		Assert.assertEquals(1, summaries.size());
@@ -288,7 +335,7 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Assert.assertEquals(2, actives);
 		Assert.assertEquals(1, shorts);
 	}
-	
+
 	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPickViaChe() throws IOException {
@@ -359,10 +406,10 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this,cheGuid1);
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
-		List<WorkInstruction> activeWIs=picker.start("402");
+		List<WorkInstruction> activeWIs = picker.start("402");
 		HousekeepingInjector.restoreHKDefaults();
 
 		Assert.assertEquals(1, activeWIs.size());
@@ -371,16 +418,39 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Assert.assertEquals("1522", currentWI.getItemId());
 
 		// pick first item
-		activeWIs=picker.pick(1,1);
+		activeWIs = picker.pick(1, 1);
 		Assert.assertEquals(1, activeWIs.size());
 		currentWI = activeWIs.get(0);
 		Assert.assertEquals("1123", currentWI.getItemId());
 
 		// pick second item
-		activeWIs=picker.pick(1,1);
+		activeWIs = picker.pick(1, 1);
 		Assert.assertEquals(0, activeWIs.size());
 
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE,1000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 1000);
 		picker.logout();
+	}
+	
+	@SuppressWarnings({ "unused", "rawtypes" })
+	@Test
+	public final void testCheIntegration1() throws IOException {
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		setUpSmallInventoryAndOrders(facility);
+		
+		HousekeepingInjector.turnOffHK();
+		
+		// Set up a cart for order 12345, which will generate work instructions
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		picker.login("Picker #1");
+		picker.setupContainer("12345", "1");
+		List<WorkInstruction> activeWIs = picker.start("402");
+		
+		// pick first item
+		activeWIs = picker.pick(1, 1);
+
+		
+		HousekeepingInjector.restoreHKDefaults();
+
 	}
 }
