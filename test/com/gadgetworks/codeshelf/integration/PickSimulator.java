@@ -8,18 +8,19 @@ import org.junit.Assert;
 
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class PickSimulator {
-	
-	EndToEndIntegrationTest test;
-	
+
+	EndToEndIntegrationTest	test;
+
 	@Getter
-	CheDeviceLogic cheDeviceLogic;
-	
+	CheDeviceLogic			cheDeviceLogic;
+
 	public PickSimulator(EndToEndIntegrationTest test, NetGuid cheGuid) {
 		this.test = test;
 		// verify that che is in site controller's device list
@@ -28,57 +29,138 @@ public class PickSimulator {
 	}
 
 	public void login(String pickerId) {
-		// Set up a cart for order 12345, which will generate work instructions
-		cheDeviceLogic.scanCommandReceived("U%"+pickerId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT,1000);
+		// This is the "scan badge" scan
+		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+	}
+	
+	public void setup() {
+		// The happy case. Scan setup needed after completing a cart run. Still logged in.
+		scanCommand("SETUP");
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
 	public void setupContainer(String containerId, String positionId) {
-		cheDeviceLogic.scanCommandReceived("C%"+containerId);
-		waitForCheState(CheStateEnum.CONTAINER_POSITION,1000);
+		// used for normal success case of scan container, then position on cart.
+		scanContainer(containerId);
+		waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 
-		cheDeviceLogic.scanCommandReceived("P%"+positionId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT,1000);
+		scanPosition(positionId);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
 	public List<WorkInstruction> start(String location) {
-		cheDeviceLogic.scanCommandReceived("X%START");
-		if (location==null) {
+		// This is both "Start pick" and scan of starting location.
+		// Note: if no jobs at all, it will fail on waiting.
+		scanCommand("START");
+		if (location == null) {
 			// perform start without location scan, if location is undefined
 			return null;
 		}
-		waitForCheState(CheStateEnum.LOCATION_SELECT,5000);
-		cheDeviceLogic.scanCommandReceived("L%"+location);
-		waitForCheState(CheStateEnum.DO_PICK,1000);
-		
-		List<WorkInstruction> activeList = cheDeviceLogic.getActivePickWiList();
-		return activeList;
-	}	
-	
+		waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
+		scanLocation(location);
+		waitForCheState(CheStateEnum.DO_PICK, 1000);
+
+		return getActivePickList();
+	}
+
 	public List<WorkInstruction> pick(int position, int quantity) {
+		buttonPress(position, quantity);
+		// many state possibilities here. On to the next job, or finished all work, or need to confirm a short.
+		return getActivePickList();
+	}
+
+	public void logout() {
+		scanCommand("LOGOUT");
+		waitForCheState(CheStateEnum.IDLE, 1000);
+	}
+
+	// Extremely primitive commands here, useful for testing the state machine for error conditions, as well as using in high-level commands.
+	public void scanCommand(String inCommand) {
+		// Valid commands currently are only START, SETUP, LOGOUT, SHORT, YES, NO, See https://codeshelf.atlassian.net/wiki/display/TD/Bar+Codes+in+Codeshelf+Application
+		cheDeviceLogic.scanCommandReceived("X%" + inCommand);
+	}
+
+	public void scanLocation(String inLocation) {
+		cheDeviceLogic.scanCommandReceived("L%" + inLocation);
+	}
+
+	public void scanContainer(String inContainerId) {
+		cheDeviceLogic.scanCommandReceived("C%" + inContainerId);
+	}
+
+	public void scanPosition(String inPositionId) {
+		cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
+	}
+
+	public void buttonPress(int inPosition, int inQuantity) {
+		// Caller's responsibility to get the quantity correct. Normally match the planQuantity. Normally only lower after SHORT command.
 		CommandControlButton buttonCommand = new CommandControlButton();
-		buttonCommand.setPosNum((byte) position);
-		buttonCommand.setValue((byte) quantity);
+		buttonCommand.setPosNum((byte) inPosition);
+		buttonCommand.setValue((byte) inQuantity);
 		cheDeviceLogic.buttonCommandReceived(buttonCommand);
+	}
+
+	// Useful, primitive methods for checking the result after some actions
+	public int countRemainingJobs() {
+		int count = 0;
+		for (WorkInstruction wi : getAllPicksList()) {
+			WorkInstructionStatusEnum status = wi.getStatusEnum();
+			if (status == WorkInstructionStatusEnum.NEW)
+				count++;
+		}
+		;
+		return count;
+	}
+
+	public WorkInstruction nextActiveWi() {
+		return getActivePickList().get(0); // This may return null
+	}
+
+	public int countActiveJobs() {
+		return getActivePickList().size(); //  0 if out of work. Usually 1. Only higher for simultaneous pick work instructions.
+	}
+
+	public CheStateEnum currentCheState() {
+		return cheDeviceLogic.getCheStateEnum();
+	}
+	
+	public int buttonFor(WorkInstruction inWorkInstruction){
+		// returns 0 if none
+		if (!getActivePickList().contains(inWorkInstruction))
+			return 0;
+		byte button = cheDeviceLogic.buttonFromContainer(inWorkInstruction.getContainerId());
+		return button;
+	}
+
+	/**
+	 * Careful: returns the actual list from the cheDeviceLogic. Also note this list only ever has one job, except for the
+	 * simultaneous work instruction situation. This not usually very useful.
+	 */
+	public List<WorkInstruction> getActivePickList() {
 		List<WorkInstruction> activeList = cheDeviceLogic.getActivePickWiList();
 		return activeList;
 	}
-	
-	public void logout() {
-		cheDeviceLogic.scanCommandReceived("X%LOGOUT");		
-		waitForCheState(CheStateEnum.IDLE,1000);
+
+	/**
+	 * Careful: returns the actual list from the cheDeviceLogic. This has all the wis, many completed.
+	 * This is not usually very useful.
+	 */
+	private List<WorkInstruction> getAllPicksList() {
+		List<WorkInstruction> activeList = cheDeviceLogic.getAllPicksWiList();
+		return activeList;
 	}
 
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
 		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis()-start<timeoutInMillis) {
+		while (System.currentTimeMillis() - start < timeoutInMillis) {
 			// retry every 100ms
 			ThreadUtils.sleep(100);
-			if (cheDeviceLogic.getCheStateEnum()==state) {
+			if (cheDeviceLogic.getCheStateEnum() == state) {
 				// expected state found - all good
 				return;
 			}
 		}
-		Assert.fail("Che state "+state+" not encountered in "+timeoutInMillis+"ms");
+		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms");
 	}
 }
