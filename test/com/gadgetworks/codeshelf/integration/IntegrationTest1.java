@@ -212,10 +212,10 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,12345,12345,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,COSTCO,11111,1111,1122,8 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,COSTCO,11111,1111,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,COSTCO,11111,1111,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,COSTCO,11111,1111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n,USF314,COSTCO,11111,11111,1122,8 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,11111,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,11111,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,11111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -409,29 +409,29 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
-		List<WorkInstruction> activeWIs = picker.start("402");
+		picker.start("402");
 		HousekeepingInjector.restoreHKDefaults();
 
-		Assert.assertEquals(1, activeWIs.size());
-		WorkInstruction currentWI = activeWIs.get(0);
+		Assert.assertEquals(1, picker.countActiveJobs());
+		WorkInstruction currentWI = picker.nextActiveWi();
 		Assert.assertEquals("SJJ BPP", currentWI.getDescription());
 		Assert.assertEquals("1522", currentWI.getItemId());
 
 		// pick first item
-		activeWIs = picker.pick(1, 1);
-		Assert.assertEquals(1, activeWIs.size());
-		currentWI = activeWIs.get(0);
+		picker.pick(1, 1);
+		Assert.assertEquals(1, picker.countActiveJobs());
+		currentWI = picker.nextActiveWi();
 		Assert.assertEquals("1123", currentWI.getItemId());
 
 		// pick second item
-		activeWIs = picker.pick(1, 1);
-		Assert.assertEquals(0, activeWIs.size());
+		picker.pick(1, 1);
+		Assert.assertEquals(0, picker.countActiveJobs());
 
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 1000);
 		picker.logout();
 	}
 	
-	@SuppressWarnings({ "unused", "rawtypes" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testCheIntegration1() throws IOException {
 
@@ -440,14 +440,31 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		
 		HousekeepingInjector.turnOffHK();
 		
-		// Set up a cart for order 12345, which will generate work instructions
+		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
+		
+		// This brief case covers and allows retirement of CheSimulationTest.java
+		picker.setupContainer("9x9x9", "1"); // unknown container
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.NO_WORK,1000);
+		Assert.assertEquals(0, picker.countActiveJobs());
+		
+		// Back to our main test
+		picker.setup();
 		picker.setupContainer("12345", "1");
-		List<WorkInstruction> activeWIs = picker.start("402");
+		picker.setupContainer("11111", "2");
+		List<WorkInstruction> activeWIs = picker.start("D303");
+		Assert.assertEquals(7, picker.countRemainingJobs());
+		
+		Assert.assertEquals(1, picker.countActiveJobs());
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
 		
 		// pick first item
-		activeWIs = picker.pick(1, 1);
+		activeWIs = picker.pick(button, quant);
+		Assert.assertEquals(6, picker.countRemainingJobs());
 
 		
 		HousekeepingInjector.restoreHKDefaults();

@@ -110,6 +110,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private Map<String, String>		mContainersMap;
 
 	// All WIs for all containers on the CHE.
+	@Accessors(prefix = "m")
+	@Getter
 	private List<WorkInstruction>	mAllPicksWiList;
 
 	// The active pick WIs.
@@ -1213,7 +1215,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				byte freq = PosControllerInstr.BRIGHT_FREQ;
 				byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 				// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
-				if (planQuantityForPositionController != minQuantityForPositionController || planQuantityForPositionController != maxQuantityForPositionController) { 
+				if (planQuantityForPositionController != minQuantityForPositionController
+						|| planQuantityForPositionController != maxQuantityForPositionController) {
 					freq = PosControllerInstr.BLINK_DUTYCYCLE;
 					brightness = PosControllerInstr.BLINK_DUTYCYCLE;
 				}
@@ -1237,6 +1240,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		}
 		ledControllerShowLeds(getGuid());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * return the button for this container ID. Mostly private use, but public for unit test convenience
+	 */
+	public byte buttonFromContainer(String inContainerId) {
+		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
+		for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+			if (mapEntry.getValue().equals(inContainerId)) {
+				return Byte.valueOf(mapEntry.getKey());
+			}
+		}
+		return 0;
 	}
 
 	// --------------------------------------------------------------------------
