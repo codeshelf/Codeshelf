@@ -121,7 +121,9 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	@Override
 	protected void doStopInterface() {
 		try {
-			mServerSocket.close();
+			if (mServerSocket!=null) {
+				mServerSocket.close();
+			}
 			doSetupConnection();
 		} catch (IOException e1) {
 			LOGGER.error("", e1);
@@ -143,7 +145,6 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	@Override
 	protected void setRTS() {
 		// TODO Auto-generated method stub
-
 	}
 
 	// --------------------------------------------------------------------------

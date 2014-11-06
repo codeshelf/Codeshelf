@@ -19,7 +19,6 @@ public class DAOMaker {
 	public DAOMaker(PersistenceService persistenceService) {
 		Organization.setDao(new OrganizationDao(persistenceService));
 		Facility.setDao(new FacilityDao(persistenceService));
-
 	}
 
 	public static final Property<Organization,String> organizationId = newProperty();
@@ -29,8 +28,6 @@ public class DAOMaker {
 
 	public final Instantiator<Organization> TestOrganization = new Instantiator<Organization>() {
 	    public Organization instantiate(PropertyLookup<Organization> lookup) {
-
-
 	    	Organization organization = new Organization();
 	    	organization.setOrganizationId(lookup.valueOf(organizationId, RandomStringUtils.randomAlphanumeric(5)));
 			Organization.DAO.store(organization);

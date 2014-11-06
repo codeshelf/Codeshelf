@@ -27,8 +27,6 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Aisle.AisleDao;
@@ -183,7 +181,6 @@ public final class ServerMain {
 
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
-				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
@@ -195,6 +192,9 @@ public final class ServerMain {
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
+
+				//
+				// bind(DaoProvider.class).to(PersistenceService.class).in(Singleton.class);
 				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);

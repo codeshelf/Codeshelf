@@ -12,8 +12,6 @@ import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -47,10 +45,10 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	protected static String facilityId = "F1";
 	protected static String networkId = CodeshelfNetwork.DEFAULT_NETWORK_NAME;
-	protected static String cheId1 = "CHE1";
+	protected static String cheId1 = "CHE-E2E-1";
 	@Getter
 	protected static NetGuid cheGuid1 = new NetGuid("0x23");
-	protected static String cheId2 = "CHE2";
+	protected static String cheId2 = "CHE-E2E-2";
 	@Getter
 	protected static NetGuid cheGuid2 = new NetGuid("0x24");
 
@@ -85,11 +83,9 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			@Override
 			protected void configure() {
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
-				bind(IDaoProvider.class).to(DaoProvider.class);
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
-
 			}
 		});
 		return injector;
@@ -116,10 +112,8 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		System.setProperty("javax.net.ssl.keyStorePassword", configuration.getString("keystore.store.password"));
 		System.setProperty("javax.net.ssl.trustStore", configuration.getString("keystore.path"));
 		System.setProperty("javax.net.ssl.trustStorePassword", configuration.getString("keystore.store.password"));
-
 		
 		this.getPersistenceService().beginTenantTransaction();
-		
 		// ensure facility, organization, network exist in database before booting up site controller
 		this.organization = mOrganizationDao.findByDomainId(null, organizationId);
 		if (organization==null) {
@@ -153,10 +147,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		if (che2==null) {
 			network.createChe(cheId2, cheGuid2);
 		}
-
-		
 		this.getPersistenceService().endTenantTransaction();
-
 		
 		// start web socket server
 		webSocketServer = websocketServerInjector.getInstance(JettyWebSocketServer.class);
@@ -214,19 +205,13 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			}
 		}
 		
-		
 		// verify that che is in site controller's device list
-		this.getPersistenceService().beginTenantTransaction();
-
 		CheDeviceLogic cheDeviceLogic1 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
 		Assert.assertNotNull("Che-1 device logic not found",cheDeviceLogic1);
 		CheDeviceLogic cheDeviceLogic2 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid2);
 		Assert.assertNotNull("Che-2 device logic not found",cheDeviceLogic2);
-
 		LOGGER.debug("Embedded site controller and server connected");
 		LOGGER.debug("-------------- Environment created");
-
-		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Override

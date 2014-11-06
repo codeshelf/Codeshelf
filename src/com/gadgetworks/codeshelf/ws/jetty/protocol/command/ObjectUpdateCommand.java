@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -9,9 +10,9 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -26,12 +27,13 @@ public class ObjectUpdateCommand extends CommandABC {
 	
 	private PropertyUtilsBean propertyUtil = new PropertyUtilsBean();
 	
-	public ObjectUpdateCommand(IDaoProvider daoProvider, UserSession session, ObjectUpdateRequest request) {
-		super(daoProvider, session);
+	public ObjectUpdateCommand(UserSession session, ObjectUpdateRequest request) {
+		super(session);
 		this.request = request;
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		ObjectUpdateResponse response = new ObjectUpdateResponse();
 		
@@ -70,9 +72,9 @@ public class ObjectUpdateCommand extends CommandABC {
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				// First locate an instance of the parent class.
-				@SuppressWarnings("unchecked")
-				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
+				// First locate an instance of the parent class.				
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
+				
 				IDomainObject updateObject = null;
 				if(dao == null) {
 					LOGGER.error("got null dao for "+className);

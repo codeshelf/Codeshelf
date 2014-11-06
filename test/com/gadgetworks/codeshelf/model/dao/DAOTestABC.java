@@ -248,5 +248,8 @@ public abstract class DAOTestABC {
 	}
 	
 	public void doAfter() {
+		if (persistenceService.hasActiveTransaction()) {
+			persistenceService.rollbackTenantTransaction();
+		}
 	}
 }

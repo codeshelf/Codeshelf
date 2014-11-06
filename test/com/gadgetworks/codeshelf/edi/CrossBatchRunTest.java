@@ -177,7 +177,6 @@ public class CrossBatchRunTest extends EdiTestABC {
 		aisle2.getDao().store(aisle2);
 
 		return facility;
-
 	}
 
 	@SuppressWarnings("unused")

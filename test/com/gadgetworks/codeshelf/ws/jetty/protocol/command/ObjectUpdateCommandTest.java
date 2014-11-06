@@ -17,7 +17,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.MockModel;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
@@ -29,9 +28,6 @@ public class ObjectUpdateCommandTest {
 	@Mock
 	private ITypedDao<MockModel> mockTypedDao;
 	
-	@Mock
-	private IDaoProvider mockDaoProvider;
-
 	@Test
 	public void shouldChangeValueOfBooleanSetter() throws JsonProcessingException, IOException {
 		String testProperty = "testSetterBoolean";
@@ -40,9 +36,6 @@ public class ObjectUpdateCommandTest {
 		MockModel mockModel = testSetter(testProperty, testValue);
 		Assert.assertEquals(new Boolean(testValue).booleanValue(), mockModel.getTestSetterBoolean()); //note that this correlates to the the test property getter/setter
 	}
-
-
-
 	
 	@Test
 	public void shouldChangeValueOfDoubleSetter() throws JsonProcessingException, IOException {
@@ -61,8 +54,6 @@ public class ObjectUpdateCommandTest {
 		ResponseABC resp = testSetterFail(testProperty, testValue);
 		Assert.assertTrue(resp.getStatus().equals(ResponseStatus.Fail));
 	}
-
-
 	
 	@Test
 	public void shouldFailIntSetterWrongType() throws JsonProcessingException, IOException {
@@ -105,7 +96,7 @@ public class ObjectUpdateCommandTest {
 		ObjectUpdateRequest objectUpdateRequest = createReq();
 		objectUpdateRequest.setClassName("com.gadgetworks.codeshelf.model.domain.NOTFOUND");
 		
-		ObjectUpdateCommand subject = new ObjectUpdateCommand(mockDaoProvider, null, objectUpdateRequest);
+		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
 
 		assertIsErrorResponse(respCmd);
@@ -114,12 +105,11 @@ public class ObjectUpdateCommandTest {
 	@Test
 	public void shouldReturnErrorResponseWhenInstanceNotFound() throws JsonProcessingException, IOException {
 
-		when(mockDaoProvider.getDaoInstance(MockModel.class)).thenReturn(mockTypedDao);
 		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(null);
 
 		ObjectUpdateRequest objectUpdateRequest = createReq();
 		
-		ObjectUpdateCommand subject = new ObjectUpdateCommand(mockDaoProvider, null, objectUpdateRequest);
+		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
 		
 		assertIsErrorResponse(respCmd);
@@ -128,12 +118,11 @@ public class ObjectUpdateCommandTest {
 	
 	private ResponseABC testSetterFail(String testProperty, String testValue) throws JsonParseException, JsonMappingException, IOException {
 		MockModel mockModel = new MockModel();
-		when(mockDaoProvider.getDaoInstance(MockModel.class)).thenReturn(mockTypedDao);
 		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(mockModel);
 		
 		ObjectUpdateRequest objectUpdateRequest = createReqCmdJsonNode(testProperty, testValue);
 		
-		ObjectUpdateCommand subject = new ObjectUpdateCommand(mockDaoProvider, null, objectUpdateRequest);
+		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
 		return respCmd;
 	}
@@ -141,12 +130,11 @@ public class ObjectUpdateCommandTest {
 	private MockModel testSetter(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
 
 		MockModel mockModel = new MockModel();
-		when(mockDaoProvider.getDaoInstance(MockModel.class)).thenReturn(mockTypedDao);
 		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(mockModel);
 		
 		ObjectUpdateRequest objectUpdateRequest = createReqCmdJsonNode(testProperty, testValue);
 		
-		ObjectUpdateCommand subject = new ObjectUpdateCommand(mockDaoProvider, null, objectUpdateRequest);
+		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
 		Assert.assertEquals(respCmd.toString(), false, respCmd.getStatus().equals(ResponseStatus.Fail));
 		return mockModel;
@@ -157,9 +145,6 @@ public class ObjectUpdateCommandTest {
 		Assert.assertTrue(respCmd.getStatus().equals(ResponseStatus.Fail));
 		Assert.assertNotNull(respCmd.getStatusMessage());
 	}
-
-	
-
 	
 	private ObjectUpdateRequest createReq() throws JsonParseException, JsonMappingException, IOException {
 		return createReqCmdJsonNode("testSetterString", "testString");

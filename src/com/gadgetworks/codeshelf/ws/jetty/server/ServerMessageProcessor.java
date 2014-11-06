@@ -7,7 +7,6 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CompleteWorkInstructionCommand;
@@ -71,20 +70,14 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 //	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	
-	private final IDaoProvider daoProvider;
-
 	//TODO should turn into a provider for all server service endpoints instead of just work service
 	private final WorkService  workService;
 	
 	@Inject
 	//TODO should turn into a provider for all server service endpoints instead of just work service
-	public ServerMessageProcessor(IDaoProvider daoProvider, WorkService workService) {
+	public ServerMessageProcessor(WorkService workService) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
-		this.daoProvider = daoProvider;
 		this.workService = workService;
-		if(daoProvider == null) {
-			LOGGER.error("got null daoProvider creating ServerMessageProcessor");
-		}
 	}
 	
 	@Override
@@ -101,7 +94,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession,loginRequest,daoProvider);
+				command = new LoginCommand(csSession,loginRequest);
 				loginCounter.inc();
 				applicationRequestCounter.inc();
 			}
@@ -130,12 +123,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof ObjectUpdateRequest) {
-				command = new ObjectUpdateCommand(this.daoProvider, csSession,(ObjectUpdateRequest) request);
+				command = new ObjectUpdateCommand(csSession,(ObjectUpdateRequest) request);
 				objectUpdateCounter.inc();
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ObjectDeleteRequest) {
-				command = new ObjectDeleteCommand(this.daoProvider, csSession,(ObjectDeleteRequest) request);
+				command = new ObjectDeleteCommand(csSession,(ObjectDeleteRequest) request);
 				objectDeleteCounter.inc();
 				applicationRequestCounter.inc();
 			}
@@ -169,9 +162,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 				LOGGER.warn("Unable to find matching command for request "+request+". Ignoring request.");
 		        context.stop();
 			} else {
-				// inject context
-				command.setDaoProvider(this.daoProvider);
-
 				// execute command and generate response to be sent to client
 				response = command.exec();
 				if (response!=null) {

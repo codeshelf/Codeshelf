@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -7,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -25,15 +27,9 @@ public class ObjectGetCommand extends CommandABC {
 	}
 
 	@Override
+	// @SuppressWarnings("unchecked")
 	public ResponseABC exec() {
-		// CRITICAL SECUTIRY CONCEPT.
-		// The remote end can NEVER get object results outside of it's own scope.
-		// Today, the scope is set by the user's ORGANIZATION.
-		// That means we can never return objects not part of the current (logged in) user's organization.
-		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
-
 		ObjectGetResponse response = new ObjectGetResponse();
-		
 		try {
 			String parentClassName = request.getClassName();
 			if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
@@ -44,11 +40,8 @@ public class ObjectGetCommand extends CommandABC {
 
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(parentClassName);
-			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				
-				@SuppressWarnings("unchecked")
-				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
-				
+			if (IDomainObject.class.isAssignableFrom(classObject)) {				
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
 				IDomainObject parentObject = dao.findByPersistentId(parentId);
 				// Execute the "get" method against the parent to return the children.
 				// (The method *must* start with "get" to ensure other methods don't get called.)

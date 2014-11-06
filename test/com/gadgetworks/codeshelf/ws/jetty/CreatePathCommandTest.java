@@ -1,9 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import static com.natpryce.makeiteasy.MakeItEasy.a;
-import static com.natpryce.makeiteasy.MakeItEasy.make;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -12,7 +9,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
@@ -21,16 +17,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
-import com.gadgetworks.codeshelf.model.domain.DAOMaker;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.WorkArea;
-import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -41,20 +31,15 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.natpryce.makeiteasy.Maker;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CreatePathCommandTest extends DAOTestABC {
+public class CreatePathCommandTest extends DomainTestABC {
 
 	PersistenceService persistenceService = PersistenceService.getInstance();
-
-	@Mock
-	private IDaoProvider mockDaoProvider;
 
 	@Test
 	public void testPojo() throws JsonGenerationException, JsonMappingException, IOException {
 		JsonPojo pojo = new JsonPojo();
-		
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonString = "";
 		jsonString = mapper.writeValueAsString(pojo);
@@ -68,20 +53,20 @@ public class CreatePathCommandTest extends DAOTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
-		DAOMaker maker = new DAOMaker(persistenceService);
+		// DAOMaker maker = new DAOMaker(persistenceService);
 		
-		@SuppressWarnings("unchecked")
-		Maker<Facility> fm = a(maker.TestFacility);
-		Facility testFacility = make(fm);
+		//@SuppressWarnings("unchecked")
+		//Maker<Facility> fm = a(maker.TestFacility);
+		//Facility testFacility = make(fm);
 		
-		Path.DAO = new PathDao(persistenceService);
-		PathSegment.DAO = new PathSegmentDao(persistenceService);
-		WorkArea.DAO = new WorkAreaDao(persistenceService);
+		//Path.DAO = new PathDao(persistenceService);
+		//PathSegment.DAO = new PathSegmentDao(persistenceService);
+		//WorkArea.DAO = new WorkAreaDao(persistenceService);
+		
+		Facility testFacility = this.createDefaultFacility(testPathDomainId);
 	
 		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);
-		
-		when(mockDaoProvider.getDaoInstance(Facility.class)).thenReturn(Facility.DAO);		
 		
 		PathSegment[] segments = createPathSegment(numberOfSegments);
 		
@@ -98,7 +83,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(session, request);
 
 		Assert.assertTrue(response instanceof CreatePathResponse);
@@ -111,20 +96,13 @@ public class CreatePathCommandTest extends DAOTestABC {
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
-		DAOMaker maker = new DAOMaker(persistenceService);
-		Facility testFacility = make(a(maker.TestFacility));
-		Path.DAO = new PathDao(persistenceService);
-		PathSegment.DAO = new PathSegmentDao(persistenceService);
-		WorkArea.DAO = new WorkAreaDao(persistenceService);
+		Facility testFacility = this.createDefaultFacility(testPathDomainId);
 	
 		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);
-		
-		when(mockDaoProvider.getDaoInstance(Facility.class)).thenReturn(Facility.DAO);		
 		
 		PathSegment[] segments = createPathSegment(numberOfSegments);
 		
@@ -144,7 +122,7 @@ public class CreatePathCommandTest extends DAOTestABC {
 		session.setSessionId("test-session");
 
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockDaoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, request);
 

@@ -13,7 +13,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
@@ -54,18 +53,8 @@ public class ObjectMethodCommandTest {
 		// {"name":"description","value":"First Facility","classType":"java.lang.String"},
 		// {"name":"anchorPoint","value":{"posTypeEnum":"METERS_FROM_PARENT","x":0.0,"y":0.0,"z":0.0},"classType":"com.gadgetworks.codeshelf.model.domain.Point"}]}}
 
-		MockDaoProvider daoProvider = new MockDaoProvider();
-
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
-		ITypedDao<DropboxService> dropboxDao = daoProvider.getDaoInstance(DropboxService.class);
-		ITypedDao<IronMqService> ironMqDao = daoProvider.getDaoInstance(IronMqService.class);
-		ITypedDao<ContainerKind> containerKindDao = daoProvider.getDaoInstance(ContainerKind.class);
-		ITypedDao<SiteController> siteControllerDao = daoProvider.getDaoInstance(SiteController.class);
-		ITypedDao<User> userDao = daoProvider.getDaoInstance(User.class);
-		Organization.setDao(orgDao);
+		//Organization.setDao(orgDao);
+		/*
 		Facility.DAO = facDao;
 		DropboxService.DAO = dropboxDao;
 		IronMqService.DAO = ironMqDao;
@@ -75,10 +64,11 @@ public class ObjectMethodCommandTest {
 		Che.DAO = cheDao;
 		SiteController.setDao(siteControllerDao);
 		User.setDao(userDao);
+		*/
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
+		Organization.DAO.store(organization);
 
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Organization");
@@ -104,7 +94,7 @@ public class ObjectMethodCommandTest {
 		} catch (EncodeException e) {
 		}
 
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 

@@ -137,29 +137,27 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
-	public final T findByDomainId(final IDomainObject inParentObject, final String inId) {
-		T result = null;
-
-		String effectiveId = inId;
+	public final T findByDomainId(final IDomainObject parentObject, final String domainId) {
+		String effectiveId = domainId;
 		try {
 			Session session = getCurrentSession();
 			
 			// Query<T> query = mServer.createQuery(getDaoClass());
 	        Criteria criteria = session.createCriteria(getDaoClass());
-			if (inParentObject != null) {
+			if (parentObject != null) {
 				Class<T> clazz = getDaoClass();
 				if (clazz.equals(Facility.class)) {
 					// This is a bit odd: the Facility is the top-level Location object, but Ebean doesn't allow us to have a parent field that points to another table.
 					// (It *should* be able to do this since Ebean knows the class type at runtime, but it just doesn't.)
 					criteria
 						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
-						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,inParentObject.getPersistentId()));
+						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,parentObject.getPersistentId()));
 					// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
 				} 
 				else {
 					criteria
 						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
-						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,inParentObject.getPersistentId()));
+						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,parentObject.getPersistentId()));
 					// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
 				}
 			} 
@@ -168,11 +166,21 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 				// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId);
 			}
 			//query = query.setUseCache(true);
-			result = (T) criteria.uniqueResult();
+			List<T> results = criteria.list();
+			if (results.size()==0) {
+				return null;
+			}
+			else if (results.size()==1) {
+				return results.get(0);
+			}
+			else {
+				LOGGER.error(results.size()+" objects found matching domain ID "+domainId);
+				return null;
+			}
 		} catch (PersistenceException e) {
 			LOGGER.error("Failed to find object by domain ID", e);
+			return null;
 		}
-		return result;
 	}
 
 	// --------------------------------------------------------------------------

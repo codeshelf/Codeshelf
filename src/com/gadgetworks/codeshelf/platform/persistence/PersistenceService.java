@@ -1,7 +1,11 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -11,6 +15,10 @@ import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
@@ -32,7 +40,7 @@ public class PersistenceService extends Service {
 	
 	// stores the factories for different tenants
 	Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
-
+	
 	// temp solution to get current tenant, while multitenancy has not been built out
 	Tenant fixedTenant;
 	
@@ -42,9 +50,7 @@ public class PersistenceService extends Service {
 
 	private PersistenceService() {
 		setInstance();
-		fixedTenant = new Tenant();
-		fixedTenant.setName("Tenant #1");
-		fixedTenant.setShardId(1);
+		fixedTenant = new Tenant("Tenant #1",1);
 	}
 	
 	private void setInstance() {
@@ -52,7 +58,7 @@ public class PersistenceService extends Service {
 	}
 	
 	public final synchronized static PersistenceService getInstance() {
-		if(theInstance == null) {
+		if (theInstance == null) {
 			theInstance = new PersistenceService();
 			theInstance.start();
 			LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
@@ -132,7 +138,6 @@ public class PersistenceService extends Service {
 
 	@Override
 	public final boolean stop() {
-		this.endTenantTransaction();
 		LOGGER.info("Database shutdown");
 		return true;
 	}
@@ -160,17 +165,15 @@ public class PersistenceService extends Service {
 	public final Transaction beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		StackTraceElement st[]=this.sessionStarted.get(session);
-		
 		Transaction tx = session.getTransaction();
 		if(!this.transactionStarted.containsKey(tx)) {
 			this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
 		}
-		
 		if (tx != null) {
 			// check for already active transaction
 			if (tx.isActive()) {
 				StackTraceElement[] tst=transactionStarted.get(tx);
-				LOGGER.warn("tried to begin transaction, but was already in active transaction");
+				LOGGER.error("tried to begin transaction, but was already in active transaction");
 				return tx;
 			} // else we will begin new transaction
 		}
@@ -182,11 +185,47 @@ public class PersistenceService extends Service {
 	public final void endTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		Transaction tx = session.getTransaction();
-		
-		if(tx.isActive()) {
+		if (tx.isActive()) {
 			tx.commit();
 		} else {
-			LOGGER.warn("tried to close inactive Tenant transaction");
+			LOGGER.error("tried to close inactive Tenant transaction");
 		}
 	}
+	
+	public final void rollbackTenantTransaction() {
+		Session session = getCurrentTenantSession();
+		Transaction tx = session.getTransaction();
+		if (tx.isActive()) {
+			tx.rollback();
+		} else {
+			LOGGER.error("tried to roll back inactive Tenant transaction");
+		}
+	}
+	
+	public boolean hasActiveTransaction() {
+		Session session = getCurrentTenantSession();
+		if (session==null) {
+			return false;
+		}
+		Transaction tx = session.getTransaction();
+		if (tx==null) {
+			return false;
+		}
+		if (tx.isActive()) {
+			return true;
+		}
+		return false;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) throws NoSuchFieldException, IllegalAccessException {
+		if (IDomainObject.class.isAssignableFrom(classObject)) {
+			Class<IDomainObject> domainClass = (Class<IDomainObject>) classObject;
+			Field field = domainClass.getField("DAO");
+			ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) field.get(null);
+			return dao;
+		}
+		// not a domain object
+		return null;
+	}	
 }

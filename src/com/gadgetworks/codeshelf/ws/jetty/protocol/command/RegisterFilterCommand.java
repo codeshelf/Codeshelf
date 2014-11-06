@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Filter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -43,6 +45,7 @@ public class RegisterFilterCommand extends CommandABC {
 	}
 	
 	@Override
+	@SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		try {
 			String objectClassName = request.getClassName();
@@ -69,12 +72,10 @@ public class RegisterFilterCommand extends CommandABC {
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				@SuppressWarnings("unchecked")
-				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);	
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
 				this.session.registerAsDAOListener(dao);
 
 				// create listener
-				@SuppressWarnings("unchecked")
 				Filter filter = new Filter((Class<IDomainObject>) classObject);				
 				filter.setId(request.getMessageId());
 				filter.setPropertyNames(request.getPropertyNames());

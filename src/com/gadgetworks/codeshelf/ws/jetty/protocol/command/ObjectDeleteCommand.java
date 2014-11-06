@@ -1,13 +1,14 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -20,19 +21,13 @@ public class ObjectDeleteCommand extends CommandABC {
 
 	private ObjectDeleteRequest	request;
 	
-	public ObjectDeleteCommand(IDaoProvider daoProvider, UserSession session, ObjectDeleteRequest request) {
-		super(daoProvider, session);
+	public ObjectDeleteCommand(UserSession session, ObjectDeleteRequest request) {
+		super(session);
 		this.request = request;
 	}
 	
 	@Override
 	public ResponseABC exec() {
-		// CRITICAL SECUTIRY CONCEPT.
-		// The remote end can NEVER get object results outside of it's own scope.
-		// Today, the scope is set by the user's ORGANIZATION.
-		// That means we can never return objects not part of the current (logged in) user's organization.
-		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
-
 		try {
 			String className = request.getClassName();
 			if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
@@ -43,11 +38,10 @@ public class ObjectDeleteCommand extends CommandABC {
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-
-				// First locate an instance of the parent class.
-				@SuppressWarnings("unchecked")
-				ITypedDao<IDomainObject> dao = this.daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
 				IDomainObject object = dao.findByPersistentId(objectIdId);
+				
+				// First locate an instance of the parent class.
 
 				// Execute the "set" method against the parents to return the children.
 				// (The method *must* start with "set" to ensure other methods don't get called.)

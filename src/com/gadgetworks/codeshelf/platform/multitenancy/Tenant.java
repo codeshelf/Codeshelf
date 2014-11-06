@@ -40,6 +40,11 @@ public class Tenant {
 	public Tenant() {
 	}
 	
+	public Tenant(String name, int shardId) {
+		this.name = name;
+		this.shardId = shardId;
+	}
+
 	public void setShard(Shard shard) {
 		this.shardId = shard.getShardId();
 	}

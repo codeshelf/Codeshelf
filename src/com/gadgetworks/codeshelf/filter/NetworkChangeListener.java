@@ -4,7 +4,6 @@ import java.util.Set;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -63,16 +62,17 @@ public class NetworkChangeListener implements ObjectEventListener {
 		return null;
 	}
 	
-	public static void registerWithSession(UserSession session, CodeshelfNetwork network, IDaoProvider daoProvider) {
+	public static void registerWithSession(UserSession session, CodeshelfNetwork network) {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);
 
+		/* TODO: register other DAOs
 		for (Class<?> domainClass: ImmutableList.<Class<?>>of(Che.class, LedController.class, SiteController.class, CodeshelfNetwork.class)) {
 			@SuppressWarnings("unchecked")
 			ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) domainClass);
 			session.registerAsDAOListener(dao);
 		}
+		*/
 	}
-	
 }

@@ -18,8 +18,6 @@ import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
-import com.gadgetworks.codeshelf.model.dao.IDaoProvider;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.flyweight.controller.FTDIInterface;
@@ -101,7 +99,6 @@ public final class CsSiteControllerMain {
 			bind(IRadioController.class).to(RadioController.class);
 			bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 			bind(ICsDeviceManager.class).to(CsDeviceManager.class);
-			bind(IDaoProvider.class).to(DaoProvider.class);
 		}
 		
 	}

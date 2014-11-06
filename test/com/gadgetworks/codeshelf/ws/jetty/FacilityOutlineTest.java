@@ -18,7 +18,6 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoProvider;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -84,7 +83,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 		} catch (EncodeException e) {
 		}		
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(DaoProvider.class), Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
@@ -135,7 +134,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 			Assert.fail("Failed to seriaize request");
 		}
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(DaoProvider.class), Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);

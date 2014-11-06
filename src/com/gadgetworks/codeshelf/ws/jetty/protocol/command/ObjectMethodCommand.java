@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -56,20 +57,16 @@ public class ObjectMethodCommand extends CommandABC {
 		}
 
 		try {
-			
 			UUID objectId = UUID.fromString(request.getPersistentId());
 			List<ArgsClass> methodArgs = request.getMethodArgs();
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
 				// First locate an instance of the parent class.
-				@SuppressWarnings("unchecked")
-				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) classObject);
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 
 				if (targetObject != null) {
-
 					// Loop over all the arguments, setting each one.
 					List<Class<?>> signatureClasses = new ArrayList<Class<?>>();
 					List<Object> cookedArguments = new ArrayList<Object>();
@@ -82,8 +79,7 @@ public class ObjectMethodCommand extends CommandABC {
 						if (Double.class.isAssignableFrom(classType)){
 								argumentValue = Double.valueOf(argumentValue.toString());
 						}
-						cookedArguments.add(argumentValue);	
-						
+						cookedArguments.add(argumentValue);		
 					}
 
 					Object methodResult = null;
@@ -137,5 +133,4 @@ public class ObjectMethodCommand extends CommandABC {
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-
 }

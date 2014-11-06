@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,7 @@ import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -28,6 +30,7 @@ public class RegisterListenerCommand extends CommandABC {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		try {
 			String objectClassName = request.getClassName();
@@ -39,14 +42,11 @@ public class RegisterListenerCommand extends CommandABC {
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// register session with DAO
-				@SuppressWarnings("unchecked")
-				Class<IDomainObject> persistenceClass = (Class<IDomainObject>) classObject;
-				ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) persistenceClass);
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
 				this.session.registerAsDAOListener(dao);
 
 				// create listener
 				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(request.getObjectIds());
-				@SuppressWarnings("unchecked")
 				Listener listener = new Listener((Class<IDomainObject>) classObject);				
 				listener.setId(request.getMessageId());
 				listener.setMatchList(request.getObjectIds());

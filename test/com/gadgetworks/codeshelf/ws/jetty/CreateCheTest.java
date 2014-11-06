@@ -13,7 +13,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.eaio.uuid.UUID;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -30,10 +29,8 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
-// TODO: should use mock DAO
 @RunWith(MockitoJUnitRunner.class)
 public class CreateCheTest extends DAOTestABC {
-	MockDaoProvider daoProvider;
 	UserSession mSession;
 	
 	@Test
@@ -70,7 +67,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(mSession, req);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -122,7 +119,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -170,7 +167,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -199,7 +196,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("foo", "bar");
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(session, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -245,7 +242,7 @@ public class CreateCheTest extends DAOTestABC {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
 
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -258,21 +255,4 @@ public class CreateCheTest extends DAOTestABC {
 		
 		this.getPersistenceService().endTenantTransaction();
 	}
-
-	private void setupDaos() {
-		daoProvider = new MockDaoProvider();
-		
-		mSession = Mockito.mock(UserSession.class);
-		mSession.setSessionId("test-session");
-		/*
-		Organization.setDao(mDaoProvider.getDaoInstance(Organization.class));
-		Facility.setDao(mDaoProvider.getDaoInstance(Facility.class));
-		CodeshelfNetwork.setDao(mDaoProvider.getDaoInstance(CodeshelfNetwork.class));
-		Che.setDao(mDaoProvider.getDaoInstance(Che.class));
-		Vertex.setDao(mDaoProvider.getDaoInstance(Vertex.class));
-		DropboxService.setDao(mDaoProvider.getDaoInstance(DropboxService.class));
-		IronMqService.setDao(mDaoProvider.getDaoInstance(IronMqService.class));
-		CodeshelfNetwork.setDao(mDaoProvider.getDaoInstance(CodeshelfNetwork.class));
-		*/
-	}	
 }

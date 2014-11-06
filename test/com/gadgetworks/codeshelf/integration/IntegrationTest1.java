@@ -359,7 +359,9 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
+		this.getPersistenceService().endTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
