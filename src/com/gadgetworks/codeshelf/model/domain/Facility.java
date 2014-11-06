@@ -63,14 +63,16 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -1092,46 +1094,55 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe,
+	private List<WorkInstruction>  generateCrossWallInstructions(final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
-		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
-
+		List<WorkInstruction> wiList = Lists.newArrayList();
 		for (Container container : inContainerList) {
-			// Iterate over all active CROSS orders on the path.
-			OrderHeader crossOrder = container.getCurrentOrderHeader();
-			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
-				for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-					if (crossOrderDetail.getActive()) {
-						List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
-						//if (empty?) Error
-						for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
-							List<ISubLocation<?>> firstLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
-							//if (locations.empty) Error
-							for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
-								WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-									WorkInstructionTypeEnum.PLAN,
-									matchingOutboundOrderDetail,
-									container,
-									inChe,
-									(LocationABC<?>) firstLocationOnPath,
-									inTime);
+			BatchResult<Work> result = determineWorkForContainer(container);
+			for (Work work : result.getResult()) {
+				WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+					WorkInstructionTypeEnum.PLAN,
+					work.getOutboundOrderDetail(),
+					work.getContainer(),
+					inChe,
+					work.getFirstLocationOnPath(),
+					inTime);
 
-								// If we created a WI then add it to the list.
-								if (wi != null) {
-									setWiPickInstruction(wi, matchingOutboundOrderDetail.getParent());
-									wiList.add(wi);
-								}
-							}
-						}
-					}
+				// If we created a WI then add it to the list.
+				if (wi != null) {
+					setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
+					wiList.add(wi);
 				}
 			}
 		}
 		return wiList;
 	}
 
+	public BatchResult<Work> determineWorkForContainer(Container container) {
+		// Iterate over all active CROSS orders on the path.
+		BatchResult<Work> batchResult = new BatchResult<Work>();
+		OrderHeader crossOrder = container.getCurrentOrderHeader();
+		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(crossOrder);
+			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
+				List<ISubLocation<?>> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+				for (ISubLocation<?> aLocationOnPath : firstOrderLocationPerPath) {
+					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
+					batchResult.add(work);
+				} /* for else */ if (firstOrderLocationPerPath.isEmpty()) {
+					batchResult.addViolation("matchingOutboundOrderDetail", matchingOutboundOrderDetail, "did not have a matching order location on any path");
+				}
+			} /* for else */ if (matchingOrderDetails.isEmpty()) {
+				batchResult.addViolation("currentOrderHeader", crossOrder, "no matching outbound order detail");
+			}
+		} else {
+			batchResult.addViolation("currentOrderHeader", container.getCurrentOrderHeader(), ErrorCode.FIELD_REFERENCE_INACTIVE);
+		}
+		return batchResult;
+	}
+	
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
@@ -1145,7 +1156,19 @@ public class Facility extends SubLocationABC<Facility> {
 		return locations;
 	}
 
-	private List<OrderDetail> getMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
+	private List<OrderDetail> toAllMatchingOutboundOrderDetails(OrderHeader crossbatchOrder) {
+		List<OrderDetail> allMatchingOrderDetails = Lists.newArrayList();
+		for (OrderDetail crossOrderDetail : crossbatchOrder.getOrderDetails()) {
+			if (crossOrderDetail.getActive()) {
+				List<OrderDetail> matchingOrderDetails = toMatchingOutboundOrderDetail(crossOrderDetail);
+				allMatchingOrderDetails.addAll(matchingOrderDetails);
+			}		
+		}
+		return allMatchingOrderDetails;
+	}
+
+	
+	private List<OrderDetail> toMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
 		Preconditions.checkNotNull(crossbatchOrderDetail);
 		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
 		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderTypeEnum().equals(OrderTypeEnum.CROSS));
@@ -1195,14 +1218,12 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 		// new way. Not sorted. Simple alpha sort. Will fail on D-10 D-11 D-9
 		Collections.sort(locIdList);
-		for (String aString : locIdList) {
-			locationString += aString + " ";
-		}
+		locationString = Joiner.on(" ").join(locIdList);
 		// end DEV-315 modification
 
 		inWi.setPickInstruction(locationString);
 
-		try {
+		try { 
 			WorkInstruction.DAO.store(inWi);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -1997,8 +2018,8 @@ public class Facility extends SubLocationABC<Facility> {
 		itemBean.setUom(inUomId);
 		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
-			Errors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", ErrorCode.FIELD_REFERENCE_NOT_FOUND, "storedLocation was not found");
+			DefaultErrors errors = new DefaultErrors(Item.class);
+			errors.rejectValue("storedLocation", storedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			throw new InputValidationException(errors);
 		}
 
@@ -2037,5 +2058,24 @@ public class Facility extends SubLocationABC<Facility> {
 	// TO come from configuration
 	public ColorEnum getDiagnosticColor() {
 		return ColorEnum.RED;
+	}
+	
+	public static class Work {
+		@Getter
+		private OrderDetail outboundOrderDetail;
+		
+		@Getter
+		private ISubLocation<?> firstLocationOnPath;
+		
+		@Getter
+		private Container container;
+
+		public Work(Container container, OrderDetail outboundOrderDetail, ISubLocation<?> firstLocationOnPath) {
+			super();
+			this.container = container;
+			this.outboundOrderDetail = outboundOrderDetail;
+			this.firstLocationOnPath = firstLocationOnPath;
+		}
+		
 	}
 }

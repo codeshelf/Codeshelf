@@ -54,8 +54,8 @@ public class FieldError extends ObjectError {
 	 * @param field the affected field of the object
 	 * @param defaultMessage the default message to be used to resolve this message
 	 */
-	public FieldError(String objectName, String field, String defaultMessage) {
-		this(objectName, field, null, false, null, null, defaultMessage);
+	public FieldError(String objectName, String field, Object rejectedValue, String defaultMessage) {
+		this(objectName, field, rejectedValue, false, null, null, defaultMessage);
 	}
 
 	/**

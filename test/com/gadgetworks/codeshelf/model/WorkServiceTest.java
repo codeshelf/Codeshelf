@@ -96,7 +96,8 @@ public class WorkServiceTest {
 			workService.completeWorkInstruction(cheId, wiToRecord);
 			Assert.fail("recordCompletedWorkInstruction should have thrown an exception if WI cannot be found");
 		} catch (InputValidationException e) {
-			Assert.assertNotNull(e.getErrors().getFieldError("persistentId"));
+			Assert.assertNotNull(e.getErrors().getFieldErrors("persistentId"));
+			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
 	}

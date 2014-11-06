@@ -332,37 +332,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	public final String validatePositionFromLeft(ILocation<?> inLocation, Integer inCmFromLeft) {
-		String result = "";
-		if (inLocation == null) {
-			result = "Unknown location";
-		} else if (inCmFromLeft != null && inCmFromLeft < 0) {
-			// if the cm value is wider than that bay/tier, or negative
-			result = "Negative cm value not allowed";
-		} else if (inLocation instanceof SubLocationABC) {
-			SubLocationABC<?> asSubLocation = (SubLocationABC<?>) inLocation;
-			Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
-			if (pickEndWidthMeters != null) {
-				if (inCmFromLeft != null) {
-					if (pickEndWidthMeters < inCmFromLeft / 100.0) {
-						result = "Cm value too large. Location is not that wide.";
-					}
-				} else {
-					LOGGER.error("inCmFromLeft was null");
-					result = "invalid null value (inCmFromLeft)";
-				}
-			} else {
-				LOGGER.error("getPickFaceEndPosY returned null");
-				result = "invalid null value (getPickFaceEndPosY)";
-			}
-		} else {
-			LOGGER.error("location not a sublocation");
-			result = "location not a sublocation";
-		}
-		return result;
-
-	}
-
 	public Integer getCmFromLeft() {
 		Double meters = getMetersFromAnchor();
 		if (meters == null || meters == 0.0)
