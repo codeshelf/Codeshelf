@@ -257,22 +257,20 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	/**
 	 */
 	public final Che createChe(String inDomainId, NetGuid inGuid) {
-
 		// If the CHE doesn't already exist then create it.
-		Che result = Che.DAO.findByDomainId(this, inGuid.getHexStringNoPrefix());
-		if (result == null) {
-			result = new Che();
-			result.setDomainId(inDomainId);
-			result.setDeviceNetGuid(inGuid);
-
-			this.addChe(result);
+		Che che = Che.DAO.findByDomainId(this, inGuid.getHexStringNoPrefix());
+		if (che == null) {
+			che = new Che();
+			che.setDomainId(inDomainId);
+			che.setDeviceNetGuid(inGuid);
+			this.addChe(che);
 			try {
-				Che.DAO.store(result);
+				Che.DAO.store(che);
 			} catch (DaoException e) {
 				LOGGER.error("Couldn't store new CHE "+inDomainId, e);
 			}
 		}
-		return result;
+		return che;
 	}
 
 	// --------------------------------------------------------------------------

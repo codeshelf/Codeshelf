@@ -191,7 +191,6 @@ public class WorkInstructionTest extends DomainTestABC {
 		// no containerUse in this test case
 	
 		this.getPersistenceService().endTenantTransaction();
-
 	}
 
 	@SuppressWarnings("unused")

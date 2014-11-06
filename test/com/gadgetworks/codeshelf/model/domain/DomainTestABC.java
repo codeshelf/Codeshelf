@@ -396,6 +396,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setUsedOn(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		result.setParent(inContainer);
 		mContainerUseDao.store(result);
 		
 		inContainer.addContainerUse(result);

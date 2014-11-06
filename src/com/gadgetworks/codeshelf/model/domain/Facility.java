@@ -230,13 +230,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	}
 
 	public final void addPath(Path inPath) {
-		Facility previousFacility = inPath.getParent();
-		if(previousFacility == null) {
-			paths.put(inPath.getDomainId(), inPath);
-			inPath.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add Path "+inPath.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		Facility facility = inPath.getParent();
+		if (facility!=null && !facility.equals(this)) {
+			LOGGER.error("cannot add Path "+inPath.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+facility.getDomainId());
+			return;
+		}
+		paths.put(inPath.getDomainId(), inPath);
+		inPath.setParent(this);
 	}
 
 	public final Path getPath(String inPathId) {
@@ -405,12 +405,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addOrderHeader(OrderHeader inOrderHeader) {
 		Facility previousFacility = inOrderHeader.getParent();
-		if(previousFacility == null) {
+		if (previousFacility!=null && !previousFacility.equals(this)) {
+			LOGGER.error("cannot add OrderHeader "+inOrderHeader.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
+		}
+		else {
 			orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
 			inOrderHeader.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add OrderHeader "+inOrderHeader.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		}
 	}
 
 	public final OrderHeader getOrderHeader(String inOrderHeaderId) {

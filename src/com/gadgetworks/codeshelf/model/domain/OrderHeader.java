@@ -281,7 +281,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final void addOrderLocation(OrderLocation inOrderLocation) {
 		OrderHeader previousOrderHeader = inOrderLocation.getParent();
-		if(previousOrderHeader == null) {
+		if (previousOrderHeader == null || previousOrderHeader==this) {
 			orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
 			inOrderLocation.setParent(this);
 		} else {

@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import static org.mockito.Mockito.mock;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -20,16 +18,11 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.MockDaoProvider;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
+import com.gadgetworks.codeshelf.model.dao.DaoProvider;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -43,32 +36,18 @@ import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FacilityOutlineTest {
+public class FacilityOutlineTest extends DomainTestABC {
 
 	@Test
 	public final void testCreateVertex() {
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
-		ITypedDao<DropboxService> dropboxDao = daoProvider.getDaoInstance(DropboxService.class);
-		ITypedDao<ContainerKind> containerKindDao = daoProvider.getDaoInstance(ContainerKind.class);
-		ITypedDao<Vertex> vertexDao = daoProvider.getDaoInstance(Vertex.class);
-		Facility.DAO = facDao;
-		DropboxService.DAO = dropboxDao;
-		CodeshelfNetwork.DAO = netDao;
-		ContainerKind.DAO = containerKindDao;
-		Che.DAO = cheDao;
-		Vertex.DAO = vertexDao;
+		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
+		this.mOrganizationDao.store(organization);
 
 		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
-		facDao.store(facility);
+		this.mFacilityDao.store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Facility");
@@ -105,40 +84,26 @@ public class FacilityOutlineTest {
 		} catch (EncodeException e) {
 		}		
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(DaoProvider.class), Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
-
-		MockDaoProvider daoProvider = new MockDaoProvider();
-		
-		ITypedDao<Organization> orgDao = daoProvider.getDaoInstance(Organization.class);
-		ITypedDao<Facility> facDao = daoProvider.getDaoInstance(Facility.class);
-		ITypedDao<CodeshelfNetwork> netDao = daoProvider.getDaoInstance(CodeshelfNetwork.class);
-		ITypedDao<Che> cheDao = daoProvider.getDaoInstance(Che.class);
-		ITypedDao<DropboxService> dropboxDao = daoProvider.getDaoInstance(DropboxService.class);
-		ITypedDao<ContainerKind> containerKindDao = daoProvider.getDaoInstance(ContainerKind.class);
-		ITypedDao<Vertex> vertexDao = daoProvider.getDaoInstance(Vertex.class);
-		
-		Facility.DAO = facDao;
-		DropboxService.DAO = dropboxDao;
-		CodeshelfNetwork.DAO = netDao;
-		ContainerKind.DAO = containerKindDao;
-		Che.DAO = cheDao;
-		Vertex.DAO = vertexDao;
+		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization();
 		organization.setOrganizationId("CTEST1.O1");
-		orgDao.store(organization);
+		this.mOrganizationDao.store(organization);
 
 		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
-		facDao.store(facility);	
+		this.mFacilityDao.store(facility);	
 		
 		/*
 		var anchorPoint = {'posTypeEnum': 'GPS', 'x': event.latLng.lng(), 'y': event.latLng.lat(), 'z' : 0.0};
@@ -169,11 +134,13 @@ public class FacilityOutlineTest {
 		} catch (Exception e) {
 			Assert.fail("Failed to seriaize request");
 		}
-				
-		ServerMessageProcessor processor = new ServerMessageProcessor(daoProvider, mock(WorkService.class));
+		
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(DaoProvider.class), Mockito.mock(WorkService.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

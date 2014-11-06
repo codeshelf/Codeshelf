@@ -21,7 +21,9 @@ public class PathTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.1");
+		Assert.assertNotNull(facility);
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
+		Assert.assertNotNull("Path is undefined",path);
 
 		// Check if we can find all four aisles.
 		List<Aisle> aisleList = path.<Aisle> getLocationsByClass(Aisle.class);
@@ -43,8 +45,11 @@ public class PathTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.2");
+		Assert.assertNotNull(facility);
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
+		Assert.assertNotNull("Path is undefined",path);
 		OrderHeader order = facility.getOrderHeader("CROSS1");
+		Assert.assertNotNull("Order header is undefined",order);
 
 		Assert.assertTrue(path.isOrderOnPath(order));
 
@@ -56,7 +61,10 @@ public class PathTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.3");
+		Assert.assertNotNull(facility);
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
+		Assert.assertNotNull("Path is undefined",path);
+
 		for (PathSegment segment : path.getSegments()) {
 			segment.computePathDistance();
 		}
