@@ -49,25 +49,22 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
-	public List<WorkInstruction> start(String location) {
+	public void start(String location) {
 		// This is both "Start pick" and scan of starting location.
 		// Note: if no jobs at all, it will fail on waiting.
 		scanCommand("START");
 		if (location == null) {
 			// perform start without location scan, if location is undefined
-			return null;
+			return;
 		}
 		waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
 		scanLocation(location);
 		waitForCheState(CheStateEnum.DO_PICK, 1000);
-
-		return getActivePickList();
 	}
 
-	public List<WorkInstruction> pick(int position, int quantity) {
+	public void pick(int position, int quantity) {
 		buttonPress(position, quantity);
 		// many state possibilities here. On to the next job, or finished all work, or need to confirm a short.
-		return getActivePickList();
 	}
 
 	public void logout() {

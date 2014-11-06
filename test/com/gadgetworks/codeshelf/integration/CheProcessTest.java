@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
@@ -44,13 +46,15 @@ import com.google.common.base.Strings;
  * @author jon ranstrom
  *
  */
-public class IntegrationTest1 extends EndToEndIntegrationTest {
+public class CheProcessTest extends EndToEndIntegrationTest {
+
+	private static final Logger				LOGGER			= LoggerFactory.getLogger(CheProcessTest.class);
 
 	static {
 		Configuration.loadConfig("test");
 	}
 
-	public IntegrationTest1() {
+	public CheProcessTest() {
 	}
 
 	@SuppressWarnings({ "rawtypes" })
@@ -431,9 +435,11 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		picker.logout();
 	}
 	
-	@SuppressWarnings({ "unused" })
 	@Test
-	public final void testCheIntegration1() throws IOException {
+	public final void testCheProcess1() throws IOException {
+		// Test cases:
+		// 1) If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)
+		// 2) A happy-day pick startup. No housekeeping jobs.
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
@@ -445,29 +451,68 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		picker.login("Picker #1");
 		
 		// This brief case covers and allows retirement of CheSimulationTest.java
+		LOGGER.info ("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
 		picker.setupContainer("9x9x9", "1"); // unknown container
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.NO_WORK,1000);
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
 		// Back to our main test
+		LOGGER.info ("Case 2: A happy-day pick startup. No housekeeping jobs.");
 		picker.setup();
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
-		List<WorkInstruction> activeWIs = picker.start("D303");
-		Assert.assertEquals(7, picker.countRemainingJobs());
+		picker.start("D303");
+		HousekeepingInjector.restoreHKDefaults();
 		
+		Assert.assertEquals(7, picker.countRemainingJobs());		
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		
 		// pick first item
-		activeWIs = picker.pick(button, quant);
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
 		Assert.assertEquals(6, picker.countRemainingJobs());
 
-		
-		HousekeepingInjector.restoreHKDefaults();
+		LOGGER.info ("Case 3: A happy-day short, with one short-ahead");
+		wi = picker.nextActiveWi();
+		// the third job is for 1522, which happens to be the one item going to both orders. So it should short-ahead
+		Assert.assertEquals("1522", wi.getItemId());
+		button = picker.buttonFor(wi);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK,1000);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM,1000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		Assert.assertEquals(4, picker.countRemainingJobs()); // Would be 5, but with one short ahead it is 4.
+
+		LOGGER.info ("Case 4: Short and cancel leave you on the same job");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK,1000);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM,1000);
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		Assert.assertEquals(4, picker.countRemainingJobs()); // Still 4.
+		WorkInstruction wi2 = picker.nextActiveWi();
+		Assert.assertEquals(wi, wi2); // same work instruction still on
+
+		LOGGER.info ("Case 5: Inappropriate location scan, then normal button press works");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.scanLocation("D302");
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000); // still on pick state, although with an error message
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		Assert.assertEquals(3, picker.countRemainingJobs()); 
+
+
 
 	}
 }
