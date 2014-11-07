@@ -7,6 +7,8 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.service.IApiService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.Errors;
@@ -23,16 +25,19 @@ public class ServiceMethodCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServiceMethodCommand.class);
 
 	private ServiceMethodRequest	request;
+
+	private ServiceFactory	serviceFactory;
 	
-	public ServiceMethodCommand(UserSession session, ServiceMethodRequest request) {
+	public ServiceMethodCommand(UserSession session, ServiceMethodRequest request, ServiceFactory serviceFactory) {
 		super(session);
 		this.request = request;
+		this.serviceFactory = serviceFactory;
 	}
 	
 	@Override
 	public ResponseABC exec() {
 		ServiceMethodResponse response = new ServiceMethodResponse();
-		Errors errors = new DefaultErrors(this.getClass());
+		DefaultErrors errors = new DefaultErrors(this.getClass());
 		String className = request.getClassName();
 		if (className==null) {
 			LOGGER.error("Class name is undefined");
@@ -59,7 +64,8 @@ public class ServiceMethodCommand extends CommandABC {
 		try {
 			Method method = null;
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(className);
+			@SuppressWarnings("unchecked")
+			Class<IApiService> classObject = (Class<IApiService>) Class.forName(className).asSubclass(IApiService.class);
 			for (Method classMethod : classObject.getMethods()) {
 				if (classMethod.getName().equals(methodName)) {
 					if (methodArgs.size() == classMethod.getParameterTypes().length) {
@@ -70,7 +76,7 @@ public class ServiceMethodCommand extends CommandABC {
 			};	
 			if (method != null) {
 				try {
-					Object serviceObject = getServiceInstance(session, classObject);
+					Object serviceObject = serviceFactory.getServiceInstance(classObject);
 					Object methodResult = method.invoke(serviceObject, methodArgs.toArray());
 					response.setResults(methodResult);
 					response.setStatus(ResponseStatus.Success);
@@ -84,6 +90,14 @@ public class ServiceMethodCommand extends CommandABC {
 						response.setErrors(errors);
 						return response;
 						
+					} else {
+						String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject; 
+						LOGGER.error(message, e);
+						response.setStatus(ResponseStatus.Fail);
+						response.setStatusMessage(message);
+						errors.reject(ErrorCode.GENERAL, message);
+						response.setErrors(errors);
+						return response;
 					}
 				} catch (Exception e) {
 					String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject; 
@@ -112,11 +126,5 @@ public class ServiceMethodCommand extends CommandABC {
 			response.setErrors(errors);
 			return response;
 		}
-		return response;
 	}
-
-	private Object getServiceInstance(UserSession session, Class <?> classObject) throws InstantiationException, IllegalAccessException {
-		return classObject.newInstance();
-	}
-	
 }

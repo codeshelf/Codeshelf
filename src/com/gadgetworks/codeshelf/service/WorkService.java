@@ -31,7 +31,7 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
 
-public class WorkService {
+public class WorkService implements IApiService {
 
 	public static final long DEFAULT_RETRY_DELAY 	= 10000L;
 	public static final int DEFAULT_CAPACITY		= Integer.MAX_VALUE;
@@ -139,7 +139,7 @@ public class WorkService {
 		UUID wiId = updatedWi.getPersistentId();
 		WorkInstruction storedWi = WorkInstruction.DAO.findByPersistentId(wiId);
 		if (storedWi == null) {
-			throw new InputValidationException(updatedWi, "persistentId", ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
 		storedWi.setPickerId(updatedWi.getPickerId());
 		storedWi.setActualQuantity(updatedWi.getActualQuantity());

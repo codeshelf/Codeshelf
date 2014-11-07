@@ -47,6 +47,8 @@ import com.google.inject.Singleton;
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
 
+	private static final long	serialVersionUID	= 1L;
+
 	@Inject
 	public static ITypedDao<Item>	DAO;
 
@@ -122,7 +124,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (inUom == null)
 			revisedUom = "?uom";
 		else revisedUom = UomNormalizer.normalizeString(inUom);
-		return inItemMasterId + "-" + inLocation.getNominalLocationId() + "-" + revisedUom;
+		return inItemMasterId + "-" + inLocation.getNominalLocationIdExcludeBracket() + "-" + revisedUom;
 	}
 
 	public Item() {
@@ -266,6 +268,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		String quantStr;
 
 		// for each or case, make sure we do not return the foolish looking 2.0 EA.
+		// UomNormalizer equivalents also return a 2 PK.  Other units sill may look foolish, such as
+		// 3.0 box. We would need the table of Uom to know if the units are discrete or not.
 		
 		//It was deemed that zero in the system is the unknown quantity in this system 
 		//   the system is not inventory tracking system so zero quantity in item does not mean you 
@@ -273,7 +277,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (Math.abs(quant.doubleValue() - 0.0d) < 0.000001) {//zero essentially
 			quantStr = "?";
 			
-		} else if (uom.equalsIgnoreCase("EA") || uom.equalsIgnoreCase("CS")) {
+		} else if (UomNormalizer.normalizedEquals(uom, UomNormalizer.CASE) || UomNormalizer.normalizedEquals(uom, UomNormalizer.EACH)) { 
 			quantStr = Integer.toString((int) quant.doubleValue());
 		} else {
 			quantStr = Double.toString(quant);
@@ -290,58 +294,27 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		else {
 			Double value = 0.0;
 			ILocation<?> theLocation = this.getStoredLocation();
-			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
-			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
-			if (theLocation.isLeftSideTowardsAnchor()) {
-				value = inCmFromLeft / 100.0;
-			} else {
-				value = pickEnd - (inCmFromLeft / 100.0);
-			}
-			if (value > pickEnd) {
-				LOGGER.error("setPositionFromLeft value out of range");
-				value = pickEnd;
-			}
-			if (value < 0.0) {
-				LOGGER.error("ssetPositionFromLeft value out of range");
-				value = 0.0;
-			}
-			setMetersFromAnchor(value);
-		}
-	}
-
-	public final String validatePositionFromLeft(ILocation<?> inLocation, Integer inCmFromLeft) {
-		String result = "";
-		if (inLocation == null) {
-			result = "Unknown location";
-		} else if (inCmFromLeft != null && inCmFromLeft < 0) {
-			// if the cm value is wider than that bay/tier, or negative
-			result = "Negative cm value not allowed";
-		} else {
-			Double pickEnd = ((SubLocationABC<?>) inLocation).getPickFaceEndPosX();
-			if (pickEnd != null) {
-				if (pickEnd == 0.0)
-					pickEnd = ((SubLocationABC<?>) inLocation).getPickFaceEndPosY();
-				if (pickEnd != null) {
-					if (inCmFromLeft != null) {
-						if (pickEnd < inCmFromLeft / 100.0) {
-							result = "Cm value too large. Location is not that wide.";
-						}
-					} else {
-						LOGGER.error("inCmFromLeft was null");
-						result = "invalid null value (inCmFromLeft)";
-					}
+			if (theLocation instanceof SubLocationABC) {
+				SubLocationABC<?> asSubLocation = (SubLocationABC<?>) theLocation;
+				Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
+				if (asSubLocation.isLeftSideTowardsAnchor()) {
+					value = inCmFromLeft / 100.0;
 				} else {
-					LOGGER.error("getPickFaceEndPosY returned null");
-					result = "invalid null value (getPickFaceEndPosY)";
+					value = pickEndWidthMeters - (inCmFromLeft / 100.0);
 				}
+				if (value > pickEndWidthMeters) {
+					LOGGER.error("setPositionFromLeft value out of range");
+					value = pickEndWidthMeters;
+				}
+				if (value < 0.0) {
+					LOGGER.error("ssetPositionFromLeft value out of range");
+					value = 0.0;
+				}
+				setMetersFromAnchor(value);
 			} else {
-				LOGGER.error("getPickFaceEndPosX returned null");
-				result = "invalid null value (getPickFaceEndPosX)";
+				LOGGER.error("unexpected setPositionFromLeft on location that isn't a sublocation");
 			}
 		}
-		return result;
-
 	}
 
 	public Integer getCmFromLeft() {
@@ -355,14 +328,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (theLocation.isLeftSideTowardsAnchor()) {
 			value = (int) Math.round(meters * 100.0);
 		} else { // cm back from the pickface end
-			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
-			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
-			if (pickEnd < meters) {
+			Double pickEndWidthMeters = ((SubLocationABC<?>)theLocation).getLocationWidthMeters();
+			if (pickEndWidthMeters < meters) {
 				LOGGER.error("Bug found: getCmFromLeft in non-slotted inventory model");
-				value = (int) Math.round(pickEnd * 100.0);
+				value = (int) Math.round(pickEndWidthMeters * 100.0);
 			} else {
-				value = (int) Math.round((pickEnd - meters) * 100.0);
+				value = (int) Math.round((pickEndWidthMeters - meters) * 100.0);
 			}
 		}
 
@@ -395,14 +366,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			returnValue += meters;
 		else {
 			// if path opposing the anchor, then the pickface end corresponds to the location value. We have to convert before adding.
-			Double pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosX();
-			if (pickEnd == 0.0)
-				pickEnd = ((SubLocationABC<?>) theLocation).getPickFaceEndPosY();
-			if (pickEnd < meters) {
+			Double pickEndWidthMeters = ((SubLocationABC<?>)theLocation).getLocationWidthMeters();
+			if (pickEndWidthMeters < meters) {
 				LOGGER.error("Bug found: Item.getPosAlongPath in non-slotted inventory model");
 				// let it return the location's posAlongPath
 			} else {
-				Double correctedMeters = pickEnd - meters;
+				Double correctedMeters = pickEndWidthMeters - meters;
 				returnValue += correctedMeters;
 			}
 		}

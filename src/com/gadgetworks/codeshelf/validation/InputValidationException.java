@@ -15,9 +15,9 @@ public class InputValidationException extends ValidationException {
 	@Getter
 	private final Errors errors;
 
-	public InputValidationException(Object instance, String field, ErrorCode errorCode) {
+	public InputValidationException(Object instance, String field, Object value, ErrorCode errorCode) {
 		DefaultErrors defaultErrors = new DefaultErrors(instance.getClass());
-		defaultErrors.rejectValue(field, errorCode);
+		defaultErrors.rejectValue(field, value, errorCode);
 		this.errors = defaultErrors;
 	}
 

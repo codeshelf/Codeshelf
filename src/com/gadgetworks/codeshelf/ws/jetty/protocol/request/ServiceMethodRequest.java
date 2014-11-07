@@ -4,12 +4,14 @@ import java.util.List;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 /* {"className":"WorkService",
  * "methodName":"wiSummaryForChe",
  * "methodArgs":["3039a670-33b1-11e4-a7ed-6673094fa2cf}
 */
 
+@ToString(callSuper=false)
 public class ServiceMethodRequest extends RequestABC {
 	
 	@Getter @Setter

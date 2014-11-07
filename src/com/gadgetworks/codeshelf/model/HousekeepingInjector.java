@@ -204,12 +204,12 @@ public class HousekeepingInjector {
 			LOGGER.error("null value in wisNeedHouseKeepingBetween");
 			return null;
 		} else {
-			// If both repeatContainer and bayChange, this inserts the repeatContainer first
-			if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
-				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
-			}
+			// If both repeatContainer and bayChange, this does bay change only. DEV-478
 			if (wantBayChangeBetween(getBayChangeChoice(), inPrevWi, inNextWi)) {
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+			}
+			else if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
+				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
 			}
 		}
 		return returnList;

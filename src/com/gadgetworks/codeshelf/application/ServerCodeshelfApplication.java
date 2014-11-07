@@ -21,6 +21,7 @@ import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
+import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -49,11 +50,12 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
 	private ITypedDao<Organization>			mOrganizationDao;
+	private ITypedDao<Facility>	mFacilityDao;
+
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 
 	JettyWebSocketServer webSocketServer;
-
 	@Inject
 	public ServerCodeshelfApplication(
 		final IHttpServer inHttpServer,
@@ -69,6 +71,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
+		mFacilityDao = inFacilityDao;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
 		webSocketServer = inAlternativeWebSocketServer;
@@ -119,6 +122,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
 		MetricsService.registerHealthCheck(sessionCheck);	
+		
+		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
+		MetricsService.registerHealthCheck(dbxCheck);
 	}
 
 	// --------------------------------------------------------------------------

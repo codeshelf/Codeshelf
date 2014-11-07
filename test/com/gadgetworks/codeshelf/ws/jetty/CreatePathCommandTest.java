@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -22,7 +21,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -36,6 +35,9 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 public class CreatePathCommandTest extends DomainTestABC {
 
 	PersistenceService persistenceService = PersistenceService.getInstance();
+	
+	@Mock
+	private ServiceFactory mockServiceFactory;
 
 	@Test
 	public void testPojo() throws JsonGenerationException, JsonMappingException, IOException {
@@ -83,7 +85,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		UserSession session = Mockito.mock(UserSession.class);
 		session.setSessionId("test-session");
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);
 		ResponseABC response = processor.handleRequest(session, request);
 
 		Assert.assertTrue(response instanceof CreatePathResponse);
@@ -122,7 +124,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		session.setSessionId("test-session");
 
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);
 
 		ResponseABC response = processor.handleRequest(session, request);
 

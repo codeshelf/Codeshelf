@@ -98,7 +98,6 @@ public class Che extends WirelessDeviceABC {
 
 	@OneToMany(mappedBy = "assignedChe")
 	@OrderBy("groupAndSortCode")
-	@Getter
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 
 	public Che(String domainId) {
@@ -199,7 +198,7 @@ public class Che extends WirelessDeviceABC {
 		// return null if not on a current run.
 		WorkInstruction latestAssignedWi = null; // there is no active field on wi
 		
-		for (WorkInstruction wi : getCheWorkInstructions()) {
+		for (WorkInstruction wi : cheWorkInstructions) {
 			Timestamp wiTime = wi.getAssigned();
 			if (wiTime != null) {
 				if (latestAssignedWi == null)

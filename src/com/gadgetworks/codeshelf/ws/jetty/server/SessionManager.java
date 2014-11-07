@@ -1,8 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.websocket.Session;
@@ -15,6 +16,7 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class SessionManager {
 
@@ -90,7 +92,7 @@ public class SessionManager {
 		}
 		return userSessions;
 	}
-	
+
 	public final Collection<UserSession> getSessions() {
 		return this.activeSessions.values();
 	}
@@ -136,5 +138,25 @@ public class SessionManager {
 		activeSiteControlerSessionsCounter.inc(activeSiteController-c);		
 		c = activeSessionsCounter.getCount();
 		activeSessionsCounter.inc(numActiveSessions-c);
+	}
+
+	public int sendMessage(Set<User> users, MessageABC message) {
+		List<User> sent = new ArrayList<User>();
+		for (User user : users) {
+			if (sendMessage(user, message)) {
+				sent.add(user);
+			}
+		} 
+		return sent.size();
+	}
+
+	private boolean sendMessage(User user, MessageABC message) {
+		CsSession session = getSession(user);// TODO Auto-generated method stub
+		if (session != null) {
+			session.sendMessage(message);
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

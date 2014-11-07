@@ -29,6 +29,8 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.validation.BatchResult;
+import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.google.inject.Inject;
 
 /**
@@ -410,11 +412,11 @@ public class EdiProcessorTest extends EdiTestABC {
 		return new ICsvOrderImporter() {
 
 			@Override
-			public ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader,
+			public BatchResult importOrdersFromCsvStream(Reader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) throws IOException {
-				ImportResult result = new ImportResult();
-				result.addFailure("failed line", new Exception("fail"));
+				BatchResult result = new BatchResult();
+				result.addViolation("bad", "bad", "msg");
 				return result;
 			}
 		};

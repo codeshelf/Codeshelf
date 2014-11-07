@@ -65,14 +65,16 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -790,8 +792,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		for (IEdiService ediService : getEdiServices()) {
 			if (ediService instanceof DropboxService) {
 				result = (DropboxService) ediService;
+				break;
 			}
-			break;
 		}
 		return result;
 	}
@@ -898,6 +900,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			}
 		}
 
+		// DEV-492 identify previous container uses
+		ArrayList<ContainerUse> priorCntrUses = new ArrayList<ContainerUse>();
+		priorCntrUses.addAll(inChe.getUses());
+		ArrayList<ContainerUse> newCntrUses = new ArrayList<ContainerUse>();
+
+		// Set new uses on the CHE.
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
 			Container container = getContainer(containerId);
@@ -907,6 +915,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				// Set the CHE on the containerUse
 				ContainerUse thisUse = container.getCurrentContainerUse();
 				if (thisUse != null) {
+					newCntrUses.add(thisUse); // DEV-492 bit
 					if (thisUse.getCurrentChe() != null) {
 						changedChes.add(thisUse.getCurrentChe());
 					}
@@ -917,11 +926,30 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 						LOGGER.error("", e);
 					}
 				}
-
+			}
+		}
+		// DEV-492 remove previous container uses.
+		// just to avoid a long hang after this first runs against old data with hundreds of stale uses, limit to 50.
+		int cleanCount = 0;
+		final int lkMostUsesToConsider = 50;
+		for (ContainerUse oldUse : priorCntrUses) {
+			cleanCount ++;
+			if (cleanCount >= lkMostUsesToConsider)
+				break;
+			if (!newCntrUses.contains(oldUse)) {
+				oldUse.setCurrentChe(null);
+				inChe.removeContainerUse(oldUse);
+				try {
+					ContainerUse.DAO.store(oldUse);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
 			}
 		}
 
 		/*
+		Che.DAO.clearAllCaches();
+		
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
@@ -939,11 +967,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 
 		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
+
+		
 		return finalWIResults.size();
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
-		return WorkInstructionSequencerFactory.createSequencer(Facility.sequencerType);
+		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
@@ -1208,46 +1238,55 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe,
+	private List<WorkInstruction>  generateCrossWallInstructions(final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
-		List<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
-
+		List<WorkInstruction> wiList = Lists.newArrayList();
 		for (Container container : inContainerList) {
-			// Iterate over all active CROSS orders on the path.
-			OrderHeader crossOrder = container.getCurrentOrderHeader();
-			if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
-				for (OrderDetail crossOrderDetail : crossOrder.getOrderDetails()) {
-					if (crossOrderDetail.getActive()) {
-						List<OrderDetail> matchingOrderDetails = getMatchingOutboundOrderDetail(crossOrderDetail);
-						//if (empty?) Error
-						for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
-							List<ISubLocation<?>> firstLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
-							//if (locations.empty) Error
-							for (ISubLocation<?> firstLocationOnPath : firstLocationPerPath) {
-								WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
-									WorkInstructionTypeEnum.PLAN,
-									matchingOutboundOrderDetail,
-									container,
-									inChe,
-									(LocationABC<?>) firstLocationOnPath,
-									inTime);
+			BatchResult<Work> result = determineWorkForContainer(container);
+			for (Work work : result.getResult()) {
+				WorkInstruction wi = createWorkInstruction(WorkInstructionStatusEnum.NEW,
+					WorkInstructionTypeEnum.PLAN,
+					work.getOutboundOrderDetail(),
+					work.getContainer(),
+					inChe,
+					work.getFirstLocationOnPath(),
+					inTime);
 
-								// If we created a WI then add it to the list.
-								if (wi != null) {
-									setWiPickInstruction(wi, matchingOutboundOrderDetail.getParent());
-									wiList.add(wi);
-								}
-							}
-						}
-					}
+				// If we created a WI then add it to the list.
+				if (wi != null) {
+					setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
+					wiList.add(wi);
 				}
 			}
 		}
 		return wiList;
 	}
 
+	public BatchResult<Work> determineWorkForContainer(Container container) {
+		// Iterate over all active CROSS orders on the path.
+		BatchResult<Work> batchResult = new BatchResult<Work>();
+		OrderHeader crossOrder = container.getCurrentOrderHeader();
+		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(crossOrder);
+			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
+				List<ISubLocation<?>> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+				for (ISubLocation<?> aLocationOnPath : firstOrderLocationPerPath) {
+					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
+					batchResult.add(work);
+				} /* for else */ if (firstOrderLocationPerPath.isEmpty()) {
+					batchResult.addViolation("matchingOutboundOrderDetail", matchingOutboundOrderDetail, "did not have a matching order location on any path");
+				}
+			} /* for else */ if (matchingOrderDetails.isEmpty()) {
+				batchResult.addViolation("currentOrderHeader", crossOrder, "no matching outbound order detail");
+			}
+		} else {
+			batchResult.addViolation("currentOrderHeader", container.getCurrentOrderHeader(), ErrorCode.FIELD_REFERENCE_INACTIVE);
+		}
+		return batchResult;
+	}
+	
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
@@ -1261,7 +1300,19 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		return locations;
 	}
 
-	private List<OrderDetail> getMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
+	private List<OrderDetail> toAllMatchingOutboundOrderDetails(OrderHeader crossbatchOrder) {
+		List<OrderDetail> allMatchingOrderDetails = Lists.newArrayList();
+		for (OrderDetail crossOrderDetail : crossbatchOrder.getOrderDetails()) {
+			if (crossOrderDetail.getActive()) {
+				List<OrderDetail> matchingOrderDetails = toMatchingOutboundOrderDetail(crossOrderDetail);
+				allMatchingOrderDetails.addAll(matchingOrderDetails);
+			}		
+		}
+		return allMatchingOrderDetails;
+	}
+
+	
+	private List<OrderDetail> toMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
 		Preconditions.checkNotNull(crossbatchOrderDetail);
 		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
 		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS));
@@ -1311,14 +1362,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		}
 		// new way. Not sorted. Simple alpha sort. Will fail on D-10 D-11 D-9
 		Collections.sort(locIdList);
-		for (String aString : locIdList) {
-			locationString += aString + " ";
-		}
+		locationString = Joiner.on(" ").join(locIdList);
 		// end DEV-315 modification
 
 		inWi.setPickInstruction(locationString);
 
-		try {
+		try { 
 			WorkInstruction.DAO.store(inWi);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -2033,38 +2082,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
 
 		if (containersIdList.size() > 0) {
-			Integer wiCount = this.computeWorkInstructions(inChe, containersIdList);
+			this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
-
-			if (wiCount > 0) {
-				// debug aid. Does the CHE know its work instructions?
-				List<WorkInstruction> cheWiList = inChe.getCheWorkInstructions(); // This gets all, including shorts
-				Integer cheCountGot = cheWiList.size();
-				if (cheCountGot < wiCount) {
-					LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?");
-					// if there are shorts cheCountGot might be greater.
-				}
-
-				//  /*
-
-				// Get the work instructions for this CHE at this location for the given containers. Can we pass empty string? Normally user would scan where the CHE is starting.
-				List<WorkInstruction> wiListAfterScanBlank = this.getWorkInstructions(inChe, ""); // cannot really scan blank, but this is how our UI simulation works
-				Integer wiCountGot = wiListAfterScanBlank.size();
-				// getWorkInstructions() does a new filtered query from db
-				// Only PLAN and housekeeping types come
-				if (wiCountGot > 0) {
-					// debug aid. Does the CHE know its work instructions?
-					List<WorkInstruction> cheWiList2 = inChe.getCheWorkInstructions();
-					Integer cheCountGot2 = cheWiList2.size();
-					if (cheCountGot2 < wiCountGot) {
-						LOGGER.error("setUpCheContainerFromString did not result in CHE getting all work instructions. Why?");
-					}
-
-				}
-				//  */
-
-			}
 		}
 	}
 
@@ -2146,8 +2166,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		itemBean.setUom(inUomId);
 		LocationABC<?> location = (LocationABC<?>) this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
-			Errors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", ErrorCode.FIELD_REFERENCE_NOT_FOUND, "storedLocation was not found");
+			DefaultErrors errors = new DefaultErrors(Item.class);
+			errors.rejectValue("storedLocation", storedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			throw new InputValidationException(errors);
 		}
 
@@ -2160,6 +2180,52 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		return returnItem;
 	}
  
+	private final Set<SiteController> getSiteControllers() {
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+
+		for (CodeshelfNetwork network : this.getNetworks()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}
+		return siteControllers;
+	}
+
+	public final Set<User> getSiteControllerUsers() {
+		Set<User> users = new HashSet<User>();
+
+		for (SiteController sitecon : this.getSiteControllers()) {
+			User user = sitecon.getAuthenticationUser();
+			if (user != null) {
+				users.add(user);
+			} else {
+				LOGGER.warn("Couldn't find user for site controller " + sitecon.getDomainId());
+			}
+		}
+		return users;
+	}
+
+	// TO come from configuration
+	public ColorEnum getDiagnosticColor() {
+		return ColorEnum.RED;
+	}
+	
+	public static class Work {
+		@Getter
+		private OrderDetail outboundOrderDetail;
+		
+		@Getter
+		private ISubLocation<?> firstLocationOnPath;
+		
+		@Getter
+		private Container container;
+
+		public Work(Container container, OrderDetail outboundOrderDetail, ISubLocation<?> firstLocationOnPath) {
+			super();
+			this.container = container;
+			this.outboundOrderDetail = outboundOrderDetail;
+			this.firstLocationOnPath = firstLocationOnPath;
+		}
+		
+
 	public Organization getOrganization() {
 		return parentOrganization;
 	}
@@ -2229,4 +2295,5 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		} //else
 		return null;
 	}
+	
 }

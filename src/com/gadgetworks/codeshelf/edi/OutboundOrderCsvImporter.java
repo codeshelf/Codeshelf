@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.event.EventSeverity;
 import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
@@ -34,14 +33,11 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.DateTimeParser;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-/**
- * @author jeffw
- *
- */
 @Singleton
 public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 
@@ -81,31 +77,56 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final ImportResult importOrdersFromCsvStream(final Reader inCsvReader,
+	public final BatchResult<Object> importOrdersFromCsvStream(final Reader inCsvReader,
 		final Facility inFacility,
 		Timestamp inProcessTime) {
 		mOrderGroupDao.clearAllCaches();
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
+/*
+		try (CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
+			HeaderColumnNameMappingStrategy<OutboundOrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OutboundOrderCsvBean>();
+			strategy.setType(OutboundOrderCsvBean.class);
 
+			CsvToBean<OutboundOrderCsvBean> csv = new CsvToBean<OutboundOrderCsvBean>();
+			List<OutboundOrderCsvBean> list = csv.parse(strategy, csvReader);
+
+			List<OrderHeader> orderList = new ArrayList<OrderHeader>();
+
+			LOGGER.debug("Begin order import.");
+			BatchResult<Object> batchResult = new BatchResult<Object>();
+			int lineCount = 1;
+			for (OutboundOrderCsvBean orderBean : list) {
+				String errorMsg = orderBean.validateBean();
+				if (errorMsg != null) {
+					LOGGER.error("Import errors: " + errorMsg);
+					batchResult.addLineViolation(lineCount, orderBean, errorMsg);
+				} else {
+					try {
+						OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
+						if ((order != null) && (!orderList.contains(order))) {
+							orderList.add(order);
+						}
+						batchResult.add(orderBean);
+					} catch (Exception e) {
+						batchResult.addLineViolation(lineCount, orderBean, e);
+					}
+*/
 		List<OrderHeader> orderList = new ArrayList<OrderHeader>();
 
 		LOGGER.debug("Begin order import.");
-		ImportResult result = new ImportResult();
+		int lineCount = 1;
+		BatchResult<Object> batchResult = new BatchResult<Object>();
 		for (OutboundOrderCsvBean orderBean : list) {
 			try {
 				OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
 				if ((order != null) && (!orderList.contains(order))) {
 					orderList.add(order);
 				}
+				batchResult.add(orderBean);
 				produceRecordSuccessEvent(orderBean);
-			} catch(InputValidationException e) {
-				result.addFailure(orderBean, e);
-				produceRecordViolationEvent(EventSeverity.WARN, e, orderBean);
-				LOGGER.warn("Unable to process record: " + orderBean, e);
 			} catch(Exception e) {
-				result.addFailure(orderBean, e);
-				produceRecordViolationEvent(EventSeverity.WARN, e, orderBean);
-				LOGGER.error("Unable to process record: " + orderBean, e);
+				LOGGER.error("unable to import order line: " + orderBean, e);
+				batchResult.addLineViolation(lineCount, orderBean, e);
 			}
 		}
 
@@ -123,7 +144,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		LOGGER.debug("End order import.");
 
 		cleanupArchivedOrders();
-		return result;
+		return batchResult;
 	}
 
 	// --------------------------------------------------------------------------
@@ -136,7 +157,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		for (OrderHeader order : inOrderList) {
 			for (OrderDetail orderDetail : order.getOrderDetails()) {
 				if (!orderDetail.getUpdated().equals(inProcessTime)) {
-					LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+					LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
 					orderDetail.setActive(false);
 					//orderDetail.setQuantity(0);
 					//orderDetail.setMinQuantity(0);
@@ -163,7 +184,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			// Iterate all of the order groups to see if they're still active.
 			for (OrderGroup group : inFacility.getOrderGroups()) {
 				if (!group.getUpdated().equals(inProcessTime)) {
-					LOGGER.debug("Archive old order group: " + group.getOrderGroupId());
+					LOGGER.trace("Archive old order group: " + group.getOrderGroupId());
 					group.setActive(false);
 					mOrderGroupDao.store(group);
 				}
@@ -181,7 +202,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 								if (orderDetail.getUpdated().equals(inProcessTime)) {
 									orderHeaderIsActive = true;
 								} else {
-									LOGGER.debug("Archive old order detail: " + orderDetail.getOrderDetailId());
+									LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
 									orderDetail.setActive(false);
 									// orderDetail.setQuantity(0);
 									// orderDetail.setMinQuantity(0);
@@ -195,7 +216,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 						}
 
 						if (!orderHeaderIsActive) {
-							LOGGER.debug("Archive old order header: " + order.getOrderId());
+							LOGGER.trace("Archive old order header: " + order.getOrderId());
 							order.setActive(false);
 							mOrderHeaderDao.store(order);
 						}

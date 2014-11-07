@@ -14,7 +14,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -88,7 +88,7 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		} catch (EncodeException e) {
 		}
 
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(WorkService.class));
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 

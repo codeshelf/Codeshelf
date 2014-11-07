@@ -21,9 +21,9 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.ImportResult;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 
 public class DropboxServiceTest {
 
@@ -79,9 +79,9 @@ public class DropboxServiceTest {
 			aislesFileImporter);
 	}
 
-	private ImportResult generateFailureResult() {
-		ImportResult result = new ImportResult();
-		result.addFailure("failed line", new Exception("fail"));
+	private BatchResult<Object> generateFailureResult() {
+		BatchResult<Object> result = new BatchResult<Object>();
+		result.addViolation("bad", "bad", "msg");
 		return result;
 	}
 }

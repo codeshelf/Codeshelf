@@ -34,7 +34,7 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 	@Override
 	public List<WorkInstruction> sort(Facility facility, List<WorkInstruction> inWiList) {
 		
-		// preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
+		preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
 		
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
 		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
@@ -63,7 +63,7 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 					while (wiIterator.hasNext()) {
 						WorkInstruction wi = wiIterator.next();
 						if (wi.getLocation().equals(workLocation)) {
-							LOGGER.debug("Adding WI "+wi+" at "+workLocation);
+							// LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 							wiResultList.add(wi);
 							// WorkInstructionSequencerABC sets the sort code and persists
 							wiIterator.remove();

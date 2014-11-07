@@ -7,6 +7,7 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CompleteWorkInstructionCommand;
@@ -70,14 +71,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 //	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	
-	//TODO should turn into a provider for all server service endpoints instead of just work service
-	private final WorkService  workService;
-	
+	private ServiceFactory	serviceFactory;
+
 	@Inject
 	//TODO should turn into a provider for all server service endpoints instead of just work service
-	public ServerMessageProcessor(WorkService workService) {
+	public ServerMessageProcessor(ServiceFactory serviceFactory) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
-		this.workService = workService;
+		this.serviceFactory = serviceFactory;
 	}
 	
 	@Override
@@ -103,7 +103,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				echoCounter.inc();
 			}		
 			else if (request instanceof CompleteWorkInstructionRequest) {
-				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, this.workService);
+				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 				completeWiCounter.inc();
 				applicationRequestCounter.inc();
 			}
@@ -138,7 +138,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ServiceMethodRequest) {
-				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request);
+				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request, serviceFactory);
 				objectUpdateCounter.inc();
 				applicationRequestCounter.inc();
 			}

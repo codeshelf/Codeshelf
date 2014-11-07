@@ -85,7 +85,7 @@ public class ObjectMethodCommand extends CommandABC {
 					Object methodResult = null;
 					java.lang.reflect.Method method = classObject.getMethod(methodName, signatureClasses.toArray(new Class[0]));
 					if (method != null) {
-						Errors errors = new DefaultErrors(classObject);
+						DefaultErrors errors = new DefaultErrors(classObject);
 						try {
 							methodResult = method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
 							response.setResults(methodResult);

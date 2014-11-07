@@ -224,7 +224,21 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	}
 
-	
+	@Test
+	public void nullQuantityReturnsEmpty() throws Exception {
+		
+		WorkInstruction testWi = generateValidFullWorkInstruction();
+		testWi.setPlanMaxQuantity(null);
+		testWi.setPlanMinQuantity(null);
+		testWi.setPlanQuantity(null);
+		testWi.setActualQuantity(null);
+		List<WorkInstruction> wiList = ImmutableList.of(testWi);
+		List<String[]> table = toTable(wiList);
+		String[] dataRow = table.get(1);
+		assertField(dataRow, "actualQuantity", "");
+		assertField(dataRow, "planQuantity", "");
+	}
+
 	private WorkInstruction generateValidFullWorkInstruction() {
 		return wiGenerator.generateValid(facility);
 	}

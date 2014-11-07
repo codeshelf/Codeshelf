@@ -587,7 +587,7 @@ public class RadioController implements IRadioController {
 					}
 				}
 				queue.add(packet);
-				LOGGER.info("Queue packet:    " + packet.toString());
+				LOGGER.debug("Queue packet:    " + packet.toString());
 			} else {
 				sendPacket(packet);
 			}
@@ -741,7 +741,7 @@ public class RadioController implements IRadioController {
 						packet.setAckData(inPacket.getAckData());
 						packet.setAckState(AckStateEnum.SUCCEEDED);
 						queue.remove(packet);
-						LOGGER.info("Packet acked SUCCEEDED: " + packet.toString());
+						LOGGER.debug("Packet acked SUCCEEDED: " + packet.toString());
 					}
 				}
 			}
@@ -962,7 +962,7 @@ public class RadioController implements IRadioController {
 			
 			try {				
 				if (packet.getPacketType() == IPacket.ACK_PACKET) {
-					LOGGER.info("Packet remote ACK req RECEIVED: " + packet.toString());
+					LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
 					processAckPacket(packet);
 				} else {
 					// If the inbound packet had an ACK ID then respond with an ACK ID.

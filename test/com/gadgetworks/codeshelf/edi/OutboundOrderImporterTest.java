@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 
 /**
  * @author jeffw
@@ -765,7 +766,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
 
 		//The large set creates the initial sets of orders
-		ImportResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
+		BatchResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
@@ -945,7 +946,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		}
 	}
 
-	private ImportResult importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
+	private BatchResult importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
 		try (InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());

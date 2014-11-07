@@ -211,7 +211,9 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * Get the location id up to but not including the facility
 	 */
 	String getNominalLocationId();
-	
+
+	String getNominalLocationIdExcludeBracket(); // If location is deleted, it would have brackets.
+
 	String getLocationId();
 
 	// --------------------------------------------------------------------------
@@ -253,6 +255,19 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	List<ILocation<?>> getSubLocationsInWorkingOrder();
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the children (one level down) of this location, in working order.
+	 * Working order is top-to-bottom and then down-path.
+	 * @return
+	 */
+	List<ISubLocation> getChildrenInWorkingOrder();
+	
+	/**
+	 * Get Items in this location and down the tree by position along the path
+	 */
+	public List<Item> getInventoryInWorkingOrder();
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Recompute the path distance of this location (and recursively for all of its child locations).

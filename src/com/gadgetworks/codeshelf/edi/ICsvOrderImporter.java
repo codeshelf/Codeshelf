@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.sql.Timestamp;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 
 /**
  * @author jeffw
@@ -17,6 +18,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderImporter {
 
-	ImportResult importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
+	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
 
 }

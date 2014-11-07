@@ -43,6 +43,10 @@ public abstract class CsvImporter<T> {
 		mEventProducer.produceEvent(getEventTagsForImporter(), EventSeverity.INFO, inRelatedObject);
 	}
 
+	protected void produceRecordViolationEvent(EventSeverity inSeverity, List<?> violations, Object inRelatedObject) {
+		mEventProducer.produceViolationEvent(getEventTagsForImporter(), inSeverity, violations, inRelatedObject);
+	}
+
 	protected void produceRecordViolationEvent(EventSeverity inSeverity, InputValidationException e, Object inRelatedObject) {
 		mEventProducer.produceViolationEvent(getEventTagsForImporter(), inSeverity, e.getErrors(), inRelatedObject);
 	}
@@ -64,4 +68,5 @@ public abstract class CsvImporter<T> {
 	}
 	
 	protected abstract Set<EventTag> getEventTagsForImporter();
+
 }

@@ -24,11 +24,11 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.Errors;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -119,10 +119,16 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
-		boolean result = true;
 
 		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
-
+		return importSlottedInventory(inventoryBeanList, inFacility, inProcessTime);
+		
+	}
+	public boolean importSlottedInventory(List<InventorySlottedCsvBean> inventoryBeanList,
+		Facility inFacility,
+		Timestamp inProcessTime) {
+		boolean result = true;
+			// TODO Auto-generated method stub
 		if (inventoryBeanList.size() > 0) {
 
 			LOGGER.debug("Begin slotted inventory import.");
@@ -340,9 +346,9 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @return
 	 */
 	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
-		Errors errors = new DefaultErrors(UomMaster.class);
+		DefaultErrors errors = new DefaultErrors(UomMaster.class);
 		if (Strings.emptyToNull(inUomId) == null) {
-			errors.rejectValue("uomMasterId", ErrorCode.FIELD_REQUIRED, "uomMasterId is required");
+			errors.rejectValue("uomMasterId", inUomId, ErrorCode.FIELD_REQUIRED);
 			throw new InputValidationException(errors);
 		}
 
@@ -426,13 +432,13 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) throws InputValidationException {
 		
-		Errors errors = new DefaultErrors(Item.class);
+		DefaultErrors errors = new DefaultErrors(Item.class);
 		if (inLocation == null) {
-			errors.rejectValue("storedLocation", ErrorCode.FIELD_REQUIRED, "storedLocation is required");
-		}
+			errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_REQUIRED);
+		} 
 
 		if (inItemMaster == null) {
-			errors.rejectValue("parent", ErrorCode.FIELD_REQUIRED, "parent is required");
+			errors.rejectValue("parent", inItemMaster, ErrorCode.FIELD_REQUIRED);
 		}
 		
 		Double quantity = 0.0d;
@@ -441,11 +447,11 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			quantity = Double.valueOf(quantityString);
 			if (quantity < 0.0d) {
 				quantity = 0.0d;
-				errors.rejectValue("quantity", ErrorCode.FIELD_NUMBER_NOT_NEGATIVE, "quantity cannot be a negative number");
+				errors.rejectValue("quantity", quantity, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
 		}
 		catch(NumberFormatException e) {
-			errors.rejectValue("quantity", ErrorCode.FIELD_NUMBER_REQUIRED, "quantity must be a number");
+			errors.rejectValue("quantity", quantityString, ErrorCode.FIELD_NUMBER_REQUIRED);
 		}
 		
 		if (errors.hasErrors() && !useLenientValidation) {
@@ -486,15 +492,29 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		if (!Strings.isNullOrEmpty(cmFromLeftString)) {
 			try {
 				cmValue = Integer.valueOf(cmFromLeftString);
-				// Our new setter
-				String error = result.validatePositionFromLeft(inLocation, cmValue);
-				if (error.isEmpty()) {
-					result.setPositionFromLeft(cmValue);
-				}  else {
-					errors.rejectValue("positionFromLeft", ErrorCode.FIELD_GENERAL, error);
+				if (cmValue < 0) {
+					errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
+				} else {
+					if (inLocation != null) {
+						if ((inLocation instanceof SubLocationABC) == false) {
+							errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_WRONG_TYPE);
+						} else {
+							SubLocationABC<?> asSubLocation = (SubLocationABC<?>) inLocation;
+							Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
+							if (cmValue / 100.0 < pickEndWidthMeters) {
+								result.setPositionFromLeft(cmValue);
+							}
+							else {
+								errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
+							}
+						}	
+					}
+					else {
+						errors.rejectValue("storedLocation", null, ErrorCode.FIELD_REQUIRED); //when cmFromLeft
+					}
 				}
 			} catch (NumberFormatException e) {
-				errors.rejectValue("positionFromLeft", ErrorCode.FIELD_NUMBER_NOT_NEGATIVE, "positionFromLeft is not a positive number");
+				errors.rejectValue("positionFromLeft", cmFromLeftString, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
 		} 
 		result.setActive(true);

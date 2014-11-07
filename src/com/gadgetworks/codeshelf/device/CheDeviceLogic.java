@@ -110,17 +110,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private Map<String, String>		mContainersMap;
 
 	// All WIs for all containers on the CHE.
+	@Accessors(prefix = "m")
+	@Getter
 	private List<WorkInstruction>	mAllPicksWiList;
 
 	// The active pick WIs.
 	@Accessors(prefix = "m")
 	@Getter
 	private List<WorkInstruction>	mActivePickWiList;
-
-	// The completed  WIs.
-	@Accessors(prefix = "m")
-	@Getter
-	private List<WorkInstruction>	mCompletedWiList;
 
 	private NetGuid					mLastLedControllerGuid;
 	private boolean					mMultipleLastLedControllerGuids;															// Could have a list, but this will be quite rare.
@@ -140,7 +137,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mContainersMap = new HashMap<String, String>();
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
-		mCompletedWiList = new ArrayList<WorkInstruction>();
 	}
 
 	public final short getSleepSeconds() {
@@ -419,7 +415,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
-			mCompletedWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
 			doNextPick();
 			// setState(CheStateEnum.DO_PICK);  // doNextPick will set the state.
@@ -442,7 +437,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		// Fix short break from May 11 2014.  Very kludgy
+		// Cannot clear position controller on SHORT. (However, we would kind of like to change them all to flash their current number.)
 		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM))
 			clearAllPositionControllers();
 
@@ -776,6 +771,156 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi equivalent enough that it should also short?
+	 */
+	private Boolean sameProductLotEtc(final WorkInstruction inProposedWi, WorkInstruction inShortWi) {
+		// Initially, just look at the denormalized item Id.
+		String shortId = inShortWi.getItemId();
+		String proposedId = inProposedWi.getItemId();
+		if (shortId == null || proposedId == null) {
+			LOGGER.error("sameProductLotEtc has null value");
+			return false;
+		}
+		if (shortId.compareTo(proposedId) == 0) {
+			LOGGER.info("SHORT AHEAD " + inProposedWi);
+			return true;
+		}
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi later in sequence?
+	 */
+	private Boolean laterWi(final WorkInstruction inProposedWi, final WorkInstruction inShortWi) {
+		String proposedSort = inProposedWi.getGroupAndSortCode();
+		String shortedSort = inShortWi.getGroupAndSortCode();
+		if (proposedSort == null) {
+			LOGGER.error("laterWiSameProduct has wi with no sort code");
+			return false;
+		}
+		if (shortedSort.compareTo(proposedSort) < 0)
+			return true;
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Is this an uncompleted housekeeping WI, that if just ahead of a short-ahead job is no longer needed?
+	 * Calling context is just ahead of short-ahead, so this does not need to try to check that. But knowing that, can look for other possible errors.
+	 */
+	private Boolean unCompletedUnneededHousekeep(final WorkInstruction inWi) {
+		// Keep in mind this odd-ball case:
+		// One short will short ahead and get some shorts and repeatPos.
+		// A later short will short ahead and look for more. It is possible that one of the earlier short ahead is complete and just before it.
+		WorkInstructionTypeEnum theType = inWi.getTypeEnum();
+		WorkInstructionStatusEnum theStatus = inWi.getStatusEnum();
+		if (theStatus != WorkInstructionStatusEnum.NEW && theStatus != WorkInstructionStatusEnum.SHORT) {
+			LOGGER.error("bad calling context 1 for unCompletedUnneededHousekeep");
+			return false;
+		}
+
+		if (theType == WorkInstructionTypeEnum.HK_REPEATPOS || theType == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+			return true;
+		}
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
+	 */
+	private void doShortAheads(final WorkInstruction inShortWi) {
+		// Look for more wis in the CHE's job list that must short also if this one did.
+		// Short and notify them, and remove so the worker will not encounter them. 
+		// Also remove unnecessary repeats and bay changes. The algorithm for housekeep removal is:
+		// - There may be bay changes or repeat containers. And only one housekeep between at a time (for now--this may break)
+		// - So track the previous work instruction as we iterate. If there is a housekeep right before a short ahead, we assume it is not needed.
+		// - Repeat: definitely not needed. Baychange: maybe not needed. Better to over-remove than leave a final bay change at the end of the list.
+
+		Integer laterCount = 0;
+		Integer toShortCount = 0;
+		Integer removeHousekeepCount = 0;
+		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
+		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
+		WorkInstruction prevWi = null;
+		for (WorkInstruction wi : mAllPicksWiList) {
+			if (laterWi(wi, inShortWi)) {
+				laterCount++;
+				if (sameProductLotEtc(wi, inShortWi)) {
+					// When simultaneous pick work instructions return, we must not short ahead within the simultaneous pick. See CD_0043 for details.
+					if (!mActivePickWiList.contains(wi)) {
+						toShortCount++;
+						// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
+						if (unCompletedUnneededHousekeep(prevWi)) {
+							if (mActivePickWiList.contains(prevWi))
+								LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
+							removeHousekeepCount++;
+							doCompleteUnneededHousekeep(prevWi);
+						}
+						// Short aheads will always set the actual pick quantity to zero.
+						doShortTransaction(wi, 0);
+					}
+				}
+			}
+			prevWi = wi;
+		}
+
+		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
+		if (toShortCount > 0) {
+			String reportShortAheadDetails = "Considered " + laterCount + " later jobs for short-ahead.";
+			if (toShortCount > 0)
+				reportShortAheadDetails += " Shorted " + toShortCount + " more.";
+			if (removeHousekeepCount > 0)
+				reportShortAheadDetails += " Also removed " + removeHousekeepCount + " housekeeping instructions.";
+			LOGGER.info(reportShortAheadDetails);
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The guts of the short transaction
+	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
+	 */
+	private void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
+
+		inWi.setActualQuantity(inActualPickQuantity);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
+
+		// normal short will be in mActivePickWiList.
+		// short-aheads will not be.
+		if (mActivePickWiList.contains(inWi))
+			mActivePickWiList.remove(inWi);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Update the WI fields to complete-ahead an unneeded housekeep, and call out to mDeviceManager to share it back to the server.
+	 */
+	private void doCompleteUnneededHousekeep(final WorkInstruction inWi) {
+
+		inWi.setActualQuantity(0);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * YES or NO confirm the short pick.
 	 * @param inScanStr
 	 */
@@ -787,19 +932,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			WorkInstruction wi = mShortPickWi;
 			;
 			if (wi != null) {
-				// Add it to the list of completed WIs.
-				mCompletedWiList.add(wi);
+				doShortTransaction(wi, mShortPickQty);
 
-				wi.setActualQuantity(mShortPickQty);
-				wi.setPickerId(mUserId);
-				wi.setCompleted(new Timestamp(System.currentTimeMillis()));
-				wi.setStatus(WorkInstructionStatusEnum.SHORT);
-				mActivePickWiList.remove(wi);
-
-				mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 				LOGGER.info("Pick shorted: " + wi);
 
 				clearLedControllersForWi(wi);
+
+				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.
@@ -874,13 +1013,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
 			if (value != 0)
 				return value;
-			
+
 			String w1Sort = inWi1.getGroupAndSortCode();
 			String w2Sort = inWi2.getGroupAndSortCode();
 			value = CompareNullChecker.compareNulls(w1Sort, w2Sort);
 			if (value != 0)
 				return value;
-			
+
 			return w1Sort.compareTo(w2Sort);
 		}
 	};
@@ -939,7 +1078,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
-		mCompletedWiList.clear();
 		setState(CheStateEnum.PICK_COMPLETE);
 	}
 
@@ -1074,6 +1212,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
 				// Also pretty easy. Light the position controllers on this CHE
+				byte freq = PosControllerInstr.BRIGHT_FREQ;
+				byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+				// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
+				if (planQuantityForPositionController != minQuantityForPositionController
+						|| planQuantityForPositionController != maxQuantityForPositionController) {
+					freq = PosControllerInstr.BLINK_DUTYCYCLE;
+					brightness = PosControllerInstr.BLINK_DUTYCYCLE;
+				}
+
 				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 				for (WorkInstruction wi : mActivePickWiList) {
 					for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
@@ -1082,8 +1229,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 								planQuantityForPositionController,
 								minQuantityForPositionController,
 								maxQuantityForPositionController,
-								PosControllerInstr.BRIGHT_FREQ,
-								PosControllerInstr.BRIGHT_DUTYCYCLE);
+								freq,
+								brightness);
 							instructions.add(instruction);
 						}
 					}
@@ -1093,6 +1240,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		}
 		ledControllerShowLeds(getGuid());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * return the button for this container ID. Mostly private use, but public for unit test convenience
+	 */
+	public byte buttonFromContainer(String inContainerId) {
+		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
+		for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+			if (mapEntry.getValue().equals(inContainerId)) {
+				return Byte.valueOf(mapEntry.getKey());
+			}
+		}
+		return 0;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1168,6 +1329,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					break;
 				}
 			}
+			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
+			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
+			// this is a "ride along" error. Would be nice if the user could see it immediately.
+
 			showAssignedPositions();
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
@@ -1214,6 +1379,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
+				String itemId = wi.getItemId();
+				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -1260,9 +1427,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inQuantity
 	 */
 	private void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
-
-		// Add it to the list of completed WIs.
-		mCompletedWiList.add(inWi);
 
 		inWi.setActualQuantity(inQuantity);
 		inWi.setPickerId(mUserId);

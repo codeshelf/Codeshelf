@@ -21,10 +21,10 @@ import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.LedChaser;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -185,11 +185,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// 5 products batched into containers 11 through 15
 
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,,456,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,456,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -241,13 +241,6 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	}
 
-	private void logWiList(List<WorkInstruction> inList) {
-		for (WorkInstruction wi : inList)
-			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
-					+ wi.getPickInstruction() + " count: " + wi.getPlanQuantity() + " order: " + wi.getOrderId() + " desc.: "
-					+ wi.getDescription());
-	}
-
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -295,9 +288,9 @@ public class CrossBatchRunTest extends EdiTestABC {
 		facility.setUpCheContainerFromString(theChe, "11");
 		HousekeepingInjector.restoreHKDefaults();
 
-		List<WorkInstruction> aList = theChe.getCheWorkInstructions();
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 2, wiCount); // one product going to 2 orders
+		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 		// Just some quick log output to see it
@@ -334,10 +327,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
-		Integer wiCount = aList.size();
-		Assert.assertEquals((Integer) 7, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
+
+		Integer wiCount = aList.size();
+		Assert.assertEquals((Integer) 6, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 
 		WorkInstruction wi1 = aList.get(0);
 		WorkInstruction wi2 = aList.get(1);
@@ -345,15 +339,13 @@ public class CrossBatchRunTest extends EdiTestABC {
 		WorkInstruction wi4 = aList.get(3);
 		WorkInstruction wi5 = aList.get(4);
 		WorkInstruction wi6 = aList.get(5);
-		WorkInstruction wi7 = aList.get(6);
 
 		String wi2Desc = wi2.getDescription();
 		String wi5Desc = wi5.getDescription();
-		String wi6Desc = wi6.getDescription();
 
 		Assert.assertEquals("Bay Change", wi2Desc);
-		Assert.assertEquals("Repeat Container", wi5Desc);
-		Assert.assertEquals("Bay Change", wi6Desc);
+		// We qualify for both bayChange and repeat container before wi6. But only get a baychange from version v8 and DEV-478
+		Assert.assertEquals("Bay Change", wi5Desc);
 
 		this.getPersistenceService().endTenantTransaction();
 	}
@@ -424,49 +416,42 @@ public class CrossBatchRunTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void checkLedChaserTiming() throws IOException {
+	public final void containerAssignmentTest() throws IOException {
+		// This uses the cross batch setup because the container are convenient.
 		Facility facility = setUpSimpleSlottedFacility("XB06");
-		LocationABC<?> locationS1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S1");
-		LocationABC<?> locationS2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S2");
-		LocationABC<?> locationS3 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S3");
-		LocationABC<?> locationS4 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
-		LocationABC<?> locationS5 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S5");
+		setUpGroup1OrdersAndSlotting(facility);
 
-		LedChaser aChaser = new LedChaser(facility, ColorEnum.RED);
-		aChaser.addChaseForLocation(locationS1);
-		aChaser.addChaseForLocation(locationS2);
-		aChaser.addChaseForLocation(locationS3);
-		aChaser.addChaseForLocation(locationS4);
-		aChaser.addChaseForLocation(locationS5);
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
 
-		// This test test (non-automated) checks to see if the LedChaser runs its business on a separate thread without bothering the main thread.
-		LOGGER.info("Firing test LedChaser now");
-		aChaser.fireTheChaser(true); // true = log only
-		LOGGER.info("Message1 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message2 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message3 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message4 after firing test LedChaser");
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-		LOGGER.info("Message5 after firing test LedChaser");
-	// If this is right, there will be some interleaving of "MessageN after firing test LedChaser" and "send one chase"
+		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
+		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
+		HousekeepingInjector.turnOffHK();
+		facility.setUpCheContainerFromString(theChe, "11,12,13");
+		
+		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
+		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		int usesCount = theChe.getUses().size();
+		Assert.assertTrue(usesCount == 3);
+		// Just exploring: see what happens if we add the same use several times.
+		// Probably no need to port this bit to hibernate branch as this does not match the new pattern.
+		ContainerUse aUse = theChe.getUses().get(0);
+		theChe.addContainerUse(aUse);
+		theChe.addContainerUse(aUse);
+		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		usesCount = theChe.getUses().size();
+		Assert.assertTrue(usesCount == 3);
+		// We just proved that adding the same object extra times to CHE uses does not
+		// not result in duplicates in the list. Probably true for most ebeans relationships
+		
+		// Now the new part for DEV-492. Show that we remove prior run uses
+		facility.setUpCheContainerFromString(theChe, "14");
+		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		Assert.assertTrue(theChe.getUses().size() == 1);		
+		// BUG! at least with ebeans. If we used 12 above instead of 14, it throws on an ebeans
+		// lazy load exception on work instruction
 
+		HousekeepingInjector.restoreHKDefaults(); // set it back
 	}
-
-	// Important: BayChangeExceptSamePathDistance is not tested here. Need positive and negative tests
 
 }

@@ -28,11 +28,13 @@ import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Facility.Work;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
@@ -91,8 +93,13 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			try {
 				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
+				BatchResult<Work> workResults = inFacility.determineWorkForContainer(container);
+//				produceRecordSuccessEvent(crossBatchBean);
+				importedContainerIds.add(container.getContainerId());
 				importedRecords++;
-				produceRecordSuccessEvent(crossBatchBean);
+				if (!workResults.isSuccessful()) {
+					produceRecordViolationEvent(EventSeverity.WARN, workResults.getViolations(), crossBatchBean);
+				} 
 			}
 			catch(InputValidationException e) {
 				produceRecordViolationEvent(EventSeverity.WARN, e, crossBatchBean);
