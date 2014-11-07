@@ -89,19 +89,23 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 				+ "Bay,B1,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n" //
+				+ "Tier,T1,,0,80,80,,\r\n" //
 				+ "Bay,B3,230,,,,,\r\n" //
-				+ "Tier,T1,,4,80,0,,\r\n" //
+				+ "Tier,T1,,4,80,160,,\r\n" //
 				+ "Aisle,A2,,,,,tierNotB1S1Side,12.85,55.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n"//
 				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n" //
+				+ "Tier,T1,,0,80,80,,\r\n" //
+				+ "Bay,B3,230,,,,,\r\n" //
+				+ "Tier,T1,,0,80,160,,\r\n" //
 				+ "Aisle,A3,,,,,tierNotB1S1Side,12.85,65.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n"//
 				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"; //
+				+ "Tier,T1,,0,80,80,,\r\n" //
+				+ "Bay,B3,230,,,,,\r\n" //
+				+ "Tier,T1,,0,80,160,,\r\n"; //
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -135,15 +139,18 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		aisle3.associatePathSegment(persistStr2);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
-				+ "A1.B1, D100\r\n" //
-				+ "A1.B1.T1, D101\r\n" //
-				+ "A1.B2.T1, D301\r\n" //
+				+ "A1.B1, D300\r\n" //
+				+ "A1.B2, D400\r\n" //
+				+ "A1.B3, D500\r\n" //
+				+ "A1.B1.T1, D301\r\n" //
 				+ "A1.B2.T1, D302\r\n" //
 				+ "A1.B3.T1, D303\r\n" //
-				+ "A2.B1.T1, D402\r\n" //
-				+ "A2.B2.T1, D403\r\n"//
-				+ "A3.B1.T1, D502\r\n" //
-				+ "A3.B2.T1, D503\r\n";//
+				+ "A2.B1.T1, D401\r\n" //
+				+ "A2.B2.T1, D402\r\n" //
+				+ "A2.B3.T1, D403\r\n"//
+				+ "A3.B1.T1, D501\r\n" //
+				+ "A3.B2.T1, D502\r\n" //
+				+ "A3.B3.T1, D503\r\n";//
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -440,6 +447,9 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		// Test cases:
 		// 1) If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)
 		// 2) A happy-day pick startup. No housekeeping jobs.
+		// Case 3: A happy-day short, with one short-ahead");
+		// Case 4: Short and cancel leave you on the same job");
+		// Case 5: Inappropriate location scan, then normal button press works");
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
@@ -511,8 +521,55 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
 		Assert.assertEquals(3, picker.countRemainingJobs()); 
-
-
-
 	}
+	
+	@Test
+	public final void testRouteWrap() throws IOException {
+		// Test cases:
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		setUpSmallInventoryAndOrders(facility);
+		
+		HousekeepingInjector.turnOffHK();
+		
+		// Set up a cart for orders 12345 and 1111, which will generate work instructions
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		picker.login("Picker #1");
+		
+		LOGGER.info ("Case 1: Scan on near the end of the route. Only 3 of 7 jobs.");
+		picker.setup();
+		picker.setupContainer("12345", "1");
+		picker.setupContainer("11111", "2");
+		picker.start("D301");
+		HousekeepingInjector.restoreHKDefaults();
+		
+		Assert.assertEquals(3, picker.countRemainingJobs());		
+		Assert.assertEquals(1, picker.countActiveJobs());
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		
+		// pick first item
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		Assert.assertEquals(2, picker.countRemainingJobs());
+
+		LOGGER.info ("Case 2: Pick the 2nd and 3rd jobs");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		Assert.assertEquals(1, picker.countRemainingJobs());
+		// last job
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		// Here is the end of it
+		//picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		Assert.assertEquals(0, picker.countRemainingJobs());
+		
+	}
+
 }
