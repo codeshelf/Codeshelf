@@ -1,7 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -18,7 +17,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.gadgetworks.flyweight.command.ColorEnum;
 
 public class ObjectUpdateCommand extends CommandABC {
 

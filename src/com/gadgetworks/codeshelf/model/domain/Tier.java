@@ -264,10 +264,8 @@ public class Tier extends SubLocationABC<Bay> {
 		return slot;
 	}
 
-	
-	}
-	
 	@Override
 	public void setParent(Bay inParent) {
 		this.setParent((ILocation<?>)inParent);
+	}
 }

@@ -30,7 +30,6 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.google.inject.Inject;
 
 /**

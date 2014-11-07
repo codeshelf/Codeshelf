@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.ws.jetty.server;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -15,8 +16,8 @@ import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
 
 public class SessionManager {
 
@@ -151,7 +152,7 @@ public class SessionManager {
 	}
 
 	private boolean sendMessage(User user, MessageABC message) {
-		CsSession session = getSession(user);// TODO Auto-generated method stub
+		UserSession session = getSession(user);// TODO Auto-generated method stub
 		if (session != null) {
 			session.sendMessage(message);
 			return true;

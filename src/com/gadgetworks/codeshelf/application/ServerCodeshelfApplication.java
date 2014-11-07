@@ -71,7 +71,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		mFacilityDao = inFacilityDao;
 		mPersistentPropertyDao = inPersistentPropertyDao;
 		mOrganizationDao = inOrganizationDao;
 		webSocketServer = inAlternativeWebSocketServer;

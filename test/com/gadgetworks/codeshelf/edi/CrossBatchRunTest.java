@@ -352,6 +352,8 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	@Test
 	public final void housekeepingNegativeTest() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// Same as basic housekeeping, but showing that no housekeeps if set to pathSegmentChange and containerAndCount
 		Facility facility = setUpSimpleSlottedFacility("XB04");
 		setUpGroup1OrdersAndSlotting(facility);
@@ -379,10 +381,14 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void housekeepingContainerAndCount() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setUpSimpleSlottedFacility("XB05");
 		setUpGroup1OrdersAndSlotting(facility);
 
@@ -413,10 +419,13 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		Assert.assertEquals("Repeat Container", wi4Desc);
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void containerAssignmentTest() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		// This uses the cross batch setup because the container are convenient.
 		Facility facility = setUpSimpleSlottedFacility("XB06");
 		setUpGroup1OrdersAndSlotting(facility);
@@ -452,6 +461,8 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// lazy load exception on work instruction
 
 		HousekeepingInjector.restoreHKDefaults(); // set it back
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 }

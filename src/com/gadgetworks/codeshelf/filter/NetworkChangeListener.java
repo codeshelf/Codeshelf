@@ -4,7 +4,6 @@ import java.util.Set;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -15,7 +14,6 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.google.common.collect.ImmutableList;
 
 public class NetworkChangeListener implements ObjectEventListener {
 

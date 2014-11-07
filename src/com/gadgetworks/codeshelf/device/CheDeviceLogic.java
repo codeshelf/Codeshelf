@@ -817,8 +817,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// Keep in mind this odd-ball case:
 		// One short will short ahead and get some shorts and repeatPos.
 		// A later short will short ahead and look for more. It is possible that one of the earlier short ahead is complete and just before it.
-		WorkInstructionTypeEnum theType = inWi.getTypeEnum();
-		WorkInstructionStatusEnum theStatus = inWi.getStatusEnum();
+		WorkInstructionTypeEnum theType = inWi.getType();
+		WorkInstructionStatusEnum theStatus = inWi.getStatus();
 		if (theStatus != WorkInstructionStatusEnum.NEW && theStatus != WorkInstructionStatusEnum.SHORT) {
 			LOGGER.error("bad calling context 1 for unCompletedUnneededHousekeep");
 			return false;
@@ -894,7 +894,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		inWi.setActualQuantity(inActualPickQuantity);
 		inWi.setPickerId(mUserId);
 		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatusEnum(WorkInstructionStatusEnum.SHORT);
+		inWi.setStatus(WorkInstructionStatusEnum.SHORT);
 
 		// normal short will be in mActivePickWiList.
 		// short-aheads will not be.
@@ -914,7 +914,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		inWi.setActualQuantity(0);
 		inWi.setPickerId(mUserId);
 		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatusEnum(WorkInstructionStatusEnum.COMPLETE);
+		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}

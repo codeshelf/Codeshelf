@@ -22,6 +22,7 @@ import org.mockito.InOrder;
 
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
@@ -42,10 +43,12 @@ import com.google.common.collect.Lists;
  * @author pmonteiro
  *
  */
-public class CheDeviceLogicTest {
+public class CheDeviceLogicTest extends DomainTestABC {
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator().generateValid();
@@ -81,10 +84,14 @@ public class CheDeviceLogicTest {
 		InOrder ordered = inOrder(radioController);
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), wi.getPickInstruction());
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), "COMPLETE");
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public void showsNoWorkIfNothingAheadOfLocation() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator().generateValid();
@@ -117,6 +124,8 @@ public class CheDeviceLogicTest {
 		pressButton(cheDeviceLogic, chePosition, wi.getPlanQuantity());
 	
 		verifyDisplay(radioController, "NO WORK TO DO");
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test

@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import java.lang.reflect.Method;
 import java.util.UUID;
 
 import org.slf4j.Logger;

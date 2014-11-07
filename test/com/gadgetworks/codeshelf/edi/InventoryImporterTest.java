@@ -61,7 +61,9 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	Facility facilityForVirtualSlotting;
 	
-	protected void doBefore() {
+	public void doBefore() {
+		this.getPersistenceService().beginTenantTransaction();
+
 		VirtualSlottedFacilityGenerator facilityGenerator =
 					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
 														createLocationAliasImporter(),
@@ -69,6 +71,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test

@@ -64,7 +64,7 @@ public class SiteController extends WirelessDeviceABC {
 	}
 	
 	public User getAuthenticationUser() {
-		return User.DAO.findByDomainId(getParent().getParent().getParentOrganization(), getDomainId());
+		return User.DAO.findByDomainId(getOrganization(), getDomainId());
 	}
 
 	@Override

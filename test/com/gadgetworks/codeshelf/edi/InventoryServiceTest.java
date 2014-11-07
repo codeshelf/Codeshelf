@@ -1,10 +1,7 @@
 package com.gadgetworks.codeshelf.edi;
 
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Before;

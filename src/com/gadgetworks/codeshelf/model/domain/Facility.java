@@ -1268,7 +1268,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		// Iterate over all active CROSS orders on the path.
 		BatchResult<Work> batchResult = new BatchResult<Work>();
 		OrderHeader crossOrder = container.getCurrentOrderHeader();
-		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS))) {
+		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
 				List<ISubLocation<?>> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
@@ -2224,6 +2224,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			this.outboundOrderDetail = outboundOrderDetail;
 			this.firstLocationOnPath = firstLocationOnPath;
 		}
+	}
 		
 
 	public Organization getOrganization() {

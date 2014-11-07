@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import static org.mockito.Mockito.mock;
-
 import java.util.HashMap;
 
 import org.junit.Assert;
@@ -30,13 +28,11 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 public class CreateCheTest extends DAOTestABC {
 	UserSession mSession;
 	
-	private MockDaoProvider	daoProvider;
 	private ServerMessageProcessor	processor;
 
 
-	protected void doBefore() {
-		daoProvider = new MockDaoProvider();
-		processor = new ServerMessageProcessor(daoProvider, mock(ServiceFactory.class));
+	public void doBefore() {
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class));
 	}
 	
 	@Test

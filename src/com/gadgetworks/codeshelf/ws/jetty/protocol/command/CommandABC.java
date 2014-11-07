@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
-import lombok.Setter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

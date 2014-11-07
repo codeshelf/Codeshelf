@@ -102,7 +102,7 @@ public class PickSimulator {
 	public int countRemainingJobs() {
 		int count = 0;
 		for (WorkInstruction wi : getAllPicksList()) {
-			WorkInstructionStatusEnum status = wi.getStatusEnum();
+			WorkInstructionStatusEnum status = wi.getStatus();
 			if (status == WorkInstructionStatusEnum.NEW)
 				count++;
 		}

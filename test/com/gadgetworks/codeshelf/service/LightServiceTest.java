@@ -30,7 +30,6 @@ import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventoryGenerator;
 import com.gadgetworks.codeshelf.edi.VirtualSlottedFacilityGenerator;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -54,6 +53,7 @@ public class LightServiceTest extends EdiTestABC {
 	
 	@Test
 	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException {
+		this.getPersistenceService().beginTenantTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
 			createLocationAliasImporter(),
@@ -86,11 +86,15 @@ public class LightServiceTest extends EdiTestABC {
 			LightLedsMessage message = (LightLedsMessage) messageABC;
 			assertWillLightItem(itemIterator.next(), message);
 		}
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 
 	@Test
 	public final void checkChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setupPhysicalSlottedFacility("XB06");
 		String[] locations = new String[]{"A1.B1.T2", "A1.B1"};
 		for (String locationId : locations) {
@@ -99,6 +103,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertLightSequence(facility, parent, sublocations);
 		}
 		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	/**
@@ -106,11 +111,15 @@ public class LightServiceTest extends EdiTestABC {
 	 */
 	@Test
 	public final void checkChildLocationSequenceForAisle() throws IOException, InterruptedException, ExecutionException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setupPhysicalSlottedFacility("XB06");
 		ISubLocation parent = facility.findSubLocationById("A1");
 		List<ISubLocation> sublocations = parent.getActiveChildrenAtLevel(Tier.class);
 		Collections.sort(sublocations, new LocationABC.LocationWorkingOrderComparator());
 		assertLightSequence(facility, parent, sublocations);
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	

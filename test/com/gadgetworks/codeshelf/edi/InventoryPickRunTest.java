@@ -257,6 +257,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 	@Test
 	public final void testSequenceAlongTierWithoutTop() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
 
@@ -322,10 +324,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Need more cases for BayDistanceTopLast.
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void testSequenceAlongTierWithTop() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_02");
 		Assert.assertNotNull(facility);		
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
@@ -388,6 +393,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1524", wi10.getItemMasterId());
 
 		HousekeepingInjector.restoreHKDefaults();
+
+		this.getPersistenceService().endTenantTransaction();
 	}	
 
 }
