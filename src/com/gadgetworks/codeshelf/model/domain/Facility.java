@@ -742,7 +742,8 @@ public class Facility extends SubLocationABC<Facility> {
 		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
 		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
 		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
-		List<WorkInstruction> workInstructions = WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",filterParams);
+		List<WorkInstruction> workInstructions = WorkInstruction.DAO.findByFilter("assignedChe.persistentId = :chePersistentId and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) ",
+			filterParams);
 		for (WorkInstruction wi : workInstructions) {
 			try {
 
@@ -795,7 +796,7 @@ public class Facility extends SubLocationABC<Facility> {
 		int cleanCount = 0;
 		final int lkMostUsesToConsider = 50;
 		for (ContainerUse oldUse : priorCntrUses) {
-			cleanCount ++;
+			cleanCount++;
 			if (cleanCount >= lkMostUsesToConsider)
 				break;
 			if (!newCntrUses.contains(oldUse)) {
@@ -811,7 +812,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// Work around serious ebeans problem. See CHE uses field not correct.
 		Che.DAO.clearAllCaches();
-		
+
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
@@ -830,7 +831,6 @@ public class Facility extends SubLocationABC<Facility> {
 
 		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
 
-		
 		return finalWIResults.size();
 	}
 
@@ -857,6 +857,52 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 	}
 
+	/**
+	 * Helper function used in the context after scan location. Gives the distance, or distance of the bay across the path if within 2% of same distance.
+	 * Sort of special case. If null or empty string passed in, return 0.0. But unknown location returns null, which causes empty WI list.
+	 * @param inScannedLocationId
+	 * Returns null and logs errors for bad input situation
+	 */
+	private Double getStartingPathDistance(final String inScannedLocationId) {
+		if (inScannedLocationId == null || inScannedLocationId.isEmpty())
+			return 0.0;
+
+		ISubLocation<?> cheLocation = null;
+		cheLocation = findSubLocationById(inScannedLocationId);
+		if (cheLocation == null) {
+			LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
+			return null;
+		}
+
+		Double startingPathPos = null;
+		if (cheLocation != null) {
+			Path path = cheLocation.getAssociatedPathSegment().getParent();
+			Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
+			Bay selectedBay = cheBay;
+			if (cheBay == null) {
+				LOGGER.error("Che does not have a bay parent location in getStartingPathDistance #1");
+				return null;
+			} else if (cheBay.getPosAlongPath() == null) {
+				LOGGER.error("Ches bay parent location does not have posAlongPath in getStartingPathDistance #2");
+				return null;
+			}
+
+			for (Bay bay : path.<Bay> getLocationsByClass(Bay.class)) {
+				// Find any bay sooner on the work path that's within 2% of this bay.
+				if (bay.getPosAlongPath() == null) {
+					LOGGER.error("bay location does not have posAlongPath in getStartingPathDistance #3");
+				} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
+						&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
+					selectedBay = bay;
+				}
+			}
+
+			// Figure out the starting path position.
+			startingPathPos = selectedBay.getPosAlongPath();
+		}
+		return startingPathPos;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
@@ -870,7 +916,7 @@ public class Facility extends SubLocationABC<Facility> {
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-
+		/*
 		ISubLocation<?> cheLocation = null;
 		if (!inScannedLocationId.isEmpty()) {
 			cheLocation = findSubLocationById(inScannedLocationId);
@@ -905,6 +951,11 @@ public class Facility extends SubLocationABC<Facility> {
 			// Figure out the starting path position.
 			startingPathPos = selectedBay.getPosAlongPath();
 		}
+		*/
+
+		Double startingPathPos = getStartingPathDistance(inScannedLocationId);
+		if (startingPathPos == null) // getStartingPathDistance logged the errors, so we do not need to
+			return wiResultList;
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
 		Map<String, Object> filterParams = new HashMap<String, Object>();
@@ -930,7 +981,58 @@ public class Facility extends SubLocationABC<Facility> {
 
 		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
-		return wiResultList;
+
+		// For DEV- 477
+		final boolean doWrapIfNecessary = false;
+		if (!doWrapIfNecessary) // prior behavior
+			return wiResultList;
+
+		// If wrapping, we need to get the complete list, then add on the missing bits. AND update the group and sort code for the work instructions
+		int wiCountFromStartLocation = wiResultList.size();
+		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
+
+		Map<String, Object> filterParams2 = new HashMap<String, Object>();
+		filterParams2.put("chePersistentId", inChe.getPersistentId().toString());
+		filterParams2.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams2.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
+		filterParams2.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
+		String filter2 = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat)";
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter2, filterParams2)) {
+			ILocation<?> loc = wi.getLocation();
+			if (loc == null)
+				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
+			else if (loc.isActive())
+				completeRouteWiList.add(wi);
+			else
+				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
+		}
+		int wiCountCompleteRoute = completeRouteWiList.size();
+		Integer leftoverCount = wiCountCompleteRoute - wiCountFromStartLocation;
+		if (leftoverCount == 0) // just return what we had
+			return wiResultList;
+
+		LOGGER.info("Wrapping the CHE route. Add the starting " + leftoverCount
+				+ " jobs from start of path to the end of the CHE route.");
+		Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
+
+		// Add the first ones in order.
+		List<WorkInstruction> wrappedRouteWiList = new ArrayList<WorkInstruction>();
+		for (WorkInstruction wi : wiResultList) {
+			wrappedRouteWiList.add(wi);
+		}
+		WorkInstruction firstWi = wrappedRouteWiList.get(0);
+		// Add the ones we missed from the start.
+		for (WorkInstruction wi : completeRouteWiList) {
+			if (wi.equals(firstWi))
+				break;
+			wrappedRouteWiList.add(wi);
+		}
+		// Now our wrappedRouteWiList is ordered correctly, but group and sort codes are wrong.
+		if (wrappedRouteWiList.size() > 0)
+			wrappedRouteWiList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wrappedRouteWiList);
+
+		return wrappedRouteWiList;
+
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
@@ -1094,7 +1196,7 @@ public class Facility extends SubLocationABC<Facility> {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction>  generateCrossWallInstructions(final Che inChe,
+	private List<WorkInstruction> generateCrossWallInstructions(final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
@@ -1131,10 +1233,14 @@ public class Facility extends SubLocationABC<Facility> {
 				for (ISubLocation<?> aLocationOnPath : firstOrderLocationPerPath) {
 					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
 					batchResult.add(work);
-				} /* for else */ if (firstOrderLocationPerPath.isEmpty()) {
-					batchResult.addViolation("matchingOutboundOrderDetail", matchingOutboundOrderDetail, "did not have a matching order location on any path");
+				} /* for else */
+				if (firstOrderLocationPerPath.isEmpty()) {
+					batchResult.addViolation("matchingOutboundOrderDetail",
+						matchingOutboundOrderDetail,
+						"did not have a matching order location on any path");
 				}
-			} /* for else */ if (matchingOrderDetails.isEmpty()) {
+			} /* for else */
+			if (matchingOrderDetails.isEmpty()) {
 				batchResult.addViolation("currentOrderHeader", crossOrder, "no matching outbound order detail");
 			}
 		} else {
@@ -1142,7 +1248,7 @@ public class Facility extends SubLocationABC<Facility> {
 		}
 		return batchResult;
 	}
-	
+
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
@@ -1162,12 +1268,11 @@ public class Facility extends SubLocationABC<Facility> {
 			if (crossOrderDetail.getActive()) {
 				List<OrderDetail> matchingOrderDetails = toMatchingOutboundOrderDetail(crossOrderDetail);
 				allMatchingOrderDetails.addAll(matchingOrderDetails);
-			}		
+			}
 		}
 		return allMatchingOrderDetails;
 	}
 
-	
 	private List<OrderDetail> toMatchingOutboundOrderDetail(OrderDetail crossbatchOrderDetail) {
 		Preconditions.checkNotNull(crossbatchOrderDetail);
 		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
@@ -1223,7 +1328,7 @@ public class Facility extends SubLocationABC<Facility> {
 
 		inWi.setPickInstruction(locationString);
 
-		try { 
+		try {
 			WorkInstruction.DAO.store(inWi);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
@@ -2059,16 +2164,16 @@ public class Facility extends SubLocationABC<Facility> {
 	public ColorEnum getDiagnosticColor() {
 		return ColorEnum.RED;
 	}
-	
+
 	public static class Work {
 		@Getter
-		private OrderDetail outboundOrderDetail;
-		
+		private OrderDetail		outboundOrderDetail;
+
 		@Getter
-		private ISubLocation<?> firstLocationOnPath;
-		
+		private ISubLocation<?>	firstLocationOnPath;
+
 		@Getter
-		private Container container;
+		private Container		container;
 
 		public Work(Container container, OrderDetail outboundOrderDetail, ISubLocation<?> firstLocationOnPath) {
 			super();
@@ -2076,6 +2181,6 @@ public class Facility extends SubLocationABC<Facility> {
 			this.outboundOrderDetail = outboundOrderDetail;
 			this.firstLocationOnPath = firstLocationOnPath;
 		}
-		
+
 	}
 }

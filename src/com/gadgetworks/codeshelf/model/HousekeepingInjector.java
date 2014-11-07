@@ -122,7 +122,7 @@ public class HousekeepingInjector {
 		WorkInstruction inNextWi) {
 		if (inBayChangeChoice == BayChangeChoice.BayChangeNone)
 			return false;
-		
+
 		try {
 			// This can be tricky. Crossbatch put WI may have multiple locations. Initial implementation will not be completely right if the multiple locations span across bays.
 			// In our model, the WI.location field in this case is the arbitrary "first" location of all the locations for the outbound order.
@@ -151,7 +151,7 @@ public class HousekeepingInjector {
 				}
 			} else
 				LOGGER.error("unimplemented case in wantBayChangeBetween");
-		// Code above is complicated. Uncaught throw here (probably NPE) would result in aborted work instruction computation
+			// Code above is complicated. Uncaught throw here (probably NPE) would result in aborted work instruction computation
 		} catch (Exception e) {
 			LOGGER.error("wantBayChangeBetween", e);
 		}
@@ -168,18 +168,18 @@ public class HousekeepingInjector {
 		WorkInstruction inNextWi) {
 		if (inRepeatPosChoice == RepeatPosChoice.RepeatPosNone)
 			return false;
-		
+
 		try {
-		if (inPrevWi.getContainer().equals(inNextWi.getContainer())) {
-			if (inRepeatPosChoice == RepeatPosChoice.RepeatPosContainerOnly)
-				return true;
-			else if (inRepeatPosChoice == RepeatPosChoice.RepeatPosContainerAndCount) {
-				if (inPrevWi.getPlanQuantity().equals(inNextWi.getPlanQuantity()))
+			if (inPrevWi.getContainer().equals(inNextWi.getContainer())) {
+				if (inRepeatPosChoice == RepeatPosChoice.RepeatPosContainerOnly)
 					return true;
-			} else
-				LOGGER.error("unimplemented case in wantRepeatContainerBetween");
-		}
-		// Code above is complicated. Uncaught throw here (probably NPE) would result in aborted work instruction computation
+				else if (inRepeatPosChoice == RepeatPosChoice.RepeatPosContainerAndCount) {
+					if (inPrevWi.getPlanQuantity().equals(inNextWi.getPlanQuantity()))
+						return true;
+				} else
+					LOGGER.error("unimplemented case in wantRepeatContainerBetween");
+			}
+			// Code above is complicated. Uncaught throw here (probably NPE) would result in aborted work instruction computation
 		} catch (Exception e) {
 			LOGGER.error("wantRepeatContainerBetween", e);
 		}
@@ -207,8 +207,7 @@ public class HousekeepingInjector {
 			// If both repeatContainer and bayChange, this does bay change only. DEV-478
 			if (wantBayChangeBetween(getBayChangeChoice(), inPrevWi, inNextWi)) {
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-			}
-			else if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
+			} else if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
 			}
 		}
@@ -241,13 +240,8 @@ public class HousekeepingInjector {
 			lastWi = wi;
 		}
 		// At this point, some or none added. wiResultList is ordered. Time to add the sort codes.
-		int count = 0;
-		for (WorkInstruction wi : wiResultList) {
-			count++;
-			wi.setGroupAndSortCode(String.format("%04d", count));
-			WorkInstruction.DAO.store(wi);
-		}
-
+		if (wiResultList.size() > 0)
+			wiResultList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wiResultList);
 		return wiResultList;
 	}
 
