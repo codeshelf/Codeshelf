@@ -12,6 +12,7 @@ import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.websocket.DecodeException;
 import javax.websocket.EncodeException;
@@ -55,12 +56,12 @@ import com.google.common.base.Strings;
 public class InventoryImporterTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
+	UUID facilityForVirtualSlottingId;
+	
 	static {
 		Configuration.loadConfig("test");
 	}
 
-	Facility facilityForVirtualSlotting;
-	
 	public void doBefore() {
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -69,7 +70,9 @@ public class InventoryImporterTest extends EdiTestABC {
 														createLocationAliasImporter(),
 														createOrderImporter());
 		
-		facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		
+		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
 		
 		this.getPersistenceService().endTenantTransaction();
 	}
@@ -77,6 +80,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -93,6 +97,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testEmptyUom() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -109,6 +114,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testAlphaQuantity() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -128,6 +134,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNegativeQuantity() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,-2,each,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -149,7 +156,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = facilityForVirtualSlotting;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
@@ -198,6 +205,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testBayAnchors() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
 		Facility facility = facilityForVirtualSlotting;
@@ -256,6 +264,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedInventory() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		Facility facility = facilityForVirtualSlotting;
 
@@ -363,8 +372,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedInventory2() {
 		this.getPersistenceService().beginTenantTransaction();
-
-		Facility facility = facilityForVirtualSlotting;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking leds for this one inventory item
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -410,8 +418,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedInventory3() {
 		this.getPersistenceService().beginTenantTransaction();
-
-		Facility facility = facilityForVirtualSlotting;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking multiple inventory items for same SKU
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -451,6 +458,8 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testNonSlottedPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -587,7 +596,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testSameProductPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
-
+		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		Facility facility = facilityForVirtualSlotting;
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
