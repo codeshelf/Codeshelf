@@ -12,8 +12,10 @@ import com.google.common.collect.Lists;
 
 public class ContainerService implements IApiService {
 
-	public List<ContainerStatus> containersWithViolations(String facilityPersistentId) {
-		Facility facility = checkFacility(facilityPersistentId);
+	public List<ContainerStatus> containersWithViolations(Facility facility) {
+		if(facility == null) {
+			throw new NullPointerException("null Facility in containersWithViolations");
+		}
 		List<ContainerStatus> containerStatuses = Lists.newArrayList();
 		List<Container> containers = facility.getContainers();
 		for (Container container : containers) {
@@ -25,9 +27,5 @@ public class ContainerService implements IApiService {
 		return containerStatuses;
 	}
 	
-	private Facility checkFacility(final String facilityPersistentId) {
-		return checkNotNull(Facility.DAO.findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
-	}
-
 
 }

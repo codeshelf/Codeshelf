@@ -16,7 +16,7 @@ public class ContainerServiceTest extends EdiTestABC {
 		
 		ContainerService service  = new ContainerService();
 		
-		service.containersWithViolations(facility.getPersistentId().toString());
+		service.containersWithViolations(facility);
 		
 		this.getPersistenceService().endTenantTransaction();
 	}

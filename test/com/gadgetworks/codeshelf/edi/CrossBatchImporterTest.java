@@ -12,6 +12,7 @@ import java.io.StringReader;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ContainerService;
 import com.gadgetworks.codeshelf.service.ContainerStatus;
 
@@ -37,7 +39,7 @@ import com.gadgetworks.codeshelf.service.ContainerStatus;
  */
 public class CrossBatchImporterTest extends EdiTestABC {
 	
-	private Facility mFacility;
+	private UUID facilityId;
 	
 	@Override
 	public void doBefore() {
@@ -47,13 +49,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		organization.setDomainId("O-" + testName .getMethodName());
 		mOrganizationDao.store(organization);
 
-		String facilityId = "F-" + testName.getMethodName();
-		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(facilityId);
-		mFacility = facility;
+		String facilityName = "F-" + testName.getMethodName();
+		Facility facility = organization.createFacility(facilityName, "TEST", Point.getZeroPoint());
+		
+		facilityId = facility.getPersistentId();
 		
 		this.getPersistenceService().endTenantTransaction();
-
 	}
 	
 	private ItemMaster createItemMaster(final String inItemMasterId, final String inUom, final Facility inFacility) {
@@ -89,13 +90,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	public final void testMissingItemMaster() {
 		this.getPersistenceService().beginTenantTransaction();
 
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.valid,100,ea\r\n" //
 				+ ",C111,I111.missing,200,ea\r\n"; //
 		
-		createItemMaster("I111.valid", "ea", mFacility);
+		createItemMaster("I111.valid", "ea", facility);
 		
-		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
+		int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
 
 		this.getPersistenceService().endTenantTransaction();
@@ -104,14 +107,15 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testEmptyItemMaster() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.valid,100,ea\r\n" //
 				+ ",C111,,200,ea\r\n"; //
 		
-		createItemMaster("I111.valid", "ea", mFacility);
+		createItemMaster("I111.valid", "ea", facility);
 		
-		int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
+		int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
 		
 		this.getPersistenceService().endTenantTransaction();
@@ -120,6 +124,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testInvalidQuantity() {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String[] invalidQuantities = new String[]{"0", "-1", "NaN", "1.1"};
 
@@ -127,12 +132,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ ",C111,I111.1,{0},ea\r\n" //
 				+ ",C111,I111.2,200,ea\r\n"; //
 
-		createItemMaster("I111.1", "ea", mFacility);
-		createItemMaster("I111.2", "ea", mFacility);
+		createItemMaster("I111.1", "ea", facility);
+		createItemMaster("I111.2", "ea", facility);
 		
 		for (String invalidQuantity: invalidQuantities) {
 			String csvString = MessageFormat.format(csvStringTemplate, invalidQuantity);
-			int count = importCsvString(mFacility, csvString, new Timestamp(System.currentTimeMillis()));
+			int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 			Assert.assertEquals(1,  count);
 			Assert.assertTrue("Did not contain quantity: " + csvString, csvString.contains(invalidQuantity));// sanity check
 		}
@@ -144,7 +149,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	public final void testCrossBatchImporter() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = mFacility;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		Assert.assertEquals(0, facility.countCrossOrders().mTotalHeaders);
 		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -164,7 +169,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importCsvString(mFacility, csvString, ediProcessTime);		
+		int count = importCsvString(facility, csvString, ediProcessTime);		
 
 		Assert.assertEquals(6, count);
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
@@ -191,7 +196,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		ContainerService service  = new ContainerService();	
 		
 		//Each detail will have a violation 
-		List<ContainerStatus> results = service.containersWithViolations(mFacility.getPersistentId().toString());
+		List<ContainerStatus> results = service.containersWithViolations(facility);
 		Assert.assertEquals(2, results.size());
 		for (ContainerStatus status : results) {
 			Container container = status.getContainer();
@@ -204,7 +209,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	@Test
 	public final void testCrossBatchOrderGroups() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = mFacility;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C333,I333.1,100,ea\r\n" //
@@ -214,6 +219,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,C444,I444.1,100,ea\r\n" //
 				+ "G1,C444,I444.2,200,ea\r\n";
 
+
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I333.1", "ea", facility);
 		createItemMaster("I333.2", "ea", facility);
@@ -221,14 +227,11 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		createItemMaster("I333.4", "ea", facility);
 		createItemMaster("I444.1", "ea", facility);
 		createItemMaster("I444.2", "ea", facility);
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		int count = importCsvString(facility, csvString, ediProcessTime);
 		Assert.assertEquals(6, count);
-		
 		OrderGroup group = facility.getOrderGroup("G1");
 		Assert.assertNotNull(group);
-
 		OrderHeader order = group.getOrderHeader(OrderHeader.computeCrossOrderId("C333", ediProcessTime));
 		Assert.assertNotNull(order);
 		
@@ -238,8 +241,10 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = mFacility;
+		PersistenceService persistenceService=this.getPersistenceService();
+		persistenceService.beginTenantTransaction();
+
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C555,I555.1,100,ea\r\n" //
@@ -316,7 +321,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	public final void testResendCrossBatchAddItem() {
 		this.getPersistenceService().beginTenantTransaction();
 		
-		Facility facility = mFacility;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C777,I777.1,100,ea\r\n" //
 				+ "G1,C777,I777.2,200,ea\r\n" //
@@ -391,7 +396,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "G1,CAAA,IAAA.1,100,ea\r\n" //
 				+ "G1,CAAA,IAAA.2,200,ea\r\n";
 
-		Facility facility = mFacility; 
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I999.1", "ea", facility);
@@ -444,7 +449,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ ",C222,I222.1,100,ea\r\n" //
 				+ ",C222,I222.2,200,ea\r\n";
 
-		Facility facility = mFacility;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -514,7 +519,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 				+ "xx,C222,I222.1,100,ea\r\n" //
 				+ "xx,C222,I222.2,200,ea\r\n";
 
-		Facility facility = mFacility; 
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
@@ -595,8 +600,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	public final void testCrossBatchDoubleImporter() {
 		this.getPersistenceService().beginTenantTransaction();
 
-
-		Facility facility = mFacility;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		// We can't import cross batch orders for items not already in inventory or on outbound orders.
 		createItemMaster("I111.1", "ea", facility);
