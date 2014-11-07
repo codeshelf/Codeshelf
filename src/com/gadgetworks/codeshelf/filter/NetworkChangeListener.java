@@ -11,6 +11,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
@@ -66,13 +67,10 @@ public class NetworkChangeListener implements ObjectEventListener {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);
-
-		/* TODO: register other DAOs
-		for (Class<?> domainClass: ImmutableList.<Class<?>>of(Che.class, LedController.class, SiteController.class, CodeshelfNetwork.class)) {
-			@SuppressWarnings("unchecked")
-			ITypedDao<IDomainObject> dao = daoProvider.getDaoInstance((Class<IDomainObject>) domainClass);
-			session.registerAsDAOListener(dao);
-		}
-		*/
+		// register DAOs
+		session.registerAsDAOListener(PersistenceService.getDao(Che.class));
+		session.registerAsDAOListener(PersistenceService.getDao(LedController.class));
+		session.registerAsDAOListener(PersistenceService.getDao(SiteController.class));
+		session.registerAsDAOListener(PersistenceService.getDao(CodeshelfNetwork.class));
 	}
 }

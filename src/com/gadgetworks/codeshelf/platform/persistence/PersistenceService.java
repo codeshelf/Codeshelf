@@ -213,12 +213,21 @@ public class PersistenceService extends Service {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) throws NoSuchFieldException, IllegalAccessException {
-		if (IDomainObject.class.isAssignableFrom(classObject)) {
-			Class<IDomainObject> domainClass = (Class<IDomainObject>) classObject;
-			Field field = domainClass.getField("DAO");
-			ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) field.get(null);
-			return dao;
+	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
+		if (classObject==null) {
+			LOGGER.error("Failed to get DAO for undefined class");
+			return null;
+		}
+		try {
+			if (IDomainObject.class.isAssignableFrom(classObject)) {
+				Class<IDomainObject> domainClass = (Class<IDomainObject>) classObject;
+				Field field = domainClass.getField("DAO");
+				ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) field.get(null);
+				return dao;
+			}
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to get DAO for class "+classObject.getName(),e);
 		}
 		// not a domain object
 		return null;
