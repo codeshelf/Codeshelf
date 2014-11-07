@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -38,8 +39,10 @@ public class InventoryServiceTest extends EdiTestABC {
 	
 	@Before
 	public void initTest() throws IOException {
+		PersistenceService.getInstance().beginTenantTransaction();
 		importer = createOrderImporter();
 		facility = setupData(this.getClass().toString() + System.currentTimeMillis());
+		PersistenceService.getInstance().endTenantTransaction();
 	}
 	
 	/**

@@ -14,6 +14,8 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
@@ -49,6 +51,8 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 	static {
 		Configuration.loadConfig("test");
 	}
+	
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(IntegrationTest1.class);
 	
 	public IntegrationTest1() {
 	}
@@ -150,13 +154,6 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
-
-		/*
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = getFacility().createNetwork(nName);
-		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
-		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
-		*/
 
 		CodeshelfNetwork network = getNetwork();
 		Organization organization = getOrganization();
@@ -356,6 +353,9 @@ public class IntegrationTest1 extends EndToEndIntegrationTest {
 			String itemLocationString = detail.getItemLocations();
 			if (!Strings.isNullOrEmpty(itemLocationString)) {
 				itemLocations.add(itemLocationString);
+			}
+			else {
+				LOGGER.debug(detail.getItemMasterId()+" "+detail.getUomMasterId()+" has no location");
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());

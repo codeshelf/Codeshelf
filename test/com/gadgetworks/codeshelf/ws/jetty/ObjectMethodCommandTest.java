@@ -12,16 +12,8 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IronMqService;
+import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.SiteController;
-import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -33,7 +25,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ObjectMethodCommandTest {
+public class ObjectMethodCommandTest extends DomainTestABC {
 
 	static {
 		Configuration.loadConfig("server");
@@ -43,6 +35,8 @@ public class ObjectMethodCommandTest {
 	// this should really be an integration test
 	public final void testCreateFacilityOK() {
 
+		getPersistenceService().beginTenantTransaction();
+		
 		// "ObjectMethodRequest":{"className":"Organization","persistentId":"77fdd850-2245-11e4-822c-48d705ccef0f","methodName":"createFacility",
 		// "methodArgs":[{"name":"domainId","value":"F1","classType":"java.lang.String"},
 		// {"name":"description","value":"First Facility","classType":"java.lang.String"},
@@ -100,5 +94,7 @@ public class ObjectMethodCommandTest {
 
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(updateResponse.toString(), ResponseStatus.Success, updateResponse.getStatus());
+		
+		getPersistenceService().endTenantTransaction();
 	}
 }
