@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsSession;
+import com.gadgetworks.flyweight.command.ColorEnum;
 
 public class ObjectUpdateCommand extends CommandABC {
 
@@ -47,7 +48,7 @@ public class ObjectUpdateCommand extends CommandABC {
 		if (persistentId==null) {
 			LOGGER.error("Failed to update "+className+":  Object ID is undefined");
 			response.setStatus(ResponseStatus.Fail);
-			response.setStatusMessage("Object ID is not defined");
+			response.setStatusMessage("persistentId was null");
 			return response;
 		}
 		UUID objectId = null;
@@ -95,6 +96,11 @@ public class ObjectUpdateCommand extends CommandABC {
 									propertyValue = new Short((String)propertyValue);
 								}
 							}
+							
+							if(Enum.class.isAssignableFrom(propertyType)) {
+								propertyValue = Enum.valueOf((Class<? extends Enum>)propertyType, propertyValue.toString());
+							}
+							
 							propertyUtil.setProperty(updateObject, property.getKey(), propertyValue);
 						}
 						catch(InvocationTargetException e) {
