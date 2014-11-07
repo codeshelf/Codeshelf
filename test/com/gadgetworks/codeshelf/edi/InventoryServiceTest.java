@@ -2,6 +2,7 @@ package com.gadgetworks.codeshelf.edi;
 
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -22,14 +23,16 @@ import com.gadgetworks.codeshelf.validation.InputValidationException;
 public class InventoryServiceTest extends EdiTestABC {
 
 
-	private Facility facility;
+	private UUID facilityId;
 	
 	@Before
 	public void initTest() throws IOException {
 		PersistenceService.getInstance().beginTenantTransaction();
 		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
-		facility = generator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		Facility facility = generator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		generator.setupOrders(facility);
+		
+		this.facilityId=facility.getPersistentId();
 		PersistenceService.getInstance().endTenantTransaction();
 	}
 	
@@ -42,9 +45,10 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testExistingItemWithEachIsMoved() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		String testUom = "each";
-		testMove(testUom);
+		testMove(facility,testUom);
 
 		this.getPersistenceService().endTenantTransaction();
 	}
@@ -52,9 +56,10 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testExistingItemWithEACHAliasIsMoved() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		String testUom = "EA";
-		testMove(testUom);
+		testMove(facility,testUom);
 
 		this.getPersistenceService().endTenantTransaction();
 	}
@@ -67,7 +72,8 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testNonEachItemCreatedIfDifferentLocation() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
-
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
+		
 		String testUom = "case";
 		String sku = "10706961";
 		Integer testCmFromLeft = 10;
@@ -101,6 +107,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testNonEachItemIsUpdated() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		String testUom = "case";
 		String sku = "10706961";
@@ -121,7 +128,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	
 
 	
-	private void testMove(String testUomUserInput) throws IOException {
+	private void testMove(Facility facility,String testUomUserInput) throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
@@ -141,6 +148,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemNullLocationAlias() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -162,6 +170,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemEmptyLocationAlias() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -182,6 +191,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -203,6 +213,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingNegativeCount() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -224,6 +235,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingNegativePositionFromLeft() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -245,6 +257,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingAlphaPositionFromLeft() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -265,7 +278,8 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingEmptyPositionFromLeft() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
-		
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
+
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
@@ -279,6 +293,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingNullPositionFromLeft() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -294,6 +309,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingEmptyUom() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -315,6 +331,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingUomDifferentCase() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -328,6 +345,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingNominalLocationId() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -343,6 +361,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Test
 	public void testUpsertItemUsingLocationAlias() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");

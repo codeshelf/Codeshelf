@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.integration;
 
+import java.util.UUID;
+
 import lombok.Getter;
 
 import org.junit.Assert;
@@ -65,16 +67,16 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	Organization organization;
 
 	@Getter
-	Facility facility;
+	UUID facilityPersistentId;
 
 	@Getter
-	CodeshelfNetwork network;
+	UUID networkPersistentId;
 
 	@Getter
-	Che che1;
+	UUID che1PersistentId;
 
 	@Getter
-	Che che2;
+	UUID che2PersistentId;
 
 	int connectionTimeOut = 30 * 1000;
 
@@ -122,7 +124,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			organization.setDomainId(organizationId);
 			mOrganizationDao.store(organization);
 		}
-		facility = mFacilityDao.findByDomainId(organization, facilityId);
+		Facility facility = mFacilityDao.findByDomainId(organization, facilityId);
 		if (facility==null) {
 			// create organization object
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
@@ -131,22 +133,29 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			facility.createDefaultContainerKind();
 			facility.recomputeDdcPositions();
 		}
-		network = facility.getNetwork(networkId);
+		this.facilityPersistentId=facility.getPersistentId();
+		
+		CodeshelfNetwork network = facility.getNetwork(networkId);
 		if (network==null) {
 			network = facility.createNetwork(networkId);
 			facility.addNetwork(network);
 			mCodeshelfNetworkDao.store(network);
 		}
+		this.networkPersistentId = network.getPersistentId();
 
 		User scUser = network.createDefaultSiteControllerUser();
-		che1 = network.getChe(cheId1);
+		Che che1 = network.getChe(cheId1);
 		if (che1==null) {
-			network.createChe(cheId1, cheGuid1);
+			che1=network.createChe(cheId1, cheGuid1);
 		}
-		che2 = network.getChe(cheId2);
+		this.che1PersistentId = che1.getPersistentId();
+
+		Che che2 = network.getChe(cheId2);
 		if (che2==null) {
-			network.createChe(cheId2, cheGuid2);
+			che2=network.createChe(cheId2, cheGuid2);
 		}
+		this.che2PersistentId = che2.getPersistentId();
+
 		this.getPersistenceService().endTenantTransaction();
 		
 		// start web socket server
@@ -239,5 +248,13 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			LOGGER.error("Failed to stop WebSocket server", e);
 		}
 		LOGGER.debug("-------------- Clean up completed");
+	}
+	
+	Facility getFacility() {
+		return Facility.DAO.findByPersistentId(this.facilityPersistentId);
+	}
+	
+	CodeshelfNetwork getNetwork() {
+		return CodeshelfNetwork.DAO.findByPersistentId(this.networkPersistentId);
 	}
 }

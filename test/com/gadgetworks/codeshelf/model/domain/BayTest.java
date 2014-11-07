@@ -11,8 +11,6 @@ import com.google.common.collect.ImmutableList;
 
 public class BayTest extends DomainTestABC {
 
-	private Facility facility;
-	
 	@Before
 	public void init() {
 	}
@@ -21,7 +19,7 @@ public class BayTest extends DomainTestABC {
 	public void testOrderingOfTiers() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
+		Facility facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
 		Aisle aisle = getDefaultAisle(facility, "A1");
 		Bay bay = getDefaultBay(aisle, "B1");
 		Tier tier1 = getDefaultTier(bay, "TA");

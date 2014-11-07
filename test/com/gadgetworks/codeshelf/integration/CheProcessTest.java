@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
@@ -304,6 +305,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
+		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		facility.setUpCheContainerFromString(che1, "12345");
 		HousekeepingInjector.restoreHKDefaults();
 
