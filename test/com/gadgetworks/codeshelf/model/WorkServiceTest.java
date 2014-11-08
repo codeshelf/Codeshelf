@@ -80,6 +80,7 @@ public class WorkServiceTest extends DAOTestABC {
 			lastTimestamp = wiSetSummary.getAssignedTime();
 		}
 
+		workService.stop();
 		this.getPersistenceService().endTenantTransaction();
 	}
 
@@ -107,6 +108,8 @@ public class WorkServiceTest extends DAOTestABC {
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
+		
+		workService.stop();
 		this.getPersistenceService().endTenantTransaction();
 	}
 
@@ -139,6 +142,7 @@ public class WorkServiceTest extends DAOTestABC {
 		workService.completeWorkInstruction(cheId, wiToRecord);
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(List.class));
+		workService.stop();
 		this.getPersistenceService().endTenantTransaction();
 	}
 
@@ -158,6 +162,8 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
+		
+		workService.stop();
 		this.getPersistenceService().endTenantTransaction();
 	}
 
@@ -179,7 +185,8 @@ public class WorkServiceTest extends DAOTestABC {
 
 		//Wait up to a second per invocation to verify
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(wiList));
-
+		workService.stop();
+		
 		this.getPersistenceService().endTenantTransaction();
 	}
 
@@ -211,6 +218,8 @@ public class WorkServiceTest extends DAOTestABC {
 			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff > expectedRetryDelay);
 		}
 
+		workService.stop();
+		
 		this.getPersistenceService().endTenantTransaction();
 	}
 
@@ -284,6 +293,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 			}
 		}
+		workService.stop();
 		this.getPersistenceService().endTenantTransaction();
 	}
 

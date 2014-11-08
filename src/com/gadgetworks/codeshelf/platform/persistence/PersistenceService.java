@@ -9,6 +9,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import com.google.inject.Singleton;
 public class PersistenceService extends Service {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
 	private static PersistenceService theInstance = null;
+	private Configuration configuration;
 	private String	hibernateConfigurationFile; 
 	
 	private String connectionUrl;
@@ -52,13 +54,58 @@ public class PersistenceService extends Service {
 		PersistenceService.theInstance = this;
 	}
 	
+	public final synchronized static boolean isRunning() {
+		return (theInstance != null && theInstance.isInitialized());
+	}
+	
 	public final synchronized static PersistenceService getInstance() {
 		if (theInstance == null) {
 			theInstance = new PersistenceService();
+			theInstance.configure();
 			theInstance.start();
 			LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
+		} else if(!theInstance.isInitialized()) {
+			theInstance.start();
+			LOGGER.info("PersistanceService was stopped and restarted");
 		}
 		return theInstance;
+	}
+	
+	private final void configure() {
+		// fetch database config from properties file
+		this.hibernateConfigurationFile="hibernate." + System.getProperty("db.hibernateconfig") + ".xml";
+		if (this.hibernateConfigurationFile==null) {
+			LOGGER.error("hibernateConfigurationFile is not defined.");
+			System.exit(-1);
+		}
+		
+		this.connectionUrl = System.getProperty("db.connectionurl");
+		if (this.connectionUrl==null) {
+			LOGGER.error("Database URL is not defined.");
+			System.exit(-1);
+		}
+		
+		this.schemaName = System.getProperty("db.schemaname"); //optional
+		
+		this.userId = System.getProperty("db.userid");
+		if (this.userId==null) {
+			LOGGER.error("Database User ID is not defined.");
+			System.exit(-1);
+		}
+		this.password = System.getProperty("db.password");
+
+    	configuration = new Configuration().configure(this.hibernateConfigurationFile);	    	
+    	// String connectionUrl = "jdbc:postgresql://"+shard.getHost()+":"+shard.getPort()+"/shard"+shard.getShardId();
+    	configuration.setProperty("hibernate.connection.url", this.connectionUrl);
+    	configuration.setProperty("hibernate.connection.username", this.userId);
+    	configuration.setProperty("hibernate.connection.password", this.password);
+    	
+    	if(this.schemaName != null) {
+	    	configuration.setProperty("hibernate.default_schema", this.schemaName);
+    	}
+    	configuration.setInterceptor(new HibernateInterceptor());
+    	//configuration.setProperty("hibernate.connection.username", tenant.getName());
+    	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
 	}
 	
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {
@@ -69,18 +116,7 @@ public class PersistenceService extends Service {
         try {
         	// Shard shard = this.shardingService.getShard(tenant.getShardId());
         	LOGGER.info("Creating session factory for "+tenant);
-	    	Configuration configuration = new Configuration().configure(this.hibernateConfigurationFile);	    	
-	    	// String connectionUrl = "jdbc:postgresql://"+shard.getHost()+":"+shard.getPort()+"/shard"+shard.getShardId();
-	    	configuration.setProperty("hibernate.connection.url", this.connectionUrl);
-	    	configuration.setProperty("hibernate.connection.username", this.userId);
-	    	configuration.setProperty("hibernate.connection.password", this.password);
-	    	
-	    	if(this.schemaName != null) {
-		    	configuration.setProperty("hibernate.default_schema", this.schemaName);
-	    	}
-	    	configuration.setInterceptor(new HibernateInterceptor());
-	    	//configuration.setProperty("hibernate.connection.username", tenant.getName());
-	    	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
+
 	        StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
 	        return factory;
@@ -93,47 +129,34 @@ public class PersistenceService extends Service {
 	@Override
 	public final boolean start() {
 		if(this.isInitialized()) {
-			LOGGER.error("Attempted to start persistence service twice");
+			LOGGER.error("Attempted to start persistence service more than once");
 		} else {
 			LOGGER.info("Starting "+PersistenceService.class.getSimpleName());
-			
-			/*
-			Properties probs = System.getProperties();
-			for (Entry<Object, Object> e : probs.entrySet()) {
-				LOGGER.debug(e.getKey()+" - "+e.getValue());
-			}
-			*/
-			
-			// fetch database config from properties file
-			this.hibernateConfigurationFile="hibernate." + System.getProperty("db.hibernateconfig") + ".xml";
-			if (this.hibernateConfigurationFile==null) {
-				LOGGER.error("hibernateConfigurationFile is not defined.");
-				System.exit(-1);
-			}
-			
-			this.connectionUrl = System.getProperty("db.connectionurl");
-			if (this.connectionUrl==null) {
-				LOGGER.error("Database URL is not defined.");
-				System.exit(-1);
-			}
-			
-			this.schemaName = System.getProperty("db.schemaname"); //optional
-			
-			this.userId = System.getProperty("db.userid");
-			if (this.userId==null) {
-				LOGGER.error("Database User ID is not defined.");
-				System.exit(-1);
-			}
-			this.password = System.getProperty("db.password");
 			this.setInitialized(true);
-			LOGGER.info(PersistenceService.class.getSimpleName()+" started");
 		}
 		return true;
 	}
 
 	@Override
 	public final boolean stop() {
-		LOGGER.info("Database shutdown");
+		LOGGER.info("PersistenceService stopping");
+		if(this.hasActiveTransaction()) {
+			this.rollbackTenantTransaction();
+		}
+		
+		/*
+		 * keep session factories...
+		for(SessionFactory sf : this.factories.values()) {
+			sf.close();
+		}
+		this.factories = new HashMap<Tenant, SessionFactory>(); // unlink session factories
+		 */
+		
+		// unlink debugging stuff
+		this.sessionStarted=new HashMap<Session,StackTraceElement[]>(); 
+		this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
+		
+		this.setInitialized(false);
 		return true;
 	}
 
@@ -198,18 +221,26 @@ public class PersistenceService extends Service {
 	}
 	
 	public boolean hasActiveTransaction() {
-		Session session = getCurrentTenantSession();
-		if (session==null) {
+		if(this.isInitialized() == false) {
+			return false;
+		} //else
+		Tenant tenant = fixedTenant;
+		if(this.fixedTenant == null) {
 			return false;
 		}
+		SessionFactory sf = this.factories.get(tenant);
+		if(sf == null || sf.isClosed()) {
+			return false;
+		}
+		Session session = sf.getCurrentSession();
+		if (session==null) {
+			return false;
+		} //else
 		Transaction tx = session.getTransaction();
 		if (tx==null) {
 			return false;
-		}
-		if (tx.isActive()) {
-			return true;
-		}
-		return false;
+		} //else
+		return tx.isActive();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -231,5 +262,10 @@ public class PersistenceService extends Service {
 		}
 		// not a domain object
 		return null;
+	}
+
+	public void resetDatabase() {
+		SchemaExport se = new SchemaExport(this.configuration);
+		se.create(false, true);		
 	}	
 }

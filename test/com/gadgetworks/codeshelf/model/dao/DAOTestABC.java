@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import static org.junit.Assert.*;
 import lombok.Getter;
 
 import org.junit.After;
@@ -87,8 +88,7 @@ public abstract class DAOTestABC {
 		Configuration.loadConfig("test");
 	}
 	
-	@Getter
-	PersistenceService persistenceService;
+	protected PersistenceService persistenceService;
 	
 	protected OrganizationDao		mOrganizationDao;
 	protected UserDao				mUserDao;
@@ -126,10 +126,17 @@ public abstract class DAOTestABC {
 		super();
 	}
 
+	public PersistenceService getPersistenceService() {
+		return PersistenceService.getInstance();
+	}
+	
 	@Before
 	public final void setup() throws Exception {
+		if(persistenceService != null)
+			assertFalse(PersistenceService.isRunning());
+		
 		this.persistenceService = PersistenceService.getInstance();
-		persistenceService.start();
+		assertTrue(PersistenceService.isRunning());
 
 		mOrganizationDao = new OrganizationDao(persistenceService);
 		Organization.DAO = mOrganizationDao;
@@ -248,8 +255,7 @@ public abstract class DAOTestABC {
 	}
 	
 	public void doAfter() {
-		if (persistenceService.hasActiveTransaction()) {
-			persistenceService.rollbackTenantTransaction();
-		}
+		persistenceService.stop();
+		persistenceService.resetDatabase();
 	}
 }

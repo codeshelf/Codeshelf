@@ -51,6 +51,9 @@ public class WorkService implements IApiService {
 	
 	@Getter
 	PersistenceService persistenceService;
+
+	private WorkServiceThread wsThread = null;
+	private static boolean aWorkServiceThreadExists = false;
 	
 	public WorkService() {
 		init(new IEdiExportServiceProvider() {
@@ -72,26 +75,45 @@ public class WorkService implements IApiService {
 		this.retryDelay = DEFAULT_RETRY_DELAY;
 		this.capacity = DEFAULT_CAPACITY;
 	}
+	
+	private class WorkServiceThread extends Thread {
+		@Override
+		public void run() {
+			WorkService.aWorkServiceThreadExists = true;
+			try {
+				while (!Thread.interrupted()) {
+					
+					sendWorkInstructions();
+
+				}
+			} catch (InterruptedException e) {
+				LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
+			}
+			WorkService.aWorkServiceThreadExists = false;
+		}
+	}
 
 	public WorkService start() {
+		if(WorkService.aWorkServiceThreadExists) {
+			LOGGER.error("Only one WorkService thread is allowed to run at once");
+		}
 		this.completedWorkInstructions = new LinkedBlockingQueue<WorkInstruction>(this.capacity);
-
-		Executor executor = Executors.newSingleThreadExecutor();
-		executor.execute(new Runnable() {
-			public void run() {
-				try {
-					while (!Thread.interrupted()) {
-						
-						sendWorkInstructions();
-
-					}
-				} catch (InterruptedException e) {
-					LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
-				}
-			}
-		});
-		
+		this.wsThread = new WorkServiceThread();
+		this.wsThread.start();
 		return this;
+	} 
+	
+	public void stop() {
+		this.wsThread.interrupt();
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+		}
+		if(WorkService.aWorkServiceThreadExists) {
+			LOGGER.error("Failed to stop WorkServiceThread by interruption");
+		} else {
+			this.completedWorkInstructions = null;
+		}
 	}
 	
 	private void sendWorkInstructions() throws InterruptedException {
