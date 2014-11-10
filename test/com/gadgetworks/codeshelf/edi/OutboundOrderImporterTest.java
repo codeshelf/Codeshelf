@@ -327,62 +327,38 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	}
 
-	//@Test
+	@Test
 	public void testOneOrderArchive() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csvArray = firstOrderBatchCsv.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		// First import a big list of orders.
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		importCsvString(facility, firstOrderBatchCsv);
+		
 		HeaderCounts theCounts = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts.mActiveDetails == 11);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
+		Assert.assertEquals(3, theCounts.mTotalHeaders);
+		Assert.assertEquals(3, theCounts.mActiveHeaders);
+		Assert.assertEquals(3, theCounts.mActiveDetails);
+		Assert.assertEquals(3, theCounts.mActiveCntrUses );
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csv2Array = secondOrderBatchCsv.getBytes();
-
-		stream = new ByteArrayInputStream(csv2Array);
-		reader = new InputStreamReader(stream);
-
-		// First import a big list of orders.
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importCsvString(facility, secondOrderBatchCsv);
 
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 1);
-		Assert.assertTrue(theCounts2.mActiveDetails == 4);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 1);
-		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
+		Assert.assertEquals(3, theCounts2.mTotalHeaders );
+		Assert.assertEquals(3, theCounts2.mActiveHeaders);
+		Assert.assertEquals(4, theCounts2.mActiveDetails);
+		Assert.assertEquals(1, theCounts2.mActiveCntrUses);
+		Assert.assertEquals(0, theCounts2.mInactiveDetailsOnActiveOrders );
+		Assert.assertEquals(2, theCounts2.mInactiveCntrUsesOnActiveOrders);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -748,7 +724,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The large set creates the initial sets of orders
-		BatchResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
+		BatchResult<?> result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
@@ -775,7 +751,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	//******************** TESTS without Group ID ***********************
 
 	@Test
-	public final void testOutboundOrderNoGroup() throws IOException {
+	public final void testReimportOutboundOrderNoGroup() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization();
@@ -929,7 +905,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		}
 	}
 
-	private BatchResult importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
+	private BatchResult<?> importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
 		try (InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
