@@ -149,12 +149,14 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		if (che1==null) {
 			che1=network.createChe(cheId1, cheGuid1);
 			che1.setColor(ColorEnum.MAGENTA);
+			che1.setColor(ColorEnum.MAGENTA);
 		}
 		this.che1PersistentId = che1.getPersistentId();
 
 		Che che2 = network.getChe(cheId2);
 		if (che2==null) {
 			che2=network.createChe(cheId2, cheGuid2);
+			che2.setColor(ColorEnum.WHITE);
 			che2.setColor(ColorEnum.WHITE);
 		}
 		this.che2PersistentId = che2.getPersistentId();
