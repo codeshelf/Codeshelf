@@ -457,6 +457,8 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		// Case 3: A happy-day short, with one short-ahead");
 		// Case 4: Short and cancel leave you on the same job");
 		// Case 5: Inappropriate location scan, then normal button press works");
+		
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
@@ -527,12 +529,15 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK,1000); // still on pick state, although with an error message
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
-		Assert.assertEquals(3, picker.countRemainingJobs()); 
+		Assert.assertEquals(3, picker.countRemainingJobs());
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	@Test
 	public final void testRouteWrap() throws IOException {
 		// Test cases:
+		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
@@ -577,6 +582,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		//picker.waitForCheState(CheStateEnum.DO_PICK,1000);
 		Assert.assertEquals(0, picker.countRemainingJobs());
 		
+		this.persistenceService.endTenantTransaction();
 	}
 
 }

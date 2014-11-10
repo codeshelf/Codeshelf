@@ -41,7 +41,7 @@ import com.gadgetworks.flyweight.command.NetGuid;
 public class AisleImporterTest extends EdiTestABC {
 
 	@Test
-	@Ignore // TODO: figure out why this failing test causes next test to hang 
+	// TODO: figure out why this failing test causes next test to hang 
 	public final void testTierB1S1Side() {
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -116,8 +116,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 		// Demonstrate the tier transient field behaviors. As we are refetching tiers via the DAO, the transients are uninitialized
 		short ledCount = tierB1T2.getMTransientLedsThisTier();
-		// Assert.assertTrue(ledCount == 80); // what we really want to check
-		Assert.assertTrue(ledCount == 0);
+		Assert.assertTrue(ledCount == 80);
 
 		// Get two more tiers. Then check the tier led values
 		Tier tierB1T1 = Tier.DAO.findByDomainId(bay1, "T1");

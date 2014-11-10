@@ -36,7 +36,7 @@ public class CreateCheTest extends DAOTestABC {
 	}
 	
 	@Test
-	@Ignore // TODO: create proper mock daoProvider / set up injector /?
+	// TODO: create proper mock daoProvider / set up injector /?
 	public final void testUpdateCheOK() {
 		this.getPersistenceService().beginTenantTransaction();
 

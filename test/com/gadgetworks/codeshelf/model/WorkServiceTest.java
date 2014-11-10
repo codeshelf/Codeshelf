@@ -225,12 +225,8 @@ public class WorkServiceTest extends DAOTestABC {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	@Ignore
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
-		//TODO: this needs mock DAO 
-		
 		this.getPersistenceService().beginTenantTransaction();
-
 		
 		final int total = 100;
 		Lock callBlocker = new ReentrantLock();
@@ -241,28 +237,16 @@ public class WorkServiceTest extends DAOTestABC {
 		final WorkService workService = spy(createWorkService(total +1, mockEdiExportService, 1L));
 		doCallRealMethod().when(workService).exportWorkInstruction(any(WorkInstruction.class));
 
-		ExecutorService executorService = Executors.newSingleThreadExecutor();
-		executorService.execute(new Runnable() {
-			public void run() {
-
-				Facility facility = facilityGenerator.generateValid();
-				for(int i = 0; i < total; i++) {
-					WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-					workService.exportWorkInstruction(wi);
-				}
-			}
-
-		});
-
-		try {
-			verify(workService, Mockito.timeout(2000).times(total)).exportWorkInstruction(any(WorkInstruction.class));
-			verify(mockEdiExportService, Mockito.times(1)).sendWorkInstructionsToHost(any(List.class));
-			callBlocker.unlock();
-			verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
+		Facility facility = facilityGenerator.generateValid();
+		for(int i = 0; i < total; i++) {
+			WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
+			workService.exportWorkInstruction(wi);
 		}
-		finally {
-			Assert.assertEquals(0, executorService.shutdownNow().size());
-		}
+
+		verify(workService, Mockito.timeout(2000).times(total)).exportWorkInstruction(any(WorkInstruction.class));
+		verify(mockEdiExportService, Mockito.times(1)).sendWorkInstructionsToHost(any(List.class));
+		callBlocker.unlock();
+		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
 		
 		this.getPersistenceService().endTenantTransaction();
 	}
