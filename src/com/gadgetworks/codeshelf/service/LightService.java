@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -30,8 +31,10 @@ import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -94,7 +97,7 @@ public class LightService implements IApiService {
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
 			messages.add(toLedsMessage(3, facility.getDiagnosticColor(), item));
 		}
-		return chaserLight(facility, messages);
+		return chaserLight(facility.getSiteControllerUsers(), messages);
 	}
 
 	// --------------------------------------------------------------------------
@@ -116,6 +119,8 @@ public class LightService implements IApiService {
 	Future<Void> lightChildLocations(final Facility facility, final ISubLocation<?> theLocation) {
 
 		List<LightLedsMessage> ledMessages = Lists.newArrayList();
+		Future<Void> chaser = null;
+		
 		if (theLocation instanceof Aisle) { //TODO lost the OO here
 			List<ISubLocation<?>> children = theLocation.getActiveChildrenAtLevel(Tier.class);
 			Collections.sort(children, new LocationABC.LocationWorkingOrderComparator());
@@ -123,31 +128,33 @@ public class LightService implements IApiService {
 			ISubLocation child : children) {
 				ledMessages.add(toLedsMessage(4, facility.getDiagnosticColor(), child));
 			}
-			return chaserLight(facility, ledMessages);
+			chaser = chaserLight(facility.getSiteControllerUsers(), ledMessages);
 		} else {
 			List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
 			for (@SuppressWarnings("rawtypes")
 			ISubLocation child : children) {
 				ledMessages.add(toLedsMessage(4, facility.getDiagnosticColor(), child));
 			}
-			return chaserLight(facility, ledMessages);
+			chaser = chaserLight(facility.getSiteControllerUsers(), ledMessages);
 		}
 
+		return chaser;
 	}
 
-	Future<Void> chaserLight(final Facility facility, final List<LightLedsMessage> messageSequence) {
+	Future<Void> chaserLight(final Set<User> siteControllerUsers, final List<LightLedsMessage> messageSequence) {
 		long millisToSleep = 2250;
 		final TerminatingScheduledRunnable lightLocationRunnable = new TerminatingScheduledRunnable() {
 
 			private LinkedList<LightLedsMessage>	chaseListToFire	= Lists.newLinkedList(messageSequence);
-
+			
 			@Override
 			public void run() {
 				LightLedsMessage message = chaseListToFire.poll();
 				if (message == null) {
 					terminate();
+				} else {
+					sessionManager.sendMessage(siteControllerUsers, message);
 				}
-				sendToAllSiteControllers(facility, message);
 			}
 		};
 		return scheduleChaserRunnable(lightLocationRunnable, millisToSleep, TimeUnit.MILLISECONDS);
@@ -245,7 +252,7 @@ public class LightService implements IApiService {
 					if (!runPerPeriod.isTerminatingException(e.getCause())) {
 						throw e;
 					}
-				}
+				} 
 				return null;
 			}
 		};
