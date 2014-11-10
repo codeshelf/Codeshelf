@@ -146,6 +146,7 @@ public class LightService implements IApiService {
 
 	Future<Void> chaserLight(final Set<User> siteControllerUsers, final List<Set<LightLedsMessage>> messageSequence) {
 		long millisToSleep = 2250;
+		final Set<User> siteControllerUsers = facility.getSiteControllerUsers();
 		final TerminatingScheduledRunnable lightLocationRunnable = new TerminatingScheduledRunnable() {
 
 			private LinkedList<Set<LightLedsMessage>>	chaseListToFire	= Lists.newLinkedList(messageSequence);
