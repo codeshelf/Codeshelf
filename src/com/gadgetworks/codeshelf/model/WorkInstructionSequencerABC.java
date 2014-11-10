@@ -39,7 +39,7 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
 			if (value != 0)
 				return value;
-			
+
 			return wi1Pos.compareTo(wi2Pos);
 		}
 	}
@@ -53,6 +53,23 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	protected void preSortByPosAlongPath(List<WorkInstruction> inWiList) {
 		Collections.sort(inWiList, new PosAlongPathComparator());
 		return;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function to set the sort codes. Currently returns the passed in list reference but that could change.
+	 * @param inWiList
+	 * @return
+	 */
+	public static List<WorkInstruction> setSortCodesByCurrentSequence(List<WorkInstruction> inWiList) {
+		int count = 0;
+		for (WorkInstruction wi : inWiList) {
+			count++;
+			wi.setGroupAndSortCode(String.format("%04d", count));
+			WorkInstruction.DAO.store(wi);
+		}
+
+		return inWiList;
 	}
 
 }

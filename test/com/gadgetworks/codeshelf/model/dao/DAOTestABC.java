@@ -5,8 +5,8 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import static org.junit.Assert.*;
-import lombok.Getter;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.After;
 import org.junit.Before;

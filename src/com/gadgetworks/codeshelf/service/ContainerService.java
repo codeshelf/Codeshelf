@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.service;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-
 import java.util.List;
 
 import com.gadgetworks.codeshelf.model.domain.Container;
