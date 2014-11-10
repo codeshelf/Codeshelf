@@ -21,6 +21,7 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlLed;
@@ -187,34 +188,47 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
-	
+
 	}
 
 	/**
-	 * Sort LedSamples by their position.
+	 * Sort LedSamples by their color, and then position.  Goofy: black = 6. That has to be first. Otherwise, just need the colors grouped.
 	 */
-	private class LedPositionComparator implements Comparator<LedSample> {
+	private class LedColorPositionComparator implements Comparator<LedSample> {
+
+		private int compareColor(ColorEnum color1, ColorEnum color2) {
+			int value = CompareNullChecker.compareNulls(color1, color2);
+			if (value != 0)
+				return value;
+			int color1Value = color1.getValue();
+			int color2Value = color2.getValue();
+
+			if (color1Value == 6 && color2Value != 6)
+				return -1;
+			else if (color1Value != 6 && color2Value == 6)
+				return 1;
+			else
+
+				return Integer.compare(color1Value, color2Value);
+
+		}
 
 		public int compare(LedSample inSample1, LedSample inSample2) {
-			// throw proofing. See these errors sometimes.
-			if (inSample1 == null || inSample2 == null ){
-				LOGGER.error("null object in LedPositionComparator");
-				return 0;
-			}
+			int value = CompareNullChecker.compareNulls(inSample1, inSample2);
+			if (value != 0)
+				return value;
+
+			value = compareColor(inSample1.getColor(), inSample2.getColor());
+			if (value != 0)
+				return value;
+
 			Short short1 = inSample1.getPosition();
 			Short short2 = inSample2.getPosition();
-			if (short1 == null || short2 == null ){
-				LOGGER.error("uninitialized object in LedPositionComparator");
-				return 0;
-			}
-		
-			if (short1 < short2) {
-				return -1;
-			} else if (short1 > short2) {
-				return 1;
-			} else {
-				return 0;
-			}
+			value = CompareNullChecker.compareNulls(short1, short2);
+			if (value != 0)
+				return value;
+
+			return Short.compare(short1, short2);
 		}
 	};
 
@@ -237,12 +251,12 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	private void setLightsExpireTimer(int inSeconds) {
 		Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
-			  @Override
-			  public void run() {
-				  clearExtraLedsFromMap();
-				  updateLeds();
-			  }
-			}, inSeconds*1000);
+			@Override
+			public void run() {
+				clearExtraLedsFromMap();
+				updateLeds();
+			}
+		}, inSeconds * 1000);
 	}
 
 	// --------------------------------------------------------------------------
@@ -266,8 +280,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		clearExtraLedsFromMap();
 
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inCommands);
-		for (LedCmdGroup ledCmdGroup :ledCmdGroups){
-			Short channnel = ledCmdGroup.getChannelNum();			
+		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
+			Short channnel = ledCmdGroup.getChannelNum();
 			for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 				// This is the clever part. Add for my own GUID, not a CHE guid.
 				addLedCmdFor(getGuid(), channnel, ledSample, EffectEnum.FLASH);
@@ -276,8 +290,8 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		setLightsExpireTimer(inSeconds);
 		updateLeds();
 	}
-	
-// --------------------------------------------------------------------------
+
+	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.
 	 * 
@@ -324,27 +338,36 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		if (sentCount > kMaxLedCmdToLog)
 			LOGGER.info("And more LED not logged. Total LED Cmds this update = " + sentCount);
 
+		// New understanding of the protocol.
+		// Sort by color, then position.
+		// Send partials always, changing at each color.
+
 		// Now we have to sort the samples in position order.
-		Collections.sort(samples, new LedPositionComparator());
+		Collections.sort(samples, new LedColorPositionComparator());
 
 		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
-		if (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime) {
+		// New to V9. split commands up by color.
+		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
 			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
 			mRadioController.sendCommand(command, getAddress(), true);
 		} else {
 			int partialCount = 0;
 			List<LedSample> partialSamples = new ArrayList<LedSample>();
+			final int blackColorValue = 6; // ColorNum.BLACK;// BLACK	= 6;
+			int previousColorValue = blackColorValue;
 			for (LedSample theSample : samples) {
-				partialCount++;
-				partialSamples.add(theSample);
-				if (partialCount == kMaxLedCmdSendAtATime) {
-					LOGGER.info("partial send to aisle controller");
+				int thisColorValue = theSample.getColor().getValue();
+				// Are we changing color on this sample  in this set of samples. Do not count the first change from black.
+				boolean colorChanged = thisColorValue != blackColorValue && thisColorValue != previousColorValue;
+
+				if (colorChanged || partialCount == kMaxLedCmdSendAtATime) {
+					logSampleSend(partialSamples);
 					ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT,
 						channel,
 						EffectEnum.FLASH,
 						partialSamples);
 					mRadioController.sendCommand(command, getAddress(), true);
-					
+
 					partialCount = 0;
 					// we have to leave the old reference to partialSamples as that is floating off in a command.
 					// New list to accumulate more samples
@@ -358,12 +381,16 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 							LOGGER.error("updateLeds delay exeption", e);
 						}
 				}
+				previousColorValue = thisColorValue;
+				partialCount++;
+				partialSamples.add(theSample);
+
 			}
 			if (partialCount > 0) { // send the final leftovers
-				LOGGER.info("last partial send to aisle controller");
+				logSampleSend(partialSamples);
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
 				mRadioController.sendCommand(command, getAddress(), true);
-				
+
 				// same as above. Wait after last partial
 				if (kDelayMillisBetweenPartialSends > 0)
 					try { // Not sure this helps. Might need to throw in another thread and modify the protocol a bit.
@@ -374,5 +401,16 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 			}
 		}
+	}
+
+	void logSampleSend(List<LedSample> inSamples){
+		String sampleSummary = "";
+		for (LedSample sample : inSamples) {
+			sampleSummary += sample.getPosition().toString();
+			sampleSummary += ":";
+			sampleSummary += ColorEnum.getLogCodeOf(sample.getColor());
+			sampleSummary += ";";
+		}
+		LOGGER.info("sent to aisles controller:" + sampleSummary);;
 	}
 }

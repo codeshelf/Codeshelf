@@ -89,6 +89,39 @@ public enum ColorEnum {
 		return result;
 	}
 
+	public static String getLogCodeOf(ColorEnum inColor) {
+		String result = "??";
+		switch (inColor) {
+			case RED:
+				result = "rd";
+				break;
+			case GREEN:
+				result = "gr";
+				break;
+			case BLUE:
+				result = "bl";
+				break;
+			case MAGENTA:
+				result = "mg";
+				break;
+			case CYAN:
+				result = "cy";
+				break;
+			case ORANGE:
+				result = "or";
+				break;
+			case BLACK:
+				result = "bk";
+				break;
+			case WHITE:
+				result = "wt";
+				break;
+			default:
+				break;
+		}
+		return result;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return

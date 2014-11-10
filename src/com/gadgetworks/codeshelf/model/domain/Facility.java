@@ -903,6 +903,41 @@ public class Facility extends SubLocationABC<Facility> {
 		return startingPathPos;
 	}
 
+	/**
+	 * Helper function used in the context after scan location. Assumes computeWorkinstructions was already done.
+	 * @param inChe
+	 * @param inFromStartingPosition
+	 * @param inWiList
+	 * May return empty list, but never null
+	 */
+	private void queryAddCheInstructionsToList(final Che inChe, final Double inFromStartingPosition, List<WorkInstruction> inWiList) {
+		if (inChe == null || inFromStartingPosition == null || inWiList == null) {
+			LOGGER.error("null input to queryAddCheInstructionsToList");
+			return;
+		}
+		
+		Map<String, Object> filterParams = new HashMap<String, Object>();
+		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
+		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
+		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
+		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
+		filterParams.put("pos", inFromStartingPosition);
+		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) and (posAlongPath >= :pos)";
+		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
+			// Very unlikely. But if some wiLocations were deleted between start work and scan starting location, let's not give out the "deleted" wis
+			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
+			// Not ambiguous for picks.
+			ILocation<?> loc = wi.getLocation();
+			// so far, wi must have a location. Even housekeeping and shorts
+			if (loc == null)
+				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
+			else if (loc.isActive()) //unlikely that location got deleted between complete work instructions and scan location
+				inWiList.add(wi);
+			else
+				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
+		}
+	}
+		
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
@@ -916,96 +951,27 @@ public class Facility extends SubLocationABC<Facility> {
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-		/*
-		ISubLocation<?> cheLocation = null;
-		if (!inScannedLocationId.isEmpty()) {
-			cheLocation = findSubLocationById(inScannedLocationId);
-			if (cheLocation == null) {
-				LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
-			}
-		}
-
-		Double startingPathPos = 0.0;
-		if (cheLocation != null) {
-			Path path = cheLocation.getAssociatedPathSegment().getParent();
-			Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
-			Bay selectedBay = cheBay;
-			if (cheBay == null) {
-				LOGGER.error("Che does not have a bay parent location in getWorkInstructions #1");
-				return wiResultList;
-			} else if (cheBay.getPosAlongPath() == null) {
-				LOGGER.error("Ches bay parent location does not have posAlongPath in getWorkInstructions #2");
-				return wiResultList;
-			}
-
-			for (Bay bay : path.<Bay> getLocationsByClass(Bay.class)) {
-				// Find any bay sooner on the work path that's within 2% of this bay.
-				if (bay.getPosAlongPath() == null) {
-					LOGGER.error("bay location does not have posAlongPath in getWorkInstructions #3");
-				} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
-						&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
-					selectedBay = bay;
-				}
-			}
-
-			// Figure out the starting path position.
-			startingPathPos = selectedBay.getPosAlongPath();
-		}
-		*/
 
 		Double startingPathPos = getStartingPathDistance(inScannedLocationId);
-		if (startingPathPos == null) // getStartingPathDistance logged the errors, so we do not need to
+		if (startingPathPos == null) // getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
 			return wiResultList;
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
-		filterParams.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
-		filterParams.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
-		filterParams.put("pos", startingPathPos);
-		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) and (posAlongPath >= :pos)";
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter, filterParams)) {
-			// Very unlikely. But if some wiLocations were deleted between start work and scan starting location, let's not give out the "deleted" wis
-			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
-			// Not ambiguous for picks.
-			ILocation<?> loc = wi.getLocation();
-			// so far, wi must have a location. Even housekeeping and shorts
-			if (loc == null)
-				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
-			else if (loc.isActive())
-				wiResultList.add(wi);
-			else
-				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
-		}
+		queryAddCheInstructionsToList(inChe, startingPathPos, wiResultList);
 
-		// New from V4. make sure sorted correctly. Hard to believe we did not catch this before. (Should we have the DB sort for us?)
+		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 
-		// For DEV- 477
-		final boolean doWrapIfNecessary = false;
-		if (!doWrapIfNecessary) // prior behavior
+		final boolean doWrapIfNecessary = false; // DEV- 477 
+		if (!doWrapIfNecessary) 
 			return wiResultList;
 
+		// For DEV- 477 from here
 		// If wrapping, we need to get the complete list, then add on the missing bits. AND update the group and sort code for the work instructions
 		int wiCountFromStartLocation = wiResultList.size();
 		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
+		queryAddCheInstructionsToList(inChe, 0.0, completeRouteWiList);
 
-		Map<String, Object> filterParams2 = new HashMap<String, Object>();
-		filterParams2.put("chePersistentId", inChe.getPersistentId().toString());
-		filterParams2.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
-		filterParams2.put("typehkbaychange", WorkInstructionTypeEnum.HK_BAYCOMPLETE.toString());
-		filterParams2.put("typehkrepeat", WorkInstructionTypeEnum.HK_REPEATPOS.toString());
-		String filter2 = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat)";
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filter2, filterParams2)) {
-			ILocation<?> loc = wi.getLocation();
-			if (loc == null)
-				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
-			else if (loc.isActive())
-				completeRouteWiList.add(wi);
-			else
-				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
-		}
 		int wiCountCompleteRoute = completeRouteWiList.size();
 		Integer leftoverCount = wiCountCompleteRoute - wiCountFromStartLocation;
 		if (leftoverCount == 0) // just return what we had
@@ -1021,18 +987,25 @@ public class Facility extends SubLocationABC<Facility> {
 			wrappedRouteWiList.add(wi);
 		}
 		WorkInstruction firstWi = wrappedRouteWiList.get(0);
-		// Add the ones we missed from the start.
+		// Add the ones we missed from the start. We probably should add a new baychange here
 		for (WorkInstruction wi : completeRouteWiList) {
 			if (wi.equals(firstWi))
 				break;
 			wrappedRouteWiList.add(wi);
 		}
+		// It could be that our wrap point was just after a housekeeping WI. We should never have bay change or repeat pos last.
+		// We could avoid adding it to our final list above, but we also have to delete the WI.
+		int wrappedSize = wrappedRouteWiList.size();
+		WorkInstruction lastWi = wrappedRouteWiList.get(wrappedSize - 1);
+		// if lastWi.h
+		
+		
+		
 		// Now our wrappedRouteWiList is ordered correctly, but group and sort codes are wrong.
 		if (wrappedRouteWiList.size() > 0)
 			wrappedRouteWiList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wrappedRouteWiList);
 
 		return wrappedRouteWiList;
-
 	}
 
 	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
