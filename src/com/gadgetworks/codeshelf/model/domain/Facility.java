@@ -1388,7 +1388,8 @@ public class Facility extends SubLocationABC<Facility> {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 			}
-
+			
+			ColorEnum cheColor = inChe.getColor();
 			// Set the LED lighting pattern for this WI.
 			if (inStatus == WorkInstructionStatusEnum.SHORT) {
 				// But not if it is a short WI (made to the facility location)
@@ -1398,7 +1399,7 @@ public class Facility extends SubLocationABC<Facility> {
 					inOrderDetail.getItemMasterId(),
 					inLocation,
 					inOrderDetail.getUomMasterId(),
-					ColorEnum.BLUE);
+					cheColor);
 			} else {
 				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
 				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
@@ -1413,10 +1414,10 @@ public class Facility extends SubLocationABC<Facility> {
 						inLocation,
 						inOrderDetail.getItemMasterId(),
 						inOrderDetail.getUomMasterId(),
-						ColorEnum.BLUE);
+						cheColor);
 				} else {
 					// The cross batch situation. We want the leds for the order location(s)
-					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, ColorEnum.BLUE);
+					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
 				}
 			}
 

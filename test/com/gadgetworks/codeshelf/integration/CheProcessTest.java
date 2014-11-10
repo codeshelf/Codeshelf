@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.integration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.device.LedCmdGroup;
+import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
@@ -26,6 +29,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
@@ -39,6 +43,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
@@ -178,18 +183,25 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 
 		SubLocationABC tier = (SubLocationABC) getFacility().findSubLocationById("A1.B1.T1");
 		tier.setLedController(controller1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
 		tier.setLedController(controller1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B3.T1");
 		tier.setLedController(controller1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B1.T1");
 		tier.setLedController(controller2);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B2.T1");
 		tier.setLedController(controller2);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B1.T1");
 		tier.setLedController(controller3);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B2.T1");
 		tier.setLedController(controller3);
+		tier.getDao().store(tier);
 
 		return getFacility();
 	}
@@ -478,8 +490,12 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Assert.assertEquals(7, picker.countRemainingJobs());		
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
+		assertWIColor(wi, che1);
+		
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
+		
+		
 		
 		// pick first item
 		picker.pick(button, quant);
@@ -546,6 +562,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Assert.assertEquals(3, picker.countRemainingJobs());		
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
+		assertWIColor(wi, che1);
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		
@@ -570,6 +587,15 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		//picker.waitForCheState(CheStateEnum.DO_PICK,1000);
 		Assert.assertEquals(0, picker.countRemainingJobs());
 		
+	}
+	
+	private void assertWIColor(WorkInstruction wi, Che che) {
+		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
+		Assert.assertEquals(1, cmdGroups.size());
+		ColorEnum wiColor = cmdGroups.get(0).getLedSampleList().get(0).getColor();
+		ColorEnum cheColor = che.getColor();
+		Assert.assertEquals(cheColor, wiColor);
+
 	}
 
 }
