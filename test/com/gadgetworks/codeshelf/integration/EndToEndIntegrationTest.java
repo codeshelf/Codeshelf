@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.TcpServerInterface;
@@ -147,12 +148,14 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		Che che1 = network.getChe(cheId1);
 		if (che1==null) {
 			che1=network.createChe(cheId1, cheGuid1);
+			che1.setColor(ColorEnum.MAGENTA);
 		}
 		this.che1PersistentId = che1.getPersistentId();
 
 		Che che2 = network.getChe(cheId2);
 		if (che2==null) {
 			che2=network.createChe(cheId2, cheGuid2);
+			che2.setColor(ColorEnum.WHITE);
 		}
 		this.che2PersistentId = che2.getPersistentId();
 
