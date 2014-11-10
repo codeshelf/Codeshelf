@@ -322,11 +322,11 @@ function control(tvb, pkt, root, flyweight_tree)
     pkt.cols.info:append(" count: "..f_control_led_samples_field().display)
     local samples = tvb:range(10,1):uint()
     for sample = 0, samples - 1, 1 do
-      local offset = sample * 4
-      sample_tree:add_packet_field(fwfields.f_control_led_pos, tvb:range(offset + 11,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_led_red, tvb:range(offset + 12,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_led_green, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_led_blue, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
+      local offset = sample * 5
+      sample_tree:add_packet_field(fwfields.f_control_led_pos, tvb:range(offset + 11,2), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_red, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_green, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_blue, tvb:range(offset + 15,1), ENC_BIG_ENDIAN)
     end
   elseif control_cmd == 3 then
     pkt.cols.info = "Set Pos Controller"
