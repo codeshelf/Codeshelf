@@ -141,7 +141,7 @@ public class SessionManager {
 	}
 
 	private boolean sendMessage(User user, MessageABC message) {
-		CsSession session = getSession(user);// TODO Auto-generated method stub
+		CsSession session = getSession(user);
 		if (session != null) {
 			session.sendMessage(message);
 			return true;
