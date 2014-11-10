@@ -152,7 +152,7 @@ public class SessionManager {
 	}
 
 	private boolean sendMessage(User user, MessageABC message) {
-		UserSession session = getSession(user);// TODO Auto-generated method stub
+		UserSession session = getSession(user);
 		if (session != null) {
 			session.sendMessage(message);
 			return true;

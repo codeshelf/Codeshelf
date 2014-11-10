@@ -73,7 +73,7 @@ public class LightService implements IApiService {
 			inItemPersistentId);
 
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theItem));
+		sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theItem));
 	}
 
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
@@ -108,7 +108,7 @@ public class LightService implements IApiService {
 	private void lightOneLocation(final Facility facility, final ISubLocation<?> theLocation) {
 
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		sendToAllSiteControllers(facility, toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
+		sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
 	}
 
 	// --------------------------------------------------------------------------
@@ -143,6 +143,7 @@ public class LightService implements IApiService {
 
 	Future<Void> chaserLight(final Set<User> siteControllerUsers, final List<LightLedsMessage> messageSequence) {
 		long millisToSleep = 2250;
+		final Set<User> siteControllerUsers = facility.getSiteControllerUsers();
 		final TerminatingScheduledRunnable lightLocationRunnable = new TerminatingScheduledRunnable() {
 
 			private LinkedList<LightLedsMessage>	chaseListToFire	= Lists.newLinkedList(messageSequence);
@@ -160,8 +161,7 @@ public class LightService implements IApiService {
 		return scheduleChaserRunnable(lightLocationRunnable, millisToSleep, TimeUnit.MILLISECONDS);
 	}
 
-	private int sendToAllSiteControllers(Facility facility, LightLedsMessage message) {
-		Set<User> users = facility.getSiteControllerUsers();
+	private int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
 		return this.sessionManager.sendMessage(users, message);
 	}
 
