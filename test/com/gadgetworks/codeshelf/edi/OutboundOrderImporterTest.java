@@ -28,13 +28,13 @@ import com.gadgetworks.codeshelf.validation.BatchResult;
 
 /**
  * @author jeffw
- * 
+ *
  * Yes, these aren't exactly unit tests, but when they were unit tested they missed a lot of important business behaviors.
  * Sure, the coupling shouldn't be so tight, but Ebean doesn't make it easy to test it's granular behaviors.
- * 
+ *
  * While not ideal, we are testing, known, expected business behaviors against the full machinery in a memory-mapped DB
  * that runs at the speed of a unit test (and runs with the units tests).
- * 
+ *
  * There are other unit tests of EDI behaviors.
  *
  */
@@ -45,10 +45,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	// of these: orderId,itemId,description,quantity,uom are not nullable
 
 	private ICsvOrderImporter	importer;
+	private Facility	facility;
 
 	@Before
 	public void initTest() {
 		importer = createOrderImporter();
+		facility = getTestFacility("O-" + getTestName(), "F-" + getTestName());
+
 	}
 
 	@Test
@@ -72,13 +75,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.1");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -126,12 +122,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.2");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.2", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.2");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -167,13 +157,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.3");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.3", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.3");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -216,13 +199,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.4");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.4", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.4");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -268,13 +244,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.5");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.5", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.5");
 
 		// First import a big list of orders.
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
@@ -335,67 +304,36 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		}
 	}
 
-	//@Test
+	@Test
 	public void testOneOrderArchive() throws IOException {
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csvArray = firstOrderBatchCsv.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.6");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.6", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.6");
-
-		// First import a big list of orders.
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		importCsvString(facility, firstOrderBatchCsv);
+		
 		HeaderCounts theCounts = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts.mActiveDetails == 11);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
+		Assert.assertEquals(3, theCounts.mTotalHeaders);
+		Assert.assertEquals(3, theCounts.mActiveHeaders);
+		Assert.assertEquals(3, theCounts.mActiveDetails);
+		Assert.assertEquals(3, theCounts.mActiveCntrUses );
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csv2Array = secondOrderBatchCsv.getBytes();
-
-		stream = new ByteArrayInputStream(csv2Array);
-		reader = new InputStreamReader(stream);
-
-		// First import a big list of orders.
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importCsvString(facility, secondOrderBatchCsv);
 
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 1);
-		Assert.assertTrue(theCounts2.mActiveDetails == 4);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 1);
-		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
+		Assert.assertEquals(3, theCounts2.mTotalHeaders );
+		Assert.assertEquals(3, theCounts2.mActiveHeaders);
+		Assert.assertEquals(4, theCounts2.mActiveDetails);
+		Assert.assertEquals(1, theCounts2.mActiveCntrUses);
+		Assert.assertEquals(0, theCounts2.mInactiveDetailsOnActiveOrders );
+		Assert.assertEquals(2, theCounts2.mInactiveCntrUsesOnActiveOrders);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -436,13 +374,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.7");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.7", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.7");
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
@@ -475,13 +406,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.8");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.8", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.8");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -557,13 +481,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.8");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.8", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.8");
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
@@ -596,13 +513,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.10");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.10", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.10");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -682,12 +592,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testReimportDetailIdOrderImporterFromCsvStream() throws IOException {
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.9");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.9", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.9");
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -722,23 +626,51 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public void testNoQuantity() throws IOException {
+		String orderWithNoQuantity =
+		"orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
+		+ "\r\n243698,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
+		+ "\r\n243698,\"243,698.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CPL-CS-9F,Clear Flat Lids for 3-9 oz cup No Hole,,CS,243698";
+		BatchResult<Object> result = importCsvString(facility, orderWithNoQuantity);
+		Assert.assertEquals(1, result.getResult().size());
+		Assert.assertEquals(1, result.getViolations().size());
+	}
+	
+	@Test
+	public void testNonsequentialOrderIds() throws IOException {
+		String nonSequentialOrders =
+		"orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
+		+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
+		+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
+		+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
+		+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
+		
+		importCsvString(facility, nonSequentialOrders);
+
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertEquals(2, theCounts.mTotalHeaders);
+		Assert.assertEquals(2, theCounts.mActiveHeaders);
+		Assert.assertEquals(4, theCounts.mActiveDetails);
+		Assert.assertEquals(2, theCounts.mActiveCntrUses);
+
+	}
+
 	/**
 	 * Simulates the edi process for order importing
 	 */
 	@Test
 	public void testMultipleImportOfLargeSet() throws IOException, InterruptedException {
 
-		Facility testFacility = getTestFacility("O-testMultipleImportOfLargeSet", "F1");
-
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
-		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
+		foundFacility = mFacilityDao.findByPersistentId(facility.getPersistentId());
 
 		//The large set creates the initial sets of orders
-		BatchResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
+		BatchResult<?> result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
-		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
+		foundFacility = mFacilityDao.findByPersistentId(facility.getPersistentId());
 
 		//The subset triggers all but one of the details to be active = false
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
@@ -747,7 +679,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		//Simulate a cache trim between the uploads
 		Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
 
-		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
+		foundFacility = mFacilityDao.findByPersistentId(facility.getPersistentId());
 
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
@@ -760,7 +692,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	//******************** TESTS without Group ID ***********************
 
 	@Test
-	public final void testOutboundOrderNoGroup() throws IOException {
+	public final void testReimportOutboundOrderNoGroup() throws IOException {
 		Organization organization = new Organization();
 		organization.setDomainId("O-ORD2.1");
 		mOrganizationDao.store(organization);
@@ -898,18 +830,19 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		return facility;
 	}
 
-	private void importCsvString(Facility facility, String csvString) throws IOException {
+	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
 		byte[] firstCsvArray = csvString.getBytes();
 
 		try (ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-			importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+			BatchResult<Object> results = importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+			return results;
 		}
 	}
 
-	private BatchResult importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
+	private BatchResult<?> importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
 		try (InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());

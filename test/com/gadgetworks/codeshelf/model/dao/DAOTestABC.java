@@ -265,6 +265,10 @@ public abstract class DAOTestABC {
 
 	protected void doAfter() {
 	}
+
+	protected String getTestName() {
+		return testName.getMethodName();
+	}
 	
 
 }

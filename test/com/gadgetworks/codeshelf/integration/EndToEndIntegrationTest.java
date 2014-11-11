@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
 import com.gadgetworks.flyweight.controller.TcpServerInterface;
@@ -154,6 +155,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			che1.setParent(network);
 			che1.setDomainId(cheId1);
 			che1.setDeviceGuidStr(cheGuid1.getHexStringWithPrefix());
+			che1.setColor(ColorEnum.MAGENTA);
 			mCheDao.store(che1);
 		}
 		che2 = network.getChe(cheId2);
@@ -162,6 +164,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			che2.setParent(network);
 			che2.setDomainId(cheId2);
 			che2.setDeviceGuidStr(cheGuid2.getHexStringWithPrefix());
+			che2.setColor(ColorEnum.WHITE);
 			mCheDao.store(che2);
 		}
 
