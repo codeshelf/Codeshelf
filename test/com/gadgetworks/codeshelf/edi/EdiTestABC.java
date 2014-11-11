@@ -62,10 +62,13 @@ public abstract class EdiTestABC extends DomainTestABC {
 	}
 
 	public void logWiList(List<WorkInstruction> inList) {
-		for (WorkInstruction wi : inList)
+		for (WorkInstruction wi : inList) {
+			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
+			
 			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
-					+ wi.getPickInstruction() +"("+wi.getNominalLocationId()+")"+ " count: " + wi.getPlanQuantity() + " SKU: " + wi.getItemMasterId() + " order: "
-					+ wi.getOrderId() + " desc.: " + wi.getDescription());
+					+ wi.getPickInstruction() + "(" + wi.getNominalLocationId() + ")" + " count: " + wi.getPlanQuantity()
+					+ " SKU: " + wi.getItemMasterId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
+		}
 	}
 
 	public void logItemList(List<Item> inList) {

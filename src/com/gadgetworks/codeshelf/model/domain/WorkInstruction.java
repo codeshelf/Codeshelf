@@ -309,7 +309,10 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	private final String getItemIdIfMasterNull() {
 		// we might look at a type enumeration to set this more appropriately. See CD_0045 for list of housekeeping and other possibilities with no container.
-		return "Housekeeping"; // may need to localize on the UI.
+		if (this.amIHouseKeepingWi())
+			return "Housekeeping"; // may need to localize on the UI.
+		else
+			return "";
 	}
 
 	// Denormalized for serialized WIs at the site controller.
