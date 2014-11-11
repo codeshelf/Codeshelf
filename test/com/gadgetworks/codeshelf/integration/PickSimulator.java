@@ -49,7 +49,7 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
-	public void start(String location) {
+	public void start(String location, int inComputeTimeOut, int inLocationTimeOut) {
 		// This is both "Start pick" and scan of starting location.
 		// Note: if no jobs at all, it will fail on waiting.
 		scanCommand("START");
@@ -57,9 +57,9 @@ public class PickSimulator {
 			// perform start without location scan, if location is undefined
 			return;
 		}
-		waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
+		waitForCheState(CheStateEnum.LOCATION_SELECT, inComputeTimeOut);
 		scanLocation(location);
-		waitForCheState(CheStateEnum.DO_PICK, 1000);
+		waitForCheState(CheStateEnum.DO_PICK, inLocationTimeOut);
 	}
 
 	public void pick(int position, int quantity) {
@@ -143,7 +143,7 @@ public class PickSimulator {
 	 * Careful: returns the actual list from the cheDeviceLogic. This has all the wis, many completed.
 	 * This is not usually very useful.
 	 */
-	private List<WorkInstruction> getAllPicksList() {
+	public List<WorkInstruction> getAllPicksList() {
 		List<WorkInstruction> activeList = cheDeviceLogic.getAllPicksWiList();
 		return activeList;
 	}
@@ -158,6 +158,7 @@ public class PickSimulator {
 				return;
 			}
 		}
-		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms");
+		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
+		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);
 	}
 }

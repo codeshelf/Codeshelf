@@ -216,7 +216,46 @@ public class HousekeepingInjector {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * A small, public special case for DEV-477 wrapped-route that may need to add a bay change.  RepeatPos might be possible, but not so important.
+	 */
+	public static List<WorkInstruction> addHouseKeepingIfNecessary(Facility inFacility,
+		WorkInstruction inPrevWi,
+		WorkInstruction inNextWi,
+		List<WorkInstruction> inWiList) {
+		
+		List<WorkInstruction> returnList = inWiList;
+
+		if (inPrevWi == null)
+			return null;
+		else if (inNextWi == null) {
+			LOGGER.error("null value in wisNeedHouseKeepingBetween");
+			return null;
+		} else {
+			// If both repeatContainer and bayChange, do bay change only. DEV-478
+			if (wantBayChangeBetween(getBayChangeChoice(), inPrevWi, inNextWi)) {
+				WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(WorkInstructionTypeEnum.HK_BAYCOMPLETE,
+					inFacility,
+					inPrevWi,
+					inNextWi);
+				if (houseKeepingWi != null)
+					returnList.add(houseKeepingWi);
+
+			} else if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
+				WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(WorkInstructionTypeEnum.HK_REPEATPOS,
+					inFacility,
+					inPrevWi,
+					inNextWi);
+				if (houseKeepingWi != null)
+					returnList.add(houseKeepingWi);
+			}
+		}
+		return returnList;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * This will add any necessary housekeeping WIs. And then add the sort and group codes and save each WI.
+	 * @param inFacility
 	 * @param inSortedWiList
 	 * @return
 	 */

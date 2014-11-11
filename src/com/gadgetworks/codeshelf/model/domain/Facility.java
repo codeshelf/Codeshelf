@@ -915,7 +915,7 @@ public class Facility extends SubLocationABC<Facility> {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
 			return;
 		}
-		
+
 		Map<String, Object> filterParams = new HashMap<String, Object>();
 		filterParams.put("chePersistentId", inChe.getPersistentId().toString());
 		filterParams.put("typeplan", WorkInstructionTypeEnum.PLAN.toString());
@@ -937,7 +937,7 @@ public class Facility extends SubLocationABC<Facility> {
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}
 	}
-		
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
@@ -962,48 +962,78 @@ public class Facility extends SubLocationABC<Facility> {
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 
-		final boolean doWrapIfNecessary = false; // DEV- 477 
-		if (!doWrapIfNecessary) 
+		final boolean doWrapIfNecessary = true; // DEV- 477 
+		if (!doWrapIfNecessary)
 			return wiResultList;
 
 		// For DEV- 477 from here
 		// If wrapping, we need to get the complete list, then add on the missing bits. AND update the group and sort code for the work instructions
+		// Let's measure how long this takes. If more than 1000 ms, log it.
+		long wrapComputeTime = System.currentTimeMillis();
+
 		int wiCountFromStartLocation = wiResultList.size();
 		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
 		queryAddCheInstructionsToList(inChe, 0.0, completeRouteWiList);
 
 		int wiCountCompleteRoute = completeRouteWiList.size();
 		Integer leftoverCount = wiCountCompleteRoute - wiCountFromStartLocation;
-		if (leftoverCount == 0) // just return what we had
+		if (leftoverCount == 0) // just return what we had.  This also covers the case of wiCountCompleteRoute == 0.
 			return wiResultList;
 
 		LOGGER.info("Wrapping the CHE route. Add the starting " + leftoverCount
 				+ " jobs from start of path to the end of the CHE route.");
 		Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
 
-		// Add the first ones in order.
+		// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
+		// "wrap" to the complete list.
 		List<WorkInstruction> wrappedRouteWiList = new ArrayList<WorkInstruction>();
-		for (WorkInstruction wi : wiResultList) {
-			wrappedRouteWiList.add(wi);
-		}
-		WorkInstruction firstWi = wrappedRouteWiList.get(0);
-		// Add the ones we missed from the start. We probably should add a new baychange here
-		for (WorkInstruction wi : completeRouteWiList) {
-			if (wi.equals(firstWi))
-				break;
-			wrappedRouteWiList.add(wi);
+		if (wiCountFromStartLocation == 0) {
+			for (WorkInstruction wi : completeRouteWiList) 
+				wrappedRouteWiList.add(wi);
+		} else {
+			// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
+			WorkInstruction lastWiFirstPart = null;
+			for (WorkInstruction wi : wiResultList) {
+				wrappedRouteWiList.add(wi);
+				lastWiFirstPart = wi;
+			}
+			WorkInstruction firstWi = wrappedRouteWiList.get(0);
+			boolean firstAdded = false;
+			for (WorkInstruction wi : completeRouteWiList) {
+				if (wi.equals(firstWi))
+					break; // stop adding from the complete list once we reach the point already in it.
+				if (!firstAdded) 	// We usually need to add a new baychange here
+					wrappedRouteWiList = HousekeepingInjector.addHouseKeepingIfNecessary(this, lastWiFirstPart, wi, wrappedRouteWiList);
+				wrappedRouteWiList.add(wi);
+				firstAdded = true;
+			}
 		}
 		// It could be that our wrap point was just after a housekeeping WI. We should never have bay change or repeat pos last.
 		// We could avoid adding it to our final list above, but we also have to delete the WI.
 		int wrappedSize = wrappedRouteWiList.size();
-		WorkInstruction lastWi = wrappedRouteWiList.get(wrappedSize - 1);
-		// if lastWi.h
-		
-		
-		
+		if (wrappedSize > 0) {
+			WorkInstruction lastWi = wrappedRouteWiList.get(wrappedSize - 1);
+			if (lastWi.amIHouseKeepingWi()) { // for now, assume no last housekeeping is valid. That may not be always true.
+				LOGGER.info("deleting one unneeded housekeeping work instruction after wrapping a CHE route that starts in the middle.");
+				wrappedRouteWiList.remove(wrappedSize - 1);
+				try {
+					Che assignedChe = lastWi.getAssignedChe();
+					if (assignedChe != null)
+						assignedChe.removeWorkInstruction(lastWi); // necessary?
+					WorkInstruction.DAO.delete(lastWi);
+				} catch (DaoException e) {
+					LOGGER.error("failed to delete prior work SHORT instruction", e);
+				}
+			}
+		}
+
 		// Now our wrappedRouteWiList is ordered correctly, but group and sort codes are wrong.
 		if (wrappedRouteWiList.size() > 0)
 			wrappedRouteWiList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wrappedRouteWiList);
+
+		Long wrapComputeDuration = System.currentTimeMillis() - wrapComputeTime;
+		if (wrapComputeDuration > 1000)
+			LOGGER.warn("Route-wrap recompute took " + wrapComputeDuration + " ms.");
 
 		return wrappedRouteWiList;
 	}

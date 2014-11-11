@@ -178,6 +178,11 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 
 		SubLocationABC tier = (SubLocationABC) getFacility().findSubLocationById("A1.B1.T1");
 		tier.setLedController(controller1);
+		// Make sure we also got the alias
+		String tierName = tier.getPrimaryAliasId();
+		if (!tierName.equals("D301"))
+			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
+		
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
 		tier.setLedController(controller1);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B3.T1");
@@ -322,12 +327,16 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Double posOf403 = locationD403.getPosAlongPath();
 		Assert.assertTrue(posOf402 > posOf403);
 
-		Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 402 should be there. The item in 403 is earlier on the path.
+		// If DEV-477 route-wrap is in effect, both are there, but the 402 item is first. We still get the baychange between
+		// If DEV-477 is not in effect, 402 item is still first, and 403 item is not in the list. 
+		Assert.assertEquals((Integer) 3, wiCountAfterScan); 
 		// See which work instruction is which
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		Assert.assertNotNull(wi1);
-		String wi1Item = wi1.getItemMasterId();
-		Double wi1Pos = wi1.getPosAlongPath();
+		String wiLoc = wi1.getPickInstruction(); // this is the denormalized position on the work instruction. Should have the alias, and not F1.A2.B2.T1
+		Assert.assertEquals("D402", wiLoc);
+		WorkInstruction wi2 = wiListAfterScan.get(1);
+		Assert.assertTrue(wi2.amIHouseKeepingWi());
 
 		// New from v4. Test our work instruction summarizer
 		List<WiSetSummary> summaries = new WorkService().workSummary(che1.getPersistentId().toString(), facility.getPersistentId()
@@ -343,7 +352,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
 		Assert.assertEquals(0, completes);
-		Assert.assertEquals(2, actives);
+		Assert.assertEquals(3, actives);
 		Assert.assertEquals(1, shorts);
 	}
 
@@ -420,7 +429,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
-		picker.start("D403");
+		picker.start("D403", 5000, 1000);
 		HousekeepingInjector.restoreHKDefaults();
 
 		Assert.assertEquals(1, picker.countActiveJobs());
@@ -472,7 +481,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		picker.setup();
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
-		picker.start("D303");
+		picker.start("D303", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 		
 		Assert.assertEquals(7, picker.countRemainingJobs());		
@@ -530,29 +539,35 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
 		
-		HousekeepingInjector.turnOffHK();
+		// HousekeepingInjector.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
 		
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		
-		LOGGER.info ("Case 1: Scan on near the end of the route. Only 3 of 7 jobs.");
+		LOGGER.info ("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
 		picker.setup();
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
-		picker.start("D301");
+		// Taking more than 3 seconds for the recompute and wrap. 
+		picker.start("D301", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 		
-		Assert.assertEquals(3, picker.countRemainingJobs());		
+		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
+		// the itemMaster field is null.
+		Assert.assertEquals(10, picker.countRemainingJobs());	
+		List<WorkInstruction> theWiList = picker.getAllPicksList();
+		logWiList(theWiList);
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
+		Assert.assertEquals("D301", wi.getPickInstruction());
 		
 		// pick first item
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
-		Assert.assertEquals(2, picker.countRemainingJobs());
+		Assert.assertEquals(9, picker.countRemainingJobs());
 
 		LOGGER.info ("Case 2: Pick the 2nd and 3rd jobs");
 		wi = picker.nextActiveWi();
@@ -560,7 +575,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
-		Assert.assertEquals(1, picker.countRemainingJobs());
+		Assert.assertEquals(8, picker.countRemainingJobs());
 		// last job
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
@@ -568,7 +583,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		// Here is the end of it
 		//picker.waitForCheState(CheStateEnum.DO_PICK,1000);
-		Assert.assertEquals(0, picker.countRemainingJobs());
+		Assert.assertEquals(7, picker.countRemainingJobs());
 		
 	}
 
