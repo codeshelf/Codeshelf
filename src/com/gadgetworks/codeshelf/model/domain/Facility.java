@@ -1178,6 +1178,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		if (wrapComputeDuration > 1000)
 			LOGGER.warn("Route-wrap recompute took " + wrapComputeDuration + " ms.");
 
+		Long wrapComputeDuration = System.currentTimeMillis() - wrapComputeTime;
+		if (wrapComputeDuration > 1000)
+			LOGGER.warn("Route-wrap recompute took " + wrapComputeDuration + " ms.");
+
 		return wrappedRouteWiList;
 	}
 
