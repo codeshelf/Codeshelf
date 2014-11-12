@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import com.avaje.ebean.annotation.CacheStrategy;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.LedRange;
@@ -963,6 +964,23 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return getActive();
 	}
 
+	@JsonIgnore
+	public boolean isLightable() {
+		LedController controller = this.getEffectiveLedController();
+		Short controllerChannel = this.getEffectiveLedChannel();
+		if (controller == null || controllerChannel == null) {
+			return false;
+		}
+		Short firstLocLed = getFirstLedNumAlongPath();
+		Short lastLocLed = getLastLedNumAlongPath();
+		if (firstLocLed == null || lastLocLed == null) {
+			return false;
+		} else if (firstLocLed == 0 && lastLocLed == 0) {
+			return false;
+		}
+		return true;
+	}
+	
 	public LedRange getFirstLastLedsForLocation() {
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
 		// to compute, we need the locations first and last led positions
