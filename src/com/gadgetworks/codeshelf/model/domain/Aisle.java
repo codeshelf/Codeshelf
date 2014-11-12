@@ -123,7 +123,7 @@ public class Aisle extends SubLocationABC<Facility> {
 		
 		List<Tier> aList = getActiveChildrenAtLevel(Tier.class);
 		for (Tier aTier : aList) {
-			aTier.doClearControllerChannel();
+			aTier.clearControllerChannel();
 		}
 	}
 

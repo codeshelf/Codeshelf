@@ -38,6 +38,8 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 
 	PathSegment getAssociatedPathSegment();
 
+	boolean isLightable();
+	
 	LedController getLedController();
 
 	void setLedController(LedController inLedController);

@@ -199,7 +199,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	/**
 	 * Clears controller and channel back to null state, as if they had never been set after initialization
 	 */
-	protected final void doClearControllerChannel() {
+	public final void clearControllerChannel() {
 		if (getLedController() != null || getLedChannel() != null) {
 			try {
 				this.setLedController(null);
