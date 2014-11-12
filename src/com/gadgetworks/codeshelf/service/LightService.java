@@ -109,7 +109,6 @@ public class LightService implements IApiService {
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
 	private void lightOneLocation(final Facility facility, final ISubLocation<?> theLocation) {
-
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
 	}
@@ -123,15 +122,25 @@ public class LightService implements IApiService {
 	Future<Void> lightChildLocations(final Facility facility, final ISubLocation<?> theLocation) {
 
 		List<Set<LightLedsMessage>> ledMessages = Lists.newArrayList();
-		List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
-		for (ISubLocation child : children) {
-			if (child instanceof Bay) { //TODO lost Object Orientedness here for now
-				//when the child we are lighting is a bay, light all of the tiers at once
-				// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
-				List<Tier> tiers = (List<Tier>) child.getChildrenInWorkingOrder();
-				ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), tiers));
-			} else {
-				ledMessages.add(ImmutableSet.of(toLedsMessage(4, facility.getDiagnosticColor(), child)));
+		if (theLocation instanceof Bay) { //light whole bay at once, consistent across controller configurations
+			ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), theLocation.getChildrenInWorkingOrder()));
+		}
+		else {
+			List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
+			for (ISubLocation child : children) {
+				try {
+					if (child instanceof Bay) { 
+						//when the child we are lighting is a bay, light all of the tiers at once
+						// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
+						ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), child.getChildrenInWorkingOrder()));
+					} else {
+						if (child.isLightable()) {
+							ledMessages.add(ImmutableSet.of(toLedsMessage(4, facility.getDiagnosticColor(), child)));
+						}
+					}
+				} catch(Exception e) {
+					LOGGER.warn("Unable to light child: " + child, e);
+				}
 			}
 		}
 		return chaserLight(facility, ledMessages);
@@ -176,27 +185,29 @@ public class LightService implements IApiService {
 	private LightLedsMessage toLedsMessage(int maxNumLeds, final ColorEnum inColor, final ILocation<?> inLocation) {
 		LedRange theRange = ((LocationABC<?>) inLocation).getFirstLastLedsForLocation().capLeds(maxNumLeds);
 		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inLocation, theRange);
-		if (message == null) {
-			throw new IllegalArgumentException("location with incomplete LED configuration: " + inLocation);
-		} else {
-			return message;
-		}
+		return message;
 	}
 	
-	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<Tier> tiers) {
+	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ISubLocation> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
-		for (Tier tier : tiers) {
-			LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, tier);
-			ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
-			
-			//merge messages per controller and key
-			LightLedsMessage messageForKey = byControllerChannel.get(key);
-			if (messageForKey != null) {
-				ledMessage = messageForKey.merge(ledMessage);
+		for (ISubLocation<?> child: children) {
+			try {
+				if (child.isLightable()) {
+					LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, child);
+					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
+					
+					//merge messages per controller and key
+					LightLedsMessage messageForKey = byControllerChannel.get(key);
+					if (messageForKey != null) {
+						ledMessage = messageForKey.merge(ledMessage);
+					}
+					byControllerChannel.put(key, ledMessage);
+				}
+			} 
+			catch(Exception e) {
+				LOGGER.warn("Unable to light tier: " + child, e);
 			}
-			byControllerChannel.put(key, ledMessage);
 		}
-		
 		
 		return Sets.newHashSet(byControllerChannel.values());
 	}
@@ -215,13 +226,13 @@ public class LightService implements IApiService {
 		LedController controller = inLocation.getEffectiveLedController();
 		Short controllerChannel = inLocation.getEffectiveLedChannel();
 		// This should never happen as an ledRange comes in and it had to have controller available to make it.
-		if (controller == null || controllerChannel == null)
-			throw new IllegalArgumentException("location with incomplete LED configuration: " + inLocation);
-
+		if (controller == null || controllerChannel == null) {
+			throw new IllegalArgumentException("location with no controller or channel: " + inLocation);
+		}
 		short firstLedPosNum = ledRange.getFirstLedToLight();
 		short lastLedPosNum = ledRange.getLastLedToLight();
 		if (firstLedPosNum == 0)
-			return null;
+			throw new IllegalArgumentException("location with zero for first Led Position: " + inLocation);
 
 		// This is how we send LED data to the remote controller. In this case, only one led sample range.
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
