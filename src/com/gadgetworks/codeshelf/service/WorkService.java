@@ -79,7 +79,7 @@ public class WorkService implements IApiService {
 		public void run() {
 			WorkService.aWorkServiceThreadExists = true;
 			try {
-				while (!Thread.interrupted()) {
+				while (!Thread.currentThread().isInterrupted()) {
 					
 					sendWorkInstructions();
 
@@ -127,12 +127,13 @@ public class WorkService implements IApiService {
 				ediExportService.sendWorkInstructionsToHost(wiList);
 				sent = true;
 			} catch (IOException e) {
+				LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
 				Thread.sleep(retryDelay);
-				LOGGER.warn("failure to send work instructions, retrying: ", e);
 			}
 		}
 
 		persistenceService.endTenantTransaction();
+					LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
 	}
 
 	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {

@@ -26,6 +26,7 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
@@ -34,6 +35,8 @@ import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -87,8 +90,12 @@ public class IronMqService extends EdiServiceABC {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
 
+
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
+
+	@Transient
+	private Counter exportCounter = MetricsService.addCounter(MetricsGroup.WSS,"exports.ironmq");
 
 	@Transient
 	private ClientProvider	clientProvider;
@@ -201,6 +208,7 @@ public class IronMqService extends EdiServiceABC {
 			LOGGER.debug("attempting send of work instructions: " + inWiList);
 			String message = wiCSVExporter.exportWorkInstructions(inWiList);
 			queue.get().push(message);
+			exportCounter.inc();
 			LOGGER.debug("Sent " + inWiList.size() + " work instructions to iron mq service");
 		}
 		else {
