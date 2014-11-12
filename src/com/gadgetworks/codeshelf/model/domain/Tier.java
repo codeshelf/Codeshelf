@@ -57,8 +57,8 @@ final class TierIds {
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Tier extends SubLocationABC<Bay> {
 
-	private static final String		THIS_TIER_ONLY		= "";
-	private static final String		ALL_TIERS_IN_AISLE	= "aisle";
+	public static final String		THIS_TIER_ONLY		= "";
+	public static final String		ALL_TIERS_IN_AISLE	= "aisle";
 
 	@Inject
 	public static ITypedDao<Tier>	DAO;

@@ -661,7 +661,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		LedController theController = location.getEffectiveLedController();
 		if (theController != null) {
 			String theGuidStr = theController.getDeviceGuidStr();
-			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, 5, theLedCommands);
+			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, (short)1, 5, ledCmdGroupList);
 			// check encode and decode of the message similar to how the jetty socket does it.
 			JsonEncoder encoder = new JsonEncoder();
 			String messageString = "";
