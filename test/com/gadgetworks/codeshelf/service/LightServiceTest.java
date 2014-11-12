@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +23,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
+import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
@@ -36,7 +36,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -48,6 +47,7 @@ import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Objects;
+import com.google.common.base.Objects.ToStringHelper;
 
 public class LightServiceTest extends EdiTestABC {
 	
@@ -94,13 +94,21 @@ public class LightServiceTest extends EdiTestABC {
 	@Test
 	public final void checkChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
 
-		Facility facility = setupPhysicalSlottedFacility("XB06");
 		String[] locations = new String[]{"A1.B1.T2", "A1.B1"};
 		for (String locationId : locations) {
 			ISubLocation parent = facility.findSubLocationById(locationId);
 			List<ISubLocation> sublocations = parent.getChildrenInWorkingOrder();
-			assertLightSequence(facility, parent, sublocations);
+			List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
+
+			//Messages came in same working order
+			Iterator<ISubLocation> subLocationsIter = sublocations.iterator();
+			for (MessageABC messageABC : messages) {
+				LightLedsMessage message = (LightLedsMessage) messageABC;
+				assertASampleWillLightLocation(subLocationsIter.next(), message);
+			}
+
 		}
 		
 		this.getPersistenceService().endTenantTransaction();
@@ -109,22 +117,48 @@ public class LightServiceTest extends EdiTestABC {
 	/**
 	 * Special cased for now
 	 */
+	@SuppressWarnings("rawtypes")
 	@Test
-	public final void checkChildLocationSequenceForAisle() throws IOException, InterruptedException, ExecutionException {
+	public final void checkChildLocationSequenceForTierLeftLayoutAisle() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
 
-		Facility facility = setupPhysicalSlottedFacility("XB06");
 		ISubLocation parent = facility.findSubLocationById("A1");
-		List<ISubLocation> sublocations = parent.getActiveChildrenAtLevel(Tier.class);
-		Collections.sort(sublocations, new LocationABC.LocationWorkingOrderComparator());
-		assertLightSequence(facility, parent, sublocations);
+		List<ISubLocation> bays = parent.getChildrenInWorkingOrder();
+		List<MessageABC> messages = captureLightMessages(facility, parent, 4 /*2 bays x 2 tiers*/);
+		Iterator<MessageABC> messageIter = messages.iterator();
 		
+		for (ISubLocation bay : bays) {
+			List<ISubLocation> tiers = bay.getChildrenInWorkingOrder();
+			for (ISubLocation tier : tiers) {
+				assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+			}
+		}
 		this.getPersistenceService().endTenantTransaction();
 	}
 
+	/**
+	 * Special cased for now
+	 */
+	@SuppressWarnings("rawtypes")
+	@Test
+	public final void checkChildLocationSequenceForZigZagLayoutAisle() throws IOException, InterruptedException, ExecutionException {
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
+		ISubLocation parent = facility.findSubLocationById("A1");
+		List<ISubLocation> bays = parent.getChildrenInWorkingOrder();
+		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);
+		Iterator<MessageABC> messageIter = messages.iterator();
+		for (ISubLocation bay : bays) {
+			List<ISubLocation> tiers = bay.getChildrenInWorkingOrder();
+			for (ISubLocation tier : tiers) {
+				//assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+			}
+		}
+	}
+
 	
-	private void assertLightSequence(Facility facility, ISubLocation parent, List<ISubLocation> sublocations) throws InterruptedException, ExecutionException {
-		Assert.assertTrue(sublocations.size() > 0);// test a reasonable amount
+	private List<MessageABC> captureLightMessages(Facility facility, ISubLocation parent, int expectedTotal) throws InterruptedException, ExecutionException {
+		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
 		SessionManager sessionManager = mock(SessionManager.class);
 		
 		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
@@ -132,34 +166,31 @@ public class LightServiceTest extends EdiTestABC {
 		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(sessionManager, times(sublocations.size())).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(sessionManager, times(expectedTotal)).sendMessage(any(Set.class), messagesCaptor.capture());
 		
 		List<MessageABC> messages = messagesCaptor.getAllValues();
-		Iterator<ISubLocation> locations = sublocations.iterator();
-		for (MessageABC messageABC : messages) {
-			LightLedsMessage message = (LightLedsMessage) messageABC;
-			assertWillLightsLocation(locations.next(), message);
-		}
+		return messages;
 
 	}
 		
-	private void assertWillLightsLocation(ISubLocation<?> location, LightLedsMessage ledMessage) {
+	private void assertASampleWillLightLocation(ISubLocation<?> location, LightLedsMessage ledMessage) {
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
+		boolean found = false;
+		ToStringHelper message = Objects.toStringHelper("Failed, probably lit out of order ");
 		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
 			for(LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 				short pos = ledSample.getPosition();
 				short first = location.getFirstLedNumAlongPath();
 				short last = location.getLastLedNumAlongPath();
-				String message = Objects.toStringHelper("Failed probably lit out of order ")
-					.add("first", first)
+					message.add("first", first)
 					.add("pos", pos)
 					.add("last", last)
-					.add("location", location).toString();
-
-				Assert.assertTrue(message ,  first <= pos && pos <= last);
+					.add("location", location);
+				found |= (first <= pos && pos <= last);
 			}
+
 		}
-		
+		Assert.assertTrue(message.toString(),  found);
 	}
 
 	
@@ -180,7 +211,7 @@ public class LightServiceTest extends EdiTestABC {
 	}
 	
 	// Important: BayChangeExceptSamePathDistance is not tested here. Need positive and negative tests
-	private Facility setupPhysicalSlottedFacility(String inOrganizationName) {
+	private Facility setupPhysicalSlottedFacility(String inOrganizationName, ControllerLayout controllerLayout) {
 		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
 		// 1) same position on cart
 		// 2) Bay done/change bay
@@ -190,16 +221,16 @@ public class LightServiceTest extends EdiTestABC {
 		// Zigzag bays like GoodEggs. 10 valid locations per aisle, named as GoodEggs
 		// One controllers associated per aisle
 		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
-
+		String controllerLayoutStr = controllerLayout.name();
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
+				+ "Aisle,A1,,,,,"+ controllerLayoutStr +",12.85,43.45,X,40,Y\r\n" //
 				+ "Bay,B1,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n" //
 				+ "Bay,B2,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n" //
-				+ "Aisle,A2,,,,,zigzagB1S1Side,12.85,55.45,X,120,Y\r\n" //
+				+ "Aisle,A2,,,,,"+ controllerLayoutStr +",12.85,55.45,X,120,Y\r\n" //
 				+ "Bay,B1,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n" //
@@ -291,16 +322,25 @@ public class LightServiceTest extends EdiTestABC {
 		Che che2 = network.getChe("CHE2");
 		che1.setColor(ColorEnum.MAGENTA);
 
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController("0x00000011", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("0x00000012", new NetGuid("0x00000012"));
 		Short channel1 = 1;
-		aisle1.setLedController(controller1);
-		aisle1.setLedChannel(channel1);
-		aisle1.getDao().store(aisle1);
-		aisle2.setLedController(controller2);
-		aisle2.setLedChannel(channel1);
-		aisle2.getDao().store(aisle2);
-
+		if (controllerLayout.equals(ControllerLayout.zigzagB1S1Side)) {
+			aisle1.setLedController(controller1);
+			aisle1.setLedChannel(channel1);
+			aisle1.getDao().store(aisle1);
+			aisle2.setLedController(controller2);
+			aisle2.setLedChannel(channel1);
+			aisle2.getDao().store(aisle2);
+		} else if (controllerLayout.equals(ControllerLayout.tierLeft)) {
+			Tier tier1 = (Tier) facility.findSubLocationById("A1.B1.T1");
+			tier1.setControllerChannel(controller1.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
+			tier1.getDao().store(tier1);
+			Tier tier2 = (Tier) facility.findSubLocationById("A1.B1.T2");
+			tier2.setControllerChannel(controller2.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
+			tier1.getDao().store(tier2);
+		}
+		
 		return facility;
 
 	}

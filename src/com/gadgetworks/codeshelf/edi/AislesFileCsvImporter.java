@@ -53,6 +53,17 @@ import com.google.inject.Singleton;
 @Singleton
 public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implements ICsvAislesFileImporter {
 
+	public static enum ControllerLayout {
+		zigzagLeft, 
+		zigzagRight,
+		zigzagB1S1Side,
+		zigzagNotB1S1Side,
+		tierRight, 
+		tierLeft,
+		tierB1S1Side,
+		tierNotB1S1Side
+	}
+	
 	private static double			CM_PER_M		= 100D;
 	private static int				maxSlotForTier	= 30;
 
@@ -638,10 +649,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		if (tierSortNeeded) {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase("zigzagLeft") || controllerLedPattern.equalsIgnoreCase("zigzagB1S1Side")) {
+		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagLeft.name()) || controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagB1S1Side.name())) {
 			Collections.sort(mTiersThisAisle, new ZigzagLeftComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase("zigzagRight")
-				|| controllerLedPattern.equalsIgnoreCase("zigzagNotB1S1Side")) {
+		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagRight.name())
+				|| controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagNotB1S1Side.name())) {
 			Collections.sort(mTiersThisAisle, new ZigzagRightComparable());
 			intialZigTierDirectionIncrease = false;
 		}
@@ -653,7 +664,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		ListIterator<Tier> li = null;
 
 		boolean forwardIterationNeeded = true;
-		if (controllerLedPattern.equalsIgnoreCase("tierRight") || controllerLedPattern.equalsIgnoreCase("tierNotB1S1Side")) {
+		if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierRight.name()) || controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierNotB1S1Side.name())) {
 			forwardIterationNeeded = false;
 		}
 		// default is then "tierB1S1Side"
