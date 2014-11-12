@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.MockModel;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
@@ -27,6 +29,12 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 public class ObjectUpdateCommandTest {
 	@Mock
 	private ITypedDao<MockModel> mockTypedDao;
+	
+	@Before
+	public void doBefore() {
+		
+		MockModel.DAO = mockTypedDao;
+	}
 	
 	@Test
 	public void shouldChangeValueOfBooleanSetter() throws JsonProcessingException, IOException {
@@ -128,7 +136,6 @@ public class ObjectUpdateCommandTest {
 	}
 	
 	private MockModel testSetter(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
-
 		MockModel mockModel = new MockModel();
 		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(mockModel);
 		

@@ -13,6 +13,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
  */
 public class MockModel implements IDomainObject {
 
+	public static ITypedDao<MockModel>	DAO;
+
 	private String testSetterString;
 	private int testSetterInt;
 	private double testSetterDouble;
