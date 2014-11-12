@@ -47,7 +47,7 @@ public class WorkService implements IApiService {
 		executor.execute(new Runnable() {
 			public void run() {
 				try {
-					while (!Thread.interrupted()) {
+					while (!Thread.currentThread().isInterrupted()) {
 						WorkInstruction wi = completedWorkInstructions.take();
 						boolean sent = false;
 						while (!sent) {
@@ -58,13 +58,14 @@ public class WorkService implements IApiService {
 								ediExportService.sendWorkInstructionsToHost(wiList);
 								sent = true;
 							} catch (IOException e) {
+								LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
 								Thread.sleep(retryDelay);
-								LOGGER.warn("failure to send work instructions, retrying: ", e);
 							}
 						}
 					}
-				} catch (InterruptedException e) {
-					LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
+					LOGGER.info("WorkService exporting thread ending, interrupted");
+				} catch (Exception e) {
+					LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
 				}
 			}
 		});
