@@ -36,9 +36,12 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.model.domain.Facility.Work;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -74,13 +77,13 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	private static final Logger		LOGGER				= LoggerFactory.getLogger(OrderDetail.class);
+	private static final Logger				LOGGER						= LoggerFactory.getLogger(OrderDetail.class);
 
-	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
+	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
 	// The owning order header.
 	@ManyToOne(optional = false)
-	private OrderHeader				parent;
+	private OrderHeader						parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -88,63 +91,63 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private OrderStatusEnum			status;
+	private OrderStatusEnum					status;
 
 	// The item master.
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private ItemMaster				itemMaster;
+	private ItemMaster						itemMaster;
 
 	// The description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String					description;
+	private String							description;
 
 	// The actual quantity requested.
 	@Column(nullable = false)
 	@Getter
 	//@Setter use setQuantities() to set all quantities at once
 	@JsonProperty
-	private Integer					quantity;
+	private Integer							quantity;
 
 	// The min quantity that we can use.  (Same as quantity in most cases.)
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer					minQuantity;
+	private Integer							minQuantity;
 
 	// The max quantity that we can use. (Same as quantity in most cases.)
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer					maxQuantity;
+	private Integer							maxQuantity;
 
 	// The UoM.
 	@OneToOne(fetch = FetchType.LAZY)
 	@Getter
 	@Setter
-	private UomMaster				uomMaster;
+	private UomMaster						uomMaster;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean					active;
+	private Boolean							active;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp				updated;
+	private Timestamp						updated;
 
 	@OneToMany(mappedBy = "orderDetail")
 	@Getter
-	private List<WorkInstruction>	workInstructions	= new ArrayList<WorkInstruction>();
+	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
 	}
@@ -267,11 +270,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		//If cross batch return empty
 		if (getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
 			return "";
-		}
-		else {
+		} else {
 			//if work instructions are assigned use the location from that
 			List<String> wiLocationDisplay = getPickableWorkInstructions();
-			if (!wiLocationDisplay .isEmpty()) {
+			if (!wiLocationDisplay.isEmpty()) {
 				return Joiner.on(",").join(wiLocationDisplay);
 			} else {
 				List<String> itemLocationIds = new ArrayList<String>();
@@ -292,8 +294,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	private List<String> getPickableWorkInstructions() {
-		ImmutableSet<WorkInstructionStatusEnum> pickableWiSet = Sets.immutableEnumSet(WorkInstructionStatusEnum.NEW, WorkInstructionStatusEnum.INPROGRESS, WorkInstructionStatusEnum.COMPLETE);
-		List<String> pickableWiLocations =  new ArrayList<String>();
+		ImmutableSet<WorkInstructionStatusEnum> pickableWiSet = Sets.immutableEnumSet(WorkInstructionStatusEnum.NEW,
+			WorkInstructionStatusEnum.INPROGRESS,
+			WorkInstructionStatusEnum.COMPLETE);
+		List<String> pickableWiLocations = new ArrayList<String>();
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (pickableWiSet.contains(wi.getStatus())) {
 				pickableWiLocations.add(wi.getPickInstruction());
@@ -302,8 +306,117 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return pickableWiLocations;
 	}
 
-	public static void setDao(OrderDetailDao inOrderDetailDao) {
-		OrderDetail.DAO = inOrderDetailDao;
+	// --------------------------------------------------------------------------
+	/**
+	 * Convenience method
+	 */
+	public OrderTypeEnum getParentOrderType() {
+		OrderHeader myParent = this.getParent(); // Guaranteed to have parent by database constraint.
+		return myParent.getOrderTypeEnum();
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Convenience method, but very tricky.  May return null. This assumes maximum one cross detail per outbound detail. Seems true for now.
+	 * The other direction needs to return a list.
+	 * 
+	 */
+	public OrderDetail outboundDetailToMatchingCrossDetail() {
+		if (getParentOrderType() != OrderTypeEnum.OUTBOUND) {
+			LOGGER.error("incorrect use of getCorrespondingCrossDetail");
+			return null;
+		}
+		// see Facility.toAllMatchingOutboundOrderDetails
+		OrderDetail returnDetail = null;
+		OrderGroup theGroup = getParent().getOrderGroup();
+		if (theGroup == null)
+			return null;
+		// then it might be cross batch. If no group, definitely not.
+		// Look for a cross batch order that has the same order group.
+		List<OrderHeader> theGroupHeaders = theGroup.getOrderHeaders();
+		for (OrderHeader outOrder : theGroupHeaders) {
+			boolean match = true;
+			match &= outOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS);
+			match &= outOrder.getActive();
+			if (match) {
+				for (OrderDetail crossOrderDetail : outOrder.getOrderDetails()) {
+					if (crossOrderDetail.getActive()) {
+						boolean matchDetail = true;
+						matchDetail &= crossOrderDetail.getItemMaster().equals(this.getItemMaster());
+						matchDetail &= UomNormalizer.normalizedEquals(crossOrderDetail.getUomMasterId(), this.getUomMasterId());
+						if (matchDetail) {
+							return crossOrderDetail;
+						}
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
+	 */
+	public boolean willProduceWi() {
+		OrderTypeEnum myParentType = getParentOrderType();
+		if (myParentType != OrderTypeEnum.OUTBOUND)
+			return false;
+
+		// Need to know if this is a simple outbound pick order, or linked to crossbatch.
+		OrderDetail matchingCrossDetail = outboundDetailToMatchingCrossDetail();
+		if (matchingCrossDetail != null) { // Then we only need the outbound order to have a location on the path
+			OrderHeader myParent = getParent();
+			List<OrderLocation> locations = myParent.getOrderLocations();
+			if (locations.size() == 0)
+				return false;
+			// should check non-deleted locations, on path. Not initially.
+			return true;
+
+		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
+			// Should refactor getItemLocations() rather than use the string here.
+			String inventoryLocs = getItemLocations();
+			if (!inventoryLocs.isEmpty())
+				return true;
+		}
+
+		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
+
+		return false;
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * If the order header is crossbatch, leave blank. If outbound, then Y or -. Other types not implemented. Return ??
+	 * Advanced: If already completed work instruction: C. If short and not complete yet: s
+	 */
+	public String getWillProduceWiUi() {
+		OrderTypeEnum myParentType = getParentOrderType();
+		if (myParentType == OrderTypeEnum.CROSS)
+			return "";
+		else if (myParentType != OrderTypeEnum.OUTBOUND)
+			return "??";
+
+		// do I have work instructions yet? For the moment, if any complete, return C.
+		List<WorkInstruction> wiList = this.getWorkInstructions();
+		if (wiList.size() > 0) {
+			boolean foundShort = false;
+			for (WorkInstruction wi : wiList) {
+				if (wi.getStatusEnum() == WorkInstructionStatusEnum.COMPLETE)
+					return "C";
+				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
+					foundShort = true;
+			}
+			if (foundShort)
+				return "short";
+			// If we get here, we have some plans for this detail. Cheat for efficiency. Assume it would work again.
+			return "Y";
+		}
+		if (willProduceWi())
+			return "Y";
+		else
+			return "-"; // Make it more distinguishable from "Y".
 	}
 
 }
