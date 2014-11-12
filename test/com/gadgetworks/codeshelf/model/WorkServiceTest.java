@@ -38,6 +38,7 @@ import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -69,7 +70,13 @@ public class WorkServiceTest extends DAOTestABC {
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
 		WorkService workService = new WorkService().start();
-		List<WiSetSummary> workSummaries  = workService.workSummary("testCheId", "testFacilityId");
+		UUID cheId = null;
+		for(CodeshelfNetwork network : facility.getNetworks()) {
+			for(Che che: network.getChes().values()) {
+				cheId = che.getPersistentId();
+			}
+		}
+		List<WiSetSummary> workSummaries  = workService.workSummary(cheId, facility.getPersistentId());
 
 		//since each timestamp is unique they will each get summarized into their own summary object
 		Assert.assertEquals(inputs.size(), workSummaries.size());

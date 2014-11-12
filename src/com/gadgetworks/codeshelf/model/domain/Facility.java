@@ -1156,7 +1156,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 		// separate list to delete from, because we get ConcurrentModificationException if we delete in the middle of inOrderDetail.getWorkInstructions()
 		List<WorkInstruction> aList = new ArrayList<WorkInstruction>();
-		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
+		List<WorkInstruction> wis = inOrderDetail.getWorkInstructions();
+		for (WorkInstruction wi : wis) {
 			if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
 				if (wi.getLocation().equals(this)) { // planned to the facility
 					aList.add(wi);

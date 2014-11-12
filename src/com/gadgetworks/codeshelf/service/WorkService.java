@@ -135,7 +135,7 @@ public class WorkService implements IApiService {
 		persistenceService.endTenantTransaction();
 	}
 
-	public List<WiSetSummary> workSummary(String cheId, String facilityId) {
+	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeWiSummariesForChe(cheId, facilityId);
 		return summarizer.getSummaries();

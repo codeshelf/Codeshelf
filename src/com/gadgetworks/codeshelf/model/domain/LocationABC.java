@@ -769,7 +769,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		
 	}
-
+	
 	public final Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
 		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
 		// why not just ask the item for its domainId?

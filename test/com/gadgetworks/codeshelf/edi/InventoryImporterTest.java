@@ -569,8 +569,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(facility, wiOrderHeader.getParent());
 
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workSummary(theChe.getPersistentId().toString(),
-			facility.getPersistentId().toString());
+		List<WiSetSummary> summaries = new WorkService().start().workSummary(theChe.getPersistentId(),
+			facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
 		Assert.assertEquals(1, summaries.size());
@@ -582,8 +582,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
 		Assert.assertEquals(0, completes);
-		Assert.assertEquals(2, actives);
 		Assert.assertEquals(1, shorts);
+		Assert.assertEquals(2, actives);
 
 		this.getPersistenceService().endTenantTransaction();
 	}

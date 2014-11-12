@@ -394,16 +394,18 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		// Get or create the item at the specified location.
 		result = inItemMaster.getItem(inCsvBean.getItemId());
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
-			result = new Item();
+			result = inItemMaster.createStoredItem(inFacility, inUomMaster);
 		}
 
 		// If we were able to get/create an item then update it.
 		if (result != null) {
-			result.setStoredLocation(inFacility);
-			result.setUomMaster(inUomMaster);
 			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
-			inItemMaster.addItem(result);
+
+			//result.setStoredLocation(inFacility);
+			//result.setUomMaster(inUomMaster);
+			//inItemMaster.addItem(result);
 			inFacility.addStoredItem(result);
+			
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -476,15 +478,13 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			result = inLocation.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
 				
 		}
-		if ((result == null)) {
-			result = new Item();
-			inItemMaster.addItem(result);
-		} 
-		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
-		result.setUomMaster(inUomMaster);
-		inLocation.addStoredItem(result);
 		
+		if (result == null) {
+			result = inItemMaster.createStoredItem(inLocation,inUomMaster);
+		} 
+
 		result.setQuantity(quantity);
+
 		// This used to call only this
 		// now refine using the cm value if there is one
 		Integer cmValue = null;

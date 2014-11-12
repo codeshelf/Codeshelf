@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -37,15 +38,16 @@ public class WiSummarizer {
 		return ImmutableList.<WiSetSummary>copyOf(mWiSetSummaries.values());
 	}
 
-	public void computeWiSummariesForChe(String inCheId, String inFacilityId) {
-		if (Strings.isNullOrEmpty(inCheId) || Strings.isNullOrEmpty(inFacilityId)) {
+	public void computeWiSummariesForChe(UUID inCheId, UUID inFacilityId) {
+		if (inCheId == null || inFacilityId == null) {
 			return;
 		}
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
 		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
+		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		for (WorkInstruction wi : wis) {
 			Timestamp wiAssignTime = wi.getAssigned();
 			WiSetSummary theSummary = getOrCreateSummaryForTime(wiAssignTime);
 			WorkInstructionStatusEnum status = wi.getStatus();

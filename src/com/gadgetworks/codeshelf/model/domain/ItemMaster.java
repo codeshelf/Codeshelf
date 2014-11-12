@@ -295,4 +295,19 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public static void setDao(ItemMasterDao inItemMasterDao) {
 		ItemMaster.DAO = inItemMasterDao;
 	}
+	
+	public final Item createStoredItem(ILocation<?> location, UomMaster uom) {
+		String domainId = Item.makeDomainId(this.getItemId(), location, uom.getUomMasterId());
+		Item item = new Item();
+		item.setDomainId(domainId);		
+		
+		this.addItem(item);
+		
+		item.setUomMaster(uom);
+		location.addStoredItem(item);
+		
+		return item;
+	}
+
+
 }

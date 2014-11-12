@@ -327,8 +327,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Double wi1Pos = wi1.getPosAlongPath();
 
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workSummary(che1.getPersistentId().toString(), facility.getPersistentId()
-			.toString());
+		List<WiSetSummary> summaries = new WorkService().start().workSummary(che1.getPersistentId(), facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
 		Assert.assertEquals(1, summaries.size());

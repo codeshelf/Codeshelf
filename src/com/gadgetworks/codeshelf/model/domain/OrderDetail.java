@@ -278,7 +278,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 				List<Item> items = getItemMaster().getItems();
 				//filter by uom and join the aliases together
 				for (Item item : items) {
-					if (UomNormalizer.normalizedEquals(item.getUomMasterId(), this.getUomMasterId())) {
+					String itemUom = item.getUomMasterId();
+					String thisUom = this.getUomMasterId();
+					if (UomNormalizer.normalizedEquals(itemUom, thisUom)) {
 						String itemLocationId = item.getStoredLocation().getPrimaryAliasId();
 						itemLocationIds.add(itemLocationId);
 					}
