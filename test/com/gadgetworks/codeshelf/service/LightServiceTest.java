@@ -97,13 +97,15 @@ public class LightServiceTest extends EdiTestABC {
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
 		ISubLocation parent = facility.findSubLocationById("A1.B1.T2");
 		List<ISubLocation> sublocations = parent.getChildrenInWorkingOrder();
-		List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
+			List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
 
-		//Messages came in same working order
-		Iterator<ISubLocation> subLocationsIter = sublocations.iterator();
-		for (MessageABC messageABC : messages) {
-			LightLedsMessage message = (LightLedsMessage) messageABC;
-			assertASampleWillLightLocation(subLocationsIter.next(), message);
+			//Messages came in same working order
+			Iterator<ISubLocation> subLocationsIter = sublocations.iterator();
+			for (MessageABC messageABC : messages) {
+				LightLedsMessage message = (LightLedsMessage) messageABC;
+				assertASampleWillLightLocation(subLocationsIter.next(), message);
+			}
+
 		}
 		this.getPersistenceService().endTenantTransaction();
 
@@ -155,7 +157,28 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
+		
 		this.getPersistenceService().endTenantTransaction();
+	}
+	
+	/**
+	 * Special cased for now
+	 */
+	@SuppressWarnings("rawtypes")
+	@Test
+	public final void checkChildLocationSequenceForZigZagLayoutAisle() throws IOException, InterruptedException, ExecutionException {
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
+		ISubLocation parent = facility.findSubLocationById("A1");
+		List<ISubLocation> bays = parent.getChildrenInWorkingOrder();
+		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);
+		Iterator<MessageABC> messageIter = messages.iterator();
+		for (ISubLocation bay : bays) {
+			List<ISubLocation> tiers = bay.getChildrenInWorkingOrder();
+			for (ISubLocation tier : tiers) {
+				//assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+			}
+		}
+	
 
 	}
 
