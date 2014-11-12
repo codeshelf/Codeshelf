@@ -129,6 +129,8 @@ public class WorkService implements IApiService {
 			} catch (IOException e) {
 				LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
 				Thread.sleep(retryDelay);
+			} catch (Exception e) {
+				LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
 			}
 		}
 		persistenceService.endTenantTransaction();
