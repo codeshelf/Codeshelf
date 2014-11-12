@@ -36,9 +36,12 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.model.domain.Facility.Work;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -397,19 +400,21 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 		// do I have work instructions yet? For the moment, if any complete, return C.
 		List<WorkInstruction> wiList = this.getWorkInstructions();
-		boolean foundShort = false;
 		if (wiList.size() > 0) {
+			boolean foundShort = false;
 			for (WorkInstruction wi : wiList) {
 				if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE)
 					return "C";
 				if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
 					foundShort = true;
 			}
+			if (foundShort)
+				return "short";
+			// If we get here, we have some plans for this detail. Cheat for efficiency. Assume it would work again.
+			return "Y";
 		}
 		if (willProduceWi())
 			return "Y";
-		else if (foundShort)
-			return "-, short";
 		else
 			return "-"; // Make it more distinguishable from "Y".
 	}
