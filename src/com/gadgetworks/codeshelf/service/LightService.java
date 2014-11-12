@@ -126,14 +126,21 @@ public class LightService implements IApiService {
 		else {
 			List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
 			for (ISubLocation child : children) {
-				if (child instanceof Bay) { //TODO lost Object Orientedness here for now
-					//when the child we are lighting is a bay, light all of the tiers at once
-					// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
-					List<Tier> tiers = (List<Tier>) child.getChildrenInWorkingOrder();
-					ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), tiers));
-				} else {
-					ledMessages.add(ImmutableSet.of(toLedsMessage(4, facility.getDiagnosticColor(), child)));
+				try {
+					if (child.isLightable()) {
+						if (child instanceof Bay) { 
+							//when the child we are lighting is a bay, light all of the tiers at once
+							// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
+							ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), child.getChildrenInWorkingOrder()));
+						} else {
+							ledMessages.add(ImmutableSet.of(toLedsMessage(4, facility.getDiagnosticColor(), child)));
+						}
+						
+					}
+				} catch(Exception e) {
+					LOGGER.warn("Unable to light child: " + child, e);
 				}
+			}
 			}
 		}
 		return chaserLight(facility.getSiteControllerUsers(), ledMessages);
@@ -204,22 +211,27 @@ public class LightService implements IApiService {
 		}
 		
 		return Sets.newHashSet(byControllerChannel.values());
-	}
 	
-	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<Tier> tiers) {
+	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ISubLocation> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
-		for (Tier tier : tiers) {
-			LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, tier);
-			ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
-			
-			//merge messages per controller and key
-			LightLedsMessage messageForKey = byControllerChannel.get(key);
-			if (messageForKey != null) {
-				ledMessage = messageForKey.merge(ledMessage);
+		for (ISubLocation<?> child: children) {
+			try {
+				if (child.isLightable()) {
+					LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, child);
+					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
+					
+					//merge messages per controller and key
+					LightLedsMessage messageForKey = byControllerChannel.get(key);
+					if (messageForKey != null) {
+						ledMessage = messageForKey.merge(ledMessage);
+					}
+					byControllerChannel.put(key, ledMessage);
+				}
+			} 
+			catch(Exception e) {
+				LOGGER.warn("Unable to light tier: " + child, e);
 			}
-			byControllerChannel.put(key, ledMessage);
 		}
-		
 		
 		return Sets.newHashSet(byControllerChannel.values());
 	}

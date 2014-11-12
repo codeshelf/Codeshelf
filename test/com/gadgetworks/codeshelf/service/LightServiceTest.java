@@ -97,16 +97,15 @@ public class LightServiceTest extends EdiTestABC {
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
 		ISubLocation parent = facility.findSubLocationById("A1.B1.T2");
 		List<ISubLocation> sublocations = parent.getChildrenInWorkingOrder();
-			List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
+		List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
 
-			//Messages came in same working order
-			Iterator<ISubLocation> subLocationsIter = sublocations.iterator();
-			for (MessageABC messageABC : messages) {
-				LightLedsMessage message = (LightLedsMessage) messageABC;
-				assertASampleWillLightLocation(subLocationsIter.next(), message);
-			}
-
+		//Messages came in same working order
+		Iterator<ISubLocation> subLocationsIter = sublocations.iterator();
+		for (MessageABC messageABC : messages) {
+			LightLedsMessage message = (LightLedsMessage) messageABC;
+			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
+	}
 		this.getPersistenceService().endTenantTransaction();
 
 	}
@@ -126,8 +125,23 @@ public class LightServiceTest extends EdiTestABC {
 			LightLedsMessage message = (LightLedsMessage) messageABC;
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
-		
+
 		this.getPersistenceService().endTenantTransaction();
+	}
+	
+	@Test
+	public final void checkZigZagBayChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
+		ISubLocation parent = facility.findSubLocationById("A1.B1");
+		List<ISubLocation> sublocations = parent.getChildrenInWorkingOrder();
+		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*whole bay*/);
+
+		//Messages came in same working order
+		Iterator<ISubLocation> subLocationsIter = sublocations.iterator();
+		for (MessageABC messageABC : messages) {
+			LightLedsMessage message = (LightLedsMessage) messageABC;
+			assertASampleWillLightLocation(subLocationsIter.next(), message);
+		}
 	}
 
 	
@@ -173,9 +187,25 @@ public class LightServiceTest extends EdiTestABC {
 		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);
 		Iterator<MessageABC> messageIter = messages.iterator();
 		for (ISubLocation bay : bays) {
-			List<ISubLocation> tiers = bay.getChildrenInWorkingOrder();
-			for (ISubLocation tier : tiers) {
-				//assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+			Tier tier = (Tier) bay.findSubLocationById("T2");
+			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+		}
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Test
+	public final void lightBayWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
+		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
+		b1t1.clearControllerChannel();
+		
+		
+		ISubLocation parent = facility.findSubLocationById("A1.B1");
+		List<ISubLocation> tiers = parent.getChildrenInWorkingOrder();
+		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*1 bays x 1 tiers*/);
+		Iterator<MessageABC> messageIter = messages.iterator();
+		for (ISubLocation tier : tiers) {
+			if (tier.getDomainId().equals("T2")) {
 			}
 		}
 	
