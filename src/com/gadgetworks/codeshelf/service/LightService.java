@@ -129,15 +129,14 @@ public class LightService implements IApiService {
 			List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
 			for (ISubLocation child : children) {
 				try {
-					if (child.isLightable()) {
-						if (child instanceof Bay) { 
-							//when the child we are lighting is a bay, light all of the tiers at once
-							// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
-							ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), child.getChildrenInWorkingOrder()));
-						} else {
+					if (child instanceof Bay) { 
+						//when the child we are lighting is a bay, light all of the tiers at once
+						// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
+						ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), child.getChildrenInWorkingOrder()));
+					} else {
+						if (child.isLightable()) {
 							ledMessages.add(ImmutableSet.of(toLedsMessage(4, facility.getDiagnosticColor(), child)));
 						}
-						
 					}
 				} catch(Exception e) {
 					LOGGER.warn("Unable to light child: " + child, e);
