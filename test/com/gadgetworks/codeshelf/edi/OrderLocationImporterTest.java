@@ -160,10 +160,10 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		
 		
 		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, initialSlotFile));
-		
-		facility = Facility.DAO.findByPersistentId(facility.getPersistentId());
 
-		OrderHeader order = facility.getOrderHeader("01111");
+		String orderId = "01111";
+		OrderHeader order = facility.getOrderHeader(orderId);
+		Assert.assertNotNull("OrderHeader: " + orderId + " not found", order);
 		assertOrderHasLocation(facility, order, "D-21");
 		
 		String modifySlots = new SlotFileBuilder()
@@ -647,7 +647,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				}
 		
 		Assert.assertTrue(importSlotting(facility, multiSlotCsv));
-		Assert.assertNotNull(facility.getOrderHeader(orderId));
+		Assert.assertNotNull("OrderHeader: " + orderId + "not found", facility.getOrderHeader(orderId));
 		Assert.assertEquals(locations.length, facility.getOrderHeader(orderId).getOrderLocations().size());
 	}
 	
@@ -658,7 +658,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ orderId + ", " + locationId + "\r\n"; //
 		
 		Assert.assertTrue(importSlotting(facility, doubleSlotCsv));
-		Assert.assertNotNull(facility.getOrderHeader(orderId));
+		Assert.assertNotNull("OrderHeader: " + orderId + "not found", facility.getOrderHeader(orderId));
 		Assert.assertEquals(1, facility.getOrderHeader(orderId).getOrderLocations().size());
 	}
 
