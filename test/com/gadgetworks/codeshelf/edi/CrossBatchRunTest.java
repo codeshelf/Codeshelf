@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -186,6 +187,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// 5 products batched into containers 11 through 15
 
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,,123,99999,Unknown Item,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -259,7 +261,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
-		Assert.assertEquals((Integer) 4, detailCount);
+		Assert.assertEquals((Integer) 5, detailCount); // 4 good ones, and the "unknown item"
 		// Make sure our order locations ( from slotting file)  are valid. Make sure D-36 has early location on path
 		LocationABC<?> locationD2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
 		Assert.assertNotNull(locationD2);
@@ -280,6 +282,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveDetails == 5);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 5);
 		// Assume all is good.  Other tests in this class will not need to check these things.
+		
+		// Just check a UI field. Basically looking for NPE
+		for (OrderDetail detail : order.getOrderDetails()) {
+			String theUiField = detail.getWillProduceWiUi();
+		}
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		HousekeepingInjector.turnOffHK();

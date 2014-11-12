@@ -25,6 +25,8 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -350,6 +352,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Orders
 		readOrdersForA1(facility);
+		
+		// Just check a UI field. Basically looking for NPE
+		OrderHeader order = facility.getOrderHeader("12000");
+		Assert.assertNotNull(order);
+		for (OrderDetail detail : order.getOrderDetails()) {
+			String theUiField = detail.getWillProduceWiUi();
+		}
 
 		// Now ready to run the cart
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
