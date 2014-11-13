@@ -390,21 +390,19 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 		// do I have work instructions yet? For the moment, if any complete, return C.
 		List<WorkInstruction> wiList = this.getWorkInstructions();
+		boolean foundShort = false;
 		if (wiList.size() > 0) {
-			boolean foundShort = false;
 			for (WorkInstruction wi : wiList) {
 				if (wi.getStatusEnum() == WorkInstructionStatusEnum.COMPLETE)
 					return "C";
 				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
 					foundShort = true;
 			}
-			if (foundShort)
-				return "short";
-			// If we get here, we have some plans for this detail. Cheat for efficiency. Assume it would work again.
-			return "Y";
 		}
 		if (willProduceWi())
 			return "Y";
+		else if (foundShort)
+			return "-, short";
 		else
 			return "-"; // Make it more distinguishable from "Y".
 	}
