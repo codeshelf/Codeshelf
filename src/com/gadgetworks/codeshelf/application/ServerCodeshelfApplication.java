@@ -23,6 +23,9 @@ import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -34,6 +37,7 @@ import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
+import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.google.inject.Inject;
 
@@ -52,12 +56,15 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>	mFacilityDao;
 
-
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
 
 	JettyWebSocketServer webSocketServer;
+
+	private IConfiguration	configuration;
+	
 	@Inject
 	public ServerCodeshelfApplication(
+		final IConfiguration configuration,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
@@ -68,6 +75,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final JettyWebSocketServer inAlternativeWebSocketServer,
 		final PersistenceService persistenceService) {
 		super(inAdminServer);
+		this.configuration = configuration;
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
@@ -83,8 +91,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 */
 	@Override
 	protected void doLoadLibraries() {
-		//System.loadLibrary("jd2xx");
-		//System.loadLibrary("libjSSC-0.9_x86_64");
 	}
 
 	// --------------------------------------------------------------------------
@@ -124,6 +130,22 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
 		MetricsService.registerHealthCheck(dbxCheck);
+		
+		// configure housekeeping work instructions
+		// TODO: replace with configuration via database table
+		boolean useBayChangeWI = configuration.getBoolean("facility.housekeeping.usebaychange", true);
+		if (!useBayChangeWI) {
+			LOGGER.info("BayChange housekeeping work instructions disabled");
+			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
+		}
+		else {
+			LOGGER.info("BayChange housekeeping work instructions enabled");
+		}
+		String useRepeatPosWI = configuration.getString("facility.housekeeping.repeatposition");
+		if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerAndCount")) {
+			LOGGER.info("RepeatPosition housekeeping work instructions requires matching counts");
+			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
+		}
 	}
 
 	// --------------------------------------------------------------------------

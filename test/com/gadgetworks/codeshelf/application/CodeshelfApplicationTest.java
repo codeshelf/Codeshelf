@@ -47,6 +47,7 @@ import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
+import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.google.inject.Binding;
@@ -214,6 +215,7 @@ public class CodeshelfApplicationTest {
 			"1qazse4",
 			"1qazse4");
 
+		IConfiguration config = mock(IConfiguration.class);
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
 		ICsvLocationAliasImporter locationAliasImporter = mock(ICsvLocationAliasImporter.class);
@@ -242,6 +244,7 @@ public class CodeshelfApplicationTest {
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
+			config,
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
