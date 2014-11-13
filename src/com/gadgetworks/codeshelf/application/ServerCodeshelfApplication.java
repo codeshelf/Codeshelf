@@ -131,21 +131,47 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
 		MetricsService.registerHealthCheck(dbxCheck);
 		
-		// configure housekeeping work instructions
+		// configure baychange housekeeping work instructions
 		// TODO: replace with configuration via database table
-		boolean useBayChangeWI = configuration.getBoolean("facility.housekeeping.usebaychange", true);
-		if (!useBayChangeWI) {
+		String bayChangeWI = configuration.getString("facility.housekeeping.baychange");
+		if (bayChangeWI!=null && bayChangeWI.equals("None")) {
 			LOGGER.info("BayChange housekeeping work instructions disabled");
 			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
 		}
-		else {
-			LOGGER.info("BayChange housekeeping work instructions enabled");
+		else  if (bayChangeWI!=null && bayChangeWI.equals("BayChange")) {
+			LOGGER.info("BayChange housekeeping set to BayChange");
+			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
 		}
+		else  if (bayChangeWI!=null && bayChangeWI.equals("PathSegmentChange")) {
+			LOGGER.info("BayChange housekeeping set to PathSegmentChange");
+			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
+		}
+		else  if (bayChangeWI!=null && bayChangeWI.equals("ExceptSamePathDistance")) {
+			LOGGER.info("BayChange housekeeping set to ExceptSamePathDistance");
+			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeExceptSamePathDistance);
+		}
+		else {
+			LOGGER.info("Using default BayChange housekeeping work instructions setting");
+		}
+		
+		// configure repeatposition housekeeping work instructions
+		// TODO: replace with configuration via database table		
 		String useRepeatPosWI = configuration.getString("facility.housekeeping.repeatposition");
 		if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerAndCount")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions requires matching counts");
+			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
 		}
+		else if (useRepeatPosWI!=null && useRepeatPosWI.equals("None")) {
+			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
+			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
+		}
+		else if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerOnly")) {
+			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
+			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
+		}
+		else {
+			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");			
+		}		
 	}
 
 	// --------------------------------------------------------------------------
