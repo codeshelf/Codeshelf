@@ -483,6 +483,9 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			result = inItemMaster.createStoredItem(inLocation,inUomMaster);
 		} 
 
+		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
+		result.setUomMaster(inUomMaster);
+		inLocation.addStoredItem(result);
 		result.setQuantity(quantity);
 
 		// This used to call only this
@@ -517,7 +520,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				errors.rejectValue("positionFromLeft", cmFromLeftString, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
 		}
-		result.setStoredLocation(inLocation);
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 		
