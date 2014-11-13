@@ -861,9 +861,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	 */
 	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 
-		// Work around serious ebeans problem. See OrderHeader's orderDetails cache getting trimmed and then failing to get work instructions made for some orders.
-		OrderHeader.DAO.clearAllCaches();
-
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		//manually track changed ches here to trigger an update broadcast
@@ -1261,7 +1258,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		final Timestamp inTime) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-		Integer count = 0;
+		int count = 0;
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
@@ -1570,6 +1567,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			long seq = SequenceNumber.generate();
 			String wiDomainId = Long.toString(seq);
 			resultWi.setDomainId(wiDomainId);
+			resultWi.setType(inType);
+			resultWi.setStatus(inStatus);
 
 			resultWi.setLocation(inLocation);
 			resultWi.setLocationId(inLocation.getFullDomainId());
