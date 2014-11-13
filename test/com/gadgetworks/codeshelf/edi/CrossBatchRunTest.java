@@ -443,15 +443,27 @@ public class CrossBatchRunTest extends EdiTestABC {
 		int usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
 		// Just exploring: see what happens if we add the same use several times.
-		// Probably no need to port this bit to hibernate branch as this does not match the new pattern.
+		// Alternating this a bit for hibernate branch. The new pattern is:
+		// - From the parent, add the child
+		// - Look at the parent add method. It needs to call the child's set method for the parent relationship.
+		// - Then code needs to remember to do the DAO.store(child)
 		ContainerUse aUse = theChe.getUses().get(0);
+		// Adding same item. Not storing
 		theChe.addContainerUse(aUse);
 		theChe.addContainerUse(aUse);
+		usesCount = theChe.getUses().size();
+		Assert.assertTrue(usesCount == 3);
+		
 		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
+
+		theChe.addContainerUse(aUse);
+		aUse.getDao().store(aUse);
+		usesCount = theChe.getUses().size();
+		Assert.assertTrue(usesCount == 3);
 		// We just proved that adding the same object extra times to CHE uses does not
-		// not result in duplicates in the list. Probably true for most ebeans relationships
+		// not result in duplicates in the list. Probably true for most hibernate relationships. But don't try this at home.
 		
 		// Now the new part for DEV-492. Show that we remove prior run uses
 		facility.setUpCheContainerFromString(theChe, "14");
