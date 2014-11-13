@@ -168,6 +168,7 @@ public class Facility extends SubLocationABC<Facility> {
 	@Setter
 	static WorkInstructionSequencerType		sequencerType	= WorkInstructionSequencerType.BayDistance;
 
+	// TODO: replace with configuration via database table
 	static {
 		String sequencerConfig = System.getProperty("facility.sequencer");
 		if ("BayDistance".equalsIgnoreCase(sequencerConfig)) {

@@ -17,6 +17,7 @@ public class ServiceFactory {
 		mServices.put(lightService.getClass(), lightService);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T extends IApiService> T getServiceInstance(Class<T> classObject) {
 		IApiService service = mServices.get(classObject);
 		return (T) service;
