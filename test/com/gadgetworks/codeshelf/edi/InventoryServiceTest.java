@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.Tier;
@@ -141,7 +142,8 @@ public class InventoryServiceTest extends EdiTestABC {
 		
 		Item movedItem = facility.upsertItem(itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUomUserInput);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), movedItem.getPersistentId());
-		Assert.assertEquals(movedItem.getStoredLocation(), newItemLocation);
+		ILocation<?> currentLocation = movedItem.getStoredLocation(); 
+		Assert.assertEquals(newItemLocation.getNominalLocationId(), currentLocation.getNominalLocationId());
 	}
 	
 	@SuppressWarnings("unused")

@@ -516,7 +516,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			} catch (NumberFormatException e) {
 				errors.rejectValue("positionFromLeft", cmFromLeftString, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
-		} 
+		}
+		result.setStoredLocation(inLocation);
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 		
