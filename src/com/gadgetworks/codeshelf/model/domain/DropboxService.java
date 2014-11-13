@@ -264,7 +264,7 @@ public class DropboxService extends EdiServiceABC {
 		boolean result = true;
 
 		for (DbxDelta.Entry<DbxEntry> entry : inPage.entries) {
-			LOGGER.info("Dropbox found: " + entry.lcPath);
+			LOGGER.trace("Dropbox found: " + entry.lcPath);
 			try {
 				if (entry.metadata != null) {
 					// Add, or modify.
@@ -398,7 +398,7 @@ public class DropboxService extends EdiServiceABC {
 		boolean result = false;
 
 		if (inPath != null)
-			LOGGER.debug("ensureDirectory: " + inPath);
+			LOGGER.trace("ensureDirectory: " + inPath);
 		try {
 			DbxEntry dirEntry = inClient.getMetadata(inPath);
 			if (dirEntry == null) {
