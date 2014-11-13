@@ -916,7 +916,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 					if (thisUse.getCurrentChe() != null) {
 						changedChes.add(thisUse.getCurrentChe());
 					}
-					thisUse.setCurrentChe(inChe);
+					// thisUse.setCurrentChe(inChe); only do from the parent in  our hibernate pattern
+					inChe.addContainerUse(thisUse);
 					try {
 						ContainerUse.DAO.store(thisUse);
 					} catch (DaoException e) {
