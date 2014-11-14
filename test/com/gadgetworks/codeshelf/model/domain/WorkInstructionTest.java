@@ -28,10 +28,18 @@ public class WorkInstructionTest extends DomainTestABC {
 		// The goal of cooking descriptions is to make the remaining description safe to be transmitted to the cart controller.
 		// Our general test mechanism is to measure the string length before and after.
 		
-		// This is real order data from GoodEggs. The problem was non-ASCI characters
-		String inputStr = "Napa Valley Bistro - Jalape������������o Stuffed Olives";
+		// This was real order data from GoodEggs. The problem was non-ASCI characters
+		// String inputStr = "Napa Valley Bistro - Jalape������������������������������������o Stuffed Olives";
+		// But Git seems to give us different numbers of non-ASCII frequently. So, construct our own string.
+		// This was not a hibernate failure, just the next git change in the reference string.  Fix once and for all.
+		String startStr = "Napa Valley Bistro - Jalape";
+		String endStr = "o Stuffed Olives";
+		// Now add our enye on
+		Character enye = '\ufffd';
+		
+		String inputStr = startStr + enye + endStr;
 		Integer lengthBefore = inputStr.length();
-		Assert.assertEquals((Integer) 55, lengthBefore);
+		Assert.assertEquals((Integer) 44, lengthBefore);
 
 		String referenceStr = "Napa Valley Bistro - Jalapeo Stuffed Olives";
 		Integer lengthOfReference = referenceStr.length();
