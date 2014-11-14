@@ -1065,14 +1065,17 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
 		
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
+		// Hibernate version has test failing with database lock here, so pull out the query
+		List<WorkInstruction> filterWiList = WorkInstruction.DAO.findByFilter(filterParams);
+		
+		for (WorkInstruction wi : filterWiList) {
 			// Very unlikely. But if some wiLocations were deleted between start work and scan starting location, let's not give out the "deleted" wis
 			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
 			// Not ambiguous for picks.
 			ILocation<?> loc = wi.getLocation();
 			// so far, wi must have a location. Even housekeeping and shorts
 			if (loc == null)
-				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new from v8
+				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
 			else if (loc.isActive()) //unlikely that location got deleted between complete work instructions and scan location
 				inWiList.add(wi);
 			else

@@ -81,7 +81,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	@JsonProperty
+	// @JsonProperty do we need to serialize this?
 	private Timestamp			version;
 
 	public DomainObjectABC() {
