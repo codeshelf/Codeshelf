@@ -49,18 +49,22 @@ public class WorkService implements IApiService {
 				try {
 					while (!Thread.currentThread().isInterrupted()) {
 						WorkInstruction wi = completedWorkInstructions.take();
-						boolean sent = false;
-						while (!sent) {
-							List<WorkInstruction> wiList = ImmutableList.of(wi);
-							try {
-								Facility facility = wi.getParent();
-								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-								ediExportService.sendWorkInstructionsToHost(wiList);
-								sent = true;
-							} catch (IOException e) {
-								LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
-								Thread.sleep(retryDelay);
+						try {
+							boolean sent = false;
+							while (!sent) {
+								List<WorkInstruction> wiList = ImmutableList.of(wi);
+								try {
+									Facility facility = wi.getParent();
+									IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+									ediExportService.sendWorkInstructionsToHost(wiList);
+									sent = true;
+								} catch (IOException e) {
+									LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
+									Thread.sleep(retryDelay);
+								}
 							}
+						} catch (Exception e) {
+							LOGGER.warn("Unexpected exception sending work instruction, skipping: " + wi, e);
 						}
 					}
 					LOGGER.info("WorkService exporting thread ending, interrupted");
