@@ -175,8 +175,10 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
 
+		Short channel1 = 1;
 		SubLocationABC tier = (SubLocationABC) getFacility().findSubLocationById("A1.B1.T1");
 		tier.setLedController(controller1);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		// Make sure we also got the alias
 		String tierName = tier.getPrimaryAliasId();
@@ -185,21 +187,27 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
 		tier.setLedController(controller1);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B3.T1");
 		tier.setLedController(controller1);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B1.T1");
 		tier.setLedController(controller2);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B2.T1");
 		tier.setLedController(controller2);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B1.T1");
 		tier.setLedController(controller3);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B2.T1");
 		tier.setLedController(controller3);
+		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
 		return getFacility();

@@ -150,17 +150,30 @@ public class PickSimulaneousWis extends EdiTestABC {
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
 		SubLocationABC tier = (SubLocationABC) facility.findSubLocationById("A1.B1.T1");
+		Short channel1 = 1;
 		tier.setLedController(controller1);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) facility.findSubLocationById("A1.B2.T1");
 		tier.setLedController(controller1);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
 		tier.setLedController(controller2);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) facility.findSubLocationById("A2.B2.T1");
 		tier.setLedController(controller2);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) facility.findSubLocationById("A3.B1.T1");
 		tier.setLedController(controller3);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
 		tier = (SubLocationABC) facility.findSubLocationById("A3.B2.T1");
 		tier.setLedController(controller3);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
 
 		return facility;
 
