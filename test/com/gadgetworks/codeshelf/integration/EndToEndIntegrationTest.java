@@ -232,6 +232,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		System.clearProperty("javax.net.ssl.keyStorePassword");
 		System.clearProperty("javax.net.ssl.trustStore");
 		System.clearProperty("javax.net.ssl.trustStorePassword");
+		super.doAfter();
 	}
 
 	private void stop() {
