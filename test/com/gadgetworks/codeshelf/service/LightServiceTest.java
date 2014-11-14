@@ -111,6 +111,8 @@ public class LightServiceTest extends EdiTestABC {
 
 	@Test
 	public final void checkZigZagBayChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
 		ISubLocation parent = facility.findSubLocationById("A1.B1");
 		List<ISubLocation> sublocations = parent.getChildrenInWorkingOrder();
@@ -122,6 +124,8 @@ public class LightServiceTest extends EdiTestABC {
 			LightLedsMessage message = (LightLedsMessage) messageABC;
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	
@@ -132,6 +136,7 @@ public class LightServiceTest extends EdiTestABC {
 	@Test
 	public final void lightAisleWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
@@ -149,11 +154,16 @@ public class LightServiceTest extends EdiTestABC {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
+		
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Test
 	public final void lightBayWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
@@ -179,6 +189,8 @@ public class LightServiceTest extends EdiTestABC {
 	@SuppressWarnings("rawtypes")
 	@Test
 	public final void checkChildLocationSequenceForZigZagLayoutAisle() throws IOException, InterruptedException, ExecutionException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
 		ISubLocation parent = facility.findSubLocationById("A1");
 		List<ISubLocation> bays = parent.getChildrenInWorkingOrder();
@@ -190,6 +202,8 @@ public class LightServiceTest extends EdiTestABC {
 				//assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 			}
 		}
+		
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	
