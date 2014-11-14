@@ -118,19 +118,23 @@ public class WorkService implements IApiService {
 		persistenceService.beginTenantTransaction();
 
 		WorkInstruction wi = completedWorkInstructions.take();
-		boolean sent = false;
-		while (!sent) {
-			List<WorkInstruction> wiList = ImmutableList.of(wi);
-			try {
-				Facility facility = wi.getParent();
-				IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-				ediExportService.sendWorkInstructionsToHost(wiList);
-				sent = true;
-			} catch (IOException e) {
-				LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
-				Thread.sleep(retryDelay);
-			} catch (Exception e) {
-				LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
+		try {
+			boolean sent = false;
+			while (!sent) {
+				List<WorkInstruction> wiList = ImmutableList.of(wi);
+				try {
+					Facility facility = wi.getParent();
+					IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+					ediExportService.sendWorkInstructionsToHost(wiList);
+					sent = true;
+				} catch (IOException e) {
+					LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
+					Thread.sleep(retryDelay);
+				}
+
+				catch (Exception e) {
+					LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
+				}
 			}
 		}
 		persistenceService.endTenantTransaction();

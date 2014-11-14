@@ -9,6 +9,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,7 @@ import org.mockito.internal.stubbing.answers.DoesNothing;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.mockito.invocation.InvocationOnMock;
 
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
@@ -46,6 +48,10 @@ import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends DAOTestABC {
+	
+	static {
+		Configuration.loadConfig("test");
+	}
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator();
@@ -227,6 +233,30 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 
+	@Test
+	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
+		long expectedRetryDelay = 1L;
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction wi1 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
+		WorkInstruction wi2 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
+		Assert.assertNotEquals(wi1,  wi2);
+		IEdiService mockEdiExportService = mock(IEdiService.class);
+		doThrow(new RuntimeException("test io")).
+		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));
+
+		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		workService.exportWorkInstruction(wi1);
+		workService.exportWorkInstruction(wi2);
+
+		//Wait up to a second per invocation to verify
+		// Normal behavior is to keep retrying the first on IOException
+		//   in this case it should skip to the second one and send it
+		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi1)));
+		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi2)));
+
+	}
+
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
