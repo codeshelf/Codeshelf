@@ -31,38 +31,38 @@ import com.google.common.collect.ImmutableList;
 
 public class WorkService implements IApiService {
 
-	public static final long DEFAULT_RETRY_DELAY 	= 10000L;
-	public static final int DEFAULT_CAPACITY		= Integer.MAX_VALUE;
-	
-	private static final Logger						LOGGER	= LoggerFactory.getLogger(WorkService.class);
+	public static final long				DEFAULT_RETRY_DELAY			= 10000L;
+	public static final int					DEFAULT_CAPACITY			= Integer.MAX_VALUE;
+
+	private static final Logger				LOGGER						= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WorkInstruction>	completedWorkInstructions;
 
 	@Getter
 	@Setter
-	long retryDelay;
+	long									retryDelay;
 
 	@Getter
 	@Setter
-	int capacity;
-	
-	IEdiExportServiceProvider exportServiceProvider;
-	
-	@Getter
-	PersistenceService persistenceService;
+	int										capacity;
 
-	private WorkServiceThread wsThread = null;
-	private static boolean aWorkServiceThreadExists = false;
-	
+	IEdiExportServiceProvider				exportServiceProvider;
+
+	@Getter
+	PersistenceService						persistenceService;
+
+	private WorkServiceThread				wsThread					= null;
+	private static boolean					aWorkServiceThreadExists	= false;
+
 	public WorkService() {
 		init(new IEdiExportServiceProvider() {
-										@Override
-										public IEdiService getWorkInstructionExporter(Facility facility) {
-											return facility.getEdiExportService();
-										}
-									});
+			@Override
+			public IEdiService getWorkInstructionExporter(Facility facility) {
+				return facility.getEdiExportService();
+			}
+		});
 	}
-	
-	public WorkService(PersistenceService persistenceService,IEdiExportServiceProvider exportServiceProvider) {
+
+	public WorkService(PersistenceService persistenceService, IEdiExportServiceProvider exportServiceProvider) {
 		init(exportServiceProvider);
 	}
 
@@ -73,14 +73,14 @@ public class WorkService implements IApiService {
 		this.retryDelay = DEFAULT_RETRY_DELAY;
 		this.capacity = DEFAULT_CAPACITY;
 	}
-	
+
 	private class WorkServiceThread extends Thread {
 		@Override
 		public void run() {
 			WorkService.aWorkServiceThreadExists = true;
 			try {
 				while (!Thread.currentThread().isInterrupted()) {
-					
+
 					sendWorkInstructions();
 
 				}
@@ -92,28 +92,28 @@ public class WorkService implements IApiService {
 	}
 
 	public WorkService start() {
-		if(WorkService.aWorkServiceThreadExists) {
+		if (WorkService.aWorkServiceThreadExists) {
 			LOGGER.error("Only one WorkService thread is allowed to run at once");
 		}
 		this.completedWorkInstructions = new LinkedBlockingQueue<WorkInstruction>(this.capacity);
 		this.wsThread = new WorkServiceThread();
 		this.wsThread.start();
 		return this;
-	} 
-	
+	}
+
 	public void stop() {
 		this.wsThread.interrupt();
 		try {
 			Thread.sleep(100);
 		} catch (InterruptedException e) {
 		}
-		if(WorkService.aWorkServiceThreadExists) {
+		if (WorkService.aWorkServiceThreadExists) {
 			LOGGER.error("Failed to stop WorkServiceThread by interruption");
 		} else {
 			this.completedWorkInstructions = null;
 		}
 	}
-	
+
 	private void sendWorkInstructions() throws InterruptedException {
 		persistenceService.beginTenantTransaction();
 
@@ -182,8 +182,15 @@ public class WorkService implements IApiService {
 	 * @throws InterruptedException 
 	 */
 	public void exportWorkInstruction(WorkInstruction inWorkInstruction) {
-		LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
-		completedWorkInstructions.add(inWorkInstruction);
+		// jr/hibernate  tracking down an error
+		if (completedWorkInstructions == null)
+			LOGGER.error("null completedWorkInstructions in WorkService.exportWorkInstruction");
+		else if (inWorkInstruction == null)
+			LOGGER.error("null input to WorkService.exportWorkInstruction");
+		else {
+			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
+			completedWorkInstructions.add(inWorkInstruction);
+		}
 	}
 
 	// --------------------------------------------------------------------------

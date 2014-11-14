@@ -1163,7 +1163,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
 				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
 				INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
+				
 				if (ledController != null) {
+					// jr/hibernate. See null channel in testPickViaChe test. Screen
+					Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+					if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
+						String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: " + firstWi.getContainerId();
+						LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
+						continue;
+					}
+
+					
 
 					Short startLedNum = ledCmdGroup.getPosNum();
 					Short currLedNum = startLedNum;
@@ -1176,7 +1186,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 					NetGuid ledControllerGuid = ledController.getGuid();
 					String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
-					short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+					// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
 					String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
 					Integer setCount = 0;
 					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
