@@ -70,6 +70,7 @@ public class IronMqServiceOnlineTest {
 		for (int i = 0; i < messages.length; i++) {
 			String string = messages[i];
 			found = string.contains(wi.getDomainId());
+			if (found) break;
 		}
 		Assert.assertTrue("Did not find work instruction message", found);
 	}
