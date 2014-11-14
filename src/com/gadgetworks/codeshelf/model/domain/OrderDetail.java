@@ -312,7 +312,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 */
 	public OrderTypeEnum getParentOrderType() {
 		OrderHeader myParent = this.getParent(); // Guaranteed to have parent by database constraint.
-		return myParent.getOrderTypeEnum();
+		return myParent.getOrderType();
 	}
 
 	// --------------------------------------------------------------------------
@@ -336,7 +336,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		List<OrderHeader> theGroupHeaders = theGroup.getOrderHeaders();
 		for (OrderHeader outOrder : theGroupHeaders) {
 			boolean match = true;
-			match &= outOrder.getOrderTypeEnum().equals(OrderTypeEnum.CROSS);
+			match &= outOrder.getOrderType().equals(OrderTypeEnum.CROSS);
 			match &= outOrder.getActive();
 			if (match) {
 				for (OrderDetail crossOrderDetail : outOrder.getOrderDetails()) {
@@ -403,9 +403,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		boolean foundShort = false;
 		if (wiList.size() > 0) {
 			for (WorkInstruction wi : wiList) {
-				if (wi.getStatusEnum() == WorkInstructionStatusEnum.COMPLETE)
+				if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE)
 					return "C";
-				if (wi.getStatusEnum() == WorkInstructionStatusEnum.SHORT)
+				if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
 					foundShort = true;
 			}
 		}

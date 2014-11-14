@@ -131,9 +131,7 @@ public class WorkService implements IApiService {
 				Thread.sleep(retryDelay);
 			}
 		}
-
 		persistenceService.endTenantTransaction();
-					LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
 	}
 
 	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {
