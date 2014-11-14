@@ -258,4 +258,8 @@ public abstract class DAOTestABC {
 		persistenceService.stop();
 		persistenceService.resetDatabase();
 	}
+	protected String getTestName() {
+		return testName.getMethodName();
+	}
+	
 }

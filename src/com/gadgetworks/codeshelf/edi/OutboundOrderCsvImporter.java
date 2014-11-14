@@ -7,7 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -35,6 +35,8 @@ import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.util.DateTimeParser;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.google.common.base.Objects;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -111,7 +113,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 						batchResult.addLineViolation(lineCount, orderBean, e);
 					}
 */
-		List<OrderHeader> orderList = new ArrayList<OrderHeader>();
+		Set<OrderHeader> orderSet = Sets.newHashSet();
 
 		LOGGER.debug("Begin order import.");
 		int lineCount = 1;
@@ -119,8 +121,8 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		for (OutboundOrderCsvBean orderBean : list) {
 			try {
 				OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
-				if ((order != null) && (!orderList.contains(order))) {
-					orderList.add(order);
+				if ((order != null) && (!orderSet.contains(order))) {
+					orderSet.add(order);
 				}
 				batchResult.add(orderBean);
 				produceRecordSuccessEvent(orderBean);
@@ -130,11 +132,11 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			}
 		}
 
-		if (orderList.size() == 0) {
+		if (orderSet.size() == 0) {
 			// Do nothing.
-		} else if (orderList.size() == 1) {
+		} else if (orderSet.size() == 1) {
 			// If we've only imported one order then don't change the status of other orders.
-			archiveCheckOneOrder(inFacility, orderList, inProcessTime);
+			archiveCheckOneOrder(inFacility, orderSet, inProcessTime);
 		} else {
 			// If we've imported more than one order then do a full archive.
 			archiveCheckAllOrders(inFacility, inProcessTime);
@@ -153,10 +155,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	 * @param inOrderIdList
 	 * @param inProcessTime
 	 */
-	private void archiveCheckOneOrder(final Facility inFacility, final List<OrderHeader> inOrderList, final Timestamp inProcessTime) {
+	private void archiveCheckOneOrder(final Facility inFacility, final Collection<OrderHeader> inOrderList, final Timestamp inProcessTime) {
 		for (OrderHeader order : inOrderList) {
 			for (OrderDetail orderDetail : order.getOrderDetails()) {
-				if (!orderDetail.getUpdated().equals(inProcessTime)) {
+				if (!Objects.equal(orderDetail.getUpdated(), inProcessTime)) {
 					LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
 					orderDetail.setActive(false);
 					//orderDetail.setQuantity(0);
@@ -297,7 +299,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
-		OrderHeader result = null;
+		OrderHeader order = null;
 
 		LOGGER.info(inCsvBean.toString());
 
@@ -309,8 +311,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			} 
 
 			OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-			OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-			result = order;
+			order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
 			@SuppressWarnings("unused")
 			Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 			UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
@@ -326,7 +327,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			//mOrderHeaderDao.endTransaction();
 		}
 
-		return result;
+		return order;
 	}
 
 	// --------------------------------------------------------------------------
@@ -602,8 +603,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		if (result == null) {
 			result = new OrderDetail();
 			result.setOrderDetailId(detailId);
-
-			inOrder.addOrderDetail(result);
 		}
 
 		result.setStatus(OrderStatusEnum.CREATED);
@@ -636,6 +635,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
+
+		if (result.getParent() == null) {
+			inOrder.addOrderDetail(result);
+		}
 		mOrderDetailDao.store(result);
 		return result;
 	}

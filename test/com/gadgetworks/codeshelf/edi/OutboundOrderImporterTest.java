@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,13 +28,13 @@ import com.gadgetworks.codeshelf.validation.BatchResult;
 
 /**
  * @author jeffw
- * 
+ *
  * Yes, these aren't exactly unit tests, but when they were unit tested they missed a lot of important business behaviors.
  * Sure, the coupling shouldn't be so tight, but Ebean doesn't make it easy to test it's granular behaviors.
- * 
+ *
  * While not ideal, we are testing, known, expected business behaviors against the full machinery in a memory-mapped DB
  * that runs at the speed of a unit test (and runs with the units tests).
- * 
+ *
  * There are other unit tests of EDI behaviors.
  *
  */
@@ -44,15 +45,22 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	// of these: orderId,itemId,description,quantity,uom are not nullable
 
 	private ICsvOrderImporter	importer;
+	private UUID	facilityId;
 
 	@Before
 	public void initTest() {
+		this.getPersistenceService().beginTenantTransaction();
+		
 		importer = createOrderImporter();
+		facilityId = getTestFacility("O-" + getTestName(), "F-" + getTestName()).getPersistentId();
+
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -72,13 +80,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.1");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -109,6 +110,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testOrderImporterWithPickStrategyFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,pickStrategy,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -128,12 +130,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.2");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.2", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.2");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -154,6 +150,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testOrderImporterWithPreassignedContainerIdFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -172,13 +169,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.3");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.3", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.3");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -202,6 +192,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public void testFailOrderImporterFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
 		// orderId,itemId,description,quantity,uom are not nullable according to the bean
 		// There's no due date on first order line. nullable, ok
 		// There's no itemID on third to last line. (did not matter)
@@ -224,13 +216,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.4");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.4", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.4");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -261,6 +246,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public void testManyOrderArchive() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -279,13 +265,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.5");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.5", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.5");
 
 		// First import a big list of orders.
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
@@ -350,6 +329,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	//@Test
 	public void testOneOrderArchive() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -368,13 +349,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.6");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.6", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.6");
 
 		// First import a big list of orders.
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
@@ -433,6 +407,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testMinMaxOrderImporterFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -452,13 +427,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.7");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.7", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.7");
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
@@ -477,6 +445,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testMinMaxDefaultOrderImporterFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -495,13 +464,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.8");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.8", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.8");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -559,6 +521,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testMinMaxBoundariesCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -578,13 +541,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.8");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.8", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.8");
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
@@ -602,6 +558,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testDetailIdOrderImporterFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -620,13 +577,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
-
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.10");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.10", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.10");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
@@ -709,13 +659,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	@Test
 	public final void testReimportDetailIdOrderImporterFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD1.9");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD1.9", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD1.9");
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -752,6 +697,45 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public void testNoQuantity() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		
+		String orderWithNoQuantity =
+		"orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
+		+ "\r\n243698,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
+		+ "\r\n243698,\"243,698.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CPL-CS-9F,Clear Flat Lids for 3-9 oz cup No Hole,,CS,243698";
+		BatchResult<Object> result = importCsvString(facility, orderWithNoQuantity);
+		Assert.assertEquals(1, result.getResult().size());
+		Assert.assertEquals(1, result.getViolations().size());
+
+		this.getPersistenceService().endTenantTransaction();
+	}
+	
+	@Test
+	public void testNonsequentialOrderIds() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
+		String nonSequentialOrders =
+		"orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
+		+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
+		+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
+		+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
+		+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
+		
+		importCsvString(facility, nonSequentialOrders);
+
+		HeaderCounts theCounts = facility.countOutboundOrders();
+		Assert.assertEquals(2, theCounts.mTotalHeaders);
+		Assert.assertEquals(2, theCounts.mActiveHeaders);
+		Assert.assertEquals(4, theCounts.mActiveDetails);
+		Assert.assertEquals(2, theCounts.mActiveCntrUses);
+
+		this.getPersistenceService().endTenantTransaction();
+	}
+
 	/**
 	 * Simulates the edi process for order importing
 	 */
@@ -759,17 +743,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public void testMultipleImportOfLargeSet() throws IOException, InterruptedException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility testFacility = getTestFacility("O-testMultipleImportOfLargeSet", "F1");
-
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
-		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
+		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The large set creates the initial sets of orders
 		BatchResult result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
-		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
+		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The subset triggers all but one of the details to be active = false
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
@@ -778,7 +760,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		//Simulate a cache trim between the uploads
 		// Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
 
-		foundFacility = mFacilityDao.findByPersistentId(testFacility.getPersistentId());
+		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
@@ -935,14 +917,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		return facility;
 	}
 
-	private void importCsvString(Facility facility, String csvString) throws IOException {
+	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
 		byte[] firstCsvArray = csvString.getBytes();
 
 		try (ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);) {
 			InputStreamReader reader = new InputStreamReader(stream);
 
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-			importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+			BatchResult<Object> results = importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+			return results;
 		}
 	}
 
