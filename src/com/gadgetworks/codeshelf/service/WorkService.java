@@ -49,18 +49,22 @@ public class WorkService implements IApiService {
 				try {
 					while (!Thread.interrupted()) {
 						WorkInstruction wi = completedWorkInstructions.take();
-						boolean sent = false;
-						while (!sent) {
-							List<WorkInstruction> wiList = ImmutableList.of(wi);
-							try {
-								Facility facility = wi.getParent();
-								IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-								ediExportService.sendWorkInstructionsToHost(wiList);
-								sent = true;
-							} catch (IOException e) {
-								Thread.sleep(retryDelay);
-								LOGGER.warn("failure to send work instructions, retrying: ", e);
+						try {
+							boolean sent = false;
+							while (!sent) {
+								List<WorkInstruction> wiList = ImmutableList.of(wi);
+								try {
+									Facility facility = wi.getParent();
+									IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+									ediExportService.sendWorkInstructionsToHost(wiList);
+									sent = true;
+								} catch (IOException e) {
+									LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
+									Thread.sleep(retryDelay);
+								}
 							}
+						} catch (Exception e) {
+							LOGGER.warn("Unexpected exception sending work instruction, skipping: " + wi, e);
 						}
 					}
 				} catch (InterruptedException e) {
@@ -114,8 +118,8 @@ public class WorkService implements IApiService {
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inWorkInstruction
-	 * @throws IOException 
-	 * @throws InterruptedException 
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
 	public void exportWorkInstruction(WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Queueing work instruction: " + inWorkInstruction);

@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.generators;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
@@ -22,13 +23,14 @@ import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {
-
+	private static long sequence = 0;
 	
 	public WorkInstruction generateWithNewStatus(Facility facility) {
 		WorkInstruction workInstruction = new WorkInstruction();
+		workInstruction.setPersistentId(UUID.randomUUID());
 		workInstruction.setParent(facility);
 		workInstruction.setOrderDetail(generateValidOrderDetail(facility));
-		workInstruction.setDomainId("WIDOMAINID");
+		workInstruction.setDomainId("WIDOMAINID" + sequence++);
 		workInstruction.setDescription("A DESCRIPTION");
 		workInstruction.setContainer(new Container(facility, "C1"));
 		workInstruction.setItemMaster(new ItemMaster(facility, "ITEMID", new UomMaster(facility, "UOMID")));
