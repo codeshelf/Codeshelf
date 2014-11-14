@@ -936,7 +936,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			if (cleanCount >= lkMostUsesToConsider)
 				break;
 			if (!newCntrUses.contains(oldUse)) {
-				oldUse.setCurrentChe(null);
 				inChe.removeContainerUse(oldUse);
 				try {
 					ContainerUse.DAO.store(oldUse);
