@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.domain.Bay;
@@ -32,12 +30,9 @@ import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;

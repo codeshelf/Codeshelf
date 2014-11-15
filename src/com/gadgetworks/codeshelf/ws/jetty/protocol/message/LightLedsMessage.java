@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 @ToString

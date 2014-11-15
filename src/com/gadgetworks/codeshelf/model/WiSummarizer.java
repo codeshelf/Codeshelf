@@ -17,7 +17,6 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 

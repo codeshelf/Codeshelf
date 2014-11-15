@@ -336,7 +336,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
 		importCsvString(facility, firstOrderBatchCsv);
 		
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -637,7 +636,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -711,14 +709,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		this.getPersistenceService().endTenantTransaction();
 	}
-
+	
 	/**
 	 * Simulates the edi process for order importing
 	 */
 	@Test
 	public void testMultipleImportOfLargeSet() throws IOException, InterruptedException {
 		this.getPersistenceService().beginTenantTransaction();
-
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
