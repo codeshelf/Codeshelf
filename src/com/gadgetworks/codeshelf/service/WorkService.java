@@ -117,8 +117,8 @@ public class WorkService implements IApiService {
 	private void sendWorkInstructions() throws InterruptedException {
 		persistenceService.beginTenantTransaction();
 
-		WorkInstruction wi = completedWorkInstructions.take();
 		try {
+			WorkInstruction wi = completedWorkInstructions.take();
 			boolean sent = false;
 			while (!sent) {
 				List<WorkInstruction> wiList = ImmutableList.of(wi);
@@ -136,8 +136,9 @@ public class WorkService implements IApiService {
 					LOGGER.error("Work instruction exporter interrupted by exception while waiting for completed work instructions. Shutting down.", e);
 				}
 			}
+		} finally {
+			persistenceService.endTenantTransaction();
 		}
-		persistenceService.endTenantTransaction();
 	}
 
 	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {

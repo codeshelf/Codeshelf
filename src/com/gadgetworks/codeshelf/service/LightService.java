@@ -140,14 +140,12 @@ public class LightService implements IApiService {
 					LOGGER.warn("Unable to light child: " + child, e);
 				}
 			}
-			}
 		}
 		return chaserLight(facility.getSiteControllerUsers(), ledMessages);
 	}
 
 	Future<Void> chaserLight(final Set<User> siteControllerUsers, final List<Set<LightLedsMessage>> messageSequence) {
 		long millisToSleep = 2250;
-		final Set<User> siteControllerUsers = facility.getSiteControllerUsers();
 		final TerminatingScheduledRunnable lightLocationRunnable = new TerminatingScheduledRunnable() {
 
 			private LinkedList<Set<LightLedsMessage>>	chaseListToFire	= Lists.newLinkedList(messageSequence);
@@ -187,29 +185,7 @@ public class LightService implements IApiService {
 		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inLocation, theRange);
 		return message;
 	}
-	
-	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ISubLocation> children) {
-		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
-		for (ISubLocation<?> child: children) {
-			try {
-				if (child.isLightable()) {
-					LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, child);
-					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
-					
-					//merge messages per controller and key
-					LightLedsMessage messageForKey = byControllerChannel.get(key);
-					if (messageForKey != null) {
-						ledMessage = messageForKey.merge(ledMessage);
-					}
-					byControllerChannel.put(key, ledMessage);
-				}
-			} 
-			catch(Exception e) {
-				LOGGER.warn("Unable to light tier: " + child, e);
-			}
-		}
-		
-		return Sets.newHashSet(byControllerChannel.values());
+
 	
 	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ISubLocation> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();

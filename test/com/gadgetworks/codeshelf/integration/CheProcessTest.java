@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.integration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -630,15 +629,6 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Assert.assertEquals(7, picker.countRemainingJobs());
 		
 		this.persistenceService.endTenantTransaction();
-	}
-	
-	private void assertWIColor(WorkInstruction wi, Che che) {
-		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
-		Assert.assertEquals(1, cmdGroups.size());
-		ColorEnum wiColor = cmdGroups.get(0).getLedSampleList().get(0).getColor();
-		ColorEnum cheColor = che.getColor();
-		Assert.assertEquals(cheColor, wiColor);
-
 	}
 	
 	private void assertWIColor(WorkInstruction wi, Che che) {

@@ -235,6 +235,8 @@ public class WorkServiceTest extends DAOTestABC {
 
 	@Test
 	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
+		this.getPersistenceService().beginTenantTransaction();
+
 		long expectedRetryDelay = 1L;
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi1 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
@@ -254,6 +256,7 @@ public class WorkServiceTest extends DAOTestABC {
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi1)));
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi2)));
 
+		this.getPersistenceService().endTenantTransaction();
 	}
 
 	
