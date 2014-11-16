@@ -107,8 +107,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		try {
 			Session session = getCurrentSession();
 			result = (T) session.get(getDaoClass(), inPersistentId);
-		} catch (PersistenceException e) {
-			LOGGER.error("Failed to find object by persistent ID", e);
+		} 
+		catch (Exception e) {
+			LOGGER.error("Failed to find object with persistent ID "+inPersistentId, e);
 		}
 		return result;
 	}

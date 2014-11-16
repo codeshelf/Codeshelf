@@ -77,15 +77,14 @@ public abstract class DomainObjectABC implements IDomainObject {
 	// This is not an application-editable field.
 	// It's for the private use of the ORM transaction system.
 	@Version
-	@NonNull
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	// @JsonProperty do we need to serialize this?
-	private Timestamp			version;
+	private long version;
 
 	public DomainObjectABC() {
-		//		lastDefaultSequenceId = 0;
+		// lastDefaultSequenceId = 0;
 	}
 
 	public DomainObjectABC(String inDomainId) {
@@ -114,7 +113,6 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	public final boolean equals(Object inObject) {
-
 		boolean result = false;
 
 		if (inObject instanceof DomainObjectABC) {

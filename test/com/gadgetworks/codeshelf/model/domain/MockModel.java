@@ -57,13 +57,13 @@ public class MockModel implements IDomainObject {
 	}
 
 	@Override
-	public Timestamp getVersion() {
+	public long getVersion() {
 		// TODO Auto-generated method stub
-		return null;
+		return 0;
 	}
 
 	@Override
-	public void setVersion(Timestamp inVersion) {
+	public void setVersion(long inVersion) {
 		// TODO Auto-generated method stub
 		
 	}

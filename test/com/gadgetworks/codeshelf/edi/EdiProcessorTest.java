@@ -228,15 +228,14 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			@Override
-			public Timestamp getVersion() {
+			public long getVersion() {
 				// TODO Auto-generated method stub
-				return null;
+				return 0;
 			}
 
 			@Override
-			public void setVersion(Timestamp inVersion) {
+			public void setVersion(long inVersion) {
 				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
@@ -347,19 +346,17 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void setPersistentId(UUID inPersistentId) {
 				// TODO Auto-generated method stub
-				
 			}
 
 			@Override
-			public Timestamp getVersion() {
+			public long getVersion() {
 				// TODO Auto-generated method stub
-				return null;
+				return 0;
 			}
 
 			@Override
-			public void setVersion(Timestamp inVersion) {
+			public void setVersion(long inVersion) {
 				// TODO Auto-generated method stub
-				
 			}
 
 			@Override

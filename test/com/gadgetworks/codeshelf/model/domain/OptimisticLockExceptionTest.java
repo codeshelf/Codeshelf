@@ -67,7 +67,7 @@ public class OptimisticLockExceptionTest {
 		OrderHeader.DAO.store(foundOrder);
 
 		order1.setStatus(OrderStatusEnum.COMPLETE);
-		order1.setVersion(new Timestamp(order1.getVersion().getTime() + 1));
+		order1.setVersion(order1.getVersion() + 1);
 		OrderHeader.DAO.store(order1);
 
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");

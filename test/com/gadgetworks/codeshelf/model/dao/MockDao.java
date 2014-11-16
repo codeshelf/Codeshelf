@@ -95,7 +95,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	public final void store(T inDomainObject) {
 		inDomainObject.setPersistentId(new UUID(UUIDGen.newTime(), UUIDGen.getClockSeqAndNode()));
-		inDomainObject.setVersion(new Timestamp(System.currentTimeMillis()));
+		inDomainObject.setVersion(System.currentTimeMillis());
 
 		// Walk through all of the fields to see if any of them are null but should not be.
 		try {

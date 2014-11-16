@@ -64,13 +64,13 @@ public interface IDomainObject {
 	/**
 	 * @return
 	 */
-	Timestamp getVersion();
+	long getVersion();
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inVersion
 	 */
-	void setVersion(Timestamp inVersion);
+	void setVersion(long inVersion);
 
 	// --------------------------------------------------------------------------
 	/**

@@ -505,7 +505,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		LOGGER.info ("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
 		picker.setupContainer("9x9x9", "1"); // unknown container
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK,1000);
+		picker.waitForCheState(CheStateEnum.NO_WORK,5000);
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
 		// Back to our main test

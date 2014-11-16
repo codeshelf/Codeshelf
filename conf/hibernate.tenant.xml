@@ -13,8 +13,12 @@
         <property name="dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
         <property name="hbm2ddl.auto">validate</property>
 
-        <!-- JDBC connection pool (use the built-in) -->
-        <property name="connection.pool_size">10</property>
+        <!-- JDBC connection pool -->
+		<property name="hibernate.c3p0.min_size">5</property>
+  		<property name="hibernate.c3p0.max_size">20</property>
+  		<property name="hibernate.c3p0.timeout">600</property>
+  		<property name="hibernate.c3p0.max_statements">100</property>
+  		<property name="hibernate.c3p0.idle_test_period">3000</property>        
 
         <!-- Disable the second-level cache for now  -->
         <property name="cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
