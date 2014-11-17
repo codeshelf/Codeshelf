@@ -181,7 +181,7 @@ public class AisleImporterTest extends EdiTestABC {
 		// Vertex thirdV = (Vertex) vList1.get(2);
 
 		// New side effect: creates some LED controllers. But if no network in our test system, may not happen
-		// Assert.assertTrue(facility.countLedControllers() > 0);
+		Assert.assertTrue(facility.countLedControllers() > 0);
 
 		// Check that the locations know which side has lower led numbers.
 		// as a tierB1S1Side aisle, tier and slot have lower led number on anchor side.
