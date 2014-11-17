@@ -19,6 +19,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
@@ -230,7 +231,14 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	@Override
 	public void doAfter() {
+		// tear down server and site controller
 		stop();
+		// roll back transaction if active
+		if (PersistenceService.getInstance().hasActiveTransaction()) {
+			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");
+			PersistenceService.getInstance().rollbackTenantTransaction();
+		}
+		// reset
 		webSocketServer = null;
 		siteController = null;
 		System.clearProperty("javax.net.ssl.keyStore");

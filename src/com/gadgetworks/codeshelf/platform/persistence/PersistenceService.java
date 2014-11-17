@@ -64,7 +64,8 @@ public class PersistenceService extends Service {
 			theInstance.configure();
 			theInstance.start();
 			LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
-		} else if(!theInstance.isInitialized()) {
+		} 
+		else if (!theInstance.isInitialized()) {
 			theInstance.start();
 			LOGGER.info("PersistanceService was stopped and restarted");
 		}
