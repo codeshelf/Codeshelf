@@ -40,22 +40,22 @@ import com.google.inject.Singleton;
 // --------------------------------------------------------------------------
 /**
  * WorkInstruction
- * 
+ *
  * A planned or actual request for work.
- * 
- * We anticipate that some day this object will split from a pure item->container instruction object 
+ *
+ * We anticipate that some day this object will split from a pure item->container instruction object
  * to a item/container to container, or container to/from location
- * 
+ *
  * The references are stored as Strings because we mostly serialize this object (in JSON) to send back-and-forth
  * over the wire to the remote radio/network controllers.
- * 
+ *
  * NOTE:
- * 
+ *
  * WorkInstructions also get sent to the site controller (gateway).  The gateway only knows that it needs to distribute and handle
  * work instructions at the site, but the gateway has no business logic at all.  Any changes to those work instructions can only
- * come from the back-end business logic.  We send those changes over the WebSocket to the gateway.  We share this 
- * WorkInstruction class between the business logic and remote gateway as a simple way to serial the objects over the WebSocket.  
- * 
+ * come from the back-end business logic.  We send those changes over the WebSocket to the gateway.  We share this
+ * WorkInstruction class between the business logic and remote gateway as a simple way to serial the objects over the WebSocket.
+ *
  * @author jeffw
  */
 
@@ -65,7 +65,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })
-@ToString(of = { "typeEnum", "statusEnum", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "typeEnum", "statusEnum",  "orderDetail", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	@Inject
@@ -428,7 +428,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 */
 	public final String getWiPosAlongPath() {
 		// This needs work for Accu non-slotted inventory.
-		// 
+		//
 		Double wiPosValue = getPosAlongPath();
 		if (wiPosValue == null || wiPosValue == 0.0)
 			return ""; // 0.0 happens for short plans to facility
