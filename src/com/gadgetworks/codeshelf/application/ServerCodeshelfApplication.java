@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import lombok.Getter;
 
 import org.apache.log4j.Level;
+import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,8 +103,20 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		LOGGER.info("Process info: " + processName);
 
 		this.getPersistenceService().start();
-		this.getPersistenceService().beginTenantTransaction();
-		this.getPersistenceService().endTenantTransaction();
+		
+		try {
+			this.getPersistenceService().beginTenantTransaction();
+			this.getPersistenceService().endTenantTransaction();
+		} catch (HibernateException e) {
+			if(e.getMessage().startsWith("Missing table") && configuration.getBoolean("db.autocreate")) {
+				LOGGER.error("Could not initialize Hibernate due to missing table, will try to create schema",e);
+				this.getPersistenceService().createNewSchema();
+			} else {
+				LOGGER.error("Failed to initialize Hibernate. Server is shutting down.",e);
+				Thread.sleep(3000);
+				System.exit(1);
+			}
+		}
 		
 		// Start the WebSocket server
 		webSocketServer.start();

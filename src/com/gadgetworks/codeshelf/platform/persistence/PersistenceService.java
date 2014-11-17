@@ -1,9 +1,15 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
 import java.lang.reflect.Field;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -104,6 +110,7 @@ public class PersistenceService extends Service {
     	if(this.schemaName != null) {
 	    	configuration.setProperty("hibernate.default_schema", this.schemaName);
     	}
+    	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
     	configuration.setInterceptor(new HibernateInterceptor());
     	//configuration.setProperty("hibernate.connection.username", tenant.getName());
     	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
@@ -122,8 +129,12 @@ public class PersistenceService extends Service {
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
 	        return factory;
         } catch (Exception ex) {
-        	LOGGER.error("SessionFactory creation for "+tenant+" failed",ex);
-            throw new RuntimeException(ex);
+        	if(ex instanceof HibernateException) {
+        		throw ex;
+        	} else {
+            	LOGGER.error("SessionFactory creation for "+tenant+" failed",ex);
+                throw new RuntimeException(ex);
+        	}
         }
 	}
 	
@@ -268,5 +279,19 @@ public class PersistenceService extends Service {
 	public void resetDatabase() {
 		SchemaExport se = new SchemaExport(this.configuration);
 		se.create(false, true);		
-	}	
+	}
+	
+	public void createNewSchema() throws SQLException {
+		Connection conn = DriverManager.getConnection(configuration.getProperty("hibernate.connection.url"), 
+			configuration.getProperty("hibernate.connection.username"),
+			configuration.getProperty("hibernate.connection.password"));
+
+		Statement stmt = conn.createStatement();
+//		ResultSet result=stmt.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = '"+configuration.getProperty("hibernate.default_schema")+"';");
+		boolean result = stmt.execute("CREATE SCHEMA IF NOT EXISTS "+configuration.getProperty("hibernate.default_schema")+" AUTHORIZATION "+configuration.getProperty("hibernate.connection.username"));
+		stmt.close();
+		conn.close();
+
+		resetDatabase();
+	}
 }
