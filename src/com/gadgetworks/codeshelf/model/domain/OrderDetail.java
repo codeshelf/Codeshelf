@@ -203,11 +203,21 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final String getUomMasterId() {
-		return getUomMaster().getDomainId();
+		UomMaster uomMaster = getUomMaster();
+		if (uomMaster != null) {
+			return uomMaster.getDomainId();
+		} else {
+			return "";
+		}
 	}
 
 	public final String getItemMasterId() {
-		return getItemMaster().getDomainId();
+		ItemMaster itemMaster = getItemMaster();
+		if (itemMaster != null) {
+			return itemMaster.getDomainId();
+		} else {
+			return "";
+		}
 	}
 
 	public final String getOrderId() {
