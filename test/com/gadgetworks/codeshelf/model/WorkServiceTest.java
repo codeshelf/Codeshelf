@@ -241,7 +241,6 @@ public class WorkServiceTest extends DAOTestABC {
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi1 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		WorkInstruction wi2 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		Assert.assertNotEquals(wi1,  wi2);
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 		doThrow(new RuntimeException("test io")).
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));
@@ -253,6 +252,7 @@ public class WorkServiceTest extends DAOTestABC {
 		//Wait up to a second per invocation to verify
 		// Normal behavior is to keep retrying the first on IOException
 		//   in this case it should skip to the second one and send it
+		Assert.assertNotEquals(wi1,  wi2);
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi1)));
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi2)));
 
