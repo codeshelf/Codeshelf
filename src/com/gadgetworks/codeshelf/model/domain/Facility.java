@@ -878,8 +878,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
 		filterParams.add(Restrictions.in("type", wiTypes));
-
-		for (WorkInstruction wi : WorkInstruction.DAO.findByFilter(filterParams)) {
+		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		for (WorkInstruction wi : wis) {
 			try {
 
 				Che assignedChe = wi.getAssignedChe();
