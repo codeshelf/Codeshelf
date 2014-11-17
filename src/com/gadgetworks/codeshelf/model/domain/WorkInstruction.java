@@ -63,7 +63,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })
-@ToString(of = { "type", "status", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "type", "status", "orderDetail", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	@Inject
