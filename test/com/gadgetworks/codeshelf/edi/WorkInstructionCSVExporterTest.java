@@ -138,26 +138,6 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	}
 
-	@Test
-	public void missingUomMasterReturnsEmpty() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
-
-		String expectedValue = "TESTDOMAINID";
-		
-		
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		testWi.getOrderDetail().setParent(new OrderHeader(facility, expectedValue));
-		testWi.getOrderDetail().setUomMaster(null);
-		System.out.println(testWi);	
-
-		List<WorkInstruction> wiList = ImmutableList.of(testWi);
-		List<String[]> table = toTable(wiList);
-		String[] dataRow = table.get(1);
-		assertField(dataRow, "uom", "");		
-		this.getPersistenceService().endTenantTransaction();
-		
-	}
 	
 	@Test
 	public void usesLocationIdWhenNoAlias() throws Exception {
@@ -200,6 +180,28 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		assertField(dataRow, "locationId", expectedValue);		
 		this.getPersistenceService().endTenantTransaction();
 
+	}
+
+
+	@Test
+	public void missingUomMasterReturnsEmpty() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
+		String expectedValue = "TESTDOMAINID";
+		
+		
+		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		testWi.getOrderDetail().setParent(new OrderHeader(facility, expectedValue));
+		testWi.getOrderDetail().setUomMaster(null);
+		System.out.println(testWi);	
+
+		List<WorkInstruction> wiList = ImmutableList.of(testWi);
+		List<String[]> table = toTable(wiList);
+		String[] dataRow = table.get(1);
+		assertField(dataRow, "uom", "");		
+		this.getPersistenceService().endTenantTransaction();
+		
 	}
 
 	

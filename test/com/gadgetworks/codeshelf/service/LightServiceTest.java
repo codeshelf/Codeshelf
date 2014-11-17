@@ -150,16 +150,14 @@ public class LightServiceTest extends EdiTestABC {
 		List<MessageABC> messages = captureLightMessages(facility, parent, 2 /*2 bays x 1 tiers*/);
 		
 		Iterator<MessageABC> messageIter = messages.iterator();
-		
 		for (ISubLocation bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		
 		this.getPersistenceService().endTenantTransaction();
 	}
-
+		
 
 	@SuppressWarnings("rawtypes")
 	@Test

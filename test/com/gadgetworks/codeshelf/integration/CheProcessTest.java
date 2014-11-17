@@ -540,7 +540,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		picker.setup();
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
-		picker.start("D303", 8000, 8000);
+		picker.start("D303", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 		
 		Assert.assertEquals(7, picker.countRemainingJobs());		
@@ -551,6 +551,8 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
+		
+		
 		
 		// pick first item
 		picker.pick(button, quant);

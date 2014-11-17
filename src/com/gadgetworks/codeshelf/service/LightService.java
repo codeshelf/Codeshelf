@@ -139,6 +139,7 @@ public class LightService implements IApiService {
 				} catch(Exception e) {
 					LOGGER.warn("Unable to light child: " + child, e);
 				}
+
 			}
 		}
 		return chaserLight(facility.getSiteControllerUsers(), ledMessages);
@@ -185,7 +186,6 @@ public class LightService implements IApiService {
 		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inLocation, theRange);
 		return message;
 	}
-
 	
 	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ISubLocation> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
@@ -199,7 +199,10 @@ public class LightService implements IApiService {
 					LightLedsMessage messageForKey = byControllerChannel.get(key);
 					if (messageForKey != null) {
 						ledMessage = messageForKey.merge(ledMessage);
+
 					}
+				
+			
 					byControllerChannel.put(key, ledMessage);
 				}
 			} 
