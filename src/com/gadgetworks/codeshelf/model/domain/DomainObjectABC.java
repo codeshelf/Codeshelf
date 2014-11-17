@@ -6,7 +6,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.lang.reflect.Field;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Objects;

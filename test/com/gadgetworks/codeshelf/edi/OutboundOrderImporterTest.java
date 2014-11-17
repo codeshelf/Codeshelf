@@ -710,6 +710,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 	
+	
 	/**
 	 * Simulates the edi process for order importing
 	 */

@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.sql.Timestamp;
 import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
