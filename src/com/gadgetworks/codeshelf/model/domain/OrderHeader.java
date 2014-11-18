@@ -34,6 +34,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -237,12 +238,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final void addOrderDetail(OrderDetail inOrderDetail) {
 		OrderHeader previousOrderHeader = inOrderDetail.getParent();
-		if(previousOrderHeader == null) {
+		if (previousOrderHeader == null) {
 			orderDetails.put(inOrderDetail.getDomainId(), inOrderDetail);
 			inOrderDetail.setParent(this);
 		} else {
-			LOGGER.error("cannot add OrderDetail "+inOrderDetail.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderHeader.getDomainId());
-		}	
+			LOGGER.error("cannot add OrderDetail " + inOrderDetail.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousOrderHeader.getDomainId());
+		}
 	}
 
 	public final OrderDetail getOrderDetail(String inOrderDetailId) {
@@ -251,16 +253,85 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final void removeOrderDetail(String inOrderDetailId) {
 		OrderDetail orderDetail = this.getOrderDetail(inOrderDetailId);
-		if(orderDetail != null) {
+		if (orderDetail != null) {
 			orderDetail.setParent(null);
 			orderDetails.remove(inOrderDetailId);
 		} else {
-			LOGGER.error("cannot remove OrderDetail "+inOrderDetailId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove OrderDetail " + inOrderDetailId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final List<OrderDetail> getOrderDetails() {
 		return new ArrayList<OrderDetail>(orderDetails.values());
+	}
+
+	public final void addHeadersContainerUse(ContainerUse inContainerUse) {
+		if (inContainerUse == null) {
+			LOGGER.error("null input to OrderHeader.addHeadersContainerUse");
+			return;
+		}
+		// Intent: set the one-to-one relationship fields unless this orderHeader already has a containerUse
+		// However, as the fields in both directions persist, update anyway in the error case. Otherwise an orphan relationship could never be cleaned up 
+		OrderHeader previousOrderHeader = inContainerUse.getOrderHeader();
+		if (previousOrderHeader == null) {
+			setContainerUse(inContainerUse);
+			inContainerUse.setOrderHeader(this);
+			// done
+		} else {
+			LOGGER.error("problem adding ContainerUse " + inContainerUse.getContainerName() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousOrderHeader.getDomainId()
+					+ ". However, proceeding to make data consistent");
+			
+			// This is really problematic because the caller has the responsibility to call the two DAOs to store this OrderHeader and the inContainerUse. We must store anything else.
+			ContainerUse possibleOrphanCntrUse = previousOrderHeader.getContainerUse();
+			if (possibleOrphanCntrUse == null || possibleOrphanCntrUse.equals(inContainerUse))
+				return; // no cleanup necessary, but we did not do the updates.
+			
+			// Or if the possible orphan is self-consistent, don't clean them, but do clean this.
+			OrderHeader orphansHeader = possibleOrphanCntrUse.getOrderHeader();
+			if (orphansHeader.equals(previousOrderHeader)) {
+				inContainerUse.setOrderHeader(null); // Caller will call the DAO.store()
+				
+			} else {
+				//  Finally, the tricky bit. Do what was asked, and clean the others.
+				setContainerUse(inContainerUse);
+				inContainerUse.setOrderHeader(this);
+				
+				if (!previousOrderHeader.equals(this)) {
+					previousOrderHeader.setContainerUse(null);
+					try {
+						OrderHeader.DAO.store(previousOrderHeader);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
+				}
+				
+				// if we did not return already, possibleOrphanCntrUse also needs cleaning
+				possibleOrphanCntrUse.setOrderHeader(null);
+				try {
+					ContainerUse.DAO.store(possibleOrphanCntrUse);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+			}
+		}
+	}
+
+	public final void removeHeadersContainerUse(ContainerUse inContainerUse) {
+		if (inContainerUse == null) {
+			LOGGER.error("null input to OrderHeader.removeHeadersContainerUse");
+			return;
+		}
+		// Intent: clear the one-to-one relationship fields, but only if the one being cleared is the expected one.
+		ContainerUse previousContainerUse = getContainerUse();
+		if (previousContainerUse.equals(inContainerUse)) {
+			inContainerUse.setOrderHeader(null);
+			setContainerUse(null);
+		} else {
+			LOGGER.error("cannot remove ContainerUse " + inContainerUse.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't referenced by this OrderHeader");
+		}
 	}
 
 	public final OrderLocation addOrderLocation(ILocation<?> inLocation) {
@@ -281,12 +352,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final void addOrderLocation(OrderLocation inOrderLocation) {
 		OrderHeader previousOrderHeader = inOrderLocation.getParent();
-		if (previousOrderHeader == null || previousOrderHeader==this) {
+		if (previousOrderHeader == null || previousOrderHeader == this) {
 			orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
 			inOrderLocation.setParent(this);
 		} else {
-			LOGGER.error("cannot add OrderLocation"+inOrderLocation.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderHeader.getDomainId());
-		}	
+			LOGGER.error("cannot add OrderLocation" + inOrderLocation.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousOrderHeader.getDomainId());
+		}
 	}
 
 	public final OrderLocation getOrderLocation(String inOrderLocationId) {
@@ -295,11 +367,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final void removeOrderLocation(String inOrderLocationId) {
 		OrderLocation orderLocation = this.getOrderLocation(inOrderLocationId);
-		if(orderLocation != null) {
+		if (orderLocation != null) {
 			orderLocation.setParent(null);
 			orderLocations.remove(inOrderLocationId);
 		} else {
-			LOGGER.error("cannot remove OrderLocation "+inOrderLocationId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove OrderLocation " + inOrderLocationId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 

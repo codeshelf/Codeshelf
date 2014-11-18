@@ -90,7 +90,8 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public Container() {
 
-	}	
+	}
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Container> getDao() {
 		return DAO;
@@ -111,7 +112,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	public final Facility getParent() {
 		return parent;
 	}
-	
+
 	public final Facility getFacility() {
 		return getParent();
 	}
@@ -125,21 +126,31 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final void addContainerUse(ContainerUse inContainerUse) {
+		if (inContainerUse == null) {
+			LOGGER.error("null input to Container.addContainerUse");
+			return;
+		}
 		Container previousContainer = inContainerUse.getParent();
-		if(previousContainer == null) {
+		if (previousContainer == null) {
 			uses.add(inContainerUse);
 			inContainerUse.setParent(this);
-		} else if((!previousContainer.equals(this)) || (!uses.contains(inContainerUse))) {
-			LOGGER.error("cannot add ContainerUse "+inContainerUse.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousContainer.getDomainId());
-		}	
+		} else if ((!previousContainer.equals(this)) || (!uses.contains(inContainerUse))) {
+			LOGGER.error("cannot add ContainerUse " + inContainerUse.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousContainer.getDomainId());
+		}
 	}
 
 	public final void removeContainerUse(ContainerUse inContainerUse) {
-		if(uses.contains(inContainerUse)) {
+		if (inContainerUse == null) {
+			LOGGER.error("null input to Container.addContainerUse");
+			return;
+		}
+		if (uses.contains(inContainerUse)) {
 			inContainerUse.setParent(null);
 			uses.remove(inContainerUse);
 		} else {
-			LOGGER.error("cannot remove ContainerUse "+inContainerUse.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove ContainerUse " + inContainerUse.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -172,10 +183,10 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		ContainerUse containerUse = getCurrentContainerUse();
 		if (containerUse != null)
 			result = containerUse.getOrderHeader();
-		
+
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Return the currently working container use for this container.
@@ -196,7 +207,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		}
 		return result;
 	}
-	
+
 	// Instead of lomboc annotation, which can lead to infinite loop if fields are not restricted
 	public final String toString() {
 		// What we would want to see if logged as toString?
@@ -207,6 +218,5 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	public static void setDao(ContainerDao inContainerDao) {
 		Container.DAO = inContainerDao;
 	}
-
 
 }

@@ -124,8 +124,10 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	public final String toString() {
 		// What we would want to see if logged as toString?  parent containerID for sure. Order header. Che?
 		String returnString = getParent().getDomainId();
+		OrderHeader theHeader = getOrderHeader();
 		returnString += " forOrder:";
-		returnString += getOrderHeader().getDomainId();
+		if (theHeader != null)
+		returnString += theHeader.getDomainId();
 		Che theChe = getCurrentChe();
 		if (theChe != null) {
 			returnString += " on CHE:";

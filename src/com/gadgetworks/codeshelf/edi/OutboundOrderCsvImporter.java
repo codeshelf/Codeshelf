@@ -404,22 +404,32 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				LOGGER.error("", e);
 			}
 
-			// Now create the container use for this.
+			// Now create the container use for this. ContainerUse has Container, OrderHead as potential parent.  (Che also, but not set here.)
 			ContainerUse use = result.getContainerUse(inOrder);
 			if (use == null) {
 				use = new ContainerUse();
 				use.setDomainId(inOrder.getOrderId());
-				use.setOrderHeader(inOrder);
-			}
+				inOrder.addHeadersContainerUse(use);
+				result.addContainerUse(use);
+			} else {
+				OrderHeader prevOrder = use.getOrderHeader();
+				// No worries for container, as no way containerUse can change to different container owner.
+				if (prevOrder == null)
+					inOrder.addHeadersContainerUse(use);
+				else if (!prevOrder.equals(inOrder)){
+					prevOrder.removeHeadersContainerUse(use);
+					inOrder.addHeadersContainerUse(use);					
+				}
+			}			
+
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			use.setUsedOn(timestamp);
 			use.setActive(true);
 			use.setUpdated(inEdiProcessTime);
-			result.addContainerUse(use);
 
 			try {
 				mContainerUseDao.store(use);
-				inOrder.setContainerUse(use);
+				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
 				mOrderHeaderDao.store(inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("", e);

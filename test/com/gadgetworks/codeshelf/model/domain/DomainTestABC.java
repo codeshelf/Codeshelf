@@ -313,12 +313,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		Container container4 = createContainer("C4", resultFacility);
 		Container container5 = createContainer("C5", resultFacility);
-//		Container container6 = createContainer("C6", resultFacility);
+		Container container6 = createContainer("C6", resultFacility);
 //		Container container7 = createContainer("C7", resultFacility);
 
 		ItemMaster itemMaster4 = createItemMaster("ITEM4", resultFacility, uomMaster);
 		ItemMaster itemMaster5 = createItemMaster("ITEM5", resultFacility, uomMaster);
-//		ItemMaster itemMaster6 = createItemMaster("ITEM6", resultFacility, uomMaster);
+		ItemMaster itemMaster6 = createItemMaster("ITEM6", resultFacility, uomMaster);
 //		ItemMaster itemMaster7 = createItemMaster("ITEM7", resultFacility, uomMaster);
 
 		OrderGroup orderGroup1 = createOrderGroup("GROUP1", resultFacility);
@@ -345,7 +345,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		OrderHeader orderCross5 = createOrderHeader("CROSS5", OrderTypeEnum.CROSS, resultFacility, null);
 		OrderDetail orderCross5Detail1 = createOrderDetail(orderCross5, itemMaster5);
 
-//		OrderHeader orderCross6 = createOrderHeader("CROSS6", OrderTypeEnum.CROSS, resultFacility, orderGroup2);
+		OrderHeader orderCross6 = createOrderHeader("CROSS6", OrderTypeEnum.CROSS, resultFacility, orderGroup2);
 //		OrderDetail orderCross6Detail1 = createOrderDetail(orderCross6, itemMaster6);
 //
 //		OrderHeader orderCross7 = createOrderHeader("CROSS7", OrderTypeEnum.CROSS, resultFacility, null);
@@ -353,7 +353,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		ContainerUse containerUse4 = createContainerUse(container4, orderCross4, resultFacility);
 		ContainerUse containerUse5 = createContainerUse(container5, orderCross5, resultFacility);
-//		ContainerUse containerUse6 = createContainerUse(container6, orderCross6, resultFacility);
+		ContainerUse containerUse6 = createContainerUse(container6, orderCross6, resultFacility);
 //		ContainerUse containerUse7 = createContainerUse(container7, orderCross7, resultFacility);
 
 		return resultFacility;
@@ -379,13 +379,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		result = new Container();
 		result.setDomainId(inContainerId);
-		result.setParent(inFacility);
+		// result.setParent(inFacility);
 		result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mContainerDao.store(result);
 		
 		inFacility.addContainer(result);
+		
+		mContainerDao.store(result);
 
 		return result;
 	}
@@ -402,14 +403,20 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		result = new ContainerUse();
 		result.setDomainId(inContainer.getContainerId());
-		result.setOrderHeader(inOrderHeader);
+		
+		// This works because new of DomainObjectABC() descendant calls super on constructor, giving a new random persistentId.
+		// Not dependant on the DAO save. HOWEVER, if the store() fails, then the parents are spoiled
+		inOrderHeader.addHeadersContainerUse(result);
+		
 		result.setUsedOn(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		result.setParent(inContainer);
-		mContainerUseDao.store(result);
 		
 		inContainer.addContainerUse(result);
+		
+		// This one-to-one relationship needs both persisted
+		mContainerUseDao.store(result);
+		mOrderHeaderDao.store(inOrderHeader);
 		
 		return result;
 	}

@@ -64,8 +64,8 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(Che.class);
-		
+	private static final Logger		LOGGER				= LoggerFactory.getLogger(Che.class);
+
 	/*
 	@ManyToOne(optional = false)
 	private CodeshelfNetwork parent;
@@ -75,13 +75,13 @@ public class Che extends WirelessDeviceABC {
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private WorkArea			currentWorkArea;
+	private WorkArea				currentWorkArea;
 
 	// The current user.
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private User				currentUser;
+	private User					currentUser;
 
 	// Service state.
 	@NotNull
@@ -89,12 +89,12 @@ public class Che extends WirelessDeviceABC {
 	@Getter
 	@Setter
 	@JsonProperty
-	private ColorEnum			color;
+	private ColorEnum				color;
 
 	// ebeans maintains a lazy-loaded list of containerUse for this CHE
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
-	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+	private List<ContainerUse>		uses				= new ArrayList<ContainerUse>();
 
 	@OneToMany(mappedBy = "assignedChe")
 	@OrderBy("groupAndSortCode")
@@ -104,7 +104,7 @@ public class Che extends WirelessDeviceABC {
 		this();
 		setDomainId(domainId);
 	}
-	
+
 	public Che() {
 		super();
 		color = ColorEnum.BLUE;
@@ -114,7 +114,7 @@ public class Che extends WirelessDeviceABC {
 	public final ITypedDao<Che> getDao() {
 		return DAO;
 	}
-	
+
 	public final static void setDao(ITypedDao<Che> dao) {
 		Che.DAO = dao;
 	}
@@ -123,46 +123,51 @@ public class Che extends WirelessDeviceABC {
 		return "CHE";
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void addContainerUse(ContainerUse inContainerUse) {
 		Che previousChe = inContainerUse.getCurrentChe();
-		if(previousChe == null) {
+		if (previousChe == null) {
 			uses.add(inContainerUse);
-			inContainerUse.setCurrentChe(this);
+			inContainerUse.setCurrentChe(this); 
+		} else if (previousChe.equals(this)) { 
+			LOGGER.warn("call to add ContainerUse " + inContainerUse.getDomainId() + " to " + this.getDomainId()
+					+ " when it already is. This is a noOp ");
 		} else {
-			LOGGER.error("cannot add ContainerUse "+inContainerUse.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousChe.getDomainId());
-		}	
+			LOGGER.error("cannot add ContainerUse " + inContainerUse.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousChe.getDomainId());
+		}
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
 	public final void removeContainerUse(ContainerUse inContainerUse) {
-		if(uses.contains(inContainerUse)) {
+		if (uses.contains(inContainerUse)) {
 			inContainerUse.setCurrentChe(null);
 			uses.remove(inContainerUse);
 		} else {
-			LOGGER.error("cannot remove ContainerUse "+inContainerUse.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove ContainerUse " + inContainerUse.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
 		Che previousChe = inWorkInstruction.getAssignedChe();
-		if(previousChe == null) {
+		if (previousChe == null) {
 			cheWorkInstructions.add(inWorkInstruction);
 			inWorkInstruction.setAssignedChe(this);
-		} else if(!previousChe.equals(this)) {
-			LOGGER.error("cannot add WorkInstruction "+inWorkInstruction.getPersistentId()+" to "+this.getDomainId()+" because it has not been removed from "+previousChe.getDomainId());
-		}	
+		} else if (!previousChe.equals(this)) {
+			LOGGER.error("cannot add WorkInstruction " + inWorkInstruction.getPersistentId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousChe.getDomainId());
+		}
 	}
 
 	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
-		if(this.cheWorkInstructions.contains(inWorkInstruction)) {
+		if (this.cheWorkInstructions.contains(inWorkInstruction)) {
 			inWorkInstruction.setAssignedChe(null);
 			cheWorkInstructions.remove(inWorkInstruction);
 		} else {
-			LOGGER.error("cannot remove WorkInstruction "+inWorkInstruction.getPersistentId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getPersistentId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
-	
+
 	//  Called from the UI, so really should return any persistence error.
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 	public final void changeControllerId(String inNewControllerId) {
@@ -176,12 +181,12 @@ public class Che extends WirelessDeviceABC {
 
 		catch (Exception e) {
 			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-			LOGGER.error("Failed to set controller ID",e);
+			LOGGER.error("Failed to set controller ID", e);
 		}
 		if (newGuid != null) {
 			try {
 				this.setDeviceNetGuid(newGuid);
-				this.setDomainId(this.toString()); 
+				this.setDomainId(this.toString());
 				// curious that setDeviceNetGuid does not do the persist
 				Che.DAO.store(this);
 			} catch (DaoException e) {
@@ -189,7 +194,7 @@ public class Che extends WirelessDeviceABC {
 			}
 		}
 	}
-	
+
 	// Utility functions for CHE work instructions, past runs and current
 	// the ebeans getter gives us List<WorkInstruction> aList =	getCheWorkInstructions();
 	// Work instruction has assignedChe. When work instructions are computed for a run, they all get the same assignedTime field set.
@@ -197,7 +202,7 @@ public class Che extends WirelessDeviceABC {
 	public final Timestamp getTimeStampOfCurrentRun() {
 		// return null if not on a current run.
 		WorkInstruction latestAssignedWi = null; // there is no active field on wi
-		
+
 		for (WorkInstruction wi : cheWorkInstructions) {
 			Timestamp wiTime = wi.getAssigned();
 			if (wiTime != null) {
@@ -206,16 +211,16 @@ public class Che extends WirelessDeviceABC {
 				else {
 					if (wiTime.after(latestAssignedWi.getAssigned()))
 						latestAssignedWi = wi;
-				}					
+				}
 			}
 		}
-		
+
 		if (latestAssignedWi != null)
 			return latestAssignedWi.getAssigned();
-		
+
 		return null;
 	}
-	
+
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(String inContainers) {
 		CodeshelfNetwork network = this.getParent();
@@ -234,18 +239,17 @@ public class Che extends WirelessDeviceABC {
 	 */
 	public final String getActiveContainers() {
 		String returnStr = "";
-		
+
 		for (ContainerUse use : getUses()) {
 			if (use.getActive()) {
 				if (returnStr.isEmpty())
 					returnStr = use.getContainerName();
 				else {
 					returnStr = returnStr + "," + use.getContainerName();
-				}					
+				}
 			}
 		}
 		return returnStr;
 	}
 
 }
-

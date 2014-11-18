@@ -111,13 +111,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		}
 	}
 
-	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
+	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
 	// The owning organization.
 	@NotNull
 	@ManyToOne
 	private Organization					parentOrganization;
-	
+
 	//	@Column(nullable = false)
 	//	@ManyToOne(optional = false)
 	//	private SubLocationABC					parent;
@@ -125,56 +125,56 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	/*
 	@OneToMany(mappedBy = "parent",targetEntity=SubLocationABC.class)
 	*/
-	
+
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Container>			containers		= new HashMap<String, Container>();
+	private Map<String, Container>			containers			= new HashMap<String, Container>();
 
 	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
 	@MapKey(name = "domainId")
-	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
+	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
 	@Getter
-	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
+	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, ItemMaster>			itemMasters		= new HashMap<String, ItemMaster>();
+	private Map<String, ItemMaster>			itemMasters			= new HashMap<String, ItemMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
+	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderGroup>			orderGroups		= new HashMap<String, OrderGroup>();
+	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, OrderHeader>		orderHeaders	= new HashMap<String, OrderHeader>();
+	private Map<String, OrderHeader>		orderHeaders		= new HashMap<String, OrderHeader>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Path>				paths			= new HashMap<String, Path>();
+	private Map<String, Path>				paths				= new HashMap<String, Path>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
+	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, LocationAlias>		locationAliases	= new HashMap<String, LocationAlias>();
+	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
 
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<WorkInstruction>			workInstructions= new ArrayList<WorkInstruction>();
+	private List<WorkInstruction>			workInstructions	= new ArrayList<WorkInstruction>();
 
 	@Transient
 	// for now installation specific.  property needs to be exposed as a configuration parameter.
 	@Getter
 	@Setter
-	static WorkInstructionSequencerType		sequencerType	= WorkInstructionSequencerType.BayDistance;
+	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
 
 	// TODO: replace with configuration via database table
 	static {
@@ -214,28 +214,31 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addAisle(Aisle inAisle) {
 		Facility previousFacility = inAisle.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			this.addLocation(inAisle);
 			inAisle.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add Aisle "+inAisle.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}		
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add Aisle " + inAisle.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final void removeAisle(Aisle inAisle) {
 		String domainId = inAisle.getDomainId();
-		if(this.getLocations().get(domainId) != null) {				
+		if (this.getLocations().get(domainId) != null) {
 			inAisle.setParent(null);
 			this.removeLocation(domainId);
 		} else {
-			LOGGER.error("cannot remove Aisle "+inAisle.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove Aisle " + inAisle.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addPath(Path inPath) {
 		Facility facility = inPath.getParent();
-		if (facility!=null && !facility.equals(this)) {
-			LOGGER.error("cannot add Path "+inPath.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+facility.getDomainId());
+		if (facility != null && !facility.equals(this)) {
+			LOGGER.error("cannot add Path " + inPath.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + facility.getDomainId());
 			return;
 		}
 		paths.put(inPath.getDomainId(), inPath);
@@ -252,22 +255,23 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removePath(String inPathId) {
 		Path path = this.getPath(inPathId);
-		if(path != null) {
+		if (path != null) {
 			path.setParent(null);
-			paths.remove(inPathId);			
+			paths.remove(inPathId);
 		} else {
-			LOGGER.error("cannot remove Path "+inPathId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove Path " + inPathId + " from " + this.getDomainId() + " because it isn't found in children");
 		}
 	}
 
 	public final void addContainer(Container inContainer) {
 		Facility previousFacility = inContainer.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			containers.put(inContainer.getDomainId(), inContainer);
 			inContainer.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add Container "+inContainer.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add Container " + inContainer.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final Container getContainer(String inContainerId) {
@@ -280,22 +284,24 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeContainer(String inContainerId) {
 		Container container = this.getContainer(inContainerId);
-		if(container != null) {
+		if (container != null) {
 			container.setParent(null);
 			containers.remove(inContainerId);
 		} else {
-			LOGGER.error("cannot remove Container "+inContainerId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove Container " + inContainerId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addContainerKind(ContainerKind inContainerKind) {
 		Facility previousFacility = inContainerKind.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			containerKinds.put(inContainerKind.getDomainId(), inContainerKind);
 			inContainerKind.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add ContainerKind "+inContainerKind.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add ContainerKind " + inContainerKind.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final ContainerKind getContainerKind(String inContainerKindId) {
@@ -304,60 +310,66 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeContainerKind(String inContainerKindId) {
 		ContainerKind containerKind = this.getContainerKind(inContainerKindId);
-		if(containerKind != null) {
+		if (containerKind != null) {
 			containerKind.setParent(null);
 			containerKinds.remove(inContainerKindId);
 		} else {
-			LOGGER.error("cannot remove ContainerKind "+inContainerKindId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove ContainerKind " + inContainerKindId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addEdiService(IEdiService inEdiService) {
 		Facility previousFacility = inEdiService.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			ediServices.add(inEdiService);
 			inEdiService.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add EdiService "+inEdiService.getServiceName()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add EdiService " + inEdiService.getServiceName() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final void removeEdiService(IEdiService inEdiService) {
-		if(this.ediServices.contains(inEdiService)) {
+		if (this.ediServices.contains(inEdiService)) {
 			inEdiService.setParent(null);
-			ediServices.remove(inEdiService);			
+			ediServices.remove(inEdiService);
 		} else {
-			LOGGER.error("cannot remove EdiService "+inEdiService.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove EdiService " + inEdiService.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addWorkInstruction(WorkInstruction wi) {
 		Facility previousFacility = wi.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			workInstructions.add(wi);
 			wi.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add WorkInstruction "+wi.getPersistentId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add WorkInstruction " + wi.getPersistentId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final void removeWorkInstruction(WorkInstruction wi) {
-		if(this.workInstructions.contains(wi)) {
+		if (this.workInstructions.contains(wi)) {
 			wi.setParent(null);
-			workInstructions.remove(wi);			
+			workInstructions.remove(wi);
 		} else {
-			LOGGER.error("cannot remove WorkInstruction "+wi.getPersistentId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove WorkInstruction " + wi.getPersistentId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addItemMaster(ItemMaster inItemMaster) {
 		Facility previousFacility = inItemMaster.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			itemMasters.put(inItemMaster.getDomainId(), inItemMaster);
 			inItemMaster.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add ItemMaster "+inItemMaster.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add ItemMaster " + inItemMaster.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final ItemMaster getItemMaster(String inItemMasterId) {
@@ -366,11 +378,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeItemMaster(String inItemMasterId) {
 		ItemMaster itemMaster = this.getItemMaster(inItemMasterId);
-		if(itemMaster != null) {
+		if (itemMaster != null) {
 			itemMaster.setParent(null);
 			itemMasters.remove(inItemMasterId);
 		} else {
-			LOGGER.error("cannot remove ItemMaster "+inItemMasterId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove ItemMaster " + inItemMasterId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -380,12 +393,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addOrderGroup(OrderGroup inOrderGroup) {
 		Facility previousFacility = inOrderGroup.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			orderGroups.put(inOrderGroup.getDomainId(), inOrderGroup);
 			inOrderGroup.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add OrderGroup "+inOrderGroup.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add OrderGroup " + inOrderGroup.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final OrderGroup getOrderGroup(String inOrderGroupId) {
@@ -394,11 +408,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeOrderGroup(String inOrderGroupId) {
 		OrderGroup orderGroup = this.getOrderGroup(inOrderGroupId);
-		if(orderGroup != null) {
+		if (orderGroup != null) {
 			orderGroup.setParent(null);
 			orderGroups.remove(inOrderGroupId);
 		} else {
-			LOGGER.error("cannot remove OrderGroup "+inOrderGroupId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove OrderGroup " + inOrderGroupId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -408,10 +423,10 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addOrderHeader(OrderHeader inOrderHeader) {
 		Facility previousFacility = inOrderHeader.getParent();
-		if (previousFacility!=null && !previousFacility.equals(this)) {
-			LOGGER.error("cannot add OrderHeader "+inOrderHeader.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}
-		else {
+		if (previousFacility != null && !previousFacility.equals(this)) {
+			LOGGER.error("cannot add OrderHeader " + inOrderHeader.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		} else {
 			orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
 			inOrderHeader.setParent(this);
 		}
@@ -423,11 +438,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeOrderHeader(String inOrderHeaderId) {
 		OrderHeader orderHeader = this.getOrderHeader(inOrderHeaderId);
-		if(orderHeader != null) {
+		if (orderHeader != null) {
 			orderHeader.setParent(null);
 			orderHeaders.remove(inOrderHeaderId);
 		} else {
-			LOGGER.error("cannot remove OrderHeader "+inOrderHeaderId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove OrderHeader " + inOrderHeaderId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -437,12 +453,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addUomMaster(UomMaster inUomMaster) {
 		Facility previousFacility = inUomMaster.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			uomMasters.put(inUomMaster.getDomainId(), inUomMaster);
 			inUomMaster.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add UomMaster "+inUomMaster.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add UomMaster " + inUomMaster.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final UomMaster getUomMaster(String inUomMasterId) {
@@ -451,22 +468,24 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeUomMaster(String inUomMasterId) {
 		UomMaster uomMaster = this.getUomMaster(inUomMasterId);
-		if(uomMaster != null) {
+		if (uomMaster != null) {
 			uomMaster.setParent(null);
 			uomMasters.remove(inUomMasterId);
 		} else {
-			LOGGER.error("cannot remove UomMaster "+inUomMasterId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove UomMaster " + inUomMasterId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addNetwork(CodeshelfNetwork inNetwork) {
 		Facility previousFacility = inNetwork.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			networks.put(inNetwork.getDomainId(), inNetwork);
 			inNetwork.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add CodeshelfNetwork "+inNetwork.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add CodeshelfNetwork " + inNetwork.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final CodeshelfNetwork getNetwork(String inNetworkId) {
@@ -475,11 +494,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeNetwork(String inNetworkId) {
 		CodeshelfNetwork network = this.getNetwork(inNetworkId);
-		if(network  != null) {
+		if (network != null) {
 			network.setParent(null);
 			networks.remove(inNetworkId);
 		} else {
-			LOGGER.error("cannot remove CodeshelfNetwork "+inNetworkId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove CodeshelfNetwork " + inNetworkId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -489,12 +509,13 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addLocationAlias(LocationAlias inLocationAlias) {
 		Facility previousFacility = inLocationAlias.getParent();
-		if(previousFacility == null) {
+		if (previousFacility == null) {
 			locationAliases.put(inLocationAlias.getDomainId(), inLocationAlias);
 			inLocationAlias.setParent(this);
-		} else if(!previousFacility.equals(this)) {
-			LOGGER.error("cannot add LocationAlias "+inLocationAlias.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousFacility.getDomainId());
-		}	
+		} else if (!previousFacility.equals(this)) {
+			LOGGER.error("cannot add LocationAlias " + inLocationAlias.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousFacility.getDomainId());
+		}
 	}
 
 	public final LocationAlias getLocationAlias(String inLocationAliasId) {
@@ -503,11 +524,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void removeLocationAlias(String inLocationAliasId) {
 		LocationAlias locationAlias = this.getLocationAlias(inLocationAliasId);
-		if(locationAlias  != null) {
+		if (locationAlias != null) {
 			locationAlias.setParent(null);
 			locationAliases.remove(inLocationAliasId);
 		} else {
-			LOGGER.error("cannot remove LocationAlias "+inLocationAliasId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove LocationAlias " + inLocationAliasId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -566,9 +588,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		Path path = new Path();
 		path.setDomainId(inDomainId);
 
-		this.addPath(path); 
+		this.addPath(path);
 		Path.DAO.store(path);
-		
+
 		path.createDefaultWorkArea(); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
 		return path;
 	}
@@ -869,11 +891,11 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		changedChes.add(inChe);
 
 		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
-		Collection<WorkInstructionTypeEnum> wiTypes=new ArrayList<WorkInstructionTypeEnum>(3);
+		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
 		wiTypes.add(WorkInstructionTypeEnum.PLAN);
 		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
-		
+
 		// Delete any planned WIs for this CHE.
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
@@ -914,19 +936,26 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				ContainerUse thisUse = container.getCurrentContainerUse();
 				if (thisUse != null) {
 					newCntrUses.add(thisUse); // DEV-492 bit
-					if (thisUse.getCurrentChe() != null) {
-						changedChes.add(thisUse.getCurrentChe());
+					Che previousChe = thisUse.getCurrentChe();
+					if (previousChe != null) {
+						changedChes.add(previousChe);
 					}
-					// thisUse.setCurrentChe(inChe); only do from the parent in  our hibernate pattern
-					inChe.addContainerUse(thisUse);
-					try {
-						ContainerUse.DAO.store(thisUse);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
+					if (previousChe == null) {
+						inChe.addContainerUse(thisUse);
+					} else if (!previousChe.equals(inChe)) {
+						previousChe.removeContainerUse(thisUse);
+						inChe.addContainerUse(thisUse);
 					}
+				}
+
+				try {
+					ContainerUse.DAO.store(thisUse);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
 				}
 			}
 		}
+
 		// DEV-492 remove previous container uses.
 		// just to avoid a long hang after this first runs against old data with hundreds of stale uses, limit to 50.
 		int cleanCount = 0;
@@ -1055,18 +1084,18 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		wiTypes.add(WorkInstructionTypeEnum.PLAN);
 		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
-		
+
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe", inChe));
 		filterParams.add(Restrictions.in("type", wiTypes));
 		filterParams.add(Restrictions.ge("posAlongPath", inFromStartingPosition));
-		
+
 		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
-		
+
 		// Hibernate version has test failing with database lock here, so pull out the query
 		List<WorkInstruction> filterWiList = WorkInstruction.DAO.findByFilter(filterParams);
-		
+
 		for (WorkInstruction wi : filterWiList) {
 			// Very unlikely. But if some wiLocations were deleted between start work and scan starting location, let's not give out the "deleted" wis
 			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
@@ -1131,7 +1160,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		// "wrap" to the complete list.
 		List<WorkInstruction> wrappedRouteWiList = new ArrayList<WorkInstruction>();
 		if (wiCountFromStartLocation == 0) {
-			for (WorkInstruction wi : completeRouteWiList) 
+			for (WorkInstruction wi : completeRouteWiList)
 				wrappedRouteWiList.add(wi);
 		} else {
 			// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
@@ -1145,8 +1174,11 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			for (WorkInstruction wi : completeRouteWiList) {
 				if (wi.equals(firstWi))
 					break; // stop adding from the complete list once we reach the point already in it.
-				if (!firstAdded) 	// We usually need to add a new baychange here
-					wrappedRouteWiList = HousekeepingInjector.addHouseKeepingIfNecessary(this, lastWiFirstPart, wi, wrappedRouteWiList);
+				if (!firstAdded) // We usually need to add a new baychange here
+					wrappedRouteWiList = HousekeepingInjector.addHouseKeepingIfNecessary(this,
+						lastWiFirstPart,
+						wi,
+						wrappedRouteWiList);
 				wrappedRouteWiList.add(wi);
 				firstAdded = true;
 			}
@@ -1541,8 +1573,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
-				if(!wi.getFacility().equals(this)) {
-					LOGGER.error("Strange: Work instruction "+resultWi.getPersistentId()+" in OrderDetail "+inOrderDetail.getDomainId()+" does not belong to Facility "+this.getDomainId()+" (continuing)");
+				if (!wi.getFacility().equals(this)) {
+					LOGGER.error("Strange: Work instruction " + resultWi.getPersistentId() + " in OrderDetail "
+							+ inOrderDetail.getDomainId() + " does not belong to Facility " + this.getDomainId() + " (continuing)");
 				}
 				break;
 			} else if (wi.getType().equals(WorkInstructionTypeEnum.ACTUAL)) {
@@ -1565,7 +1598,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
 				this.addWorkInstruction(resultWi);
 			}
-			
+
 			ColorEnum cheColor = inChe.getColor();
 			// Set the LED lighting pattern for this WI.
 			if (inStatus == WorkInstructionStatusEnum.SHORT) {
@@ -2031,7 +2064,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				// Start the next DDC group.
 				lastDdcGroup = new ItemDdcGroup();
 				lastDdcGroup.setDdcGroupId(item.getParent().getDdcId());
-				
+
 				lastDdcGroup.setStartPosAlongPath(item.getPosAlongPath());
 				item.getStoredLocation().addItemDdcGroup(lastDdcGroup);
 			}
@@ -2290,7 +2323,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			uomMaster);
 		return returnItem;
 	}
- 
+
 	private final Set<SiteController> getSiteControllers() {
 		Set<SiteController> siteControllers = new HashSet<SiteController>();
 
@@ -2336,7 +2369,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			this.firstLocationOnPath = firstLocationOnPath;
 		}
 	}
-		
 
 	public Organization getOrganization() {
 		return parentOrganization;
@@ -2359,15 +2391,16 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		aisle.setDomainId(inAisleId);
 		aisle.setAnchorPoint(inAnchorPoint);
 		aisle.setPickFaceEndPoint(inPickFaceEndPoint);
-					
+
 		this.addAisle(aisle);
-		
+
 		return aisle;
 	}
-	
+
 	@Override
 	public void setParent(ISubLocation<?> inParent) {
-		LOGGER.error("tried to set Facility "+this.getDomainId()+" parent to non-organization "+inParent.getClassName()+" "+inParent.getDomainId());
+		LOGGER.error("tried to set Facility " + this.getDomainId() + " parent to non-organization " + inParent.getClassName() + " "
+				+ inParent.getDomainId());
 	}
 
 	public UomMaster createUomMaster(String inDomainId) {
@@ -2376,21 +2409,24 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		this.addUomMaster(uomMaster);
 		return uomMaster;
 	}
+
 	public Container createContainer(String inDomainId) {
 		Container container = new Container();
 		container.setDomainId(inDomainId);
 		this.addContainer(container);
 		return container;
 	}
+
 	public ItemMaster createItemMaster(String inDomainId, UomMaster uomMaster) {
-		ItemMaster itemMaster=null;
-		if(uomMaster.getParent().equals(this)) {
+		ItemMaster itemMaster = null;
+		if (uomMaster.getParent().equals(this)) {
 			itemMaster = new ItemMaster();
 			itemMaster.setDomainId(inDomainId);
 			itemMaster.setStandardUom(uomMaster);
 			this.addItemMaster(itemMaster);
 		} else {
-			LOGGER.error("can't create ItemMaster "+inDomainId+" with UomMaster "+uomMaster.getDomainId()+" under "+this.getDomainId()+" because UomMaster parent is "+uomMaster.getParentFullDomainId());
+			LOGGER.error("can't create ItemMaster " + inDomainId + " with UomMaster " + uomMaster.getDomainId() + " under "
+					+ this.getDomainId() + " because UomMaster parent is " + uomMaster.getParentFullDomainId());
 		}
 		return itemMaster;
 	}
@@ -2398,14 +2434,14 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	public Aisle getAisle(String domainId) {
 		SubLocationABC<? extends IDomainObject> location = this.getLocations().get(domainId);
 
-		if(location!=null) {
-			if(location.getClass().equals(Aisle.class)) {
-				return (Aisle)location;
+		if (location != null) {
+			if (location.getClass().equals(Aisle.class)) {
+				return (Aisle) location;
 			} else {
-				LOGGER.error("child location "+domainId+" of Facility was not an Aisle, found "+location.getClassName());
+				LOGGER.error("child location " + domainId + " of Facility was not an Aisle, found " + location.getClassName());
 			}
 		} //else
 		return null;
 	}
-	
+
 }
