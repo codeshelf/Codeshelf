@@ -266,13 +266,51 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return new ArrayList<OrderDetail>(orderDetails.values());
 	}
 
+	static boolean containerUseAlreadyConsistentWithHeader(ContainerUse inUse) {
+		OrderHeader previousHeader = inUse.getOrderHeader();
+		if (previousHeader == null)
+			return false;
+		ContainerUse previousHeadersUse = previousHeader.getContainerUse();
+		if (previousHeadersUse == null)
+			return false;
+		return previousHeadersUse.equals(inUse);
+	}
+	
+	private final boolean thisHeaderAlreadyConsistentWithUse() {
+		ContainerUse previousUse = getContainerUse();
+		if (previousUse == null)
+			return false;	
+		OrderHeader previousUseHeader = previousUse.getOrderHeader();
+		if (previousUseHeader == null)
+			return false;
+		return previousUseHeader.equals(this);
+	}
+
+	
 	public final void addHeadersContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
 			LOGGER.error("null input to OrderHeader.addHeadersContainerUse");
 			return;
 		}
 		// Intent: set the one-to-one relationship fields unless this orderHeader already has a containerUse
-		// However, as the fields in both directions persist, update anyway in the error case. Otherwise an orphan relationship could never be cleaned up 
+		// However, as the fields in both directions persist, update anyway on inconsistent data. Otherwise an orphan relationship could never be cleaned up 
+		if (containerUseAlreadyConsistentWithHeader(inContainerUse)) {
+			LOGGER.error("did not add ContainerUse " + inContainerUse.getContainerName() + " to " + this.getDomainId()
+				+ " because it already has a consistent relationship with an order header ");
+			return;
+		}
+		if (thisHeaderAlreadyConsistentWithUse()) {
+			LOGGER.error("did not add ContainerUse " + inContainerUse.getContainerName() + " to " + this.getDomainId()
+				+ " because this OrderHeader already has a consistent relationship with an ContainerUse ");
+			return;
+		}
+		
+		// Keep it simple for now. Just do the sets
+		setContainerUse(inContainerUse);
+		inContainerUse.setOrderHeader(this);
+		return;
+		
+		/*
 		OrderHeader previousOrderHeader = inContainerUse.getOrderHeader();
 		if (previousOrderHeader == null) {
 			setContainerUse(inContainerUse);
@@ -316,6 +354,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 				}
 			}
 		}
+		*/
+		
 	}
 
 	public final void removeHeadersContainerUse(ContainerUse inContainerUse) {
