@@ -6,6 +6,7 @@
 package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.Set;
+import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
@@ -15,10 +16,10 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
  */
 public interface IDaoListener {
 	
-	void objectAdded(IDomainObject inObject);
+	void objectAdded(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
 	
-	void objectUpdated(IDomainObject inObject, Set<String> inChangedProperties);
+	void objectUpdated(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties);
 	
-	void objectDeleted(IDomainObject inObject);
+	void objectDeleted(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
 
 }

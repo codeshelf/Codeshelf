@@ -61,11 +61,4 @@ public interface ITypedDao<T> extends IDao {
 	 * @see tests of the outbound order importer
 	 */
 	void clearAllCaches();
-
-	void broadcastAdd(IDomainObject inDomainObject);
-
-	void broadcastUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties);
-
-	void broadcastDelete(IDomainObject inDomainObject);
-
 }

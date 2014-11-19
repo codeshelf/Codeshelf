@@ -1,9 +1,11 @@
 package com.gadgetworks.codeshelf.filter;
 
 import java.util.Set;
+import java.util.UUID;
 
 import lombok.Getter;
 
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -29,28 +31,28 @@ public class NetworkChangeListener implements ObjectEventListener {
 	}
 	
 	@Override
-	public MessageABC processObjectAdd(IDomainObject inDomainObject) {
-		return onAnythingChanged(inDomainObject);
+	public MessageABC processObjectAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		return onAnythingChanged(domainClass, domainPersistentId);
 	}
 
 	@Override
-	public MessageABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		return onAnythingChanged(inDomainObject);
+	public MessageABC processObjectUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties) {
+		return onAnythingChanged(domainClass, domainPersistentId);
 	}
 
 	@Override
-	public MessageABC processObjectDelete(IDomainObject inDomainObject) {
-		return onAnythingChanged(inDomainObject);
+	public MessageABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		return onAnythingChanged(domainClass, domainPersistentId);
 	}
 	
-	private MessageABC onAnythingChanged(IDomainObject inDomainObject) {
+	private MessageABC onAnythingChanged(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		CodeshelfNetwork network = null;
-		if(inDomainObject instanceof WirelessDeviceABC) {
-			WirelessDeviceABC device = (WirelessDeviceABC)inDomainObject;
-			network = device.getParent();
+		if(WirelessDeviceABC.class.isAssignableFrom(domainClass)) {
+			WirelessDeviceABC object = (WirelessDeviceABC) PersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
+			network = object.getParent();
 			
-		} else if(inDomainObject instanceof CodeshelfNetwork) {
-			network = (CodeshelfNetwork) inDomainObject;
+		} else if(CodeshelfNetwork.class.isAssignableFrom(domainClass)) {
+			network = (CodeshelfNetwork) PersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
 		}
 		if(network != null) {
 			// if the object changed within this network, generate a new network status response
@@ -61,14 +63,14 @@ public class NetworkChangeListener implements ObjectEventListener {
 		return null;
 	}
 	
-	public static void registerWithSession(UserSession session, CodeshelfNetwork network) {
+	public static void registerWithSession(ObjectChangeBroadcaster objectChangeBroadcaster, UserSession session, CodeshelfNetwork network) {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);
 		// register DAOs
-		session.registerAsDAOListener(PersistenceService.getDao(Che.class));
-		session.registerAsDAOListener(PersistenceService.getDao(LedController.class));
-		session.registerAsDAOListener(PersistenceService.getDao(SiteController.class));
-		session.registerAsDAOListener(PersistenceService.getDao(CodeshelfNetwork.class));
+		objectChangeBroadcaster.registerDAOListener(session, Che.class);
+		objectChangeBroadcaster.registerDAOListener(session, LedController.class);
+		objectChangeBroadcaster.registerDAOListener(session, SiteController.class);
+		objectChangeBroadcaster.registerDAOListener(session, CodeshelfNetwork.class);
 	}
 }

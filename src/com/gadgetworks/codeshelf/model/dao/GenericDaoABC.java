@@ -52,40 +52,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 
 	// --------------------------------------------------------------------------
-
-	/**
-	 * @param inDomainObject
-	 */
-	@Override
-	public void broadcastAdd(final IDomainObject inDomainObject) {
-		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectAdded(inDomainObject);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inDomainObject
-	 */
-	@Override
-	public void broadcastUpdate(final IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectUpdated(inDomainObject, inChangedProperties);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inDomainObject
-	 */
-	@Override
-	public void broadcastDelete(final IDomainObject inDomainObject) {
-		for (IDaoListener daoListener : mListeners) {
-			daoListener.objectDeleted(inDomainObject);
-		}
-	}
-
-	// --------------------------------------------------------------------------
 	/**
 	 * @param inDomainObject
 	 * @return
@@ -287,37 +253,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return results;
 	}
 
-	/*
-	 * --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
-	 */
-	public final void registerDAOListener(IDaoListener inListener) {
-		if (!mListeners.contains(inListener)) {
-			mListeners.add(inListener);
-		}
-	}
-
-	/*
-	 * --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
-	 */
-	public final void unregisterDAOListener(IDaoListener inListener) {
-		mListeners.remove(inListener);
-	}
-
-	/*
-	 * --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
-	 */
-	public final void removeDAOListeners() {
-		mListeners.clear();
-	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

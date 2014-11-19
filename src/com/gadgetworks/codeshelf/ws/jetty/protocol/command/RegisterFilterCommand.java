@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Filter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
@@ -37,10 +38,13 @@ public class RegisterFilterCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(RegisterFilterCommand.class);
 
 	private RegisterFilterRequest request;
+
+	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 	
-	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request) {
+	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.request = request;
+		this.objectChangeBroadcaster = objectChangeBroadcaster;
 	}
 	
 	@Override
@@ -71,12 +75,12 @@ public class RegisterFilterCommand extends CommandABC {
 			// First we find the object (by it's ID).
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
-				this.session.registerAsDAOListener(dao);
+				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
 
 				// create listener
-				Filter filter = new Filter((Class<IDomainObject>) classObject);				
-				filter.setId(request.getMessageId());
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
+				
+				Filter filter = new Filter((Class<IDomainObject>) classObject, request.getMessageId());				
 				filter.setPropertyNames(request.getPropertyNames());
 				filter.setParams(processedParams);
 				filter.setClause(filterClause);

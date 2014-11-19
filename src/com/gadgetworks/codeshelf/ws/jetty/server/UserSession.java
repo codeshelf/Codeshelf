@@ -3,7 +3,10 @@ package com.gadgetworks.codeshelf.ws.jetty.server;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import javax.websocket.CloseReason;
@@ -13,7 +16,6 @@ import javax.websocket.Session;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,11 +25,12 @@ import com.gadgetworks.codeshelf.filter.ObjectEventListener;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class UserSession implements IDaoListener {
 	public enum State {
@@ -69,11 +72,15 @@ public class UserSession implements IDaoListener {
 	private Timer pingTimer = null;
 	
 	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
-	
-	private Set<ITypedDao<IDomainObject>> daoList = new ConcurrentHashSet<ITypedDao<IDomainObject>>();
+
+	private ExecutorService	executorService;
 	
 	public UserSession(Session session) {
 		this.wsSession = session;
+		ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
+		builder.setNameFormat("UserSession %s");
+		this.executorService = Executors.newCachedThreadPool(builder.build());
+
 	}
 
 	public void sendMessage(final MessageABC message) {
@@ -105,33 +112,55 @@ public class UserSession implements IDaoListener {
 	}
 	
 	@Override
-	public void objectAdded(IDomainObject inDomainObject) {
-		for (ObjectEventListener listener : eventListeners.values()) {
-			MessageABC response = listener.processObjectAdd(inDomainObject);
-			if (response != null) {
-				sendMessage(response);
+	public void objectAdded(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		this.executorService.submit(new Runnable() {
+			
+			@Override
+			public void run() {
+				PersistenceService.getInstance().beginTenantTransaction();
+				for (ObjectEventListener listener : eventListeners.values()) {
+					MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
+					if (response != null) {
+						sendMessage(response);
+					}
+				}		
 			}
-		}		
+		});
 	}
 
 	@Override
-	public void objectUpdated(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		for (ObjectEventListener listener : eventListeners.values()) {
-			MessageABC response = listener.processObjectUpdate(inDomainObject, inChangedProperties);
-			if (response != null) {
-				sendMessage(response);
+	public void objectUpdated(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, final Set<String> inChangedProperties) {
+		this.executorService.submit(new Runnable() {
+			
+			@Override
+			public void run() {
+				PersistenceService.getInstance().beginTenantTransaction();
+				for (ObjectEventListener listener : eventListeners.values()) {
+					MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
+					if (response != null) {
+						sendMessage(response);
+					}
+				}		
 			}
-		}
+		});
 	}
 
 	@Override
-	public void objectDeleted(IDomainObject inDomainObject) {
-		for (ObjectEventListener listener : eventListeners.values()) {
-			MessageABC response = listener.processObjectDelete(inDomainObject);
-			if (response != null) {
-				sendMessage(response);
+	public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		this.executorService.submit(new Runnable() {
+			
+			@Override
+			public void run() {
+				PersistenceService.getInstance().beginTenantTransaction();
+				for (ObjectEventListener listener : eventListeners.values()) {
+					MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
+					if (response != null) {
+						sendMessage(response);
+					}
+				}		
 			}
-		}		
+		});
+		
 	}
 	
 	public void registerObjectEventListener(ObjectEventListener listener) {
@@ -143,23 +172,6 @@ public class UserSession implements IDaoListener {
 		LOGGER.debug("Event listener "+listenerId+" registered: "+listener);
 	}
 
-	public void registerAsDAOListener(ITypedDao<IDomainObject> dao) {
-		if (dao == null) {
-			LOGGER.error("couldn't register session as listener to null dao");
-		} else if (!daoList.contains(dao)) {
-			dao.registerDAOListener(this);
-			LOGGER.debug("Registered session "+this.sessionId+" with "+dao.getClass().getSimpleName());
-			this.daoList.add(dao);
-		}
-	}
-
-	public void unregisterAsDAOListener() {
-		for (ITypedDao<IDomainObject> dao : this.daoList) {
-			dao.unregisterDAOListener(this);
-			LOGGER.debug("Unregistered session "+this.sessionId+" from "+dao.getClass().getSimpleName());
-		}
-	}
-	
 	public void messageReceived() {
 		this.lastMessageReceived = System.currentTimeMillis();
 	}
@@ -173,7 +185,6 @@ public class UserSession implements IDaoListener {
 	}
 
 	public void disconnect(CloseReason reason) {
-		this.unregisterAsDAOListener();
 		this.lastState=State.CLOSED;
 		if(this.user != null)
 			this.user=null;

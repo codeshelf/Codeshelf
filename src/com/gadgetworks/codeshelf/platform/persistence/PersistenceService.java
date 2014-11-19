@@ -10,16 +10,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.hibernate.HibernateException;
+import lombok.Getter;
+
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.event.internal.DefaultSaveOrUpdateEventListener;
+import org.hibernate.event.spi.SaveOrUpdateEvent;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
@@ -34,50 +39,54 @@ public class PersistenceService extends Service {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
 	private static PersistenceService theInstance = null;
 	private Configuration configuration;
-	private String	hibernateConfigurationFile; 
-	
+	private String	hibernateConfigurationFile;
+
 	private String connectionUrl;
 	private String	userId;
 	private String	password;
 	private String schemaName;
-	
+
+	@Getter
+	private ObjectChangeBroadcaster	objectChangeBroadcaster;
+
 	// stores the factories for different tenants
-	Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
-	
+	private Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
+
 	// temp solution to get current tenant, while multitenancy has not been built out
-	Tenant fixedTenant;
-	
+	private Tenant fixedTenant;
+
 	// TODO: for debugging only, remove
-	Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>(); 
-	Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
+	private Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>();
+	private Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
 
 	private PersistenceService() {
 		setInstance();
+		objectChangeBroadcaster = new ObjectChangeBroadcaster();
 		fixedTenant = new Tenant("Tenant #1",1);
 	}
-	
+
 	private void setInstance() {
 		PersistenceService.theInstance = this;
 	}
-	
+
 	public final synchronized static boolean isRunning() {
 		return (theInstance != null && theInstance.isInitialized());
 	}
-	
+
 	public final synchronized static PersistenceService getInstance() {
 		if (theInstance == null) {
 			theInstance = new PersistenceService();
 			theInstance.configure();
 			theInstance.start();
 			LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
-		} 
+		}
 		else if (!theInstance.isInitialized()) {
 			theInstance.start();
 			LOGGER.info("PersistanceService was stopped and restarted");
 		}
 		return theInstance;
 	}
-	
+
 	private final void configure() {
 		// fetch database config from properties file
 		this.hibernateConfigurationFile="hibernate." + System.getProperty("db.hibernateconfig") + ".xml";
@@ -85,15 +94,15 @@ public class PersistenceService extends Service {
 			LOGGER.error("hibernateConfigurationFile is not defined.");
 			System.exit(-1);
 		}
-		
+
 		this.connectionUrl = System.getProperty("db.connectionurl");
 		if (this.connectionUrl==null) {
 			LOGGER.error("Database URL is not defined.");
 			System.exit(-1);
 		}
-		
+
 		this.schemaName = System.getProperty("db.schemaname"); //optional
-		
+
 		this.userId = System.getProperty("db.userid");
 		if (this.userId==null) {
 			LOGGER.error("Database User ID is not defined.");
@@ -101,21 +110,22 @@ public class PersistenceService extends Service {
 		}
 		this.password = System.getProperty("db.password");
 
-    	configuration = new Configuration().configure(this.hibernateConfigurationFile);	    	
+    	configuration = new Configuration().configure(this.hibernateConfigurationFile);
     	// String connectionUrl = "jdbc:postgresql://"+shard.getHost()+":"+shard.getPort()+"/shard"+shard.getShardId();
     	configuration.setProperty("hibernate.connection.url", this.connectionUrl);
     	configuration.setProperty("hibernate.connection.username", this.userId);
     	configuration.setProperty("hibernate.connection.password", this.password);
-    	
+
     	if(this.schemaName != null) {
 	    	configuration.setProperty("hibernate.default_schema", this.schemaName);
     	}
     	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
-    	configuration.setInterceptor(new HibernateInterceptor());
+    	configuration.setInterceptor(new HibernateInterceptor(this.objectChangeBroadcaster));
+
     	//configuration.setProperty("hibernate.connection.username", tenant.getName());
     	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
 	}
-	
+
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {
 		if (this.isInitialized()==false) {
 			throw new ServiceNotInitializedException();
@@ -137,7 +147,7 @@ public class PersistenceService extends Service {
         	}
         }
 	}
-	
+
 	@Override
 	public final boolean start() {
 		if(this.isInitialized()) {
@@ -155,7 +165,7 @@ public class PersistenceService extends Service {
 		if(this.hasActiveTransaction()) {
 			this.rollbackTenantTransaction();
 		}
-		
+
 		/*
 		 * keep session factories...
 		for(SessionFactory sf : this.factories.values()) {
@@ -163,11 +173,11 @@ public class PersistenceService extends Service {
 		}
 		this.factories = new HashMap<Tenant, SessionFactory>(); // unlink session factories
 		 */
-		
+
 		// unlink debugging stuff
-		this.sessionStarted=new HashMap<Session,StackTraceElement[]>(); 
+		this.sessionStarted=new HashMap<Session,StackTraceElement[]>();
 		this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
-		
+
 		this.setInitialized(false);
 		return true;
 	}
@@ -180,18 +190,18 @@ public class PersistenceService extends Service {
 			this.factories.put(tenant, fac);
 		}
 		Session session = fac.getCurrentSession();
-		
+
 		if(!this.sessionStarted.containsKey(session)) {
 			this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
 		}
-		
+
 		return session;
 	}
 
 	private Tenant getCurrentTenant() {
 		return this.fixedTenant;
 	}
-	
+
 	public final Transaction beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		StackTraceElement st[]=this.sessionStarted.get(session);
@@ -207,7 +217,7 @@ public class PersistenceService extends Service {
 				return tx;
 			} // else we will begin new transaction
 		}
-		
+
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
 	}
@@ -221,7 +231,7 @@ public class PersistenceService extends Service {
 			LOGGER.error("tried to close inactive Tenant transaction");
 		}
 	}
-	
+
 	public final void rollbackTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		Transaction tx = session.getTransaction();
@@ -231,7 +241,7 @@ public class PersistenceService extends Service {
 			LOGGER.error("tried to roll back inactive Tenant transaction");
 		}
 	}
-	
+
 	public boolean hasActiveTransaction() {
 		if(this.isInitialized() == false) {
 			return false;
@@ -254,7 +264,7 @@ public class PersistenceService extends Service {
 		} //else
 		return tx.isActive();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
 		if (classObject==null) {
@@ -278,11 +288,11 @@ public class PersistenceService extends Service {
 
 	public void resetDatabase() {
 		SchemaExport se = new SchemaExport(this.configuration);
-		se.create(false, true);		
+		se.create(false, true);
 	}
-	
+
 	public void createNewSchema() throws SQLException {
-		Connection conn = DriverManager.getConnection(configuration.getProperty("hibernate.connection.url"), 
+		Connection conn = DriverManager.getConnection(configuration.getProperty("hibernate.connection.url"),
 			configuration.getProperty("hibernate.connection.username"),
 			configuration.getProperty("hibernate.connection.password"));
 
@@ -294,4 +304,5 @@ public class PersistenceService extends Service {
 
 		resetDatabase();
 	}
+
 }

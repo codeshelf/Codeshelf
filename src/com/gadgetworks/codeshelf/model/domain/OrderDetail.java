@@ -212,6 +212,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		if (uomMaster != null) {
 			return uomMaster.getDomainId();
 		} else {
+			LOGGER.error("Unexpected null uomMaster for detail: " + this);
 			return "";
 		}
 	}
@@ -221,6 +222,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		if (itemMaster != null) {
 			return itemMaster.getDomainId();
 		} else {
+			LOGGER.error("Unexpected null itemMaster for detail: " + this);
 			return "";
 		}
 	}

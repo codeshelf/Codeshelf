@@ -6,15 +6,11 @@
 package com.gadgetworks.codeshelf.model.dao;
 
 /**
+ * Marker Interface for Dao objects.
+ * 
  * @author jeffw
  *
  */
 public interface IDao {
-
-	void registerDAOListener(IDaoListener inListener);
-
-	void unregisterDAOListener(IDaoListener inListener);
-
-	void removeDAOListeners();
 
 }

@@ -9,9 +9,9 @@ import org.hibernate.type.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.google.inject.Inject;
 
 public class HibernateInterceptor extends EmptyInterceptor {
 
@@ -19,6 +19,13 @@ public class HibernateInterceptor extends EmptyInterceptor {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(HibernateInterceptor.class);
 
+	private ObjectChangeBroadcaster	changeBroadcaster;
+
+	@Inject
+	public HibernateInterceptor(ObjectChangeBroadcaster changeBroadcaster) {
+		this.changeBroadcaster = changeBroadcaster;
+	}
+	
 	@Override
 	public boolean onFlushDirty(Object entity,
 		Serializable id,
@@ -47,13 +54,7 @@ public class HibernateInterceptor extends EmptyInterceptor {
 					}
 				}
 				if (changedProperties.size()>0) {
-					ITypedDao<IDomainObject> dao = domainObject.getDao();
-					if (dao!=null) {
-						dao.broadcastUpdate(domainObject, changedProperties);
-					}
-					else {
-						LOGGER.error("Failed to broadcast update notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
-					}
+					this.changeBroadcaster.broadcastUpdate(domainObject.getClass(), domainObject.getPersistentId(), changedProperties);
 				}
 			}
 		}
@@ -64,34 +65,19 @@ public class HibernateInterceptor extends EmptyInterceptor {
 	public void onDelete(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			ITypedDao<IDomainObject> dao = domainObject.getDao();
-			if (dao!=null) {
-				dao.broadcastDelete(domainObject);
-			}
-			else {
-				LOGGER.error("Failed to broadcast delete notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
-			}
+			this.changeBroadcaster.broadcastDelete(domainObject.getClass(), domainObject.getPersistentId());
 		}
 		super.onDelete(entity, id, state, propertyNames, types);
 	}
 	
 	@Override
-	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+	public boolean onSave(final Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
 		boolean result = super.onSave(entity, id, state, propertyNames, types);
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			doBroadcastAdd(domainObject);
+			this.changeBroadcaster.broadcastAdd(domainObject.getClass(), domainObject.getPersistentId());
 		}
 		return result;
-	}
-	
-	private void doBroadcastAdd(DomainObjectABC domainObject) {
-		ITypedDao<IDomainObject> dao = domainObject.getDao();
-		if (dao!=null) {
-			dao.broadcastAdd(domainObject);
-		}
-		else {
-			LOGGER.error("Failed to broadcast add notification. DAO for type "+domainObject.getClass().getSimpleName()+" is undefined");
-		}
+
 	}
 }

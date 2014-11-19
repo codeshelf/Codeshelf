@@ -7,14 +7,19 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.transaction.Transaction;
+
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
@@ -27,11 +32,11 @@ public class Listener implements ObjectEventListener {
 	String	CLASSNAME			= "className";
 	String	OP_TYPE				= "op";
 
-	@Getter @Setter
+	@Getter
 	String id;
 	
 	@Getter
-	Class<IDomainObject> persistenceClass;
+	Class<? extends IDomainObject> persistenceClass;
 	
 	@Getter @Setter
 	List<UUID> matchList;
@@ -39,29 +44,33 @@ public class Listener implements ObjectEventListener {
 	@Getter @Setter
 	List<String> propertyNames;
 	
-	public Listener(Class<IDomainObject> classObject) {
-		this.persistenceClass = classObject;
+	PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
+
+	public Listener(Class<? extends IDomainObject> persistenceClass, String id) {
+		this.persistenceClass = persistenceClass;
+		this.id = id;
 	}
 
 	@Override
-	public ResponseABC processObjectAdd(IDomainObject inDomainObject) {
-		return this.processEvent(inDomainObject, EventType.Create);
+	public ResponseABC processObjectAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		return this.processEvent(domainClass, domainPersistentId, EventType.Create);
 	}
 
 	@Override
-	public ResponseABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-		return this.processEvent(inDomainObject, EventType.Update);
+	public ResponseABC processObjectUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties) {
+		return this.processEvent(domainClass, domainPersistentId,  EventType.Update);
 	}
 
 	@Override
-	public ResponseABC processObjectDelete(IDomainObject inDomainObject) {
-		return this.processEvent(inDomainObject, EventType.Delete);
+	public ResponseABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		return this.processEvent(domainClass, domainPersistentId, EventType.Delete);
 	}
 	
-	private ResponseABC processEvent(IDomainObject inDomainObject, EventType type) {
+	private ResponseABC processEvent(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, EventType type) {
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
-		if (this.matchList.contains(inDomainObject.getPersistentId())) {
-			domainObjectList.add(inDomainObject);
+		if (this.matchList.contains(domainPersistentId)) {
+			IDomainObject domainObject = PersistenceService.getDao(domainClass).findByPersistentId(domainPersistentId);
+			domainObjectList.add(domainObject);
 		}
 		if (domainObjectList.size()>0) {
 			List<Map<String, Object>> p = getProperties(domainObjectList,type);
@@ -92,19 +101,14 @@ public class Listener implements ObjectEventListener {
 					}
 				}
 				for (String propertyName : this.propertyNames) {
-					// Execute the "get" method against the parents to return the children.
-					// (The method *must* start with "get" to ensure other methods don't get called.)
-					String rememberGetterName = "";
 					try {
-						String getterName = "get" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-						rememberGetterName = getterName;
-						//String getterName = "get" + propertyName;
-						java.lang.reflect.Method method = matchedObject.getClass().getMethod(getterName, (Class<?>[]) null);
-						Object resultObject = method.invoke(matchedObject, (Object[]) null);
+						Object resultObject = propertyUtils.getProperty(matchedObject, propertyName);
 						propertiesMap.put(propertyName, resultObject);
-					} catch (NoSuchMethodException e) {
+					} catch(NoSuchMethodException e) {
 						// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
-						LOGGER.debug("Method not found in ObjectListenerWsReqCmd getProperties: " + rememberGetterName);
+						LOGGER.debug("no property " +propertyName + " on object: " + matchedObject);
+					} catch(Exception e) {
+						LOGGER.warn("unexpected exception for property " +propertyName + " object: " + matchedObject, e);
 					}
 				}
 				resultsList.add(propertiesMap);

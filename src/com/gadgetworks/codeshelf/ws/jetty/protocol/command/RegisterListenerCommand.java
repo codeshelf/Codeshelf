@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
@@ -22,10 +23,13 @@ public class RegisterListenerCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(RegisterListenerCommand.class);
 
 	private RegisterListenerRequest request;
+
+	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 	
-	public RegisterListenerCommand(UserSession session, RegisterListenerRequest request) {
+	public RegisterListenerCommand(UserSession session, RegisterListenerRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.request = request;
+		this.objectChangeBroadcaster = objectChangeBroadcaster;
 	}
 
 	@Override
@@ -41,18 +45,17 @@ public class RegisterListenerCommand extends CommandABC {
 			Class<?> classObject = Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// register session with DAO
-				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
-				this.session.registerAsDAOListener(dao);
+				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
 
 				// create listener
-				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(request.getObjectIds());
-				Listener listener = new Listener((Class<IDomainObject>) classObject);				
-				listener.setId(request.getMessageId());
+				Listener listener = new Listener((Class<IDomainObject>) classObject, request.getMessageId());				
 				listener.setMatchList(request.getObjectIds());
 				listener.setPropertyNames(request.getPropertyNames());
 				this.session.registerObjectEventListener(listener);
 
 				// generate response
+				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
+				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(request.getObjectIds());
 				List<Map<String, Object>> results = listener.getProperties(objectMatchList, EventType.Update);
 				ObjectChangeResponse response = new ObjectChangeResponse();
 				response.setResults(results);

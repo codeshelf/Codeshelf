@@ -26,8 +26,8 @@ public class Filter extends Listener {
 	@Getter @Setter
 	Map<String,Object> params;
 	
-	public Filter(Class<IDomainObject> classObject) {
-		super(classObject);
+	public Filter(Class<IDomainObject> classObject, String id) {
+		super(classObject, id);
 	}
 	
 	public List<IDomainObject> refreshMatchList() {
@@ -41,17 +41,16 @@ public class Filter extends Listener {
 	}
 	
 	@Override
-	public ResponseABC processObjectAdd(IDomainObject inDomainObject) {
+	public ResponseABC processObjectAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		ResponseABC result = null;
-		if(inDomainObject.getClassName().equals(this.getPersistenceClass().getSimpleName())) {
+		if(domainClass.getSimpleName().equals(this.getPersistenceClass().getSimpleName())) {
 			// TODO:???
-			if (!this.matchList.contains(inDomainObject.getPersistentId())) {
-				this.matchList.add(inDomainObject.getPersistentId());
+			if (!this.matchList.contains(domainPersistentId)) {
+				this.matchList.add(domainPersistentId);
 			}
-			result = super.processObjectAdd(inDomainObject);
+			result = super.processObjectAdd(domainClass, domainPersistentId);
 
-			//TODO: this might need to actually happen for filter to work right... 
-			//refreshMatchList();
+			refreshMatchList();
 		} 
 		return result;
 	}

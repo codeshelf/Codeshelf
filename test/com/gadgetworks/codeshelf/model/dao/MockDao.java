@@ -174,15 +174,4 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return this.findByPersistentId(persistentId);
 	}
 
-	@Override
-	public void broadcastAdd(IDomainObject inDomainObject) {
-	}
-
-	@Override
-	public void broadcastUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties) {
-	}
-
-	@Override
-	public void broadcastDelete(IDomainObject inDomainObject) {
-	}
 }

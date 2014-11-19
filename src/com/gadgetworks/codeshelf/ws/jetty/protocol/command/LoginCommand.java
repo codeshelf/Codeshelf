@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.filter.NetworkChangeListener;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
@@ -21,10 +22,13 @@ public class LoginCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(LoginCommand.class);
 	
 	private LoginRequest loginRequest;
+
+	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 	
-	public LoginCommand(UserSession session, LoginRequest loginRequest) {
+	public LoginCommand(UserSession session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.loginRequest = loginRequest;
+		this.objectChangeBroadcaster = objectChangeBroadcaster;
 	}
 
 	@Override
@@ -57,7 +61,7 @@ public class LoginCommand extends CommandABC {
 							response.setNetwork(network); 
 
 							// send all network updates to this session for this network 
-							NetworkChangeListener.registerWithSession(session, network);
+							NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, session, network);
 						} // else regular user session
 
 						// update session counters

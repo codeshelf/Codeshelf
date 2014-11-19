@@ -2,11 +2,19 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.any;
 
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 
 public class AisleTest extends DomainTestABC {
 
@@ -55,24 +63,29 @@ public class AisleTest extends DomainTestABC {
 		this.getPersistenceService().endTenantTransaction();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public final void updatePathSegment() {
 		this.getPersistenceService().beginTenantTransaction();
-
+		IDaoListener listener = Mockito.mock(IDaoListener.class);
+		this.getPersistenceService().getObjectChangeBroadcaster().registerDAOListener(listener, Aisle.class);
+		
 		String aisleDomainId = "A1";
 		
 		Facility facility = getDefaultFacility();
 		
 		PathSegment pathSegment  = getDefaultPathSegment(getDefaultPath(facility, "P1"), 1);
-		Aisle aisle = getDefaultAisle(facility, aisleDomainId);
 
+		Aisle aisle = getDefaultAisle(facility, aisleDomainId);
 		String segPersistId = pathSegment.getPersistentId().toString();
 		aisle.associatePathSegment(segPersistId);
 		// Paul: please see facility.recomputeLocationPathDistances()
-	
+		
+		
 		Aisle storedAisle = (Aisle) facility.findLocationById(aisleDomainId);
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
 
+		verify(listener, times(2)).objectUpdated(eq(Aisle.class), eq(storedAisle.getPersistentId()), any(Set.class)); //1 for segment association and one for meters along path
 		this.getPersistenceService().endTenantTransaction();
 	}
 	

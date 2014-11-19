@@ -1,9 +1,16 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
 
+import static org.mockito.Mockito.mock;
+
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.persistence.PostPersist;
+import javax.persistence.PostUpdate;
+import javax.persistence.PrePersist;
+import javax.websocket.Session;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,7 +23,9 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gadgetworks.codeshelf.filter.Listener;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -56,42 +65,41 @@ public class CreatePathCommandTest extends DomainTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
-		// DAOMaker maker = new DAOMaker(persistenceService);
-		
-		//@SuppressWarnings("unchecked")
-		//Maker<Facility> fm = a(maker.TestFacility);
-		//Facility testFacility = make(fm);
-		
-		//Path.DAO = new PathDao(persistenceService);
-		//PathSegment.DAO = new PathSegmentDao(persistenceService);
-		//WorkArea.DAO = new WorkAreaDao(persistenceService);
-		
 		Facility testFacility = this.createDefaultFacility(testPathDomainId);
-	
-		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
-		Assert.assertNull(noPath);
-		
-		PathSegment[] segments = createPathSegment(numberOfSegments);
-		
-		CreatePathRequest request = new CreatePathRequest();
-		request.setDomainId(testPathDomainId);
-		request.setFacilityId(testFacility.getPersistentId().toString());
-		request.setPathSegments(segments);
-		
-		ObjectMapper mapper = new ObjectMapper();
-		String jsonString = "";
-		jsonString = mapper.writeValueAsString(request);
-		System.out.println(jsonString);
-		
-		UserSession session = Mockito.mock(UserSession.class);
-		session.setSessionId("test-session");
-		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);
-		ResponseABC response = processor.handleRequest(session, request);
 
-		Assert.assertTrue(response instanceof CreatePathResponse);
+		ObjectChangeBroadcaster objectChangeBroadcaster = this.getPersistenceService().getObjectChangeBroadcaster();
+		Session websocketSession = mock(Session.class);
+		UserSession viewSession = new UserSession(websocketSession);
 
-		this.getPersistenceService().endTenantTransaction();
+		try {
+			/* register a filter like the UI does */
+			viewSession.registerObjectEventListener(new Listener(PathSegment.class, "ID1"));
+			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
+			
+			
+			
+			Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
+			Assert.assertNull(noPath);
+			
+			PathSegment[] segments = createPathSegment(numberOfSegments);
+			
+			CreatePathRequest request = new CreatePathRequest();
+			request.setDomainId(testPathDomainId);
+			request.setFacilityId(testFacility.getPersistentId().toString());
+			request.setPathSegments(segments);
+			
+			UserSession requestSession = new UserSession(mock(Session.class));
+			requestSession.setSessionId("test-session");
+			
+			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);
+			ResponseABC response = processor.handleRequest(requestSession, request);
+			Assert.assertTrue(response instanceof CreatePathResponse);
+		}
+		finally {
+			objectChangeBroadcaster.unregisterDAOListener(viewSession);
+			this.getPersistenceService().endTenantTransaction();
+		}
+
 	}
 	
 	@SuppressWarnings("unchecked")

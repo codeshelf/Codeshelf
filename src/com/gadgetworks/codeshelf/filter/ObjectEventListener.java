@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.filter;
 
 import java.util.Set;
+import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -9,9 +10,9 @@ public interface ObjectEventListener {
 
 	String getId();
 
-	MessageABC processObjectAdd(IDomainObject inDomainObject);
+	MessageABC processObjectAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
 
-	MessageABC processObjectUpdate(IDomainObject inDomainObject, Set<String> inChangedProperties);
+	MessageABC processObjectUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties);
 
-	MessageABC processObjectDelete(IDomainObject inDomainObject);
+	MessageABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
 }

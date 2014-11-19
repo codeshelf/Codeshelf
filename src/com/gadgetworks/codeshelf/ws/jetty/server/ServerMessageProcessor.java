@@ -7,6 +7,8 @@ import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
@@ -72,12 +74,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 //	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	
 	private ServiceFactory	serviceFactory;
+	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 
 	@Inject
-	//TODO should turn into a provider for all server service endpoints instead of just work service
 	public ServerMessageProcessor(ServiceFactory serviceFactory) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
+		this.objectChangeBroadcaster = PersistenceService.getInstance().getObjectChangeBroadcaster();
 	}
 	
 	@Override
@@ -94,7 +97,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession,loginRequest);
+				command = new LoginCommand(csSession, loginRequest, objectChangeBroadcaster);
 				loginCounter.inc();
 				applicationRequestCounter.inc();
 			}
@@ -143,12 +146,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof RegisterListenerRequest) {
-				command = new RegisterListenerCommand(csSession, (RegisterListenerRequest) request);
+				command = new RegisterListenerCommand(csSession, (RegisterListenerRequest) request, objectChangeBroadcaster);
 				objectListenerCounter.inc();
 				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof RegisterFilterRequest) {
-				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request);
+				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, objectChangeBroadcaster);
 				objectFilterCounter.inc();
 				applicationRequestCounter.inc();
 			}			
