@@ -258,7 +258,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final void store(final T inDomainObject) throws DaoException {
 		// TODO: need to add change property intercepter and versioning
 		Session session = getCurrentSession();
-		session.persist(inDomainObject);
+		session.saveOrUpdate(inDomainObject);
 	}
 
 	// --------------------------------------------------------------------------

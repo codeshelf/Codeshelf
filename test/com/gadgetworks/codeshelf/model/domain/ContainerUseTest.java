@@ -87,22 +87,20 @@ public class ContainerUseTest extends DomainTestABC {
 		Assert.assertEquals(cntrUse2, header2.getContainerUse());
 
 		this.getPersistenceService().endTenantTransaction();
+
 		// Now the point. Do some crazy updating.
 		// The calling use pattern is removeHeadersContainerUse() or addHeadersContainerUse() followed by both DAO stores.
-
 		
-		if (true)
-			return;
 		this.getPersistenceService().beginTenantTransaction();
 		
 		LOGGER.info("testUseHeaderRelationship Case 1: normal removal");
-//		header0.removeHeadersContainerUse(cntrUse0);
+		header0.removeHeadersContainerUse(cntrUse0);
 		OrderHeader.DAO.store(header0);
-//		ContainerUse.DAO.store(cntrUse0);
+		ContainerUse.DAO.store(cntrUse0);
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertNull(header0.getContainerUse());
 		Assert.assertNull(cntrUse0.getOrderHeader());
-
+		
 		this.getPersistenceService().beginTenantTransaction();
 		LOGGER.info("Case 2: Add same again. No change to final condition");
 		header2.addHeadersContainerUse(cntrUse2);
@@ -111,7 +109,9 @@ public class ContainerUseTest extends DomainTestABC {
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertEquals(cntrUse2, header2.getContainerUse());
 
-		this.getPersistenceService().beginTenantTransaction();
+		if (true) return;
+
+		// this.getPersistenceService().beginTenantTransaction();
 		LOGGER.info("Case 3: Try to add a container use already with another header to header without. Should refuse.");
 		header0.addHeadersContainerUse(cntrUse2);
 		OrderHeader.DAO.store(header0);
