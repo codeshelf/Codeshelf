@@ -252,7 +252,15 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				Boolean shouldInactivateContainer = true;
 
 				for (ContainerUse containerUse : container.getUses()) {
-					if (!containerUse.getOrderHeader().getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+					// ContainerUse.getOrderHeader() can be null if the EDI is not fully consistent. Don't NPE. Don't fail to archive.
+					OrderHeader header = containerUse.getOrderHeader();
+					if (header == null) {
+						shouldInactivateContainer = false; // Should the container be inactivated? If this is the only use for the container, perhaps.
+						// neglect this case for now.
+						containerUse.setActive(false);
+						mContainerUseDao.store(containerUse);
+					}
+					else if (!header.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 						shouldInactivateContainer = false;
 					} else {
 						if (containerUse.getUpdated().equals(inProcessTime)) {
@@ -619,7 +627,14 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
-		result.setQuantities(Integer.valueOf(inCsvBean.getQuantity()));
+		
+		try {
+			result.setQuantities(Integer.valueOf(inCsvBean.getQuantity()));
+		} catch (NumberFormatException e) {
+			String errorMsg = "bad or missing value in quantity field for " + detailId + ". Skipping this zero quantity order detail.";
+				result.setQuantities(0);
+			throw new InputValidationException(inCsvBean, errorMsg);
+		}
 
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.

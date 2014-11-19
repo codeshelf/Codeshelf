@@ -305,57 +305,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			return;
 		}
 		
-		// Keep it simple for now. Just do the sets
+		// Keep it simple for now. Just do the sets. Don't try to clean up inconsistency if one of the objects has inconsistent one-way relationship.
 		setContainerUse(inContainerUse);
 		inContainerUse.setOrderHeader(this);
-		return;
-		
-		/*
-		OrderHeader previousOrderHeader = inContainerUse.getOrderHeader();
-		if (previousOrderHeader == null) {
-			setContainerUse(inContainerUse);
-			inContainerUse.setOrderHeader(this);
-			// done
-		} else {
-			LOGGER.error("problem adding ContainerUse " + inContainerUse.getContainerName() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousOrderHeader.getDomainId()
-					+ ". However, proceeding to make data consistent");
-			
-			// This is really problematic because the caller has the responsibility to call the two DAOs to store this OrderHeader and the inContainerUse. We must store anything else.
-			ContainerUse possibleOrphanCntrUse = previousOrderHeader.getContainerUse();
-			if (possibleOrphanCntrUse == null || possibleOrphanCntrUse.equals(inContainerUse))
-				return; // no cleanup necessary, but we did not do the updates.
-			
-			// Or if the possible orphan is self-consistent, don't clean them, but do clean this.
-			OrderHeader orphansHeader = possibleOrphanCntrUse.getOrderHeader();
-			if (orphansHeader.equals(previousOrderHeader)) {
-				inContainerUse.setOrderHeader(null); // Caller will call the DAO.store()
 				
-			} else {
-				//  Finally, the tricky bit. Do what was asked, and clean the others.
-				setContainerUse(inContainerUse);
-				inContainerUse.setOrderHeader(this);
-				
-				if (!previousOrderHeader.equals(this)) {
-					previousOrderHeader.setContainerUse(null);
-					try {
-						OrderHeader.DAO.store(previousOrderHeader);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-				}
-				
-				// if we did not return already, possibleOrphanCntrUse also needs cleaning
-				possibleOrphanCntrUse.setOrderHeader(null);
-				try {
-					ContainerUse.DAO.store(possibleOrphanCntrUse);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-			}
-		}
-		*/
-		
 	}
 
 	public final void removeHeadersContainerUse(ContainerUse inContainerUse) {
