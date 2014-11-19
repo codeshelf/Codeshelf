@@ -208,30 +208,26 @@ public class ContainerUseTest extends DomainTestABC {
 		// This would only happen by upgrade on bad data, or a throw somewhere in normal transaction.
 		LOGGER.info("        Then have the header add another containerUse");
 		// DO NOT CALL setOrderHeader elsewhere in the code. Doing it here to simulate throw in the middle of addHeadersContainerUse or removeHeadersContainerUse to achieve inconsistent data
-		LOGGER.info("bjoern: calling the lamboc setter here");
 		cntrUse0.setOrderHeader(header0);
+		ContainerUse.DAO.store(cntrUse0);
 		this.getPersistenceService().endTenantTransaction();
+		
 		// check the orphan result
-		LOGGER.info("bjoern: see that the setter seemed to work on these references");
 		Assert.assertNull(header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
+		
 		// check that the database has the orphan result
 		this.getPersistenceService().beginTenantTransaction();
 		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
 		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
 		this.getPersistenceService().endTenantTransaction();
-		LOGGER.info("bjoern: see that the setter did not persist to the database. No logging or error.");
 		Assert.assertNull(header0d.getContainerUse());
-		// Assert.assertEquals(header0d, cntrUse0d.getOrderHeader()); // FAILS! Why? Uncomment this assert
+		Assert.assertEquals(header0d, cntrUse0d.getOrderHeader());
 		
 		// Now assume the code is doing a fairly normal thing of trying to add it to a header.
 		// Really two cases: but just do one test case of adding to a different header.
-	
-
-		
 		
 		this.getPersistenceService().beginTenantTransaction();
 		this.getPersistenceService().endTenantTransaction();
-
 	}
 }
