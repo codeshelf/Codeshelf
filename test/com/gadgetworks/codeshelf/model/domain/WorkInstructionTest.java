@@ -142,15 +142,14 @@ public class WorkInstructionTest extends DomainTestABC {
 
 		OrderDetail orderDetail = new OrderDetail();
 		orderDetail.setDomainId(itemMaster.getItemId());
-		orderDetail.setParent(order1);
 		orderDetail.setItemMaster(itemMaster);
 		orderDetail.setQuantities(5);
 		orderDetail.setUomMaster(uomMaster);
 		orderDetail.setStatus(OrderStatusEnum.CREATED);
 		orderDetail.setActive(true);
 		orderDetail.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mOrderDetailDao.store(orderDetail);
 		order1.addOrderDetail(orderDetail);
+		mOrderDetailDao.store(orderDetail);
 
 		WorkInstruction wi = new WorkInstruction();
 		wi.setParent(facility);

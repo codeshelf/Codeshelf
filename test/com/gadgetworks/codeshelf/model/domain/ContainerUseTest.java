@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,6 +39,7 @@ public class ContainerUseTest extends DomainTestABC {
 			return string1.compareTo(string2);
 		}
 	};
+		
 
 	@Test
 	public final void testUseHeaderRelationship() {
@@ -45,6 +47,11 @@ public class ContainerUseTest extends DomainTestABC {
 
 		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
 
+		this.getPersistenceService().endTenantTransaction();
+		
+		// Now just queries. Do in a transaction as our code normally would
+		this.getPersistenceService().beginTenantTransaction();
+		
 		ISubLocation<?> aisle = facility.findLocationById("A1");
 		ISubLocation<?> bay = aisle.findLocationById("B1");
 
@@ -85,6 +92,13 @@ public class ContainerUseTest extends DomainTestABC {
 		Assert.assertEquals(cntrUse0, header0.getContainerUse());
 		Assert.assertEquals(cntrUse1, header1.getContainerUse());
 		Assert.assertEquals(cntrUse2, header2.getContainerUse());
+		
+		UUID cntrUse0Uuid = cntrUse0.getPersistentId();
+		UUID cntrUse1Uuid = cntrUse1.getPersistentId();
+		UUID cntrUse2Uuid = cntrUse2.getPersistentId();
+		UUID header0Uuid = header0.getPersistentId();
+		UUID header1Uuid = header1.getPersistentId();
+		UUID header2Uuid = header2.getPersistentId();
 
 		this.getPersistenceService().endTenantTransaction();
 
@@ -98,21 +112,42 @@ public class ContainerUseTest extends DomainTestABC {
 		OrderHeader.DAO.store(header0);
 		ContainerUse.DAO.store(cntrUse0);
 		this.getPersistenceService().endTenantTransaction();
+		
+		// From here we will follow the pattern of original references are header0, cntrUse1, etc.  New fetches from the DAO are header0d, cntrUse1d, etc.
+		ContainerUse cntrUse0d = null;
+		ContainerUse cntrUse1d = null;
+		ContainerUse cntrUse2d = null;
+		OrderHeader header0d = null;
+		OrderHeader header1d = null;
+		OrderHeader header2d = null;
+
 		Assert.assertNull(header0.getContainerUse());
 		Assert.assertNull(cntrUse0.getOrderHeader());
 		
 		this.getPersistenceService().beginTenantTransaction();
+		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
+		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertNull(header0d.getContainerUse());
+		Assert.assertNull(cntrUse0d.getOrderHeader());
+		
 		LOGGER.info("Case 2: Add same again. No change to final condition");
+		this.getPersistenceService().beginTenantTransaction();
 		header2.addHeadersContainerUse(cntrUse2);
 		OrderHeader.DAO.store(header2);
 		ContainerUse.DAO.store(cntrUse2);
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertEquals(cntrUse2, header2.getContainerUse());
 
-		if (true) return;
+		this.getPersistenceService().beginTenantTransaction();
+		cntrUse2d = ContainerUse.DAO.findByPersistentId(cntrUse2Uuid);
+		header2d = OrderHeader.DAO.findByPersistentId(header2Uuid);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertEquals(cntrUse2d, header2d.getContainerUse());
 
-		// this.getPersistenceService().beginTenantTransaction();
+
 		LOGGER.info("Case 3: Try to add a container use already with another header to header without. Should refuse.");
+		this.getPersistenceService().beginTenantTransaction();
 		header0.addHeadersContainerUse(cntrUse2);
 		OrderHeader.DAO.store(header0);
 		ContainerUse.DAO.store(cntrUse2);
@@ -120,17 +155,48 @@ public class ContainerUseTest extends DomainTestABC {
 		Assert.assertNull(header0.getContainerUse());
 
 		this.getPersistenceService().beginTenantTransaction();
+		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertNull(header0.getContainerUse());
+
+
 		LOGGER.info("Case 4: Try to add a container use to header that has one already. Should refuse.");
+		this.getPersistenceService().beginTenantTransaction();
 		header1.addHeadersContainerUse(cntrUse0);
 		OrderHeader.DAO.store(header1);
 		ContainerUse.DAO.store(cntrUse0);
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertEquals(cntrUse1, header1.getContainerUse());
 		
+		this.getPersistenceService().beginTenantTransaction();
+		header1d = OrderHeader.DAO.findByPersistentId(header1Uuid);
+		cntrUse1d = ContainerUse.DAO.findByPersistentId(cntrUse1Uuid);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertEquals(cntrUse1d, header1d.getContainerUse());
+	
+		LOGGER.info("Case 5: Normal add. Should work as the this is how the data was setup in the first place.");
+		this.getPersistenceService().beginTenantTransaction();
+		header0.addHeadersContainerUse(cntrUse0);
+		OrderHeader.DAO.store(header0);
+		ContainerUse.DAO.store(cntrUse0);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertEquals(cntrUse0, header0.getContainerUse());
+		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
+
+		this.getPersistenceService().beginTenantTransaction();
+		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
+		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertEquals(cntrUse0d, header0d.getContainerUse());
+		Assert.assertEquals(header0d, cntrUse0d.getOrderHeader());
+
 		// Prep for the odd cases
 		this.getPersistenceService().beginTenantTransaction();
+		header0.removeHeadersContainerUse(cntrUse0);
 		header1.removeHeadersContainerUse(cntrUse1);
 		header2.removeHeadersContainerUse(cntrUse2);
+		OrderHeader.DAO.store(header0);
+		ContainerUse.DAO.store(cntrUse0);
 		OrderHeader.DAO.store(header1);
 		ContainerUse.DAO.store(cntrUse1);
 		OrderHeader.DAO.store(header2);
@@ -142,11 +208,22 @@ public class ContainerUseTest extends DomainTestABC {
 		// This would only happen by upgrade on bad data, or a throw somewhere in normal transaction.
 		LOGGER.info("        Then have the header add another containerUse");
 		// DO NOT CALL setOrderHeader elsewhere in the code. Doing it here to simulate throw in the middle of addHeadersContainerUse or removeHeadersContainerUse to achieve inconsistent data
+		LOGGER.info("bjoern: calling the lamboc setter here");
 		cntrUse0.setOrderHeader(header0);
 		this.getPersistenceService().endTenantTransaction();
 		// check the orphan result
+		LOGGER.info("bjoern: see that the setter seemed to work on these references");
 		Assert.assertNull(header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
+		// check that the database has the orphan result
+		this.getPersistenceService().beginTenantTransaction();
+		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
+		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
+		this.getPersistenceService().endTenantTransaction();
+		LOGGER.info("bjoern: see that the setter did not persist to the database. No logging or error.");
+		Assert.assertNull(header0d.getContainerUse());
+		// Assert.assertEquals(header0d, cntrUse0d.getOrderHeader()); // FAILS! Why? Uncomment this assert
+		
 		// Now assume the code is doing a fairly normal thing of trying to add it to a header.
 		// Really two cases: but just do one test case of adding to a different header.
 	
