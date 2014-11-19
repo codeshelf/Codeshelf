@@ -52,7 +52,9 @@ public class WorkInstructionGenerator {
 		workInstruction.setPlanMinQuantity(2);
 		workInstruction.setPlanMaxQuantity(2);
 		workInstruction.setActualQuantity(2);
-		workInstruction.setAssignedChe(new Che("CHE1"));
+		
+		Che che1 = new Che("CHE1");
+		che1.addWorkInstruction(workInstruction);
 		workInstruction.setAssigned( new Timestamp(System.currentTimeMillis()-10000));
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
 		workInstruction.setCompleted(new Timestamp(System.currentTimeMillis()-0000));

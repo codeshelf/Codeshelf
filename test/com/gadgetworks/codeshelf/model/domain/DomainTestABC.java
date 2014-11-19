@@ -176,17 +176,18 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		Short channel1 = 1;
 		
+		// Notice: we are setting the controller on the bay in this test. But the application UI only does tiers or aisles.
 		Bay baya1b1 = aisle1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya1b1.setFirstLedNumAlongPath((short) 0);
 		baya1b1.setLastLedNumAlongPath((short) 0);
-		baya1b1.setLedController(controller);
+		controller.addLocation(baya1b1);
 		baya1b1.setLedChannel(channel1);
 		mBayDao.store(baya1b1);
 
 		Bay baya1b2 = aisle1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya1b2.setFirstLedNumAlongPath((short) 0);
 		baya1b2.setLastLedNumAlongPath((short) 0);
-		baya1b2.setLedController(controller);
+		controller.addLocation(baya1b2);
 		baya1b2.setLedChannel(channel1);
 		mBayDao.store(baya1b2);
 
@@ -195,14 +196,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Bay baya2b1 = aisle2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya2b1.setFirstLedNumAlongPath((short) 0);
 		baya2b1.setLastLedNumAlongPath((short) 0);
-		baya2b1.setLedController(controller);
+		controller.addLocation(baya2b1);
 		baya2b1.setLedChannel(channel1);
 		mBayDao.store(baya2b1);
 
 		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya2b2.setFirstLedNumAlongPath((short) 0);
 		baya2b2.setLastLedNumAlongPath((short) 0);
-		baya2b2.setLedController(controller);
+		controller.addLocation(baya2b2);
 		baya2b2.setLedChannel(channel1);
 		mBayDao.store(baya2b2);
 
@@ -228,14 +229,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Bay baya3b1 = aisle3.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya3b1.setFirstLedNumAlongPath((short) 0);
 		baya3b1.setLastLedNumAlongPath((short) 0);
-		baya3b1.setLedController(controller);
+		controller.addLocation(baya3b1);
 		baya3b1.setLedChannel(channel1);
 		mBayDao.store(baya3b1);
 
 		Bay baya3b2 = aisle3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya3b2.setFirstLedNumAlongPath((short) 0);
 		baya3b2.setLastLedNumAlongPath((short) 0);
-		baya3b2.setLedController(controller);
+		controller.addLocation(baya3b2);
 		baya3b2.setLedChannel(channel1);
 		mBayDao.store(baya3b2);
 
@@ -244,14 +245,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Bay baya4b1 = aisle4.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
 		baya4b1.setFirstLedNumAlongPath((short) 0);
 		baya4b1.setLastLedNumAlongPath((short) 0);
-		baya4b1.setLedController(controller);
+		controller.addLocation(baya4b1);
 		baya4b1.setLedChannel(channel1);
 		mBayDao.store(baya4b1);
 
 		Bay baya4b2 = aisle4.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya4b2.setFirstLedNumAlongPath((short) 0);
 		baya4b2.setLastLedNumAlongPath((short) 0);
-		baya4b2.setLedController(controller);
+		controller.addLocation(baya4b2);
 		baya4b2.setLedChannel(channel1);
 		mBayDao.store(baya4b2);
 

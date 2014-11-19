@@ -99,11 +99,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		
 		Short channel1 = 1;
-		aisle1.setLedController(controller1);
+		controller1.addLocation(aisle1);
 		aisle1.setLedChannel(channel1);
 		Aisle.DAO.store(aisle1);
 
-		aisle2.setLedController(controller2);
+		controller2.addLocation(aisle2);
 		aisle2.setLedChannel(channel1);
 		Aisle.DAO.store(aisle2);
 

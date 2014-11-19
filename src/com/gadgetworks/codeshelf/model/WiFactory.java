@@ -82,12 +82,11 @@ public class WiFactory {
 
 		// The container provides our map to the position controller. That is the only way the user can acknowledge the housekeeping command.
 		resultWi.setContainer(ourCntr);
-		resultWi.setAssignedChe(ourChe);
 		resultWi.setAssigned(assignTime);
+		ourChe.addWorkInstruction(resultWi); 
 
 		try {
 			WorkInstruction.DAO.store(resultWi);
-			ourChe.addWorkInstruction(resultWi); 
 		} catch (DaoException e) {
 			LOGGER.error("createHouseKeepingWi", e);
 		}

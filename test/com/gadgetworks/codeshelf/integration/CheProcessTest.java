@@ -178,7 +178,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 
 		Short channel1 = 1;
 		SubLocationABC tier = (SubLocationABC) getFacility().findSubLocationById("A1.B1.T1");
-		tier.setLedController(controller1);
+		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		// Make sure we also got the alias
@@ -187,34 +187,28 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
 		
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
-		tier.setLedController(controller1);
+		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B3.T1");
-		tier.setLedController(controller1);
+		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B1.T1");
-		tier.setLedController(controller2);
+		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B2.T1");
-		tier.setLedController(controller2);
+		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B1.T1");
-		tier.setLedController(controller3);
+		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
 		tier.getDao().store(tier);
 		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B2.T1");
-		tier.setLedController(controller3);
+		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
 		tier.getDao().store(tier);
 
 		return getFacility();

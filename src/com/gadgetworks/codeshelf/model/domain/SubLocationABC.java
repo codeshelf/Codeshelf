@@ -202,7 +202,9 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	public final void clearControllerChannel() {
 		if (getLedController() != null || getLedChannel() != null) {
 			try {
-				this.setLedController(null);
+				LedController currentController = this.getLedController();
+				if (currentController != null)
+					currentController.removeLocation(this);
 				this.setLedChannel(null);
 				this.getDao().store(this);
 			} catch (DaoException e) {
@@ -238,7 +240,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 			}
 
 			// set the controller. And set the channel
-			this.setLedController(theLedController);
+			theLedController.addLocation(this);
 			if (theChannel != null && theChannel > 0) {
 				this.setLedChannel(theChannel);
 			} else {

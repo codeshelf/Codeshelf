@@ -373,10 +373,10 @@ public class LightServiceTest extends EdiTestABC {
 		LedController controller2 = network.findOrCreateLedController("0x00000012", new NetGuid("0x00000012"));
 		Short channel1 = 1;
 		if (controllerLayout.equals(ControllerLayout.zigzagB1S1Side)) {
-			aisle1.setLedController(controller1);
+			controller1.addLocation(aisle1);
 			aisle1.setLedChannel(channel1);
 			aisle1.getDao().store(aisle1);
-			aisle2.setLedController(controller2);
+			controller2.addLocation(aisle2);
 			aisle2.setLedChannel(channel1);
 			aisle2.getDao().store(aisle2);
 		} else if (controllerLayout.equals(ControllerLayout.tierLeft)) {
