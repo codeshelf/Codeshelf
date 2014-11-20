@@ -8,6 +8,9 @@ package com.gadgetworks.codeshelf.application;
 
 import java.util.concurrent.TimeUnit;
 
+import javax.websocket.ContainerProvider;
+import javax.websocket.WebSocketContainer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +45,7 @@ public final class CsSiteControllerMain {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
 
+	private static WebSocketContainer websocketContainer = ContainerProvider.getWebSocketContainer();
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -95,6 +99,7 @@ public final class CsSiteControllerMain {
 		
 		@Override
 		protected void configure() {
+			bind(WebSocketContainer.class).toInstance(websocketContainer);
 			bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
 			bind(IRadioController.class).to(RadioController.class);
 			bind(IConfiguration.class).to(JVMSystemConfiguration.class);

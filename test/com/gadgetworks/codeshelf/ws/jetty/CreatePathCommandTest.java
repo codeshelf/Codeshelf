@@ -6,10 +6,8 @@ import static org.mockito.Mockito.mock;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executors;
 
-import javax.persistence.PostPersist;
-import javax.persistence.PostUpdate;
-import javax.persistence.PrePersist;
 import javax.websocket.Session;
 
 import org.junit.Assert;
@@ -69,7 +67,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 
 		ObjectChangeBroadcaster objectChangeBroadcaster = this.getPersistenceService().getObjectChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
-		UserSession viewSession = new UserSession(websocketSession);
+		UserSession viewSession = new UserSession(websocketSession, Executors.newSingleThreadExecutor());
 
 		try {
 			/* register a filter like the UI does */
@@ -88,7 +86,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 			request.setFacilityId(testFacility.getPersistentId().toString());
 			request.setPathSegments(segments);
 			
-			UserSession requestSession = new UserSession(mock(Session.class));
+			UserSession requestSession = new UserSession(mock(Session.class), Executors.newSingleThreadExecutor());
 			requestSession.setSessionId("test-session");
 			
 			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);

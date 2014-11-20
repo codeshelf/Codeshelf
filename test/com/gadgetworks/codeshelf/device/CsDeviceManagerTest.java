@@ -4,10 +4,18 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.websocket.DeploymentException;
+import javax.websocket.Endpoint;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
 
 import lombok.Getter;
 
@@ -34,7 +42,7 @@ public class CsDeviceManagerTest {
 	PersistenceService persistenceService = PersistenceService.getInstance();
 
 	@Test
-	public void communicatesServerUnattachedToChe() {
+	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
@@ -53,7 +61,7 @@ public class CsDeviceManagerTest {
 	}
 	
 	@Test
-	public void communicatesServerDisconnectionToChe() {
+	public void communicatesServerDisconnectionToChe() throws DeploymentException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
@@ -69,10 +77,14 @@ public class CsDeviceManagerTest {
 		this.getPersistenceService().endTenantTransaction();
 	}
 
-	private CsDeviceManager produceAttachedDeviceManager(IRadioController mockRadioController) {
+	private CsDeviceManager produceAttachedDeviceManager(IRadioController mockRadioController) throws DeploymentException, IOException {
 		Map<String, String> properties = new HashMap<String, String>();
 		properties.put("websocket.uri", "wss://uri:800");
-		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, new MemoryConfiguration(properties));
+		WebSocketContainer container = mock(WebSocketContainer.class);
+		Session mockSession = mock(Session.class);
+		when(mockSession.isOpen()).thenReturn(true);
+		when(container.connectToServer(any(Endpoint.class), any(URI.class))).thenReturn(mockSession);
+		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, new MemoryConfiguration(properties), container);
 		
 		deviceManager.start();
 		

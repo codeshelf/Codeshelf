@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.websocket.WebSocketContainer;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -88,14 +90,18 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Getter @Setter
 	boolean radioEnabled = true;
 
+	private WebSocketContainer	webSocketContainer;
+
 	@Inject
-	public CsDeviceManager(final IRadioController inRadioController, final IConfiguration configuration) {
+	public CsDeviceManager(final IRadioController inRadioController, final IConfiguration configuration, final WebSocketContainer inWebSocketContainer) {
 		// fetch properties from config file
 		radioEnabled = configuration.getBoolean("radio.enabled",true);
 		mUri = URI.create(configuration.getString("websocket.uri"));
 		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
 		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
+		this.webSocketContainer = inWebSocketContainer;
+		
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
@@ -155,8 +161,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void startWebSocketClient() {
     	// create response processor and register it with WS client
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
-
-    	client = new JettyWebSocketClient(mUri,responseProcessor,this);
+    	client = new JettyWebSocketClient(webSocketContainer, mUri,responseProcessor,this);
     	responseProcessor.setWebClient(client);
     	connectionManagerThread = new ConnectionManagerThread(this);
     	connectionManagerThread.start();

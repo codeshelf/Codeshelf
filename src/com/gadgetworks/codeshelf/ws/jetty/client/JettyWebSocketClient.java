@@ -5,7 +5,6 @@ import java.net.URI;
 
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
-import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
@@ -50,7 +49,7 @@ public class JettyWebSocketClient {
 	@Getter @Setter
 	long lastMessageReceived = 0;
 	
-	public JettyWebSocketClient(URI uri, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
+	public JettyWebSocketClient(WebSocketContainer webSocketContainer, URI uri, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
 		this.uri = uri;
 		this.eventListener = eventListener;
 		this.responseProcessor = responseProcessor;
@@ -63,7 +62,7 @@ public class JettyWebSocketClient {
         messageCoordinator = new MessageCoordinator(); 
         endpoint.setMessageCoordinator(messageCoordinator);
         responseProcessor.setMessageCoordinator(messageCoordinator);
-        container = ContainerProvider.getWebSocketContainer();
+        container = webSocketContainer;
 	}
 	
     public void connect() throws DeploymentException, IOException {    			

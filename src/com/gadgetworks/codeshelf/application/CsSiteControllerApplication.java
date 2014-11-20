@@ -20,6 +20,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	@Getter
 	private ICsDeviceManager	deviceManager;
 
+	
 	@Inject
 	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager,final AdminServer inAdminServer) {
 		super(inAdminServer);
