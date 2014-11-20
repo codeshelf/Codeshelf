@@ -1326,7 +1326,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inScanStr
 	 */
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
-		if (CONTAINER_PREFIX.equals(inScanPrefixStr)) {
+		// DEV-518. Also accept the raw order ID.
+		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
 
