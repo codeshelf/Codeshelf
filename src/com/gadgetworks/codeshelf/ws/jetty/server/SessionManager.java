@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.websocket.Session;
 
@@ -18,6 +20,8 @@ import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
+import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class SessionManager {
 
@@ -25,13 +29,18 @@ public class SessionManager {
 
 	private final static SessionManager theSessionManager = new SessionManager();
 	
-	private HashMap<String,UserSession> activeSessions = new HashMap<String, UserSession>();
-	
+	private HashMap<String,UserSession> activeSessions; 
+	private ExecutorService	sharedExecutor;
+
 	private final Counter activeSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.active");
 	private final Counter activeSiteControlerSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.sitecontrollers");
 	private final Counter totalSessionsCounter = MetricsService.addCounter(MetricsGroup.WSS,"sessions.total");
 
 	private SessionManager() {
+		ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
+		builder.setNameFormat("UserSession %s");
+		this.sharedExecutor = Executors.newCachedThreadPool(builder.build());
+		this.activeSessions = Maps.newHashMap();
 	}
 	 
 	public static SessionManager getInstance() {
@@ -41,7 +50,7 @@ public class SessionManager {
 	public synchronized void sessionStarted(Session session) {
 		String sessionId = session.getId();
 		if (!activeSessions.containsKey(sessionId)) {
-			UserSession csSession = new UserSession(session);
+			UserSession csSession = new UserSession(session, sharedExecutor);
 			csSession.setSessionId(sessionId);
 			activeSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");

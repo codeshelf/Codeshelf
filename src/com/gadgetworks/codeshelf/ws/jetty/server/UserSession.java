@@ -75,11 +75,9 @@ public class UserSession implements IDaoListener {
 
 	private ExecutorService	executorService;
 	
-	public UserSession(Session session) {
+	public UserSession(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
-		ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
-		builder.setNameFormat("UserSession %s");
-		this.executorService = Executors.newCachedThreadPool(builder.build());
+		this.executorService = sharedExecutor;
 
 	}
 
@@ -124,6 +122,7 @@ public class UserSession implements IDaoListener {
 						sendMessage(response);
 					}
 				}		
+				PersistenceService.getInstance().endTenantTransaction();
 			}
 		});
 	}
@@ -140,7 +139,8 @@ public class UserSession implements IDaoListener {
 					if (response != null) {
 						sendMessage(response);
 					}
-				}		
+				}	
+				PersistenceService.getInstance().endTenantTransaction();
 			}
 		});
 	}
@@ -158,6 +158,7 @@ public class UserSession implements IDaoListener {
 						sendMessage(response);
 					}
 				}		
+				PersistenceService.getInstance().endTenantTransaction();
 			}
 		});
 		
