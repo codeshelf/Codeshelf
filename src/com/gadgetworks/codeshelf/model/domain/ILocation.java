@@ -122,8 +122,6 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	List<LocationAlias> getAliases();
 
-	void setAliases(List<LocationAlias> inAliases);
-
 	void addAlias(LocationAlias inAlias);
 
 	void removeAlias(LocationAlias inAlias);

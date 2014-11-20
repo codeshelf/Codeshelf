@@ -509,7 +509,9 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 
 	public final void addLocationAlias(LocationAlias inLocationAlias) {
 		Facility previousFacility = inLocationAlias.getParent();
-		if (previousFacility == null) {
+		if (previousFacility == null) {     
+
+
 			locationAliases.put(inLocationAlias.getDomainId(), inLocationAlias);
 			inLocationAlias.setParent(this);
 		} else if (!previousFacility.equals(this)) {
@@ -522,13 +524,14 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		return locationAliases.get(inLocationAliasId);
 	}
 
-	public final void removeLocationAlias(String inLocationAliasId) {
-		LocationAlias locationAlias = this.getLocationAlias(inLocationAliasId);
+	public final void removeLocationAlias(LocationAlias inLocationAlias) {
+		String locationAliasId = inLocationAlias.getDomainId();
+		LocationAlias locationAlias = this.getLocationAlias(locationAliasId);
 		if (locationAlias != null) {
 			locationAlias.setParent(null);
-			locationAliases.remove(inLocationAliasId);
+			locationAliases.remove(locationAliasId);
 		} else {
-			LOGGER.error("cannot remove LocationAlias " + inLocationAliasId + " from " + this.getDomainId()
+			LOGGER.error("cannot remove LocationAlias " + locationAliasId + " from " + this.getDomainId()
 					+ " because it isn't found in children");
 		}
 	}

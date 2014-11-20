@@ -140,50 +140,6 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	
 	@Test
-	public void usesLocationIdWhenNoAlias() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
-
-		String expectedValue = "TESTDOMAINID";
-		List<LocationAlias> emptyAliases = Collections.<LocationAlias>emptyList();
-		SubLocationABC<?> noAliasLocation = mockSubLocation("ID_FROM_LOCATION"); 
-		noAliasLocation.setAliases(emptyAliases);
-		
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		testWi.setLocation(noAliasLocation);
-		testWi.setLocationId(expectedValue);
-		List<WorkInstruction> wiList = ImmutableList.of(testWi);
-		List<String[]> table = toTable(wiList);
-		String[] dataRow = table.get(1);
-		assertField(dataRow, "locationId", expectedValue);		
-		this.getPersistenceService().endTenantTransaction();
-
-	}
-
-	@Test
-	public void usesFirstLocationAliasIfAvailable() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
-
-		String expectedValue = "ALIASID";
-		SubLocationABC<?> aliasedLocation = mockSubLocation("NOT_EXPECTED");
-		aliasedLocation.setAliases(ImmutableList.of(
-			new LocationAlias(facility, expectedValue, aliasedLocation),
-			new LocationAlias(facility, "NOTEXPECTED", aliasedLocation)));
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		testWi.setLocation(aliasedLocation);
-		testWi.setLocationId("LOCATIONID_NOTEXPECTED");
-			
-		List<WorkInstruction> wiList = ImmutableList.of(testWi);
-		List<String[]> table = toTable(wiList);
-		String[] dataRow = table.get(1);
-		assertField(dataRow, "locationId", expectedValue);		
-		this.getPersistenceService().endTenantTransaction();
-
-	}
-
-
-	@Test
 	public void missingUomMasterReturnsEmpty() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
