@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,8 @@ public class ServiceMethodCommand extends CommandABC {
 			if (method != null) {
 				try {
 					Object serviceObject = serviceFactory.getServiceInstance(classObject);
-					Object methodResult = method.invoke(serviceObject, methodArgs.toArray());
+					Object[] convertedArgs = convertArguments(method, methodArgs);
+					Object methodResult = method.invoke(serviceObject, convertedArgs);
 					response.setResults(methodResult);
 					response.setStatus(ResponseStatus.Success);
 					return response;
@@ -125,5 +127,29 @@ public class ServiceMethodCommand extends CommandABC {
 			response.setErrors(errors);
 			return response;
 		}
+	}
+	
+	/**
+	 * Inelegant converter for the time being
+	 */
+	private Object[] convertArguments(Method method, List<?> methodArgs) {
+		Class<?>[] parameterTypes = method.getParameterTypes();
+		Object[] convertedArgs = new Object[parameterTypes.length]; 
+		int i = 0;
+		for (Object arg : methodArgs) {
+			Class<?> paramType = parameterTypes[i];
+			if (paramType.isAssignableFrom(methodArgs.getClass())) {
+				convertedArgs[i] = arg;
+			} else if (UUID.class.isAssignableFrom(paramType)) {
+				convertedArgs[i] = UUID.fromString(String.valueOf(arg));
+			} else if (Double.class.isAssignableFrom(paramType)){
+				convertedArgs[i] = Double.valueOf(String.valueOf(arg));
+			}
+			else {
+				throw new IllegalArgumentException("could not convert argument: " + arg + " to " + paramType);
+			}
+			i++;
+		}
+		return convertedArgs;
 	}
 }
