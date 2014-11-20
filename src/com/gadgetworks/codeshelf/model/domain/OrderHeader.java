@@ -358,13 +358,16 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return orderLocations.get(inOrderLocationId);
 	}
 
-	public final void removeOrderLocation(String inOrderLocationId) {
-		OrderLocation orderLocation = this.getOrderLocation(inOrderLocationId);
-		if (orderLocation != null) {
-			orderLocation.setParent(null);
-			orderLocations.remove(inOrderLocationId);
+	public final void removeOrderLocation(OrderLocation inOrderLocation) {
+		if (inOrderLocation == null) {
+			LOGGER.error("null input to removeOrderLocation");
+			return;
+		}
+		if (orderLocations.containsValue(inOrderLocation)) {
+			inOrderLocation.setParent(null);
+			orderLocations.remove(inOrderLocation.getDomainId());
 		} else {
-			LOGGER.error("cannot remove OrderLocation " + inOrderLocationId + " from " + this.getDomainId()
+			LOGGER.error("cannot remove OrderLocation " + inOrderLocation + " from " + this.getDomainId()
 					+ " because it isn't found in children");
 		}
 	}

@@ -110,7 +110,7 @@ public class WorkInstructionTest extends DomainTestABC {
 
 		Container container = new Container();
 		container.setDomainId("C1");
-		container.setParent(facility);
+		facility.addContainer(container);
 		container.setKind(facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		container.setActive(true);
 		container.setUpdated(new Timestamp(System.currentTimeMillis()));

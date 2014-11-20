@@ -142,7 +142,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public final void removeContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
-			LOGGER.error("null input to Container.addContainerUse");
+			LOGGER.error("null input to Container.rermoveContainerUse");
 			return;
 		}
 		if (uses.contains(inContainerUse)) {

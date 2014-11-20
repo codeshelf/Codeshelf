@@ -229,9 +229,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
 			while (iter.hasNext()) {
 				OrderLocation orderLocation = iter.next();
-				orderLocation.setParent(null);
+				order.removeOrderLocation(orderLocation);
 				mOrderLocationDao.delete(orderLocation);
-				order.removeOrderLocation(orderLocation.getDomainId());
 			}
 		}
 	}
@@ -252,9 +251,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			while (iter.hasNext()) {
 				OrderLocation orderLocation = iter.next();
 				if (orderLocation.getLocation().equals(location)) {
-					orderLocation.setParent(null);
+					order.removeOrderLocation(orderLocation);
 					mOrderLocationDao.delete(orderLocation);
-					order.removeOrderLocation(orderLocation.getDomainId());
 				}
 			}
 		}
