@@ -40,6 +40,15 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
+	public void setupOrderIdAsContainer(String orderId, String positionId) {
+		// DEV-518. Also accept the raw order ID as the containerId
+		scanOrderId(orderId);
+		waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+
+		scanPosition(positionId);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+	}
+
 	public void setupContainer(String containerId, String positionId) {
 		// used for normal success case of scan container, then position on cart.
 		scanContainer(containerId);
@@ -82,8 +91,18 @@ public class PickSimulator {
 		cheDeviceLogic.scanCommandReceived("L%" + inLocation);
 	}
 
+	/**
+	 * Adds the C% to conform with Codeshelf scan specification
+	 */
 	public void scanContainer(String inContainerId) {
 		cheDeviceLogic.scanCommandReceived("C%" + inContainerId);
+	}
+
+	/**
+	 * Does not add C% or anything else to conform with Codeshelf scan specification. DEV-518. Also accept the raw order ID.
+	 */
+	public void scanOrderId(String inOrderId) {
+		cheDeviceLogic.scanCommandReceived(inOrderId);
 	}
 
 	public void scanPosition(String inPositionId) {

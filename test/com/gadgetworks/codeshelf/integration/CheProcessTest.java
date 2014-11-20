@@ -486,8 +486,9 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		// Back to our main test
 		LOGGER.info ("Case 2: A happy-day pick startup. No housekeeping jobs.");
 		picker.setup();
-		picker.setupContainer("12345", "1");
-		picker.setupContainer("11111", "2");
+		picker.setupContainer("12345", "1"); // This prepended to scan "C%12345" as per Codeshelf scan specification
+		// Enhancement from v9 for Accu-Logistics
+		picker.setupOrderIdAsContainer("11111", "2"); // This did not prepend. Scan "11111" and hope it is a preassigned containerId on the order.
 		picker.start("D303", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 		
