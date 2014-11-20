@@ -13,8 +13,8 @@ public class ServiceFactory {
 	public ServiceFactory(WorkService workService,
 						  LightService lightService) {
 		mServices = Maps.newHashMap();
-		mServices.put(workService.getClass(), workService);
-		mServices.put(lightService.getClass(), lightService);
+		mServices.put(WorkService.class, workService);
+		mServices.put(LightService.class, lightService);
 	}
 	
 	@SuppressWarnings("unchecked")

@@ -16,6 +16,7 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
@@ -43,8 +44,16 @@ import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.LightService;
+import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
+import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends DAOTestABC {
@@ -60,6 +69,31 @@ public class WorkServiceTest extends DAOTestABC {
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator();
 
+	@Test
+	public void workSummaryRequest() {
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = facilityGenerator.generateValid();
+		UUID cheId = null;
+		for(CodeshelfNetwork network : facility.getNetworks()) {
+			for(Che che: network.getChes().values()) {
+				cheId = che.getPersistentId();
+			}
+		}
+		
+		ServiceMethodRequest request = new ServiceMethodRequest();
+		request.setClassName("WorkService"); //the ux would use strings
+		request.setMethodName("workSummary");
+		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
+		WorkService workService = mock(WorkService.class);
+		when(workService.workSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
+		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class));
+		MessageProcessor processor = new ServerMessageProcessor(factory);
+		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
+		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
+		Assert.assertTrue(responseABC.isSuccess());
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
