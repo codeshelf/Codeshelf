@@ -133,7 +133,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			facility=organization.createFacility(facilityId,"",0.0,0.0);
 			mFacilityDao.store(facility);
 			facility.createDefaultContainerKind();
-			facility.recomputeDdcPositions();
+			// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.
 		}
 		this.facilityPersistentId=facility.getPersistentId();
 		

@@ -280,7 +280,8 @@ public class Organization extends DomainObjectABC {
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
-		facility.recomputeDdcPositions();
+		
+		// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.
 
 		// Setup six dummy CHEs
 		LOGGER.info("creating 6 CHEs");;

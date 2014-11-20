@@ -146,11 +146,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public final void setStoredLocation(final ILocation<?> inStoredLocation) {
 		storedLocation = (LocationABC<?>) inStoredLocation; 
-				
-		// The stored location is part of the domain key for an item's instance.
-		//setDomainId(makeDomainId(getItemId(), inStoredLocation, getUomMasterId()));
-		//inStoredLocation.addStoredItem(this);
-		
 	}
 
 	// Assorted meta fields for the UI

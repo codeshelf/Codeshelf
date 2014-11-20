@@ -141,8 +141,6 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 */
 	Map<String, Item> getStoredItems();
 
-	void setStoredItems(Map<String, Item> inItems);
-
 	void addStoredItem(Item inItem);
 	
 	Item getStoredItem(final String inItemDomainId);
