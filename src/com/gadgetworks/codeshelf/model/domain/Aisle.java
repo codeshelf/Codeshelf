@@ -94,19 +94,9 @@ public class Aisle extends SubLocationABC<Facility> {
 		// Some checking 
 		int initialLocationCount = pathSegment.getLocations().size();
 
-		this.setPathSegment(pathSegment);
-		ITypedDao<Aisle> theDao = this.getDao();
-		theDao.store(this);
-
-		// There is now a new association. Need to recompute locations positions along the path.  Kind of too bad to do several times as each segment is assigned.
-		// Note, this is also done on application restart.
-		Facility theFacility = this.getParent();
-		Path thePath = pathSegment.getParent();
-		if (thePath == null || theFacility == null)
-			LOGGER.error("null value in associatePathSegment");
-		else {
-			theFacility.recomputeLocationPathDistances(thePath);
-		}
+		pathSegment.addLocation(this);
+		this.computePosAlongPath(pathSegment);
+		this.getDao().store(this);
 
 		int afterLocationCount = pathSegment.getLocations().size();
 		if (initialLocationCount == afterLocationCount)

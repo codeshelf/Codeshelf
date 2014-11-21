@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.UUID;
@@ -1448,7 +1449,11 @@ public class AisleImporterTest extends EdiTestABC {
 
 		Path aPath = createPathForTest("F5X.1", facility);
 		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.00, 48.45);
-
+		
+		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		
 		String persistStr = segment0.getPersistentId().toString();
 		aisle51.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
@@ -1469,9 +1474,6 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(slot1Meters);
 		Double slot4Meters = slotS4.getPosAlongPath();
 		Assert.assertNotNull(slot4Meters);
-
-		// Not be necessary as associatePathSegment() called it. But convenient to debug as it computes again.
-		facility.recomputeLocationPathDistances(aPath);
 
 		Assert.assertNotEquals(slot1Meters, slot4Meters); // one of these should be further along the path
 		Assert.assertTrue(slot1Meters > slot4Meters); // path goes right to left, so S4 lowest.
@@ -1550,79 +1552,41 @@ public class AisleImporterTest extends EdiTestABC {
 		// For A32, B1 will be at the start of the path
 
 		Path aPath = createPathForTest("F3X.1", facility);
+
 		PathSegment segment0 = addPathSegmentForTest("F3X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		// Mostly check the parent relationship these 4 lines
-		TravelDirectionEnum direction1 = aPath.getTravelDirEnum();
+		TravelDirectionEnum direction1 = aPath.getTravelDir();
 		Assert.assertEquals(direction1, TravelDirectionEnum.FORWARD);
-		TravelDirectionEnum direction2 = segment0.getParent().getTravelDirEnum();
+		TravelDirectionEnum direction2 = segment0.getParent().getTravelDir();
 		Assert.assertEquals(direction2, TravelDirectionEnum.FORWARD);
 
-		Path bPath = facility.getPath("F3X.1");
-		Assert.assertEquals(aPath, bPath);
+		Path retrievedPath = facility.getPath("F3X.1");
+		Assert.assertEquals(aPath, retrievedPath);
 
 		List<Path> paths = facility.getPaths();
-		int countPaths = paths.size();
-		Assert.assertEquals(1, countPaths);
-		Path aPath2 = segment0.getParent();
-		Assert.assertEquals(aPath, aPath2);
-		int countPaths2 = paths.size();
-		Assert.assertEquals(1, countPaths2);
+		Assert.assertEquals(1, paths.size());
+		Assert.assertEquals(aPath, segment0.getParent());
+		Assert.assertEquals(1, paths.size());
 
+		UUID retrievedPathID = retrievedPath.getPersistentId();
 		// Then we need to associate the aisles to the path segment. Use the same function as the UI does
-		String persistStr = segment0.getPersistentId().toString();
-		aisle31.associatePathSegment(persistStr);
-		// Interesting. This calls facility.recomputeLocationPathDistances(the path segment's parent path); But does not find any locations on the path segment
+		String segmentId = segment0.getPersistentId().toString();
+		UUID facilityID = facility.getPersistentId();
+		this.getPersistenceService().endTenantTransaction();
+		
+		
+		this.getPersistenceService().beginTenantTransaction();
 
-		// this segment should have one location now. However, the old reference is stale and may know its aisles (used to be). Re-get
-		PathSegment segment00 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
-		int countLocations1 = segment00.getLocations().size();
-		Assert.assertEquals(1, countLocations1);
+		
+		aisle31.associatePathSegment(segmentId);
 
-		// Let's check locations on the path segment, derived different ways
-		// original aPath return while created:
-		PathSegment aPathSegment = aPath.getPathSegment(0);
-		int countLocationsA = aPathSegment.getLocations().size();
-		Assert.assertEquals(aPathSegment, segment00);
-		Assert.assertEquals(1, countLocationsA); // if this fails, may be irrelevant; just a stale reference.
-
-		// bPath from the facility before associating aisle to path segment
-		PathSegment bPathSegment = bPath.getPathSegment(0);
-		int countLocationsB = bPathSegment.getLocations().size();
-		Assert.assertEquals(bPathSegment, segment00);
-		Assert.assertEquals(1, countLocationsB); // if this fails, may be irrelevant; just a stale reference.
-
-		// cPath from the facility now (after associating aisle to path segment)
-		Path cPath = facility.getPath("F3X.1");
-		PathSegment cPathSegment = cPath.getPathSegment(0);
-		int countLocationsC = cPathSegment.getLocations().size();
-		Assert.assertEquals(cPathSegment, segment00);
-		Assert.assertEquals(1, countLocationsC); // if this fails, may be irrelevant; just a stale reference.
+		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31);
 
 		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
-		aisle32.associatePathSegment(persistStr);
-		// Check in the same manner
-		UUID persistentId = UUID.fromString(persistStr);
-		PathSegment dPathSegment = PathSegment.DAO.findByPersistentId(persistentId);
-		int countLocationsD = dPathSegment.getLocations().size();
-		Assert.assertEquals(dPathSegment, segment00);
-		Assert.assertEquals(2, countLocationsD);
+		aisle32.associatePathSegment(segmentId);
 
-		// this segment should have two locations now
-		//However, the old reference is stale and would only have one aisle. Need to re-get.
-		PathSegment segment000 = PathSegment.DAO.findByDomainId(aPath, "F3X.1.0");
-		List<LocationABC> locations2 = segment000.getLocations();
-		int countLocations2 = locations2.size();
-		Assert.assertEquals(2, countLocations2);
-
-		// Just checking if the getParent() returns fully hydrated path. Used to NPE from this.
-		Path dPath = dPathSegment.getParent();
-		Assert.assertNotNull(dPath);
-		TravelDirectionEnum theDirection = dPath.getTravelDirEnum();
-		Assert.assertEquals(theDirection, TravelDirectionEnum.FORWARD);
-
-		// This should not be necessary as associatePathSegment() called it
-		facility.recomputeLocationPathDistances(aPath);
+		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31, aisle32);
 
 		// Lowest path values at A31B2T1S5 and A32B2T1S5
 		// Lowest LED values should be A31B1T1S1 and A32B2T1S5
@@ -1707,6 +1671,27 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
+	protected void checkLocations(UUID facilityID, UUID retrievedPathID, String segmentDomainId, Aisle...locations) {
+		Path retrievedPath;
+		retrievedPath = Path.DAO.findByPersistentId(retrievedPathID);
+		// this segment should have one location now. However, the old reference is stale and may know its aisles (used to be). Re-get
+		PathSegment retrievedSegment = PathSegment.DAO.findByDomainId(retrievedPath, segmentDomainId);
+		Assert.assertEquals(Arrays.asList(locations), retrievedSegment.getLocations());
+		
+		// Let's check locations on the path segment, derived different ways
+		// original aPath return while created:
+		PathSegment memberSegment = retrievedPath.getPathSegment(0);
+		Assert.assertEquals(memberSegment, retrievedSegment);
+		Assert.assertEquals(Arrays.asList(locations), memberSegment.getLocations());
+		
+		//From the facility now (after associating aisle to path segment)
+		Facility retrievedFacility = Facility.DAO.findByPersistentId(facilityID);
+		Path memberPath = retrievedFacility.getPath("F3X.1");
+		PathSegment memberPathFirstSegment = memberPath.getPathSegment(0);
+		Assert.assertEquals(memberSegment, memberPathFirstSegment);
+		Assert.assertEquals(Arrays.asList(locations), memberPathFirstSegment.getLocations());
+	}
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void nonSlottedTest() {
@@ -1757,6 +1742,10 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(segmentRightMostX > aisleCorrectedEndX);
 
 		String persistStr = segment0.getPersistentId().toString();
+		
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
 		aisle61.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should have position now
 		// Although the old reference to aisle before path association would not.
