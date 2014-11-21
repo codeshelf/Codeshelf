@@ -152,11 +152,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public Object getNextId(Class<?> beanType) {
-		throw new NotImplementedException();
-	}
-
-	@Override
 	public void beginTransaction() {
 	}
 
