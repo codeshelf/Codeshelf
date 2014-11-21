@@ -7,8 +7,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.transaction.Transaction;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -70,7 +67,11 @@ public class Listener implements ObjectEventListener {
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (this.matchList.contains(domainPersistentId)) {
 			IDomainObject domainObject = PersistenceService.getDao(domainClass).findByPersistentId(domainPersistentId);
-			domainObjectList.add(domainObject);
+			if (domainObject != null) {
+				domainObjectList.add(domainObject);
+			} else {
+				LOGGER.warn("listener unable to find persistentId: " + domainPersistentId);
+			}
 		}
 		if (domainObjectList.size()>0) {
 			List<Map<String, Object>> p = getProperties(domainObjectList,type);
