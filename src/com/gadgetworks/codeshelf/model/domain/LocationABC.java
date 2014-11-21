@@ -804,9 +804,27 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		if (storedItem != null) {
 			storedItem.setStoredLocation(null);
 			storedItems.remove(itemDomainId);
+			return;
+		}
+		// If not found, two possibilities of bug. (Or inconsistent data after unexpected throw.)
+		// 1) Call remove from a location that does not have the item.
+		// 2) The location does have the item, but mapped under a different domainId. This is the bug I want to look for.
+
+		for (Item iterItem : storedItems.values()) {
+			if (iterItem.equals(inItem)) {
+				storedItem = iterItem;
+				LOGGER.error("removeStoredItem  found" + itemDomainId + " in " + this.getDomainId()
+						+ " but not keyed by domainId correctly");  // This is bug 2)
+				break;
+			}
+		}
+		
+		if (storedItem != null) {
+			storedItem.setStoredLocation(null);
+			// How do we remove it from stored items?
 		} else {
 			LOGGER.error("cannot removeStoredItem " + itemDomainId + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+					+ " because it isn't found in children"); // This is bug 1)
 		}
 	}
 
