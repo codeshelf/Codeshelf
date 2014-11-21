@@ -393,18 +393,12 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 		// Get or create the item at the specified location.
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
-			result = inItemMaster.createStoredItem(inFacility, inUomMaster);
+			result = inItemMaster.findOrCreateItem(inFacility, inUomMaster);
 		}
 
 		// If we were able to get/create an item then update it.
 		if (result != null) {
 			result.setQuantity(Double.valueOf(inCsvBean.getQuantity()));
-
-			//result.setStoredLocation(inFacility);
-			//result.setUomMaster(inUomMaster);
-			//inItemMaster.addItem(result);
-			inFacility.addStoredItem(result);
-			
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -458,37 +452,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		if (errors.hasErrors() && !useLenientValidation) {
 			throw new InputValidationException(errors);
 		}
-
 		
-		Item result = null;
-		
-		
-		String normalizedUom = UomNormalizer.normalizeString(inCsvBean.getUom());
-		if (normalizedUom.equals(UomNormalizer.EACH)) {
-			List<Item> items = inItemMaster.getItems();
-			for (Item item : items) {
-				if (UomNormalizer.normalizeString(item.getUomMaster().getUomMasterId()).equals(normalizedUom)) {
-					result = item;
-					break;
-				}
-			}
-		}
-		else {
-			result = inLocation.getStoredItemFromMasterIdAndUom(inCsvBean.getItemId(),inCsvBean.getUom());
-				
-		}
-		
-		if (result == null) {
-			result = inItemMaster.createStoredItem(inLocation,inUomMaster);
-		} 
-
-		// setStoredLocation has the side effect of setting domainId, but that requires that UOM already be set. So setUomMaster first.
-		result.setUomMaster(inUomMaster);
-		inLocation.addStoredItem(result);
-		result.setQuantity(quantity);
-
-		// This used to call only this
-		// now refine using the cm value if there is one
+		// Refine using the cm value if there is one
 		Integer cmValue = null;
 		String cmFromLeftString = inCsvBean.getCmFromLeft();
 		if (!Strings.isNullOrEmpty(cmFromLeftString)) {
@@ -503,10 +468,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 						} else {
 							SubLocationABC<?> asSubLocation = (SubLocationABC<?>) inLocation;
 							Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
-							if (cmValue / 100.0 < pickEndWidthMeters) {
-								result.setPositionFromLeft(cmValue);
-							}
-							else {
+							if (cmValue / 100.0 > pickEndWidthMeters) {
 								errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
 							}
 						}	
@@ -519,8 +481,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				errors.rejectValue("positionFromLeft", cmFromLeftString, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
 		}
-		result.setActive(true);
-		result.setUpdated(inEdiProcessTime);
 		
 		
 		if(errors.hasErrors()) {
@@ -528,6 +488,15 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				throw new InputValidationException(errors); 
 			}
 		} 
+		
+		Item result = inItemMaster.findOrCreateItem(inLocation,inUomMaster);
+		
+		result.setQuantity(quantity);
+		if (cmValue != null)
+			result.setPositionFromLeft(cmValue);
+		result.setActive(true);
+		result.setUpdated(inEdiProcessTime);
+		
 		mItemDao.store(result);
 		return result;
 	}

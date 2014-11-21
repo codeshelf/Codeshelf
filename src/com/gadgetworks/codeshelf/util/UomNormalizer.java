@@ -39,6 +39,13 @@ public class UomNormalizer {
 		
 		return normalizeString(inFirstUom).equals(normalizeString(inSecondUom));
 	}
+	
+	/*
+	 * Separate function because of our business logic importance for each. Only one each item per facility (or later, per work area.)
+	 */
+	public static boolean isEach(String inUom){
+		return normalizedEquals(EACH, inUom);
+	}
 
 }
 
