@@ -75,6 +75,10 @@ public class WorkService implements IApiService {
 	}
 
 	private class WorkServiceThread extends Thread {
+		public WorkServiceThread() {
+			super("WorkService Thread");
+		}
+		
 		@Override
 		public void run() {
 			WorkService.aWorkServiceThreadExists = true;

@@ -40,7 +40,7 @@ public class ConnectionManagerThread extends Thread {
 	
 	public ConnectionManagerThread(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
-		this.setName("WebSocket Maintenance Thread");
+		this.setName("WS Client Maintenance Thread");
 		this.setDaemon(true);
 	}
 	

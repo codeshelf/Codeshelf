@@ -29,6 +29,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.PcapRecord;
 import com.gadgetworks.codeshelf.util.PcapRingBuffer;
+import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -170,6 +171,15 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void stop() {
 		radioController.stopController();
 		connectionManagerThread.setExit(true);
+		while (connectionManagerThread.isAlive()) {
+			LOGGER.debug("Waiting for connection manager thread to exit...");
+			ThreadUtils.sleep(2000);
+		}
+		try {
+			client.disconnect();
+		} catch (IOException e) {
+			LOGGER.error("Failed to disconnect from server", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------
