@@ -146,8 +146,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	Item getStoredItem(final String inItemDomainId);
 	Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom);
 
-	void removeStoredItem(final String inItemDomainId);
-	void removeStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom);
+	void removeStoredItem(Item inItem);
 	// --------------------------------------------------------------------------
 	/**
 	 * Get all of the DDC item groups in this location (if it is a DDC location and has any DDC groups).

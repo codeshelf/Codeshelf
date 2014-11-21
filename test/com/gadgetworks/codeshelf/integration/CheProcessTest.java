@@ -470,7 +470,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
-		picker.start("D403", 5000, 1000);
+		picker.start("D403", 8000, 5000);
 		HousekeepingInjector.restoreHKDefaults();
 
 		Assert.assertEquals(1, picker.countActiveJobs());

@@ -1856,9 +1856,14 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
 		// IMPORTANT. When DEV-411 resumes, change back to <=.  For now, we want only 3 LED lit at GoodEggs.
-		for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+		// Bug: DEV-519 Make it work if firstLedPosNum = lastLedPosNum, but still limit to 3.
+		int countUsed = 0;
+		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
+			countUsed++;
+			if (countUsed >= 3)
+				break;
 		}
 		ledCmdGroup.setLedSampleList(ledSamples);
 
@@ -1906,9 +1911,14 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 			LedCmdGroup ledCmdGroup = new LedCmdGroup(theController.getDeviceGuidStr(), theChannel, firstLedPosNum, ledSamples);
 
 			// IMPORTANT. When DEV-411 resumes, change back to <=.  For now, we want only 3 LED lit at GoodEggs.
-			for (short ledPos = firstLedPosNum; ledPos < lastLedPosNum; ledPos++) {
+			// Bug: DEV-519 Make it work if firstLedPosNum = lastLedPosNum, but still limit to 3.
+			int countUsed = 0;
+			for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 				LedSample ledSample = new LedSample(ledPos, inColor);
 				ledSamples.add(ledSample);
+				countUsed++;
+				if (countUsed >= 3)
+					break;
 			}
 			ledCmdGroup.setLedSampleList(ledSamples);
 			ledCmdGroupList.add(ledCmdGroup);

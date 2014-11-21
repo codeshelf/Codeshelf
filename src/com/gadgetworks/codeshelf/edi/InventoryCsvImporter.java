@@ -392,7 +392,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		Item result = null;
 
 		// Get or create the item at the specified location.
-		result = inItemMaster.getItem(inCsvBean.getItemId());
 		if ((result == null) && (inCsvBean.getItemId() != null) && (inCsvBean.getItemId().length() > 0)) {
 			result = inItemMaster.createStoredItem(inFacility, inUomMaster);
 		}

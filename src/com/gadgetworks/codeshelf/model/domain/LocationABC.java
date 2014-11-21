@@ -72,31 +72,31 @@ import com.google.common.collect.Ordering;
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
-/*
-	@SuppressWarnings("rawtypes")
-	@Inject
-	public static ITypedDao<LocationABC>	DAO;
-
-	@SuppressWarnings("rawtypes")
-	@Singleton
-	public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
-
-		// We include the IDatabase arg to cause Guice to initialize it *before* locations.
+	/*
+		@SuppressWarnings("rawtypes")
 		@Inject
-		public LocationABCDao(final PersistenceService persistenceService) {
-			super(persistenceService);
-		}
+		public static ITypedDao<LocationABC>	DAO;
 
-		public final Class<LocationABC> getDaoClass() {
-			return LocationABC.class;
-		}
-	}*/
+		@SuppressWarnings("rawtypes")
+		@Singleton
+		public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
+
+			// We include the IDatabase arg to cause Guice to initialize it *before* locations.
+			@Inject
+			public LocationABCDao(final PersistenceService persistenceService) {
+				super(persistenceService);
+			}
+
+			public final Class<LocationABC> getDaoClass() {
+				return LocationABC.class;
+			}
+		}*/
 
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
-	public static final Double			METERS_PER_LED_POS	= 0.03125;
+	public static final Double										METERS_PER_LED_POS	= 0.03125;
 
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(LocationABC.class);
+	private static final Logger										LOGGER				= LoggerFactory.getLogger(LocationABC.class);
 
 	//	@Embedded
 	//	@AttributeOverrides({ @AttributeOverride(name = "x", column = @Column(name = "anchor_pos_x")),
@@ -113,45 +113,45 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Enumerated(value = EnumType.STRING)
 	@JsonProperty
 	@Getter
-	private PositionTypeEnum			anchorPosTypeEnum;
+	private PositionTypeEnum										anchorPosTypeEnum;
 
 	// The X anchor position.
 	@Column(nullable = false)
 	@JsonProperty
 	@Getter
-	private Double						anchorPosX;
+	private Double													anchorPosX;
 
 	// The Y anchor position.
 	@Column(nullable = false)
 	@JsonProperty
 	@Getter
-	private Double						anchorPosY;
+	private Double													anchorPosY;
 
 	// The Z anchor position.
 	@Column(nullable = false)
 	@JsonProperty
 	@Getter
-	private Double						anchorPosZ;
+	private Double													anchorPosZ;
 
 	// The location description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						description;
+	private String													description;
 
 	// How far this location is from the path's origin.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double						posAlongPath;
+	private Double													posAlongPath;
 
 	// Associated path segment (optional)
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private PathSegment					pathSegment;
+	private PathSegment												pathSegment;
 	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
 	// DomainObjectABC will manufacture a call to getPathSegment during DAO.store(). So do not skip the getter with complicated overrides
 
@@ -166,45 +166,45 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	private LedController				ledController;
+	private LedController											ledController;
 
 	// The LED controller's channel that lights this location.
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Short						ledChannel;
+	private Short													ledChannel;
 
 	// The bay's first LED position on the channel.
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Short						firstLedNumAlongPath;
+	private Short													firstLedNumAlongPath;
 
 	// The number of LED positions in the bay.
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Short						lastLedNumAlongPath;
+	private Short													lastLedNumAlongPath;
 
 	// The first DDC ID for this location (if it has one).
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						firstDdcId;
+	private String													firstDdcId;
 
 	// The last DDC ID for this location (if it has one).
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						lastDdcId;
+	private String													lastDdcId;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	private List<Vertex>				vertices			= new ArrayList<Vertex>();
+	private List<Vertex>											vertices			= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
@@ -217,33 +217,33 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@OneToMany(mappedBy = "mappedLocation")
 	@Getter
 	@Setter
-	private List<LocationAlias>			aliases				= new ArrayList<LocationAlias>();
+	private List<LocationAlias>										aliases				= new ArrayList<LocationAlias>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "storedLocation")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Item>			storedItems			= new HashMap<String, Item>();
+	private Map<String, Item>										storedItems			= new HashMap<String, Item>();
 
 	// The DDC groups stored in this location.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, ItemDdcGroup>	itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
+	private Map<String, ItemDdcGroup>								itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
 
 	// For this location, is the lower led on the anchor side?
 	@Column(nullable = true)
 	@Getter
 	@Setter
-	private Boolean						lowerLedNearAnchor;
+	private Boolean													lowerLedNearAnchor;
 
 	// Is this location active?
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Boolean						active;
+	private Boolean													active;
 
 	public LocationABC() {
 		active = true;
@@ -503,11 +503,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 */
 	public final void addLocation(SubLocationABC<? extends IDomainObject> inLocation) {
 		IDomainObject oldParent = inLocation.getParent();
-		if(oldParent == null) {
+		if (oldParent == null) {
 			locations.put(inLocation.getDomainId(), inLocation);
 			inLocation.setParent(this);
-		} else if(!oldParent.equals(this)){
-			LOGGER.error("cannot add Location "+inLocation.getDomainId()+" to "+this.getClassName()+" "+this.getDomainId()+" because it has not been removed from "+oldParent.getDomainId());
+		} else if (!oldParent.equals(this)) {
+			LOGGER.error("cannot add Location " + inLocation.getDomainId() + " to " + this.getClassName() + " "
+					+ this.getDomainId() + " because it has not been removed from " + oldParent.getDomainId());
 		}
 	}
 
@@ -528,35 +529,35 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			}
 		} // else
 		return locations.get(inLocationId);
-		
-/*		
-		// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
-		//return locations.get(inLocationId);
-		ISubLocation<?> result = null;
 
-		// If the current location is a facility then first look for an alias
-		if (this.getClass().equals(Facility.class)) {
-			Facility facility = (Facility) this;
-			LocationAlias alias = facility.getLocationAlias(inLocationId);
-			if ((alias != null) && (alias.getActive())) {
-				return alias.getMappedLocation();
-			}
-		}
+		/*		
+				// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
+				//return locations.get(inLocationId);
+				ISubLocation<?> result = null;
 
-		// We didn't find an alias, so search through DB for the matching location.
-		@SuppressWarnings("rawtypes")
-		ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
-		Map<String, Object> filterParams = new HashMap<String, Object>();
-		filterParams.put("parent.persistentId", this.getPersistentId());
-		filterParams.put("domainId", inLocationId);
-		@SuppressWarnings("rawtypes")
-		List<SubLocationABC> resultSet = dao.findByFilter(filterParams);
-		if ((resultSet != null) && (resultSet.size() > 0)) {
-			result = resultSet.get(0);
-		}
+				// If the current location is a facility then first look for an alias
+				if (this.getClass().equals(Facility.class)) {
+					Facility facility = (Facility) this;
+					LocationAlias alias = facility.getLocationAlias(inLocationId);
+					if ((alias != null) && (alias.getActive())) {
+						return alias.getMappedLocation();
+					}
+				}
 
-		return result;
-		*/
+				// We didn't find an alias, so search through DB for the matching location.
+				@SuppressWarnings("rawtypes")
+				ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
+				Map<String, Object> filterParams = new HashMap<String, Object>();
+				filterParams.put("parent.persistentId", this.getPersistentId());
+				filterParams.put("domainId", inLocationId);
+				@SuppressWarnings("rawtypes")
+				List<SubLocationABC> resultSet = dao.findByFilter(filterParams);
+				if ((resultSet != null) && (resultSet.size() > 0)) {
+					result = resultSet.get(0);
+				}
+
+				return result;
+				*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -565,11 +566,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 */
 	public final void removeLocation(String inLocationId) {
 		SubLocationABC<? extends IDomainObject> location = locations.get(inLocationId);
-		if(location != null) {
+		if (location != null) {
 			location.setParent(null);
 			locations.remove(inLocationId);
 		} else {
-			LOGGER.error("cannot remove SubLocationABC "+inLocationId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove SubLocationABC " + inLocationId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -698,39 +700,43 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final void addVertex(Vertex inVertex) {
 		ILocation<?> previousLocation = inVertex.getParent();
-		if(previousLocation == null) {
+		if (previousLocation == null) {
 			vertices.add(inVertex);
 			inVertex.setParent(this);
-		} else if(!previousLocation.equals(this)) {
-			LOGGER.error("cannot add Vertex "+inVertex.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousLocation.getDomainId());
-		}	
+		} else if (!previousLocation.equals(this)) {
+			LOGGER.error("cannot add Vertex " + inVertex.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousLocation.getDomainId());
+		}
 	}
 
 	public final void removeVertex(Vertex inVertex) {
-		if(this.vertices.contains(inVertex)) {
+		if (this.vertices.contains(inVertex)) {
 			inVertex.setParent(null);
 			vertices.remove(inVertex);
 		} else {
-			LOGGER.error("cannot remove Vertex "+inVertex.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove Vertex " + inVertex.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addAlias(LocationAlias inAlias) {
 		ILocation<?> previousLocation = inAlias.getMappedLocation();
-		if(previousLocation == null) {
+		if (previousLocation == null) {
 			aliases.add(inAlias);
 			inAlias.setMappedLocation((ISubLocation<?>) this);
-		} else if(!previousLocation.equals(this)) {
-			LOGGER.error("cannot map Alias "+inAlias.getDomainId()+" to "+this.getDomainId()+" because it is still mapped to "+previousLocation.getDomainId());
-		}	
+		} else if (!previousLocation.equals(this)) {
+			LOGGER.error("cannot map Alias " + inAlias.getDomainId() + " to " + this.getDomainId()
+					+ " because it is still mapped to " + previousLocation.getDomainId());
+		}
 	}
 
 	public final void removeAlias(LocationAlias inAlias) {
-		if(this.aliases.contains(inAlias)) {
+		if (this.aliases.contains(inAlias)) {
 			inAlias.setMappedLocation(null);
 			aliases.remove(inAlias);
 		} else {
-			LOGGER.error("cannot unmap Alias "+inAlias.getDomainId()+" from "+this.getDomainId()+" because it isn't found in aliases");
+			LOGGER.error("cannot unmap Alias " + inAlias.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in aliases");
 		}
 	}
 
@@ -749,28 +755,27 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final void addStoredItem(Item inItem) {
 		ILocation<?> previousLocation = inItem.getStoredLocation();
-		
+
 		// If it's already in another location then remove it from that location.
 		// Shall we use its existing domainID (which will change momentarily?
 		// Or compute what its domainID must have been in that location?
 		if (previousLocation != null) {
-			previousLocation.removeStoredItemFromMasterIdAndUom(inItem.getItemId(), inItem.getUomMasterId());
+			previousLocation.removeStoredItem(inItem);
 			previousLocation = null;
 		}
-		
-		if(previousLocation == null) {
+
+		if (previousLocation == null) {
 			String domainId = Item.makeDomainId(inItem.getItemId(), this, inItem.getUomMasterId());
 			inItem.setDomainId(domainId);
-			// why not just ask the item for its domainId?
+			// why not just ask the item for its domainId? The item's domainID is changing as it moves.
 			storedItems.put(domainId, inItem);
 			inItem.setStoredLocation(this);
 		} /*else if(!previousLocation.equals(this)) {
 			LOGGER.error("cannot addStoredItem "+inItem.getDomainId()+" to "+this.getDomainId()+" because it is still stored at "+previousLocation.getDomainId());
-		}	*/
+			}	*/
 
-		
 	}
-	
+
 	public final Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
 		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
 		// why not just ask the item for its domainId?
@@ -793,29 +798,27 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return storedItems.get(inItemDomainId);
 	}
 
-	public final void removeStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
-		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
-		removeStoredItem(domainId);
-	}
-
-	public final void removeStoredItem(final String inItemDomainId) {
-		Item storedItem = storedItems.get(inItemDomainId);
-		if(storedItem != null) {
+	public final void removeStoredItem(Item inItem) {
+		String itemDomainId = inItem.getDomainId();
+		Item storedItem = storedItems.get(itemDomainId);
+		if (storedItem != null) {
 			storedItem.setStoredLocation(null);
-			storedItems.remove(inItemDomainId);
+			storedItems.remove(itemDomainId);
 		} else {
-			LOGGER.error("cannot removeStoredItem "+inItemDomainId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot removeStoredItem " + itemDomainId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
 		ILocation<?> previousLocation = inItemDdcGroup.getParent();
-		if(previousLocation == null) {
+		if (previousLocation == null) {
 			itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
 			inItemDdcGroup.setParent(this);
-		} else if(!previousLocation.equals(this)) {
-			LOGGER.error("cannot addItemDdcGroup "+inItemDdcGroup.getDomainId()+" to "+this.getDomainId()+" because it is still stored at "+previousLocation.getDomainId());
-		}	
+		} else if (!previousLocation.equals(this)) {
+			LOGGER.error("cannot addItemDdcGroup " + inItemDdcGroup.getDomainId() + " to " + this.getDomainId()
+					+ " because it is still stored at " + previousLocation.getDomainId());
+		}
 
 	}
 
@@ -825,11 +828,12 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public final void removeItemDdcGroup(final String inItemDdcGroupId) {
 		ItemDdcGroup itemDdcGroup = itemDdcGroups.get(inItemDdcGroupId);
-		if(itemDdcGroup != null) {
+		if (itemDdcGroup != null) {
 			itemDdcGroup.setParent(null);
 			itemDdcGroups.remove(inItemDdcGroupId);
 		} else {
-			LOGGER.error("cannot removeItemDdcGroup "+inItemDdcGroupId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot removeItemDdcGroup " + inItemDdcGroupId + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -1043,14 +1047,17 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 		return true;
 	}
-	
+
 	public LedRange getFirstLastLedsForLocation() {
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
 		// to compute, we need the locations first and last led positions
 		Short firstLocLed = getFirstLedNumAlongPath();
 		Short lastLocLed = getLastLedNumAlongPath();
 		if (firstLocLed == null || lastLocLed == null) {
-			throw new UnsupportedOperationException(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ", this, firstLocLed, lastLocLed));
+			throw new UnsupportedOperationException(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
+				this,
+				firstLocLed,
+				lastLocLed));
 		}
 		// following cast not safe if the stored location is facility
 		if (this instanceof Facility)
@@ -1068,8 +1075,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		public int compare(Item item1, Item item2) {
 			int result = ComparisonChain.start()
-		             .compare(item1.getPosAlongPath(), item2.getPosAlongPath(), Ordering.natural().nullsLast())
-		             .result();
+				.compare(item1.getPosAlongPath(), item2.getPosAlongPath(), Ordering.natural().nullsLast())
+				.result();
 			return result;
 		}
 
@@ -1096,9 +1103,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return aList;
 	}
 
-//	public static void setDao(LocationABCDao inLocationDao) {
-//		LocationABC.DAO = inLocationDao;
-//	}
+	//	public static void setDao(LocationABCDao inLocationDao) {
+	//		LocationABC.DAO = inLocationDao;
+	//	}
 
 	/*
 	@Override
@@ -1106,7 +1113,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return this;
 	}
 	*/
-	
+
 	public Organization getOrganization() {
 		return getFacility().getOrganization();
 	}

@@ -22,7 +22,7 @@ public class ItemTest extends DomainTestABC {
 		item.setDomainId("domain");
 
 		ItemMaster itemMaster = new ItemMaster();
-		itemMaster.addItem(item);
+		itemMaster.addItemToMaster(item);
 		
 		item.setStoredLocation(facility);
 		String result = item.getPosAlongPathui();
@@ -40,7 +40,7 @@ public class ItemTest extends DomainTestABC {
 		item.setDomainId("domain");
 		
 		ItemMaster itemMaster = new ItemMaster();
-		itemMaster.addItem(item);
+		itemMaster.addItemToMaster(item);
 		
 		item.setStoredLocation(anyLocation);
 		item.setItemCmFromLeft(" "); //allowed

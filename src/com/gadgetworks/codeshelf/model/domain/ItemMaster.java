@@ -69,20 +69,20 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemMaster.class);
+	private static final Logger				LOGGER						= LoggerFactory.getLogger(ItemMaster.class);
 
-	private static final Comparator<String> asciiAlphanumericComparator = new ASCIIAlphanumericComparator();
-	
+	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
+
 	// The parent facility.
 	@ManyToOne(optional = false)
-	private Facility			parent;
+	private Facility						parent;
 
 	// The description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				description;
+	private String							description;
 
 	// The lot handling method for this item.
 	@Column(nullable = false)
@@ -90,58 +90,58 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private LotHandlingEnum		lotHandlingEnum;
+	private LotHandlingEnum					lotHandlingEnum;
 
 	// Ddc Id
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				ddcId;
+	private String							ddcId;
 
 	// SlotFlex Id
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				slotFlexId;
+	private String							slotFlexId;
 
 	// Ddc pack depth
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer				ddcPackDepth;
+	private Integer							ddcPackDepth;
 
 	// The standard UoM.
 	@ManyToOne(optional = false)
 	@Getter
 	@Setter
-	private UomMaster			standardUom;
+	private UomMaster						standardUom;
 
 	// For a network this is a list of all of the users that belong in the set.
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean				active;
+	private Boolean							active;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			updated;
+	private Timestamp						updated;
 
 	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	private Map<String, Item>	items		= new HashMap<String, Item>();
+	@MapKey(name = "persistentId")
+	private Map<String, Item>				items						= new HashMap<String, Item>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
-		active=true;
+		active = true;
 		updated = new Timestamp(System.currentTimeMillis());
 	}
-	
+
 	/*
 	public ItemMaster(Facility inParent, String inItemId, UomMaster standardUom) {
 		super(inItemId);
@@ -177,28 +177,38 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final List<? extends IDomainObject> getChildren() {
 		return getItems();
 	}
-	
-	public final void addItem(Item inItem) {
+
+	/**
+	 * Item's domainId changes as the item moves. Therefore use the persistentId so we do not have to remove and add back after each move.
+	 */
+	public final void addItemToMaster(Item inItem) {
 		ItemMaster previousItemMaster = inItem.getParent();
-		if(previousItemMaster == null) {
-			items.put(inItem.getDomainId(), inItem);
+		if (previousItemMaster == null) {
+			items.put(inItem.getPersistentId().toString(), inItem);
 			inItem.setParent(this);
-		} else if(!previousItemMaster.equals(this)) {
-			LOGGER.error("cannot add Item "+inItem.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousItemMaster.getDomainId());
-		}	
-	}
-
-	public final Item getItem(String inItemId) {
-		return items.get(inItemId);
-	}
-
-	public final void removeItem(String inItemId) {
-		Item item = this.getItem(inItemId);
-		if(item != null) {
-			item.setParent(null);
-			items.remove(inItemId);
+		} else if (!previousItemMaster.equals(this)) {
+			LOGGER.error("cannot add Item " + inItem.getDomainId() + " to " + this.getDomainId()
+					+ ". because item should not change parent from " + previousItemMaster.getDomainId());
 		} else {
-			LOGGER.error("cannot remove Item "+inItemId+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("Extra unnecessary call to addItemToMaster");
+		}
+	}
+
+	public final Item getItemFromPersistentId(String inItemPersistentId) {
+		return items.get(inItemPersistentId);
+	}
+
+/**
+ * Careful with removeItem(). Item's domainId changes as the item moves. Therefore use the persistentId so we do not have to remove and add back after each move.
+ */
+	public final void removeItemFromMaster(Item inItem) {
+		String persistId = inItem.getPersistentId().toString();
+		Item item = this.getItemFromPersistentId(persistId);
+		if (item != null) {
+			item.setParent(null);
+			items.remove(persistId);
+		} else {
+			LOGGER.error("cannot remove Item " + inItem.getDomainId() + " from " + this.getDomainId() + " because it isn't found in children");
 		}
 	}
 
@@ -209,7 +219,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final void setItemId(final String inItemId) {
 		setDomainId(inItemId);
 	}
-	
+
 	public final String getItemId() {
 		return getDomainId();
 	}
@@ -217,7 +227,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public Boolean isDdcItem() {
 		return (ddcId != null);
 	}
-	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -230,21 +239,21 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 */
 	public final Item getFirstActiveItemMatchingUomOnPath(final Path inPath, final String inUomStr) {
 		Item result = null;
-		
+
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
 
 		ISubLocation<?> foundLocation = null;
 		Item selectedItem = null;
-		
+
 		// This mimics the old code. Not at all sure it is correct.
 		for (Item item : getItems()) {
 			// Does the Item know where it is?
 			ISubLocation<?> location = (ISubLocation<?>) item.getStoredLocation();
-			
+
 			if (location != null && inPath.isLocationOnPath(location)) {
 				String itemUom = item.getUomMasterId();
 				String itemNormalizedUom = UomNormalizer.normalizeString(itemUom);
-				if (normalizedUomStr.equals(itemNormalizedUom)){
+				if (normalizedUomStr.equals(itemNormalizedUom)) {
 					foundLocation = location;
 					selectedItem = item;
 					break;
@@ -256,10 +265,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		if (foundLocation != null) {
 			result = selectedItem;
 		}
-		
+
 		return result;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Return list of inventory items of the right UOM for that SKU
@@ -268,7 +277,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 */
 	public final List<Item> getItemsOfUom(final String inUomStr) {
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
-		List<Item> theReturnList = new ArrayList<Item>() ;
+		List<Item> theReturnList = new ArrayList<Item>();
 		for (Item item : getItems()) {
 			String itemUom = item.getUomMasterId();
 			String itemNormalizedUom = UomNormalizer.normalizeString(itemUom);
@@ -295,19 +304,18 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public static void setDao(ItemMasterDao inItemMasterDao) {
 		ItemMaster.DAO = inItemMasterDao;
 	}
-	
+
 	public final Item createStoredItem(ILocation<?> location, UomMaster uom) {
 		String domainId = Item.makeDomainId(this.getItemId(), location, uom.getUomMasterId());
 		Item item = new Item();
-		item.setDomainId(domainId);		
-		
-		this.addItem(item);
-		
+		item.setDomainId(domainId);
+
+		this.addItemToMaster(item);
+
 		item.setUomMaster(uom);
 		location.addStoredItem(item);
-		
+
 		return item;
 	}
-
 
 }
