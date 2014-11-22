@@ -84,8 +84,10 @@ public class UserSession implements IDaoListener {
 	public void sendMessage(final MessageABC message) {
 		ContextLogging.setSession(UserSession.this);
 		try {
-			this.wsSession.getBasicRemote().sendObject(message);
-			this.messageSent();
+			if (this.wsSession != null) {
+				this.wsSession.getBasicRemote().sendObject(message);
+				this.messageSent();
+			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to send message", e);
 		} finally {
@@ -199,6 +201,8 @@ public class UserSession implements IDaoListener {
 			}
 			this.wsSession=null;
 		}
+		//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
+		PersistenceService.getInstance().getObjectChangeBroadcaster().unregisterDAOListener(this);
 	}
 
 	public void authenticated(User user) {
