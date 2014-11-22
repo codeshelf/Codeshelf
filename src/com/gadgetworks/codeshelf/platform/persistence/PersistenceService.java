@@ -8,12 +8,13 @@ import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.hibernate.HibernateException;
 import lombok.Getter;
 
+import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
@@ -58,7 +59,8 @@ public class PersistenceService extends Service {
 
 	private PersistenceService() {
 		setInstance();
-		objectChangeBroadcaster = new ObjectChangeBroadcaster();
+		//TODO inject since this is essentially the messaging mechanism
+		objectChangeBroadcaster = new ObjectChangeBroadcaster(); 
 		fixedTenant = new Tenant("Tenant #1",1);
 	}
 
@@ -117,7 +119,6 @@ public class PersistenceService extends Service {
 	    	configuration.setProperty("hibernate.default_schema", this.schemaName);
     	}
     	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
-    	configuration.setInterceptor(new HibernateInterceptor(this.objectChangeBroadcaster));
 
     	//configuration.setProperty("hibernate.connection.username", tenant.getName());
     	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
@@ -131,8 +132,13 @@ public class PersistenceService extends Service {
         try {
         	// Shard shard = this.shardingService.getShard(tenant.getShardId());
         	LOGGER.info("Creating session factory for "+tenant);
-
-	        StandardServiceRegistryBuilder ssrb = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties());
+        	BootstrapServiceRegistryBuilder bootstrapBuilder = 
+        			new BootstrapServiceRegistryBuilder()
+        				.with(new EventListenerIntegrator(getObjectChangeBroadcaster()));
+        				
+	        StandardServiceRegistryBuilder ssrb = 
+	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
+	        			.applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
 	        return factory;
         } catch (Exception ex) {

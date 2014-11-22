@@ -37,7 +37,8 @@ public class ObjectChangeBroadcaster {
 	 * @param inDomainObject
 	 */
 	public void broadcastUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, final Set<String> inChangedProperties) {
-		for (final IDaoListener daoListener : mListeners.get(domainClass)) {
+		Set<IDaoListener> listenersForClass = mListeners.get(domainClass);
+		for (final IDaoListener daoListener : listenersForClass) {
 			daoListener.objectUpdated(domainClass, domainPersistentId, inChangedProperties);
 		}
 	}

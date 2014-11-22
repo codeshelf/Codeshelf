@@ -642,7 +642,6 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		// /*
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
-				segment.computePathDistance();
 				for (ILocation<?> location : segment.getLocations()) {
 					location.computePosAlongPath(segment);
 				}

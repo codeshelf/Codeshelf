@@ -10,15 +10,13 @@ import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import org.hibernate.Criteria;
-import org.hibernate.Session;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +27,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -66,21 +65,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			return PathSegment.class;
 		}
 
-		@SuppressWarnings("rawtypes")
-		public List<LocationABC> findLocations(PathSegment inPathSegment) {
-			Session session = this.getCurrentSession();
-	        Criteria criteria = session.createCriteria(LocationABC.class);
-			criteria.add(Restrictions.eq("pathSegment",inPathSegment));
-			@SuppressWarnings("unchecked")
-			List<LocationABC> locations = criteria.list();
-			return locations;
-			/*
-			 * old ebeans implementation:
-			Query<LocationABC> query = mServer.createQuery(LocationABC.class);
-			query.where().eq("pathSegment.persistentId", persistentId);
-			return query.findList();
-			*/
-		}
 	}
 
 	public static final String	DOMAIN_PREFIX	= "SEG";
@@ -152,27 +136,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Getter
 	private Double				startPosAlongPath;
 
+	@OneToMany(mappedBy = "pathSegment")
+	@Getter
+	private List<LocationABC>  locations = Lists.newArrayList();
+	
 	public PathSegment() {
 	}
-
 	
-	/*
-	public PathSegment(final Path inParentPath,
-		final TravelDirectionEnum inTravelDirectionEnum,
-		final Point inBeginPoint,
-		final Point inEndPoint) {
-
-		parent = inParentPath;
-		posTypeEnum = inBeginPoint.getPosTypeEnum();
-		startPosX = inBeginPoint.getX();
-		startPosY = inBeginPoint.getY();
-		startPosZ = inBeginPoint.getZ();
-		endPosX = inEndPoint.getX();
-		endPosY = inEndPoint.getY();
-		endPosZ = inEndPoint.getZ();
-	}
-	*/
-
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<PathSegment> getDao() {
 		return DAO;
@@ -192,11 +162,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final void setParent(Path inParent) {
 		parent = inParent;
-	}
-
-	@SuppressWarnings("rawtypes")
-	public final List<LocationABC> getLocations() {
-		return DAO.findLocations(this);
+		computePathDistance();
 	}
 
 	public final String getParentPathID() {
@@ -230,7 +196,23 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public final Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
+	
+	public void addLocation(LocationABC location) {
+        PathSegment previousSegment = location.getPathSegment();
+        if(previousSegment == null) {
+    		locations.add(location);
+    		location.setPathSegment(this);
+        }
+	}
 
+	public void removeLocation(LocationABC location) {
+        if (locations.contains(location)) {
+        	location.setPathSegment(null);
+        	locations.remove(location);
+        }
+	}
+
+	
 	// For a UI field
 	public final int getAssociatedLocationCount() {
 		return getLocations().size();
@@ -252,12 +234,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			distance += Path.computeLineLength(segment.getStartPoint(), segment.getEndPoint());
 		}
 		startPosAlongPath = distance;
-
-		try {
-			PathSegment.DAO.store(this);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
 	}
 
 	// --------------------------------------------------------------------------

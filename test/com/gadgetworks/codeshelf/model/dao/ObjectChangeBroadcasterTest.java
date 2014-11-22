@@ -69,38 +69,37 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			String orgDesc = "org-desc";
 			String updatedDesc = "updated-desc";
 			// create org
-			Session session = persistenceService.getCurrentTenantSession();
-			Transaction t = session.beginTransaction();
+			this.getPersistenceService().beginTenantTransaction();
 			Organization organization = new Organization();
 			organization.setDomainId("DELETE-TEST");
 			organization.setDescription(orgDesc);
 			mOrganizationDao.store(organization);
 			UUID id = organization.getPersistentId();
-			t.commit();
-			
+			this.getPersistenceService().endTenantTransaction();
+
 			// make sure org exists and then update it
-			session = persistenceService.getCurrentTenantSession();
-			t = session.beginTransaction();
+			this.getPersistenceService().beginTenantTransaction();
+			
 			Organization foundOrganization = mOrganizationDao.findByPersistentId(id);
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(orgDesc,foundOrganization.getDescription());
 			foundOrganization.setDescription(updatedDesc);
 			mOrganizationDao.store(foundOrganization);
-			t.commit();
+			this.getPersistenceService().endTenantTransaction();
+
 			Thread.sleep(1000); //shame on me
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(1, l.getObjectsUpdated());
 			Assert.assertEquals(foundOrganization.getPersistentId(), l.getLastObjectUpdated());
 			Assert.assertEquals(1, l.getLastObjectPropertiesUpdated().size());
 			Assert.assertTrue(l.getLastObjectPropertiesUpdated().contains("description"));
-			
-			// now reload it again and make sure desc has changed
-			session = persistenceService.getCurrentTenantSession();
-			t = session.beginTransaction();
+
+			// make sure org exists and then update it
+			this.getPersistenceService().beginTenantTransaction();
 			foundOrganization = mOrganizationDao.findByPersistentId(id);
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(updatedDesc,foundOrganization.getDescription());
-			t.commit();
+			this.getPersistenceService().endTenantTransaction();
 		} finally {
 			broadcaster.unregisterDAOListener(l);
 		}

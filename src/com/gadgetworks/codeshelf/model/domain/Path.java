@@ -91,7 +91,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private TravelDirectionEnum			travelDirEnum;
+	private TravelDirectionEnum			travelDir;
 
 	// The work area that goes with this path.
 	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
@@ -119,7 +119,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	*/
 	public Path() {
 		description = "";
-		travelDirEnum = TravelDirectionEnum.FORWARD;
+		travelDir = TravelDirectionEnum.FORWARD;
 	}
 
 	/*
@@ -201,7 +201,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @return
 	 */
 	public final SortedSet<PathSegment> getSegments() {
-		TreeSet<PathSegment> sorted = new TreeSet<PathSegment>(new PathSegmentComparator(travelDirEnum));
+		TreeSet<PathSegment> sorted = new TreeSet<PathSegment>(new PathSegmentComparator(travelDir));
 		sorted.addAll(segments.values());
 		return sorted;
 	}
@@ -291,11 +291,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		} catch (DaoException e) {
 			LOGGER.error("Failed to store PathSegment", e);
 		}
-
-
-		// Force a re-computation of the path distance for this path segment.
-		result.computePathDistance();
-
 		return result;
 	}
 

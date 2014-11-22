@@ -65,7 +65,7 @@ public class AisleTest extends DomainTestABC {
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public final void updatePathSegment() {
+	public final void associatePathSegment() {
 		this.getPersistenceService().beginTenantTransaction();
 		IDaoListener listener = Mockito.mock(IDaoListener.class);
 		this.getPersistenceService().getObjectChangeBroadcaster().registerDAOListener(listener, Aisle.class);
@@ -78,6 +78,10 @@ public class AisleTest extends DomainTestABC {
 
 		Aisle aisle = getDefaultAisle(facility, aisleDomainId);
 		String segPersistId = pathSegment.getPersistentId().toString();
+		this.getPersistenceService().endTenantTransaction();
+		
+		
+		this.getPersistenceService().beginTenantTransaction();
 		aisle.associatePathSegment(segPersistId);
 		// Paul: please see facility.recomputeLocationPathDistances()
 		
@@ -85,8 +89,9 @@ public class AisleTest extends DomainTestABC {
 		Aisle storedAisle = (Aisle) facility.findLocationById(aisleDomainId);
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
 
-		verify(listener, times(2)).objectUpdated(eq(Aisle.class), eq(storedAisle.getPersistentId()), any(Set.class)); //1 for segment association and one for meters along path
+		verify(listener, times(1)).objectAdded(eq(Aisle.class), eq(storedAisle.getPersistentId()));
 		this.getPersistenceService().endTenantTransaction();
+		
 	}
 	
 	@Test

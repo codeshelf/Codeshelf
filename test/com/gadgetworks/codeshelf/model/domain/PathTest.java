@@ -22,7 +22,12 @@ public class PathTest extends DomainTestABC {
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.1");
 		Assert.assertNotNull(facility);
-		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		Facility retrievedFacility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+		
+		Path path = retrievedFacility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);
 
 		// Check if we can find all four aisles.

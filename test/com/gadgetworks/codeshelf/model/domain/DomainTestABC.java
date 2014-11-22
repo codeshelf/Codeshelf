@@ -210,7 +210,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Path path = new Path();
 		path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
 		path.setParent(resultFacility);
-		path.setTravelDirEnum(TravelDirectionEnum.FORWARD);
+		path.setTravelDir(TravelDirectionEnum.FORWARD);
 		mPathDao.store(path);
 		resultFacility.addPath(path);
 
