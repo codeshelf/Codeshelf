@@ -8,9 +8,7 @@ package com.gadgetworks.codeshelf.model.dao;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
@@ -37,8 +35,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
 
-	private LinkedBlockingQueue<IDaoListener>	mListeners	= new LinkedBlockingQueue<IDaoListener>();
-	
 	PersistenceService persistenceService;
 
 	@Inject
@@ -50,23 +46,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		Session session = persistenceService.getCurrentTenantSession(); 
 		return session;
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inDomainObject
-	 * @return
-	 */
-	//	public final boolean isObjectPersisted(IDomainObject inDomainObject) {
-	//		boolean result = false;
-	//
-	//		BeanState state = Ebean.getBeanState(inDomainObject);
-	//		// If there is a bean state and it's not new then this object was once persisted.
-	//		if ((state != null) && (!state.isNew())) {
-	//			result = true;
-	//		}
-	//
-	//		return result;
-	//	}
 
 	public final T findByPersistentId(UUID inPersistentId) {
 		T result = null;
@@ -108,14 +87,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		String effectiveId = domainId;
 		try {
 			Session session = getCurrentSession();
-			
 			// Query<T> query = mServer.createQuery(getDaoClass());
 	        Criteria criteria = session.createCriteria(getDaoClass());
 			if (parentObject != null) {
 				Class<T> clazz = getDaoClass();
 				if (clazz.equals(Facility.class)) {
-					// This is a bit odd: the Facility is the top-level Location object, but Ebean doesn't allow us to have a parent field that points to another table.
-					// (It *should* be able to do this since Ebean knows the class type at runtime, but it just doesn't.)
 					criteria
 						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
 						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,parentObject.getPersistentId()));
@@ -164,19 +140,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return methodResultsList;
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
-	public final List<T> findByFilter(Map<String, Object> inFilterParams) {
-		// If we have a valid filter then get the filtered objects.
-		Session session = getCurrentSession();
-        Criteria criteria = session.createCriteria(getDaoClass());
-		for (Entry<String, Object> param : inFilterParams.entrySet()) {
-			criteria.add(Restrictions.eq(param.getKey(), param.getValue()));
-		}
-		List<T> results = criteria.list();
-		return results;
-	}*/
 	public final List<T> findByFilter(List<Criterion> inFilter) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
@@ -187,20 +150,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		List<T> results = criteria.list();
 		return results;
 	}
-
-	/*
-	public final List<T> findByFilter(String clause,Map<String,Object> params) {
-		Session session = getCurrentSession();
-		String queryString = "from Che where "+clause;
-		Query query = session.createQuery(queryString);
-		for(Entry<String, Object> entry : params.entrySet()) {
-			query.setParameter(entry.getKey(), UUID.fromString(entry.getValue().toString()) );
-		}
-		//query.setProperties(params);
-		
-		List<T> results = query.list();
-		return results;
-	}*/
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -253,7 +202,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return results;
 	}
 
-
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#getNextId(java.lang.Class)
@@ -274,14 +222,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public final void beginTransaction() {
 		this.persistenceService.beginTenantTransaction();
 	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#commitTransaction()
-	 */
-	//public final void commitTransaction() {
-	//	this.persistenceService.endTenantTransaction();
-	//}
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -289,12 +229,5 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final void endTransaction() {
 		this.persistenceService.endTenantTransaction();
-	}
-	
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#isNewOrDirty(com.gadgetworks.codeshelf.model.domain.IDomainObject)
-	 */
-	public void clearAllCaches() {
 	}
 }

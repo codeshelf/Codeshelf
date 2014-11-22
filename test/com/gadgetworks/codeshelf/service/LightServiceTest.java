@@ -367,7 +367,7 @@ public class LightServiceTest extends EdiTestABC {
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
 		Che che2 = network.getChe("CHE2");
-		che1.setColor(ColorEnum.MAGENTA);
+		che2.setColor(ColorEnum.MAGENTA);
 
 		LedController controller1 = network.findOrCreateLedController("0x00000011", new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController("0x00000012", new NetGuid("0x00000012"));

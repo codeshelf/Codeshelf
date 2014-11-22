@@ -82,7 +82,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	public final BatchResult<Object> importOrdersFromCsvStream(final Reader inCsvReader,
 		final Facility inFacility,
 		Timestamp inProcessTime) {
-		mOrderGroupDao.clearAllCaches();
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
 /*
 		try (CSVReader csvReader = new CSVReader(inCsvStreamReader);) {

@@ -83,7 +83,6 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		Timestamp inProcessTime) {
 
 		LOGGER.debug("Begin cross batch import.");
-		mOrderGroupDao.clearAllCaches(); // avoids a class cast exception if ebeans had trimmed some objects
 		List<CrossBatchCsvBean> crossBatchBeanList = toCsvBean(inCsvStreamReader, CrossBatchCsvBean.class);
 
 		int importedRecords = 0;

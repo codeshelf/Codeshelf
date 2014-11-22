@@ -38,12 +38,7 @@ public class Aisle extends SubLocationABC<Facility> {
 	
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
-/*
-	@NotNull
-	@ManyToOne
-//	@JoinColumn(name = "parent_facility")
-	private Facility parent;*/
-	
+
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
 		@Inject
@@ -61,12 +56,7 @@ public class Aisle extends SubLocationABC<Facility> {
 	public Aisle() {
 		super();
 	}
-/*
-	public Aisle(Facility parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
-		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
-		this.parent = parent;
-	}
-*/
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Aisle> getDao() {
 		return DAO;
@@ -78,7 +68,6 @@ public class Aisle extends SubLocationABC<Facility> {
 
 	public final void associatePathSegment(String inPathSegPersistentID) {
 		// to support setting of list view meta-field pathSegId
-
 		// Get the PathSegment
 		UUID persistentId = UUID.fromString(inPathSegPersistentID);
 		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);

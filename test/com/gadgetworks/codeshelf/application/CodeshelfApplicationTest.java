@@ -199,7 +199,6 @@ public class CodeshelfApplicationTest {
 		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
 		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
 		ITypedDao<Item> itemDao = new MockDao<Item>();
-		ITypedDao<UomMaster> uomMasterDao = new MockDao<UomMaster>();
 		//ITypedDao<Che> cheDao = new MockDao<Che>();
 		//ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
 		ITypedDao<LocationAlias> locationAliasDao = new MockDao<LocationAlias>();

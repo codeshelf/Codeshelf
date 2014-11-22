@@ -20,8 +20,6 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
  */
 public interface ITypedDao<T> extends IDao {
 
-	//	boolean isObjectPersisted(T inDomainObject);
-
 	T findByPersistentId(UUID inPersistentId);
 
 	T findByPersistentId(String inPersistentIdAsString);
@@ -32,9 +30,6 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> findByPersistentIdList(List<UUID> inPersistentIdList);
 
-	//List<T> findByFilter(String inFilter, Map<String, Object> inFilterParams);
-	//List<T> findByFilter(Map<String, Object> inFilterParams);
-	//List<T> findByFilter(String clause, Map<String, Object> params);
 	List<T> findByFilter(List<Criterion> inFilter);
 
 	List<T> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<T> inClass);
@@ -45,20 +40,11 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> getAll();
 
-	// void pushNonPersistentUpdates(T inDomainObject);
-
 	Class<T> getDaoClass();
 	
 	Object getNextId(final Class<?> beanType);
 	
 	// TODO: remove transaction methods from DAO layer
 	void beginTransaction();
-	//void commitTransaction();
-	void endTransaction();
-	
-	/**
-	 * Exposed for a few cases until we understand the caching mechanism better. 
-	 * @see tests of the outbound order importer
-	 */
-	void clearAllCaches();
+	void endTransaction();	
 }

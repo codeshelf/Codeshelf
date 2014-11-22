@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.platform.persistence;
 import java.lang.reflect.Field;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -17,8 +16,6 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
-import org.hibernate.event.internal.DefaultSaveOrUpdateEventListener;
-import org.hibernate.event.spi.SaveOrUpdateEvent;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,7 +209,7 @@ public class PersistenceService extends Service {
 		if (tx != null) {
 			// check for already active transaction
 			if (tx.isActive()) {
-				StackTraceElement[] tst=transactionStarted.get(tx);
+				// StackTraceElement[] tst=transactionStarted.get(tx);
 				LOGGER.error("tried to begin transaction, but was already in active transaction");
 				return tx;
 			} // else we will begin new transaction

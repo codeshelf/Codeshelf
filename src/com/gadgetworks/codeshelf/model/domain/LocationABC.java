@@ -72,25 +72,6 @@ import com.google.common.collect.Ordering;
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
-	/*
-		@SuppressWarnings("rawtypes")
-		@Inject
-		public static ITypedDao<LocationABC>	DAO;
-
-		@SuppressWarnings("rawtypes")
-		@Singleton
-		public static class LocationABCDao extends GenericDaoABC<LocationABC> implements ITypedDao<LocationABC> {
-
-			// We include the IDatabase arg to cause Guice to initialize it *before* locations.
-			@Inject
-			public LocationABCDao(final PersistenceService persistenceService) {
-				super(persistenceService);
-			}
-
-			public final Class<LocationABC> getDaoClass() {
-				return LocationABC.class;
-			}
-		}*/
 
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
@@ -529,35 +510,6 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			}
 		} // else
 		return locations.get(inLocationId);
-
-		/*		
-				// There's some ebean weirdness around Map caches, so we have to use a different strategy to resolve this request.
-				//return locations.get(inLocationId);
-				ISubLocation<?> result = null;
-
-				// If the current location is a facility then first look for an alias
-				if (this.getClass().equals(Facility.class)) {
-					Facility facility = (Facility) this;
-					LocationAlias alias = facility.getLocationAlias(inLocationId);
-					if ((alias != null) && (alias.getActive())) {
-						return alias.getMappedLocation();
-					}
-				}
-
-				// We didn't find an alias, so search through DB for the matching location.
-				@SuppressWarnings("rawtypes")
-				ITypedDao<SubLocationABC> dao = SubLocationABC.DAO;
-				Map<String, Object> filterParams = new HashMap<String, Object>();
-				filterParams.put("parent.persistentId", this.getPersistentId());
-				filterParams.put("domainId", inLocationId);
-				@SuppressWarnings("rawtypes")
-				List<SubLocationABC> resultSet = dao.findByFilter(filterParams);
-				if ((resultSet != null) && (resultSet.size() > 0)) {
-					result = resultSet.get(0);
-				}
-
-				return result;
-				*/
 	}
 
 	// --------------------------------------------------------------------------
