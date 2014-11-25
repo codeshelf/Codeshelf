@@ -9,7 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -627,17 +629,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public void testNoQuantity() throws IOException {
-		String orderWithNoQuantity =
-		"orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
-		+ "\r\n243698,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
-		+ "\r\n243698,\"243,698.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CPL-CS-9F,Clear Flat Lids for 3-9 oz cup No Hole,,CS,243698";
-		BatchResult<Object> result = importCsvString(facility, orderWithNoQuantity);
-		Assert.assertEquals(1, result.getResult().size());
-		Assert.assertEquals(1, result.getViolations().size());
-	}
-	
-	@Test
 	public void testNonsequentialOrderIds() throws IOException {
 		String nonSequentialOrders =
 		"orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
@@ -691,6 +682,35 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	//******************** TESTS without Group ID ***********************
 
+	@Test
+	public final void testImportEmptyQuantityAsZero() throws IOException {
+		Facility facility = createFacility(getTestName());
+		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis()-30000);
+
+		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,\"\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
+		List<OrderDetail> orderDetails = OrderDetail.DAO.getAll();
+		Assert.assertEquals(1, orderDetails.size());
+		Assert.assertTrue(results.isSuccessful());
+		Assert.assertEquals(0,  orderDetails.get(0).getQuantity().intValue());
+	}
+
+	@Test
+	public final void testImportAlphaQuantityAsZero() throws IOException {
+		Facility facility = createFacility(getTestName());
+		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis()-30000);
+
+		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,\"A\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
+		List<OrderDetail> orderDetails = OrderDetail.DAO.getAll();
+		Assert.assertEquals(1, orderDetails.size());
+		Assert.assertTrue(results.isSuccessful());
+		Assert.assertEquals(0,  orderDetails.get(0).getQuantity().intValue());
+	}
+
+	
 	@Test
 	public final void testReimportOutboundOrderNoGroup() throws IOException {
 		Organization organization = new Organization();
@@ -830,16 +850,16 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		return facility;
 	}
 
+
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
-		byte[] firstCsvArray = csvString.getBytes();
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		return importCsvString(facility, csvString, ediProcessTime);
+	}
 
-		try (ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);) {
-			InputStreamReader reader = new InputStreamReader(stream);
-
-			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-			BatchResult<Object> results = importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-			return results;
-		}
+	
+	private BatchResult<Object> importCsvString(Facility facility, String csvString, Timestamp ediProcessTime) throws IOException {
+		BatchResult<Object> results = importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		return results;
 	}
 
 	private BatchResult<?> importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {

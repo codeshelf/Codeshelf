@@ -37,6 +37,7 @@ import com.gadgetworks.codeshelf.util.DateTimeParser;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -85,35 +86,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		Timestamp inProcessTime) {
 		mOrderGroupDao.clearAllCaches();
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
-/*
-		try (CSVReader csvReader = new CSVReader(inCsvStreamReader);) {
-			HeaderColumnNameMappingStrategy<OutboundOrderCsvBean> strategy = new HeaderColumnNameMappingStrategy<OutboundOrderCsvBean>();
-			strategy.setType(OutboundOrderCsvBean.class);
-
-			CsvToBean<OutboundOrderCsvBean> csv = new CsvToBean<OutboundOrderCsvBean>();
-			List<OutboundOrderCsvBean> list = csv.parse(strategy, csvReader);
-
-			List<OrderHeader> orderList = new ArrayList<OrderHeader>();
-
-			LOGGER.debug("Begin order import.");
-			BatchResult<Object> batchResult = new BatchResult<Object>();
-			int lineCount = 1;
-			for (OutboundOrderCsvBean orderBean : list) {
-				String errorMsg = orderBean.validateBean();
-				if (errorMsg != null) {
-					LOGGER.error("Import errors: " + errorMsg);
-					batchResult.addLineViolation(lineCount, orderBean, errorMsg);
-				} else {
-					try {
-						OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
-						if ((order != null) && (!orderList.contains(order))) {
-							orderList.add(order);
-						}
-						batchResult.add(orderBean);
-					} catch (Exception e) {
-						batchResult.addLineViolation(lineCount, orderBean, e);
-					}
-*/
 		Set<OrderHeader> orderSet = Sets.newHashSet();
 
 		LOGGER.debug("Begin order import.");
@@ -620,7 +592,17 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
-		result.setQuantities(Integer.valueOf(inCsvBean.getQuantity()));
+		
+		int quantities = 0;
+		try {	
+			if (!Strings.isNullOrEmpty(inCsvBean.getQuantity())) {
+				quantities = Integer.valueOf(inCsvBean.getQuantity());
+			}
+		}
+		catch(NumberFormatException e) {
+			LOGGER.warn("quantity could not be coerced to integer, setting to zero: " + inCsvBean);
+		}
+		result.setQuantities(quantities);
 
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
