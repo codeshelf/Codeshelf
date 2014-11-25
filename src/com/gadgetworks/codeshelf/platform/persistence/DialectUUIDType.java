@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -20,14 +21,9 @@ public class DialectUUIDType extends AbstractSingleColumnStandardBasicType<UUID>
 
     private static final SqlTypeDescriptor descriptor;
     static {
-        Properties properties = new Properties();
-        try {
-            properties.load(Thread.currentThread().getContextClassLoader().getResourceAsStream("database.properties"));
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load database properties", e);
-        }
+    	boolean isPostgres = System.getProperty("db.connectionurl", "").startsWith("jdbc:postgresql");
  
-        if(properties.getProperty("dialect").endsWith("PostgreSQLDialect")) {
+        if(isPostgres) {
             descriptor = PostgresUUIDType.PostgresUUIDSqlTypeDescriptor.INSTANCE;
         } else {
             descriptor = VarcharTypeDescriptor.INSTANCE;

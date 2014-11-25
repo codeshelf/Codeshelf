@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType;
 
 // --------------------------------------------------------------------------
 /**
@@ -59,11 +60,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	// TODO: fix to use the dynamic UUID type!
-//	@Type(type="com/gadgetworks/codeshelf/model/domain/DialectUUIDType")
-	@Type(type="uuid-char")
+	@Type(type="com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
 	private UUID persistentId = UUID.randomUUID();
-
 
 	// The domain ID
 	@NonNull
