@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -74,6 +75,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// The stored location.
 	@ManyToOne(optional = false)
+	@JoinColumn(name="stored_location_persistentid")
 	@Getter
 	//	@Setter
 	private LocationABC<?>			storedLocation;
@@ -87,12 +89,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// The actual UoM.
 	@ManyToOne(optional = false)
+	@JoinColumn(name="uom_master_persistentid")
 	@Getter
 	@Setter
 	private UomMaster			uomMaster;
 
 	// Ddc position.
-	@Column(nullable = true)
+	@Column(nullable = true,name="meters_from_anchor")
 	@Getter
 	@Setter
 	private Double				metersFromAnchor;								// used to be posAlongPath. Upgrade action doUpgrade017()

@@ -65,7 +65,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private Path				parent;
 
 	// The work area ID.
-	@Column(nullable = false)
+	@Column(nullable = false,name="work_area_id")
 	@Getter
 	@Setter
 	@JsonProperty

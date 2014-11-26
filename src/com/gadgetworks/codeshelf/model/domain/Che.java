@@ -9,9 +9,11 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
@@ -75,15 +77,16 @@ public class Che extends WirelessDeviceABC {
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
+	@JoinColumn(name="current_work_area_persistentid")
 	private WorkArea				currentWorkArea;
 
 	// The current user.
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
+	@JoinColumn(name="current_user_persistentid")
 	private User					currentUser;
 
-	// Service state.
 	@NotNull
 	@Enumerated(value = EnumType.STRING)
 	@Getter

@@ -45,7 +45,7 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "users")
+@Table(name = "users") // user can be reserved word in sql
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class User extends DomainObjectTreeABC<Organization> {
 
@@ -83,7 +83,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private Organization		parent;
 
 	// The hash salt.
-	@Column(nullable = false)
+	@Column(nullable = false,name="hash_salt")
 	@NonNull
 	@Getter
 	@Setter
@@ -91,7 +91,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private String				hashSalt;
 
 	// The hash iterations.
-	@Column(nullable = false)
+	@Column(nullable = false,name="hash_iterations")
 	@NonNull
 	@Getter
 	@Setter
@@ -99,7 +99,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	private Integer				hashIterations;
 
 	// The hashed password.
-	@Column(nullable = false)
+	@Column(nullable = false,name="hashed_password")
 	@NonNull
 	// It's not safe to expose these values outside this object!
 	//	@Getter

@@ -23,6 +23,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -90,26 +91,26 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	//	private Point						anchorPos;
 
 	// The position type (GPS, METERS, etc.).
-	@Column(nullable = false)
+	@Column(nullable = false,name="anchor_pos_type")
 	@Enumerated(value = EnumType.STRING)
 	@JsonProperty
 	@Getter
 	private PositionTypeEnum										anchorPosType;
 
 	// The X anchor position.
-	@Column(nullable = false)
+	@Column(nullable = false,name="anchor_pos_x")
 	@JsonProperty
 	@Getter
 	private Double													anchorPosX;
 
 	// The Y anchor position.
-	@Column(nullable = false)
+	@Column(nullable = false,name="anchor_pos_y")
 	@JsonProperty
 	@Getter
 	private Double													anchorPosY;
 
 	// The Z anchor position.
-	@Column(nullable = false)
+	@Column(nullable = false,name="anchor_pos_z")
 	@JsonProperty
 	@Getter
 	private Double													anchorPosZ;
@@ -122,7 +123,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private String													description;
 
 	// How far this location is from the path's origin.
-	@Column(nullable = true)
+	@Column(nullable = true,name="pos_along_path")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -130,6 +131,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// Associated path segment (optional)
 	@ManyToOne(optional = true)
+	@JoinColumn(name="path_segment_persistentid")
 	@Getter
 	@Setter
 	private PathSegment												pathSegment;
@@ -145,37 +147,38 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	//
 	// The LED controller.
 	@ManyToOne(optional = true)
+	@JoinColumn(name="led_controller_persistentid")
 	@Getter
 	@Setter
 	private LedController											ledController;
 
 	// The LED controller's channel that lights this location.
-	@Column(nullable = true)
+	@Column(nullable = true,name="led_channel")
 	@Getter
 	@Setter
 	private Short													ledChannel;
 
 	// The bay's first LED position on the channel.
-	@Column(nullable = true)
+	@Column(nullable = true,name="first_led_num_along_path")
 	@Getter
 	@Setter
 	private Short													firstLedNumAlongPath;
 
 	// The number of LED positions in the bay.
-	@Column(nullable = true)
+	@Column(nullable = true,name="last_led_num_along_path")
 	@Getter
 	@Setter
 	private Short													lastLedNumAlongPath;
 
 	// The first DDC ID for this location (if it has one).
-	@Column(nullable = true)
+	@Column(nullable = true,name="first_ddc_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String													firstDdcId;
 
 	// The last DDC ID for this location (if it has one).
-	@Column(nullable = true)
+	@Column(nullable = true,name="last_ddc_id")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -215,7 +218,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	private Map<String, ItemDdcGroup>								itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
 
 	// For this location, is the lower led on the anchor side?
-	@Column(nullable = true)
+	@Column(nullable = true,name="lower_led_near_anchor")
 	@Getter
 	@Setter
 	private Boolean													lowerLedNearAnchor;

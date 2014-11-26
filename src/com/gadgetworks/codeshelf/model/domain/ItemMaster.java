@@ -15,6 +15,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -82,7 +83,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private String							description;
 
 	// The lot handling method for this item.
-	@Column(nullable = false)
+	@Column(nullable = false,name="lot_handling")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -90,21 +91,21 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private LotHandlingEnum					lotHandlingEnum;
 
 	// Ddc Id
-	@Column(nullable = true)
+	@Column(nullable = true,name="ddc_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String							ddcId;
 
 	// SlotFlex Id
-	@Column(nullable = true)
+	@Column(nullable = true,name="slot_flex_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String							slotFlexId;
 
 	// Ddc pack depth
-	@Column(nullable = true)
+	@Column(nullable = true,name="ddc_pack_depth")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -112,6 +113,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	// The standard UoM.
 	@ManyToOne(optional = false)
+	@JoinColumn(name="standard_uom_persistentid")
 	@Getter
 	@Setter
 	private UomMaster						standardUom;

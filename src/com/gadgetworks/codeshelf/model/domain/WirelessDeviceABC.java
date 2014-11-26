@@ -67,7 +67,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@ManyToOne(optional = false)
 	protected CodeshelfNetwork		parent;
 
-	@Column(nullable = false)
+	@Column(nullable = false,name="device_guid")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -81,7 +81,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	private String					description;
 
 	// The last seen battery level.
-	@Column(nullable = false)
+	@Column(nullable = false,name="last_battery_level")
 	@Getter
 	@Setter
 	@JsonProperty

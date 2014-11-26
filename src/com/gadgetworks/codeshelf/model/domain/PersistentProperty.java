@@ -63,13 +63,13 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	@Setter
 	private Organization		parent;
 
-	@Column(nullable = false)
+	@Column(nullable = false,name="default_value_str")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String				defaultValueStr;
 
-	@Column(nullable = false)
+	@Column(nullable = false,name="current_value_str")
 	@Getter
 	@Setter
 	@JsonProperty

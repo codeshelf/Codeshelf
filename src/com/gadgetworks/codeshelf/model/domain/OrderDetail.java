@@ -16,6 +16,7 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -92,6 +93,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	// The item master.
 	@ManyToOne(optional = false)
+	@JoinColumn(name="item_master_persistentid")
 	@Getter
 	@Setter
 	private ItemMaster						itemMaster;
@@ -111,14 +113,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private Integer							quantity;
 
 	// The min quantity that we can use.  (Same as quantity in most cases.)
-	@Column(nullable = false)
+	@Column(nullable = false,name="min_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer							minQuantity;
 
 	// The max quantity that we can use. (Same as quantity in most cases.)
-	@Column(nullable = false)
+	@Column(nullable = false,name="max_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -126,6 +128,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	// The UoM.
 	@OneToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name="uom_master_persistentid")
 	@Getter
 	@Setter
 	private UomMaster						uomMaster;

@@ -87,7 +87,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	private Short 						channel;
 
 	// Logical network number to further subdivide channel
-	@Column(nullable = false)
+	@Column(nullable = false,name="network_num")
 	@Getter
 	@Setter
 	@JsonProperty

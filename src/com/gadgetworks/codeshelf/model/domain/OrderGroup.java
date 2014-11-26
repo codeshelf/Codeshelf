@@ -90,7 +90,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
 	// Lower numbers work first.
-	@Column(nullable = true)
+	@Column(nullable = true,name="work_sequence")
 	@Getter
 	@Setter
 	@JsonProperty

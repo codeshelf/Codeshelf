@@ -16,6 +16,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -94,7 +95,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Facility					parent;
 
 	// The order type.
-	@Column(nullable = false)
+	@Column(nullable = false,name="order_type")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -110,7 +111,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private OrderStatusEnum				status;
 
 	// The pick strategy.
-	@Column(nullable = false)
+	@Column(nullable = false,name="pick_strategy")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -119,13 +120,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// The parent order group.
 	@ManyToOne(optional = true)
+	@JoinColumn(name="order_group_persistentid")
 	@Getter
 	@Setter
 	private OrderGroup					orderGroup;
 
 	// The customerID for this order.
 	// Lower numbers work first.
-	@Column(nullable = true)
+	@Column(nullable = true,name="customer_id")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -133,7 +135,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// Reference to the shipment for this order.
 	// Lower numbers work first.
-	@Column(nullable = true)
+	@Column(nullable = true,name="shipment_id")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -142,21 +144,21 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
 	// Lower numbers work first.
-	@Column(nullable = true)
+	@Column(nullable = true,name="work_sequence")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						workSequence;
 
 	// Order date.
-	@Column(nullable = true)
+	@Column(nullable = true,name="order_date")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Timestamp					orderDate;
 
 	// Due date.
-	@Column(nullable = true)
+	@Column(nullable = true,name="due_date")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -164,6 +166,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// The container use for this order.
 	@OneToOne(optional = true)
+	@JoinColumn(name="container_use_persistentid")
 	@Getter
 	@Setter
 	private ContainerUse				containerUse;

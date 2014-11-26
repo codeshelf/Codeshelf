@@ -66,17 +66,21 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 
 	@NonNull
 	@Getter
+	@Column(nullable=true,name="pos_type")
 	private PositionTypeEnum	posType;
 
 	@NonNull
 	@Getter
+	@Column(nullable=true,name="pos_x")
 	private Double				posX;
 
 	@NonNull
 	@Getter
+	@Column(nullable=true,name="pos_y")
 	private Double				posY;
 
 	@Getter
+	@Column(nullable=true,name="pos_z")
 	private Double				posZ;
 
 	// The vertex order/position (zero-based).

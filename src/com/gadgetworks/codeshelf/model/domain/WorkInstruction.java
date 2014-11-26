@@ -11,6 +11,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -110,7 +111,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private Container					container;
 
 	// Denormalized for serialized WIs at the site controller.
-	@Column(nullable = false)
+	@Column(nullable = false,name="container_id")
 	@Getter
 	@JsonProperty
 	private String						containerId;
@@ -118,10 +119,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// The itemMaster. Change to nullable v5 upgrade020
 	@Getter
 	@ManyToOne(optional = true)
+	@JoinColumn(name="item_master_persistentid")
 	private ItemMaster					itemMaster;
 
 	// Denormalized for serialized WIs at the site controller.
-	@Column(nullable = false)
+	@Column(nullable = false,name="item_id")
 	@Getter
 	@JsonProperty
 	private String						itemId;
@@ -134,35 +136,35 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private String						description;
 
 	// The pick instruction (cooked item ID to pick).
-	@Column(nullable = false)
+	@Column(nullable = false,name="pick_instruction")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						pickInstruction;
 
 	// The nominal planned pick quantity.
-	@Column(nullable = false)
+	@Column(nullable = false,name="plan_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planQuantity;
 
 	// The min planned pick quantity.
-	@Column(nullable = false)
+	@Column(nullable = false,name="plan_min_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planMinQuantity;
 
 	// The  max planned pick quantity.
-	@Column(nullable = false)
+	@Column(nullable = false,name="plan_max_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planMaxQuantity;
 
 	// The pick quantity.
-	@Column(nullable = true)
+	@Column(nullable = true,name="actual_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -175,14 +177,14 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private LocationABC					location;
 
 	// Denormalized for serialized WIs at the site controller.
-	@Column(nullable = false)
+	@Column(nullable = false,name="location_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						locationId;
 
 	// Picker ID.
-	@Column(nullable = true)
+	@Column(nullable = true,name="picker_id")
 	@Getter 
 	@Setter
 	@JsonProperty
@@ -193,19 +195,20 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@ManyToOne(optional = true)
+	@JoinColumn(name="assigned_che_persistentid")
 	private Che							assignedChe;
 
 	// LED command/processing stream.
 	// A formatted stream of LED processing commands that tells the site gateway how to lights LEDs for this WI.
 	// See LedStreamProcessor
-	@Column(nullable = true)
+	@Column(nullable = true,name="led_cmd_stream")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						ledCmdStream;
 
 	// The remote gateway controller will sort and group by this code, and then only send out one group to the radio network at a time.
-	@Column(nullable = true)
+	@Column(nullable = true,name="group_and_sort_code")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -214,6 +217,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
+	@Column(nullable = true,name="pos_along_path")
 	private Double						posAlongPath;
 
 	@Column(nullable = true)
@@ -243,6 +247,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// The parent order detail item.
 	//@Column(nullable = true)
 	@ManyToOne(optional = true)
+	@JoinColumn(name="order_detail_persistentid")
 	private OrderDetail					orderDetail;
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;

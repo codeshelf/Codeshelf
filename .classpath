@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="lib" path="lib/dist/snakeyaml-1.13.jar"/>
 	<classpathentry kind="lib" path="lib/dist/xalan-2.7.2.jar"/>
-	<classpathentry kind="lib" path="lib/dist/liquibase-hibernate4-3.4.jar"/>
+	<classpathentry kind="lib" path="lib/dist/liquibase-hibernate4-3.4.jar" sourcepath="APIs/liquibase-hibernate-liquibase-hibernate4-3.4.zip"/>
 	<classpathentry kind="lib" path="lib/drivers/linux"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
@@ -119,7 +119,7 @@
 	<classpathentry kind="lib" path="lib/dist/lz4-1.2-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="lib/dist/commons-cli-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/commons-lang-2.4.jar"/>
-	<classpathentry kind="lib" path="lib/dist/liquibase-3.2.2.jar"/>
+	<classpathentry kind="lib" path="lib/dist/liquibase-3.2.2.jar" sourcepath="APIs/liquibase-liquibase-parent-3.2.2.zip"/>
 	<classpathentry kind="lib" path="lib/dist/lombok-1.14.8.jar"/>
 	<classpathentry kind="src" path=".apt_generated">
 		<attributes>
@@ -129,12 +129,13 @@
 	<classpathentry kind="lib" path="lib/dist/c3p0-0.9.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/ehcache-core-2.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-c3p0-4.3.7.Final.jar"/>
-	<classpathentry kind="lib" path="lib/dist/hibernate-core-4.3.7.Final.jar"/>
+	<classpathentry kind="lib" path="lib/dist/hibernate-core-4.3.7.Final.jar" sourcepath="APIs/hibernate-orm-4.3.6.Final.zip"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-ehcache-4.3.7.Final.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jandex-1.1.0.Final.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jboss-logging-annotations-1.2.0.Beta1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/mchange-commons-java-0.2.3.4.jar"/>
 	<classpathentry kind="lib" path="lib/dist/velocity-1.7.jar"/>
 	<classpathentry kind="lib" path="lib/dist/serializer-2.7.2.jar"/>
+	<classpathentry kind="lib" path="liquibase/changeLogs"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>

@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -66,7 +67,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	private Container			parent;
 
 	// Use date.
-	@Column(nullable = false)
+	@Column(nullable = false,name="used_on")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -74,12 +75,14 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	// The order where we used this container.
 	@OneToOne(optional = true)
+	@JoinColumn(name="order_header_persistentid")
 	@Getter
 	@Setter
 	private OrderHeader			orderHeader;
 
 	// The che where we're using this container.
 	@ManyToOne(optional = true)
+	@JoinColumn(name="current_che_persistentid")
 	@Getter
 	@Setter
 	private Che					currentChe;

@@ -66,14 +66,14 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 	private EdiServiceABC			parent;
 
 	// Document Path
-	@Column(nullable = false)
+	@Column(nullable = false,name="document_path")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String					documentPath;
 
 	// Document Name
-	@Column(nullable = true)
+	@Column(nullable = true,name="document_name")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -94,7 +94,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 	private Timestamp				processed;
 
 	// Document state.
-	@Column(nullable = false)
+	@Column(nullable = false,name="document_state")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter

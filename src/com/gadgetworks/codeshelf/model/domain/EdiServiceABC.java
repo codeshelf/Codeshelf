@@ -87,7 +87,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	private EdiProviderEnum				provider;
 
 	// Service state.
-	@Column(nullable = false)
+	@Column(nullable = false,name="service_state")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -95,7 +95,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	private EdiServiceStateEnum			serviceState;
 
 	// The credentials (encoded toekns or obfuscated keys only).
-	@Column(nullable = true)
+	@Column(nullable = true,name="provider_credentials")
 	@Getter
 	@Setter
 	@JsonProperty

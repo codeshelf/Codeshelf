@@ -76,61 +76,62 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	// The order of this path segment in the path (from the tail/origin).
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="segment_order")
 	@Getter
 	@Setter
 	private Integer segmentOrder;
 
 	// The positioning type.
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="pos_type")
 	@Getter
 	@Setter
 	@JsonProperty
 	private PositionTypeEnum	posType;
 
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="start_pos_x")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosX;
 
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="start_pos_y")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosY;
 
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="start_pos_z")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosZ;
 
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="end_pos_x")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				endPosX;
 
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="end_pos_y")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				endPosY;
 
 	@NonNull
-	@Column(nullable = true)
+	@Column(nullable = true,name="end_pos_z")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				endPosZ;
 
+	@Column(nullable = true,name="start_pos_along_path")
 	@Setter
 	@Getter
 	private Double				startPosAlongPath;

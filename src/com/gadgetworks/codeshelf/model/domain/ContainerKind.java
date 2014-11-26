@@ -63,28 +63,28 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	private Facility parent;
 
 	// The container class ID.
-	@Column(nullable = false)
+	@Column(nullable = false,name="class_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String				classId;
 
 	// Length.
-	@Column(nullable = false)
+	@Column(nullable = false,name="length_meters")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				lengthMeters;
 
 	// Width.
-	@Column(nullable = false)
+	@Column(nullable = false,name="width_meters")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				widthMeters;
 
 	// Height.
-	@Column(nullable = false)
+	@Column(nullable = false,name="height_meters")
 	@Getter
 	@Setter
 	@JsonProperty

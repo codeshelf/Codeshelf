@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -116,6 +117,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	// The owning organization.
 	@NotNull
 	@ManyToOne
+	@JoinColumn(name="parent_organization_persistentid")
 	private Organization					parentOrganization;
 
 	//	@Column(nullable = false)

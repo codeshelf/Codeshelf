@@ -52,7 +52,7 @@ public class SiteController extends WirelessDeviceABC {
 	private Boolean				monitor;
 
 	// Text describing how to find the hardware installed in the warehouse (should be required non-blank when registering)
-	@Column(nullable = false)
+	@Column(nullable = false,name="describe_location")
 	@Getter
 	@Setter
 	@JsonProperty

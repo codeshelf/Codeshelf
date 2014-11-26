@@ -87,7 +87,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String						description;
 
-	@Column(nullable = false)
+	@Column(nullable = false,name="travel_dir")
 	@Getter
 	@Setter
 	@JsonProperty

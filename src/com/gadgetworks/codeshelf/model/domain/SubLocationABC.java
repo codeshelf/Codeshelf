@@ -53,7 +53,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	@ManyToOne
 	protected LocationABC<?> parent;
 
-	@Column(nullable = false)
+	@Column(nullable = false,name="pick_face_end_pos_type")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -61,21 +61,21 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	private PositionTypeEnum	pickFaceEndPosType;
 
 	// X pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false)
+	@Column(nullable = false,name="pick_face_end_pos_x")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				pickFaceEndPosX;
 
 	// Y pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false)
+	@Column(nullable = false,name="pick_face_end_pos_y")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				pickFaceEndPosY;
 
 	// Z pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false)
+	@Column(nullable = false,name="pick_face_end_pos_z")
 	@Getter
 	@Setter
 	@JsonProperty

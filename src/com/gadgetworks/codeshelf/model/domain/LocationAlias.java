@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -63,6 +64,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	// Attachment credential.
 	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
+	@JoinColumn(name="mapped_location_persistentid")
 	@JsonProperty
 	private LocationABC			mappedLocation;
 

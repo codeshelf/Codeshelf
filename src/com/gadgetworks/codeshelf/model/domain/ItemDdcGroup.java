@@ -62,14 +62,14 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation<?>> {
 	private LocationABC			parent;
 
 	// The start position of this DDC group along the pick path.
-	@Column(nullable = true)
+	@Column(nullable = true,name="start_pos_along_path")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosAlongPath;
 
 	// The end position of this DDC group along the pick path.
-	@Column(nullable = true)
+	@Column(nullable = true,name="end_pos_along_path")
 	@Getter
 	@Setter
 	@JsonProperty

@@ -125,6 +125,9 @@ public class PersistenceService extends Service {
     	// we do not attempt to manage the in-memory test db; that will be done by Hibernate
 		if(!this.connectionUrl.startsWith("jdbc:h2:mem")) {
 			SchemaManager sm = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
+			
+			sm.applySchemaUpdates();
+			
 			boolean schemaMatches = sm.checkSchema();
 			
 			if(!schemaMatches) {
@@ -311,18 +314,5 @@ public class PersistenceService extends Service {
 		se.create(false, true);
 	}
 
-	public void createNewSchema() throws SQLException {
-		Connection conn = DriverManager.getConnection(configuration.getProperty("hibernate.connection.url"),
-			configuration.getProperty("hibernate.connection.username"),
-			configuration.getProperty("hibernate.connection.password"));
-
-		Statement stmt = conn.createStatement();
-//		ResultSet result=stmt.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = '"+configuration.getProperty("hibernate.default_schema")+"';");
-		boolean result = stmt.execute("CREATE SCHEMA IF NOT EXISTS "+configuration.getProperty("hibernate.default_schema")+" AUTHORIZATION "+configuration.getProperty("hibernate.connection.username"));
-		stmt.close();
-		conn.close();
-
-		resetDatabase();
-	}
 
 }

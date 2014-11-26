@@ -52,6 +52,7 @@
 	<property name="test.dir" location="${basedir}/test" />
 	<property name="bin" location="${target.build}/bin" />
 	<property name="conf.dir" location="${basedir}/conf" />
+	<property name="liquibase.dir" location="${basedir}/liquibase/changeLogs" />
 	<property name="resources.dir" location="${basedir}/resources" />
 
 	<property name="javac.compile.using.version" value="1.7" />
@@ -151,6 +152,9 @@
 				
 				<include name="hibernate.tenant.xml" />
 				<include name="hibernate.test.xml" />
+			</fileset>
+			<fileset dir="${liquibase.dir}">
+				<include name="*.*" />
 			</fileset>
 		</copy>
 		<!--copy todir="${target.resources}/images">
