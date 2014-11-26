@@ -566,6 +566,16 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return getItemIdIfMasterNull();
 	}
+	
+	public String getStatusString() {
+		// getStatus works fine, except when the status is null. As in logging WI on the site controller side. Just don't throw if null.
+		WorkInstructionStatusEnum theStatus = this.getStatus();
+		if (theStatus != null)
+			return theStatus.getName();
+		else
+			return "";
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**

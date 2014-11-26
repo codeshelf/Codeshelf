@@ -34,6 +34,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -54,14 +55,14 @@ import com.google.common.base.Strings;
  */
 public class CheProcessTest extends EndToEndIntegrationTest {
 
-	private static final Logger				LOGGER			= LoggerFactory.getLogger(CheProcessTest.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTest.class);
 
 	static {
 		Configuration.loadConfig("test");
 	}
 
 	public CheProcessTest() {
-	
+
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -185,7 +186,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		String tierName = tier.getPrimaryAliasId();
 		if (!tierName.equals("D301"))
 			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
-		
+
 		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
@@ -217,13 +218,15 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 	private void setUpSmallInventoryAndOrders(Facility inFacility) throws IOException {
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
+		// One case item, just as part of our immediate short scenario
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1122,D302,8 oz Bowl Lids -PLA Compostable,,ea,6/25/14 12:00,80\r\n" //
 				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,,EA,6/25/14 12:00,135\r\n" //
 				+ "1124,D303,8 oz Bowls -PLA Compostable,,ea,6/25/14 12:00,55\r\n" //
 				+ "1493,D301,PARK RANGER Doll,,ea,6/25/14 12:00,66\r\n" //
 				+ "1522,D302,Butterfly Yoyo,,ea,6/25/14 12:00,3\r\n" //
-				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,3\r\n";//
+				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,3\r\n"//
+				+ "1555,D502,paper towel, ,cs,6/25/14 12:00,18\r\n";//
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -238,6 +241,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		// Item 1123 exists in case and each.
 		// Item 1493 exists in case only. Order for each should short.
 		// Item 1522 exists in case and each.
+		// Item 1555 exists in case only, so will short on each
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -246,7 +250,8 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,1122,8 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,11111,11111,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,11111,11111,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,COSTCO,11111,11111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n,USF314,COSTCO,11111,11111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n,USF314,COSTCO,11111,11111,1555,paper towel,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -258,29 +263,29 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
-	
+
 	@Test
 	public final void testDataSetup() throws IOException {
-		
+
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
-		setUpSmallInventoryAndOrders(facility);		
+		setUpSmallInventoryAndOrders(facility);
 		this.getPersistenceService().endTenantTransaction();
-		
+
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);
-		
+
 		List<Container> containers = facility.getContainers();
 		this.getPersistenceService().endTenantTransaction();
-	}	
+	}
 
 	@SuppressWarnings({ "unused", "rawtypes" })
 	@Test
 	public final void testPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
-		
+
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -363,7 +368,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 
 		// If DEV-477 route-wrap is in effect, both are there, but the 402 item is first. We still get the baychange between
 		// If DEV-477 is not in effect, 402 item is still first, and 403 item is not in the list. 
-		Assert.assertEquals((Integer) 3, wiCountAfterScan); 
+		Assert.assertEquals((Integer) 3, wiCountAfterScan);
 		// See which work instruction is which
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		Assert.assertNotNull(wi1);
@@ -455,9 +460,8 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 			String itemLocationString = detail.getItemLocations();
 			if (!Strings.isNullOrEmpty(itemLocationString)) {
 				itemLocations.add(itemLocationString);
-			}
-			else {
-				LOGGER.debug(detail.getItemMasterId()+" "+detail.getUomMasterId()+" has no location");
+			} else {
+				LOGGER.debug(detail.getItemMasterId() + " " + detail.getUomMasterId() + " has no location");
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
@@ -493,7 +497,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 
 		this.getPersistenceService().endTenantTransaction();
 	}
-	
+
 	@Test
 	public final void testCheProcess1() throws IOException {
 		// Test cases:
@@ -502,7 +506,7 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		// Case 3: A happy-day short, with one short-ahead");
 		// Case 4: Short and cancel leave you on the same job");
 		// Case 5: Inappropriate location scan, then normal button press works");
-		
+
 		// set up data for pick scenario
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
@@ -515,30 +519,35 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		facility = Facility.DAO.findByPersistentId(facId);
 		List<Container> containers = facility.getContainers();
 		Assert.assertEquals(2, containers.size());
-		
+
 		HousekeepingInjector.turnOffHK();
-		
+
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
-		
+
 		// This brief case covers and allows retirement of CheSimulationTest.java
-		LOGGER.info ("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
+		LOGGER.info("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
 		picker.setupContainer("9x9x9", "1"); // unknown container
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK,5000);
+		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
 		Assert.assertEquals(0, picker.countActiveJobs());
-		
+
 		// Back to our main test
-		LOGGER.info ("Case 2: A happy-day pick startup. No housekeeping jobs.");
+		LOGGER.info("Case 2: A happy-day pick startup. No housekeeping jobs.");
 		picker.setup();
 		picker.setupContainer("12345", "1"); // This prepended to scan "C%12345" as per Codeshelf scan specification
+
 		// Enhancement from v9 for Accu-Logistics
 		picker.setupOrderIdAsContainer("11111", "2"); // This did not prepend. Scan "11111" and hope it is a preassigned containerId on the order.
 		picker.start("D303", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
-		
-		Assert.assertEquals(7, picker.countRemainingJobs());		
+
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		logWiList(serverWiList);
+
+		Assert.assertEquals(7, picker.countRemainingJobs());
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
@@ -546,53 +555,83 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
-		
-		
-		
+
 		// pick first item
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.DO_PICK,5000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(6, picker.countRemainingJobs());
 
-		LOGGER.info ("Case 3: A happy-day short, with one short-ahead");
+		LOGGER.info("Case 3: A happy-day short, with one short-ahead");
 		wi = picker.nextActiveWi();
 		// the third job is for 1522, which happens to be the one item going to both orders. So it should short-ahead
 		Assert.assertEquals("1522", wi.getItemId());
 		button = picker.buttonFor(wi);
 		picker.scanCommand("SHORT");
-		picker.waitForCheState(CheStateEnum.SHORT_PICK,5000);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
 		picker.pick(button, 0);
-		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM,5000);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
 		picker.scanCommand("YES");
-		picker.waitForCheState(CheStateEnum.DO_PICK,5000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(4, picker.countRemainingJobs()); // Would be 5, but with one short ahead it is 4.
 
-		LOGGER.info ("Case 4: Short and cancel leave you on the same job");
+		LOGGER.info("Case 4: Short and cancel leave you on the same job");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		picker.scanCommand("SHORT");
-		picker.waitForCheState(CheStateEnum.SHORT_PICK,5000);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
 		picker.pick(button, 0);
-		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM,5000);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
 		picker.scanCommand("NO");
-		picker.waitForCheState(CheStateEnum.DO_PICK,5000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(4, picker.countRemainingJobs()); // Still 4.
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2); // same work instruction still on
 
-		LOGGER.info ("Case 5: Inappropriate location scan, then normal button press works");
+		LOGGER.info("Case 5: Inappropriate location scan, then normal button press works");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.DO_PICK,5000); // still on pick state, although with an error message
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.DO_PICK,5000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(3, picker.countRemainingJobs());
+
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
+		logWiList(serverWiList2);
+		// In this, we see 2nd wi is user short, and third a short ahead. Item 1555 should have got an immediate short.
+		WorkInstruction userShortWi = serverWiList2.get(1);
+		WorkInstruction shortAheadWi = serverWiList2.get(2);
+		WorkInstruction immediateShortWi = null;
+		
+		// Hibernate bug. If you ask che1 for getCheWorkInstructions(), the list will throw during lazy load because the che reference came from a different transaction.
+		// But we had to change the transaction in order to see the completed work instructions.
+		Che che1b = Che.DAO.findByPersistentId(this.che1PersistentId);
+		// for (WorkInstruction cheWi : che1.getCheWorkInstructions()) {		
+		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
+		Assert.assertNotNull(cheWis2);
+		int cheWiTotal2 = cheWis2.size();
+		
+		for (WorkInstruction cheWi : cheWis2) {
+			if (cheWi.getItemMasterId().equals("1555"))
+				immediateShortWi = cheWi;
+		}
+		Assert.assertNotNull(userShortWi);
+		Assert.assertNotNull(shortAheadWi);
+		Assert.assertNotNull(immediateShortWi);
+		logOneWi(immediateShortWi);
+		logOneWi(userShortWi);
+		logOneWi(shortAheadWi);
+		// All should have the same assign time
+		Assert.assertEquals(immediateShortWi.getAssigned(), userShortWi.getAssigned());
+		Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
+
 		this.getPersistenceService().endTenantTransaction();
 	}
-	
+
 	@Test
 	public final void testRouteWrap() throws IOException {
 		// create test data
@@ -600,28 +639,33 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
 		this.getPersistenceService().endTenantTransaction();
-		
+
 		// perform pick operation
 		this.getPersistenceService().beginTenantTransaction();
 		// HousekeepingInjector.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
-		
+
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
-		
-		LOGGER.info ("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
+
+		LOGGER.info("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
 		picker.setup();
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap. 
 		picker.start("D301", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
-		
+
 		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
 		// the itemMaster field is null.
-		Assert.assertEquals(10, picker.countRemainingJobs());	
+		Assert.assertEquals(10, picker.countRemainingJobs());
+		LOGGER.info("List the work instructions as the site controller sees them");
 		List<WorkInstruction> theWiList = picker.getAllPicksList();
 		logWiList(theWiList);
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		logWiList(serverWiList);
+
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
 
@@ -630,31 +674,34 @@ public class CheProcessTest extends EndToEndIntegrationTest {
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		Assert.assertEquals("D301", wi.getPickInstruction());
-		
+
 		// pick first item
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 1000);
 		Assert.assertEquals(9, picker.countRemainingJobs());
 
-		LOGGER.info ("Case 2: Pick the 2nd and 3rd jobs");
+		LOGGER.info("Case 2: Pick the 2nd and 3rd jobs");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.DO_PICK,1000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 1000);
 		Assert.assertEquals(8, picker.countRemainingJobs());
 		// last job
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		// Here is the end of it
-		//picker.waitForCheState(CheStateEnum.DO_PICK,1000);
 		Assert.assertEquals(7, picker.countRemainingJobs());
-		
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
+
+		LOGGER.info("List the work instructions as the server now has them");
+		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
+		logWiList(serverWiList2);
+
 		this.persistenceService.endTenantTransaction();
 	}
-	
+
 	private void assertWIColor(WorkInstruction wi, Che che) {
 		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
 		Assert.assertEquals(1, cmdGroups.size());
