@@ -1,25 +1,32 @@
 package com.gadgetworks.codeshelf.integration;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import lombok.Getter;
 
 import org.junit.Assert;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class PickSimulator {
 
-	EndToEndIntegrationTest	test;
+	EndToEndIntegrationTest		test;
 
 	@Getter
-	CheDeviceLogic			cheDeviceLogic;
+	CheDeviceLogic				cheDeviceLogic;
+
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
 	public PickSimulator(EndToEndIntegrationTest test, NetGuid cheGuid) {
 		this.test = test;
@@ -33,7 +40,7 @@ public class PickSimulator {
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
-	
+
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.
 		scanCommand("SETUP");
@@ -74,6 +81,18 @@ public class PickSimulator {
 	public void pick(int position, int quantity) {
 		buttonPress(position, quantity);
 		// many state possibilities here. On to the next job, or finished all work, or need to confirm a short.
+		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
+	}
+
+	public void simulateCommitByChangingTransaction(PersistenceService inService) {
+		// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
+		// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
+		if (inService == null || !inService.hasActiveTransaction()) {
+			LOGGER.error("bad call to simulateCommitByChangingTransaction");
+		} else {
+			inService.endTenantTransaction();
+			inService.beginTenantTransaction();
+		}
 	}
 
 	public void logout() {
@@ -140,8 +159,8 @@ public class PickSimulator {
 	public CheStateEnum currentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
-	
-	public int buttonFor(WorkInstruction inWorkInstruction){
+
+	public int buttonFor(WorkInstruction inWorkInstruction) {
 		// returns 0 if none
 		if (!getActivePickList().contains(inWorkInstruction))
 			return 0;
@@ -165,6 +184,36 @@ public class PickSimulator {
 	public List<WorkInstruction> getAllPicksList() {
 		List<WorkInstruction> activeList = cheDeviceLogic.getAllPicksWiList();
 		return activeList;
+	}
+
+	/**
+	 * Returns the new list with each work instruction fetched from the DAO. Should represent how the server sees it.
+	 */
+	public List<WorkInstruction> getServerVersionAllPicksList() {
+		List<WorkInstruction> activeList = cheDeviceLogic.getAllPicksWiList();
+		List<WorkInstruction> serversList = new ArrayList<WorkInstruction>();
+		for (WorkInstruction wi : activeList) {
+			UUID theId = wi.getPersistentId();
+			WorkInstruction fullWi = WorkInstruction.DAO.findByPersistentId(theId);
+			serversList.add(fullWi);
+		}
+
+		return serversList;
+	}
+
+	/**
+	 * Returns a new list with each work instruction fetched from the DAO.
+	 * Usually obtain the input list from getServerVersionAllPicksList. Don't get it from getAllPicksList
+	 * as that returns the raw cheDeviceLogic list that usually has changed.
+	 */
+	public List<WorkInstruction> getCurrentWorkInstructionsFromList(List<WorkInstruction> inList) {
+		List<WorkInstruction> currentList = new ArrayList<WorkInstruction>();
+		for (WorkInstruction wi : inList) {
+			UUID theId = wi.getPersistentId();
+			WorkInstruction fullWi = WorkInstruction.DAO.findByPersistentId(theId);
+			currentList.add(fullWi);
+		}
+		return currentList;
 	}
 
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {

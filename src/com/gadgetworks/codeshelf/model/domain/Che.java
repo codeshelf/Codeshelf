@@ -97,7 +97,7 @@ public class Che extends WirelessDeviceABC {
 	private List<ContainerUse>		uses				= new ArrayList<ContainerUse>();
 
 	@OneToMany(mappedBy = "assignedChe")
-	@OrderBy("groupAndSortCode")
+	@Getter
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
 
 	public Che(String domainId) {

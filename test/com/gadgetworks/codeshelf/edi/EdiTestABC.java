@@ -61,16 +61,28 @@ public abstract class EdiTestABC extends DomainTestABC {
 		return new InventoryCsvImporter(mEventProducer, mItemMasterDao, mItemDao, mUomMasterDao);
 	}
 
+	private  String padRight(String s, int n) {
+	    return String.format("%1$-" + n + "s", s);
+	  }
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList) {
 			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
+			String statusStr = padRight(wi.getStatusString(), 8);
 			
-			LOGGER.debug("WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
+			LOGGER.debug(statusStr + " WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
 					+ wi.getPickInstruction() + "(" + wi.getNominalLocationId() + ")" + " count: " + wi.getPlanQuantity()
 					+ " SKU: " + wi.getItemMasterId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
 		}
 	}
 
+	public void logOneWi(WorkInstruction inWi) {
+			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
+			String statusStr = padRight(inWi.getStatusString(), 8);
+			
+			LOGGER.debug(statusStr + " " + inWi.getGroupAndSortCode() + " " + inWi.getContainerId() + " loc: "
+					+ inWi.getPickInstruction() + "(" + inWi.getNominalLocationId() + ")" + " count: " + inWi.getPlanQuantity() + " actual: " + inWi.getActualQuantity()
+					+ " SKU: " + inWi.getItemMasterId() + " order: " + inWi.getOrderId() + " desc.: " + inWi.getDescription());
+	}
 	public void logItemList(List<Item> inList) {
 		for (Item item : inList)
 			LOGGER.debug("SKU: " + item.getItemMasterId() + " cm: " + item.getCmFromLeft() + " posAlongPath: "
