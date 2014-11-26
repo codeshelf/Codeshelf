@@ -138,7 +138,7 @@ public class ServiceMethodCommand extends CommandABC {
 		int i = 0;
 		for (Object arg : methodArgs) {
 			Class<?> paramType = parameterTypes[i];
-			if (paramType.isAssignableFrom(methodArgs.getClass())) {
+			if (paramType.isAssignableFrom(arg.getClass())) {
 				convertedArgs[i] = arg;
 			} else if (UUID.class.isAssignableFrom(paramType)) {
 				convertedArgs[i] = UUID.fromString(String.valueOf(arg));
@@ -146,7 +146,7 @@ public class ServiceMethodCommand extends CommandABC {
 				convertedArgs[i] = Double.valueOf(String.valueOf(arg));
 			}
 			else {
-				throw new IllegalArgumentException("could not convert argument: " + arg + " to " + paramType);
+				throw new IllegalArgumentException("could not convert argument: " + arg + " of type "+ arg.getClass().getName() +" to " + paramType);
 			}
 			i++;
 		}
