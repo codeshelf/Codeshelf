@@ -1,0 +1,409 @@
+/*******************************************************************************
+ *  CodeShelf
+ *  Copyright (c) 2014, Codeshelf, All rights reserved
+ *  file IntegrationTest1.java
+ *******************************************************************************/
+package com.gadgetworks.codeshelf.integration;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.gadgetworks.codeshelf.application.Configuration;
+import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.device.LedCmdGroup;
+import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
+import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
+import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
+import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
+import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
+import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.NetGuid;
+import com.google.common.base.Strings;
+
+/**
+ * @author jon ranstrom
+ *
+ */
+public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
+
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestCrossBatch.class);
+
+	static {
+		Configuration.loadConfig("test");
+	}
+
+	public CheProcessTestCrossBatch() {
+
+	}
+
+	// @SuppressWarnings("rawtypes")
+	private Facility setUpSimpleSlottedFacility() {
+		// This returns a facility with aisle A1 and A2, with two bays with two tier each. 5 slots per tier, like GoodEggs. With a path, associated to both aisles.
+		// Zigzag bays like GoodEggs. 10 valid locations per aisle, named as GoodEggs
+		// One controllers associated per aisle
+		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,40,Y\r\n" //
+				+ "Bay,B1,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Bay,B2,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Aisle,A2,,,,,zigzagB1S1Side,12.85,55.45,X,120,Y\r\n" //
+				+ "Bay,B1,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n" //
+				+ "Bay,B2,112,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,,\r\n" //
+				+ "Tier,T2,,5,32,120,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		Facility facility = getFacility();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get the aisles
+		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Assert.assertNotNull(aisle1);
+
+		Path aPath = createPathForTest("F5X.1", facility);
+		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 10.85, 48.45);
+
+		String persistStr = segment0.getPersistentId().toString();
+		aisle1.associatePathSegment(persistStr);
+
+		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Assert.assertNotNull(aisle2);
+		aisle2.associatePathSegment(persistStr);
+
+		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+				+ "A1.B1.T2.S5,D-1\r\n" //
+				+ "A1.B1.T2.S4,D-2\r\n" //
+				+ "A1.B1.T2.S3, D-3\r\n" //
+				+ "A1.B1.T2.S2, D-4\r\n" //
+				+ "A1.B1.T2.S1, D-5\r\n" //
+				+ "A1.B1.T1.S5, D-6\r\n" //
+				+ "A1.B1.T1.S4, D-7\r\n" //
+				+ "A1.B1.T1.S3, D-8\r\n" //
+				+ "A1.B1.T1.S2, D-9\r\n" //
+				+ "A1.B2.T1.S1, D-10\r\n" //
+				+ "A1.B2.T2.S5, D-21\r\n" //
+				+ "A1.B2.T2.S4, D-22\r\n" //
+				+ "A1.B2.T2.S3, D-23\r\n" //
+				+ "A1.B2.T2.S2, D-24\r\n" //
+				+ "A1.B2.T2.S1, D-25\r\n" //
+				+ "A1.B2.T1.S5, D-26\r\n" //
+				+ "A1.B2.T1.S4, D-27\r\n" //
+				+ "A1.B2.T1.S3, D-28\r\n" //
+				+ "A1.B2.T1.S2, D-29\r\n" //
+				+ "A1.B2.T1.S1, D-30\r\n" //
+				+ "A2.B1.T2.S5, D-11\r\n" //
+				+ "A2.B1.T2.S4, D-12\r\n" //
+				+ "A2.B1.T2.S3, D-13\r\n" //
+				+ "A2.B1.T2.S2, D-14\r\n" //
+				+ "A2.B1.T2.S1, D-15\r\n" //
+				+ "A2.B1.T1.S5, D-16\r\n" //
+				+ "A2.B1.T1.S4, D-17\r\n" //
+				+ "A2.B1.T1.S3, D-18\r\n" //
+				+ "A2.B1.T1.S2, D-19\r\n" //
+				+ "A2.B2.T1.S1, D-20\r\n" //
+				+ "A2.B2.T2.S5, D-31\r\n" //
+				+ "A2.B2.T2.S4, D-32\r\n" //
+				+ "A2.B2.T2.S3, D-33\r\n" //
+				+ "A2.B2.T2.S2, D-34\r\n" //
+				+ "A2.B2.T2.S1, D-35\r\n" //
+				+ "A2.B2.T1.S5, D-36\r\n" //
+				+ "A2.B2.T1.S4, D-37\r\n" //
+				+ "A2.B2.T1.S3, D-38\r\n" //
+				+ "A2.B2.T1.S2, D-39\r\n" //
+				+ "A2.B2.T1.S1, D-40\r\n"; //
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
+		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+
+		CodeshelfNetwork network = getNetwork();
+		Organization organization = getOrganization();
+		String organizationId = organization.getDomainId();
+
+		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
+
+		Che che1 = network.getChe("CHE1");
+		che1.setColor(ColorEnum.GREEN);
+		Che che2 = network.getChe("CHE2");
+		che1.setColor(ColorEnum.MAGENTA);
+
+		Short channel1 = 1;
+		controller1.addLocation(aisle1);
+		aisle1.setLedChannel(channel1);
+		aisle1.getDao().store(aisle1);
+		controller2.addLocation(aisle2);
+		aisle2.setLedChannel(channel1);
+		aisle2.getDao().store(aisle2);
+
+		return facility;
+
+	}
+
+	// @SuppressWarnings("unused")
+	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
+		// These are group = "1". Orders "123", "456", and "789"
+		// 5 products batched into containers 11 through 15
+		// and 99999999,Unknown Item
+
+		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,,123,99999999,Unknown Item,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,88888888,Unknown Item,1,XXX,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,66666666,Unknown Item,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,,456,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,456,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,789,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+
+		byte orderCsvArray[] = orderCsvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(orderCsvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
+
+		// Slotting file
+
+		String csvString2 = "orderId,locationId\r\n" //
+				+ "123,D-2\r\n" // in A1.B1
+				+ "456,D-25\r\n" // in A1.B2
+				+ "789,D-35\r\n"; // in A2.B2
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		boolean result = importer.importOrderLocationsFromCsvStream(reader2, inFacility, ediProcessTime);
+
+		// Batches file. 11-15 are valid. 16-18 are looking for problems.
+		String thirdCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
+				+ "1,11,10700589,5,ea\r\n" //
+				+ "1,12,10722222,10,ea\r\n" //
+				+ "1,13,10706962,3,ea\r\n" //
+				+ "1,14,10100250,4,ea\r\n" //
+				+ "1,16,99999999,0,ea\r\n" // Order for item exists, but we say we have 0 in container 16
+				+ "1,17,88888888,2,ea\r\n" // Order for item exists, but with different UOM
+				+ "1,18,77777777,2,ea\r\n" // Order for item does not exist.
+				+ "1,19,66666666,2,ea\r\n" // Order for item came with 0 count in outbound order.
+				+ "1,15,10706961,2,ea\r\n"; // a good one last, to prove we elegantly skipped one line each only above.
+
+		byte[] thirdCsvArray = thirdCsvString.getBytes();
+
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(thirdCsvArray);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
+
+		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvCrossBatchImporter importer3 = createCrossBatchImporter();
+		importer3.importCrossBatchesFromCsvStream(reader3, inFacility, thirdEdiProcessTime);
+
+	}
+
+	@Test
+	public final void testDataSetup() throws IOException {
+
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpSimpleSlottedFacility();
+		UUID facId = facility.getPersistentId();
+		setUpGroup1OrdersAndSlotting(facility);
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(facId);
+		Assert.assertNotNull(facility);
+
+		List<Container> containers = facility.getContainers();
+		int containerCount = containers.size(); // This can throw if  we did not re-get the facility in the new transaction boundary. Just testing that.
+		Assert.assertTrue(containerCount == 7);
+		this.getPersistenceService().endTenantTransaction();
+	}
+
+	@Test
+	public final void basicCrossBatchRun() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpSimpleSlottedFacility();
+		UUID facId = facility.getPersistentId();
+		setUpGroup1OrdersAndSlotting(facility);
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(facId);
+		Assert.assertNotNull(facility);
+
+		HousekeepingInjector.turnOffHK();
+
+		// Set up a cart for orders 12345 and 1111, which will generate work instructions
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		picker.login("Picker #1");
+
+		LOGGER.info("Case 1: A happy-day startup. No housekeeping jobs. Two from one container.");
+		picker.setup();
+		picker.setupContainer("11", "1"); // This prepended to scan "C%11" as per Codeshelf scan specification
+		picker.setupContainer("15", "3");
+		
+		picker.start("D-36", 5000, 3000);
+		HousekeepingInjector.restoreHKDefaults();
+
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		logWiList(serverWiList);
+
+		Assert.assertEquals(3, picker.countRemainingJobs());
+		Assert.assertEquals(1, picker.countActiveJobs());
+
+		// put away first item
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+		Assert.assertEquals(2, picker.countRemainingJobs());
+
+		// put away second item
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+
+		// put away last item
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
+
+		this.getPersistenceService().endTenantTransaction();
+	}
+	
+	@Test
+	public final void crossBatchShorts() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleSlottedFacility();
+		UUID facId = facility.getPersistentId();
+		setUpGroup1OrdersAndSlotting(facility);
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(facId);
+		Assert.assertNotNull(facility);
+
+		HousekeepingInjector.turnOffHK();
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		picker.login("Picker #1");
+
+		LOGGER.info("Case 1: Startup. Container 11 will have 2 jobs. We can short one, and see the other short ahead. Container 15 has one job.");
+		LOGGER.info("                  Containers 16-19 do 4 situations that might cause immediate short. They do not. ");
+		picker.setup();
+		picker.setupContainer("15", "1"); // Good one gives one work instruction
+		picker.setupContainer("16", "2"); 
+		picker.setupContainer("17", "3"); 
+		picker.setupContainer("18", "4"); 
+		picker.setupContainer("19", "5"); 
+		picker.setupContainer("11", "6"); // Good one gives two work instruction
+
+		picker.start("D-36", 5000, 3000);
+		HousekeepingInjector.restoreHKDefaults();
+
+		Assert.assertEquals(3, picker.countRemainingJobs());
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		logWiList(serverWiList);
+		
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
+
+		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
+		List<WorkInstruction> cheWis = che1.getCheWorkInstructions();
+		Assert.assertNotNull(cheWis);
+		int cheWiTotal = cheWis.size();
+		Assert.assertEquals(3, cheWiTotal);
+		LOGGER.info("List the CHE work instructions which might have new shorts. Order is random for this. Only 3 confirms no immediate shorts.");
+		// CheProcessTestPick.java shows immediate shorts for picks.
+		logWiList(cheWis);
+		
+		LOGGER.info("Case 2: Short the first job. This should short ahead the third.");
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+		Assert.assertEquals(1, picker.countRemainingJobs());
+
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+
+		// pick last item
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
+
+		this.getPersistenceService().endTenantTransaction();
+	}
+
+
+}
