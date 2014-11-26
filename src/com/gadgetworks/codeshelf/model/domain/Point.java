@@ -37,7 +37,7 @@ public class Point {
 	@NonNull
 	@Getter
 	@JsonProperty
-	private PositionTypeEnum	posTypeEnum;
+	private PositionTypeEnum	posType;
 
 	@NonNull
 	@Getter
@@ -59,21 +59,21 @@ public class Point {
 	}
 
 	public Point(final PositionTypeEnum inPosType, final Double inX, final Double inY, final Double inZ) {
-		posTypeEnum = inPosType;
+		posType = inPosType;
 		x = (inX == null) ? 0.0 : inX;
 		y = (inY == null) ? 0.0 : inY;
 		z = (inZ == null) ? 0.0 : inZ;
 	}
 
 	public Point(final String inPosTypeStr, final Double inX, final Double inY, final Double inZ) {
-		posTypeEnum = PositionTypeEnum.valueOf(inPosTypeStr);
+		posType = PositionTypeEnum.valueOf(inPosTypeStr);
 		x = (inX == null) ? 0.0 : inX;
 		y = (inY == null) ? 0.0 : inY;
 		z = (inZ == null) ? 0.0 : inZ;
 	}
 
 	public Point(final Point inClonePoint) {
-		posTypeEnum = inClonePoint.getPosTypeEnum();
+		posType = inClonePoint.getPosType();
 		x = inClonePoint.getX();
 		y = inClonePoint.getY();
 		z = inClonePoint.getZ();
@@ -88,11 +88,11 @@ public class Point {
 	}
 
 	public final Point add(final Point inAddPoint) {
-		if (inAddPoint.getPosTypeEnum().equals(posTypeEnum)) {
+		if (inAddPoint.getPosType().equals(posType)) {
 			return add(inAddPoint.getX(), inAddPoint.getY(), inAddPoint.getZ());
 		}
 		else {
-			throw new IllegalArgumentException("inAddPoint is not the same point type: " + inAddPoint.getPosTypeEnum());
+			throw new IllegalArgumentException("inAddPoint is not the same point type: " + inAddPoint.getPosType());
 		}
 	}
 
@@ -104,7 +104,7 @@ public class Point {
 	}
 	
 	public final Point add(double inX, double inY, double inZ) {
-		return new Point(posTypeEnum, x+inX, y+inY, z+inZ);
+		return new Point(posType, x+inX, y+inY, z+inZ);
 	}
 
 	// These are legacy from the front-end GUI.
@@ -139,8 +139,8 @@ public class Point {
 		this.z = z;
 	}
 	
-	public void setPosTypeEnum(PositionTypeEnum posTypeEnum) {
-		this.posTypeEnum = posTypeEnum;
+	public void setPosType(PositionTypeEnum posType) {
+		this.posType = posType;
 	}
 
 }

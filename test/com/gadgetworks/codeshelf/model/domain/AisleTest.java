@@ -2,12 +2,10 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.any;
 
-import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Assert;

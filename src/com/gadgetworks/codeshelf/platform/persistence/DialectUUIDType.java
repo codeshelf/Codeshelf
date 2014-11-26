@@ -1,8 +1,5 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
 import java.util.UUID;
 
 import org.hibernate.type.AbstractSingleColumnStandardBasicType;

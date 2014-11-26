@@ -58,7 +58,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	@Getter
 	@Setter
 	@JsonProperty
-	private PositionTypeEnum	pickFaceEndPosTypeEnum;
+	private PositionTypeEnum	pickFaceEndPosType;
 
 	// X pos of pick face end (pick face starts at anchor pos).
 	@Column(nullable = false)
@@ -142,7 +142,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	 * @return
 	 */
 	public Point getPickFaceEndPoint() {
-		return new Point(pickFaceEndPosTypeEnum, pickFaceEndPosX, pickFaceEndPosY, pickFaceEndPosZ);
+		return new Point(pickFaceEndPosType, pickFaceEndPosX, pickFaceEndPosY, pickFaceEndPosZ);
 	}
 
 	// --------------------------------------------------------------------------
@@ -150,7 +150,7 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 	 * @param inPickFaceEndPoint
 	 */
 	public void setPickFaceEndPoint(final Point inPickFaceEndPoint) {
-		pickFaceEndPosTypeEnum = inPickFaceEndPoint.getPosTypeEnum();
+		pickFaceEndPosType = inPickFaceEndPoint.getPosType();
 		pickFaceEndPosX = inPickFaceEndPoint.getX();
 		pickFaceEndPosY = inPickFaceEndPoint.getY();
 		pickFaceEndPosZ = inPickFaceEndPoint.getZ();

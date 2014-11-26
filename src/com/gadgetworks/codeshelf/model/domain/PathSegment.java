@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -88,7 +87,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private PositionTypeEnum	posTypeEnum;
+	private PositionTypeEnum	posType;
 
 	@NonNull
 	@Column(nullable = true)
@@ -172,25 +171,25 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public final void setStartPoint(final Point inPoint) {
-		posTypeEnum = inPoint.getPosTypeEnum();
+		posType = inPoint.getPosType();
 		startPosX = inPoint.getX();
 		startPosY = inPoint.getY();
 		startPosZ = inPoint.getZ();
 	}
 
 	public final void setEndPoint(final Point inPoint) {
-		posTypeEnum = inPoint.getPosTypeEnum();
+		posType = inPoint.getPosType();
 		endPosX = inPoint.getX();
 		endPosY = inPoint.getY();
 		endPosZ = inPoint.getZ();
 	}
 
 	public final Point getStartPoint() {
-		return new Point(posTypeEnum, startPosX, startPosY, startPosZ);
+		return new Point(posType, startPosX, startPosY, startPosZ);
 	}
 
 	public final Point getEndPoint() {
-		return new Point(posTypeEnum, endPosX, endPosY, endPosZ);
+		return new Point(posType, endPosX, endPosY, endPosZ);
 	}
 
 	public final Double getLength() {

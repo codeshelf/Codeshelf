@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
 
-	PositionTypeEnum getAnchorPosTypeEnum();
+	PositionTypeEnum getAnchorPosType();
 
 	Double getAnchorPosX();
 

@@ -77,7 +77,7 @@ public class PersistenceService extends Service {
 			theInstance = new PersistenceService();
 			theInstance.configure();
 			theInstance.start();
-			LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
+			//LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
 		}
 		else if (!theInstance.isInitialized()) {
 			theInstance.start();
@@ -112,6 +112,8 @@ public class PersistenceService extends Service {
     	configuration = new Configuration().configure(this.hibernateConfigurationFile);
     	// String connectionUrl = "jdbc:postgresql://"+shard.getHost()+":"+shard.getPort()+"/shard"+shard.getShardId();
     	configuration.setProperty("hibernate.connection.url", this.connectionUrl);
+    	//configuration.setProperty("hibernate.connection.username", tenant.getName());
+    	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
     	configuration.setProperty("hibernate.connection.username", this.userId);
     	configuration.setProperty("hibernate.connection.password", this.password);
 
@@ -120,8 +122,23 @@ public class PersistenceService extends Service {
     	}
     	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
 
-    	//configuration.setProperty("hibernate.connection.username", tenant.getName());
-    	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
+    	// we do not attempt to manage the in-memory test db; that will be done by Hibernate
+		if(!this.connectionUrl.startsWith("jdbc:h2:mem")) {
+			SchemaManager sm = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
+			boolean schemaMatches = sm.checkSchema();
+			
+			if(!schemaMatches) {
+/*					try {
+						this.createNewSchema();
+					} catch (SQLException e) {
+						LOGGER.error("SQL exception generating schema",e);
+						throw new RuntimeException("Cannot start, failed to initialize schema");
+					}
+				} else*/ {
+					throw new RuntimeException("Cannot start, schema does not match");
+				}
+			}
+		}
 	}
 
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {

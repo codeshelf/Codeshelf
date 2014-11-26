@@ -118,7 +118,7 @@ public class JsonDecoderTest  {
 			PathSegment segment = new PathSegment();
 			segment.setDomainId("P."+i);
 			segment.setSegmentOrder(i);
-			segment.setPosTypeEnum(PositionTypeEnum.METERS_FROM_PARENT);
+			segment.setPosType(PositionTypeEnum.METERS_FROM_PARENT);
 			segment.setStartPosX(di);
 			segment.setStartPosY(di);
 			segment.setStartPosZ(di);
@@ -169,7 +169,7 @@ public class JsonDecoderTest  {
 	public void testObjectMethodRequestDecoding() throws DecodeException {
 		JsonDecoder decoder = new JsonDecoder();		
 		//String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'posTypeEnum':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.gadgetworks.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
-		String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'className':'Point','posTypeEnum':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.gadgetworks.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
+		String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'className':'Point','posType':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.gadgetworks.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
 		MessageABC message = decoder.decode(rawMessage);
 		Assert.assertTrue(message instanceof ObjectMethodRequest);
 		ObjectMethodRequest objectMethodRequest = (ObjectMethodRequest) message;

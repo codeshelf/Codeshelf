@@ -94,7 +94,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@Enumerated(value = EnumType.STRING)
 	@JsonProperty
 	@Getter
-	private PositionTypeEnum										anchorPosTypeEnum;
+	private PositionTypeEnum										anchorPosType;
 
 	// The X anchor position.
 	@Column(nullable = false)
@@ -244,18 +244,18 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public Point getAnchorPoint() {
-		return new Point(anchorPosTypeEnum, anchorPosX, anchorPosY, anchorPosZ);
+		return new Point(anchorPosType, anchorPosX, anchorPosY, anchorPosZ);
 	}
 
 	public final void setAnchorPoint(final Point inAnchorPoint) {
-		anchorPosTypeEnum = inAnchorPoint.getPosTypeEnum();
+		anchorPosType = inAnchorPoint.getPosType();
 		anchorPosX = inAnchorPoint.getX();
 		anchorPosY = inAnchorPoint.getY();
 		anchorPosZ = inAnchorPoint.getZ();
 	}
 
 	public final void setAnchorPosTypeByStr(final String inPosType) {
-		anchorPosTypeEnum = PositionTypeEnum.valueOf(inPosType);
+		anchorPosType = PositionTypeEnum.valueOf(inPosType);
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -448,13 +448,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public Point getAbsoluteAnchorPoint() {
 		Point anchor = getAnchorPoint();
 		Point result = anchor;
-		if (!anchorPosTypeEnum.equals(PositionTypeEnum.GPS)) {
+		if (!anchorPosType.equals(PositionTypeEnum.GPS)) {
 			ILocation<P> parent = (ILocation<P>) getParent();
 
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
 			parent = this.getDao().findByPersistentId(parent.getClass(), parent.getPersistentId());
-			if ((parent != null) && (parent.getAnchorPoint().getPosTypeEnum().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
+			if ((parent != null) && (parent.getAnchorPoint().getPosType().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
 				result = anchor.add(parent.getAbsoluteAnchorPoint());
 			}
 		}

@@ -13,12 +13,10 @@ import java.util.concurrent.BlockingQueue;
 
 import lombok.Getter;
 
-import org.apache.log4j.Level;
 import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
@@ -37,6 +35,7 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
@@ -101,21 +100,16 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
-
+		
 		this.getPersistenceService().start();
 		
 		try {
 			this.getPersistenceService().beginTenantTransaction();
 			this.getPersistenceService().endTenantTransaction();
 		} catch (HibernateException e) {
-			if(e.getMessage().startsWith("Missing table") && configuration.getBoolean("db.autocreate")) {
-				LOGGER.error("Could not initialize Hibernate due to missing table, will try to create schema",e);
-				this.getPersistenceService().createNewSchema();
-			} else {
-				LOGGER.error("Failed to initialize Hibernate. Server is shutting down.",e);
-				Thread.sleep(3000);
-				System.exit(1);
-			}
+			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.",e);
+			Thread.sleep(3000);
+			System.exit(1);
 		}
 		
 		// Start the WebSocket server
@@ -219,7 +213,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		this.persistenceService.stop();
 		LOGGER.info("Application terminated normally");
 	}
-
+/*
 	@SuppressWarnings("unused")
 	private void initPreferencesStore(Organization inOrganization) {
 		initPreference(inOrganization,
@@ -236,12 +230,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			Level.INFO.toString());
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  @param inPropertyID
-	 *  @param inDescription
-	 *  @param inDefaultValue
-	 */
 	private void initPreference(Organization inOrganization, String inPropertyID, String inDescription, String inDefaultValue) {
 		boolean shouldUpdate = false;
 
@@ -273,6 +261,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			}
 		}
 	}
+	 */
 
 	// --------------------------------------------------------------------------
 	/**

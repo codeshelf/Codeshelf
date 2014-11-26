@@ -128,7 +128,7 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 	}
 	
 	public final void setPoint(final Point inPoint) {
-		posType = inPoint.getPosTypeEnum();
+		posType = inPoint.getPosType();
 		posX = inPoint.getX();
 		posY = inPoint.getY();
 		posZ = inPoint.getZ();

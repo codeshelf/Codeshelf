@@ -151,7 +151,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 			PathSegment segment = new PathSegment();
 			segment.setDomainId("P."+i);
 			segment.setSegmentOrder(i);
-			segment.setPosTypeEnum(PositionTypeEnum.METERS_FROM_PARENT);
+			segment.setPosType(PositionTypeEnum.METERS_FROM_PARENT);
 			segment.setStartPosX(di);
 			segment.setStartPosY(di);
 			segment.setStartPosZ(di);
