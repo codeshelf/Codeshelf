@@ -62,10 +62,6 @@ public class WorkServiceTest extends DAOTestABC {
 		Configuration.loadConfig("test");
 	}
 	
-	static {
-		Configuration.loadConfig("test");
-	}
-	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator();
 

@@ -157,7 +157,6 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().endTenantTransaction();
 		
 	}
-
 	
 	@Test
 	public void usesOrderDomainId() throws Exception {
