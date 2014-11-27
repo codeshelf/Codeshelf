@@ -84,7 +84,7 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 	private Double				posZ;
 
 	// The vertex order/position (zero-based).
-	@Column(nullable = false)
+	@Column(nullable = false,name="draw_order")
 	@Setter
 	@Getter
 	@JsonProperty

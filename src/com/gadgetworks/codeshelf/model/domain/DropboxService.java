@@ -107,7 +107,7 @@ public class DropboxService extends EdiServiceABC {
 
 	private static final String	TIME_FORMAT				= "HH-mm-ss";
 
-	@Column(nullable = true, name = "CURSOR")
+	@Column(nullable = true, name = "db_cursor")
 	@Getter
 	@Setter
 	@JsonProperty
