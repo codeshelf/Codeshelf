@@ -94,7 +94,6 @@ public class Che extends WirelessDeviceABC {
 	@JsonProperty
 	private ColorEnum				color;
 
-	// ebeans maintains a lazy-loaded list of containerUse for this CHE
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
 	private List<ContainerUse>		uses				= new ArrayList<ContainerUse>();
@@ -199,7 +198,7 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	// Utility functions for CHE work instructions, past runs and current
-	// the ebeans getter gives us List<WorkInstruction> aList =	getCheWorkInstructions();
+	// the lomboc getter gives us List<WorkInstruction> aList =	getCheWorkInstructions();
 	// Work instruction has assignedChe. When work instructions are computed for a run, they all get the same assignedTime field set.
 
 	public final Timestamp getTimeStampOfCurrentRun() {
