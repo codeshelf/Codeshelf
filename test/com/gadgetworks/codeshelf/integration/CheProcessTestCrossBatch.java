@@ -196,6 +196,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15
 		// and 99999999,Unknown Item
+		// order 888 bad slotting. Order 999 no slotting
 
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,,123,99999999,Unknown Item,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -211,7 +212,9 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,888,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,,999,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		byte orderCsvArray[] = orderCsvString.getBytes();
 
@@ -227,6 +230,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		String csvString2 = "orderId,locationId\r\n" //
 				+ "123,D-2\r\n" // in A1.B1
 				+ "456,D-25\r\n" // in A1.B2
+				+ "888,D-XX\r\n" // bad location
 				+ "789,D-35\r\n"; // in A2.B2
 
 		byte[] csvArray2 = csvString2.getBytes();
