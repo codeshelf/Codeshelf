@@ -23,6 +23,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 // domain objects needed
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -1249,25 +1250,64 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(b2T1Channel, slotB2T1S1.getEffectiveLedChannel());
 
 		// New from v8. Setting controller on aisle should clear the earlier tier set.
-		String cntlrId2 = "000066";
-		String guidId2 = "0x000066";
-		LedController ledController2 = network.findOrCreateLedController(cntlrId2, new NetGuid(guidId2));
+		String cntlrId66 = "000066";
+		String guidId66 = "0x000066";
+		LedController ledController66 = network.findOrCreateLedController(cntlrId66, new NetGuid(guidId66));
+		String cntlrId55 = "000055";
+		String guidId55 = "0x000055";
+		LedController ledController55 = network.findOrCreateLedController(cntlrId55, new NetGuid(guidId55));
+		UUID cntlrPersistID55 = ledController55.getPersistentId();
+		String cntrlPersistIdStr55 = cntlrPersistID55.toString();
 
-		Assert.assertNotNull(ledController2);
-		LedController aController2 = network.getLedController(cntlrId2); // make sure we can get it as we might
-		Assert.assertNotNull(aController2);
-		UUID cntlrPersistID2 = aController2.getPersistentId();
-		String cntrlPersistIdStr2 = cntlrPersistID2.toString();
+		Assert.assertNotNull(ledController66);
+		LedController aController66 = network.getLedController(cntlrId66); // make sure we can get it as we might
+		Assert.assertNotNull(aController66);
+		UUID cntlrPersistID66 = aController66.getPersistentId();
+		String cntrlPersistIdStr2 = cntlrPersistID66.toString();
 		// verify we have something on the tier
 		Assert.assertNotNull(tierB1T1.getLedController());
 		Assert.assertNotNull(tierB1T1.getLedChannel());
 		// set the aisle, then make sure tier got cleared and tier getEffectiveXXX() works
 		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
-		tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1"); // get the tier again. Will Hibernate fix this ebeans problem?
+		
+		// DEV-514 investigation tierB1T1 is old reference to tier. Does it know its controller/channel immediately after the aisle set it in the same transaction space?
+		// Yes! ebean would have failed the following
 		Assert.assertNull(tierB1T1.getLedController());
 		Assert.assertNull(tierB1T1.getLedChannel());
-		Assert.assertEquals(ledController2, tierB1T1.getEffectiveLedController());
+		Assert.assertEquals(ledController66, tierB1T1.getEffectiveLedController());
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
+		
+		// DEV-514: a different kind of issue with hibernate. findByDomainId does not go to the database.  If you asked the database, 
+		// tierB1T1.getLedController()) would not be null.
+		tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1");
+		Assert.assertNull(tierB1T1.getLedController());
+		Assert.assertNull(tierB1T1.getLedChannel());
+		Assert.assertEquals(ledController66, tierB1T1.getEffectiveLedController());
+		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
+		
+		// DEV-514 Let's persist now. tierB1T1 reference comes from the previous. As does aisle16 reference.
+		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		// set on the old aisle reference. Does the old tier reference know?
+		aisle16.setControllerChannel(cntrlPersistIdStr55, "1");
+		// These fail!
+		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
+		// Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 1);
+		// Get from DB again under this transaction. However, facility is old reference. Ok? No!
+		aisle16 = Aisle.DAO.findByDomainId(facility, "A16");
+		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
+		// There is no way in this test structure to re-get the facility from the database under a new transaction.
+		// aisle16 = Aisle.DAO.findByDomainId(getFacility(), "A16");
+		// similar problem: still the old facility reference.
+		tierB1T1 = (Tier) facility.findSubLocationById("A16.B1.T1");
+		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
+		List<Facility> aList = Facility.DAO.getAll();
+		Facility facility2 = aList.get(0);
+		tierB1T1 = (Tier) facility2.findSubLocationById("A16.B1.T1");
+		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
+		
+		// Set it back to pass the rest of the test.
+		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
 		// and the new v8 UI fields
 		// Aisle has the direct association, so no parenthesis around it. Tier is indirect via getEffective.
 		String aisleCntrlUiField = aisle16.getLedControllerIdUi();
@@ -1789,6 +1829,106 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same
 		// Bay1 and bay2 path position differ by about 1.15 meters;  bay is 115 cm long.
 
+		this.getPersistenceService().endTenantTransaction();
+
+	}
+	
+	@Test
+	public final void testHibernatePersistFetch() {
+		this.getPersistenceService().beginTenantTransaction();
+
+		// Start with a file read to new facility
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A29,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE29");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE29", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE29");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get the objects we will use
+		Aisle aisle29 = Aisle.DAO.findByDomainId(facility, "A29");
+		Assert.assertNotNull(aisle29);
+
+		Bay bayA16B1 = Bay.DAO.findByDomainId(aisle29, "B1");
+		Bay bayA16B2 = Bay.DAO.findByDomainId(aisle29, "B2");
+		Assert.assertNotNull(bayA16B2);
+
+		Tier tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1");
+		Assert.assertNotNull(tierB1T1);
+		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA16B2, "T1");
+		Assert.assertNotNull(tierB2T1);
+		
+		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
+		Assert.assertNotNull(slotB1T1S5);
+		
+		// The modification is trivial: activation and deactivation of a slot. Verify starting condition.
+		Assert.assertTrue(slotB1T1S5.getActive());
+		
+		slotB1T1S5.setActive(false);  // but not persisted yet.
+		Assert.assertFalse(slotB1T1S5.getActive());
+		
+		// Get it from the DAO again, although from the old facility reference. Does not give the database version.
+		slotB1T1S5  = (Slot) facility.findSubLocationById("A29.B1.T1.S5");
+		// Assert.assertTrue(slotB1T1S5.getActive()); // fails
+		
+		// See if we can somehow get what the database has. No!
+		List<Facility> listB = Facility.DAO.getAll();
+		Facility facilityB = listB.get(0);
+		Slot slotB1T1S5B  = (Slot) facilityB.findSubLocationById("A29.B1.T1.S5");
+		// Assert.assertTrue(slotB1T1S5B.getActive()); // fails
+		
+		// ok, persist it by closing the transaction
+		this.getPersistenceService().endTenantTransaction();
+		
+		this.getPersistenceService().beginTenantTransaction();
+		Assert.assertFalse(slotB1T1S5.getActive());
+	
+		
+		slotB1T1S5.setActive(true);  // but not persisted yet. This is probably the big danger. Change value on an old reference in new transaction.
+		Assert.assertTrue(slotB1T1S5.getActive());
+
+		// How is our old reference?
+		Assert.assertTrue(slotB1T1S5B.getActive()); // Also true, even though not persisted.
+		
+		// See if we can somehow get what the database has. Yes!  Why this time?
+		List<Facility> listC = Facility.DAO.getAll();
+		Facility facilityC = listC.get(0);
+		Slot slotB1T1S5C  = (Slot) facilityC.findSubLocationById("A29.B1.T1.S5");
+		Assert.assertFalse(slotB1T1S5C.getActive()); 
+		Assert.assertTrue(slotB1T1S5B.getActive());
+		
+		// close the transaction, and see what happens to our inconsistent reference
+		this.getPersistenceService().endTenantTransaction();
+		
+		this.getPersistenceService().beginTenantTransaction();
+		
+		Assert.assertTrue(slotB1T1S5.getActive()); 
+		Assert.assertTrue(slotB1T1S5B.getActive());
+		Assert.assertFalse(slotB1T1S5C.getActive());  // This reference still "stuck" with wrong value
+		// We should be able to get it again.
+		List<Facility> listD = Facility.DAO.getAll();
+		Facility facilityD = listD.get(0);
+		Slot slotB1T1S5D  = (Slot) facilityD.findSubLocationById("A29.B1.T1.S5");
+		Assert.assertFalse(slotB1T1S5D.getActive());  // Still stuck! incorrect! What value is in the database?
+		Assert.assertTrue(slotB1T1S5.getActive()); 
+		Assert.assertTrue(slotB1T1S5B.getActive());
+		
 		this.getPersistenceService().endTenantTransaction();
 
 	}
