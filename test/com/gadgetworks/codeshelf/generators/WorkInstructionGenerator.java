@@ -6,11 +6,15 @@ import java.util.UUID;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.LedSample;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Container;
+import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -26,18 +30,25 @@ public class WorkInstructionGenerator {
 	private static long sequence = 0;
 	
 	public WorkInstruction generateWithNewStatus(Facility facility) {
+		UomMaster uomMaster = facility.createUomMaster("UOMID");
+		ItemMaster itemMaster = facility.createItemMaster("ITEMID", uomMaster);
+
+		OrderDetail orderDetail = generateValidOrderDetail(facility, itemMaster, uomMaster);
 		WorkInstruction workInstruction = new WorkInstruction();
 		workInstruction.setPersistentId(UUID.randomUUID());
-		workInstruction.setOrderDetail(generateValidOrderDetail(facility));
+		workInstruction.setOrderDetail(orderDetail);
 		workInstruction.setDomainId("WIDOMAINID" + sequence++);
 		workInstruction.setDescription("A DESCRIPTION");
 		
-		Container container = facility.createContainer("C1");
+		Container container = 	
+				new Container("CONTID",
+							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
+							  true);
+		facility.addContainer(container);
+
 		workInstruction.setContainer(container);
 		
-		UomMaster uomMaster = facility.createUomMaster("UOMID");
 		
-		ItemMaster itemMaster = facility.createItemMaster("ITEMID", uomMaster);
 		workInstruction.setItemMaster(itemMaster);
 		workInstruction.setLocationId("LOCID");
 		
@@ -53,7 +64,13 @@ public class WorkInstructionGenerator {
 		workInstruction.setPlanMaxQuantity(2);
 		workInstruction.setActualQuantity(2);
 		
+		CodeshelfNetwork network = new CodeshelfNetwork();
+		network.setDomainId("TEST");
+		facility.addNetwork(network);
+		
 		Che che1 = new Che("CHE1");
+		network.addChe(che1);
+		
 		che1.addWorkInstruction(workInstruction);
 		workInstruction.setAssigned( new Timestamp(System.currentTimeMillis()-10000));
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
@@ -71,12 +88,22 @@ public class WorkInstructionGenerator {
 	}
 	
 	//Move to order detail generator
-	private OrderDetail generateValidOrderDetail(Facility facility) {
-		OrderHeader orderHeader = new OrderHeader(facility, "OH1");
-		orderHeader.setOrderGroup(new OrderGroup(facility, "OG1"));
-		OrderDetail detail = new OrderDetail(orderHeader, "OD1");
+	private OrderDetail generateValidOrderDetail(Facility facility, ItemMaster itemMaster, UomMaster uom) {
+		OrderGroup orderGroup = new OrderGroup("OG1");
+		facility.addOrderGroup(orderGroup);
+		
+		OrderHeader orderHeader = new OrderHeader("OH1", OrderTypeEnum.OUTBOUND);
+		facility.addOrderHeader(orderHeader);
+		
+		orderGroup.addOrderHeader(orderHeader);
+
+		OrderDetail detail = new OrderDetail("OD1", true);
+		detail.setStatus(OrderStatusEnum.CREATED);
+		detail.setUpdated(new Timestamp(System.currentTimeMillis()));
 		detail.setQuantities(5);
-		detail.setUomMaster(new UomMaster(facility, "newUOM"));
+		detail.setItemMaster(itemMaster);
+		detail.setUomMaster(uom);
+		orderHeader.addOrderDetail(detail);
 		return detail;
 		
 	}

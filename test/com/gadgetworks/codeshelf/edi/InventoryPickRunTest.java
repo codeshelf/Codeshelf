@@ -302,9 +302,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		WorkInstruction wi1 = wiList.get(0);
 		WorkInstruction wi5 = wiList.get(4);
 		WorkInstruction wi10 = wiList.get(9);
-		Assert.assertEquals("1124", wi1.getItemMasterId());
-		Assert.assertEquals("1831", wi5.getItemMasterId());
-		Assert.assertEquals("1524", wi10.getItemMasterId());
+		Assert.assertEquals("1124", wi1.getItemId());
+		Assert.assertEquals("1831", wi5.getItemId());
+		Assert.assertEquals("1524", wi10.getItemId());
 
 		// Check again with the Accu sequencer
 		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
@@ -318,9 +318,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		wi5 = wiList2.get(4);
 		wi10 = wiList2.get(9);
 		// All wrong!
-		Assert.assertEquals("1124", wi1.getItemMasterId());
-		Assert.assertEquals("1831", wi5.getItemMasterId());
-		Assert.assertEquals("1524", wi10.getItemMasterId());
+		Assert.assertEquals("1124", wi1.getItemId());
+		Assert.assertEquals("1831", wi5.getItemId());
+		Assert.assertEquals("1524", wi10.getItemId());
 
 		HousekeepingInjector.restoreHKDefaults();
 
@@ -381,9 +381,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		WorkInstruction wi1 = wiList.get(0);
 		WorkInstruction wi5 = wiList.get(4);
 		WorkInstruction wi10 = wiList.get(9);
-		Assert.assertEquals("1523", wi1.getItemMasterId());
-		Assert.assertEquals("1125", wi5.getItemMasterId());
-		Assert.assertEquals("1525", wi10.getItemMasterId());
+		Assert.assertEquals("1523", wi1.getItemId());
+		Assert.assertEquals("1125", wi5.getItemId());
+		Assert.assertEquals("1525", wi10.getItemId());
 
 		// Check again with the Accu sequencer
 		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
@@ -397,9 +397,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		wi5 = wiList2.get(4);
 		wi10 = wiList2.get(9);
 		// All wrong!
-		Assert.assertEquals("1124", wi1.getItemMasterId());
-		Assert.assertEquals("1831", wi5.getItemMasterId());
-		Assert.assertEquals("1524", wi10.getItemMasterId());
+		Assert.assertEquals("1124", wi1.getItemId());
+		Assert.assertEquals("1831", wi5.getItemId());
+		Assert.assertEquals("1524", wi10.getItemId());
 
 		HousekeepingInjector.restoreHKDefaults();
 

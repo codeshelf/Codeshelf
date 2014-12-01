@@ -265,7 +265,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		Assert.assertNotNull(wi1);
 		String wi1Order = wi1.getOrderId();
-		String wi1Item = wi1.getItemMasterId();
+		String wi1Item = wi1.getItemId();
 		String groupSortStr1 = wi1.getGroupAndSortCode();
 		Assert.assertEquals("0001", groupSortStr1);
 		Double wi1Pos = wi1.getPosAlongPath();
@@ -318,8 +318,8 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertEquals("12001", wi1Order);
 		
 		// Last items picked should be 1522. Two orders, so that is arbitrary. (Until later, when we might care to alternate somewhat to reduce confusion about orders going to same cart slot.
-		String wi7Item = wi7.getItemMasterId();
-		String wi8Item = wi8.getItemMasterId();
+		String wi7Item = wi7.getItemId();
+		String wi8Item = wi8.getItemId();
 		Assert.assertEquals("1522", wi7Item);
 		Assert.assertEquals("1522", wi8Item);
 		getPersistenceService().endTenantTransaction();

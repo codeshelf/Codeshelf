@@ -13,6 +13,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
+import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -24,6 +25,18 @@ public class LoginTest extends DomainTestABC {
 	
 	static {
 		Configuration.loadConfig("test");
+	}
+
+	private ServerMessageProcessor	processor;
+
+	
+	
+	@Override
+	public void doBefore() throws Exception {
+		// TODO Auto-generated method stub
+		super.doBefore();
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+
 	}
 
 	@Test
@@ -51,7 +64,6 @@ public class LoginTest extends DomainTestABC {
 		request.setUserId(user.getDomainId());
 		request.setPassword(password);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
@@ -88,7 +100,6 @@ public class LoginTest extends DomainTestABC {
 		request.setUserId("user@invalid.com");
 		request.setPassword(password);
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
@@ -124,7 +135,6 @@ public class LoginTest extends DomainTestABC {
 		request.setUserId(user.getDomainId());
 		request.setPassword("invalid");
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class));
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);

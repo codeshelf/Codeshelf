@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
+import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,12 +76,14 @@ public class ServerMessageProcessor extends MessageProcessor {
 	
 	private ServiceFactory	serviceFactory;
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
+	private ConvertUtilsBean	converter;
 
 	@Inject
-	public ServerMessageProcessor(ServiceFactory serviceFactory) {
+	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
 		this.objectChangeBroadcaster = PersistenceService.getInstance().getObjectChangeBroadcaster();
+		this.converter = converter;
 	}
 	
 	@Override
@@ -141,7 +144,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ServiceMethodRequest) {
-				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request, serviceFactory);
+				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request, serviceFactory, converter);
 				objectUpdateCounter.inc();
 				applicationRequestCounter.inc();
 			}

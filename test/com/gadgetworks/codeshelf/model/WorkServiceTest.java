@@ -47,6 +47,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.LightService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
@@ -84,7 +85,7 @@ public class WorkServiceTest extends DAOTestABC {
 		WorkService workService = mock(WorkService.class);
 		when(workService.workSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class));
-		MessageProcessor processor = new ServerMessageProcessor(factory);
+		MessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get());
 		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());

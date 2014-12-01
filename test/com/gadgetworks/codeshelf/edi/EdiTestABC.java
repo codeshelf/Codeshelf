@@ -71,7 +71,7 @@ public abstract class EdiTestABC extends DomainTestABC {
 			
 			LOGGER.debug(statusStr + " WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
 					+ wi.getPickInstruction() + "(" + wi.getNominalLocationId() + ")" + " count: " + wi.getPlanQuantity()
-					+ " SKU: " + wi.getItemMasterId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
+					+ " SKU: " + wi.getItemId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
 		}
 	}
 

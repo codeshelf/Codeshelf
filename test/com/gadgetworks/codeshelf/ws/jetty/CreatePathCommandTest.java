@@ -30,6 +30,7 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
+import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
@@ -89,7 +90,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 			UserSession requestSession = new UserSession(mock(Session.class), Executors.newSingleThreadExecutor());
 			requestSession.setSessionId("test-session");
 			
-			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);
+			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get());
 			ResponseABC response = processor.handleRequest(requestSession, request);
 			Assert.assertTrue(response instanceof CreatePathResponse);
 		}
@@ -131,7 +132,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		session.setSessionId("test-session");
 
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get());
 
 		ResponseABC response = processor.handleRequest(session, request);
 

@@ -152,9 +152,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail() {
 	}
 
-	public OrderDetail(OrderHeader inOrderHeader, String inDomainId) {
+	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
-		this.parent = inOrderHeader;
+		this.active = active;
 	}
 
 	@SuppressWarnings("unchecked")
