@@ -23,7 +23,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Point;
@@ -256,9 +256,9 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	}
 	
-	private LocationABC mockSubLocation(String domainId) {
+	private Location mockSubLocation(String domainId) {
 		
-		LocationABC mockLocation = new LocationABC() {
+		Location mockLocation = new Location() {
 
 			@Override
 			public String getDefaultDomainIdPrefix() {

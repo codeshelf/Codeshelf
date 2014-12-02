@@ -141,12 +141,12 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		LocationABC locationD101 = (LocationABC) facility.findSubLocationById("D101");
-		LocationABC locationD102 = (LocationABC) facility.findSubLocationById("D102");
-		LocationABC locationD103 = (LocationABC) facility.findSubLocationById("D103");
-		LocationABC locationD201 = (LocationABC) facility.findSubLocationById("D201");
-		LocationABC locationD202 = (LocationABC) facility.findSubLocationById("D202");
-		LocationABC locationD203 = (LocationABC) facility.findSubLocationById("D203");
+		Location locationD101 = (Location) facility.findSubLocationById("D101");
+		Location locationD102 = (Location) facility.findSubLocationById("D102");
+		Location locationD103 = (Location) facility.findSubLocationById("D103");
+		Location locationD201 = (Location) facility.findSubLocationById("D201");
+		Location locationD202 = (Location) facility.findSubLocationById("D202");
+		Location locationD203 = (Location) facility.findSubLocationById("D203");
 
 		Item item1123LocD101 = locationD101.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123LocD101);
@@ -243,12 +243,12 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		LocationABC locationD101 = (LocationABC) facility.findSubLocationById("D101");
-		LocationABC locationD102 = (LocationABC) facility.findSubLocationById("D102");
-		LocationABC locationD103 = (LocationABC) facility.findSubLocationById("D103");
-		LocationABC locationD201 = (LocationABC) facility.findSubLocationById("D201");
-		LocationABC locationD202 = (LocationABC) facility.findSubLocationById("D202");
-		LocationABC locationD203 = (LocationABC) facility.findSubLocationById("D203");
+		Location locationD101 = (Location) facility.findSubLocationById("D101");
+		Location locationD102 = (Location) facility.findSubLocationById("D102");
+		Location locationD103 = (Location) facility.findSubLocationById("D103");
+		Location locationD201 = (Location) facility.findSubLocationById("D201");
+		Location locationD202 = (Location) facility.findSubLocationById("D202");
+		Location locationD203 = (Location) facility.findSubLocationById("D203");
 
 		Item item1123LocD101 = locationD101.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123LocD101);

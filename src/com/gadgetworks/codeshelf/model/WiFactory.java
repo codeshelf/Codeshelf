@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 
@@ -144,7 +144,7 @@ public class WiFactory {
 	/**
 	 * ok to return null if no aisle lights. Only some kinds of housekeeps involve aisle lights.
 	 */
-	private static List<LedCmdGroup> getLedCmdGroupListForHK(WorkInstructionTypeEnum inType, LocationABC inLocation) {
+	private static List<LedCmdGroup> getLedCmdGroupListForHK(WorkInstructionTypeEnum inType, Location inLocation) {
 		return Collections.<LedCmdGroup>emptyList(); // returns empty immutable list
 	}
 

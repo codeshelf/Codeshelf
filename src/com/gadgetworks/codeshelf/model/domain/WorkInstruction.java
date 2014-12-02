@@ -174,7 +174,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@SuppressWarnings("rawtypes")
 	//@Column(nullable = false)
 	@ManyToOne(optional = false)
-	private LocationABC					location;
+	private Location					location;
 
 	// Denormalized for serialized WIs at the site controller.
 	@Column(nullable = false,name="location_id")
@@ -282,8 +282,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		orderDetail = inDetail;
 	}
 
-	public final LocationABC getLocation() {
-		return (LocationABC) location;
+	public final Location getLocation() {
+		return (Location) location;
 	}
 
 	// Denormalized for serialized WIs at the site controller.
@@ -321,7 +321,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	}
 
 	// Denormalized for serialized WIs at the site controller.
-	public final void setLocation(LocationABC inLocation) {
+	public final void setLocation(Location inLocation) {
 		location = inLocation;
 		// This string is user-readable format set by application logic.
 		// locationId = inLocation.getLocationId();
@@ -333,7 +333,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * @param inCheckLocation
 	 * @return
 	 */
-	public final boolean isContainedByLocation(final LocationABC inCheckLocation) {
+	public final boolean isContainedByLocation(final Location inCheckLocation) {
 		boolean result = false;
 
 		if (inCheckLocation == null) {
@@ -344,7 +344,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		} else {
 			// The check location is parent of the WI location, so it contains it.
 			@SuppressWarnings("unchecked")
-			LocationABC parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
+			Location parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;
 			}
@@ -402,7 +402,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public final String getPickInstructionUi() {
 		String theStr = getPickInstruction();
 		if (theStr != null) {
-			LocationABC loc = this.getLocation();
+			Location loc = this.getLocation();
 			if (loc != null && !loc.isActive())
 				return "<" + theStr + ">";
 			else
@@ -477,7 +477,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 */
 	public final String getNominalLocationId() {
 
-		LocationABC theLoc = this.getLocation();
+		Location theLoc = this.getLocation();
 		if (theLoc != null)
 			return theLoc.getNominalLocationId();
 		else {
@@ -528,11 +528,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		// 3) If inventory is there, is there meters from anchor value?
 
 		String returnStr = "";
-		LocationABC theWLocationABC = this.getLocation();
+		Location theWLocationABC = this.getLocation();
 		if (theWLocationABC == null)
 			return returnStr;
 
-		LocationABC theLocation = theWLocationABC;
+		Location theLocation = theWLocationABC;
 		if (theLocation instanceof Facility)
 			return returnStr;
 
@@ -551,11 +551,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// convenience method. This may return null! Normally returns something only for pick wi
 	public Item getWiItem() {
-		LocationABC theWLocationABC = this.getLocation();
+		Location theWLocationABC = this.getLocation();
 		if (theWLocationABC == null)
 			return null; // should not happen
 
-		LocationABC theLocation = theWLocationABC;
+		Location theLocation = theWLocationABC;
 		if (theLocation instanceof Facility)
 			return null;
 

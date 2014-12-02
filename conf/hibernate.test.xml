@@ -29,7 +29,7 @@
         <property name="show_sql">false</property>
         
 		<!-- Map these classes (by annotation) -->
-        <mapping class="com.gadgetworks.codeshelf.model.domain.LocationABC"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Location"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Facility"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Bay"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>

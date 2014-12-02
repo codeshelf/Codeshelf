@@ -91,7 +91,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("FACILITY")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Facility extends LocationABC {
+public class Facility extends Location {
 
 	private static final long			serialVersionUID	= 1L;
 
@@ -635,7 +635,7 @@ public class Facility extends LocationABC {
 		// /*
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
-				for (LocationABC location : segment.getLocations()) {
+				for (Location location : segment.getLocations()) {
 					location.computePosAlongPath(segment);
 				}
 			}
@@ -672,7 +672,7 @@ public class Facility extends LocationABC {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public final void createOrUpdateVertices(LocationABC inLocation, Point inDimMeters) {
+	public final void createOrUpdateVertices(Location inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
@@ -1026,7 +1026,7 @@ public class Facility extends LocationABC {
 		if (inScannedLocationId == null || inScannedLocationId.isEmpty())
 			return 0.0;
 
-		LocationABC cheLocation = null;
+		Location cheLocation = null;
 		cheLocation = findSubLocationById(inScannedLocationId);
 		if (cheLocation == null) {
 			LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
@@ -1051,7 +1051,7 @@ public class Facility extends LocationABC {
 				if (bay.getPosAlongPath() == null) {
 					LOGGER.error("bay location does not have posAlongPath in getStartingPathDistance #3");
 				} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
-						&& (bay.getPosAlongPath() + LocationABC.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
+						&& (bay.getPosAlongPath() + Location.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
 					selectedBay = bay;
 				}
 			}
@@ -1095,7 +1095,7 @@ public class Facility extends LocationABC {
 			// Very unlikely. But if some wLocationABCs were deleted between start work and scan starting location, let's not give out the "deleted" wis
 			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
 			// Not ambiguous for picks.
-			LocationABC loc = wi.getLocation();
+			Location loc = wi.getLocation();
 			// so far, wi must have a location. Even housekeeping and shorts
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
@@ -1403,8 +1403,8 @@ public class Facility extends LocationABC {
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
-				List<LocationABC> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
-				for (LocationABC aLocationOnPath : firstOrderLocationPerPath) {
+				List<Location> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+				for (Location aLocationOnPath : firstOrderLocationPerPath) {
 					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
 					batchResult.add(work);
 				} /* for else */
@@ -1426,8 +1426,8 @@ public class Facility extends LocationABC {
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
-	private List<LocationABC> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
-		ArrayList<LocationABC> locations = new ArrayList<LocationABC>();
+	private List<Location> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
+		ArrayList<Location> locations = new ArrayList<Location>();
 		for (Path path : getPaths()) {
 			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
 			if (firstOutOrderLoc != null)
@@ -1518,13 +1518,13 @@ public class Facility extends LocationABC {
 	 */
 	@SuppressWarnings("unused")
 	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
-		final List<LocationABC> inSubLocations) {
+		final List<Location> inSubLocations) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Cycle over all bays on the path.
-		for (LocationABC subLocation : inSubLocations) {
-			for (LocationABC workLocation : subLocation.getSubLocationsInWorkingOrder()) {
+		for (Location subLocation : inSubLocations) {
+			for (Location workLocation : subLocation.getSubLocationsInWorkingOrder()) {
 				Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();
@@ -1556,7 +1556,7 @@ public class Facility extends LocationABC {
 		OrderDetail inOrderDetail,
 		Container inContainer,
 		Che inChe,
-		LocationABC inLocation,
+		Location inLocation,
 		final Timestamp inTime) {
 		WorkInstruction resultWi = null;
 		boolean isInventoryPickInstruction = false;
@@ -1717,7 +1717,7 @@ public class Facility extends LocationABC {
 	 * @param inUomId
 	 */
 	private void setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(final WorkInstruction inWi,
-		final LocationABC inLocation,
+		final Location inLocation,
 		final String inItemMasterId,
 		final String inUomId,
 		final ColorEnum inColor) {
@@ -1777,7 +1777,7 @@ public class Facility extends LocationABC {
 	/**
 	 * API to get LED group to light a location
 	 */
-	public List<LedCmdGroup> getLedCmdGroupListForLocation(final LocationABC inLocation, final ColorEnum inColor) {
+	public List<LedCmdGroup> getLedCmdGroupListForLocation(final Location inLocation, final ColorEnum inColor) {
 		return getLedCmdGroupListForItemOrLocation(null, inColor, inLocation);
 	}
 
@@ -1786,7 +1786,7 @@ public class Facility extends LocationABC {
 	 * API to get LED group to light an inventory item
 	 */
 	public List<LedCmdGroup> getLedCmdGroupListForInventoryItem(final Item inItem, final ColorEnum inColor) {
-		LocationABC location = inItem.getStoredLocation();
+		Location location = inItem.getStoredLocation();
 		return getLedCmdGroupListForItemOrLocation(inItem, inColor, location);
 	}
 
@@ -1796,7 +1796,7 @@ public class Facility extends LocationABC {
 	 */
 	private List<LedCmdGroup> getLedCmdGroupListForItemInLocation(final Item inItem,
 		final ColorEnum inColor,
-		final LocationABC inLocation) {
+		final Location inLocation) {
 		return getLedCmdGroupListForItemOrLocation(inItem, inColor, inLocation);
 	}
 
@@ -1812,7 +1812,7 @@ public class Facility extends LocationABC {
 	@SuppressWarnings("rawtypes")
 	public List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
 		final ColorEnum inColor,
-		final LocationABC inLocation) {
+		final Location inLocation) {
 
 		short firstLedPosNum = 0;
 		short lastLedPosNum = 0;
@@ -1824,7 +1824,7 @@ public class Facility extends LocationABC {
 			firstLedPosNum = theRange.getFirstLedToLight();
 			lastLedPosNum = theRange.getLastLedToLight();
 		} else if (inLocation != null) { // null item. Just get the location values.
-			LedRange theRange = ((LocationABC) inLocation).getFirstLastLedsForLocation();
+			LedRange theRange = ((Location) inLocation).getFirstLastLedsForLocation();
 			firstLedPosNum = theRange.getFirstLedToLight();
 			lastLedPosNum = theRange.getLastLedToLight();
 		} else {
@@ -1873,7 +1873,7 @@ public class Facility extends LocationABC {
 	private List<LedCmdGroup> getLedCmdGroupListForLocationList(final List<OrderLocation> inLocationList, final ColorEnum inColor) {
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inLocationList) {
-			LocationABC theLocation = orderLocation.getLocation(); // this should never be null by database constraint
+			Location theLocation = orderLocation.getLocation(); // this should never be null by database constraint
 			if (theLocation == null) {
 				LOGGER.error("null order location in getLedCmdGroupListForLocationList. How?");
 				continue;
@@ -1929,7 +1929,7 @@ public class Facility extends LocationABC {
 	 */
 	private void setCrossWorkInstructionLedPattern(final WorkInstruction inWi,
 		final String inItemMasterId,
-		final LocationABC inLocation,
+		final Location inLocation,
 		final String inUom,
 		final ColorEnum inColor) {
 
@@ -2005,7 +2005,7 @@ public class Facility extends LocationABC {
 
 		LOGGER.debug("Begin DDC position recompute");
 
-		List<LocationABC> ddcLocations = getDdcLocations();
+		List<Location> ddcLocations = getDdcLocations();
 		List<ItemMaster> ddcItemMasters = getDccItemMasters();
 
 		// Sort the DDC items in lex/DDC order.
@@ -2016,7 +2016,7 @@ public class Facility extends LocationABC {
 		LOGGER.debug("DDC list items");
 		List<Item> locationItems = new ArrayList<Item>();
 		Double locationItemsQuantity;
-		for (LocationABC location : ddcLocations) {
+		for (Location location : ddcLocations) {
 			// Delete all of the old DDC groups from this location.
 			for (ItemDdcGroup ddcGroup : location.getDdcGroups()) {
 				ItemDdcGroup.DAO.delete(ddcGroup);
@@ -2042,7 +2042,7 @@ public class Facility extends LocationABC {
 	 */
 	private void putDdcItemsInPositionOrder(List<Item> inLocationItems,
 		Double inLocationItemsQuantity,
-		LocationABC inLocation,
+		Location inLocation,
 		Double inLocationLen) {
 
 		Double ddcPos = inLocation.getPosAlongPath();
@@ -2090,7 +2090,7 @@ public class Facility extends LocationABC {
 	 */
 	private Double getLocationDdcItemsAndTotalQuantity(List<ItemMaster> inDdcItemMasters,
 		List<Item> inLocationItems,
-		LocationABC inLocation) {
+		Location inLocation) {
 		Double locationItemCount;
 		LOGGER.debug("DDC location check: " + inLocation.getFullDomainId() + " " + inLocation.getPersistentId());
 		inLocationItems.clear();
@@ -2116,7 +2116,7 @@ public class Facility extends LocationABC {
 	 * @param inLocation
 	 * @return
 	 */
-	private Double computeLengthOfLocationFace(LocationABC inLocation) {
+	private Double computeLengthOfLocationFace(Location inLocation) {
 		Double locationLen = 0.0;
 		Vertex lastVertex = null;
 		List<Vertex> list = inLocation.getVertices();
@@ -2153,12 +2153,12 @@ public class Facility extends LocationABC {
 	/**
 	 * Not currently used. An old stitch-fix feature.  Remember that getActiveChildren() is recursive, so it returns bays, tiers, or slots--whatever has the Ddc.
 	 */
-	private List<LocationABC> getDdcLocations() {
+	private List<Location> getDdcLocations() {
 		LOGGER.debug("DDC get locations");
-		List<LocationABC> ddcLocations = new ArrayList<LocationABC>();
-		for (LocationABC aisle : getActiveChildrenAtLevel(Aisle.class)) {
+		List<Location> ddcLocations = new ArrayList<Location>();
+		for (Location aisle : getActiveChildrenAtLevel(Aisle.class)) {
 			// no actual need for above line. facility.getActiveChildren would work equally
-			for (LocationABC location : aisle.getActiveChildren()) {
+			for (Location location : aisle.getActiveChildren()) {
 				if (location.getFirstDdcId() != null) {
 					ddcLocations.add(location);
 				}
@@ -2313,7 +2313,7 @@ public class Facility extends LocationABC {
 		itemBean.setCmFromLeft(cmDistanceFromLeft);
 		itemBean.setQuantity(quantity);
 		itemBean.setUom(inUomId);
-		LocationABC location = this.findSubLocationById(storedLocationId);
+		Location location = this.findSubLocationById(storedLocationId);
 		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
 			DefaultErrors errors = new DefaultErrors(Item.class);
 			errors.rejectValue("storedLocation", storedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
@@ -2362,12 +2362,12 @@ public class Facility extends LocationABC {
 		private OrderDetail		outboundOrderDetail;
 
 		@Getter
-		private LocationABC	firstLocationOnPath;
+		private Location	firstLocationOnPath;
 
 		@Getter
 		private Container		container;
 
-		public Work(Container container, OrderDetail outboundOrderDetail, LocationABC firstLocationOnPath) {
+		public Work(Container container, OrderDetail outboundOrderDetail, Location firstLocationOnPath) {
 			super();
 			this.container = container;
 			this.outboundOrderDetail = outboundOrderDetail;
@@ -2376,7 +2376,7 @@ public class Facility extends LocationABC {
 	}
 
 	@Override
-	public LocationABC getParent() {
+	public Location getParent() {
 		return null;
 	}
 
@@ -2392,7 +2392,7 @@ public class Facility extends LocationABC {
 	}
 
 	@Override
-	public void setParent(LocationABC inParent) {
+	public void setParent(Location inParent) {
 		LOGGER.error("tried to set Facility " + this.getDomainId() + " parent to non-organization " + inParent.getClassName() + " "
 				+ inParent.getDomainId());
 	}
@@ -2426,7 +2426,7 @@ public class Facility extends LocationABC {
 	}
 
 	public Aisle getAisle(String domainId) {
-		LocationABC location = this.getLocations().get(domainId);
+		Location location = this.getLocations().get(domainId);
 
 		if (location != null) {
 			if (location.getClass().equals(Aisle.class)) {

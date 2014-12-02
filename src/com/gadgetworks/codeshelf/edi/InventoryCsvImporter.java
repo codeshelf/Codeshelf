@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -263,7 +263,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				uomMaster);
 			
 			String theLocationID = inCsvBean.getLocationId();
-			LocationABC location = inFacility.findSubLocationById(theLocationID);
+			Location location = inFacility.findSubLocationById(theLocationID);
 			// Remember, findSubLocationById will find inactive locations.
 			// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
 			if (location == null) {
@@ -419,7 +419,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @return
 	 */
 	public Item updateSlottedItem(boolean useLenientValidation, final InventorySlottedCsvBean inCsvBean,
-		final LocationABC inLocation,
+		final Location inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) throws InputValidationException {

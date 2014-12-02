@@ -78,7 +78,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@JoinColumn(name="stored_location_persistentid")
 	@Getter
 	//	@Setter
-	private LocationABC			storedLocation;
+	private Location			storedLocation;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -119,7 +119,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public static String makeDomainId(final String inItemMasterId, final LocationABC inLocation, final String inUom) {
+	public static String makeDomainId(final String inItemMasterId, final Location inLocation, final String inUom) {
 		// as soon as we have "lot" field on item, we want to either pass the lot in, or get from the item.
 		// an item is defined unique combination of item master, lot, and location.
 		String revisedUom = inUom;
@@ -147,13 +147,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return parent.getItemId();
 	}
 
-	public final void setStoredLocation(final LocationABC inStoredLocation) {
+	public final void setStoredLocation(final Location inStoredLocation) {
 		storedLocation = inStoredLocation; 
 	}
 
 	// Assorted meta fields for the UI
 	public final String getNominalLocationId() {
-		LocationABC theLoc = getStoredLocation();
+		Location theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
@@ -162,7 +162,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final String getItemLocationAlias() {
-		LocationABC theLoc = getStoredLocation();
+		Location theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
@@ -175,7 +175,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (alias == null) {
 			throw new DaoException("could not find location with alias: " + inLocationAliasId);
 		}
-		LocationABC loc = alias.getMappedLocation();
+		Location loc = alias.getMappedLocation();
 		if (!loc.isActive()) {
 			throw new DaoException("The location with alias: " + inLocationAliasId + " was deleted");
 		}
@@ -215,9 +215,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// The intended purpose is allow user to filter by aisle, then sort by tier and getPosAlongPathui
 		//  Should allow easy verification of inventory, working across a tier.
 		String result = "";
-		LocationABC location = this.getStoredLocation();
+		Location location = this.getStoredLocation();
 		if (location != null) {
-			LocationABC tierLocation = location.getParentAtLevel(Tier.class);
+			Location tierLocation = location.getParentAtLevel(Tier.class);
 			if (tierLocation != null) {
 				result = tierLocation.getDomainId();
 			}
@@ -291,7 +291,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 		else {
 			Double value = 0.0;
-			LocationABC theLocation = this.getStoredLocation();
+			Location theLocation = this.getStoredLocation();
 			
 			if (theLocation.getParent() != null) {
 				Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
@@ -322,7 +322,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 		Integer value = 0;
 
-		LocationABC theLocation = this.getStoredLocation();
+		Location theLocation = this.getStoredLocation();
 		if (theLocation.isLeftSideTowardsAnchor()) {
 			value = (int) Math.round(meters * 100.0);
 		} else { // cm back from the pickface end
@@ -341,7 +341,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// This mimics the old getter, but now is done via a computation. This is the key routine.
 	// May well be worth caching this value. Only changes if item's location changes, metersFromAnchor changes, or path change.
 	public Double getPosAlongPath() {
-		LocationABC theLocation = this.getStoredLocation();
+		Location theLocation = this.getStoredLocation();
 		Double locationPosValue = theLocation.getPosAlongPath();
 		Double returnValue = locationPosValue;
 		if (returnValue == null) {
@@ -395,7 +395,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	
 	public LedRange getFirstLastLedsForItem() {
 		// to compute, we need the locations first and last led positions
-		LocationABC theLocation = this.getStoredLocation();
+		Location theLocation = this.getStoredLocation();
 		if (theLocation instanceof Facility)
 			return LedRange.zero(); // was initialized to give values of 0,0
 

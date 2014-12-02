@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 // domain objects needed
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
@@ -76,7 +76,7 @@ public class AisleImporterTest extends EdiTestABC {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check the aisle
-		LocationABC aisle = facility.findLocationById("A9");
+		Location aisle = facility.findLocationById("A9");
 		Assert.assertNotNull(aisle);
 		Assert.assertEquals(aisle.getDomainId(), "A9");
 
@@ -87,8 +87,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(aisle, aisle2);
 
 		// Check the bays
-		LocationABC bay1 = aisle.findLocationById("B1");
-		LocationABC bay2 = aisle.findLocationById("B2");
+		Location bay1 = aisle.findLocationById("B1");
+		Location bay2 = aisle.findLocationById("B2");
 		Assert.assertNotNull(bay1);
 		Assert.assertNotNull(bay2);
 		Assert.assertEquals(bay2.getDomainId(), "B2");
@@ -901,10 +901,10 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
 		@SuppressWarnings("rawtypes")
-		List<LocationABC> theB1T1Slots = tierB1T1.getActiveChildren();
+		List<Location> theB1T1Slots = tierB1T1.getActiveChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
 		@SuppressWarnings("rawtypes")
-		List<LocationABC> theB1T2Slots = tierB1T2.getActiveChildren();
+		List<Location> theB1T2Slots = tierB1T2.getActiveChildren();
 		Assert.assertTrue(theB1T2Slots.size() == 4);
 		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB1T2First == 1);
@@ -1938,7 +1938,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
-	private void setActiveValue(LocationABC inLocation, boolean inValue, boolean inWithTransaction, boolean inThrow) {
+	private void setActiveValue(Location inLocation, boolean inValue, boolean inWithTransaction, boolean inThrow) {
 		if (inWithTransaction)
 			this.getPersistenceService().beginTenantTransaction();
 

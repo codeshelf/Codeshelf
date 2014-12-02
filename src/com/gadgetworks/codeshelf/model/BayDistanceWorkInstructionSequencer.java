@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
@@ -36,15 +36,15 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 		preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
 				
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
-		List<LocationABC> bayList = new ArrayList<LocationABC>();
+		List<Location> bayList = new ArrayList<Location>();
 		for (Path path : facility.getPaths()) {
-			bayList.addAll(path.<LocationABC> getLocationsByClass(Bay.class));
+			bayList.addAll(path.<Location> getLocationsByClass(Bay.class));
 		}
 		LOGGER.debug("Sequencing work instructions at "+facility.getDomainId());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path.
-		for (LocationABC subLocation : bayList) {
-			for (LocationABC workLocation : subLocation.getSubLocationsInWorkingOrder()) {
+		for (Location subLocation : bayList) {
+			for (Location workLocation : subLocation.getSubLocationsInWorkingOrder()) {
 				Iterator<WorkInstruction> wiIterator = inWiList.iterator();
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();

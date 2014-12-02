@@ -7,7 +7,7 @@ import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.google.common.collect.Lists;
 
@@ -34,7 +34,7 @@ public class InventoryGenerator {
 	}
 
 	
-	private InventorySlottedCsvBean generateInventoryRecord(LocationABC location, int cmFromLeft) {
+	private InventorySlottedCsvBean generateInventoryRecord(Location location, int cmFromLeft) {
 		InventorySlottedCsvBean bean = new InventorySlottedCsvBean();
 		bean.setItemId(generateItemId());
 		bean.setDescription(generateString());

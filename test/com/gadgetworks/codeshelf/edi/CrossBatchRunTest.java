@@ -27,7 +27,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -265,11 +265,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 5, detailCount); // 4 good ones, and the "unknown item"
 		// Make sure our order locations ( from slotting file)  are valid. Make sure D-36 has early location on path
-		LocationABC locationD2 = facility.findSubLocationById("A1.B1.T2.S4");
+		Location locationD2 = facility.findSubLocationById("A1.B1.T2.S4");
 		Assert.assertNotNull(locationD2);
-		LocationABC locationD2a = facility.findSubLocationById("D-2");
+		Location locationD2a = facility.findSubLocationById("D-2");
 		Assert.assertNotNull(locationD2a);
-		LocationABC locationD36 = facility.findSubLocationById("D-36");
+		Location locationD36 = facility.findSubLocationById("D-36");
 		Aisle aisle2 = (Aisle) facility.findSubLocationById("A2");
 		Double a2Pos = aisle2.getPosAlongPath();
 		Double d36Pos = locationD36.getPosAlongPath();

@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("AISLE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Aisle extends LocationABC {
+public class Aisle extends Location {
 	
 	@Inject
 	public static ITypedDao<Aisle>	DAO;

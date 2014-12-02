@@ -138,7 +138,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@OneToMany(mappedBy = "pathSegment")
 	@Getter
-	private List<LocationABC>  locations = Lists.newArrayList();
+	private List<Location>  locations = Lists.newArrayList();
 	
 	public PathSegment() {
 	}
@@ -197,7 +197,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
 	
-	public void addLocation(LocationABC location) {
+	public void addLocation(Location location) {
         PathSegment previousSegment = location.getPathSegment();
         if(previousSegment == null) {
     		locations.add(location);
@@ -205,7 +205,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
         }
 	}
 
-	public void removeLocation(LocationABC location) {
+	public void removeLocation(Location location) {
         if (locations.contains(location)) {
         	location.setPathSegment(null);
         	locations.remove(location);

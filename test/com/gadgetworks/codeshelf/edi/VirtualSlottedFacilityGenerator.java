@@ -12,7 +12,7 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -138,7 +138,7 @@ public class VirtualSlottedFacilityGenerator {
 		String uuid2 = controller2.getPersistentId().toString();
 		String uuid3 = controller3.getPersistentId().toString();
 
-		LocationABC tier = facility.findSubLocationById("A1.B1.T1");
+		Location tier = facility.findSubLocationById("A1.B1.T1");
 
 		((Tier) tier).setControllerChannel(uuid1, "1", "aisle"); // all A1 T1
 

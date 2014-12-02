@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "item_ddc_group")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class ItemDdcGroup extends DomainObjectTreeABC<LocationABC> {
+public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
 	@Inject
 	public static ITypedDao<ItemDdcGroup>	DAO;
@@ -59,7 +59,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<LocationABC> {
 	// The parent location.
 	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
-	private LocationABC			parent;
+	private Location			parent;
 
 	// The start position of this DDC group along the pick path.
 	@Column(nullable = true,name="start_pos_along_path")
@@ -88,7 +88,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<LocationABC> {
 		return "DDC";
 	}
 
-	public final LocationABC getParent() {
+	public final Location getParent() {
 		return parent;
 	}
 	
@@ -100,7 +100,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<LocationABC> {
 		return getDomainId();
 	}
 
-	public final void setParent(LocationABC inParent) {
+	public final void setParent(Location inParent) {
 		parent = inParent;
 	}
 

@@ -53,7 +53,7 @@ final class TierIds {
 @Entity
 @DiscriminatorValue("TIER")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Tier extends LocationABC {
+public class Tier extends Location {
 
 	public static final String		THIS_TIER_ONLY		= "";
 	public static final String		ALL_TIERS_IN_AISLE	= "aisle";

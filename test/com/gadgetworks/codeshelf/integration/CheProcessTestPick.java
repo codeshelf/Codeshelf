@@ -35,7 +35,7 @@ import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -176,7 +176,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
-		LocationABC tier = getFacility().findSubLocationById("A1.B1.T1");
+		Location tier = getFacility().findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -305,10 +305,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
-		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
-		LocationABC locationD502 = (LocationABC) facility.findSubLocationById("D502");
-		LocationABC locationD503 = (LocationABC) facility.findSubLocationById("D503");
+		Location locationD403 = (Location) facility.findSubLocationById("D403");
+		Location locationD402 = (Location) facility.findSubLocationById("D402");
+		Location locationD502 = (Location) facility.findSubLocationById("D502");
+		Location locationD503 = (Location) facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
@@ -420,10 +420,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		LocationABC locationD403 = (LocationABC) facility.findSubLocationById("D403");
-		LocationABC locationD402 = (LocationABC) facility.findSubLocationById("D402");
-		LocationABC locationD502 = (LocationABC) facility.findSubLocationById("D502");
-		LocationABC locationD503 = (LocationABC) facility.findSubLocationById("D503");
+		Location locationD403 = (Location) facility.findSubLocationById("D403");
+		Location locationD402 = (Location) facility.findSubLocationById("D402");
+		Location locationD502 = (Location) facility.findSubLocationById("D502");
+		Location locationD503 = (Location) facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);

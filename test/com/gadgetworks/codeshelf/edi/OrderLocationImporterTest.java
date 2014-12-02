@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
@@ -403,7 +403,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		// Make sure all of the order locations map to real locations.
 		for (OrderLocation orderLocation : order1111.getOrderLocations()) {
-			LocationABC location = orderLocation.getLocation();
+			Location location = orderLocation.getLocation();
 			String locationId = location.getLocationIdToParentLevel(Aisle.class);
 			location = facility.findSubLocationById(locationId);
 			Assert.assertNotNull(location);
@@ -560,7 +560,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		// Make sure all of the order locations map to real locations.
 		for (OrderLocation orderLocation : order1111.getOrderLocations()) {
-			LocationABC location = orderLocation.getLocation();
+			Location location = orderLocation.getLocation();
 			String locationId = location.getLocationIdToParentLevel(Aisle.class);
 			location = facility.findSubLocationById(locationId);
 			Assert.assertNotNull(location);
@@ -588,7 +588,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		// Make sure all of the order locations map to real locations.
 		for (OrderLocation orderLocation : order1111.getOrderLocations()) {
-			LocationABC location = orderLocation.getLocation();
+			Location location = orderLocation.getLocation();
 			String locationId = location.getLocationIdToParentLevel(Aisle.class);
 			location = facility.findSubLocationById(locationId);
 			Assert.assertNotNull(location);
@@ -613,7 +613,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertTrue(importAisles(facility, aisleCsv));;
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle);
-		LocationABC location = facility.findSubLocationById("A9.B1.T1.S1");
+		Location location = facility.findSubLocationById("A9.B1.T1.S1");
 		Assert.assertNotNull(location);
 
 		// **************
@@ -631,7 +631,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Leaving S7 and S8 unknown
 		
 		Assert.assertTrue(importLocationAliases(facility, locationAliasCsv));
-		LocationABC locationByAlias = facility.findSubLocationById("D-21");
+		Location locationByAlias = facility.findSubLocationById("D-21");
 		Assert.assertNotNull(locationByAlias);
 	}
 
@@ -718,7 +718,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	}
 	
 	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
-		LocationABC mappedLocation = facility.findSubLocationById(locationAlias);
+		Location mappedLocation = facility.findSubLocationById(locationAlias);
 		//String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
 		Assert.assertTrue(order.getOrderLocations().size() > 0);
 		boolean found = false;

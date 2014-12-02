@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
@@ -94,9 +94,9 @@ public class HousekeepingInjector {
 
 	// helper function
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	private static boolean isDifferentNotNullBay(LocationABC inLoc1, LocationABC inLoc2) {
-		LocationABC bay1 = inLoc1.getParentAtLevel(Bay.class);
-		LocationABC bay2 = inLoc2.getParentAtLevel(Bay.class);
+	private static boolean isDifferentNotNullBay(Location inLoc1, Location inLoc2) {
+		Location bay1 = inLoc1.getParentAtLevel(Bay.class);
+		Location bay2 = inLoc2.getParentAtLevel(Bay.class);
 		if (bay1 != null && bay2 != null && !bay1.equals(bay2))
 			return true;
 		return false;
@@ -104,7 +104,7 @@ public class HousekeepingInjector {
 
 	// helper function
 	@SuppressWarnings("rawtypes")
-	private static boolean hasDifferentNotNullPathSegment(LocationABC inLoc1, LocationABC inLoc2) {
+	private static boolean hasDifferentNotNullPathSegment(Location inLoc1, Location inLoc2) {
 		PathSegment segment1 = inLoc1.getAssociatedPathSegment();
 		PathSegment segment2 = inLoc2.getAssociatedPathSegment();
 		if (segment1 != null && segment2 != null && !segment1.equals(segment2))
@@ -126,8 +126,8 @@ public class HousekeepingInjector {
 		try {
 			// This can be tricky. Crossbatch put WI may have multiple locations. Initial implementation will not be completely right if the multiple locations span across bays.
 			// In our model, the WI.location field in this case is the arbitrary "first" location of all the locations for the outbound order.
-			LocationABC loc1 = inPrevWi.getLocation();
-			LocationABC loc2 = inNextWi.getLocation();
+			Location loc1 = inPrevWi.getLocation();
+			Location loc2 = inNextWi.getLocation();
 			if (loc1 == null || loc2 == null) {
 				LOGGER.error("null WI location in wisNeedHouseKeepingBetween");
 				return false;
@@ -142,8 +142,8 @@ public class HousekeepingInjector {
 					// tentatively return true; Only not true if same path segment and bays on opposite side of same aisle
 					if (!hasDifferentNotNullPathSegment(loc1, loc2)) {
 						// As a surrogate, if each bay has the same domain ID, then assume the same distance along path.
-						LocationABC bay1 = loc1.getParentAtLevel(Bay.class);
-						LocationABC bay2 = loc2.getParentAtLevel(Bay.class);
+						Location bay1 = loc1.getParentAtLevel(Bay.class);
+						Location bay2 = loc2.getParentAtLevel(Bay.class);
 						if (bay1 != null && bay2 != null && bay1.getDomainId().equals(bay2.getDomainId()))
 							return false;
 						return true;

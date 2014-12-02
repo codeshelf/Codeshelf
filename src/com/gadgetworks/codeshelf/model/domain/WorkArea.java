@@ -82,7 +82,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
+	private List<Location>	locations	= new ArrayList<Location>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
@@ -115,11 +115,11 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
-	public final void addLocation(LocationABC inSubLocation) {
+	public final void addLocation(Location inSubLocation) {
 		locations.add(inSubLocation);
 	}
 
-	public final void removeLocation(LocationABC inLocation) {
+	public final void removeLocation(Location inLocation) {
 		locations.remove(inLocation);
 	}
 

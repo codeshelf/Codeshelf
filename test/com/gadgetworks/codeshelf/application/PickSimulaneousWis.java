@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -148,7 +148,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
-		LocationABC tier = facility.findSubLocationById("A1.B1.T1");
+		Location tier = facility.findSubLocationById("A1.B1.T1");
 		Short channel1 = 1;
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
@@ -211,7 +211,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 
-		LocationABC locationD402 = facility.findSubLocationById("D402");
+		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);

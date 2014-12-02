@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
+import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.validation.Errors;
 
@@ -140,7 +140,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		// Make sure we can still look up an aisle by it's FQN.
-		LocationABC location = facility.findLocationById("A1");
+		Location location = facility.findLocationById("A1");
 		Assert.assertNotNull(location);
 		Assert.assertEquals(location.getDomainId(), "A1");
 

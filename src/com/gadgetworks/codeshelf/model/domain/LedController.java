@@ -63,9 +63,9 @@ public class LedController extends WirelessDeviceABC {
 	//private CodeshelfNetwork parent;
 
 	// All of the locations that use this controller.
-	@OneToMany(targetEntity=LocationABC.class)
+	@OneToMany(targetEntity=Location.class)
 	@Getter
-	private List<LocationABC> locations	= new ArrayList<LocationABC>();
+	private List<Location> locations	= new ArrayList<Location>();
 
 	public LedController() {
 
@@ -80,7 +80,7 @@ public class LedController extends WirelessDeviceABC {
 		return "LED";
 	}
 
-	public final void addLocation(LocationABC inSubLocation) {
+	public final void addLocation(Location inSubLocation) {
 		LedController previousLedController = inSubLocation.getLedController();
 		if(previousLedController == null) {
 			locations.add(inSubLocation);
@@ -90,7 +90,7 @@ public class LedController extends WirelessDeviceABC {
 		}	
 	}
 
-	public final void removeLocation(LocationABC inSubLocation) {
+	public final void removeLocation(Location inSubLocation) {
 		if(locations.contains(inSubLocation)) {
 			inSubLocation.setLedController(null);
 			locations.remove(inSubLocation);

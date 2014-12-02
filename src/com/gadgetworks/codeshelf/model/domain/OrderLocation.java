@@ -64,7 +64,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
 	@JsonProperty
-	private LocationABC			location;
+	private Location			location;
 
 	@Column(nullable = false)
 	@Getter
@@ -89,7 +89,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public static String makeDomainId(final OrderHeader inOrder, final LocationABC inLocation) {
+	public static String makeDomainId(final OrderHeader inOrder, final Location inLocation) {
 		return inOrder.getOrderId() + "-" + inLocation.getNominalLocationId();
 	}
 
@@ -118,11 +118,11 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		parent = inParent;
 	}
 
-	public final LocationABC getLocation() {
+	public final Location getLocation() {
 		return location;
 	}
 
-	public final void setLocation(final LocationABC inLocation) {
+	public final void setLocation(final Location inLocation) {
 		location = inLocation;
 	}
 

@@ -66,7 +66,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	@ManyToOne(optional = false)
 	@JoinColumn(name="mapped_location_persistentid")
 	@JsonProperty
-	private LocationABC			mappedLocation;
+	private Location			mappedLocation;
 
 	@Column(nullable = false)
 	@Getter
@@ -88,7 +88,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	}
 
-	public LocationAlias(Facility facility, String domainId, LocationABC mappedLocation) {
+	public LocationAlias(Facility facility, String domainId, Location mappedLocation) {
 		super(domainId);
 		this.parent = facility;
 		this.mappedLocation = mappedLocation;
@@ -125,11 +125,11 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		return getDomainId();
 	}
 
-	public final LocationABC getMappedLocation() {
+	public final Location getMappedLocation() {
 		return mappedLocation;
 	}
 
-	public final void setMappedLocation(final LocationABC inMappedLocation) {
+	public final void setMappedLocation(final Location inMappedLocation) {
 		mappedLocation = inMappedLocation;
 	}
 

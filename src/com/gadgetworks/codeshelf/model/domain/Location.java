@@ -72,7 +72,7 @@ import com.google.common.collect.Ordering;
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
+public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	static Double BAY_ALIGNMENT_FUDGE = 0.25;
 	
@@ -80,7 +80,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	// For example, the current strips are spaced exactly 3.125cm apart.
 	public static final Double										METERS_PER_LED_POS	= 0.03125;
 
-	private static final Logger										LOGGER				= LoggerFactory.getLogger(LocationABC.class);
+	private static final Logger										LOGGER				= LoggerFactory.getLogger(Location.class);
 
 	//	@Embedded
 	//	@AttributeOverrides({ @AttributeOverride(name = "x", column = @Column(name = "anchor_pos_x")),
@@ -190,7 +190,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, LocationABC>	locations			= new HashMap<String, LocationABC>();
+	private Map<String, Location>	locations			= new HashMap<String, Location>();
 
 	// The location aliases for this location.
 	@OneToMany(mappedBy = "mappedLocation")
@@ -224,14 +224,14 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	@Setter
 	private Boolean													active;
 
-	public LocationABC() {
+	public Location() {
 		active = true;
 
 		this.setAnchorPoint(Point.getZeroPoint());
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
 
-	public LocationABC(String domainId, final Point inAnchorPoint) {
+	public Location(String domainId, final Point inAnchorPoint) {
 		super(domainId);
 		active = true;
 		setAnchorPoint(inAnchorPoint);
@@ -261,14 +261,14 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	}
 
 	@SuppressWarnings("rawtypes")
-	public final List<LocationABC> getChildren() {
-		return new ArrayList<LocationABC>(locations.values());
+	public final List<Location> getChildren() {
+		return new ArrayList<Location>(locations.values());
 	}
 
 	@SuppressWarnings("rawtypes")
-	public final List<LocationABC> getActiveChildren() {
-		ArrayList<LocationABC> aList = new ArrayList<LocationABC>();
-		for (LocationABC loc : locations.values()) {
+	public final List<Location> getActiveChildren() {
+		ArrayList<Location> aList = new ArrayList<Location>();
+		for (Location loc : locations.values()) {
 			if (loc.isActive())
 				aList.add(loc);
 		}
@@ -289,8 +289,8 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 			LOGGER.error("makeInactive", e);
 		}
 
-		List<LocationABC> childList = getActiveChildren();
-		for (LocationABC sublocation : childList) {
+		List<Location> childList = getActiveChildren();
+		for (Location sublocation : childList) {
 			sublocation.makeInactiveAndAllChildren();
 		}
 	}
@@ -312,7 +312,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends LocationABC> List<T> getActiveChildrenAtLevel(Class<? extends LocationABC> inClassWanted) {
+	public final <T extends Location> List<T> getActiveChildrenAtLevel(Class<? extends Location> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 		if (!this.isActive()) {
 			LOGGER.error("getActiveChildrenAtLevel called for inactive location");
@@ -320,7 +320,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		}
 
 		// Loop through all of the active children.
-		for (LocationABC child : getActiveChildren()) {
+		for (Location child : getActiveChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
@@ -343,10 +343,10 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationIdToParentLevel(java.lang.Class)
 	 */
 	@SuppressWarnings("unchecked")
-	public final String getLocationIdToParentLevel(Class<? extends LocationABC> inClassWanted) {
+	public final String getLocationIdToParentLevel(Class<? extends Location> inClassWanted) {
 		String result;
 
-		LocationABC checkParent = getParent();
+		Location checkParent = getParent();
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
@@ -391,7 +391,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 			return "";
 
 		@SuppressWarnings("rawtypes")
-		LocationABC checkParent = (LocationABC) getParent();
+		Location checkParent = (Location) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
 			// This is the last child  we want.
 			result = getLocationId();
@@ -427,7 +427,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends LocationABC> T getParentAtLevel(Class<? extends LocationABC> inClassWanted) {
+	public final <T extends Location> T getParentAtLevel(Class<? extends Location> inClassWanted) {
 
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
 		if (this.getClass().equals(inClassWanted))
@@ -435,7 +435,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 
 		T result = null;
 
-		LocationABC checkParent = getParent();
+		Location checkParent = getParent();
 		if (checkParent != null) {
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
@@ -471,7 +471,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		Point anchor = getAnchorPoint();
 		Point result = anchor;
 		if (!anchorPosType.equals(PositionTypeEnum.GPS)) {
-			LocationABC parent = getParent();
+			Location parent = getParent();
 
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
@@ -504,7 +504,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
-	public final void addLocation(LocationABC inLocation) {
+	public final void addLocation(Location inLocation) {
 		IDomainObject oldParent = inLocation.getParent();
 		if (oldParent == null) {
 			locations.put(inLocation.getDomainId(), inLocation);
@@ -523,7 +523,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * bay bay.findLocationById("T3") would find the tier.
 	 * This may return null
 	 */
-	public final LocationABC findLocationById(String inLocationId) {
+	public final Location findLocationById(String inLocationId) {
 		if (this.getClass().equals(Facility.class)) {
 			Facility facility = (Facility)this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
@@ -539,7 +539,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
 	public final void removeLocation(String inLocationId) {
-		LocationABC location = locations.get(inLocationId);
+		Location location = locations.get(inLocationId);
 		if (location != null) {
 			location.setParent(null);
 			locations.remove(inLocationId);
@@ -561,8 +561,8 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public final LocationABC findSubLocationById(final String inLocationId) {
-		LocationABC result = null;
+	public final Location findSubLocationById(final String inLocationId) {
+		Location result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
@@ -572,7 +572,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			LocationABC firstPartLocation = this.findLocationById(firstPart);
+			Location firstPartLocation = this.findLocationById(firstPart);
 			if (firstPartLocation != null) {
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}
@@ -587,7 +587,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		PathSegment result = null;
 
 		if (pathSegment == null) {
-			LocationABC parent = (LocationABC) getParent();
+			Location parent = (Location) getParent();
 			if (parent != null) {
 				result = parent.getAssociatedPathSegment();
 			}
@@ -680,7 +680,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	}
 
 	public final void addVertex(Vertex inVertex) {
-		LocationABC previousLocation = inVertex.getParent();
+		Location previousLocation = inVertex.getParent();
 		if (previousLocation == null) {
 			vertices.add(inVertex);
 			inVertex.setParent(this);
@@ -701,7 +701,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	}
 
 	public final void addAlias(LocationAlias inAlias) {
-		LocationABC previousLocation = inAlias.getMappedLocation();
+		Location previousLocation = inAlias.getMappedLocation();
 		if (previousLocation == null) {
 			aliases.add(inAlias);
 			inAlias.setMappedLocation(this);
@@ -735,7 +735,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	}
 
 	public final void addStoredItem(Item inItem) {
-		LocationABC previousLocation = inItem.getStoredLocation();
+		Location previousLocation = inItem.getStoredLocation();
 
 		// If it's already in another location then remove it from that location.
 		// Shall we use its existing domainID (which will change momentarily?
@@ -769,7 +769,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		final String inItemMasterId,
 		final String inUom) {
 		Item returnItem = null;
-		LocationABC location = this.findSubLocationById(inLocationName);
+		Location location = this.findSubLocationById(inLocationName);
 		if (location != null)
 			returnItem = location.getStoredItemFromMasterIdAndUom(inItemMasterId, inUom);
 		return returnItem;
@@ -810,7 +810,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
-		LocationABC previousLocation = inItemDdcGroup.getParent();
+		Location previousLocation = inItemDdcGroup.getParent();
 		if (previousLocation == null) {
 			itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
 			inItemDdcGroup.setParent(this);
@@ -901,9 +901,9 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 *
 	 */
 	@SuppressWarnings("rawtypes")
-	public static class LocationWorkingOrderComparator implements Comparator<LocationABC> {
+	public static class LocationWorkingOrderComparator implements Comparator<Location> {
 
-		public int compare(LocationABC inLoc1, LocationABC inLoc2) {
+		public int compare(Location inLoc1, Location inLoc2) {
 			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
 				return -1;
 			} else if (inLoc1.getPosAlongPath() == null || inLoc2.getPosAlongPath() == null) {
@@ -924,12 +924,12 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * Working order is top-to-bottom and then down-path.
 	 * @return
 	 */
-	public List<LocationABC> getSubLocationsInWorkingOrder() {
-		List<LocationABC> result = new ArrayList<LocationABC>();
+	public List<Location> getSubLocationsInWorkingOrder() {
+		List<Location> result = new ArrayList<Location>();
 		@SuppressWarnings("rawtypes")
-		List<LocationABC> childLocations = getActiveChildren();
+		List<Location> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
-		for (LocationABC childLocation : childLocations) {
+		for (Location childLocation : childLocations) {
 			// add sublocation
 			result.add(childLocation);
 			// and its sublocations recursively
@@ -945,9 +945,9 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	 * Working order is top-to-bottom and then down-path.
 	 * @return
 	 */
-	public List<LocationABC> getChildrenInWorkingOrder() {
+	public List<Location> getChildrenInWorkingOrder() {
 		@SuppressWarnings("rawtypes")
-		List<LocationABC> childLocations = getActiveChildren();
+		List<Location> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		return childLocations;
 	}
@@ -976,7 +976,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		// See if we have the controller. Then recursively ask each parent until found.
 		LedController theController = getLedController();
 		if (theController == null) {
-			LocationABC aLocation = (LocationABC) this.getParent();
+			Location aLocation = (Location) this.getParent();
 			if (aLocation != null) {
 				theController = aLocation.getEffectiveLedController();
 			}
@@ -989,7 +989,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		// See if we have the controller. Then recursively ask each parent until found.
 		Short theChannel = getLedChannel();
 		if (theChannel == null) {
-			LocationABC aLocation = (LocationABC) this.getParent();
+			Location aLocation = (Location) this.getParent();
 			if (aLocation != null) {
 				theChannel = aLocation.getEffectiveLedChannel();
 			}
@@ -1002,7 +1002,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		if (getEffectiveLedController() != null) {
 			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
 		} else {
-			for (LocationABC child : getActiveChildren()) {
+			for (Location child : getActiveChildren()) {
 				cmdPathsSet.addAll(child.getAllLedCmdPaths());
 			}
 		}
@@ -1106,7 +1106,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		// Add my inventory
 		aList.addAll(getStoredItems().values());
 		// Add my children's inventory
-		for (LocationABC location : locations.values()) {
+		for (Location location : locations.values()) {
 			aList.addAll(location.getInventoryInWorkingOrder());
 		}
 		// Sort as we want it
@@ -1134,7 +1134,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 
 	// The owning location.
 	@ManyToOne
-	protected LocationABC parent;
+	protected Location parent;
 
 	@Column(nullable = false,name="pick_face_end_pos_type")
 	@Enumerated(value = EnumType.STRING)
@@ -1166,7 +1166,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public LocationABC getParent() {
+	public Location getParent() {
 		return parent;
 	}
 
@@ -1175,7 +1175,7 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#setParent(P)
 	 */
-	public void setParent(LocationABC inParent) {
+	public void setParent(Location inParent) {
 		parent = inParent;
 	}
 
@@ -1236,9 +1236,9 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 
 		// Also force a recompute for all of the child locations.
 		@SuppressWarnings("rawtypes")
-		List<LocationABC> locations = getActiveChildren();
+		List<Location> locations = getActiveChildren();
 		for (@SuppressWarnings("rawtypes")
-		LocationABC location : locations) {
+		Location location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}
 	}

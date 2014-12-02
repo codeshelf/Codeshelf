@@ -299,7 +299,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Is the passed in location on this path?  Important: deleted location is not on path
 	 * @return
 	 */
-	public final Boolean isLocationOnPath(final LocationABC inLocation) {
+	public final Boolean isLocationOnPath(final Location inLocation) {
 		boolean result = false;
 
 		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
@@ -358,9 +358,9 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 *
 	 */
 	@SuppressWarnings("rawtypes")
-	private class LocationsComparable implements Comparator<LocationABC> {
+	private class LocationsComparable implements Comparator<Location> {
 
-		public int compare(LocationABC inLoc1, LocationABC inLoc2) {
+		public int compare(Location inLoc1, Location inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
 				return 0;
@@ -391,14 +391,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inPath
 	 * @return
 	 */
-	public final <T extends LocationABC> List<T> getLocationsByClass(final Class<? extends LocationABC> inClassWanted) {
+	public final <T extends Location> List<T> getLocationsByClass(final Class<? extends Location> inClassWanted) {
 
 		// First make a list of all the bays on the CHE's path.
 		List<T> locations = new ArrayList<T>();
 
 		// Path segments get return in direction order.
 		for (PathSegment pathSegment : getSegments()) {
-			for (LocationABC pathLocation : pathSegment.getLocations()) {
+			for (Location pathLocation : pathSegment.getLocations()) {
 				locations.addAll(pathLocation.<T> getActiveChildrenAtLevel(inClassWanted));
 			}
 		}
@@ -416,8 +416,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inClassWanted
 	 * @return
 	 */
-	public final <T extends LocationABC> List<T> getLocationsByClassAtOrPastLocation(final LocationABC inAtOrPastLocation,
-		final Class<? extends LocationABC> inClassWanted) {
+	public final <T extends Location> List<T> getLocationsByClassAtOrPastLocation(final Location inAtOrPastLocation,
+		final Class<? extends Location> inClassWanted) {
 
 		if (inAtOrPastLocation.getPosAlongPath() == null) {
 			LOGGER.error("null posAlongPath in getLocationsByClassAtOrPastLocation #1");
@@ -477,7 +477,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		for (PathSegment segment : this.getSegments()) {
 
 			// make sure segment is not associated to a location			
-			for (LocationABC location : segment.getLocations()) {
+			for (Location location : segment.getLocations()) {
 				if (location.getAssociatedPathSegment().equals(segment)) {
 					LOGGER.info("clearing path segment association");
 					location.setPathSegment(null);
