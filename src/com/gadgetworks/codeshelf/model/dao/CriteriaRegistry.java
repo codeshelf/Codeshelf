@@ -65,7 +65,7 @@ public class CriteriaRegistry {
 				"parentId", UUID.class));
 
 		indexedCriteria.put("itemsByFacilityAndLocation",
-			new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and ((storedLocation.persistentId = :locationId) or (storedLocation.parent is not null and ((storedLocation.parent.persistentId = :theLocationId) or (storedLocation.parent.parent is not null and (storedLocation.parent.parent.persistentId = :locationId))))",
+			new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and ((storedLocation.persistentId = :locationId) or (storedLocation.parent is not null and ((storedLocation.parent.persistentId = :locationId) or (storedLocation.parent.parent is not null and (storedLocation.parent.parent.persistentId = :locationId)))))",
 				"facilityId", UUID.class,
 				"locationId", UUID.class));
 
