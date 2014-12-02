@@ -78,10 +78,6 @@ public class RegisterFilterCommand extends CommandABC {
 			for (Map<String, Object> map : filterParams) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
-				String className = (String) map.get("type");
-				if (!Strings.isNullOrEmpty(className)) {
-					value = convertFilterParam(className, value);
-				}
 				processedParams.put(name, value);
 				//processedParams.add(Restrictions.eq(name, value));
 			}
@@ -124,15 +120,4 @@ public class RegisterFilterCommand extends CommandABC {
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-
-	private Object convertFilterParam(String className, Object value) throws ClassNotFoundException {
-		Class<?> classObject = Class.forName(className);
-		if (java.sql.Timestamp.class.isAssignableFrom(classObject)) {
-			return new java.sql.Timestamp(Long.valueOf(value.toString()));
-		}
-		else {
-			return value;
-		}
-	}
-	
 }

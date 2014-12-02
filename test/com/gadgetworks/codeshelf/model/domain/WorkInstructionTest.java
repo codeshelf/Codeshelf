@@ -263,8 +263,8 @@ public class WorkInstructionTest extends DomainTestABC {
 		
 		this.getPersistenceService().beginTenantTransaction();
 		Map<String, Object> params = ImmutableMap.<String, Object>of(
-			"che_persistentId", wi.getAssignedChe().getPersistentId().toString(),
-			"assigned", wi.getAssigned());
+			"cheId", wi.getAssignedChe().getPersistentId().toString(),
+			"assignedTimestamp", wi.getAssigned().getTime());
 		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime", params, WorkInstruction.class);
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
 		this.getPersistenceService().endTenantTransaction();
