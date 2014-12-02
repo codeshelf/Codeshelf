@@ -1836,9 +1836,11 @@ public class AisleImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testHibernatePersistFetch() {
-		this.getPersistenceService().beginTenantTransaction();
+	public final void testMultipleReferencesForSimpleField() {
+		// DAO-correct
+		// This was one common ebeans bug. This test gets references to the same slot at different times, and sees that they are all synchronized.
 
+		this.getPersistenceService().beginTenantTransaction();
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A29,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -1899,28 +1901,28 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertFalse(slotB1T1S5B.getActive());
 		// true in database. False in this transaction, even though we really tried to get it straight from the DAO 
 
-		// ok, persist it by closing the transaction
+		// Persist it by closing the transaction
 		this.getPersistenceService().endTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 		// Old reference. Now false in database, and false on this reference. Cannot tell if the reference actually got updated by hibernate.
 
-		slotB1T1S5.setActive(true); // but not persisted yet. This is probably the big danger. Change value on an old reference in new transaction.
-		Slot.DAO.store(slotB1T1S5); // This object reference came from the previous transaction. Does that mean it is detached? Did it save?
+		slotB1T1S5.setActive(true); // but not persisted yet.
+		Slot.DAO.store(slotB1T1S5); // object attached to the transaction, but still not persisted
 		Assert.assertTrue(slotB1T1S5.getActive());
 
 		// How is our old reference?
 		Assert.assertTrue(slotB1T1S5B.getActive()); // Also true, for the old transaction reference after refetch
 
-		// See if we can somehow get what the database has. Yes!  Why this time?
+		// Get it from scratch again.
 		List<Facility> listC = Facility.DAO.getAll();
 		Facility facilityC = listC.get(0);
 		Slot slotB1T1S5C = (Slot) facilityC.findSubLocationById("A29.B1.T1.S5");
-		Assert.assertTrue(slotB1T1S5C.getActive()); // matching what database has
+		Assert.assertTrue(slotB1T1S5C.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive()); // old reference is still active.
 
-		// close the transaction, and see what happens to our inconsistent reference
+		// close the transaction
 		this.getPersistenceService().endTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
@@ -1957,6 +1959,8 @@ public class AisleImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testThrowInTransaction() {
+		// DAO-correct
+		// And nested transactions
 		this.getPersistenceService().beginTenantTransaction();
 
 		// Start with a file read to new facility
@@ -1994,54 +1998,139 @@ public class AisleImporterTest extends EdiTestABC {
 
 		this.getPersistenceService().endTenantTransaction();
 
-		LOGGER.info("Case 1: try to store a detached object should throw");
-
+		LOGGER.info("Case 1: try to store without a transaction should throw");
+		boolean caughtExpected = false;
 		try {
-			// try to store not in a transaction		
-			slotB1T1S5.setActive(true); // but not persisted yet. This is probably the big danger. Change value on an old reference in new transaction.
-			LOGGER.info("Modify a detached object was ok.");
-			Slot.DAO.store(slotB1T1S5); // This object reference came from the previous transaction. Does that mean it is detached? Did it save?
+			slotB1T1S5.setActive(true);
+			LOGGER.info("Modify a detached object was ok."); // Modify and forget to store will be an easy mistake to make.
+			Slot.DAO.store(slotB1T1S5);
 			LOGGER.error("Should not see this message. Cannot store a detached object");
 		} catch (HibernateException e) {
-			LOGGER.info("Caught expected throw");
+			caughtExpected = true;
 		}
+		if (!caughtExpected)
+			Assert.fail("did not see the expected throw");
 		final boolean throwYes = true;
 		final boolean throwNo = false;
 		final boolean transactionYes = true;
 		final boolean transactionNo = false;
 
-		LOGGER.info("Case 2: simple subtransaction that might work. See errors from PersistenceService");
-
+		LOGGER.info("Case 2: simple nested transaction that might work. See errors from PersistenceService");
 		this.getPersistenceService().beginTenantTransaction();
 		setActiveValue(slotB1T1S5, false, transactionYes, throwNo);
 		Assert.assertFalse(slotB1T1S5.getActive());
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 
-		LOGGER.info("Case 2: simple subtransaction will throw");
+		LOGGER.info("Case 3: simple nested transaction will throw");
 		this.getPersistenceService().beginTenantTransaction();
+		caughtExpected = false;
 		try {
 			setActiveValue(slotB1T1S5, true, transactionYes, throwYes);
 		} catch (EdiFileReadException e) {
-			LOGGER.info("Caught expected exception");
+			caughtExpected = true;
 		}
+		if (!caughtExpected)
+			Assert.fail("did not see the expected throw");
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
-		
-		LOGGER.info("Case 3: Not a subtransaction. Will throw, leaving transaction open");
+
+		LOGGER.info("Case 4: does nested transaction spoil the outer transaction? See errors from PersistenceService");
+		this.getPersistenceService().beginTenantTransaction();
+		setActiveValue(slotB1T1S5, true, transactionYes, throwNo);
+		slotB1T1S5.setLedChannel((short) 4);
 		try {
-			setActiveValue(slotB1T1S5, false , transactionYes, throwYes);
-		} catch (EdiFileReadException e) {
-			LOGGER.info("Caught expected exception");
+			Slot.DAO.store(slotB1T1S5);
+		} catch (HibernateException e) {
+			caughtExpected = true;
 		}
+		if (!caughtExpected)
+			Assert.fail("did not see the expected throw");
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertTrue(slotB1T1S5.getActive());
+		Assert.assertTrue(slotB1T1S5.getLedChannel() == 4);
+
+		LOGGER.info("Case 5: Not a nested transaction. Will throw, leaving transaction open");
+		caughtExpected = false;
+		try {
+			setActiveValue(slotB1T1S5, false, transactionYes, throwYes);
+		} catch (EdiFileReadException e) {
+			caughtExpected = true;
+		}
+		if (!caughtExpected)
+			Assert.fail("did not see the expected throw");
 		Assert.assertFalse(slotB1T1S5.getActive());
 
-		LOGGER.info("Case 4: After the throw leaving transaction open, continue with normal transaction.");
+		LOGGER.info("Case 6: After the throw that left a transaction open, continue with normal transaction.");
 		this.getPersistenceService().beginTenantTransaction();
-		slotB1T1S5.setActive(true); 
+		slotB1T1S5.setActive(true);
 		Slot.DAO.store(slotB1T1S5);
 		this.getPersistenceService().endTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 
 	}
+
+	@Test
+	public final void outOfOrderStores() {
+		// DAO-correct
+		// Attempts to create various detached and reattach object scenarios 
+		// Need to add database queries to this later to see if and when change was persisted.
+
+		this.getPersistenceService().beginTenantTransaction();
+
+		// Start with a file read to new facility
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A31,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE31");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE31", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE31");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+
+		List<Facility> listA = Facility.DAO.getAll();
+		Facility facilityA = listA.get(0);
+		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A31.B1.T1.S5");
+		Assert.assertTrue(slotB1T1S5.getActive());
+
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 1: Modify outside a transaction. Then store inside a transaction");
+		slotB1T1S5.setActive(false);
+		this.getPersistenceService().beginTenantTransaction();
+		slotB1T1S5.setLedChannel((short) 2); // set another field, making it look more like a mistake may be.
+		Slot.DAO.store(slotB1T1S5);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertFalse(slotB1T1S5.getActive());
+
+		LOGGER.info("Case 2: multiple stores in the same transaction");
+		this.getPersistenceService().beginTenantTransaction();
+		slotB1T1S5.setActive(true);
+		Slot.DAO.store(slotB1T1S5);
+		slotB1T1S5.setLedChannel((short) 3);
+		Slot.DAO.store(slotB1T1S5);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertTrue(slotB1T1S5.getActive());
+		Assert.assertTrue(slotB1T1S5.getLedChannel() == 3);
+
+	}
+
 }
