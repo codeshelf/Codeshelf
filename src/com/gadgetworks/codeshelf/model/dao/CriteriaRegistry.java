@@ -57,7 +57,7 @@ public class CriteriaRegistry {
 				"facilityId", UUID.class));
 
 		indexedCriteria.put("containerUsesByChe",
-			new TypedCriteria("from ContainerUse where 	current_che_persistentid = :cheId  and active = true",
+			new TypedCriteria("from ContainerUse where currentChe.persistentId = :cheId  and active = true",
 				"cheId", UUID.class));
 
 		indexedCriteria.put("baysByZeroPosition",

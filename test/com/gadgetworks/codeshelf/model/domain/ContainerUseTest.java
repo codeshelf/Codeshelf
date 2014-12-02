@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * @author ranstrom
@@ -238,5 +239,20 @@ public class ContainerUseTest extends DomainTestABC {
 		Assert.assertEquals(header0d, cntrUse1d.getOrderHeader());
 		// did not clean up the fact that cntrUse0 still points to header0 also. We just wanted that fact to not interfere with otherwise valid setting.
 		// Good enough. (knowing how the code works.)
+	}
+	
+	@Test
+	public void testEmptyCriteriaByChe() {
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
+
+		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		List<ContainerUse> uses = ContainerUse.DAO.findByFilterAndClass("containerUsesByChe",
+			ImmutableMap.<String, Object>of("cheId", UUID.randomUUID().toString()),
+			ContainerUse.class);
+		Assert.assertEquals(0, uses.size());
+		this.getPersistenceService().endTenantTransaction();
 	}
 }

@@ -170,8 +170,12 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		ContainerUse result = null;
 
 		for (ContainerUse use : getUses()) {
-			if (inOrderHeader.getOrderId().equals(use.getOrderHeader().getOrderId())) {
-				result = use;
+			OrderHeader useHeader = use.getOrderHeader();
+			if (useHeader != null) {
+				if (useHeader.getOrderId().equals(inOrderHeader.getOrderId())) {
+					result = use;
+					break;
+				}
 			}
 		}
 
