@@ -6,6 +6,7 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.gadgetworks.codeshelf.application;
 
+import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.crypto.hash.Md5Hash;
@@ -102,6 +103,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
+import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -198,6 +200,8 @@ public final class ServerMain {
 				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
+				
+				bind(ConvertUtilsBean.class).toProvider(ConverterProvider.class);
 				
 				// Shiro modules
 				bind(Realm.class).to(CodeshelfRealm.class);

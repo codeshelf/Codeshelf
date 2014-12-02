@@ -196,12 +196,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		pickStrategy = PickStrategyEnum.SERIAL;
 	}
 
-	public OrderHeader(Facility facility, String domainId) {
+	public OrderHeader(String domainId, OrderTypeEnum orderType) {
 		super(domainId);
-		parent = facility;
-		parent.addOrderHeader(this);
+		this.active = true;
+		this.orderType = orderType;
 		status = OrderStatusEnum.CREATED;
 		pickStrategy = PickStrategyEnum.SERIAL;
+		updated = new Timestamp(System.currentTimeMillis());
 	}
 
 	@SuppressWarnings("unchecked")

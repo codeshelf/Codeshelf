@@ -117,11 +117,11 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		status = OrderStatusEnum.CREATED;
 	}
 	
-	public OrderGroup(Facility facility, String domainId) {
+	public OrderGroup(String domainId) {
 		super(domainId);
-		parent = facility;
-		parent.addOrderGroup(this);
+		active = true;
 		status = OrderStatusEnum.CREATED;
+		updated = new Timestamp(System.currentTimeMillis());
 	}
 
 	@SuppressWarnings("unchecked")

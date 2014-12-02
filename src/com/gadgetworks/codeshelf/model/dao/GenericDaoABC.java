@@ -13,8 +13,11 @@ import java.util.UUID;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
+import org.apache.commons.beanutils.ConversionException;
+import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
+import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -24,6 +27,8 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.util.ConverterProvider;
+import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 /**
@@ -35,11 +40,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
 
-	PersistenceService persistenceService;
+	private PersistenceService persistenceService;
+
+	private ConvertUtilsBean converter;
 
 	@Inject
+	@SuppressWarnings("rawtypes")
 	public GenericDaoABC(PersistenceService persistenceService) {
 		this.persistenceService = persistenceService;
+		this.converter = new ConverterProvider().get();
 	}
 	
 	protected Session getCurrentSession() {
@@ -155,17 +164,34 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
-	public final List<T> findByFilterAndClass(String filter, Map<String, Object> params, Class<T> clazz) {
+	public List<T> findByFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass) {
 		Session session = getCurrentSession();
-		String queryString = "from "+clazz.getSimpleName()+" where "+filter;
-		Query query = session.createQuery(queryString);
-		for(Entry<String, Object> entry : params.entrySet()) {
-			query.setParameter(entry.getKey(), UUID.fromString(entry.getValue().toString()) );
+		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, inClass);
+		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
+		Query query = session.createQuery(criteria.getQuery());
+		for (Entry<String, Object> argument : inArgs.entrySet()) {
+			String name = argument.getKey();
+			Class<?> paramType = criteria.getParameterTypes().get(name);
+			if (paramType == null) {
+				throw new IllegalArgumentException("no parameter named: " + name + " found for query: " + criteria.getQuery());
+			}
+			Object value = argument.getValue();
+			Object convertedValue = converter .convert(value, paramType);
+			if (convertedValue != null && !paramType.isAssignableFrom(convertedValue.getClass())) {
+				throw new ConversionException("Failed to convert value : " + value + " to type: " + paramType);
+			}
+			try {
+				query.setParameter(name, convertedValue);
+			}
+			catch(QueryParameterException e) {
+				throw new QueryParameterException("argument could not be found in query: " + name, criteria.getQuery(), e);
+				 
+			}
 		}		
 		List<T> results = query.list();
 		return results;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)

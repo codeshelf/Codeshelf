@@ -3,8 +3,8 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.UUID;
 
+import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,13 +27,16 @@ public class ServiceMethodCommand extends CommandABC {
 	private ServiceMethodRequest	request;
 
 	private ServiceFactory	serviceFactory;
-	
-	public ServiceMethodCommand(UserSession session, ServiceMethodRequest request, ServiceFactory serviceFactory) {
+
+	private ConvertUtilsBean	converter;
+
+	public ServiceMethodCommand(UserSession session, ServiceMethodRequest request, ServiceFactory serviceFactory, ConvertUtilsBean converter) {
 		super(session);
 		this.request = request;
 		this.serviceFactory = serviceFactory;
+		this.converter = converter;
 	}
-	
+
 	@Override
 	public ResponseABC exec() {
 		ServiceMethodResponse response = new ServiceMethodResponse();
@@ -51,7 +54,7 @@ public class ServiceMethodCommand extends CommandABC {
 		if (!className.startsWith("com.gadgetworks.codeshelf.service.")) {
 			className = "com.gadgetworks.codeshelf.service." + className;
 		}
-		
+
 		String methodName = request.getMethodName();
 		if (Strings.isNullOrEmpty(methodName)) {
 			response.setStatus(ResponseStatus.Fail);
@@ -73,7 +76,7 @@ public class ServiceMethodCommand extends CommandABC {
 						break;
 					}
 				}
-			};	
+			};
 			if (method != null) {
 				try {
 					Object serviceObject = serviceFactory.getServiceInstance(classObject);
@@ -90,9 +93,9 @@ public class ServiceMethodCommand extends CommandABC {
 						response.setStatusMessage("Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject);
 						response.setErrors(errors);
 						return response;
-						
+
 					} else {
-						String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject; 
+						String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject;
 						LOGGER.error(message, e);
 						response.setStatus(ResponseStatus.Fail);
 						response.setStatusMessage(message);
@@ -101,7 +104,7 @@ public class ServiceMethodCommand extends CommandABC {
 						return response;
 					}
 				} catch (Exception e) {
-					String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject; 
+					String message = "Failed to invoke " + methodName + " for args " + methodArgs + " on type " + classObject;
 					LOGGER.error(message, e);
 					response.setStatus(ResponseStatus.Fail);
 					response.setStatusMessage(message);
@@ -128,26 +131,17 @@ public class ServiceMethodCommand extends CommandABC {
 			return response;
 		}
 	}
-	
+
 	/**
 	 * Inelegant converter for the time being
 	 */
 	private Object[] convertArguments(Method method, List<?> methodArgs) {
 		Class<?>[] parameterTypes = method.getParameterTypes();
-		Object[] convertedArgs = new Object[parameterTypes.length]; 
+		Object[] convertedArgs = new Object[parameterTypes.length];
 		int i = 0;
 		for (Object arg : methodArgs) {
 			Class<?> paramType = parameterTypes[i];
-			if (paramType.isAssignableFrom(arg.getClass())) {
-				convertedArgs[i] = arg;
-			} else if (UUID.class.isAssignableFrom(paramType)) {
-				convertedArgs[i] = UUID.fromString(String.valueOf(arg));
-			} else if (Double.class.isAssignableFrom(paramType)){
-				convertedArgs[i] = Double.valueOf(String.valueOf(arg));
-			}
-			else {
-				throw new IllegalArgumentException("could not convert argument: " + arg + " of type "+ arg.getClass().getName() +" to " + paramType);
-			}
+			convertedArgs[i] = converter.convert(arg, paramType);
 			i++;
 		}
 		return convertedArgs;

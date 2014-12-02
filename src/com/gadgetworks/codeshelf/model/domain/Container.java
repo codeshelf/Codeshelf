@@ -89,7 +89,13 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 
 	public Container() {
-
+	}
+	
+	public Container(String domainId, ContainerKind kind, boolean active) {
+		this.setDomainId(domainId);
+		this.active = active;
+		this.kind = kind;
+		this.updated = new Timestamp(System.currentTimeMillis());
 	}
 
 	@SuppressWarnings("unchecked")

@@ -8,14 +8,18 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * @author jeffw
@@ -152,7 +156,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		mOrderDetailDao.store(orderDetail);
 
 		WorkInstruction wi = new WorkInstruction();
-		wi.setParent(facility);
+		facility.addWorkInstruction(wi);
 		wi.setOrderDetail(orderDetail);
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 
@@ -233,6 +237,37 @@ public class WorkInstructionTest extends DomainTestABC {
 		Assert.assertNotNull(out4NoGroup);
 		Assert.assertTrue(wiExistsForOrder(out4NoGroup));
 
+	}
+	
+	@Test
+	public void filterTest() {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = createDefaultFacility(getTestName());
+		WorkInstructionGenerator generator = new WorkInstructionGenerator();
+		
+		WorkInstruction wi = generator.generateWithNewStatus(facility);
+		wi.getLocation().getDao().store(wi.getLocation());
+		wi.getAssignedChe().getParent().getDao().store(wi.getAssignedChe().getParent());
+		wi.getAssignedChe().getDao().store(wi.getAssignedChe());
+		wi.getContainer().getDao().store(wi.getContainer());
+		
+		wi.getItemMaster().getStandardUom().getDao().store(wi.getItemMaster().getStandardUom());
+		wi.getItemMaster().getDao().store(wi.getItemMaster());
+		
+		wi.getOrderDetail().getParent().getOrderGroup().getDao().store(wi.getOrderDetail().getParent().getOrderGroup());
+		wi.getOrderDetail().getParent().getDao().store(wi.getOrderDetail().getParent());
+		wi.getOrderDetail().getDao().store(wi.getOrderDetail());
+		
+		WorkInstruction.DAO.store(wi);
+		this.getPersistenceService().endTenantTransaction();
+		
+		this.getPersistenceService().beginTenantTransaction();
+		Map<String, Object> params = ImmutableMap.<String, Object>of(
+			"cheId", wi.getAssignedChe().getPersistentId().toString(),
+			"assignedTimestamp", wi.getAssigned().getTime());
+		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime", params, WorkInstruction.class);
+		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
+		this.getPersistenceService().endTenantTransaction();
 	}
 	
 	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {

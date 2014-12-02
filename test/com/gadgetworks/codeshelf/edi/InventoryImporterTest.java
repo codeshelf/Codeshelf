@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
+import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -547,14 +548,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		String groupSortStr1 = wi1.getGroupAndSortCode();
 		Assert.assertEquals("0001", groupSortStr1);
 		Double wi1Pos = wi1.getPosAlongPath();
-		String wi1Item = wi1.getItemMasterId();
+		String wi1Item = wi1.getItemId();
 
 		WorkInstruction wi2 = wiListAfterScan.get(1);
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
 		Double wi2Pos = wi2.getPosAlongPath();
-		String wi2Item = wi2.getItemMasterId();
+		String wi2Item = wi2.getItemId();
 
 		Double pos403 = locationD403.getPosAlongPath();
 		Double pos402 = locationD402.getPosAlongPath();
@@ -684,7 +685,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Now we have an item. Mimic how the code works for lightOneItem
 		Location location = theItem.getStoredLocation();
-		List<LedCmdGroup> ledCmdGroupList = facility.getLedCmdGroupListForItemOrLocation(theItem, ColorEnum.RED, location);
+		List<LedCmdGroup> ledCmdGroupList = WiFactory.getLedCmdGroupListForItemOrLocation(theItem, ColorEnum.RED, location);
 		if (ledCmdGroupList.size() == 0) {
 			LOGGER.error("location with incomplete LED configuration in testSameProductPick");
 			return;

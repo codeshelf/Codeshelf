@@ -146,7 +146,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public final List<T> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<T> inClass) {
+	public final List<T> findByFilterAndClass(String criteria, Map<String, Object> inFilterParams, Class<T> inClass) {
 		throw new NotImplementedException();
 	}
 

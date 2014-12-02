@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
+import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -31,7 +32,7 @@ public class CreateCheTest extends DAOTestABC {
 
 
 	public void doBefore() {
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class));
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
 	}
 	
 	@Test

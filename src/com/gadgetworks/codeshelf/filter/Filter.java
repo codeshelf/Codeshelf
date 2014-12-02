@@ -18,10 +18,7 @@ public class Filter extends Listener {
 	ITypedDao<IDomainObject> dao;
 	
 	@Getter @Setter
-	String clause;
-	
-//	@Getter @Setter
-//	List<Criterion> params;
+	String criteriaName;
 	
 	@Getter @Setter
 	Map<String,Object> params;
@@ -31,7 +28,7 @@ public class Filter extends Listener {
 	}
 	
 	public List<IDomainObject> refreshMatchList() {
-		List<IDomainObject> objectMatchList = dao.findByFilterAndClass(clause,params,dao.getDaoClass());
+		List<IDomainObject> objectMatchList = dao.findByFilterAndClass(criteriaName,params,dao.getDaoClass());
 		List<UUID> objectIds = new LinkedList<UUID>();
 		for (IDomainObject object : objectMatchList) {
 			objectIds.add(object.getPersistentId());

@@ -1,10 +1,13 @@
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.UUID;
+
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.google.common.collect.ImmutableMap;
 
 public class OrderHeaderTest extends DomainTestABC {
 
@@ -53,13 +56,20 @@ public class OrderHeaderTest extends DomainTestABC {
 		
 		
 		this.getPersistenceService().endTenantTransaction();
-		
-		
-		
-		
 
 	}
 
+	@Test
+	public void testOrderHeaderByFacilityAndType() {
+		this.getPersistenceService().beginTenantTransaction();
+		OrderHeader.DAO.findByFilterAndClass("orderHeadersByFacilityAndType",
+											ImmutableMap.<String, Object>of(
+												"facilityId", UUID.randomUUID(),
+												"orderType", OrderTypeEnum.OUTBOUND.name()),
+											 OrderHeader.class);
+		this.getPersistenceService().endTenantTransaction();
+	}
+	
 	private Path createAssociatedPath(Aisle a1, Aisle a2) {
 		Facility facility = a1.getParentAtLevel(Facility.class);
 		

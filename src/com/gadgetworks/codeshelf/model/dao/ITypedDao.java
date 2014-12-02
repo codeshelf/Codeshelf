@@ -31,7 +31,7 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> findByFilter(List<Criterion> inFilter);
 
-	List<T> findByFilterAndClass(String inFilter, Map<String, Object> inFilterParams, Class<T> inClass);
+	List<T> findByFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs, Class<T> inClass);
 
 	void store(T inDomainObject) throws DaoException;
 

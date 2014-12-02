@@ -25,7 +25,6 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
@@ -146,7 +145,11 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		
 		
 		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		testWi.getOrderDetail().setParent(new OrderHeader(facility, expectedValue));
+		OrderGroup orderGroup = new OrderGroup(expectedValue);
+		facility.addOrderGroup(orderGroup);
+		
+		orderGroup.addOrderHeader(testWi.getOrderDetail().getParent());
+		
 		testWi.getOrderDetail().setUomMaster(null);
 		System.out.println(testWi);	
 
@@ -163,11 +166,16 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		String expectedValue = "TESTDOMAINID";
+		String expectedValue = "OH1";
 		
 		
 		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		testWi.getOrderDetail().setParent(new OrderHeader(facility, expectedValue));
+		
+		OrderGroup orderGroup = new OrderGroup(expectedValue);
+		facility.addOrderGroup(orderGroup);
+		
+		orderGroup.addOrderHeader(testWi.getOrderDetail().getParent());
+		
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
@@ -182,11 +190,15 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		String expectedValue = "TESTDOMAINID";
+		String expectedValue = "OG1";
 		
 		
 		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		testWi.getOrderDetail().getParent().setOrderGroup(new OrderGroup(facility, expectedValue));
+		OrderGroup orderGroup = new OrderGroup(expectedValue);
+		facility.addOrderGroup(orderGroup);
+		
+		orderGroup.addOrderHeader(testWi.getOrderDetail().getParent());
+		
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);

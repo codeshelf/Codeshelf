@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Filter;
+import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -18,7 +19,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.google.common.base.Strings;
 
 /*
 	Example Message:
@@ -40,22 +40,34 @@ public class RegisterFilterCommand extends CommandABC {
 	private RegisterFilterRequest request;
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
+
+	private CriteriaRegistry	criteriaRegistry;
 	
 	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.request = request;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
+		this.criteriaRegistry = CriteriaRegistry.getInstance();
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		try {
+			/*
+			 
+			 filterName(TypedCriteria) + named arguments => Filter suitable for persistence and messaging 
+			 
+			 filter<T> = createFilter(name, args);
+			 criteria
+			 */
+			
+			
+			
 			String objectClassName = request.getClassName();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
 			}
-			String filterClause = request.getFilterClause();
 			List<Map<String, Object>> filterParams = request.getFilterParams();
 			
 			// extract property map
@@ -64,10 +76,6 @@ public class RegisterFilterCommand extends CommandABC {
 			for (Map<String, Object> map : filterParams) {
 				String name = (String) map.get("name");
 				Object value = map.get("value");
-				String className = (String) map.get("type");
-				if (!Strings.isNullOrEmpty(className)) {
-					value = convertFilterParam(className, value);
-				}
 				processedParams.put(name, value);
 				//processedParams.add(Restrictions.eq(name, value));
 			}
@@ -80,10 +88,12 @@ public class RegisterFilterCommand extends CommandABC {
 				// create listener
 				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
 				
+				String filterClause = request.getFilterClause();
+					
 				Filter filter = new Filter((Class<IDomainObject>) classObject, request.getMessageId());				
 				filter.setPropertyNames(request.getPropertyNames());
 				filter.setParams(processedParams);
-				filter.setClause(filterClause);
+				filter.setCriteriaName(filterClause);
 				filter.setDao(dao);
 				List<IDomainObject> objectMatchList = filter.refreshMatchList();
 				this.session.registerObjectEventListener(filter);
@@ -108,15 +118,4 @@ public class RegisterFilterCommand extends CommandABC {
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-
-	private Object convertFilterParam(String className, Object value) throws ClassNotFoundException {
-		Class<?> classObject = Class.forName(className);
-		if (java.sql.Timestamp.class.isAssignableFrom(classObject)) {
-			return new java.sql.Timestamp(Long.valueOf(value.toString()));
-		}
-		else {
-			return value;
-		}
-	}
-	
 }
