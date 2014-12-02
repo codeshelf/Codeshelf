@@ -88,7 +88,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	}
 
-	public LocationAlias(Facility facility, String domainId, LocationABC<?> mappedLocation) {
+	public LocationAlias(Facility facility, String domainId, LocationABC mappedLocation) {
 		super(domainId);
 		this.parent = facility;
 		this.mappedLocation = mappedLocation;
@@ -125,12 +125,12 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		return getDomainId();
 	}
 
-	public final ILocation<?> getMappedLocation() {
-		return (ILocation<?>) mappedLocation;
+	public final LocationABC getMappedLocation() {
+		return mappedLocation;
 	}
 
-	public final void setMappedLocation(final ILocation<?> inMappedLocation) {
-		mappedLocation = (SubLocationABC<?>) inMappedLocation;
+	public final void setMappedLocation(final LocationABC inMappedLocation) {
+		mappedLocation = inMappedLocation;
 	}
 
 	public static void setDao(LocationAliasDao inLocationAliasDao) {

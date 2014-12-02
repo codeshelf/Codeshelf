@@ -23,10 +23,10 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -256,9 +256,9 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	}
 	
-	private SubLocationABC<Facility> mockSubLocation(String domainId) {
+	private LocationABC mockSubLocation(String domainId) {
 		
-		SubLocationABC<Facility> mockLocation = new SubLocationABC<Facility>() {
+		LocationABC mockLocation = new LocationABC() {
 
 			@Override
 			public String getDefaultDomainIdPrefix() {
@@ -272,11 +272,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 				return null;
 			}
 
-			@Override
-			public void setParent(Facility inParent) {
-				// TODO Auto-generated method stub
-				
-			}}; 
+		}; 
 			
 		mockLocation.setDomainId(domainId);
 		mockLocation.setDescription("");

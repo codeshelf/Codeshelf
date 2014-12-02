@@ -63,9 +63,9 @@ public class LedController extends WirelessDeviceABC {
 	//private CodeshelfNetwork parent;
 
 	// All of the locations that use this controller.
-	@OneToMany(targetEntity=SubLocationABC.class)
+	@OneToMany(targetEntity=LocationABC.class)
 	@Getter
-	private List<SubLocationABC<?>> locations	= new ArrayList<SubLocationABC<?>>();
+	private List<LocationABC> locations	= new ArrayList<LocationABC>();
 
 	public LedController() {
 
@@ -80,18 +80,17 @@ public class LedController extends WirelessDeviceABC {
 		return "LED";
 	}
 
-	public final void addLocation(ILocation<?> inSubLocation) {
+	public final void addLocation(LocationABC inSubLocation) {
 		LedController previousLedController = inSubLocation.getLedController();
 		if(previousLedController == null) {
-			SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
-			locations.add(subLocation);
+			locations.add(inSubLocation);
 			inSubLocation.setLedController(this);
 		} else {
 			LOGGER.error("cannot add Location "+inSubLocation.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousLedController.getDomainId());
 		}	
 	}
 
-	public final void removeLocation(ILocation<?> inSubLocation) {
+	public final void removeLocation(LocationABC inSubLocation) {
 		if(locations.contains(inSubLocation)) {
 			inSubLocation.setLedController(null);
 			locations.remove(inSubLocation);

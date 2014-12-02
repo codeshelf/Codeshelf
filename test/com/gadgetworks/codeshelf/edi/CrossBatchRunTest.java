@@ -265,11 +265,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 5, detailCount); // 4 good ones, and the "unknown item"
 		// Make sure our order locations ( from slotting file)  are valid. Make sure D-36 has early location on path
-		LocationABC<?> locationD2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
+		LocationABC locationD2 = facility.findSubLocationById("A1.B1.T2.S4");
 		Assert.assertNotNull(locationD2);
-		LocationABC<?> locationD2a = (LocationABC<?>) facility.findSubLocationById("D-2");
+		LocationABC locationD2a = facility.findSubLocationById("D-2");
 		Assert.assertNotNull(locationD2a);
-		LocationABC<?> locationD36 = (LocationABC<?>) facility.findSubLocationById("D-36");
+		LocationABC locationD36 = facility.findSubLocationById("D-36");
 		Aisle aisle2 = (Aisle) facility.findSubLocationById("A2");
 		Double a2Pos = aisle2.getPosAlongPath();
 		Double d36Pos = locationD36.getPosAlongPath();

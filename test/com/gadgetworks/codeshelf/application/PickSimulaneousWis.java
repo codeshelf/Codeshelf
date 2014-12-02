@@ -31,7 +31,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -149,28 +148,28 @@ public class PickSimulaneousWis extends EdiTestABC {
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
-		SubLocationABC tier = (SubLocationABC) facility.findSubLocationById("A1.B1.T1");
+		LocationABC tier = facility.findSubLocationById("A1.B1.T1");
 		Short channel1 = 1;
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) facility.findSubLocationById("A1.B2.T1");
+		tier = facility.findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
+		tier = facility.findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) facility.findSubLocationById("A2.B2.T1");
+		tier = facility.findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) facility.findSubLocationById("A3.B1.T1");
+		tier = facility.findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) facility.findSubLocationById("A3.B2.T1");
+		tier = facility.findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -212,7 +211,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 
-		LocationABC<?> locationD402 = (LocationABC<?>) facility.findSubLocationById("D402");
+		LocationABC locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);

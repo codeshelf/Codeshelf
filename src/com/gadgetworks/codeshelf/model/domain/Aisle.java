@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("AISLE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Aisle extends SubLocationABC<Facility> {
+public class Aisle extends LocationABC {
 	
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
@@ -166,11 +166,4 @@ public class Aisle extends SubLocationABC<Facility> {
 		
 		return bay;
 	}
-	
-	@Override
-	public void setParent(Facility inParent) {
-		this.setParent((ILocation<?>)inParent);
-	}
-
-
 }

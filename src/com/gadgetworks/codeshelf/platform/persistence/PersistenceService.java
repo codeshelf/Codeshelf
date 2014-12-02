@@ -1,10 +1,6 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
 import java.lang.reflect.Field;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 

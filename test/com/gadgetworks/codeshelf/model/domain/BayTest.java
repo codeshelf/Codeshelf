@@ -28,7 +28,7 @@ public class BayTest extends DomainTestABC {
 		tier2.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0d, 0.0d, 2.0d));
 		Tier tier3 = getDefaultTier(bay, "TC");
 		tier3.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0d, 0.0d, 4.0d));
-		List<ILocation<?>> locations = bay.getSubLocationsInWorkingOrder();
+		List<LocationABC> locations = bay.getSubLocationsInWorkingOrder();
 		Assert.assertEquals(ImmutableList.of(tier3, tier2, tier1), ImmutableList.copyOf(locations));
 
 		this.getPersistenceService().endTenantTransaction();

@@ -9,14 +9,10 @@ import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.changelog.ChangeSet;
 import liquibase.database.Database;
-import liquibase.datatype.core.UUIDType;
 import liquibase.diff.DiffGeneratorFactory;
 import liquibase.diff.DiffResult;
 import liquibase.diff.compare.CompareControl;
@@ -24,12 +20,12 @@ import liquibase.diff.output.DiffOutputControl;
 import liquibase.diff.output.changelog.DiffToChangeLog;
 import liquibase.exception.DatabaseException;
 import liquibase.exception.LiquibaseException;
-import liquibase.ext.hibernate.database.HibernateDatabase;
 import liquibase.integration.commandline.CommandLineUtils;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import liquibase.resource.CompositeResourceAccessor;
-import liquibase.resource.FileSystemResourceAccessor;
 import liquibase.resource.ResourceAccessor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SchemaManager {
 	private static final String MASTER_CHANGELOG_FILENAME= "db.changelog-master.xml";

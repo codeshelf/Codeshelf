@@ -34,7 +34,6 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -42,7 +41,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.ColorEnum;
@@ -178,7 +176,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
-		SubLocationABC tier = (SubLocationABC) getFacility().findSubLocationById("A1.B1.T1");
+		LocationABC tier = getFacility().findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -187,27 +185,27 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		if (!tierName.equals("D301"))
 			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
 
-		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B2.T1");
+		tier = getFacility().findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) getFacility().findSubLocationById("A1.B3.T1");
+		tier = getFacility().findSubLocationById("A1.B3.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B1.T1");
+		tier = getFacility().findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) getFacility().findSubLocationById("A2.B2.T1");
+		tier = getFacility().findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B1.T1");
+		tier = getFacility().findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = (SubLocationABC) getFacility().findSubLocationById("A3.B2.T1");
+		tier = getFacility().findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);

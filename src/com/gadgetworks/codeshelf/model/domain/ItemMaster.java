@@ -232,13 +232,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
 
-		ILocation<?> foundLocation = null;
+		LocationABC foundLocation = null;
 		Item selectedItem = null;
 
 		// This mimics the old code. Not at all sure it is correct.
 		for (Item item : getItems()) {
 			// Does the Item know where it is?
-			ILocation<?> location = (ILocation<?>) item.getStoredLocation();
+			LocationABC location = (LocationABC) item.getStoredLocation();
 
 			if (location != null && inPath.isLocationOnPath(location)) {
 				String itemUom = item.getUomMasterId();
@@ -301,7 +301,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * (Disallow means to return an existing item, even if some details mismatch.)
 	 * Will need to modify for lots.
 	 */
-	private Item findExistingItem(ILocation<?> inLocation, UomMaster inUom) {
+	private Item findExistingItem(LocationABC inLocation, UomMaster inUom) {
 		String thisUomId = inUom.getUomMasterId();
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		if (thisItemEach) {
@@ -329,7 +329,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/*
 	 * This creates a new Item for this master, and adds to the location. All business logic checks need to have been done before:	 * 1) Find the existing. 2) Disallow same location, master, uom combination. 3) Disallow same master, each anywhere.
 	 */
-	private Item createStoredItem(ILocation<?> location, UomMaster uom) {
+	private Item createStoredItem(LocationABC location, UomMaster uom) {
 		String domainId = Item.makeDomainId(this.getItemId(), location, uom.getUomMasterId());
 		Item item = new Item();
 		item.setDomainId(domainId);
@@ -345,7 +345,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/*
 	 * Huge side effect for each items. If found, and location is different, update the location. Caller must persist the change.
 	 */
-	public final Item findOrCreateItem(ILocation<?> inLocation, UomMaster uom) {
+	public final Item findOrCreateItem(LocationABC inLocation, UomMaster uom) {
 		Item item = findExistingItem(inLocation, uom);
 		if (item == null)
 			item = createStoredItem(inLocation, uom);

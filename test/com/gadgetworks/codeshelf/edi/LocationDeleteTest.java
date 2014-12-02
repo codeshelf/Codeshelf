@@ -23,8 +23,6 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -327,11 +325,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);
 		// Make sure our order locations ( from slotting file)  are valid. Make sure D-36 has early location on path
-		LocationABC<?> locationD2 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T2.S4");
+		LocationABC locationD2 = facility.findSubLocationById("A1.B1.T2.S4");
 		Assert.assertNotNull(locationD2);
-		LocationABC<?> locationD2a = (LocationABC<?>) facility.findSubLocationById("D-2");
+		LocationABC locationD2a = facility.findSubLocationById("D-2");
 		Assert.assertNotNull(locationD2a);
-		LocationABC<?> locationD36 = (LocationABC<?>) facility.findSubLocationById("D-36");
+		LocationABC locationD36 = facility.findSubLocationById("D-36");
 		Aisle aisle2 = (Aisle) facility.findSubLocationById("A2");
 		Double a2Pos = aisle2.getPosAlongPath();
 		Double d36Pos = locationD36.getPosAlongPath();
@@ -376,11 +374,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		aisle1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertFalse(aisle1.getActive());
 		// This should have also inactivated all children,  recursively.
-		LocationABC<?> locationA1B1 = (LocationABC<?>) facility.findSubLocationById("A1.B1");
+		LocationABC locationA1B1 = facility.findSubLocationById("A1.B1");
 		Assert.assertFalse(locationA1B1.getActive());
-		LocationABC<?> locationA1B1T1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1");
+		LocationABC locationA1B1T1 = facility.findSubLocationById("A1.B1.T1");
 		Assert.assertFalse(locationA1B1T1.getActive());
-		LocationABC<?> locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
+		LocationABC locationA1B1T1S1 = facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertFalse(locationA1B1T1S1.getActive());
 		// check the new getActiveChildren
 		// facility is "stale". Will hibernate fix this?
@@ -392,11 +390,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		readStandardAisleFile(facility);
 		aisle1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertTrue(aisle1.getActive());
-		locationA1B1 = (LocationABC<?>) facility.findSubLocationById("A1.B1");
+		locationA1B1 = facility.findSubLocationById("A1.B1");
 		Assert.assertTrue(locationA1B1.getActive());
-		locationA1B1T1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1");
+		locationA1B1T1 = facility.findSubLocationById("A1.B1.T1");
 		Assert.assertTrue(locationA1B1T1.getActive());
-		locationA1B1T1S1 = (LocationABC<?>) facility.findSubLocationById("A1.B1.T1.S1");
+		locationA1B1T1S1 = facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertTrue(locationA1B1T1S1.getActive());
 
 		this.getPersistenceService().endTenantTransaction();
@@ -423,13 +421,13 @@ public class LocationDeleteTest extends EdiTestABC {
 		readSmallerAisleFile(facility);
 
 		LOGGER.info("A1.B2.T1.S5 should be inactive now. findSubLocationById succeeds, but should warn");
-		LocationABC<?> locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5");
+		LocationABC locationA1B2T1S5 = facility.findSubLocationById("A1.B2.T1.S5");
 		Assert.assertNotNull(locationA1B2T1S5);
 		Assert.assertFalse(locationA1B2T1S5.isActive());
 		// Location alias was D-26 for this. Should still know it. However, display comes with brackets.
 		Assert.assertEquals("<D-26>", locationA1B2T1S5.getPrimaryAliasId());
 		// If you ask by the mapped name, should still get the location
-		ILocation<?> mappedLocation = facility.findSubLocationById("D-26");
+		LocationABC mappedLocation = facility.findSubLocationById("D-26");
 		Assert.assertEquals(locationA1B2T1S5, mappedLocation);
 		// Nominal positions also come with brackets
 		Assert.assertEquals("<A1.B2.T1.S5>", locationA1B2T1S5.getNominalLocationId());
@@ -440,7 +438,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		// This used to generate an ebeans optimistic commit error
 		LOGGER.info("reading original aisles file that should restore the bay, tier, and slot");
 		readStandardAisleFile(facility);
-		locationA1B2T1S5 = (LocationABC<?>) facility.findSubLocationById("A1.B2.T1.S5"); // get it again; our ebeans reference would be stale
+		locationA1B2T1S5 = facility.findSubLocationById("A1.B2.T1.S5"); // get it again; our ebeans reference would be stale
 		Assert.assertNotNull(locationA1B2T1S5);
 		Assert.assertTrue(locationA1B2T1S5.isActive());
 
@@ -480,11 +478,11 @@ public class LocationDeleteTest extends EdiTestABC {
 
 		 */
 		// prove what is there and what isn't
-		ILocation<?> locD26 = facility.findSubLocationById("D-26");
+		LocationABC locD26 = facility.findSubLocationById("D-26");
 		Assert.assertNull(locD26);
-		ILocation<?> locX999 = facility.findSubLocationById("X-999");
+		LocationABC locX999 = facility.findSubLocationById("X-999");
 		Assert.assertNull(locX999);
-		ILocation<?> locD6 = facility.findSubLocationById("D-6");
+		LocationABC locD6 = facility.findSubLocationById("D-6");
 		Assert.assertNotNull(locD6);
 
 		Item item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
@@ -532,7 +530,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertNotNull(locD26);
 		Boolean activeValuelocD26 = locD26.isActive();
 		// Assert.assertFalse(activeValue);  fails. ebean bug, hibernate fix?
-		ILocation<?> locD26b = facility.findSubLocationById("A1.B2.T1.S5");
+		LocationABC locD26b = facility.findSubLocationById("A1.B2.T1.S5");
 		Assert.assertNotNull(locD26b);
 		Boolean activeValuelocD26b = locD26b.isActive();
 		Assert.assertEquals(locD26, locD26b);

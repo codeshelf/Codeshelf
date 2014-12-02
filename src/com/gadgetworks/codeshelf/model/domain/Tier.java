@@ -53,7 +53,7 @@ final class TierIds {
 @Entity
 @DiscriminatorValue("TIER")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Tier extends SubLocationABC<Bay> {
+public class Tier extends LocationABC {
 
 	public static final String		THIS_TIER_ONLY		= "";
 	public static final String		ALL_TIERS_IN_AISLE	= "aisle";
@@ -111,12 +111,12 @@ public class Tier extends SubLocationABC<Bay> {
 		theTierIds.bayName = "";
 		theTierIds.aisleName = "";
 		theTierIds.tierName = this.getDomainId();
-		Bay bayLocation = this.getParent();
+		Bay bayLocation = this.<Bay>getParentAtLevel(Bay.class);
 		Aisle aisleLocation = null;
 
 		if (bayLocation != null) {
 			theTierIds.bayName = bayLocation.getDomainId();
-			aisleLocation = bayLocation.getParent();
+			aisleLocation = bayLocation.<Aisle>getParentAtLevel(Aisle.class);
 		}
 		if (aisleLocation != null) {
 			theTierIds.aisleName = aisleLocation.getDomainId();
@@ -229,8 +229,8 @@ public class Tier extends SubLocationABC<Bay> {
 		// if "aisle", then the rest of tiers at same level
 		if (allTiers) {
 			// The goal is to get to the aisle, then ask for all tiers. Filter those to the subset with the same domainID (like "T2")
-			Bay bayParent = this.getParent();
-			Aisle aisleParent = bayParent.getParent();
+			Bay bayParent = this.<Bay>getParentAtLevel(Bay.class);
+			Aisle aisleParent = bayParent.<Aisle>getParentAtLevel(Aisle.class);
 			List<Tier> locationList = aisleParent.getActiveChildrenAtLevel(Tier.class);
 
 			String thisDomainId = this.getDomainId();
@@ -262,10 +262,5 @@ public class Tier extends SubLocationABC<Bay> {
 		this.addLocation(slot);
 		
 		return slot;
-	}
-
-	@Override
-	public void setParent(Bay inParent) {
-		this.setParent((ILocation<?>)inParent);
 	}
 }

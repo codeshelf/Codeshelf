@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -175,7 +175,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 		String locationId = inCsvBean.getLocationId();
 
 		// Only create an OrderLocation mapping if the location is valid.
-		ILocation<?> mappedLocation = inFacility.findSubLocationById(locationId);
+		LocationABC mappedLocation = inFacility.findSubLocationById(locationId);
 		if (mappedLocation == null) {
 			// throw new EdiFileReadException("No location found for location: " + locationId);
 			produceRecordViolationEvent(inCsvBean, "locationId", locationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
@@ -243,7 +243,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 */
 	private void deleteLocation(final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
-		ILocation<?> location = inFacility.findSubLocationById(inLocationId);
+		LocationABC location = inFacility.findSubLocationById(inLocationId);
 
 		for (OrderHeader order : inFacility.getOrderHeaders()) {
 			// For every OrderLocation on this order, set it to inactive.

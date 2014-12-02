@@ -39,7 +39,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "vertex")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
+public class Vertex extends DomainObjectTreeABC<LocationABC> {
 
 	@Inject
 	public static ITypedDao<Vertex>	DAO;
@@ -95,7 +95,7 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 	}
 
 	/*
-	public Vertex(final ILocation<?> inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
+	public Vertex(final LocationABC inParentLocation, final String inLocationId, final int inDrawOrder, final Point inPoint) {
 		parent = (LocationABC<?>) inParentLocation;
 		setDomainId(inLocationId);
 		posTypeEnum = inPoint.getPosTypeEnum();
@@ -115,12 +115,12 @@ public class Vertex extends DomainObjectTreeABC<ILocation<?>> {
 		return "V";
 	}
 
-	public final ILocation<?> getParent() {
+	public final LocationABC getParent() {
 		return parent;
 	}
 
-	public final void setParent(ILocation<?> inParent) {
-		parent = (LocationABC<?>) inParent;
+	public final void setParent(LocationABC inParent) {
+		parent = inParent;
 	}
 
 

@@ -329,14 +329,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final OrderLocation addOrderLocation(ILocation<?> inLocation) {
+	public final OrderLocation addOrderLocation(LocationABC inLocation) {
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
 		OrderLocation.DAO.store(result);
 		return result;
 	}
 
-	private OrderLocation createOrderLocation(ILocation<?> inLocation) {
+	private OrderLocation createOrderLocation(LocationABC inLocation) {
 		OrderLocation result = new OrderLocation();
 		result.setDomainId(OrderLocation.makeDomainId(this, inLocation));
 		result.setLocation(inLocation);
@@ -379,7 +379,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		List<OrderLocation> newActiveOrderLocations = new ArrayList<OrderLocation>();
 		for (OrderLocation orderLocation : getOrderLocations()) {
 			if (orderLocation.getActive()) {
-				ILocation<?> loc = orderLocation.getLocation();
+				LocationABC loc = orderLocation.getLocation();
 				if (inIncludeInactiveLocations || loc.isActive()) // do not need null check due to database constraint
 					newActiveOrderLocations.add(orderLocation);
 			}
@@ -524,18 +524,18 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 		OrderLocation firstLocation = oLocations.get(0);
 		if (firstLocation != null) {
-			ILocation<?> theLoc = firstLocation.getLocation();
+			LocationABC theLoc = firstLocation.getLocation();
 			if (theLoc != null)
-				result = ((LocationABC<?>) theLoc).getPrimaryAliasId();
+				result = theLoc.getPrimaryAliasId();
 		}
 		if (numLocations > 1) {
 			// add delimmiter and next one on
 			for (int n = 1; n < numLocations; n++) {
 				OrderLocation nextLocation = oLocations.get(n);
 				if (nextLocation != null) {
-					ILocation<?> theLoc = nextLocation.getLocation();
+					LocationABC theLoc = nextLocation.getLocation();
 					if (theLoc != null)
-						result = result + ";" + ((LocationABC<?>) theLoc).getPrimaryAliasId();
+						result = result + ";" + theLoc.getPrimaryAliasId();
 				}
 			}
 		}

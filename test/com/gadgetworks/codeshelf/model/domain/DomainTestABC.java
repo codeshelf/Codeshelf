@@ -507,7 +507,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return result;
 	}
 
-	protected final OrderLocation createOrderLocation(final OrderHeader inOrderHeader, final ILocation<?> inLocation) {
+	protected final OrderLocation createOrderLocation(final OrderHeader inOrderHeader, final LocationABC inLocation) {
 		OrderLocation result = null;
 
 		result = new OrderLocation();

@@ -78,7 +78,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@JoinColumn(name="stored_location_persistentid")
 	@Getter
 	//	@Setter
-	private LocationABC<?>			storedLocation;
+	private LocationABC			storedLocation;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -119,7 +119,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public static String makeDomainId(final String inItemMasterId, final ILocation<?> inLocation, final String inUom) {
+	public static String makeDomainId(final String inItemMasterId, final LocationABC inLocation, final String inUom) {
 		// as soon as we have "lot" field on item, we want to either pass the lot in, or get from the item.
 		// an item is defined unique combination of item master, lot, and location.
 		String revisedUom = inUom;
@@ -147,13 +147,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return parent.getItemId();
 	}
 
-	public final void setStoredLocation(final ILocation<?> inStoredLocation) {
-		storedLocation = (LocationABC<?>) inStoredLocation; 
+	public final void setStoredLocation(final LocationABC inStoredLocation) {
+		storedLocation = inStoredLocation; 
 	}
 
 	// Assorted meta fields for the UI
 	public final String getNominalLocationId() {
-		ILocation<?> theLoc = getStoredLocation();
+		LocationABC theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
@@ -162,7 +162,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final String getItemLocationAlias() {
-		ILocation<?> theLoc = getStoredLocation();
+		LocationABC theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
@@ -175,7 +175,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		if (alias == null) {
 			throw new DaoException("could not find location with alias: " + inLocationAliasId);
 		}
-		ILocation<?> loc = alias.getMappedLocation();
+		LocationABC loc = alias.getMappedLocation();
 		if (!loc.isActive()) {
 			throw new DaoException("The location with alias: " + inLocationAliasId + " was deleted");
 		}
@@ -215,9 +215,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// The intended purpose is allow user to filter by aisle, then sort by tier and getPosAlongPathui
 		//  Should allow easy verification of inventory, working across a tier.
 		String result = "";
-		SubLocationABC<?> location = (SubLocationABC<?>) this.getStoredLocation();
+		LocationABC location = this.getStoredLocation();
 		if (location != null) {
-			LocationABC<?> tierLocation = (LocationABC<?>) location.getParentAtLevel(Tier.class);
+			LocationABC tierLocation = location.getParentAtLevel(Tier.class);
 			if (tierLocation != null) {
 				result = tierLocation.getDomainId();
 			}
@@ -291,11 +291,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 		else {
 			Double value = 0.0;
-			ILocation<?> theLocation = this.getStoredLocation();
-			if (theLocation instanceof SubLocationABC) {
-				SubLocationABC<?> asSubLocation = (SubLocationABC<?>) theLocation;
-				Double pickEndWidthMeters = asSubLocation.getLocationWidthMeters();
-				if (asSubLocation.isLeftSideTowardsAnchor()) {
+			LocationABC theLocation = this.getStoredLocation();
+			
+			if (theLocation.getParent() != null) {
+				Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
+				if (theLocation.isLeftSideTowardsAnchor()) {
 					value = inCmFromLeft / 100.0;
 				} else {
 					value = pickEndWidthMeters - (inCmFromLeft / 100.0);
@@ -322,11 +322,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 		Integer value = 0;
 
-		ILocation<?> theLocation = this.getStoredLocation();
+		LocationABC theLocation = this.getStoredLocation();
 		if (theLocation.isLeftSideTowardsAnchor()) {
 			value = (int) Math.round(meters * 100.0);
 		} else { // cm back from the pickface end
-			Double pickEndWidthMeters = ((SubLocationABC<?>)theLocation).getLocationWidthMeters();
+			Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
 			if (pickEndWidthMeters < meters) {
 				LOGGER.error("Bug found: getCmFromLeft in non-slotted inventory model");
 				value = (int) Math.round(pickEndWidthMeters * 100.0);
@@ -341,7 +341,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// This mimics the old getter, but now is done via a computation. This is the key routine.
 	// May well be worth caching this value. Only changes if item's location changes, metersFromAnchor changes, or path change.
 	public Double getPosAlongPath() {
-		ILocation<?> theLocation = this.getStoredLocation();
+		LocationABC theLocation = this.getStoredLocation();
 		Double locationPosValue = theLocation.getPosAlongPath();
 		Double returnValue = locationPosValue;
 		if (returnValue == null) {
@@ -364,7 +364,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			returnValue += meters;
 		else {
 			// if path opposing the anchor, then the pickface end corresponds to the location value. We have to convert before adding.
-			Double pickEndWidthMeters = ((SubLocationABC<?>)theLocation).getLocationWidthMeters();
+			Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
 			if (pickEndWidthMeters < meters) {
 				LOGGER.error("Bug found: Item.getPosAlongPath in non-slotted inventory model");
 				// let it return the location's posAlongPath
@@ -395,7 +395,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	
 	public LedRange getFirstLastLedsForItem() {
 		// to compute, we need the locations first and last led positions
-		ILocation<?> theLocation = this.getStoredLocation();
+		LocationABC theLocation = this.getStoredLocation();
 		if (theLocation instanceof Facility)
 			return LedRange.zero(); // was initialized to give values of 0,0
 
@@ -404,7 +404,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	
 		Double metersFromAnchor = getMetersFromAnchor();
 		
-		Double locationWidth = ((SubLocationABC<?>) theLocation).getLocationWidthMeters();
+		Double locationWidth = theLocation.getLocationWidthMeters();
 		boolean lowerLedNearAnchor = theLocation.isLowerLedNearAnchor();
 		
 		LedRange theLedRange = LedRange.computeLedsToLight(firstLocLed, lastLocLed, lowerLedNearAnchor, locationWidth, metersFromAnchor); 

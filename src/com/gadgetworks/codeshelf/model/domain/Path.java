@@ -299,13 +299,13 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Is the passed in location on this path?  Important: deleted location is not on path
 	 * @return
 	 */
-	public final Boolean isLocationOnPath(final ILocation<?> inLocation) {
+	public final Boolean isLocationOnPath(final LocationABC inLocation) {
 		boolean result = false;
 
 		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
 		// that makes it impossible to search down the graph and then back up for nested classes.
-		//		ILocation<?> parentLocation = (ILocation<?>) inLocation.getParent();
-		//		ILocation<?> location = parentLocation.getLocation(inLocation.getLocationId());
+		//		LocationABC parentLocation = (LocationABC) inLocation.getParent();
+		//		LocationABC location = parentLocation.getLocation(inLocation.getLocationId());
 		if (!inLocation.isActive()) {
 			// Note: if we had to report out on otherwise good order locations or items, then we could still do the code below 
 			// here and if satisfied log the warning or generate a business event.
@@ -358,9 +358,9 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 *
 	 */
 	@SuppressWarnings("rawtypes")
-	private class LocationsComparable implements Comparator<ILocation> {
+	private class LocationsComparable implements Comparator<LocationABC> {
 
-		public int compare(ILocation inLoc1, ILocation inLoc2) {
+		public int compare(LocationABC inLoc1, LocationABC inLoc2) {
 
 			if ((inLoc1 == null) && (inLoc2 == null)) {
 				return 0;
@@ -391,14 +391,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inPath
 	 * @return
 	 */
-	public final <T extends ILocation<?>> List<T> getLocationsByClass(final Class<? extends ILocation<?>> inClassWanted) {
+	public final <T extends LocationABC> List<T> getLocationsByClass(final Class<? extends LocationABC> inClassWanted) {
 
 		// First make a list of all the bays on the CHE's path.
 		List<T> locations = new ArrayList<T>();
 
 		// Path segments get return in direction order.
 		for (PathSegment pathSegment : getSegments()) {
-			for (ILocation<?> pathLocation : pathSegment.getLocations()) {
+			for (LocationABC pathLocation : pathSegment.getLocations()) {
 				locations.addAll(pathLocation.<T> getActiveChildrenAtLevel(inClassWanted));
 			}
 		}
@@ -416,8 +416,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inClassWanted
 	 * @return
 	 */
-	public final <T extends ILocation<?>> List<T> getLocationsByClassAtOrPastLocation(final ILocation<?> inAtOrPastLocation,
-		final Class<? extends ILocation<?>> inClassWanted) {
+	public final <T extends LocationABC> List<T> getLocationsByClassAtOrPastLocation(final LocationABC inAtOrPastLocation,
+		final Class<? extends LocationABC> inClassWanted) {
 
 		if (inAtOrPastLocation.getPosAlongPath() == null) {
 			LOGGER.error("null posAlongPath in getLocationsByClassAtOrPastLocation #1");
@@ -477,7 +477,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		for (PathSegment segment : this.getSegments()) {
 
 			// make sure segment is not associated to a location			
-			for (ILocation<?> location : segment.getLocations()) {
+			for (LocationABC location : segment.getLocations()) {
 				if (location.getAssociatedPathSegment().equals(segment)) {
 					LOGGER.info("clearing path segment association");
 					location.setPathSegment(null);

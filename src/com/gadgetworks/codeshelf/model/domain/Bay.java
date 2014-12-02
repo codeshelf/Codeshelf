@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("BAY")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Bay extends SubLocationABC<Aisle> {
+public class Bay extends LocationABC {
 
 
 	@Inject
@@ -58,7 +58,7 @@ public class Bay extends SubLocationABC<Aisle> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
 	@SuppressWarnings("rawtypes")
-	private static Comparator<ILocation> topDownTierOrder = new TopDownTierOrder();
+	private static Comparator<LocationABC> topDownTierOrder = new TopDownTierOrder();
 	
 	public Bay() {
 		super();
@@ -81,7 +81,7 @@ public class Bay extends SubLocationABC<Aisle> {
 		// to support list view meta-field tierSortName
 		String bayName = this.getDomainId();
 		String aisleName = "";
-		Aisle aisleLocation = this.getParent();
+		Aisle aisleLocation = this.<Aisle>getParentAtLevel(Aisle.class);
 				
 		if (aisleLocation != null) {
 			aisleName = aisleLocation.getDomainId();
@@ -94,12 +94,12 @@ public class Bay extends SubLocationABC<Aisle> {
 	}
 	
 	@Override
-	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
+	public List<LocationABC> getSubLocationsInWorkingOrder() {
 		@SuppressWarnings("rawtypes")
-		List<ILocation> copy = new ArrayList<ILocation>(getActiveChildren());
+		List<LocationABC> copy = new ArrayList<LocationABC>(getActiveChildren());
 		Collections.sort(copy, topDownTierOrder);
-		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
-		for (ILocation<?> childLocation : copy) {
+		List<LocationABC> result = new ArrayList<LocationABC>();
+		for (LocationABC childLocation : copy) {
 			// add sublocation
 			result.add(childLocation);
 			// and its sublocations recursively
@@ -110,11 +110,11 @@ public class Bay extends SubLocationABC<Aisle> {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private static final class TopDownTierOrder implements Comparator<ILocation> {
+	private static final class TopDownTierOrder implements Comparator<LocationABC> {
 		final Ordering<Double> doubleOrdering = Ordering.<Double>natural().reverse().nullsLast();
 
 		@Override
-		public int compare(ILocation o1, ILocation o2) {
+		public int compare(LocationABC o1, LocationABC o2) {
 			Double o1Z = o1.getAbsoluteAnchorPoint().getZ();
 			Double o2Z = o2.getAbsoluteAnchorPoint().getZ();
 			int result = doubleOrdering.compare(o1Z, o2Z); 
@@ -133,14 +133,8 @@ public class Bay extends SubLocationABC<Aisle> {
 		tier.setAnchorPoint(inAnchorPoint);
 		tier.setPickFaceEndPoint(inPickFaceEndPoint);
 		
-		this.addLocation((SubLocationABC<? extends IDomainObject>)tier);
+		this.addLocation(tier);
 		
 		return tier;
 	}
-
-	@Override
-	public void setParent(Aisle inParent) {
-		this.setParent((ILocation<?>)inParent);
-	}
-
 }

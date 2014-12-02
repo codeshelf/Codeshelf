@@ -35,7 +35,6 @@ import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;

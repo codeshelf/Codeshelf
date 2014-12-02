@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,38 +19,24 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
-import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.LocationABC;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.google.common.base.Strings;
 
 /**
  * @author jon ranstrom

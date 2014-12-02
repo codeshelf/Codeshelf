@@ -89,7 +89,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public static String makeDomainId(final OrderHeader inOrder, final ILocation<?> inLocation) {
+	public static String makeDomainId(final OrderHeader inOrder, final LocationABC inLocation) {
 		return inOrder.getOrderId() + "-" + inLocation.getNominalLocationId();
 	}
 
@@ -118,12 +118,12 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		parent = inParent;
 	}
 
-	public final ILocation<?> getLocation() {
-		return (ILocation<?>) location;
+	public final LocationABC getLocation() {
+		return location;
 	}
 
-	public final void setLocation(final ILocation<?> inLocation) {
-		location = (LocationABC<?>) inLocation;
+	public final void setLocation(final LocationABC inLocation) {
+		location = inLocation;
 	}
 
 	public static void setDao(OrderLocationDao inOrderLocationDao) {

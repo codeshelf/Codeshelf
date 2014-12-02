@@ -6,7 +6,8 @@ import java.util.Random;
 import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.google.common.collect.Lists;
 
@@ -29,11 +30,11 @@ public class InventoryGenerator {
 				inventoryRecords.add(record);
 			}
 		}
-		itemImporter.importSlottedInventory(inventoryRecords, aisle.getParent(), new Timestamp(System.currentTimeMillis()));
+		itemImporter.importSlottedInventory(inventoryRecords, aisle.<Facility>getParentAtLevel(Facility.class), new Timestamp(System.currentTimeMillis()));
 	}
 
 	
-	private InventorySlottedCsvBean generateInventoryRecord(ILocation<?> location, int cmFromLeft) {
+	private InventorySlottedCsvBean generateInventoryRecord(LocationABC location, int cmFromLeft) {
 		InventorySlottedCsvBean bean = new InventorySlottedCsvBean();
 		bean.setItemId(generateItemId());
 		bean.setDescription(generateString());

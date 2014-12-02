@@ -32,14 +32,12 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
@@ -209,11 +207,11 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
 		Facility facility = facilityForVirtualSlotting;
-		SubLocationABC locationB1 = (SubLocationABC) facility.findSubLocationById("A1.B1");
+		LocationABC locationB1 = facility.findSubLocationById("A1.B1");
 		Assert.assertNotNull(locationB1);
-		SubLocationABC locationB2 = (SubLocationABC) facility.findSubLocationById("A1.B2");
+		LocationABC locationB2 = facility.findSubLocationById("A1.B2");
 		Assert.assertNotNull(locationB2);
-		SubLocationABC locationB3 = (SubLocationABC) facility.findSubLocationById("A1.B3");
+		LocationABC locationB3 = facility.findSubLocationById("A1.B3");
 		Assert.assertNotNull(locationB3);
 
 		// By our model, each bay's anchor is relative to the owner aisle, so will differ.
@@ -227,13 +225,13 @@ public class InventoryImporterTest extends EdiTestABC {
 		String bay3PickEnd = locationB3.getPickFaceEndPosXui();
 		Assert.assertEquals(bay1PickEnd, bay2PickEnd);
 
-		SubLocationABC locationB3T1S1 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S1");
+		LocationABC locationB3T1S1 = facility.findSubLocationById("A1.B3.T1.S1");
 		Assert.assertNotNull(locationB3T1S1);
-		SubLocationABC locationB3T1S2 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S2");
+		LocationABC locationB3T1S2 = facility.findSubLocationById("A1.B3.T1.S2");
 		Assert.assertNotNull(locationB3T1S2);
-		SubLocationABC locationB3T1S3 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S3");
+		LocationABC locationB3T1S3 = facility.findSubLocationById("A1.B3.T1.S3");
 		Assert.assertNotNull(locationB3T1S3);
-		SubLocationABC locationB3T1S4 = (SubLocationABC) facility.findSubLocationById("A1.B3.T1.S4");
+		LocationABC locationB3T1S4 = facility.findSubLocationById("A1.B3.T1.S4");
 		Assert.assertNotNull(locationB3T1S4);
 
 		// By our model, each slot's anchor is relative to the owner tier, so will differ.
@@ -321,7 +319,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Double correspondingMeters = itemBOL1.getMetersFromAnchor();
 
 		String itemPosValue = itemBOL1.getPosAlongPathui();
-		String locPosValue = ((SubLocationABC) locationB1T1).getPosAlongPathui();
+		String locPosValue = locationB1T1.getPosAlongPathui();
 		// Assert.assertEquals(itemPosValue, locPosValue);
 		// Bug here
 
@@ -329,12 +327,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		Integer cmValue2 = item1123.getCmFromLeft(); // this did not have a value.
 		Assert.assertEquals(cmValue2, (Integer) 16);
 		String itemPosValue2 = item1123.getPosAlongPathui();
-		String locPosValue2 = ((SubLocationABC) locationD101).getPosAlongPathui();
+		String locPosValue2 = locationD101.getPosAlongPathui();
 		Assert.assertNotEquals(itemPosValue2, locPosValue2);
 
 		// We can now see how the inventory would light.
 		// BOL 1 is case item in A1.B1.T1, with 80 LEDs. No cmFromLeftValue, so it will take the central 4 LEDs.
-		ILocation<?> theLoc = itemBOL1.getStoredLocation();
+		LocationABC theLoc = itemBOL1.getStoredLocation();
 		// verify the conditions.
 		int firstLocLed = theLoc.getFirstLedNumAlongPath();
 		int lastLocLed = theLoc.getLastLedNumAlongPath();
@@ -391,7 +389,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Let's check the LEDs. A2 is tierNotB1S1 side, so B2 is 1 to 80. A1 is tierB1S1 .
 		// Just check our led range on the tiers
-		SubLocationABC locationA2B1T1 = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
+		LocationABC locationA2B1T1 = facility.findSubLocationById("A2.B1.T1");
 		Assert.assertNotNull(locationA2B1T1);
 		Short firstLED1 = locationA2B1T1.getFirstLedNumAlongPath();
 		Short lastLED1 = locationA2B1T1.getLastLedNumAlongPath();
@@ -472,10 +470,10 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 
-		LocationABC<?> locationD403 = (LocationABC) facility.findSubLocationById("D403");
-		LocationABC<?> locationD402 = (LocationABC) facility.findSubLocationById("D402");
-		LocationABC<?> locationD502 = (LocationABC) facility.findSubLocationById("D502");
-		LocationABC<?> locationD503 = (LocationABC) facility.findSubLocationById("D503");
+		LocationABC locationD403 = facility.findSubLocationById("D403");
+		LocationABC locationD402 = facility.findSubLocationById("D402");
+		LocationABC locationD502 = facility.findSubLocationById("D502");
+		LocationABC locationD503 = facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);

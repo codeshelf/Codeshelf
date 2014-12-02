@@ -30,7 +30,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("SLOT")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Slot extends SubLocationABC<Tier> {
+public class Slot extends LocationABC {
 
 	@Inject
 	public static ITypedDao<Slot>	DAO;
@@ -74,10 +74,4 @@ public class Slot extends SubLocationABC<Tier> {
 	public static void setDao(SlotDao inSlotDao) {
 		Slot.DAO = inSlotDao;
 	}
-
-	@Override
-	public void setParent(Tier inParent) {
-		this.setParent((LocationABC<?>)inParent);		
-	}
-
 }

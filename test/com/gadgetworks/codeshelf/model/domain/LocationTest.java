@@ -20,8 +20,8 @@ public class LocationTest extends DomainTestABC {
 
 		Facility facility = createFacilityWithOutboundOrders("O-LOC.1");
 		
-		ILocation<?> aisle = facility.findLocationById("A1");
-		ILocation<?> bay = aisle.findLocationById("B1");
+		LocationABC aisle = facility.findLocationById("A1");
+		LocationABC bay = aisle.findLocationById("B1");
 
 		String aisleId = bay.getLocationIdToParentLevel(Aisle.class);
 		Assert.assertEquals(aisleId, "A1.B1");

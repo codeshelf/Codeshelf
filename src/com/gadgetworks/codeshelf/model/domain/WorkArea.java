@@ -82,7 +82,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "parent")
 	@Getter
-	private List<SubLocationABC>	locations	= new ArrayList<SubLocationABC>();
+	private List<LocationABC>	locations	= new ArrayList<LocationABC>();
 
 	// A work area will contain a set of active users (workers).
 	@OneToMany(mappedBy = "parent")
@@ -115,15 +115,11 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addLocation(ILocation<?> inSubLocation) {
-		// Ebean can't deal with interfaces.
-		SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
-		locations.add(subLocation);
+	public final void addLocation(LocationABC inSubLocation) {
+		locations.add(inSubLocation);
 	}
 
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeLocation(ILocation<?> inLocation) {
+	public final void removeLocation(LocationABC inLocation) {
 		locations.remove(inLocation);
 	}
 

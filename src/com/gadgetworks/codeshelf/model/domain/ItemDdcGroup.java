@@ -36,7 +36,7 @@ import com.google.inject.Singleton;
 @Entity
 @Table(name = "item_ddc_group")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class ItemDdcGroup extends DomainObjectTreeABC<ILocation<?>> {
+public class ItemDdcGroup extends DomainObjectTreeABC<LocationABC> {
 
 	@Inject
 	public static ITypedDao<ItemDdcGroup>	DAO;
@@ -88,8 +88,8 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation<?>> {
 		return "DDC";
 	}
 
-	public final ILocation<?> getParent() {
-		return (ILocation<?>) parent;
+	public final LocationABC getParent() {
+		return parent;
 	}
 	
 	public final void setDdcGroupId(final String inDdcGroupId) {
@@ -100,8 +100,8 @@ public class ItemDdcGroup extends DomainObjectTreeABC<ILocation<?>> {
 		return getDomainId();
 	}
 
-	public final void setParent(ILocation<?> inParent) {
-		parent = (LocationABC<?>) inParent;
+	public final void setParent(LocationABC inParent) {
+		parent = inParent;
 	}
 
 	public final Facility getFacility() {

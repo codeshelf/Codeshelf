@@ -72,8 +72,10 @@ import com.google.common.collect.Ordering;
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public abstract class LocationABC<P extends IDomainObject> extends DomainObjectTreeABC<P> implements ILocation<P> {
+public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 
+	static Double BAY_ALIGNMENT_FUDGE = 0.25;
+	
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
 	public static final Double										METERS_PER_LED_POS	= 0.03125;
@@ -195,7 +197,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, SubLocationABC<? extends IDomainObject>>	locations			= new HashMap<String, SubLocationABC<? extends IDomainObject>>();
+	private Map<String, LocationABC>	locations			= new HashMap<String, LocationABC>();
 
 	// The location aliases for this location.
 	@OneToMany(mappedBy = "mappedLocation")
@@ -231,12 +233,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	public LocationABC() {
 		active = true;
+
+		this.setAnchorPoint(Point.getZeroPoint());
+		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
 
 	public LocationABC(String domainId, final Point inAnchorPoint) {
 		super(domainId);
 		active = true;
 		setAnchorPoint(inAnchorPoint);
+		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
 
 	public void updateAnchorPoint(Double x, Double y, Double z) {
@@ -262,14 +268,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	@SuppressWarnings("rawtypes")
-	public final List<ILocation> getChildren() {
-		return new ArrayList<ILocation>(locations.values());
+	public final List<LocationABC> getChildren() {
+		return new ArrayList<LocationABC>(locations.values());
 	}
 
 	@SuppressWarnings("rawtypes")
-	public final List<ILocation> getActiveChildren() {
-		ArrayList<ILocation> aList = new ArrayList<ILocation>();
-		for (ILocation loc : locations.values()) {
+	public final List<LocationABC> getActiveChildren() {
+		ArrayList<LocationABC> aList = new ArrayList<LocationABC>();
+		for (LocationABC loc : locations.values()) {
 			if (loc.isActive())
 				aList.add(loc);
 		}
@@ -290,9 +296,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			LOGGER.error("makeInactive", e);
 		}
 
-		List<ILocation> childList = getActiveChildren();
-		for (ILocation sublocation : childList) {
-			((LocationABC) sublocation).makeInactiveAndAllChildren();
+		List<LocationABC> childList = getActiveChildren();
+		for (LocationABC sublocation : childList) {
+			sublocation.makeInactiveAndAllChildren();
 		}
 	}
 
@@ -300,8 +306,20 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* getActiveChildrenAtLevel should only be called for active locations. By our model, it should be impossible for active child to have inactive parents.
 	 * See CD_0051 Delete Locations. Once inactive child is encountered, it does not look further down that child chain. Also, will not return itself if inactive and of the right class
 	 */
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the children of this type (no matter how far down the hierarchy).
+	 * 
+	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
+	 * 
+	 * Aisle aisle = facility.<Aisle> getActiveChildrenAtLevel(Aisle.class)
+	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
+	 * 
+	 * @param inClassWanted
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends ILocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ILocation<?>> inClassWanted) {
+	public final <T extends LocationABC> List<T> getActiveChildrenAtLevel(Class<? extends LocationABC> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 		if (!this.isActive()) {
 			LOGGER.error("getActiveChildrenAtLevel called for inactive location");
@@ -309,7 +327,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 
 		// Loop through all of the active children.
-		for (ILocation<?> child : getActiveChildren()) {
+		for (LocationABC child : getActiveChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
@@ -329,13 +347,13 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getLocationIdToParentLevel(java.lang.Class)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationIdToParentLevel(java.lang.Class)
 	 */
 	@SuppressWarnings("unchecked")
-	public final String getLocationIdToParentLevel(Class<? extends ILocation<?>> inClassWanted) {
+	public final String getLocationIdToParentLevel(Class<? extends LocationABC> inClassWanted) {
 		String result;
 
-		ILocation<P> checkParent = (ILocation<P>) getParent();
+		LocationABC checkParent = getParent();
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
@@ -404,11 +422,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getParentAtLevel(java.lang.Class)
+	/**
+	 * Get the parent of this location at the class level specified.
+	 * 
+	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
+	 * 
+	 * Aisle aisle = bay.<Aisle> getParentAtLevel(Aisle.class)
+	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
+	 * 
+	 * @param inClassWanted
+	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends ILocation<?>> T getParentAtLevel(Class<? extends ILocation<?>> inClassWanted) {
+	public final <T extends LocationABC> T getParentAtLevel(Class<? extends LocationABC> inClassWanted) {
 
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
 		if (this.getClass().equals(inClassWanted))
@@ -416,7 +442,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 		T result = null;
 
-		ILocation<P> checkParent = (ILocation<P>) getParent();
+		LocationABC checkParent = getParent();
 		if (checkParent != null) {
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
@@ -445,14 +471,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.ILocation#getAbsolutePosX()
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getAbsolutePosX()
 	 */
 	@SuppressWarnings("unchecked")
 	public Point getAbsoluteAnchorPoint() {
 		Point anchor = getAnchorPoint();
 		Point result = anchor;
 		if (!anchorPosType.equals(PositionTypeEnum.GPS)) {
-			ILocation<P> parent = (ILocation<P>) getParent();
+			LocationABC parent = getParent();
 
 			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
 			// This fixes that problem, but it's not pretty.
@@ -485,7 +511,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
-	public final void addLocation(SubLocationABC<? extends IDomainObject> inLocation) {
+	public final void addLocation(LocationABC inLocation) {
 		IDomainObject oldParent = inLocation.getParent();
 		if (oldParent == null) {
 			locations.put(inLocation.getDomainId(), inLocation);
@@ -504,9 +530,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * bay bay.findLocationById("T3") would find the tier.
 	 * This may return null
 	 */
-	public final ILocation<?> findLocationById(String inLocationId) {
+	public final LocationABC findLocationById(String inLocationId) {
 		if (this.getClass().equals(Facility.class)) {
-			Facility facility = (Facility) this;
+			Facility facility = (Facility)this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
 			if ((alias != null) && (alias.getActive())) {
 				return alias.getMappedLocation();
@@ -520,7 +546,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
 	public final void removeLocation(String inLocationId) {
-		SubLocationABC<? extends IDomainObject> location = locations.get(inLocationId);
+		LocationABC location = locations.get(inLocationId);
 		if (location != null) {
 			location.setParent(null);
 			locations.remove(inLocationId);
@@ -535,8 +561,15 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * Normally called as facility.findSubLocationById(). If no dots in the name, calls findLocationById(), which first looks for alias, but only if at the facility level.
 	 * This will return "deleted" location, but if it does so, it will log a WARN.
 	 */
-	public final ILocation<?> findSubLocationById(final String inLocationId) {
-		ILocation<?> result = null;
+	// --------------------------------------------------------------------------
+	/**
+	 * Look for any sub-location by it's ID.
+	 * The location ID needs to be a dotted notation where the first octet is a child location of "this" location.
+	 * @param inLocationId
+	 * @return
+	 */
+	public final LocationABC findSubLocationById(final String inLocationId) {
+		LocationABC result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
@@ -546,7 +579,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			ILocation<?> firstPartLocation = this.findLocationById(firstPart);
+			LocationABC firstPartLocation = this.findLocationById(firstPart);
 			if (firstPartLocation != null) {
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}
@@ -561,7 +594,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		PathSegment result = null;
 
 		if (pathSegment == null) {
-			ILocation<?> parent = (ILocation<?>) getParent();
+			LocationABC parent = (LocationABC) getParent();
 			if (parent != null) {
 				result = parent.getAssociatedPathSegment();
 			}
@@ -654,7 +687,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addVertex(Vertex inVertex) {
-		ILocation<?> previousLocation = inVertex.getParent();
+		LocationABC previousLocation = inVertex.getParent();
 		if (previousLocation == null) {
 			vertices.add(inVertex);
 			inVertex.setParent(this);
@@ -675,10 +708,10 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addAlias(LocationAlias inAlias) {
-		ILocation<?> previousLocation = inAlias.getMappedLocation();
+		LocationABC previousLocation = inAlias.getMappedLocation();
 		if (previousLocation == null) {
 			aliases.add(inAlias);
-			inAlias.setMappedLocation((ILocation<?>) this);
+			inAlias.setMappedLocation(this);
 		} else if (!previousLocation.equals(this)) {
 			LOGGER.error("cannot map Alias " + inAlias.getDomainId() + " to " + this.getDomainId()
 					+ " because it is still mapped to " + previousLocation.getDomainId());
@@ -709,7 +742,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addStoredItem(Item inItem) {
-		ILocation<?> previousLocation = inItem.getStoredLocation();
+		LocationABC previousLocation = inItem.getStoredLocation();
 
 		// If it's already in another location then remove it from that location.
 		// Shall we use its existing domainID (which will change momentarily?
@@ -743,7 +776,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		final String inItemMasterId,
 		final String inUom) {
 		Item returnItem = null;
-		ILocation<?> location = this.findSubLocationById(inLocationName);
+		LocationABC location = this.findSubLocationById(inLocationName);
 		if (location != null)
 			returnItem = location.getStoredItemFromMasterIdAndUom(inItemMasterId, inUom);
 		return returnItem;
@@ -784,7 +817,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
-		ILocation<?> previousLocation = inItemDdcGroup.getParent();
+		LocationABC previousLocation = inItemDdcGroup.getParent();
 		if (previousLocation == null) {
 			itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
 			inItemDdcGroup.setParent(this);
@@ -875,9 +908,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 *
 	 */
 	@SuppressWarnings("rawtypes")
-	public static class LocationWorkingOrderComparator implements Comparator<ILocation> {
+	public static class LocationWorkingOrderComparator implements Comparator<LocationABC> {
 
-		public int compare(ILocation inLoc1, ILocation inLoc2) {
+		public int compare(LocationABC inLoc1, LocationABC inLoc2) {
 			if (inLoc1.getAnchorPosZ() > inLoc2.getAnchorPosZ()) {
 				return -1;
 			} else if (inLoc1.getPosAlongPath() == null || inLoc2.getPosAlongPath() == null) {
@@ -891,12 +924,19 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 	};
 
-	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
-		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the sublocations (down the the very tree bottom) of this location, in working order.
+	 * The working order gets applied to each level down from this location.
+	 * Working order is top-to-bottom and then down-path.
+	 * @return
+	 */
+	public List<LocationABC> getSubLocationsInWorkingOrder() {
+		List<LocationABC> result = new ArrayList<LocationABC>();
 		@SuppressWarnings("rawtypes")
-		List<ILocation> childLocations = getActiveChildren();
+		List<LocationABC> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
-		for (ILocation<?> childLocation : childLocations) {
+		for (LocationABC childLocation : childLocations) {
 			// add sublocation
 			result.add(childLocation);
 			// and its sublocations recursively
@@ -905,10 +945,16 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		return result;
 	}
 
-	@Override
-	public List<ILocation> getChildrenInWorkingOrder() {
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get all of the children (one level down) of this location, in working order.
+	 * Working order is top-to-bottom and then down-path.
+	 * @return
+	 */
+	public List<LocationABC> getChildrenInWorkingOrder() {
 		@SuppressWarnings("rawtypes")
-		List<ILocation> childLocations = getActiveChildren();
+		List<LocationABC> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		return childLocations;
 	}
@@ -937,7 +983,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// See if we have the controller. Then recursively ask each parent until found.
 		LedController theController = getLedController();
 		if (theController == null) {
-			ILocation<?> aLocation = (ILocation<?>) this.getParent();
+			LocationABC aLocation = (LocationABC) this.getParent();
 			if (aLocation != null) {
 				theController = aLocation.getEffectiveLedController();
 			}
@@ -950,7 +996,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// See if we have the controller. Then recursively ask each parent until found.
 		Short theChannel = getLedChannel();
 		if (theChannel == null) {
-			ILocation<?> aLocation = (ILocation<?>) this.getParent();
+			LocationABC aLocation = (LocationABC) this.getParent();
 			if (aLocation != null) {
 				theChannel = aLocation.getEffectiveLedChannel();
 			}
@@ -963,7 +1009,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		if (getEffectiveLedController() != null) {
 			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
 		} else {
-			for (ILocation<?> child : getActiveChildren()) {
+			for (LocationABC child : getActiveChildren()) {
 				cmdPathsSet.addAll(child.getAllLedCmdPaths());
 			}
 		}
@@ -1067,7 +1113,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		// Add my inventory
 		aList.addAll(getStoredItems().values());
 		// Add my children's inventory
-		for (SubLocationABC<?> location : locations.values()) {
+		for (LocationABC location : locations.values()) {
 			aList.addAll(location.getInventoryInWorkingOrder());
 		}
 		// Sort as we want it
@@ -1082,7 +1128,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 
 	/*
 	@Override
-	public ILocation<?> getLocation() {
+	public LocationABC getLocation() {
 		return this;
 	}
 	*/
@@ -1094,4 +1140,241 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
+
+
+
+	// The owning location.
+	@ManyToOne
+	protected LocationABC parent;
+
+	@Column(nullable = false,name="pick_face_end_pos_type")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private PositionTypeEnum	pickFaceEndPosType;
+
+	// X pos of pick face end (pick face starts at anchor pos).
+	@Column(nullable = false,name="pick_face_end_pos_x")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double				pickFaceEndPosX;
+
+	// Y pos of pick face end (pick face starts at anchor pos).
+	@Column(nullable = false,name="pick_face_end_pos_y")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double				pickFaceEndPosY;
+
+	// Z pos of pick face end (pick face starts at anchor pos).
+	@Column(nullable = false,name="pick_face_end_pos_z")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double				pickFaceEndPosZ;
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public LocationABC getParent() {
+		return parent;
+	}
+
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#setParent(P)
+	 */
+	public void setParent(LocationABC inParent) {
+		parent = inParent;
+	}
+
+	public Point getAbsolutePickFaceEndPoint() {
+		Point base = getAbsoluteAnchorPoint();
+		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	public Point getPickFaceEndPoint() {
+		return new Point(pickFaceEndPosType, pickFaceEndPosX, pickFaceEndPosY, pickFaceEndPosZ);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inPickFaceEndPoint
+	 */
+	public void setPickFaceEndPoint(final Point inPickFaceEndPoint) {
+		pickFaceEndPosType = inPickFaceEndPoint.getPosType();
+		pickFaceEndPosX = inPickFaceEndPoint.getX();
+		pickFaceEndPosY = inPickFaceEndPoint.getY();
+		pickFaceEndPosZ = inPickFaceEndPoint.getZ();
+	}
+
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
+	 */
+	public final void computePosAlongPath(final PathSegment inPathSegment) {
+		if (inPathSegment == null) {
+			LOGGER.error("null pathSegment in computePosAlongPath");
+			return;
+		}
+
+		// Complete revision at V4
+		Point locationAnchorPoint = getAbsoluteAnchorPoint();
+		Point pickFaceEndPoint = getAbsolutePickFaceEndPoint();
+		// The location's posAlongPath is the lower of the anchor or pickFaceEnd
+		Double locAnchorPathPosition = inPathSegment.computeNormalizedPositionAlongPath(locationAnchorPoint);
+		Double pickFaceEndPathPosition = inPathSegment.computeNormalizedPositionAlongPath(pickFaceEndPoint);
+		Double newPosition = Math.min(locAnchorPathPosition, pickFaceEndPathPosition);
+		Double oldPosition = this.getPosAlongPath();
+
+		// Doing this to avoid the DAO needing to check the change, which also generates a bunch of logging.
+		if (!newPosition.equals(oldPosition)) {
+			try {
+				LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: "
+						+ locationAnchorPoint.getX() + " y: " + locationAnchorPoint.getY() + " Face x: ");
+				setPosAlongPath(newPosition);
+				this.getDao().store(this);
+			} catch (DaoException e) {
+				LOGGER.error("", e);
+			}
+		}
+
+		// Also force a recompute for all of the child locations.
+		@SuppressWarnings("rawtypes")
+		List<LocationABC> locations = getActiveChildren();
+		for (@SuppressWarnings("rawtypes")
+		LocationABC location : locations) {
+			location.computePosAlongPath(inPathSegment);
+		}
+	}
+
+	/**
+	 * Clears controller and channel back to null state, as if they had never been set after initialization
+	 */
+	public final void clearControllerChannel() {
+		if (getLedController() != null || getLedChannel() != null) {
+			try {
+				LedController currentController = this.getLedController();
+				if (currentController != null)
+					currentController.removeLocation(this);
+				this.setLedChannel(null);
+				this.getDao().store(this);
+			} catch (DaoException e) {
+				LOGGER.error("doClearControllerChannel", e);
+			}
+		}
+	}
+
+	/**
+	 * Both Aisle and Tier have setControllerChannel functions that call through to this.
+	 * Side effect adds a little complexity. If setting to a valid controller, make sure there is a channel (default 1) even if never set to user set to 0.
+	 */
+	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+
+		// Initially, log
+		LOGGER.debug("On " + this + ", set LED controller to " + inControllerPersistentIDStr);
+
+		// Get the LedController
+		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
+		LedController theLedController = LedController.DAO.findByPersistentId(persistentId);
+
+		// set this tier's
+		if (theLedController != null) {
+			// Get the channel
+			Short theChannel;
+			try {
+				theChannel = Short.valueOf(inChannelStr);
+			} catch (NumberFormatException e) {
+				theChannel = 0; // not recognizable as a number
+			}
+			if (theChannel < 0) {
+				theChannel = 0; // means don't change if there is a channel. Or set to 1 if there isn't.
+			}
+
+			// set the controller. And set the channel
+			theLedController.addLocation(this);
+			if (theChannel != null && theChannel > 0) {
+				this.setLedChannel(theChannel);
+			} else {
+				// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
+				Short thisLedChannel = this.getLedChannel();
+				if (thisLedChannel == null || thisLedChannel <= 0)
+					this.setLedChannel((short) 1);
+			}
+
+			this.getDao().store(this);
+		} else {
+			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
+		}
+	}
+
+	// converts A3 into 003.  Could put the A back on.  Could be a static, but called this way conveniently from tier and from bay
+	public String getCompString(String inString) {
+		String s = inString.substring(1); // Strip off the A, B, T, or S
+		// we will pad with leading spaces to 3
+		int padLength = 3;
+		int needed = padLength - s.length();
+		if (needed <= 0) {
+			return s;
+		}
+		char[] padding = new char[needed];
+		java.util.Arrays.fill(padding, '0');
+		StringBuffer sb = new StringBuffer(padLength);
+		sb.append(padding);
+		sb.append(s);
+		String ss = sb.toString();
+		return ss;
+	}
+
+	public Double getLocationWidthMeters() {
+		// Seems funny, but it is so. Anchor is relative to parent. PickFaceEnd is relative to anchor.
+		// So, the width is just the pickface end value.
+		if (isLocationXOriented())
+			return this.getPickFaceEndPosX();
+		else
+			return this.getPickFaceEndPosY();
+	}
+
+	public boolean isLocationXOriented() {
+		return getPickFaceEndPosY() == 0.0;
+	}
+
+	// UI fields
+	public String getAnchorPosXui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosX());
+	}
+
+	public String getAnchorPosYui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosY());
+	}
+
+	public String getAnchorPosZui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosZ());
+	}
+
+	public String getPickFaceEndPosXui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosX());
+	}
+
+	public String getPickFaceEndPosYui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosY());
+	}
+
+	public String getPickFaceEndPosZui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getPickFaceEndPosZ());
+	}
+
+	public String getPosAlongPathui() {
+		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
+	}
+
+
 }
+
+

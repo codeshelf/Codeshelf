@@ -12,11 +12,11 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -138,14 +138,14 @@ public class VirtualSlottedFacilityGenerator {
 		String uuid2 = controller2.getPersistentId().toString();
 		String uuid3 = controller3.getPersistentId().toString();
 
-		SubLocationABC tier = (SubLocationABC) facility.findSubLocationById("A1.B1.T1");
+		LocationABC tier = facility.findSubLocationById("A1.B1.T1");
 
 		((Tier) tier).setControllerChannel(uuid1, "1", "aisle"); // all A1 T1
 
-		tier = (SubLocationABC) facility.findSubLocationById("A2.B1.T1");
+		tier = facility.findSubLocationById("A2.B1.T1");
 		((Tier) tier).setControllerChannel(uuid2, "1", "aisle"); // all A2 T1
 
-		tier = (SubLocationABC) facility.findSubLocationById("A3.B1.T1");
+		tier = facility.findSubLocationById("A3.B1.T1");
 		((Tier) tier).setControllerChannel(uuid3, "1", "aisle"); // all A3 T1
 
 		return facility;

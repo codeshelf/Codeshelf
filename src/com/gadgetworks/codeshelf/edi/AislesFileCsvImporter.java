@@ -32,13 +32,12 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.LocationABC;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Slot;
-import com.gadgetworks.codeshelf.model.domain.SubLocationABC;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -95,7 +94,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	private String					mLastControllerLed;
 
 	private List<Tier>				mTiersThisAisle;
-	private Map<UUID, ILocation<?>>	mAisleLocationsMapThatMayBecomeInactive;
+	private Map<UUID, LocationABC>	mAisleLocationsMapThatMayBecomeInactive;
 
 	private String getAppropriateControllerLed() {
 		if (mLastControllerLed.isEmpty())
@@ -135,7 +134,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		mIsOrientationX = true;
 
 		mTiersThisAisle = new ArrayList<Tier>();
-		mAisleLocationsMapThatMayBecomeInactive = new HashMap<UUID, ILocation<?>>();
+		mAisleLocationsMapThatMayBecomeInactive = new HashMap<UUID, LocationABC>();
 
 		mLastControllerLed = "";
 		mControllerLed = "";
@@ -352,7 +351,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		List<Slot> slotList = new ArrayList<Slot>();
 
 		@SuppressWarnings("rawtypes")
-		List<? extends ILocation> locationList = inTier.getActiveChildren();
+		List<? extends LocationABC> locationList = inTier.getActiveChildren();
 
 		@SuppressWarnings("unchecked")
 		Collection<? extends Slot> slotCollection = (Collection<? extends Slot>) locationList;
@@ -530,7 +529,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/**
 	 * @param inLocation
 	 */
-	private Point getNewBoundaryPoint(final SubLocationABC<?> inLocation, Double inDepthM, Boolean inXOriented) {
+	private Point getNewBoundaryPoint(final LocationABC inLocation, Double inDepthM, Boolean inXOriented) {
 		// returns a new point in the same coordinate system as the location's anchor
 
 		// The boundary point will be the pickFaceEnd adjusted for mDepth
@@ -611,7 +610,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			LOGGER.info("Aisle " + inAisle.getDomainId() + " has " + howManyFewerLocations
 					+ " fewer locations that will become inactive.");
 
-			for (ILocation<?> location : mAisleLocationsMapThatMayBecomeInactive.values()) {
+			for (LocationABC location : mAisleLocationsMapThatMayBecomeInactive.values()) {
 				String deletingStr = "archiving location " + location.getNominalLocationId() + " " + location.getPrimaryAliasId();
 				LOGGER.info(deletingStr);
 				try {
@@ -1016,13 +1015,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			// As we work, if we don't find them in the marked collections, those are locations that need to be inactivated.
 			// Remember, aisle file goes aisle by aisle. Reading a new aisle file does not delete aisles that are not represented.
 			// no need to add the aisle itself, but add its children
-			for (ILocation<?> level2Location : aisle.getActiveChildren()) {
+			for (LocationABC level2Location : aisle.getActiveChildren()) {
 				mAisleLocationsMapThatMayBecomeInactive.put(level2Location.getPersistentId(), level2Location); // bay
 				// and its children
-				for (ILocation<?> level3Location : level2Location.getActiveChildren()) {
+				for (LocationABC level3Location : level2Location.getActiveChildren()) {
 					mAisleLocationsMapThatMayBecomeInactive.put(level3Location.getPersistentId(), level3Location); // tier
 					// and its children
-					for (ILocation<?> level4Location : level3Location.getActiveChildren()) {
+					for (LocationABC level4Location : level3Location.getActiveChildren()) {
 						mAisleLocationsMapThatMayBecomeInactive.put(level4Location.getPersistentId(), level4Location); // slot
 					}
 				}
