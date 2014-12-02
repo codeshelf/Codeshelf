@@ -12,9 +12,13 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.UUID;
 
+import org.hibernate.HibernateException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.integration.CheProcessTestCrossBatch;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
@@ -40,8 +44,9 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class AisleImporterTest extends EdiTestABC {
 
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleImporterTest.class);
+
 	@Test
-	// TODO: figure out why this failing test causes next test to hang 
 	public final void testTierB1S1Side() {
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -1269,14 +1274,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(tierB1T1.getLedChannel());
 		// set the aisle, then make sure tier got cleared and tier getEffectiveXXX() works
 		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
-		
+
 		// DEV-514 investigation tierB1T1 is old reference to tier. Does it know its controller/channel immediately after the aisle set it in the same transaction space?
 		// Yes! ebean would have failed the following
 		Assert.assertNull(tierB1T1.getLedController());
 		Assert.assertNull(tierB1T1.getLedChannel());
 		Assert.assertEquals(ledController66, tierB1T1.getEffectiveLedController());
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
-		
+
 		// DEV-514: a different kind of issue with hibernate. findByDomainId does not go to the database.  If you asked the database, 
 		// tierB1T1.getLedController()) would not be null.
 		tierB1T1 = Tier.DAO.findByDomainId(bayA16B1, "T1");
@@ -1284,7 +1289,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNull(tierB1T1.getLedChannel());
 		Assert.assertEquals(ledController66, tierB1T1.getEffectiveLedController());
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
-		
+
 		// DEV-514 Let's persist now. tierB1T1 reference comes from the previous. As does aisle16 reference.
 		this.getPersistenceService().endTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
@@ -1305,7 +1310,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Facility facility2 = aList.get(0);
 		tierB1T1 = (Tier) facility2.findSubLocationById("A16.B1.T1");
 		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
-		
+
 		// Set it back to pass the rest of the test.
 		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
 		// and the new v8 UI fields
@@ -1488,11 +1493,10 @@ public class AisleImporterTest extends EdiTestABC {
 
 		Path aPath = createPathForTest("F5X.1", facility);
 		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.00, 48.45);
-		
+
 		this.getPersistenceService().endTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
-		
-		
+
 		String persistStr = segment0.getPersistentId().toString();
 		aisle51.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
@@ -1613,11 +1617,9 @@ public class AisleImporterTest extends EdiTestABC {
 		String segmentId = segment0.getPersistentId().toString();
 		UUID facilityID = facility.getPersistentId();
 		this.getPersistenceService().endTenantTransaction();
-		
-		
+
 		this.getPersistenceService().beginTenantTransaction();
 
-		
 		aisle31.associatePathSegment(segmentId);
 
 		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31);
@@ -1710,19 +1712,19 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
-	protected void checkLocations(UUID facilityID, UUID retrievedPathID, String segmentDomainId, Aisle...locations) {
+	protected void checkLocations(UUID facilityID, UUID retrievedPathID, String segmentDomainId, Aisle... locations) {
 		Path retrievedPath;
 		retrievedPath = Path.DAO.findByPersistentId(retrievedPathID);
 		// this segment should have one location now. However, the old reference is stale and may know its aisles (used to be). Re-get
 		PathSegment retrievedSegment = PathSegment.DAO.findByDomainId(retrievedPath, segmentDomainId);
 		Assert.assertEquals(Arrays.asList(locations), retrievedSegment.getLocations());
-		
+
 		// Let's check locations on the path segment, derived different ways
 		// original aPath return while created:
 		PathSegment memberSegment = retrievedPath.getPathSegment(0);
 		Assert.assertEquals(memberSegment, retrievedSegment);
 		Assert.assertEquals(Arrays.asList(locations), memberSegment.getLocations());
-		
+
 		//From the facility now (after associating aisle to path segment)
 		Facility retrievedFacility = Facility.DAO.findByPersistentId(facilityID);
 		Path memberPath = retrievedFacility.getPath("F3X.1");
@@ -1781,7 +1783,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(segmentRightMostX > aisleCorrectedEndX);
 
 		String persistStr = segment0.getPersistentId().toString();
-		
+
 		this.getPersistenceService().endTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
@@ -1832,7 +1834,7 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getPersistenceService().endTenantTransaction();
 
 	}
-	
+
 	@Test
 	public final void testHibernatePersistFetch() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -1873,64 +1875,173 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(tierB1T1);
 		Tier tierB2T1 = Tier.DAO.findByDomainId(bayA16B2, "T1");
 		Assert.assertNotNull(tierB2T1);
-		
+
 		Slot slotB1T1S5 = Slot.DAO.findByDomainId(tierB1T1, "S5");
 		Assert.assertNotNull(slotB1T1S5);
-		
+
 		// The modification is trivial: activation and deactivation of a slot. Verify starting condition.
 		Assert.assertTrue(slotB1T1S5.getActive());
-		
-		slotB1T1S5.setActive(false);  // but not persisted yet.
+
+		slotB1T1S5.setActive(false); // but not persisted yet.
 		Assert.assertFalse(slotB1T1S5.getActive());
-		
-		// Get it from the DAO again, although from the old facility reference. Does not give the database version.
-		slotB1T1S5  = (Slot) facility.findSubLocationById("A29.B1.T1.S5");
-		// Assert.assertTrue(slotB1T1S5.getActive()); // fails
-		
+		Slot.DAO.store(slotB1T1S5);
+		Assert.assertFalse(slotB1T1S5.getActive()); // Just showing that the store did not matter on the local reference
+
+		// Get it again, although from the old facility reference. Does not give the database version.
+		slotB1T1S5 = (Slot) facility.findSubLocationById("A29.B1.T1.S5");
+		Assert.assertFalse(slotB1T1S5.getActive());
+		// true in database. False on our object		
+
 		// See if we can somehow get what the database has. No!
 		List<Facility> listB = Facility.DAO.getAll();
 		Facility facilityB = listB.get(0);
-		Slot slotB1T1S5B  = (Slot) facilityB.findSubLocationById("A29.B1.T1.S5");
-		// Assert.assertTrue(slotB1T1S5B.getActive()); // fails
-		
+		Slot slotB1T1S5B = (Slot) facilityB.findSubLocationById("A29.B1.T1.S5");
+		Assert.assertFalse(slotB1T1S5B.getActive());
+		// true in database. False in this transaction, even though we really tried to get it straight from the DAO 
+
 		// ok, persist it by closing the transaction
 		this.getPersistenceService().endTenantTransaction();
-		
+
 		this.getPersistenceService().beginTenantTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
-	
-		
-		slotB1T1S5.setActive(true);  // but not persisted yet. This is probably the big danger. Change value on an old reference in new transaction.
+		// Old reference. Now false in database, and false on this reference. Cannot tell if the reference actually got updated by hibernate.
+
+		slotB1T1S5.setActive(true); // but not persisted yet. This is probably the big danger. Change value on an old reference in new transaction.
+		Slot.DAO.store(slotB1T1S5); // This object reference came from the previous transaction. Does that mean it is detached? Did it save?
 		Assert.assertTrue(slotB1T1S5.getActive());
 
 		// How is our old reference?
-		Assert.assertTrue(slotB1T1S5B.getActive()); // Also true, even though not persisted.
-		
+		Assert.assertTrue(slotB1T1S5B.getActive()); // Also true, for the old transaction reference after refetch
+
 		// See if we can somehow get what the database has. Yes!  Why this time?
 		List<Facility> listC = Facility.DAO.getAll();
 		Facility facilityC = listC.get(0);
-		Slot slotB1T1S5C  = (Slot) facilityC.findSubLocationById("A29.B1.T1.S5");
-		Assert.assertFalse(slotB1T1S5C.getActive()); 
-		Assert.assertTrue(slotB1T1S5B.getActive());
-		
+		Slot slotB1T1S5C = (Slot) facilityC.findSubLocationById("A29.B1.T1.S5");
+		Assert.assertTrue(slotB1T1S5C.getActive()); // matching what database has
+		Assert.assertTrue(slotB1T1S5B.getActive()); // old reference is still active.
+
 		// close the transaction, and see what happens to our inconsistent reference
 		this.getPersistenceService().endTenantTransaction();
-		
+
 		this.getPersistenceService().beginTenantTransaction();
-		
-		Assert.assertTrue(slotB1T1S5.getActive()); 
+
+		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive());
-		Assert.assertFalse(slotB1T1S5C.getActive());  // This reference still "stuck" with wrong value
+		Assert.assertTrue(slotB1T1S5C.getActive());
 		// We should be able to get it again.
 		List<Facility> listD = Facility.DAO.getAll();
 		Facility facilityD = listD.get(0);
-		Slot slotB1T1S5D  = (Slot) facilityD.findSubLocationById("A29.B1.T1.S5");
-		Assert.assertFalse(slotB1T1S5D.getActive());  // Still stuck! incorrect! What value is in the database?
-		Assert.assertTrue(slotB1T1S5.getActive()); 
+		Slot slotB1T1S5D = (Slot) facilityD.findSubLocationById("A29.B1.T1.S5");
+		Assert.assertTrue(slotB1T1S5D.getActive());
+		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive());
-		
+
 		this.getPersistenceService().endTenantTransaction();
 
 	}
 
+	private void setActiveValue(LocationABC inLocation, boolean inValue, boolean inWithTransaction, boolean inThrow) {
+		if (inWithTransaction)
+			this.getPersistenceService().beginTenantTransaction();
+
+		inLocation.setActive(inValue);
+		inLocation.getDao().store(inLocation);
+
+		if (inThrow) {
+			throw new EdiFileReadException("Just a throw because test commanded it to. No relevance to EDI.");
+		}
+
+		if (inWithTransaction)
+			this.getPersistenceService().endTenantTransaction();
+	}
+
+	@Test
+	public final void testThrowInTransaction() {
+		this.getPersistenceService().beginTenantTransaction();
+
+		// Start with a file read to new facility
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A30,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,5,40,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-AISLE30");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-AISLE30", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-AISLE30");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+
+		List<Facility> listA = Facility.DAO.getAll();
+		Facility facilityA = listA.get(0);
+		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A30.B1.T1.S5");
+		Assert.assertTrue(slotB1T1S5.getActive());
+
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 1: try to store a detached object should throw");
+
+		try {
+			// try to store not in a transaction		
+			slotB1T1S5.setActive(true); // but not persisted yet. This is probably the big danger. Change value on an old reference in new transaction.
+			LOGGER.info("Modify a detached object was ok.");
+			Slot.DAO.store(slotB1T1S5); // This object reference came from the previous transaction. Does that mean it is detached? Did it save?
+			LOGGER.error("Should not see this message. Cannot store a detached object");
+		} catch (HibernateException e) {
+			LOGGER.info("Caught expected throw");
+		}
+		final boolean throwYes = true;
+		final boolean throwNo = false;
+		final boolean transactionYes = true;
+		final boolean transactionNo = false;
+
+		LOGGER.info("Case 2: simple subtransaction that might work. See errors from PersistenceService");
+
+		this.getPersistenceService().beginTenantTransaction();
+		setActiveValue(slotB1T1S5, false, transactionYes, throwNo);
+		Assert.assertFalse(slotB1T1S5.getActive());
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertFalse(slotB1T1S5.getActive());
+
+		LOGGER.info("Case 2: simple subtransaction will throw");
+		this.getPersistenceService().beginTenantTransaction();
+		try {
+			setActiveValue(slotB1T1S5, true, transactionYes, throwYes);
+		} catch (EdiFileReadException e) {
+			LOGGER.info("Caught expected exception");
+		}
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertTrue(slotB1T1S5.getActive());
+		
+		LOGGER.info("Case 3: Not a subtransaction. Will throw, leaving transaction open");
+		try {
+			setActiveValue(slotB1T1S5, false , transactionYes, throwYes);
+		} catch (EdiFileReadException e) {
+			LOGGER.info("Caught expected exception");
+		}
+		Assert.assertFalse(slotB1T1S5.getActive());
+
+		LOGGER.info("Case 4: After the throw leaving transaction open, continue with normal transaction.");
+		this.getPersistenceService().beginTenantTransaction();
+		slotB1T1S5.setActive(true); 
+		Slot.DAO.store(slotB1T1S5);
+		this.getPersistenceService().endTenantTransaction();
+		Assert.assertTrue(slotB1T1S5.getActive());
+
+	}
 }
