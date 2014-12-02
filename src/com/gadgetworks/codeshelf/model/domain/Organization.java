@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,11 +86,6 @@ public class Organization extends DomainObjectABC {
 	@MapKey(name = "domainId")
 	@Getter
 	private Map<String, PersistentProperty>	persistentProperties	= new HashMap<String, PersistentProperty>();
-
-	@OneToMany(mappedBy = "parentOrganization")
-	@MapKey(name = "domainId")
-	//	@Getter(lazy = false)
-	private Map<String, Facility>			facilities				= new HashMap<String, Facility>();
 
 	public Organization() {
 		setParent(this);
@@ -183,41 +177,13 @@ public class Organization extends DomainObjectABC {
 
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
-		return new ArrayList<Facility>(facilities.values());
-	}
-
-	public final void addFacility(Facility inFacility) {
-		Organization previousOrganization = inFacility.getOrganization();
-		if(previousOrganization == null) {
-			facilities.put(inFacility.getDomainId(), inFacility);
-			inFacility.setOrganization(this);
-		} else if(!previousOrganization.equals(this)) {
-			LOGGER.error("cannot add Facility "+inFacility.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrganization.getDomainId());
-		}	
-	}
-
-	public final void removeFacility(Facility inFacility) {
-		Facility facility = this.getFacility(inFacility.getDomainId());
-		if(facility != null) {
-			facility.setOrganization(null);
-			facilities.remove(inFacility.getDomainId());
-		} else {
-			LOGGER.error("cannot remove Facility "+inFacility.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
-		}
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inFacilityDomainId
 	 * @return
 	 */
 	public final Facility getFacility(final String inFacilityDomainId) {
-		Facility result = null;
-
-		result = facilities.get(inFacilityDomainId);
-
-		return result;
+		return Facility.DAO.findByDomainId(null, inFacilityDomainId);
 	}
 
 	// --------------------------------------------------------------------------
@@ -225,7 +191,7 @@ public class Organization extends DomainObjectABC {
 	 * @return
 	 */
 	public final List<Facility> getFacilities() {
-		return new ArrayList<Facility>(facilities.values());
+		return Facility.DAO.getAll();
 	}
 
 	// --------------------------------------------------------------------------
@@ -257,7 +223,6 @@ public class Organization extends DomainObjectABC {
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
 		facility.setAnchorPoint(inAnchorPoint);
-		this.addFacility(facility);
 		Facility.DAO.store(facility);
 
 		// Create a first Dropbox Service entry for this facility.
@@ -276,7 +241,7 @@ public class Organization extends DomainObjectABC {
 		}
 
 		// Create the default network for the facility.
-		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = facility.createNetwork(this,CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
@@ -325,11 +290,6 @@ public class Organization extends DomainObjectABC {
 		}
 
 		return result;
-	}
-
-	@Override
-	public Organization getOrganization() {
-		return this;
 	}
 
 	@Override

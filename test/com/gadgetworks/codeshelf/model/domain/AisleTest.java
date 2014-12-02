@@ -31,7 +31,7 @@ public class AisleTest extends DomainTestABC {
 	public final void updateControllerOnAisle() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		LedController controller = getDefaultController(getDefaultNetwork(getDefaultFacility()), "0xABCDEF");
+		LedController controller = getDefaultController(getDefaultNetwork(null,getDefaultFacility()), "0xABCDEF");
 		Aisle aisle = getDefaultAisle(getDefaultFacility(getDefaultOrganization("Org1")), "A1");
 
 		Short testChannel = 8;

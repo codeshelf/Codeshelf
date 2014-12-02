@@ -140,13 +140,6 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
 	// DomainObjectABC will manufacture a call to getPathSegment during DAO.store(). So do not skip the getter with complicated overrides
 
-	//	// The owning organization.
-	//	@Column(nullable = true)
-	//	@ManyToOne(optional = true)
-	//	@Getter
-	//	@Setter
-	//	private Organization				parentOrganization;
-	//
 	// The LED controller.
 	@ManyToOne(optional = true)
 	@JoinColumn(name="led_controller_persistentid")
@@ -1132,10 +1125,6 @@ public abstract class LocationABC extends DomainObjectTreeABC<LocationABC> {
 		return this;
 	}
 	*/
-
-	public Organization getOrganization() {
-		return getFacility().getOrganization();
-	}
 
 	public Facility getFacility() {
 		return getParent().getFacility();

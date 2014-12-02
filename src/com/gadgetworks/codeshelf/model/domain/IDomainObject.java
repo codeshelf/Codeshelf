@@ -78,24 +78,5 @@ public interface IDomainObject {
 	 */
 	<T extends IDomainObject> ITypedDao<T> getDao();
 
-	// --------------------------------------------------------------------------
-	/**
-	 * This allows us to get a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
-	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
-	 * @param inFieldName
-	 * @param inFieldValue
-	 */
-	//Object getFieldValueByName(final String inFieldName);
-
-	// --------------------------------------------------------------------------
-	/**
-	 * This allows us to set a domain object field value from the DAO in a way that goes around Ebean getter/setter decoration.
-	 * DO NOT CALL THIS METHOD OUTSIDE OF DAO STORE().
-	 * @param inFieldName
-	 * @param inFieldValue
-	 */
-	//void setFieldValueByName(final String inFieldName, final Object inFieldValue);
-
-	abstract Organization getOrganization();
 	abstract Facility getFacility();
 }

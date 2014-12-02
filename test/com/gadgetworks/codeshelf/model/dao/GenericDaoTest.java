@@ -114,7 +114,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 		session = persistenceService.getCurrentTenantSession();
 		t = session.beginTransaction();
-		Facility foundFacility = mFacilityDao.findByDomainId(organization1, FACILITY_ID);
+		Facility foundFacility = mFacilityDao.findByDomainId(null, FACILITY_ID);
 		Assert.assertNotNull(foundFacility);
 
 		Organization foundOrganization = mOrganizationDao.findByDomainId(null, ORGANIZATION_ID);
@@ -142,7 +142,6 @@ public class GenericDaoTest extends DAOTestABC {
 		t = session.beginTransaction();
 		Facility facility = organization1.createFacility(FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
-		organization1.addFacility(facility);
 		mFacilityDao.store(facility);
 
 		Aisle aisle1 = facility.createAisle(

@@ -116,10 +116,4 @@ public class MockModel implements IDomainObject {
 		return null;
 	}
 
-	@Override
-	public Organization getOrganization() {
-		return null;
-	}
-
-
 }

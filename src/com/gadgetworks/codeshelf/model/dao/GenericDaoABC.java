@@ -83,7 +83,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
-	public final T findByDomainId(final IDomainObject parentObject, final String domainId) {
+	public T findByDomainId(final IDomainObject parentObject, final String domainId) {
 		String effectiveId = domainId;
 		try {
 			Session session = getCurrentSession();

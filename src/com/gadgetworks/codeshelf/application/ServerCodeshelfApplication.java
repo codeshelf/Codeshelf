@@ -283,20 +283,19 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Recompute path positions,
 		//   and ensure IronMq configuration
 		//   and create a default site controller user if doesn't already exist
-		for (Organization organization : mOrganizationDao.getAll()) {
-			for (Facility facility : organization.getFacilities()) {
-				for (Path path : facility.getPaths()) {
-					// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
-					facility.recomputeLocationPathDistances(path);
-				}
-
-				// create a default site controller and user for the first facility you see
-				// this should go away
-				for(CodeshelfNetwork network : facility.getNetworks()) {
-					network.createDefaultSiteControllerUser(); // does nothing if user already exists
-				}
-
+		Organization organization = Organization.DAO.getAll().get(0);
+		for (Facility facility : Facility.DAO.getAll()) {
+			for (Path path : facility.getPaths()) {
+				// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+				facility.recomputeLocationPathDistances(path);
 			}
+
+			// create a default site controller and user for the first facility you see
+			// this should go away
+			for(CodeshelfNetwork network : facility.getNetworks()) {
+				network.createDefaultSiteControllerUser(organization); // does nothing if user already exists
+			}
+
 		}
 
 		this.getPersistenceService().endTenantTransaction();

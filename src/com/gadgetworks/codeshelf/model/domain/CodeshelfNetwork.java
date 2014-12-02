@@ -304,13 +304,13 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 * 
 	 * @return user
 	 */
-	public final User createDefaultSiteControllerUser() {
+	public final User createDefaultSiteControllerUser(Organization org) {
 		User siteconUser = User.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
 		if(siteconUser == null) {
 			// no default site controller user exists. check for default site controller.
 			SiteController sitecon = SiteController.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
 			if(sitecon == null) {
-				siteconUser = createSiteControllerAndUser(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Test Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+				siteconUser = createSiteControllerAndUser(org,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Test Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
 			} else {
 				LOGGER.error("Default site controller user doesn't exist, but default site controller does exist");
 			}
@@ -318,7 +318,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return siteconUser;
 	}
 	
-	public final User createSiteControllerAndUser(String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
+	public final User createSiteControllerAndUser(Organization org, String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
 		User siteconUser = User.DAO.findByDomainId(null,inDomainId);
 		if(siteconUser == null) {
 			// no default site controller user exists. check for default site controller.
@@ -339,8 +339,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 					sitecon=null;
 				}
 				
-				if(sitecon!=null) {
-					siteconUser = this.getParent().getOrganization().createUser(inDomainId, inPassword, UserType.SITECON);
+				if(sitecon!=null && org!=null) {
+					siteconUser = org.createUser(inDomainId, inPassword, UserType.SITECON);
 					
 					if (siteconUser == null) {
 						LOGGER.error("Failed to create user for new site controller "+inDomainId);

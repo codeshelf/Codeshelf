@@ -188,11 +188,6 @@ public class PersistentProperty extends DomainObjectTreeABC<Organization> {
 	}
 
 	@Override
-	public Organization getOrganization() {
-		return getParent();
-	}
-	
-	@Override
 	public Facility getFacility() {
 		return null;
 	}

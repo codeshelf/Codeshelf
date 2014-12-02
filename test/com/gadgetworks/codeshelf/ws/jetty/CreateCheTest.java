@@ -50,7 +50,7 @@ public class CreateCheTest extends DAOTestABC {
 		Facility facility = organization.createFacility("F1", "facilityf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
+		CodeshelfNetwork network = facility.createNetwork(organization,"N1");
 		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
@@ -101,7 +101,7 @@ public class CreateCheTest extends DAOTestABC {
 
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
+		CodeshelfNetwork network = facility.createNetwork(organization,"N1");
 		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
@@ -148,7 +148,7 @@ public class CreateCheTest extends DAOTestABC {
 		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
+		CodeshelfNetwork network = facility.createNetwork(organization,"N1");
 		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();
@@ -219,7 +219,7 @@ public class CreateCheTest extends DAOTestABC {
 		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
+		CodeshelfNetwork network = facility.createNetwork(organization,"N1");
 		CodeshelfNetwork.DAO.store(network);
 		
 		Che che = new Che();

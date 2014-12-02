@@ -45,7 +45,6 @@ public class OptimisticLockExceptionTest {
 
 		Facility.DAO = new FacilityDao(persistenceService);
 		Facility facility = new Facility();
-		organization.addFacility(facility);
 		facility.setFacilityId("OPTIMISTIC-F1");
 		facility.setAnchorPoint(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		Facility.DAO.store(facility);

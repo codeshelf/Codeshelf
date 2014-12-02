@@ -110,23 +110,14 @@ public class Facility extends LocationABC {
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
+		
+		@Override
+		public Facility findByDomainId(final IDomainObject parentObject, final String domainId) {
+			return super.findByDomainId(null, domainId);
+		}
 	}
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
-
-	// The owning organization.
-	@NotNull
-	@ManyToOne
-	@JoinColumn(name="parent_organization_persistentid")
-	private Organization					parentOrganization;
-
-	//	@Column(nullable = false)
-	//	@ManyToOne(optional = false)
-	//	private SubLocationABC					parent;
-
-	/*
-	@OneToMany(mappedBy = "parent",targetEntity=SubLocationABC.class)
-	*/
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
@@ -207,7 +198,7 @@ public class Facility extends LocationABC {
 
 	@Override
 	public final String getFullDomainId() {
-		return getOrganization().getDomainId() + "." + getDomainId();
+		return getDomainId();
 	}
 
 	public final void setFacilityId(String inFacilityId) {
@@ -851,7 +842,7 @@ public class Facility extends LocationABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
+	public final CodeshelfNetwork createNetwork(Organization org,final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
 
@@ -870,7 +861,7 @@ public class Facility extends LocationABC {
 			LOGGER.error("DaoException persistence error storing CodeshelfNetwork", e);
 		}
 
-		result.createDefaultSiteControllerUser(); // this should go away. will only create default user+sitecon if it doesn't exist
+		result.createDefaultSiteControllerUser(org); // this should go away. will only create default user+sitecon if it doesn't exist
 		return result;
 	}
 
@@ -2382,17 +2373,6 @@ public class Facility extends LocationABC {
 			this.outboundOrderDetail = outboundOrderDetail;
 			this.firstLocationOnPath = firstLocationOnPath;
 		}
-	}
-
-	public Organization getOrganization() {
-		return parentOrganization;
-	}
-
-	/**
-	 * for use only by parent organization!
-	 */
-	public void setOrganization(Organization inOrg) {
-		parentOrganization = inOrg;
 	}
 
 	@Override

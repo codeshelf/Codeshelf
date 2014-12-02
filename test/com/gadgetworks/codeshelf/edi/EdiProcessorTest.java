@@ -130,7 +130,6 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		organization.createFacility("F-EDI.1", "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility("F-EDI.1");
-		organization.addFacility(facility);
 
 		TestFacilityDao facilityDao = new TestFacilityDao(this.getPersistenceService(), facility);
 		facilityDao.store(facility);
@@ -240,12 +239,6 @@ public class EdiProcessorTest extends EdiTestABC {
 
 			@Override
 			public <T extends IDomainObject> ITypedDao<T> getDao() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Organization getOrganization() {
 				// TODO Auto-generated method stub
 				return null;
 			}
@@ -361,12 +354,6 @@ public class EdiProcessorTest extends EdiTestABC {
 
 			@Override
 			public <T extends IDomainObject> ITypedDao<T> getDao() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Organization getOrganization() {
 				// TODO Auto-generated method stub
 				return null;
 			}

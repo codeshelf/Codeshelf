@@ -293,7 +293,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 		return null;
 	}
 	
-	@Override
 	public Organization getOrganization() {
 		return this.getParent();
 	}

@@ -48,7 +48,6 @@ public class DropboxServiceTest {
 		Organization organization = new Organization();
 		organization.setOrganizationId("O1");
 		Facility facility = new Facility();
-		organization.addFacility(facility);
 		facility.setFacilityId("TEST1");
 
 		facility.createDropboxService();

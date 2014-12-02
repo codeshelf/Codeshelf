@@ -57,12 +57,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return getDefaultOrganization("orgTest");
 	}
 
-	protected CodeshelfNetwork getDefaultNetwork(Facility inFacility) {
+	protected CodeshelfNetwork getDefaultNetwork(Organization organization,Facility inFacility) {
 		String defaultDomainId = "0xFEDCBA";
 		
 		CodeshelfNetwork codeshelfNetwork = mCodeshelfNetworkDao.findByDomainId(inFacility, defaultDomainId);
 		if (codeshelfNetwork == null) {
-			codeshelfNetwork = inFacility.createNetwork(defaultDomainId);
+			codeshelfNetwork = inFacility.createNetwork(organization,defaultDomainId);
 			codeshelfNetwork.getDao().store(codeshelfNetwork);
 		}
 		return codeshelfNetwork;
@@ -167,7 +167,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		Facility resultFacility = getDefaultFacility(organization);
 		
-		CodeshelfNetwork network = resultFacility.createNetwork("WITEST");
+		CodeshelfNetwork network = resultFacility.createNetwork(organization,"WITEST");
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 
 		LedController controller = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000002"));

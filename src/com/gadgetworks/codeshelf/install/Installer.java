@@ -70,11 +70,9 @@ public class Installer {
 		
 		// Recompute path positions.
 		// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
-		for (Organization organization : Organization.DAO.getAll()) {
-			for (Facility facility : organization.getFacilities()) {
-				for (Path path : facility.getPaths()) {
-					facility.recomputeLocationPathDistances(path);
-				}
+		for (Facility facility : Facility.DAO.getAll()) {
+			for (Path path : facility.getPaths()) {
+				facility.recomputeLocationPathDistances(path);
 			}
 		}
 	}

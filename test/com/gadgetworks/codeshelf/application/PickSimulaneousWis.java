@@ -141,7 +141,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
+		CodeshelfNetwork network = facility.createNetwork(organization,nName);
 		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
 

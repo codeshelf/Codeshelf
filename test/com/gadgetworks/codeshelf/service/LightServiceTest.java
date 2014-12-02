@@ -359,7 +359,7 @@ public class LightServiceTest extends EdiTestABC {
 		importer2.importLocationAliasesFromCsvStream(new StringReader(csvLocationAlias), facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
+		CodeshelfNetwork network = facility.createNetwork(organization,nName);
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));

@@ -127,7 +127,7 @@ public class VirtualSlottedFacilityGenerator {
 		locationAliasImporter.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
+		CodeshelfNetwork network = facility.createNetwork(organization,nName);
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 
