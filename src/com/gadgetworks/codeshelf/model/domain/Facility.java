@@ -91,7 +91,7 @@ import com.google.inject.Singleton;
 @Entity
 @DiscriminatorValue("FACILITY")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Facility extends SubLocationABC<ISubLocation<?>> {
+public class Facility extends SubLocationABC<ILocation<?>> {
 
 	private static final long			serialVersionUID	= 1L;
 
@@ -1035,7 +1035,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		if (inScannedLocationId == null || inScannedLocationId.isEmpty())
 			return 0.0;
 
-		ISubLocation<?> cheLocation = null;
+		ILocation<?> cheLocation = null;
 		cheLocation = findSubLocationById(inScannedLocationId);
 		if (cheLocation == null) {
 			LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
@@ -1060,7 +1060,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 				if (bay.getPosAlongPath() == null) {
 					LOGGER.error("bay location does not have posAlongPath in getStartingPathDistance #3");
 				} else if ((bay.getPosAlongPath() < cheBay.getPosAlongPath())
-						&& (bay.getPosAlongPath() + ISubLocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
+						&& (bay.getPosAlongPath() + ILocation.BAY_ALIGNMENT_FUDGE > cheBay.getPosAlongPath())) {
 					selectedBay = bay;
 				}
 			}
@@ -1412,8 +1412,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
-				List<ISubLocation<?>> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
-				for (ISubLocation<?> aLocationOnPath : firstOrderLocationPerPath) {
+				List<ILocation<?>> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail);
+				for (ILocation<?> aLocationOnPath : firstOrderLocationPerPath) {
 					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
 					batchResult.add(work);
 				} /* for else */
@@ -1435,8 +1435,8 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
-	private List<ISubLocation<?>> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
-		ArrayList<ISubLocation<?>> locations = new ArrayList<ISubLocation<?>>();
+	private List<ILocation<?>> toPossibleLocations(OrderDetail matchingOutboundOrderDetail) {
+		ArrayList<ILocation<?>> locations = new ArrayList<ILocation<?>>();
 		for (Path path : getPaths()) {
 			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
 			if (firstOutOrderLoc != null)
@@ -1527,12 +1527,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	 */
 	@SuppressWarnings("unused")
 	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
-		final List<ISubLocation<?>> inSubLocations) {
+		final List<ILocation<?>> inSubLocations) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		// Cycle over all bays on the path.
-		for (ISubLocation<?> subLocation : inSubLocations) {
+		for (ILocation<?> subLocation : inSubLocations) {
 			for (ILocation<?> workLocation : subLocation.getSubLocationsInWorkingOrder()) {
 				Iterator<WorkInstruction> wiIterator = inCrosswallWiList.iterator();
 				while (wiIterator.hasNext()) {
@@ -1882,7 +1882,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	private List<LedCmdGroup> getLedCmdGroupListForLocationList(final List<OrderLocation> inLocationList, final ColorEnum inColor) {
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inLocationList) {
-			ISubLocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
+			ILocation<?> theLocation = orderLocation.getLocation(); // this should never be null by database constraint
 			if (theLocation == null) {
 				LOGGER.error("null order location in getLedCmdGroupListForLocationList. How?");
 				continue;
@@ -2165,7 +2165,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	private List<ILocation<?>> getDdcLocations() {
 		LOGGER.debug("DDC get locations");
 		List<ILocation<?>> ddcLocations = new ArrayList<ILocation<?>>();
-		for (ISubLocation<?> aisle : getActiveChildrenAtLevel(Aisle.class)) {
+		for (ILocation<?> aisle : getActiveChildrenAtLevel(Aisle.class)) {
 			// no actual need for above line. facility.getActiveChildren would work equally
 			for (ILocation<?> location : aisle.getActiveChildren()) {
 				if (location.getFirstDdcId() != null) {
@@ -2371,12 +2371,12 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 		private OrderDetail		outboundOrderDetail;
 
 		@Getter
-		private ISubLocation<?>	firstLocationOnPath;
+		private ILocation<?>	firstLocationOnPath;
 
 		@Getter
 		private Container		container;
 
-		public Work(Container container, OrderDetail outboundOrderDetail, ISubLocation<?> firstLocationOnPath) {
+		public Work(Container container, OrderDetail outboundOrderDetail, ILocation<?> firstLocationOnPath) {
 			super();
 			this.container = container;
 			this.outboundOrderDetail = outboundOrderDetail;
@@ -2396,7 +2396,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	}
 
 	@Override
-	public SubLocationABC<ISubLocation<?>> getParent() {
+	public SubLocationABC<ILocation<?>> getParent() {
 		return null;
 	}
 
@@ -2412,7 +2412,7 @@ public class Facility extends SubLocationABC<ISubLocation<?>> {
 	}
 
 	@Override
-	public void setParent(ISubLocation<?> inParent) {
+	public void setParent(ILocation<?> inParent) {
 		LOGGER.error("tried to set Facility " + this.getDomainId() + " parent to non-organization " + inParent.getClassName() + " "
 				+ inParent.getDomainId());
 	}

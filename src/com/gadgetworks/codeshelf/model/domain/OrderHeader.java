@@ -379,7 +379,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		List<OrderLocation> newActiveOrderLocations = new ArrayList<OrderLocation>();
 		for (OrderLocation orderLocation : getOrderLocations()) {
 			if (orderLocation.getActive()) {
-				ISubLocation<?> loc = orderLocation.getLocation();
+				ILocation<?> loc = orderLocation.getLocation();
 				if (inIncludeInactiveLocations || loc.isActive()) // do not need null check due to database constraint
 					newActiveOrderLocations.add(orderLocation);
 			}
@@ -524,7 +524,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 		OrderLocation firstLocation = oLocations.get(0);
 		if (firstLocation != null) {
-			ISubLocation<?> theLoc = firstLocation.getLocation();
+			ILocation<?> theLoc = firstLocation.getLocation();
 			if (theLoc != null)
 				result = ((LocationABC<?>) theLoc).getPrimaryAliasId();
 		}
@@ -533,7 +533,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			for (int n = 1; n < numLocations; n++) {
 				OrderLocation nextLocation = oLocations.get(n);
 				if (nextLocation != null) {
-					ISubLocation<?> theLoc = nextLocation.getLocation();
+					ILocation<?> theLoc = nextLocation.getLocation();
 					if (theLoc != null)
 						result = result + ";" + ((LocationABC<?>) theLoc).getPrimaryAliasId();
 				}

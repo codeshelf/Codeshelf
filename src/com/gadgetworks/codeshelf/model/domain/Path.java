@@ -304,8 +304,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
 		// that makes it impossible to search down the graph and then back up for nested classes.
-		//		ISubLocation<?> parentLocation = (ISubLocation<?>) inLocation.getParent();
-		//		ISubLocation<?> location = parentLocation.getLocation(inLocation.getLocationId());
+		//		ILocation<?> parentLocation = (ILocation<?>) inLocation.getParent();
+		//		ILocation<?> location = parentLocation.getLocation(inLocation.getLocationId());
 		if (!inLocation.isActive()) {
 			// Note: if we had to report out on otherwise good order locations or items, then we could still do the code below 
 			// here and if satisfied log the warning or generate a business event.
@@ -391,7 +391,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inPath
 	 * @return
 	 */
-	public final <T extends ISubLocation<?>> List<T> getLocationsByClass(final Class<? extends ISubLocation<?>> inClassWanted) {
+	public final <T extends ILocation<?>> List<T> getLocationsByClass(final Class<? extends ILocation<?>> inClassWanted) {
 
 		// First make a list of all the bays on the CHE's path.
 		List<T> locations = new ArrayList<T>();
@@ -416,8 +416,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inClassWanted
 	 * @return
 	 */
-	public final <T extends ISubLocation<?>> List<T> getLocationsByClassAtOrPastLocation(final ILocation<?> inAtOrPastLocation,
-		final Class<? extends ISubLocation<?>> inClassWanted) {
+	public final <T extends ILocation<?>> List<T> getLocationsByClassAtOrPastLocation(final ILocation<?> inAtOrPastLocation,
+		final Class<? extends ILocation<?>> inClassWanted) {
 
 		if (inAtOrPastLocation.getPosAlongPath() == null) {
 			LOGGER.error("null posAlongPath in getLocationsByClassAtOrPastLocation #1");

@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
 // domain objects needed
@@ -78,19 +78,19 @@ public class AisleImporterTest extends EdiTestABC {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check the aisle
-		ISubLocation<?> aisle = facility.findLocationById("A9");
+		ILocation<?> aisle = facility.findLocationById("A9");
 		Assert.assertNotNull(aisle);
 		Assert.assertEquals(aisle.getDomainId(), "A9");
 
 		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle2);
 
-		// Not sure if they are really the same reference. However, both implement ISubLocation. DomainObjectABC has an equals override that checks class and persistentId
+		// Not sure if they are really the same reference. However, both implement ILocation. DomainObjectABC has an equals override that checks class and persistentId
 		Assert.assertEquals(aisle, aisle2);
 
 		// Check the bays
-		ISubLocation<?> bay1 = aisle.findLocationById("B1");
-		ISubLocation<?> bay2 = aisle.findLocationById("B2");
+		ILocation<?> bay1 = aisle.findLocationById("B1");
+		ILocation<?> bay2 = aisle.findLocationById("B2");
 		Assert.assertNotNull(bay1);
 		Assert.assertNotNull(bay2);
 		Assert.assertEquals(bay2.getDomainId(), "B2");
@@ -180,7 +180,7 @@ public class AisleImporterTest extends EdiTestABC {
 		slotAnchorX = ((Slot) slotB2T2S3).getAnchorPosX();
 
 		// Check some vertices. The aisle and each bay should have 4 vertices.
-		// aisle defined as an ISublocation. Cannot event cast it to call getVerticesInOrder()
+		// aisle defined as an ILocation. Cannot event cast it to call getVerticesInOrder()
 		List<Vertex> vList1 = aisle2.getVerticesInOrder();
 		Assert.assertEquals(vList1.size(), 4);
 		// the third point is the interesting one. Note index 0,1,2,3
@@ -903,10 +903,10 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> theB1T1Slots = tierB1T1.getActiveChildren();
+		List<ILocation> theB1T1Slots = tierB1T1.getActiveChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> theB1T2Slots = tierB1T2.getActiveChildren();
+		List<ILocation> theB1T2Slots = tierB1T2.getActiveChildren();
 		Assert.assertTrue(theB1T2Slots.size() == 4);
 		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierB1T2First == 1);

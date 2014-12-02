@@ -20,7 +20,7 @@ import com.gadgetworks.codeshelf.event.EventTag;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
@@ -132,7 +132,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			String locationAliasId = inCsvBean.getLocationAlias();
 			LocationAlias result = inFacility.getLocationAlias(locationAliasId);
 			String mappedLocationId = inCsvBean.getMappedLocationId();
-			ISubLocation<?> mappedLocation = inFacility.findSubLocationById(mappedLocationId);
+			ILocation<?> mappedLocation = inFacility.findSubLocationById(mappedLocationId);
 			
 			// Check for deleted location
 			if (mappedLocation == null || mappedLocation instanceof Facility) {

@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -81,7 +81,7 @@ public class LightService implements IApiService {
 
 		Facility facility = checkFacility(facilityPersistentId);
 
-		ISubLocation<?> theLocation = checkLocation(facility, inLocationNominalId);
+		ILocation<?> theLocation = checkLocation(facility, inLocationNominalId);
 		if (theLocation.getActiveChildren().isEmpty()) {
 			lightOneLocation(facility, theLocation);
 		} else {
@@ -92,7 +92,7 @@ public class LightService implements IApiService {
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
 		Facility facility = checkFacility(facilityPersistentId);
 
-		ISubLocation<?> theLocation = checkLocation(facility, inLocationNominalId);
+		ILocation<?> theLocation = checkLocation(facility, inLocationNominalId);
 
 		List<Set<LightLedsMessage>> messages = Lists.newArrayList();
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
@@ -106,7 +106,7 @@ public class LightService implements IApiService {
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
-	private void lightOneLocation(final Facility facility, final ISubLocation<?> theLocation) {
+	private void lightOneLocation(final Facility facility, final ILocation<?> theLocation) {
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
 	}
@@ -117,15 +117,15 @@ public class LightService implements IApiService {
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
 	@SuppressWarnings("rawtypes")
-	Future<Void> lightChildLocations(final Facility facility, final ISubLocation<?> theLocation) {
+	Future<Void> lightChildLocations(final Facility facility, final ILocation<?> theLocation) {
 
 		List<Set<LightLedsMessage>> ledMessages = Lists.newArrayList();
 		if (theLocation instanceof Bay) { //light whole bay at once, consistent across controller configurations
 			ledMessages.add(lightAllAtOnce(4, facility.getDiagnosticColor(), theLocation.getChildrenInWorkingOrder()));
 		}
 		else {
-			List<ISubLocation> children = theLocation.getChildrenInWorkingOrder();
-			for (ISubLocation child : children) {
+			List<ILocation> children = theLocation.getChildrenInWorkingOrder();
+			for (ILocation child : children) {
 				try {
 					if (child instanceof Bay) { 
 						//when the child we are lighting is a bay, light all of the tiers at once
@@ -187,9 +187,9 @@ public class LightService implements IApiService {
 		return message;
 	}
 	
-	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ISubLocation> children) {
+	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<ILocation> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
-		for (ISubLocation<?> child: children) {
+		for (ILocation<?> child: children) {
 			try {
 				if (child.isLightable()) {
 					LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, child);
@@ -250,8 +250,8 @@ public class LightService implements IApiService {
 		return checkNotNull(Facility.DAO.findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
 	}
 
-	private ISubLocation<?> checkLocation(Facility facility, final String inLocationNominalId) {
-		ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+	private ILocation<?> checkLocation(Facility facility, final String inLocationNominalId) {
+		ILocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
 		checkArgument(theLocation != null && !(theLocation instanceof Facility),
 			"Location nominalId unknown: %s",
 			inLocationNominalId);
@@ -323,7 +323,7 @@ public class LightService implements IApiService {
 			}
 
 			
-			ISubLocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
+			ILocation<?> theLocation = facility.findSubLocationById(inLocationNominalId);
 			if (theLocation == null || theLocation instanceof Facility) {
 				LOGGER.error("lightAllControllers called with unknown location");
 				return;
@@ -339,7 +339,7 @@ public class LightService implements IApiService {
 			//Last tier within bay per controller
 			for (Tier tier : tiers) {
 				ControllerChannelBayKey key = new ControllerChannelBayKey(tier.getEffectiveLedController(), tier.getEffectiveLedChannel(), (Bay) tier.getParent());
-				ISubLocation<?> lastLocation = lastLocationWithinBay.get(key);
+				ILocation<?> lastLocation = lastLocationWithinBay.get(key);
 
 				if (lastLocation == null || lastLocation.getLastLedNumAlongPath() < tier.getLastLedNumAlongPath()) {
 					lastLocationWithinBay.put(key, tier);

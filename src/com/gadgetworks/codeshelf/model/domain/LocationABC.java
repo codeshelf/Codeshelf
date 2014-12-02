@@ -262,14 +262,14 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	@SuppressWarnings("rawtypes")
-	public final List<ISubLocation> getChildren() {
-		return new ArrayList<ISubLocation>(locations.values());
+	public final List<ILocation> getChildren() {
+		return new ArrayList<ILocation>(locations.values());
 	}
 
 	@SuppressWarnings("rawtypes")
-	public final List<ISubLocation> getActiveChildren() {
-		ArrayList<ISubLocation> aList = new ArrayList<ISubLocation>();
-		for (ISubLocation loc : locations.values()) {
+	public final List<ILocation> getActiveChildren() {
+		ArrayList<ILocation> aList = new ArrayList<ILocation>();
+		for (ILocation loc : locations.values()) {
 			if (loc.isActive())
 				aList.add(loc);
 		}
@@ -290,8 +290,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			LOGGER.error("makeInactive", e);
 		}
 
-		List<ISubLocation> childList = getActiveChildren();
-		for (ISubLocation sublocation : childList) {
+		List<ILocation> childList = getActiveChildren();
+		for (ILocation sublocation : childList) {
 			((LocationABC) sublocation).makeInactiveAndAllChildren();
 		}
 	}
@@ -301,7 +301,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * See CD_0051 Delete Locations. Once inactive child is encountered, it does not look further down that child chain. Also, will not return itself if inactive and of the right class
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends ISubLocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted) {
+	public final <T extends ILocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ILocation<?>> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 		if (!this.isActive()) {
 			LOGGER.error("getActiveChildrenAtLevel called for inactive location");
@@ -309,7 +309,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		}
 
 		// Loop through all of the active children.
-		for (ISubLocation<?> child : getActiveChildren()) {
+		for (ILocation<?> child : getActiveChildren()) {
 			if (child.getClass().equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				result.add((T) child);
@@ -504,7 +504,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * bay bay.findLocationById("T3") would find the tier.
 	 * This may return null
 	 */
-	public final ISubLocation<?> findLocationById(String inLocationId) {
+	public final ILocation<?> findLocationById(String inLocationId) {
 		if (this.getClass().equals(Facility.class)) {
 			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
@@ -535,8 +535,8 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	 * Normally called as facility.findSubLocationById(). If no dots in the name, calls findLocationById(), which first looks for alias, but only if at the facility level.
 	 * This will return "deleted" location, but if it does so, it will log a WARN.
 	 */
-	public final ISubLocation<?> findSubLocationById(final String inLocationId) {
-		ISubLocation<?> result = null;
+	public final ILocation<?> findSubLocationById(final String inLocationId) {
+		ILocation<?> result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
@@ -546,7 +546,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
 			String firstPart = inLocationId.substring(0, firstDotPos);
 			String secondPart = inLocationId.substring(firstDotPos + 1);
-			ISubLocation<?> firstPartLocation = this.findLocationById(firstPart);
+			ILocation<?> firstPartLocation = this.findLocationById(firstPart);
 			if (firstPartLocation != null) {
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}
@@ -678,7 +678,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		ILocation<?> previousLocation = inAlias.getMappedLocation();
 		if (previousLocation == null) {
 			aliases.add(inAlias);
-			inAlias.setMappedLocation((ISubLocation<?>) this);
+			inAlias.setMappedLocation((ILocation<?>) this);
 		} else if (!previousLocation.equals(this)) {
 			LOGGER.error("cannot map Alias " + inAlias.getDomainId() + " to " + this.getDomainId()
 					+ " because it is still mapped to " + previousLocation.getDomainId());
@@ -743,7 +743,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		final String inItemMasterId,
 		final String inUom) {
 		Item returnItem = null;
-		ISubLocation<?> location = this.findSubLocationById(inLocationName);
+		ILocation<?> location = this.findSubLocationById(inLocationName);
 		if (location != null)
 			returnItem = location.getStoredItemFromMasterIdAndUom(inItemMasterId, inUom);
 		return returnItem;
@@ -894,7 +894,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> childLocations = getActiveChildren();
+		List<ILocation> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		for (ILocation<?> childLocation : childLocations) {
 			// add sublocation
@@ -906,9 +906,9 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 	}
 
 	@Override
-	public List<ISubLocation> getChildrenInWorkingOrder() {
+	public List<ILocation> getChildrenInWorkingOrder() {
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> childLocations = getActiveChildren();
+		List<ILocation> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		return childLocations;
 	}
@@ -963,7 +963,7 @@ public abstract class LocationABC<P extends IDomainObject> extends DomainObjectT
 		if (getEffectiveLedController() != null) {
 			cmdPathsSet.add(new LedCmdPath(getEffectiveLedController().getDeviceGuidStr(), getEffectiveLedChannel()));
 		} else {
-			for (ISubLocation<?> child : getActiveChildren()) {
+			for (ILocation<?> child : getActiveChildren()) {
 				cmdPathsSet.addAll(child.getAllLedCmdPaths());
 			}
 		}

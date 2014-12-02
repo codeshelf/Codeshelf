@@ -58,7 +58,7 @@ public class Bay extends SubLocationABC<Aisle> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
 	@SuppressWarnings("rawtypes")
-	private static Comparator<ISubLocation> topDownTierOrder = new TopDownTierOrder();
+	private static Comparator<ILocation> topDownTierOrder = new TopDownTierOrder();
 	
 	public Bay() {
 		super();
@@ -96,7 +96,7 @@ public class Bay extends SubLocationABC<Aisle> {
 	@Override
 	public List<ILocation<?>> getSubLocationsInWorkingOrder() {
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> copy = new ArrayList<ISubLocation>(getActiveChildren());
+		List<ILocation> copy = new ArrayList<ILocation>(getActiveChildren());
 		Collections.sort(copy, topDownTierOrder);
 		List<ILocation<?>> result = new ArrayList<ILocation<?>>();
 		for (ILocation<?> childLocation : copy) {
@@ -110,11 +110,11 @@ public class Bay extends SubLocationABC<Aisle> {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	private static final class TopDownTierOrder implements Comparator<ISubLocation> {
+	private static final class TopDownTierOrder implements Comparator<ILocation> {
 		final Ordering<Double> doubleOrdering = Ordering.<Double>natural().reverse().nullsLast();
 
 		@Override
-		public int compare(ISubLocation o1, ISubLocation o2) {
+		public int compare(ILocation o1, ILocation o2) {
 			Double o1Z = o1.getAbsoluteAnchorPoint().getZ();
 			Double o2Z = o2.getAbsoluteAnchorPoint().getZ();
 			int result = doubleOrdering.compare(o1Z, o2Z); 

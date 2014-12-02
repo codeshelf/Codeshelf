@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
@@ -37,15 +37,15 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 		preSortByPosAlongPath(inWiList); // Necessary for non-slotted so that sort within one location is good.
 		
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
-		List<ISubLocation<?>> bayList = new ArrayList<ISubLocation<?>>();
+		List<ILocation<?>> bayList = new ArrayList<ILocation<?>>();
 		for (Path path : facility.getPaths()) {
-			bayList.addAll(path.<ISubLocation<?>> getLocationsByClass(Bay.class));
+			bayList.addAll(path.<ILocation<?>> getLocationsByClass(Bay.class));
 		}
 		LOGGER.debug("Sequencing work instructions at "+facility.getDomainId());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path skipping the top tiers
 		//LOGGER.debug("Processing lower tiers...");
-		for (ISubLocation<?> subLocation : bayList) {
+		for (ILocation<?> subLocation : bayList) {
 			List<ILocation<?>> tiers = subLocation.getSubLocationsInWorkingOrder();
 			int numTiers = tiers.size();
 			if (numTiers>0) {
@@ -74,7 +74,7 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 		}
 		// now cycle through top tiers
 		LOGGER.debug("Processing top tier...");
-		for (ISubLocation<?> subLocation : bayList) {
+		for (ILocation<?> subLocation : bayList) {
 			List<ILocation<?>> tiers = subLocation.getSubLocationsInWorkingOrder();
 			int numTiers = tiers.size();
 			if (numTiers>0) {

@@ -50,8 +50,8 @@ public class ContainerUseTest extends DomainTestABC {
 		// Now just queries. Do in a transaction as our code normally would
 		this.getPersistenceService().beginTenantTransaction();
 		
-		ISubLocation<?> aisle = facility.findLocationById("A1");
-		ISubLocation<?> bay = aisle.findLocationById("B1");
+		ILocation<?> aisle = facility.findLocationById("A1");
+		ILocation<?> bay = aisle.findLocationById("B1");
 
 		String aisleId = bay.getLocationIdToParentLevel(Aisle.class);
 		Assert.assertEquals(aisleId, "A1.B1");

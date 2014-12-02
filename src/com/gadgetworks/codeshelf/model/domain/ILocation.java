@@ -14,6 +14,12 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P> {
 
+	Double BAY_ALIGNMENT_FUDGE = 0.25;
+	
+	P getParent();
+
+	void setParent(P inParent);
+
 	PositionTypeEnum getAnchorPosType();
 
 	Double getAnchorPosX();
@@ -166,7 +172,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
-	List<ISubLocation> getChildren();
+	List<ILocation> getChildren();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -174,7 +180,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @return
 	 */
 	@SuppressWarnings("rawtypes")
-	List<ISubLocation> getActiveChildren();
+	List<ILocation> getActiveChildren();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -188,7 +194,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inClassWanted
 	 * @return
 	 */
-	<T extends ISubLocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ISubLocation<?>> inClassWanted);
+	<T extends ILocation<?>> List<T> getActiveChildrenAtLevel(Class<? extends ILocation<?>> inClassWanted);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -230,7 +236,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	ISubLocation<?> findLocationById(String inLocationId);
+	ILocation<?> findLocationById(String inLocationId);
 
 	void removeLocation(String inLocationId);
 
@@ -241,7 +247,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * @param inLocationId
 	 * @return
 	 */
-	ISubLocation<?> findSubLocationById(String inLocationId);
+	ILocation<?> findSubLocationById(String inLocationId);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -258,7 +264,7 @@ public interface ILocation<P extends IDomainObject> extends IDomainObjectTree<P>
 	 * Working order is top-to-bottom and then down-path.
 	 * @return
 	 */
-	List<ISubLocation> getChildrenInWorkingOrder();
+	List<ILocation> getChildrenInWorkingOrder();
 	
 	/**
 	 * Get Items in this location and down the tree by position along the path

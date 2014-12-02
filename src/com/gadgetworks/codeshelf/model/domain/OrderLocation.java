@@ -118,8 +118,8 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		parent = inParent;
 	}
 
-	public final ISubLocation<?> getLocation() {
-		return (ISubLocation<?>) location;
+	public final ILocation<?> getLocation() {
+		return (ILocation<?>) location;
 	}
 
 	public final void setLocation(final ILocation<?> inLocation) {

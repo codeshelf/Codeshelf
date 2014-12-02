@@ -33,7 +33,6 @@ import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -353,7 +352,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		List<Slot> slotList = new ArrayList<Slot>();
 
 		@SuppressWarnings("rawtypes")
-		List<? extends ISubLocation> locationList = inTier.getActiveChildren();
+		List<? extends ILocation> locationList = inTier.getActiveChildren();
 
 		@SuppressWarnings("unchecked")
 		Collection<? extends Slot> slotCollection = (Collection<? extends Slot>) locationList;

@@ -232,13 +232,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
 
-		ISubLocation<?> foundLocation = null;
+		ILocation<?> foundLocation = null;
 		Item selectedItem = null;
 
 		// This mimics the old code. Not at all sure it is correct.
 		for (Item item : getItems()) {
 			// Does the Item know where it is?
-			ISubLocation<?> location = (ISubLocation<?>) item.getStoredLocation();
+			ILocation<?> location = (ILocation<?>) item.getStoredLocation();
 
 			if (location != null && inPath.isLocationOnPath(location)) {
 				String itemUom = item.getUomMasterId();

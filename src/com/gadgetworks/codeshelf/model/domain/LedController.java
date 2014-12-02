@@ -80,7 +80,7 @@ public class LedController extends WirelessDeviceABC {
 		return "LED";
 	}
 
-	public final void addLocation(ISubLocation<?> inSubLocation) {
+	public final void addLocation(ILocation<?> inSubLocation) {
 		LedController previousLedController = inSubLocation.getLedController();
 		if(previousLedController == null) {
 			SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
@@ -91,7 +91,7 @@ public class LedController extends WirelessDeviceABC {
 		}	
 	}
 
-	public final void removeLocation(ISubLocation<?> inSubLocation) {
+	public final void removeLocation(ILocation<?> inSubLocation) {
 		if(locations.contains(inSubLocation)) {
 			inSubLocation.setLedController(null);
 			locations.remove(inSubLocation);

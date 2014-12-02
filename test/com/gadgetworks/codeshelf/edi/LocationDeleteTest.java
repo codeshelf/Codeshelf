@@ -24,7 +24,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.LocationABC;
@@ -480,11 +480,11 @@ public class LocationDeleteTest extends EdiTestABC {
 
 		 */
 		// prove what is there and what isn't
-		ISubLocation<?> locD26 = facility.findSubLocationById("D-26");
+		ILocation<?> locD26 = facility.findSubLocationById("D-26");
 		Assert.assertNull(locD26);
-		ISubLocation<?> locX999 = facility.findSubLocationById("X-999");
+		ILocation<?> locX999 = facility.findSubLocationById("X-999");
 		Assert.assertNull(locX999);
-		ISubLocation<?> locD6 = facility.findSubLocationById("D-6");
+		ILocation<?> locD6 = facility.findSubLocationById("D-6");
 		Assert.assertNotNull(locD6);
 
 		Item item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
@@ -532,7 +532,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertNotNull(locD26);
 		Boolean activeValuelocD26 = locD26.isActive();
 		// Assert.assertFalse(activeValue);  fails. ebean bug, hibernate fix?
-		ISubLocation<?> locD26b = facility.findSubLocationById("A1.B2.T1.S5");
+		ILocation<?> locD26b = facility.findSubLocationById("A1.B2.T1.S5");
 		Assert.assertNotNull(locD26b);
 		Boolean activeValuelocD26b = locD26b.isActive();
 		Assert.assertEquals(locD26, locD26b);

@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.util.StringUIConverter;
 
 @Entity
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> extends LocationABC<P> implements ISubLocation<P> {
+public abstract class SubLocationABC<P extends IDomainObject & ILocation<?>> extends LocationABC<P> implements ILocation<P> {
 /*
 	@SuppressWarnings("rawtypes")
 	@Inject
@@ -189,9 +189,9 @@ public abstract class SubLocationABC<P extends IDomainObject & ISubLocation<?>> 
 
 		// Also force a recompute for all of the child locations.
 		@SuppressWarnings("rawtypes")
-		List<ISubLocation> locations = getActiveChildren();
+		List<ILocation> locations = getActiveChildren();
 		for (@SuppressWarnings("rawtypes")
-		ISubLocation location : locations) {
+		ILocation location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}
 	}

@@ -116,14 +116,14 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addLocation(ISubLocation<?> inSubLocation) {
+	public final void addLocation(ILocation<?> inSubLocation) {
 		// Ebean can't deal with interfaces.
 		SubLocationABC<?> subLocation = (SubLocationABC<?>) inSubLocation;
 		locations.add(subLocation);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeLocation(ISubLocation<?> inLocation) {
+	public final void removeLocation(ILocation<?> inLocation) {
 		locations.remove(inLocation);
 	}
 

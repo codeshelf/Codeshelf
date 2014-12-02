@@ -19,7 +19,7 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ILocation;
-import com.gadgetworks.codeshelf.model.domain.ISubLocation;
+import com.gadgetworks.codeshelf.model.domain.ILocation;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
@@ -614,7 +614,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertTrue(importAisles(facility, aisleCsv));;
 		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle);
-		ISubLocation<?> location = facility.findSubLocationById("A9.B1.T1.S1");
+		ILocation<?> location = facility.findSubLocationById("A9.B1.T1.S1");
 		Assert.assertNotNull(location);
 
 		// **************
@@ -632,7 +632,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Leaving S7 and S8 unknown
 		
 		Assert.assertTrue(importLocationAliases(facility, locationAliasCsv));
-		ISubLocation<?> locationByAlias = facility.findSubLocationById("D-21");
+		ILocation<?> locationByAlias = facility.findSubLocationById("D-21");
 		Assert.assertNotNull(locationByAlias);
 	}
 
