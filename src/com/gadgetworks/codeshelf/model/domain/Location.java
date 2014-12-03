@@ -1363,6 +1363,9 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}
 
+	public String toString() {
+		return getNominalLocationId();
+	}
 
 }
 

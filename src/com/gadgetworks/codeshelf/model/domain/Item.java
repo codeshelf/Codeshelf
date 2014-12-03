@@ -424,4 +424,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return getParent().getFacility();
 	}
 
+	public boolean isLightable() {
+		Location itemLocation = getStoredLocation();
+		return (itemLocation != null && itemLocation.isLightable());
+	}
+
 }
