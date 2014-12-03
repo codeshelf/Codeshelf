@@ -72,7 +72,11 @@ public class LightService implements IApiService {
 			inItemPersistentId);
 
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theItem));
+		if (theItem.isLightable()) {
+			sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theItem));
+		} else {
+			LOGGER.warn("The item is not lightable: " + theItem);
+		}
 	}
 
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
@@ -94,8 +98,19 @@ public class LightService implements IApiService {
 
 		List<Set<LightLedsMessage>> messages = Lists.newArrayList();
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
-			messages.add(ImmutableSet.of(toLedsMessage(3, facility.getDiagnosticColor(), item)));
-		}
+			try {
+				if (item.isLightable()) {
+					LightLedsMessage message = toLedsMessage(3, facility.getDiagnosticColor(), item);
+					messages.add(ImmutableSet.of(message));
+				}
+				else {
+					LOGGER.warn("unable to light item: " + item);
+				}
+			} catch (Exception e) {
+				LOGGER.warn("unable to light item: " + item, e);
+				
+			}
+		} 
 		return chaserLight(facility.getSiteControllerUsers(), messages);
 	}
 
@@ -106,7 +121,13 @@ public class LightService implements IApiService {
 	 */
 	private void lightOneLocation(final Facility facility, final Location theLocation) {
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
-		sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, facility.getDiagnosticColor(), theLocation));
+		if (theLocation.isLightable()) {
+			LightLedsMessage message = toLedsMessage(3, facility.getDiagnosticColor(), theLocation);
+			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
+		} else {
+			LOGGER.warn("Unable to light location: " + theLocation);
+		}
+		
 	}
 
 	// --------------------------------------------------------------------------
@@ -171,11 +192,12 @@ public class LightService implements IApiService {
 	private LightLedsMessage toLedsMessage(int maxNumLeds, final ColorEnum inColor, final Item inItem) {
 		// Use our utility function to get the leds for the item
 		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
-		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inItem.getStoredLocation(), theRange);
-		if (message == null) {
-			throw new IllegalArgumentException("inItem with incomplete LED configuration: " + inItem);
-		} else {
+		Location itemLocation = inItem.getStoredLocation();
+		if (itemLocation.isLightable()) {
+			LightLedsMessage message = getLedCmdGroupListForRange(inColor, itemLocation, theRange);
 			return message;
+		} else {
+			return null;
 		}
 	}
 
@@ -202,10 +224,12 @@ public class LightService implements IApiService {
 				
 			
 					byControllerChannel.put(key, ledMessage);
+				} else {
+					LOGGER.warn("Unable to light location: " + child);
 				}
 			} 
 			catch(Exception e) {
-				LOGGER.warn("Unable to light tier: " + child, e);
+				LOGGER.warn("Unable to light location: " + child, e);
 			}
 		}
 		

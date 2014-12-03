@@ -1,7 +1,11 @@
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.UUID;
+
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableMap;
 
 public class ItemTest extends DomainTestABC {
 
@@ -48,6 +52,16 @@ public class ItemTest extends DomainTestABC {
 		
 		this.getPersistenceService().endTenantTransaction();
 
+	}
+	
+	@Test
+	public void testCriteriaByTier() {
+		this.getPersistenceService().beginTenantTransaction();
+
+		Item.DAO.findByFilterAndClass("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()), Item.class);
+		
+		this.getPersistenceService().endTenantTransaction();
+		
 	}
 
 }
