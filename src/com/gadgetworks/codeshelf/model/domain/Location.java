@@ -21,6 +21,7 @@ import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
@@ -349,22 +350,22 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 *
 	 */
 	public final String getNominalLocationIdExcludeBracket() {
-		String result;
-
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
-		if (this.getClass().equals(Facility.class))
+		if (this.getClass().equals(Facility.class)) {
 			return "";
-
-		Location checkParent = (Location) getParent();
-		if (checkParent.getClass().equals(Facility.class)) {
-			// This is the last child  we want.
-			result = getLocationId();
-		} else {
-			// The current parent is not the class we want so recurse up the hierarchy.
-			result = checkParent.getNominalLocationIdExcludeBracket();
-			result = result + "." + getLocationId();
 		}
+
+		Location parent = (Location) getParent();
+		
+		// return location id without traversing the hierarchy further, if parent is undefined or facility
+		if (parent==null || parent.getClass().equals(Facility.class)) {
+			return getLocationId();
+		} 
+			
+		// The current parent is not the class we want so recurse up the hierarchy.
+		String result = parent.getNominalLocationIdExcludeBracket();
+		result = result + "." + getLocationId();
 		return result;
 	}
 
