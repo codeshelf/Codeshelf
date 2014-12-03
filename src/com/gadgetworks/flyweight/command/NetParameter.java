@@ -67,7 +67,7 @@ public class NetParameter {
 			while(hex.length()<targetLength)
 				hex = "0"+hex;
 		} else {
-			throw new OutOfRangeException("Net parameter must be a hexadecimal number");
+			throw new OutOfRangeException("Net parameter must be a hexadecimal number: "+inParamValueString);
 		}
 		
 		byte[] tempArray = convertStringToByteArray(hex);
