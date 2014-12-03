@@ -197,11 +197,16 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
 	
-	public void addLocation(Location location) {
-        PathSegment previousSegment = location.getPathSegment();
+	public void addLocation(Location inLocation) {
+		if (inLocation.isFacility()) {
+			LOGGER.error("cannot add Facility in addLocation");
+			return;
+		}
+		
+        PathSegment previousSegment = inLocation.getPathSegment();
         if(previousSegment == null) {
-    		locations.add(location);
-    		location.setPathSegment(this);
+    		locations.add(inLocation);
+    		inLocation.setPathSegment(this);
         }
 	}
 

@@ -175,6 +175,16 @@ public class Facility extends Location {
 	public Facility() {
 		super();
 	}
+	
+	@Override
+	public Facility getFacility() {
+		return this;
+	}
+
+	@Override
+	public boolean isFacility() {
+		return true;
+	}
 
 	public final static void setDao(ITypedDao<Facility> dao) {
 		Facility.DAO = dao;
@@ -199,7 +209,7 @@ public class Facility extends Location {
 	}
 
 	public final void addAisle(Aisle inAisle) {
-		Facility previousFacility = inAisle.<Facility>getParentAtLevel(Facility.class);
+		Location previousFacility = inAisle.getParent();
 		if (previousFacility == null) {
 			this.addLocation(inAisle);
 			inAisle.setParent(this);
@@ -1987,6 +1997,10 @@ public class Facility extends Location {
 			}
 		} //else
 		return null;
+	}
+	
+	public String toString() {
+		return getDomainId();
 	}
 
 }
