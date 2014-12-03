@@ -49,22 +49,7 @@ import com.google.common.collect.Ordering;
 
 // --------------------------------------------------------------------------
 /**
- * LocationABC
- *
  * The anchor point and vertex collection to define the planar space of a work structure (e.g. facility, bay, shelf, etc.)
- *
- * NB: We can't use bean cache for location because SubLocation exists to make it so that a Facility doesn't have to have a parent location.
- * The problem with that is that cachebeans get stored with properties from their highest class (not all class in the hierarchy), so
- * the "parent" property is often not available (to the LocationABC root location object).  There are two ways to fix this:
- *
- * 1. Go back and get rid of SubLocationABC and make Facility be its own parent so that we can enfore parent constraint on all location.
- * 2. Fix ebean caches to be a bit smarter and bring in all properties for a location.
- *
- * There is a possibility that we could make SubLocationABC's parent a SubLocation and then the bean cache would always pull in
- * the SubLocationClass (instead of LocationABC), but there's some weird thing the causes a ClassCastException when the setParent()
- * gets called.  If that we fixable it might be a good way to go.
- *
- * @author jeffw
  */
 
 @Entity
@@ -81,16 +66,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public static final Double										METERS_PER_LED_POS	= 0.03125;
 
 	private static final Logger										LOGGER				= LoggerFactory.getLogger(Location.class);
-
-	//	@Embedded
-	//	@AttributeOverrides({ @AttributeOverride(name = "x", column = @Column(name = "anchor_pos_x")),
-	//		@AttributeOverride(name = "y", column = @Column(name = "anchor_pos_y")),
-	//		@AttributeOverride(name = "z", column = @Column(name = "anchor_pos_z")),
-	//		@AttributeOverride(name = "posTypeEnum", column = @Column(name = "anchor_pos_type_enum")) })
-	//	@Getter
-	//	@Setter
-	//	@JsonProperty
-	//	private Point						anchorPos;
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false,name="anchor_pos_type")
@@ -260,12 +235,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		anchorPosType = PositionTypeEnum.valueOf(inPosType);
 	}
 
-	@SuppressWarnings("rawtypes")
 	public final List<Location> getChildren() {
 		return new ArrayList<Location>(locations.values());
 	}
 
-	@SuppressWarnings("rawtypes")
 	public final List<Location> getActiveChildren() {
 		ArrayList<Location> aList = new ArrayList<Location>();
 		for (Location loc : locations.values()) {
@@ -280,7 +253,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * this is the "delete" method. Does not delete. Merely makes inactive, along with all its children.
 	 * This does the DAO persist.
 	 */
-	@SuppressWarnings("rawtypes")
 	public void makeInactiveAndAllChildren() {
 		this.setActive(false);
 		try {
@@ -342,11 +314,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationIdToParentLevel(java.lang.Class)
 	 */
-	@SuppressWarnings("unchecked")
 	public final String getLocationIdToParentLevel(Class<? extends Location> inClassWanted) {
 		String result;
-
-		Location checkParent = getParent();
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
@@ -356,10 +325,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			return getLocationId();
 		}
 
-		// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
-		// This fixes that problem, but it's not pretty.
-		checkParent = this.getDao().findByPersistentId(checkParent.getClass(), checkParent.getPersistentId());
-
+		Location checkParent = getParent();
 		if (checkParent.getClass().equals(inClassWanted)) {
 			// This is the parent we want.
 			result = checkParent.getLocationId() + "." + getLocationId();
@@ -390,7 +356,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (this.getClass().equals(Facility.class))
 			return "";
 
-		@SuppressWarnings("rawtypes")
 		Location checkParent = (Location) getParent();
 		if (checkParent.getClass().equals(Facility.class)) {
 			// This is the last child  we want.
@@ -437,28 +402,21 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		Location checkParent = getParent();
 		if (checkParent != null) {
-			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
-			// This fixes that problem, but it's not pretty.
-			UUID persistentId = checkParent.getPersistentId();
-			checkParent = this.getDao().findByPersistentId(checkParent.getClass(), persistentId);
-			if (checkParent != null) {
-				if (checkParent.getClass().equals(inClassWanted)) {
-					// This is the parent we want. (We can cast safely since we checked the class.)
-					result = (T) checkParent;
-				} else {
-					if (checkParent.getClass().equals(Facility.class)) {
-						// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
-						result = null;
-					} else {
-						// The current parent is not the class we want so recurse up the hierarchy.
-						result = (T) checkParent.getParentAtLevel(inClassWanted);
-					}
-				}
+			if (checkParent.getClass().equals(inClassWanted)) {
+				// This is the parent we want. (We can cast safely since we checked the class.)
+				result = (T) checkParent;
 			} else {
-				LOGGER.error("parent location of: " + this + " could not be retrieved with id: " + persistentId);
+				if (checkParent.getClass().equals(Facility.class)) {
+					// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
+					result = null;
+				} else {
+					// The current parent is not the class we want so recurse up the hierarchy.
+					result = (T) checkParent.getParentAtLevel(inClassWanted);
+				}
 			}
+		} else {
+			LOGGER.error("parent location of: " + this + " could not be retrieved");
 		}
-
 		return result;
 	}
 
@@ -466,17 +424,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getAbsolutePosX()
 	 */
-	@SuppressWarnings("unchecked")
 	public Point getAbsoluteAnchorPoint() {
 		Point anchor = getAnchorPoint();
 		Point result = anchor;
 		if (!anchorPosType.equals(PositionTypeEnum.GPS)) {
 			Location parent = getParent();
-
-			// There's some weirdness with Ebean and navigating a recursive hierarchy. (You can't go down and then back up to a different class.)
-			// This fixes that problem, but it's not pretty.
-			parent = this.getDao().findByPersistentId(parent.getClass(), parent.getPersistentId());
-			if ((parent != null) && (parent.getAnchorPoint().getPosType().equals(PositionTypeEnum.METERS_FROM_PARENT))) {
+			if (parent != null && parent.getAnchorPoint().getPosType().equals(PositionTypeEnum.METERS_FROM_PARENT)) {
 				result = anchor.add(parent.getAbsoluteAnchorPoint());
 			}
 		}
@@ -900,7 +853,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * Compare locations by their position relative to each other.
 	 *
 	 */
-	@SuppressWarnings("rawtypes")
 	public static class LocationWorkingOrderComparator implements Comparator<Location> {
 
 		public int compare(Location inLoc1, Location inLoc2) {
@@ -926,7 +878,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 */
 	public List<Location> getSubLocationsInWorkingOrder() {
 		List<Location> result = new ArrayList<Location>();
-		@SuppressWarnings("rawtypes")
 		List<Location> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		for (Location childLocation : childLocations) {
@@ -946,7 +897,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @return
 	 */
 	public List<Location> getChildrenInWorkingOrder() {
-		@SuppressWarnings("rawtypes")
 		List<Location> childLocations = getActiveChildren();
 		Collections.sort(childLocations, new LocationWorkingOrderComparator());
 		return childLocations;
@@ -1084,7 +1034,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	private class InventoryPositionComparator implements Comparator<Item> {
 		// We want this to sort from low to high
-
 		public int compare(Item item1, Item item2) {
 			int result = ComparisonChain.start()
 				.compare(item1.getPosAlongPath(), item2.getPosAlongPath(), Ordering.natural().nullsLast())
@@ -1100,7 +1049,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * Public mainly for testability
 	 *
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public List<Item> getInventoryInWorkingOrder() {
 		ArrayList<Item> aList = Lists.newArrayList();
 		// Add my inventory
@@ -1115,24 +1063,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return aList;
 	}
 
-	//	public static void setDao(LocationABCDao inLocationDao) {
-	//		LocationABC.DAO = inLocationDao;
-	//	}
-
-	/*
-	@Override
-	public LocationABC getLocation() {
-		return this;
-	}
-	*/
-
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
 
-
-
 	// The owning location.
+	@Getter
 	@ManyToOne
 	protected Location parent;
 
@@ -1163,14 +1099,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private Double				pickFaceEndPosZ;
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public Location getParent() {
-		return parent;
-	}
-
-	
+		
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#setParent(P)
@@ -1235,10 +1164,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 
 		// Also force a recompute for all of the child locations.
-		@SuppressWarnings("rawtypes")
 		List<Location> locations = getActiveChildren();
-		for (@SuppressWarnings("rawtypes")
-		Location location : locations) {
+		for (Location location : locations) {
 			location.computePosAlongPath(inPathSegment);
 		}
 	}
