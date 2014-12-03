@@ -460,7 +460,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 					errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 				} else {
 					if (inLocation != null) {
-						if (inLocation.getParent() == null) {
+						if (inLocation.isFacility()) {
 							errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_WRONG_TYPE);
 						} else {
 							Double pickEndWidthMeters = inLocation.getLocationWidthMeters();

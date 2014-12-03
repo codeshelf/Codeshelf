@@ -293,7 +293,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			Double value = 0.0;
 			Location theLocation = this.getStoredLocation();
 			
-			if (theLocation.getParent() != null) {
+			if (!theLocation.isFacility()) {
 				Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
 				if (theLocation.isLeftSideTowardsAnchor()) {
 					value = inCmFromLeft / 100.0;
@@ -310,7 +310,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 				}
 				setMetersFromAnchor(value);
 			} else {
-				LOGGER.error("unexpected setPositionFromLeft on location that isn't a sublocation");
+				LOGGER.error("unexpected setPositionFromLeft on facility");
 			}
 		}
 	}

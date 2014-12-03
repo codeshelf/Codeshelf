@@ -213,6 +213,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		setAnchorPoint(inAnchorPoint);
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
+	
+	public boolean isFacility() {
+		return false;
+	}
 
 	public void updateAnchorPoint(Double x, Double y, Double z) {
 		anchorPosX = x;
@@ -320,7 +324,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
-		if (this.getClass().equals(Facility.class))
+		if (this.isFacility())
 			return "";
 		else if (this.getClass().equals(inClassWanted)) {
 			return getLocationId();
@@ -331,8 +335,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			// This is the parent we want.
 			result = checkParent.getLocationId() + "." + getLocationId();
 		} else {
-			if (checkParent.getClass().equals(Facility.class)) {
-				// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
+			if (checkParent.isFacility()) {
 				result = "";
 			} else {
 				// The current parent is not the class we want so recurse up the hierarchy.
@@ -352,14 +355,18 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public final String getNominalLocationIdExcludeBracket() {
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
-		if (this.getClass().equals(Facility.class)) {
+		if (isFacility()) {
 			return "";
 		}
 
 		Location parent = (Location) getParent();
 		
 		// return location id without traversing the hierarchy further, if parent is undefined or facility
-		if (parent==null || parent.getClass().equals(Facility.class)) {
+		if (parent==null) {
+			LOGGER.error("location without a parent in getNominalLocationIdExcludeBracket");
+			return getLocationId();
+		}
+		if (parent.isFacility()) {
 			return getLocationId();
 		} 
 			
@@ -407,8 +414,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				// This is the parent we want. (We can cast safely since we checked the class.)
 				result = (T) checkParent;
 			} else {
-				if (checkParent.getClass().equals(Facility.class)) {
-					// We cannot go higher than the Facility as a parent, so there is no such parent with the requested class.
+				if (checkParent.isFacility()) {
 					result = null;
 				} else {
 					// The current parent is not the class we want so recurse up the hierarchy.
@@ -426,6 +432,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getAbsolutePosX()
 	 */
 	public Point getAbsoluteAnchorPoint() {
+		//when facility always expected to be a GPS anchor point
+
 		Point anchor = getAnchorPoint();
 		Point result = anchor;
 		if (!anchorPosType.equals(PositionTypeEnum.GPS)) {
@@ -459,6 +467,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
 	public final void addLocation(Location inLocation) {
+		if (inLocation.isFacility()) {
+			LOGGER.error("cannot add Facility in addLocation");
+			return;
+		}
+		
+		
 		IDomainObject oldParent = inLocation.getParent();
 		if (oldParent == null) {
 			locations.put(inLocation.getDomainId(), inLocation);
@@ -538,6 +552,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public final PathSegment getAssociatedPathSegment() {
+		if (isFacility()) {
+			return null;
+		}
+		
 		PathSegment result = null;
 
 		if (pathSegment == null) {
@@ -924,6 +942,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public final LedController getEffectiveLedController() {
+		if (isFacility()) {
+			return null;
+		}
+		
 		// See if we have the controller. Then recursively ask each parent until found.
 		LedController theController = getLedController();
 		if (theController == null) {
@@ -937,6 +959,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public final Short getEffectiveLedChannel() {
+		if (isFacility()) {
+			return null;
+		}
+				
 		// See if we have the controller. Then recursively ask each parent until found.
 		Short theChannel = getLedChannel();
 		if (theChannel == null) {
@@ -1064,6 +1090,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return aList;
 	}
 
+	//facility overrides
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
