@@ -8,6 +8,8 @@ package com.gadgetworks.codeshelf.model.dao;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.sql.SQLException;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -86,6 +88,11 @@ public abstract class DAOTestABC {
 	
 	static {
 		Configuration.loadConfig("test");
+		try {
+			org.h2.tools.Server.createWebServer("-webPort", "8082").start();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	protected PersistenceService persistenceService;
