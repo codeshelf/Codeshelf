@@ -170,7 +170,8 @@ public class UserSession implements IDaoListener {
 			LOGGER.warn("Event listener "+listenerId+" already registered");
 		}
 		this.eventListeners.put(listenerId,listener);
-		LOGGER.debug("Event listener "+listenerId+" registered: "+listener);
+		Integer count = eventListeners.size();
+		LOGGER.debug("Event listener "+listenerId+" registered: "+listener + ". " + count + " listeners total.");
 	}
 
 	public void messageReceived() {
