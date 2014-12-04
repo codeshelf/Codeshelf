@@ -10,7 +10,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
+import org.hibernate.HibernateException;
+import org.hibernate.NonUniqueObjectException;
 import org.junit.Assert;
 import org.junit.Test;
 // domain objects needed
@@ -157,7 +160,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(organization,nName);
+		CodeshelfNetwork network = facility.createNetwork(organization, nName);
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));
@@ -178,7 +181,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		aisle2.getDao().store(aisle2);
 
 		return facility;
-		
+
 	}
 
 	@SuppressWarnings("unused")
@@ -284,7 +287,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveDetails == 5);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 5);
 		// Assume all is good.  Other tests in this class will not need to check these things.
-		
+
 		// Just check a UI field. Basically looking for NPE
 		for (OrderDetail detail : order.getOrderDetails()) {
 			String theUiField = detail.getWillProduceWiUi();
@@ -445,7 +448,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
 		HousekeepingInjector.turnOffHK();
 		facility.setUpCheContainerFromString(theChe, "11,12,13");
-		
+
 		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
 		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
 		int usesCount = theChe.getUses().size();
@@ -461,7 +464,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		theChe.addContainerUse(aUse);
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
-		
+
 		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
@@ -472,17 +475,183 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertTrue(usesCount == 3);
 		// We just proved that adding the same object extra times to CHE uses does not
 		// not result in duplicates in the list. Probably true for most hibernate relationships. But don't try this at home.
-		
+
 		// Now the new part for DEV-492. Show that we remove prior run uses
 		facility.setUpCheContainerFromString(theChe, "14");
 		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
-		Assert.assertTrue(theChe.getUses().size() == 1);		
+		Assert.assertTrue(theChe.getUses().size() == 1);
 		// BUG! at least with ebeans. If we used 12 above instead of 14, it throws on an ebeans
 		// lazy load exception on work instruction
 
 		HousekeepingInjector.restoreHKDefaults(); // set it back
 
 		this.getPersistenceService().endTenantTransaction();
+	}
+
+	@Test
+	public final void parentChildTransactions() throws IOException {
+		// This uses the cross batch setup because the containers are convenient.
+		// Shows three non-obvious behaviors
+		// 1) findByPersistentId() not in a transactions throws on the get, but catch in the function and returns null.
+		// 2) Possible (but difficult) to get old reference and new reference to same object out of synch on the child list contents.
+		// 3) Whether you get NonUniqueObjectException is tricky.
+
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpSimpleSlottedFacility("XB06");
+		setUpGroup1OrdersAndSlotting(facility);
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che che1 = theNetwork.getChe("CHE1");
+		Che che2 = theNetwork.getChe("CHE2");
+
+		int che1UsesCount = che1.getUses().size();
+		Assert.assertEquals(che1UsesCount, 0);
+		Assert.assertNotNull(che2);
+		UUID che1Uuid = che1.getPersistentId();
+		UUID che2Uuid = che2.getPersistentId();
+		// get additional references to the same CHE
+		Che che1b = theNetwork.getChe("CHE1");
+		Che che1c = Che.DAO.findByPersistentId(che1Uuid);
+
+		List<ContainerUse> aList = ContainerUse.DAO.getAll();
+		int useCount = aList.size();
+		ContainerUse use0 = aList.get(0);
+		ContainerUse use1 = aList.get(1);
+		ContainerUse use2 = aList.get(2);
+
+		this.getPersistenceService().endTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		// - Parent add method needs to call the child's set method for the parent relationship.
+		// - Then code needs to remember to do the DAO.store(child)
+		che1.addContainerUse(use0);
+		ContainerUse.DAO.store(use0);
+		che1UsesCount = che1.getUses().size();
+		Assert.assertEquals(che1UsesCount, 1);
+
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 1: findByPersistentId() not within a transaction. Will throw, and is caught.");
+		Che che1d = null;
+		// get only works within a transaction, and findByPersistentId does a get. But it catches the exception and returns null
+		boolean unExpectedCatch = false;
+		try {
+			che1d = Che.DAO.findByPersistentId(che1Uuid);
+			Assert.assertNull("findByPersistentId returned an object without a transaction?", che1d);
+		} catch (HibernateException e) {
+			unExpectedCatch = true;
+		}
+		if (unExpectedCatch)
+			Assert.fail("findByPersistentId no longer catches out of transaction throw?");
+
+		LOGGER.info("Case 2: findByPersistentId() works within a transaction. And has the expected container use");
+		this.getPersistenceService().beginTenantTransaction();
+		Che che1e = Che.DAO.findByPersistentId(che1Uuid);
+		che1UsesCount = che1e.getUses().size();
+		Assert.assertEquals(che1UsesCount, 1);
+
+		LOGGER.info("Case 3: check earlier references obtained in prior transaction before use was added");
+		che1UsesCount = che1b.getUses().size();
+		Assert.assertEquals(che1UsesCount, 1);
+		che1UsesCount = che1c.getUses().size();
+		Assert.assertEquals(che1UsesCount, 1);
+
+		LOGGER.info("Case 4: add to an earlier obtained reference. See if all our references have the new use");
+		che1.addContainerUse(use1);
+		ContainerUse.DAO.store(use1);
+
+		this.getPersistenceService().endTenantTransaction();
+
+		che1UsesCount = che1b.getUses().size(); // che1b reference from same time/transaction as che1
+		Assert.assertEquals(2, che1UsesCount);
+		che1UsesCount = che1c.getUses().size(); // che1b reference from same time/transaction as che1. but came from DAO find
+		Assert.assertEquals(2, che1UsesCount);
+		// See inconsistency here!
+		che1UsesCount = che1e.getUses().size(); // hibernate usage bug. Che1e came from DAO find in later transaction. We did the add to che1 (older reference)
+		Assert.assertEquals(1, che1UsesCount);
+
+		LOGGER.info("Case 4b: getUses within a new transaction");
+		this.getPersistenceService().beginTenantTransaction();
+		che1UsesCount = che1e.getUses().size();
+		// Still inconsistent
+		Assert.assertEquals(1, che1UsesCount);
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 4c: get the reference from the DAO again. Now the uses count is ok.");
+		this.getPersistenceService().beginTenantTransaction();
+		che1e = Che.DAO.findByPersistentId(che1Uuid);
+		che1UsesCount = che1e.getUses().size();
+		// Now ok
+		Assert.assertEquals(2, che1UsesCount);
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 5: try to add the same use again. Ok. See error in log.");
+		this.getPersistenceService().beginTenantTransaction();
+		che1.addContainerUse(use0);
+		ContainerUse.DAO.store(use0);
+		che1UsesCount = che1.getUses().size();
+		Assert.assertEquals(2, che1UsesCount);
+
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 6: add a use to che2. Works fine, but this sets up for case 7.");
+		this.getPersistenceService().beginTenantTransaction();
+		Assert.assertNotNull(use2);
+		che2.addContainerUse(use2);
+		ContainerUse.DAO.store(use2);
+		// extra store call, just to see no trouble
+		ContainerUse.DAO.store(use2);
+		int che2UsesCount = che2.getUses().size();
+		Assert.assertEquals(1, che2UsesCount);
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 6b: after the transaction closes. Old che reference.");
+		che2UsesCount = che2.getUses().size();
+		Assert.assertEquals(1, che2UsesCount);
+
+		LOGGER.info("Case 6c: get the CHE reference again.");
+		this.getPersistenceService().beginTenantTransaction();
+		Che che2b = Che.DAO.findByPersistentId(che2Uuid);
+		che2UsesCount = che2b.getUses().size();
+		Assert.assertEquals(1, che2UsesCount);
+		Che che2c = use2.getCurrentChe();
+		Assert.assertEquals(che2c, che2b);
+
+		LOGGER.info("Case 7: get the NonUniqueObjectException if we store an object that was not changed?.");
+		// Javadoc: This exception is thrown when an operation would break session-scoped identity. 
+		// This occurs if the user tries to associate two different instances of the same Java class with a particular identifier, in the scope of a single Session.
+		boolean expectedCaught = false;
+		try {
+			// store call on old reference. Nothing changed. Should this throw?
+			ContainerUse.DAO.store(use2);
+		} catch (NonUniqueObjectException e) {
+			expectedCaught = true;
+		}
+		if (!expectedCaught)
+			Assert.fail("did not get the NonUniqueObjectException");
+
+		this.getPersistenceService().endTenantTransaction();
+
+		LOGGER.info("Case 7b: do not get the NonUniqueObjectException for store of changed object.");
+		this.getPersistenceService().beginTenantTransaction();
+	
+		// Uncomment these two lines uncommented will cause the store(use2); line to throw because
+		// This pulls new reference for the use into memory for that persistentId, and then we try to store the old reference.
+		// Che che2d = Che.DAO.findByPersistentId(che2Uuid);
+		// int use2dCount = che2d.getUses().size();
+		
+		boolean unExpectedCaught = false;
+		try {
+			// Same as above, but a real change. Should this throw?
+			use2.setActive(false);
+			ContainerUse.DAO.store(use2);
+		} catch (NonUniqueObjectException e) {
+			unExpectedCaught = true;
+		}
+		if (unExpectedCaught)
+			Assert.fail("got a NonUniqueObjectException when not expected");
+
+		this.getPersistenceService().endTenantTransaction();
+
 	}
 
 }

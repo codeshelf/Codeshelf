@@ -79,8 +79,6 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty.PersistentPropertyDao;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
@@ -315,10 +313,6 @@ public final class ServerMain {
 				requestStaticInjection(PathSegment.class);
 				bind(new TypeLiteral<ITypedDao<PathSegment>>() {
 				}).to(PathSegmentDao.class);
-
-				requestStaticInjection(PersistentProperty.class);
-				bind(new TypeLiteral<ITypedDao<PersistentProperty>>() {
-				}).to(PersistentPropertyDao.class);
 
 				requestStaticInjection(Slot.class);
 				bind(new TypeLiteral<ITypedDao<Slot>>() {

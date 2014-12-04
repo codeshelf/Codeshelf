@@ -82,13 +82,7 @@ public class Organization extends DomainObjectABC {
 	@Getter
 	private Map<String, User>				users					= new HashMap<String, User>();
 
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	@Getter
-	private Map<String, PersistentProperty>	persistentProperties	= new HashMap<String, PersistentProperty>();
-
 	public Organization() {
-		setParent(this);
 		description = "";
 	}
 	
@@ -98,7 +92,6 @@ public class Organization extends DomainObjectABC {
 
 	public Organization(String domainId) {
 		super(domainId);
-		setParent(this);
 		description = "";
 	}
 
@@ -127,30 +120,6 @@ public class Organization extends DomainObjectABC {
 		}
 	}
 
-	public final void addPersistentProperty(PersistentProperty inPersistentProperty) {
-		Organization previousOrganization = inPersistentProperty.getParent();
-		if(previousOrganization == null) {
-			persistentProperties.put(inPersistentProperty.getDomainId(), inPersistentProperty);
-			inPersistentProperty.setParent(this);
-		} else if(!previousOrganization.equals(this)) {
-			LOGGER.error("cannot add PersistentProperty "+inPersistentProperty.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrganization.getDomainId());
-		}	
-	}
-
-	public final PersistentProperty getPersistentProperty(String inPersistentPropertyId) {
-		return persistentProperties.get(inPersistentPropertyId);
-	}
-
-	public final void removePersistentProperty(String inPersistentPropertyId) {
-		PersistentProperty persistentProperty= this.getPersistentProperty(inPersistentPropertyId);
-		if(persistentProperty != null) {
-			persistentProperty.setParent(null);
-			persistentProperties.remove(inPersistentPropertyId);
-		} else {
-			LOGGER.error("cannot remove PersistentProperty "+inPersistentPropertyId+" from "+this.getDomainId()+" because it isn't found in children");
-		}
-	}
-
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Organization> getDao() {
 		return DAO;
@@ -162,19 +131,6 @@ public class Organization extends DomainObjectABC {
 
 	public final void setOrganizationId(String inOrganizationId) {
 		setDomainId(inOrganizationId);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Someday, organizations may have other organizations.
-	 * @return
-	 */
-	public final IDomainObject getParent() {
-		return null;
-	}
-
-	public final void setParent(IDomainObject inParent) {
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -296,4 +252,113 @@ public class Organization extends DomainObjectABC {
 	public Facility getFacility() {
 		return null;
 	}
+
+	public static void CreateDemo() {
+		// Create a demo organization
+		createOrganizationUser("DEMO1", "a@example.com", "testme"); //view
+		createOrganizationUser("DEMO1", "view@example.com", "testme"); //view
+		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
+		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
+		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
+		createOrganizationUser("DEMO1", "work@example.com", "testme"); //view + simulate
+
+		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
+		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
+
+		// Recompute path positions,
+		//   and ensure IronMq configuration
+		//   and create a default site controller user if doesn't already exist
+		List<Organization> orgs = Organization.DAO.getAll();
+		Organization organization = orgs.get(0);
+		for (Facility facility : Facility.DAO.getAll()) {
+			for (Path path : facility.getPaths()) {
+				// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+				facility.recomputeLocationPathDistances(path);
+			}
+		}
+
+	}
+
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inOrganizationId
+	 * @param inPassword
+	 */
+	private static User createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
+		Organization organization = Organization.DAO.findByDomainId(null, inOrganizationId);
+		if (organization == null) {
+			organization = new Organization();
+			organization.setDomainId(inOrganizationId);
+			try {
+				Organization.DAO.store(organization);
+
+			} catch (DaoException e) {
+				e.printStackTrace();
+			}
+
+		}
+		User user = organization.getUser(inDefaultUserId);
+		if (user == null) {
+			user = organization.createUser(inDefaultUserId, inDefaultUserPw, UserType.APPUSER);
+		}
+		return user;
+	}
+	/**
+	 * all this default site controller / default site controller user stuff is just for dev/test environments
+	 * 
+	 * @return user
+	 */
+	public static User createDefaultSiteControllerUser(Organization org,CodeshelfNetwork network) {
+		User siteconUser = User.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
+		if(siteconUser == null) {
+			// no default site controller user exists. check for default site controller.
+			SiteController sitecon = SiteController.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
+			if(sitecon == null) {
+				siteconUser = createSiteControllerAndUser(network,org,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Test Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+			} else {
+				LOGGER.error("Default site controller user doesn't exist, but default site controller does exist");
+			}
+		} // if default user already exists in database, we assume site controller does too; ignore and continue
+		return siteconUser;
+	}
+	
+	public static User createSiteControllerAndUser(CodeshelfNetwork network,Organization org, String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
+		User siteconUser = User.DAO.findByDomainId(null,inDomainId);
+		if(siteconUser == null) {
+			// no default site controller user exists. check for default site controller.
+			SiteController sitecon = SiteController.DAO.findByDomainId(null,inDomainId);
+			if(sitecon == null) {
+				// ok to create site controller + user
+				sitecon = new SiteController();
+				sitecon.setDomainId(inDomainId);
+				sitecon.setDescription("Site Controller for " + network.getDomainId());
+				sitecon.setDescribeLocation(inDescribeLocation);
+				sitecon.setMonitor(inMonitor);
+				network.addSiteController(sitecon);
+				
+				try {
+					SiteController.DAO.store(sitecon); 
+				} catch (DaoException e) { 
+					LOGGER.error("Couldn't store new Site Controller "+CodeshelfNetwork.DEFAULT_SITECON_SERIAL, e);
+					sitecon=null;
+				}
+				
+				if(sitecon!=null && org!=null) {
+					siteconUser = org.createUser(inDomainId, inPassword, UserType.SITECON);
+					
+					if (siteconUser == null) {
+						LOGGER.error("Failed to create user for new site controller "+inDomainId);
+					}
+				}
+			} else {
+				LOGGER.error("Tried to create Site Controller User "+inDomainId+" but it already exists (Site Controller does not exist)");
+			}
+		} else {
+			LOGGER.info("Tried to create Site Controller "+inDomainId+" but it already exists");
+		}
+		return siteconUser;
+	}
+	
+
 }

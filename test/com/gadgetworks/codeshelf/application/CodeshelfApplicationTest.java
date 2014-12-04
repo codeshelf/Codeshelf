@@ -39,7 +39,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -183,7 +182,6 @@ public class CodeshelfApplicationTest {
 	public void testStartStopApplication() {
 		Configuration.loadConfig("test");
 
-		ITypedDao<PersistentProperty> persistentPropertyDao = new MockDao<PersistentProperty>();
 		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
 		ITypedDao<User> userDao = User.DAO = new MockDao<User>();
 		ITypedDao<Facility> facilityDao = Facility.DAO = new MockDao<Facility>();
@@ -246,8 +244,6 @@ public class CodeshelfApplicationTest {
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
-			persistentPropertyDao,
-			organizationDao,
 			userDao,
 			adminServer,
 			jettyServer,
