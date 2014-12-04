@@ -51,7 +51,6 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.UomMaster"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ItemDdcGroup"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Vertex"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.PersistentProperty"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.User"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Container"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerKind"/>

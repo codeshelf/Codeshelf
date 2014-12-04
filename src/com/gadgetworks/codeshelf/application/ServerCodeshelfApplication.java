@@ -25,15 +25,10 @@ import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PersistentProperty;
 import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -51,8 +46,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	@Getter
 	private PersistenceService				persistenceService;
 
-	private ITypedDao<PersistentProperty>	mPersistentPropertyDao;
-	private ITypedDao<Organization>			mOrganizationDao;
 	private ITypedDao<Facility>	mFacilityDao;
 
 	private BlockingQueue<String>			mEdiProcessSignalQueue;
@@ -67,8 +60,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
-		final ITypedDao<PersistentProperty> inPersistentPropertyDao,
-		final ITypedDao<Organization> inOrganizationDao,
 		final ITypedDao<User> inUserDao,
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer,
@@ -78,8 +69,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		mPersistentPropertyDao = inPersistentPropertyDao;
-		mOrganizationDao = inOrganizationDao;
 		webSocketServer = inAlternativeWebSocketServer;
 		this.persistenceService = persistenceService;
 	}
@@ -212,117 +201,16 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		this.persistenceService.stop();
 		LOGGER.info("Application terminated normally");
 	}
-/*
-	@SuppressWarnings("unused")
-	private void initPreferencesStore(Organization inOrganization) {
-		initPreference(inOrganization,
-			PersistentProperty.FORCE_CHANNEL,
-			"Preferred wireless channel",
-			RadioController.NO_PREFERRED_CHANNEL_TEXT);
-		initPreference(inOrganization,
-			PersistentProperty.GENERAL_INTF_LOG_LEVEL,
-			"Preferred general log level",
-			Level.INFO.toString());
-		initPreference(inOrganization,
-			PersistentProperty.GATEWAY_INTF_LOG_LEVEL,
-			"Preferred gateway log level",
-			Level.INFO.toString());
-	}
-
-	private void initPreference(Organization inOrganization, String inPropertyID, String inDescription, String inDefaultValue) {
-		boolean shouldUpdate = false;
-
-		// Find the property in the DB.
-		PersistentProperty property = mPersistentPropertyDao.findByDomainId(inOrganization, inPropertyID);
-
-		// If the property doesn't exist then create it.
-		if (property == null) {
-			property = new PersistentProperty();
-			property.setDomainId(inPropertyID);
-			property.setCurrentValueAsStr(inDefaultValue);
-			property.setDefaultValueAsStr(inDefaultValue);
-			inOrganization.addPersistentProperty(property);
-			shouldUpdate = true;
-		}
-
-		// If the stored default value doesn't match then change it.
-		if (!property.getDefaultValueAsStr().equals(inDefaultValue)) {
-			property.setDefaultValueAsStr(inDefaultValue);
-			shouldUpdate = true;
-		}
-
-		// If the property changed then we need to persist the change.
-		if (shouldUpdate) {
-			try {
-				mPersistentPropertyDao.store(property);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-			}
-		}
-	}
-	 */
 
 	// --------------------------------------------------------------------------
 	/**
 	 *	Reset some of the persistent object fields to a base state at start-up.
 	 */
 	protected void doInitializeApplicationData() {
-		this.getPersistenceService().beginTenantTransaction();
-
-		// Create a demo organization
-		createOrganizationUser("DEMO1", "a@example.com", "testme"); //view
-		createOrganizationUser("DEMO1", "view@example.com", "testme"); //view
-		createOrganizationUser("DEMO1", "configure@example.com", "testme"); //all
-		createOrganizationUser("DEMO1", "simulate@example.com", "testme"); //simulate + configure
-		createOrganizationUser("DEMO1", "che@example.com", "testme"); //view + simulate
-		createOrganizationUser("DEMO1", "work@example.com", "testme"); //view + simulate
-
-		createOrganizationUser("DEMO1", "view@goodeggs.com", "goodeggs"); //view
-		createOrganizationUser("DEMO1", "view@accu-logistics.com", "accu-logistics"); //view
-
-		// Recompute path positions,
-		//   and ensure IronMq configuration
-		//   and create a default site controller user if doesn't already exist
-		Organization organization = Organization.DAO.getAll().get(0);
-		for (Facility facility : Facility.DAO.getAll()) {
-			for (Path path : facility.getPaths()) {
-				// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
-				facility.recomputeLocationPathDistances(path);
-			}
-
-			// create a default site controller and user for the first facility you see
-			// this should go away
-			for(CodeshelfNetwork network : facility.getNetworks()) {
-				network.createDefaultSiteControllerUser(organization); // does nothing if user already exists
-			}
-
-		}
-
+		this.getPersistenceService().beginTenantTransaction();		
+		Organization.CreateDemo();
 		this.getPersistenceService().endTenantTransaction();
+
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inOrganizationId
-	 * @param inPassword
-	 */
-	private User createOrganizationUser(String inOrganizationId, String inDefaultUserId, String inDefaultUserPw) {
-		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationId);
-		if (organization == null) {
-			organization = new Organization();
-			organization.setDomainId(inOrganizationId);
-			try {
-				mOrganizationDao.store(organization);
-
-			} catch (DaoException e) {
-				e.printStackTrace();
-			}
-
-		}
-		User user = organization.getUser(inDefaultUserId);
-		if (user == null) {
-			user = organization.createUser(inDefaultUserId, inDefaultUserPw, UserType.APPUSER);
-		}
-		return user;
-	}
 }

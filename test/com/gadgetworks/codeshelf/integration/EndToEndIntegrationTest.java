@@ -145,7 +145,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		}
 		this.networkPersistentId = network.getPersistentId();
 
-		User scUser = network.createDefaultSiteControllerUser(organization);
+		User scUser = Organization.createDefaultSiteControllerUser(organization,network);
 		Che che1 = network.getChe(cheId1);
 		if (che1==null) {
 			che1=network.createChe(cheId1, cheGuid1);

@@ -299,62 +299,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return result;
 	}
 
-	/**
-	 * all this default site controller / default site controller user stuff is just for dev/test environments
-	 * 
-	 * @return user
-	 */
-	public final User createDefaultSiteControllerUser(Organization org) {
-		User siteconUser = User.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
-		if(siteconUser == null) {
-			// no default site controller user exists. check for default site controller.
-			SiteController sitecon = SiteController.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
-			if(sitecon == null) {
-				siteconUser = createSiteControllerAndUser(org,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Test Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
-			} else {
-				LOGGER.error("Default site controller user doesn't exist, but default site controller does exist");
-			}
-		} // if default user already exists in database, we assume site controller does too; ignore and continue
-		return siteconUser;
-	}
-	
-	public final User createSiteControllerAndUser(Organization org, String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
-		User siteconUser = User.DAO.findByDomainId(null,inDomainId);
-		if(siteconUser == null) {
-			// no default site controller user exists. check for default site controller.
-			SiteController sitecon = SiteController.DAO.findByDomainId(null,inDomainId);
-			if(sitecon == null) {
-				// ok to create site controller + user
-				sitecon = new SiteController();
-				sitecon.setDomainId(inDomainId);
-				sitecon.setDescription("Site Controller for " + this.getDomainId());
-				sitecon.setDescribeLocation(inDescribeLocation);
-				sitecon.setMonitor(inMonitor);
-				this.addSiteController(sitecon);
-				
-				try {
-					SiteController.DAO.store(sitecon); 
-				} catch (DaoException e) { 
-					LOGGER.error("Couldn't store new Site Controller "+CodeshelfNetwork.DEFAULT_SITECON_SERIAL, e);
-					sitecon=null;
-				}
-				
-				if(sitecon!=null && org!=null) {
-					siteconUser = org.createUser(inDomainId, inPassword, UserType.SITECON);
-					
-					if (siteconUser == null) {
-						LOGGER.error("Failed to create user for new site controller "+inDomainId);
-					}
-				}
-			} else {
-				LOGGER.error("Tried to create Site Controller User "+inDomainId+" but it already exists (Site Controller does not exist)");
-			}
-		} else {
-			LOGGER.info("Tried to create Site Controller "+inDomainId+" but it already exists");
-		}
-		return siteconUser;
-	}
-	
 	public Facility getFacility() {
 		return this.getParent();
 	}

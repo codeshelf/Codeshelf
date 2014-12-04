@@ -7,4 +7,5 @@
 	<include file="db.changelog-v10-initial.xml" />
 	<include file="db.changelog-v10.1.xml" />
 	<include file="db.changelog-v10.2.xml" />
+	<include file="db.changelog-v10.3.xml" />
 </databaseChangeLog>

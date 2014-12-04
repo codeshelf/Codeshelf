@@ -864,7 +864,7 @@ public class Facility extends Location {
 			LOGGER.error("DaoException persistence error storing CodeshelfNetwork", e);
 		}
 
-		result.createDefaultSiteControllerUser(org); // this should go away. will only create default user+sitecon if it doesn't exist
+		Organization.createDefaultSiteControllerUser(org,result); // this should go away. will only create default user+sitecon if it doesn't exist
 		return result;
 	}
 
