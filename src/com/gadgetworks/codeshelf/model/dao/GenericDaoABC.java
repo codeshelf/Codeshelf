@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,6 +30,8 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
 /**
@@ -159,15 +162,32 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		List<T> results = criteria.list();
 		return results;
 	}
-
+	
+	@Override
+	public boolean matchesFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass, UUID inPersistentId) {
+		String parameterName = "persistentIdToMatch";
+		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, inClass);
+		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
+		TypedCriteria singleObjectCriteria = criteria.addEqualsRestriction("persistentId", parameterName, UUID.class);
+		
+		HashMap<String, Object> newArgs = Maps.newHashMap(inArgs);
+		newArgs.put(parameterName, inPersistentId);
+		return (findByCriteria(singleObjectCriteria, newArgs).isEmpty() == false);
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public List<T> findByFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass) {
-		Session session = getCurrentSession();
 		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, inClass);
 		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
+		return findByCriteria(criteria, inArgs);
+	}
+
+
+	protected List<T> findByCriteria(TypedCriteria criteria, Map<String, Object> inArgs) {
+		Session session = getCurrentSession();
 		Query query = session.createQuery(criteria.getQuery());
 		for (Entry<String, Object> argument : inArgs.entrySet()) {
 			String name = argument.getKey();

@@ -164,4 +164,9 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return this.findByPersistentId(persistentId);
 	}
 
+	@Override
+	public boolean matchesFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs, Class<T> inClass, UUID persistentId) {
+		throw new NotImplementedException();
+	}
+
 }

@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.filter;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -51,4 +52,22 @@ public class Filter extends Listener {
 		} 
 		return result;
 	}
+
+	@Override
+	public ResponseABC processObjectUpdate(Class<? extends IDomainObject> domainClass,
+		UUID domainPersistentId,
+		Set<String> inChangedProperties) {
+		
+		if (this.matchList.contains(domainPersistentId)) {
+			boolean stillMatches = dao.matchesFilterAndClass(criteriaName,params,dao.getDaoClass(), domainPersistentId);
+			if (stillMatches) {
+				return super.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
+			}
+			else {
+				return processObjectDelete(domainClass, domainPersistentId);
+			}
+		}
+		return null;
+	}
+
 }
