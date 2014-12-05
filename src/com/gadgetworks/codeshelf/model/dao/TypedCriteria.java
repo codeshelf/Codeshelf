@@ -1,10 +1,13 @@
 package com.gadgetworks.codeshelf.model.dao;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.Getter;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 
 public class TypedCriteria {
@@ -27,6 +30,14 @@ public class TypedCriteria {
 												  String paramName2, Class<?> paramType2) {
 		this(query, ImmutableMap.of(paramName1, paramType1, paramName2, paramType2));
 
+	}
+
+	public TypedCriteria addEqualsRestriction(String fieldName, String parameterName, Class<?> parameterType) {
+		// TODO relatively safe but the queries are just strings
+		String newQuery = this.query + String.format(" and %s = :%s", fieldName, parameterName);
+		HashMap<String, Class<?>> newParameterTypes = Maps.newHashMap(parameterTypes);
+		newParameterTypes.put(parameterName, parameterType);
+		return new TypedCriteria(newQuery, newParameterTypes);
 	}
 
 }

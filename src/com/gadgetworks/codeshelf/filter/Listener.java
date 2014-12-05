@@ -60,7 +60,12 @@ public class Listener implements ObjectEventListener {
 
 	@Override
 	public ResponseABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
-		return this.processEvent(domainClass, domainPersistentId, EventType.Delete);
+		ResponseABC deleteResponse = this.processEvent(domainClass, domainPersistentId, EventType.Delete);
+		if (deleteResponse != null && deleteResponse.isSuccess()) {
+			this.matchList.remove(domainPersistentId);
+			
+		}
+		return deleteResponse;
 	}
 	
 	private ResponseABC processEvent(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, EventType type) {

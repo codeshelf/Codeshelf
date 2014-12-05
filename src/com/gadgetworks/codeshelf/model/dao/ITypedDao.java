@@ -33,6 +33,10 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> findByFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs, Class<T> inClass);
 
+	boolean matchesFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs,
+		Class<T> inClass, UUID persistentId);
+
+	
 	void store(T inDomainObject) throws DaoException;
 
 	void delete(T inDomainObject) throws DaoException;
