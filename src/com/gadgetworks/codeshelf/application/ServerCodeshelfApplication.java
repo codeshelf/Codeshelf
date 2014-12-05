@@ -14,6 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import lombok.Getter;
 
 import org.hibernate.HibernateException;
+import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +93,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		try {
 			this.getPersistenceService().beginTenantTransaction();
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 		} catch (HibernateException e) {
 			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.", e);
 			Thread.sleep(3000);
@@ -199,8 +200,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		try {
 			this.getPersistenceService().beginTenantTransaction();
 			Organization.CreateDemo();
-		} finally {
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
+		} catch (RuntimeException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			LOGGER.error("unable to create demo organization", e);
+			throw e;
 		}
 	}
 }

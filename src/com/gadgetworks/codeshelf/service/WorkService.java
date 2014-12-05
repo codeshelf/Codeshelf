@@ -9,6 +9,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,11 +86,14 @@ public class WorkService implements IApiService {
 			try {
 				while (!Thread.currentThread().isInterrupted()) {
 					try {
-					persistenceService.beginTenantTransaction();
-					sendWorkInstructions();}
-					finally {
-						persistenceService.endTenantTransaction();
+						persistenceService.beginTenantTransaction();
+						sendWorkInstructions();
+						persistenceService.commitTenantTransaction();
+					} catch (Exception e) {
+						persistenceService.rollbackTenantTransaction();
+						LOGGER.error("Unable to send work instructions", e);
 					}
+
 
 				}
 			} catch (Exception e) {

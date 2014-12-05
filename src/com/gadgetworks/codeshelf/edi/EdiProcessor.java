@@ -9,6 +9,7 @@ import java.util.concurrent.BlockingQueue;
 
 import lombok.Getter;
 
+import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,9 +167,12 @@ public final class EdiProcessor implements IEdiProcessor {
 					}
 				}
 			}
+			this.getPersistenceService().commitTenantTransaction();
+		} catch (RuntimeException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			LOGGER.error("Unable to process edi", e);
 		} finally {
 			context.stop();
-			this.getPersistenceService().endTenantTransaction();
 		}
 
 		LOGGER.debug("End EDI process.");

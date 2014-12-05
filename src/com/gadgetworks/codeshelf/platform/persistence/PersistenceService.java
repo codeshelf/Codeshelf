@@ -241,7 +241,16 @@ public class PersistenceService extends Service {
 		return txBegun;
 	}
 
+	//Test code calling as commit
 	public final void endTenantTransaction() {
+		Session session = getCurrentTenantSession();
+		Transaction tx = session.getTransaction();
+		if (tx.isActive()) {
+			tx.commit();
+		} 
+	}
+
+	public final void commitTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
@@ -250,7 +259,7 @@ public class PersistenceService extends Service {
 			LOGGER.error("tried to close inactive Tenant transaction");
 		}
 	}
-
+	
 	public final void rollbackTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		Transaction tx = session.getTransaction();

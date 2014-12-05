@@ -17,6 +17,7 @@ import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.DataException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.postgresql.util.PSQLException;
 // domain objects needed
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -665,7 +666,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che che1 = theNetwork.getChe("CHE1");
 		Che che2 = theNetwork.getChe("CHE2");
-
+		String che1DefaultDescription = che1.getDescription();
 		int che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(che1UsesCount, 0);
 		Assert.assertNotNull(che2);
@@ -678,47 +679,55 @@ public class CrossBatchRunTest extends EdiTestABC {
 		for (int count = 0; count < 500; count++ ) {
 			desc += "X";
 		}
-		this.getPersistenceService().beginTenantTransaction();
-		che1.setDescription(desc);
-		Che.DAO.store(che1);
-		Assert.assertEquals(desc, che1.getDescription());
-	
-		// this throws with hibernate exception in H2 unit test world. We think this throws PSQL exception which is caught in ORM layer in our production code.
+		
 		try {
-		this.getPersistenceService().endTenantTransaction();
-		}
-		catch(DataException e) {
-			LOGGER.info("caught expected data exception");
+			this.getPersistenceService().beginTenantTransaction();
+			che1.setDescription(desc);
+			Che.DAO.store(che1);
+			Assert.assertEquals(desc, che1.getDescription());
+			this.getPersistenceService().commitTenantTransaction();
+			Assert.fail("Should have thrown exception related to column width");  
+		} catch (DataException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			LOGGER.debug("Exception OK  during test");
 		}
 
 		final String descript2 = "Description2";
 		LOGGER.info("Case 2: modify the description field on the other CHE in separate transaction.");
-		this.getPersistenceService().beginTenantTransaction();
-		che2.setDescription(descript2);
-		Assert.assertEquals(descript2, che2.getDescription());
-		Che.DAO.store(che2);
-		// this also throws
 		try {
-		this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().beginTenantTransaction();
+			che2.setDescription(descript2);
+			Assert.assertEquals(descript2, che2.getDescription());
+			Che.DAO.store(che2);
+			this.getPersistenceService().commitTenantTransaction();
+		} catch(DataException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			throw e;
 		}
-		catch(DataException e) {
-			LOGGER.info("caught expected data exception");
-		}
-
+		
 		LOGGER.info("Case 3: get che2 in yet another transaction and check the description.");
-		this.getPersistenceService().beginTenantTransaction();
-		Che che2b = Che.DAO.findByPersistentId(che2Uuid);
-		
-		// Seems like this should fail! If che2 change did not persist, why do we have the change if we got it from the DAO again?
-		Assert.assertEquals(descript2, che2b.getDescription());
-		
-		// and this stil throws
 		try {
-		this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().beginTenantTransaction();
+			Che che2b = Che.DAO.findByPersistentId(che2Uuid);
+			
+			Assert.assertEquals(descript2, che2b.getDescription());
+				
+			this.getPersistenceService().commitTenantTransaction();
+		} catch(DataException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			throw e;
 		}
-		catch(DataException e) {
-			LOGGER.info("caught expected data exception");
+		
+		LOGGER.info("Case 4: get che1 in yet another transaction and check the description.");
+		try {
+			this.getPersistenceService().beginTenantTransaction();
+			Che che1b = Che.DAO.findByPersistentId(che1Uuid);
+			
+			Assert.assertEquals(che1DefaultDescription, che1b.getDescription());
+			this.getPersistenceService().commitTenantTransaction();
+		} catch(DataException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			throw e;
 		}
-
 	}
 }

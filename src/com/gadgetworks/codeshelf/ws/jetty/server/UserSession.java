@@ -15,6 +15,7 @@ import javax.websocket.Session;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,8 +130,10 @@ public class UserSession implements IDaoListener {
 							sendMessage(response);
 						}
 					}
-				} finally {
-					PersistenceService.getInstance().endTenantTransaction();
+					PersistenceService.getInstance().commitTenantTransaction();
+				} catch (Exception e) {
+					PersistenceService.getInstance().rollbackTenantTransaction();
+					LOGGER.error("Unable to handle object add messages", e);
 				}
 			}
 		});
@@ -151,9 +154,12 @@ public class UserSession implements IDaoListener {
 						if (response != null) {
 							sendMessage(response);
 						}
+
 					}
-				} finally {
-					PersistenceService.getInstance().endTenantTransaction();
+					PersistenceService.getInstance().commitTenantTransaction();
+				} catch (Exception e) {
+					PersistenceService.getInstance().rollbackTenantTransaction();
+					LOGGER.error("Unable to handle object update", e);
 				}
 			}
 		});
@@ -173,8 +179,10 @@ public class UserSession implements IDaoListener {
 							sendMessage(response);
 						}
 					}
-				} finally {
-					PersistenceService.getInstance().endTenantTransaction();
+					PersistenceService.getInstance().commitTenantTransaction();
+				} catch (Exception e) {
+					PersistenceService.getInstance().rollbackTenantTransaction();
+					LOGGER.error("Unable to handle object delete", e);
 				}
 			}
 		});
