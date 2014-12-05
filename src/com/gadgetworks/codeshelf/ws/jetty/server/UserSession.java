@@ -38,41 +38,47 @@ public class UserSession implements IDaoListener {
 		CLOSED
 	};
 
-	private static final Logger	LOGGER = LoggerFactory.getLogger(UserSession.class);
-
-	@Getter @Setter
-	String sessionId;
-
-	@Getter 
-	User user;
-	
-	@Getter
-	Date sessionStart = new Date();
+	private static final Logger					LOGGER						= LoggerFactory.getLogger(UserSession.class);
 
 	@Getter
-	private Session	wsSession=null;
-	
-	@Getter @Setter
-	long lastPingSent = 0;
-	
-	@Getter @Setter
-	long lastPondRoundtripDuration = 0;
-	
-	@Getter @Setter
-	long lastMessageSent = System.currentTimeMillis();
-	
-	@Getter @Setter
-	long lastMessageReceived = System.currentTimeMillis();
-	
-	@Getter @Setter
-	State lastState = State.ACTIVE;
-	
-	private Timer pingTimer = null;
-	
-	private Map<String,ObjectEventListener> eventListeners = new ConcurrentHashMap<String,ObjectEventListener>();
+	@Setter
+	String										sessionId;
 
-	private ExecutorService	executorService;
-	
+	@Getter
+	User										user;
+
+	@Getter
+	Date										sessionStart				= new Date();
+
+	@Getter
+	private Session								wsSession					= null;
+
+	@Getter
+	@Setter
+	long										lastPingSent				= 0;
+
+	@Getter
+	@Setter
+	long										lastPondRoundtripDuration	= 0;
+
+	@Getter
+	@Setter
+	long										lastMessageSent				= System.currentTimeMillis();
+
+	@Getter
+	@Setter
+	long										lastMessageReceived			= System.currentTimeMillis();
+
+	@Getter
+	@Setter
+	State										lastState					= State.ACTIVE;
+
+	private Timer								pingTimer					= null;
+
+	private Map<String, ObjectEventListener>	eventListeners				= new ConcurrentHashMap<String, ObjectEventListener>();
+
+	private ExecutorService						executorService;
+
 	public UserSession(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
 		this.executorService = sharedExecutor;
@@ -92,55 +98,63 @@ public class UserSession implements IDaoListener {
 			ContextLogging.clearSession();
 		}
 	}
-	
+
 	public boolean isAuthenticated() {
-		return (user!=null);
+		return (user != null);
 	}
-	
+
 	public boolean isSiteController() {
-		if(!this.isAuthenticated())
+		if (!this.isAuthenticated())
 			return false;
 		return this.user.getType().equals(UserType.SITECON);
 	}
-	
+
 	public boolean isAppUser() {
-		if(!this.isAuthenticated())
+		if (!this.isAuthenticated())
 			return false;
 		return this.user.getType().equals(UserType.APPUSER);
 	}
-	
+
 	@Override
 	public void objectAdded(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		this.executorService.submit(new Runnable() {
-			
+
 			@Override
 			public void run() {
-				PersistenceService.getInstance().beginTenantTransaction();
-				for (ObjectEventListener listener : eventListeners.values()) {
-					MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
-					if (response != null) {
-						sendMessage(response);
+				try {
+					PersistenceService.getInstance().beginTenantTransaction();
+					for (ObjectEventListener listener : eventListeners.values()) {
+						MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
+						if (response != null) {
+							sendMessage(response);
+						}
 					}
-				}		
-				PersistenceService.getInstance().endTenantTransaction();
+				} finally {
+					PersistenceService.getInstance().endTenantTransaction();
+				}
 			}
 		});
 	}
 
 	@Override
-	public void objectUpdated(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, final Set<String> inChangedProperties) {
+	public void objectUpdated(final Class<? extends IDomainObject> domainClass,
+		final UUID domainPersistentId,
+		final Set<String> inChangedProperties) {
 		this.executorService.submit(new Runnable() {
-			
+
 			@Override
 			public void run() {
-				PersistenceService.getInstance().beginTenantTransaction();
-				for (ObjectEventListener listener : eventListeners.values()) {
-					MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
-					if (response != null) {
-						sendMessage(response);
+				try {
+					PersistenceService.getInstance().beginTenantTransaction();
+					for (ObjectEventListener listener : eventListeners.values()) {
+						MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
+						if (response != null) {
+							sendMessage(response);
+						}
 					}
-				}	
-				PersistenceService.getInstance().endTenantTransaction();
+				} finally {
+					PersistenceService.getInstance().endTenantTransaction();
+				}
 			}
 		});
 	}
@@ -148,30 +162,33 @@ public class UserSession implements IDaoListener {
 	@Override
 	public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		this.executorService.submit(new Runnable() {
-			
+
 			@Override
 			public void run() {
-				PersistenceService.getInstance().beginTenantTransaction();
-				for (ObjectEventListener listener : eventListeners.values()) {
-					MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
-					if (response != null) {
-						sendMessage(response);
+				try {
+					PersistenceService.getInstance().beginTenantTransaction();
+					for (ObjectEventListener listener : eventListeners.values()) {
+						MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
+						if (response != null) {
+							sendMessage(response);
+						}
 					}
-				}		
-				PersistenceService.getInstance().endTenantTransaction();
+				} finally {
+					PersistenceService.getInstance().endTenantTransaction();
+				}
 			}
 		});
-		
+
 	}
-	
+
 	public void registerObjectEventListener(ObjectEventListener listener) {
 		String listenerId = listener.getId();
 		if (this.eventListeners.containsKey(listenerId)) {
-			LOGGER.warn("Event listener "+listenerId+" already registered");
+			LOGGER.warn("Event listener " + listenerId + " already registered");
 		}
-		this.eventListeners.put(listenerId,listener);
+		this.eventListeners.put(listenerId, listener);
 		Integer count = eventListeners.size();
-		LOGGER.debug("Event listener "+listenerId+" registered: "+listener + ". " + count + " listeners total.");
+		LOGGER.debug("Event listener " + listenerId + " registered: " + listener + ". " + count + " listeners total.");
 	}
 
 	public void messageReceived() {
@@ -181,24 +198,24 @@ public class UserSession implements IDaoListener {
 	public void messageSent() {
 		this.lastMessageSent = System.currentTimeMillis();
 	}
-	
+
 	public void disconnect() {
 		disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Unspecified"));
 	}
 
 	public void disconnect(CloseReason reason) {
-		this.lastState=State.CLOSED;
-		if(this.user != null)
-			this.user=null;
-		if(this.sessionId != null)
-			this.sessionId=null;
-		if(this.wsSession != null) {
+		this.lastState = State.CLOSED;
+		if (this.user != null)
+			this.user = null;
+		if (this.sessionId != null)
+			this.sessionId = null;
+		if (this.wsSession != null) {
 			try {
 				this.wsSession.close(reason);
 			} catch (Exception e) {
 				LOGGER.error("Failed to close session", e);
 			}
-			this.wsSession=null;
+			this.wsSession = null;
 		}
 		//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
 		PersistenceService.getInstance().getObjectChangeBroadcaster().unregisterDAOListener(this);
@@ -208,17 +225,17 @@ public class UserSession implements IDaoListener {
 		this.user = user;
 		if (isSiteController()) {
 			String organizationName = user.getOrganization().getDomainId();
-			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS,"ping-"+organizationName+"."+user.getDomainId());
+			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + organizationName + "." + user.getDomainId());
 		}
 	}
 
 	public void pongReceived(long startTime) {
 		long now = System.currentTimeMillis();
-		long delta = now-startTime;
-		if (this.pingTimer!=null) {
+		long delta = now - startTime;
+		if (this.pingTimer != null) {
 			pingTimer.update(delta, TimeUnit.MILLISECONDS);
 		}
-		double elapsedSec = ((double) delta)/1000; 
-		LOGGER.debug("Ping roundtrip on session "+this.sessionId +" in "+elapsedSec+"s");
+		double elapsedSec = ((double) delta) / 1000;
+		LOGGER.debug("Ping roundtrip on session " + this.sessionId + " in " + elapsedSec + "s");
 	}
 }

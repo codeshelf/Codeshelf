@@ -13,6 +13,8 @@ import java.util.UUID;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
+import junit.framework.Assert;
+
 import org.apache.commons.beanutils.ConversionException;
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.hibernate.Criteria;
@@ -241,19 +243,4 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	    return persistentId;
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#beginTransaction()
-	 */
-	public final void beginTransaction() {
-		this.persistenceService.beginTenantTransaction();
-	}
-	
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#endTransaction()
-	 */
-	public final void endTransaction() {
-		this.persistenceService.endTenantTransaction();
-	}
 }

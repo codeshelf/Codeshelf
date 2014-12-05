@@ -58,13 +58,14 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public CrossBatchCsvImporter(final EventProducer inProducer, final ITypedDao<OrderGroup> inOrderGroupDao,
+	public CrossBatchCsvImporter(final EventProducer inProducer,
+		final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
 		final ITypedDao<ContainerUse> inContainerUseDao,
 		final ITypedDao<UomMaster> inUomMasterDao) {
-		
+
 		super(inProducer);
 		mOrderGroupDao = inOrderGroupDao;
 		mOrderHeaderDao = inOrderHeaderDao;
@@ -78,9 +79,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final int importCrossBatchesFromCsvStream(Reader inCsvStreamReader,
-		Facility inFacility,
-		Timestamp inProcessTime) {
+	public final int importCrossBatchesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 
 		LOGGER.debug("Begin cross batch import.");
 		List<CrossBatchCsvBean> crossBatchBeanList = toCsvBean(inCsvStreamReader, CrossBatchCsvBean.class);
@@ -93,18 +92,16 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
 				BatchResult<Work> workResults = inFacility.determineWorkForContainer(container);
-//				produceRecordSuccessEvent(crossBatchBean);
+				//				produceRecordSuccessEvent(crossBatchBean);
 				importedContainerIds.add(container.getContainerId());
 				importedRecords++;
 				if (!workResults.isSuccessful()) {
 					produceRecordViolationEvent(EventSeverity.WARN, workResults.getViolations(), crossBatchBean);
-				} 
-			}
-			catch(InputValidationException e) {
+				}
+			} catch (InputValidationException e) {
 				produceRecordViolationEvent(EventSeverity.WARN, e, crossBatchBean);
 				LOGGER.warn("Unable to process record: " + crossBatchBean, e);
-			}
-			catch(Exception e) {
+			} catch (Exception e) {
 				produceRecordViolationEvent(EventSeverity.ERROR, e, crossBatchBean);
 				LOGGER.error("Unable to process record: " + crossBatchBean, e);
 			}
@@ -127,53 +124,47 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
-		try {
-			//mOrderHeaderDao.beginTransaction();
-			for (OrderHeader order : inFacility.getOrderHeaders()) {
-				if (order.getOrderType().equals(OrderTypeEnum.CROSS)) {
-					Boolean shouldArchiveOrder = true;
-					// Make this more robust if the beans are not quite consistent. We do not want to totally fail out of EDI just because we cannot fully investigate
-					// (I only got this by deleting containerUses table, so order.getContainerId() threw EntityNotFound)
-					// By catching here and below, we accomplish two things. 1) Orders that can be archived are. 2) The batch file is processed and is not left as .FAILED
-					try {
-						if (!inImportedContainerIds.contains(order.getContainerId())) {
-							shouldArchiveOrder = false;
-						} else {
-							for (OrderDetail orderDetail : order.getOrderDetails()) {
-								if (orderDetail.getUpdated().equals(inProcessTime)) {
-									shouldArchiveOrder = false;
-								} else {
-									LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
-									orderDetail.setActive(false);
-									mOrderDetailDao.store(orderDetail);
-								}
+		for (OrderHeader order : inFacility.getOrderHeaders()) {
+			if (order.getOrderType().equals(OrderTypeEnum.CROSS)) {
+				Boolean shouldArchiveOrder = true;
+				// Make this more robust if the beans are not quite consistent. We do not want to totally fail out of EDI just because we cannot fully investigate
+				// (I only got this by deleting containerUses table, so order.getContainerId() threw EntityNotFound)
+				// By catching here and below, we accomplish two things. 1) Orders that can be archived are. 2) The batch file is processed and is not left as .FAILED
+				try {
+					if (!inImportedContainerIds.contains(order.getContainerId())) {
+						shouldArchiveOrder = false;
+					} else {
+						for (OrderDetail orderDetail : order.getOrderDetails()) {
+							if (orderDetail.getUpdated().equals(inProcessTime)) {
+								shouldArchiveOrder = false;
+							} else {
+								LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
+								orderDetail.setActive(false);
+								mOrderDetailDao.store(orderDetail);
 							}
+						}
+					}
+				} catch (PersistenceException e) {
+					LOGGER.error("Caught exception investigating an order in archiveCheckCrossBatches", e);
+				}
+
+				if (shouldArchiveOrder) {
+					try {
+
+						order.setActive(false);
+						mOrderHeaderDao.store(order);
+
+						ContainerUse containerUse = order.getContainerUse();
+						if (containerUse != null) {
+							containerUse.setActive(false);
+							mContainerUseDao.store(containerUse);
 						}
 					} catch (PersistenceException e) {
-						LOGGER.error("Caught exception investigating an order in archiveCheckCrossBatches", e);
+						LOGGER.error("Caught exception archiving order or containerUse in archiveCheckCrossBatches", e);
 					}
 
-					if (shouldArchiveOrder) {
-						try {
-
-							order.setActive(false);
-							mOrderHeaderDao.store(order);
-
-							ContainerUse containerUse = order.getContainerUse();
-							if (containerUse != null) {
-								containerUse.setActive(false);
-								mContainerUseDao.store(containerUse);
-							}
-						} catch (PersistenceException e) {
-							LOGGER.error("Caught exception archiving order or containerUse in archiveCheckCrossBatches", e);
-						}
-
-					}
 				}
 			}
-			//mOrderHeaderDao.commitTransaction();
-		} finally {
-			//mOrderHeaderDao.endTransaction();
 		}
 
 	}
@@ -188,13 +179,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException {
 
-		DefaultErrors errors = new DefaultErrors(inCsvBean.getClass());  
+		DefaultErrors errors = new DefaultErrors(inCsvBean.getClass());
 		try {
 			String errorMsg = inCsvBean.validateBean();
 			if (errorMsg != null) {
 				throw new InputValidationException(inCsvBean, errorMsg);
-			} 
-
+			}
 
 			LOGGER.info(inCsvBean.toString());
 			try {
@@ -203,28 +193,21 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				if (quantity <= 0) {
 					errors.minViolation("quantity", quantity, 0);
 				}
-			}
-			catch(NumberFormatException e) {
+			} catch (NumberFormatException e) {
 				errors.bindViolation("quantity", inCsvBean.getQuantity(), Integer.class);
 			}
 
-			
 			ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
 			if (itemMaster == null) {
 				errors.rejectValue("itemId", inCsvBean.getItemId(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-			} 
-			
+			}
+
 			if (!errors.hasErrors()) {
 				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
 				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
 				UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
 				@SuppressWarnings("unused")
-				OrderDetail detail = updateOrderDetail(inCsvBean,
-					inFacility,
-					inEdiProcessTime,
-					order,
-					itemMaster,
-					uomMaster);
+				OrderDetail detail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, itemMaster, uomMaster);
 				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 				//mOrderHeaderDao.commitTransaction();
 				return container;
@@ -232,7 +215,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		} catch (Exception e) {
 			errors.reject(ErrorCode.GENERAL, e.toString());
 		} finally {
-				//mOrderHeaderDao.endTransaction();
+			//mOrderHeaderDao.endTransaction();
 		}
 		throw new InputValidationException(errors);
 	}
@@ -409,12 +392,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				// No worries for container, as no way containerUse can change to different container owner.
 				if (prevOrder == null)
 					inOrder.addHeadersContainerUse(use);
-				else if (!prevOrder.equals(inOrder)){
+				else if (!prevOrder.equals(inOrder)) {
 					prevOrder.removeHeadersContainerUse(use);
-					inOrder.addHeadersContainerUse(use);					
+					inOrder.addHeadersContainerUse(use);
 				}
-			}			
-			
+			}
+
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			use.setUsedOn(timestamp);
 			use.setActive(true);
@@ -459,7 +442,6 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 		return result;
 	}
-	
 
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {

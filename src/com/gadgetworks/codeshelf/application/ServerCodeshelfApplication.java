@@ -37,26 +37,25 @@ import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
 
-	private static final Logger				LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
-	
-	private IEdiProcessor					mEdiProcessor;
-	private IHttpServer						mHttpServer;
-	private IPickDocumentGenerator			mPickDocumentGenerator;
-	
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
+
+	private IEdiProcessor			mEdiProcessor;
+	private IHttpServer				mHttpServer;
+	private IPickDocumentGenerator	mPickDocumentGenerator;
+
 	@Getter
-	private PersistenceService				persistenceService;
+	private PersistenceService		persistenceService;
 
-	private ITypedDao<Facility>	mFacilityDao;
+	private ITypedDao<Facility>		mFacilityDao;
 
-	private BlockingQueue<String>			mEdiProcessSignalQueue;
+	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
-	JettyWebSocketServer webSocketServer;
+	JettyWebSocketServer			webSocketServer;
 
-	private IConfiguration	configuration;
-	
+	private IConfiguration			configuration;
+
 	@Inject
-	public ServerCodeshelfApplication(
-		final IConfiguration configuration,
+	public ServerCodeshelfApplication(final IConfiguration configuration,
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
@@ -88,18 +87,18 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
-		
+
 		this.getPersistenceService().start();
-		
+
 		try {
 			this.getPersistenceService().beginTenantTransaction();
 			this.getPersistenceService().endTenantTransaction();
 		} catch (HibernateException e) {
-			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.",e);
+			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.", e);
 			Thread.sleep(3000);
 			System.exit(1);
 		}
-		
+
 		// Start the WebSocket server
 		webSocketServer.start();
 
@@ -115,73 +114,63 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		startAdminServer(null);
 		startTsdbReporter();
 		registerSystemMetrics();
-		
+
 		// create server-specific health checks
 		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(persistenceService);
 		MetricsService.registerHealthCheck(dbCheck);
-		
+
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
-		MetricsService.registerHealthCheck(sessionCheck);	
-		
+		MetricsService.registerHealthCheck(sessionCheck);
+
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
 		MetricsService.registerHealthCheck(dbxCheck);
-		
+
 		// configure baychange housekeeping work instructions
 		// TODO: replace with configuration via database table
 		String bayChangeWI = configuration.getString("facility.housekeeping.baychange");
-		if (bayChangeWI!=null && bayChangeWI.equals("None")) {
+		if (bayChangeWI != null && bayChangeWI.equals("None")) {
 			LOGGER.info("BayChange housekeeping work instructions disabled");
 			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
-		}
-		else  if (bayChangeWI!=null && bayChangeWI.equals("BayChange")) {
+		} else if (bayChangeWI != null && bayChangeWI.equals("BayChange")) {
 			LOGGER.info("BayChange housekeeping set to BayChange");
 			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
-		}
-		else  if (bayChangeWI!=null && bayChangeWI.equals("PathSegmentChange")) {
+		} else if (bayChangeWI != null && bayChangeWI.equals("PathSegmentChange")) {
 			LOGGER.info("BayChange housekeeping set to PathSegmentChange");
 			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
-		}
-		else  if (bayChangeWI!=null && bayChangeWI.equals("ExceptSamePathDistance")) {
+		} else if (bayChangeWI != null && bayChangeWI.equals("ExceptSamePathDistance")) {
 			LOGGER.info("BayChange housekeeping set to ExceptSamePathDistance");
 			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeExceptSamePathDistance);
-		}
-		else {
+		} else {
 			LOGGER.info("Using default BayChange housekeeping work instructions setting");
 		}
-		
+
 		// configure repeatposition housekeeping work instructions
 		// TODO: replace with configuration via database table		
 		String useRepeatPosWI = configuration.getString("facility.housekeeping.repeatposition");
-		if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerAndCount")) {
+		if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerAndCount")) {
 			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
-		}
-		else if (useRepeatPosWI!=null && useRepeatPosWI.equals("None")) {
+		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("None")) {
 			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		}
-		else if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerOnly")) {
+		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerOnly")) {
 			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
+		} else {
+			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");
 		}
-		else {
-			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");			
-		}		
-		if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerAndCount")) {
+		if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerAndCount")) {
 			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
-		}
-		else if (useRepeatPosWI!=null && useRepeatPosWI.equals("None")) {
+		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("None")) {
 			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		}
-		else if (useRepeatPosWI!=null && useRepeatPosWI.equals("ContainerOnly")) {
+		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerOnly")) {
 			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
 			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
+		} else {
+			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");
 		}
-		else {
-			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");			
-		}		
 	}
 
 	// --------------------------------------------------------------------------
@@ -207,10 +196,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 *	Reset some of the persistent object fields to a base state at start-up.
 	 */
 	protected void doInitializeApplicationData() {
-		this.getPersistenceService().beginTenantTransaction();		
-		Organization.CreateDemo();
-		this.getPersistenceService().endTenantTransaction();
-
+		try {
+			this.getPersistenceService().beginTenantTransaction();
+			Organization.CreateDemo();
+		} finally {
+			this.getPersistenceService().endTenantTransaction();
+		}
 	}
-
 }

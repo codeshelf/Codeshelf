@@ -41,7 +41,4 @@ public interface ITypedDao<T> extends IDao {
 
 	Class<T> getDaoClass();
 	
-	// TODO: remove transaction methods from DAO layer
-	void beginTransaction();
-	void endTransaction();	
 }

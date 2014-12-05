@@ -84,8 +84,12 @@ public class WorkService implements IApiService {
 			WorkService.aWorkServiceThreadExists = true;
 			try {
 				while (!Thread.currentThread().isInterrupted()) {
-
-					sendWorkInstructions();
+					try {
+					persistenceService.beginTenantTransaction();
+					sendWorkInstructions();}
+					finally {
+						persistenceService.endTenantTransaction();
+					}
 
 				}
 			} catch (Exception e) {
@@ -119,7 +123,6 @@ public class WorkService implements IApiService {
 	}
 
 	private void sendWorkInstructions() throws InterruptedException {
-		persistenceService.beginTenantTransaction();
 
 		while (!Thread.currentThread().isInterrupted()) {
 			WorkInstruction wi = completedWorkInstructions.take();
