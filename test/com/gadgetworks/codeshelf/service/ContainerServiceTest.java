@@ -18,7 +18,7 @@ public class ContainerServiceTest extends EdiTestABC {
 		
 		service.containersWithViolations(facility);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	/*
 	private Container generateCrossbatches(int number) {

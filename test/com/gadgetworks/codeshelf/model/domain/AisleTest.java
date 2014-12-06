@@ -24,7 +24,7 @@ public class AisleTest extends DomainTestABC {
 		String locationId = aisle.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -41,7 +41,7 @@ public class AisleTest extends DomainTestABC {
 		assertEquals(controller.getDomainId(), storedAisle.getLedControllerId());
 		assertEquals(testChannel, storedAisle.getLedChannel());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -58,7 +58,7 @@ public class AisleTest extends DomainTestABC {
 			
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -76,7 +76,7 @@ public class AisleTest extends DomainTestABC {
 
 		Aisle aisle = getDefaultAisle(facility, aisleDomainId);
 		String segPersistId = pathSegment.getPersistentId().toString();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		
 		this.getPersistenceService().beginTenantTransaction();
@@ -88,7 +88,7 @@ public class AisleTest extends DomainTestABC {
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
 
 		verify(listener, times(1)).objectAdded(eq(Aisle.class), eq(storedAisle.getPersistentId()));
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 	}
 	
@@ -105,7 +105,7 @@ public class AisleTest extends DomainTestABC {
 			
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 	}
 

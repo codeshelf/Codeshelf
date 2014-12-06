@@ -96,7 +96,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		}
 		finally {
 			objectChangeBroadcaster.unregisterDAOListener(viewSession);
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 		}
 
 	}
@@ -142,7 +142,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		Assert.assertNotNull(createdPath1);
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

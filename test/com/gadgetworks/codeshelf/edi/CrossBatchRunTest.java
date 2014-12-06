@@ -316,7 +316,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -360,7 +360,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// We qualify for both bayChange and repeat container before wi6. But only get a baychange from version v8 and DEV-478
 		Assert.assertEquals("Bay Change", wi5Desc);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -395,7 +395,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Just some quick log output to see it
 		logWiList(aList);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -432,7 +432,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		Assert.assertEquals("Repeat Container", wi4Desc);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -487,7 +487,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		HousekeepingInjector.restoreHKDefaults(); // set it back
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -520,7 +520,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		ContainerUse use1 = aList.get(1);
 		ContainerUse use2 = aList.get(2);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		// - Parent add method needs to call the child's set method for the parent relationship.
@@ -530,7 +530,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(che1UsesCount, 1);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 1: findByPersistentId() not within a transaction. Will throw, and is caught.");
 		Che che1d = null;
@@ -561,7 +561,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		che1.addContainerUse(use1);
 		ContainerUse.DAO.store(use1);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		che1UsesCount = che1b.getUses().size(); // che1b reference from same time/transaction as che1
 		Assert.assertEquals(2, che1UsesCount);
@@ -576,7 +576,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		che1UsesCount = che1e.getUses().size();
 		// Still inconsistent
 		Assert.assertEquals(1, che1UsesCount);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 4c: get the reference from the DAO again. Now the uses count is ok.");
 		this.getPersistenceService().beginTenantTransaction();
@@ -584,7 +584,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		che1UsesCount = che1e.getUses().size();
 		// Now ok
 		Assert.assertEquals(2, che1UsesCount);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 5: try to add the same use again. Ok. See error in log.");
 		this.getPersistenceService().beginTenantTransaction();
@@ -593,7 +593,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(2, che1UsesCount);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 6: add a use to che2. Works fine, but this sets up for case 7.");
 		this.getPersistenceService().beginTenantTransaction();
@@ -604,7 +604,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		ContainerUse.DAO.store(use2);
 		int che2UsesCount = che2.getUses().size();
 		Assert.assertEquals(1, che2UsesCount);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 6b: after the transaction closes. Old che reference.");
 		che2UsesCount = che2.getUses().size();
@@ -631,7 +631,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		if (!expectedCaught)
 			Assert.fail("did not get the NonUniqueObjectException");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 7b: do not get the NonUniqueObjectException for store of changed object.");
 		this.getPersistenceService().beginTenantTransaction();
@@ -652,7 +652,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		if (unExpectedCaught)
 			Assert.fail("got a NonUniqueObjectException when not expected");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -672,7 +672,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertNotNull(che2);
 		UUID che1Uuid = che1.getPersistentId();
 		UUID che2Uuid = che2.getPersistentId();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		LOGGER.info("Case 1: set up a too-long field. Using CHE description field. Commit the transaction. Should throw the error.");
 		String desc = "";

@@ -388,7 +388,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	private ICsvOrderImporter generateFailingImporter() {

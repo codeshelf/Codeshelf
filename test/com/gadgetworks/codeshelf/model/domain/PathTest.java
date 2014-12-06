@@ -22,7 +22,7 @@ public class PathTest extends DomainTestABC {
 
 		Facility facility = createFacilityWithOutboundOrders("O-PT.1");
 		Assert.assertNotNull(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		Facility retrievedFacility = Facility.DAO.findByPersistentId(facility.getPersistentId());
@@ -42,7 +42,7 @@ public class PathTest extends DomainTestABC {
 		List<Tier> tierList = path.<Tier> getLocationsByClass(Tier.class);
 		Assert.assertEquals(0, tierList.size());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -58,7 +58,7 @@ public class PathTest extends DomainTestABC {
 
 		Assert.assertTrue(path.isOrderOnPath(order));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -80,6 +80,6 @@ public class PathTest extends DomainTestABC {
 		PathSegment segment2 = path.getPathSegment(1);
 		Assert.assertEquals(segment2.getStartPosAlongPath().doubleValue(), 5.0, 0.0);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

@@ -90,7 +90,7 @@ public class PickSimulator {
 		if (inService == null || !inService.hasActiveTransaction()) {
 			LOGGER.error("bad call to simulateCommitByChangingTransaction");
 		} else {
-			inService.endTenantTransaction();
+			inService.commitTenantTransaction();
 			inService.beginTenantTransaction();
 		}
 	}

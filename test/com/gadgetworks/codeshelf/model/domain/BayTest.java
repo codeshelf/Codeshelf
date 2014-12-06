@@ -31,6 +31,6 @@ public class BayTest extends DomainTestABC {
 		List<Location> locations = bay.getSubLocationsInWorkingOrder();
 		Assert.assertEquals(ImmutableList.of(tier3, tier2, tier1), ImmutableList.copyOf(locations));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

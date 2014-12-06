@@ -58,7 +58,7 @@ public class CsDeviceManagerTest {
 		
 		Assert.assertTrue("Should be showing network unavailable", ((CommandControlDisplayMessage)commandCaptor.getValue()).getEntireMessageStr().contains("Unavailable"));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -75,7 +75,7 @@ public class CsDeviceManagerTest {
 		
 		Assert.assertTrue("Should be showing network unavailable", ((CommandControlDisplayMessage)commandCaptor.getValue()).getEntireMessageStr().contains("Unavailable"));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	private CsDeviceManager produceAttachedDeviceManager(Organization organization, IRadioController mockRadioController) throws DeploymentException, IOException {

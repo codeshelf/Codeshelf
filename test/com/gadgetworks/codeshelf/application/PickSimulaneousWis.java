@@ -321,7 +321,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String wi8Item = wi8.getItemId();
 		Assert.assertEquals("1522", wi7Item);
 		Assert.assertEquals("1522", wi8Item);
-		getPersistenceService().endTenantTransaction();
+		getPersistenceService().commitTenantTransaction();
 	}
 
 }

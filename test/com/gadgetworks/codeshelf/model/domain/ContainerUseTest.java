@@ -46,7 +46,7 @@ public class ContainerUseTest extends DomainTestABC {
 
 		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		// Now just queries. Do in a transaction as our code normally would
 		this.getPersistenceService().beginTenantTransaction();
@@ -99,7 +99,7 @@ public class ContainerUseTest extends DomainTestABC {
 		UUID header1Uuid = header1.getPersistentId();
 		UUID header2Uuid = header2.getPersistentId();
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		// Now the point. Do some crazy updating.
 		// The calling use pattern is removeHeadersContainerUse() or addHeadersContainerUse() followed by both DAO stores.
@@ -110,7 +110,7 @@ public class ContainerUseTest extends DomainTestABC {
 		header0.removeHeadersContainerUse(cntrUse0);
 		OrderHeader.DAO.store(header0);
 		ContainerUse.DAO.store(cntrUse0);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		// From here we will follow the pattern of original references are header0, cntrUse1, etc.  New fetches from the DAO are header0d, cntrUse1d, etc.
 		ContainerUse cntrUse0d = null;
@@ -126,7 +126,7 @@ public class ContainerUseTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
 		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertNull(header0d.getContainerUse());
 		Assert.assertNull(cntrUse0d.getOrderHeader());
 		
@@ -135,13 +135,13 @@ public class ContainerUseTest extends DomainTestABC {
 		header2.addHeadersContainerUse(cntrUse2);
 		OrderHeader.DAO.store(header2);
 		ContainerUse.DAO.store(cntrUse2);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse2, header2.getContainerUse());
 
 		this.getPersistenceService().beginTenantTransaction();
 		cntrUse2d = ContainerUse.DAO.findByPersistentId(cntrUse2Uuid);
 		header2d = OrderHeader.DAO.findByPersistentId(header2Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse2d, header2d.getContainerUse());
 
 
@@ -150,12 +150,12 @@ public class ContainerUseTest extends DomainTestABC {
 		header0.addHeadersContainerUse(cntrUse2);
 		OrderHeader.DAO.store(header0);
 		ContainerUse.DAO.store(cntrUse2);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertNull(header0.getContainerUse());
 
 		this.getPersistenceService().beginTenantTransaction();
 		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertNull(header0.getContainerUse());
 
 
@@ -164,13 +164,13 @@ public class ContainerUseTest extends DomainTestABC {
 		header1.addHeadersContainerUse(cntrUse0);
 		OrderHeader.DAO.store(header1);
 		ContainerUse.DAO.store(cntrUse0);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse1, header1.getContainerUse());
 		
 		this.getPersistenceService().beginTenantTransaction();
 		header1d = OrderHeader.DAO.findByPersistentId(header1Uuid);
 		cntrUse1d = ContainerUse.DAO.findByPersistentId(cntrUse1Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse1d, header1d.getContainerUse());
 	
 		LOGGER.info("Case 5: Normal add. Should work as the this is how the data was setup in the first place.");
@@ -178,14 +178,14 @@ public class ContainerUseTest extends DomainTestABC {
 		header0.addHeadersContainerUse(cntrUse0);
 		OrderHeader.DAO.store(header0);
 		ContainerUse.DAO.store(cntrUse0);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse0, header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
 
 		this.getPersistenceService().beginTenantTransaction();
 		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
 		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse0d, header0d.getContainerUse());
 		Assert.assertEquals(header0d, cntrUse0d.getOrderHeader());
 
@@ -200,7 +200,7 @@ public class ContainerUseTest extends DomainTestABC {
 		ContainerUse.DAO.store(cntrUse1);
 		OrderHeader.DAO.store(header2);
 		ContainerUse.DAO.store(cntrUse2);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		LOGGER.info("Case 5: Create an orphan ContainerUse. That is, orphan points to header, but header does not point back.");
@@ -208,7 +208,7 @@ public class ContainerUseTest extends DomainTestABC {
 		// DO NOT CALL setOrderHeader elsewhere in the code. Doing it here to simulate throw in the middle of addHeadersContainerUse or removeHeadersContainerUse to achieve inconsistent data
 		cntrUse0.setOrderHeader(header0);
 		ContainerUse.DAO.store(cntrUse0);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		// check the orphan result
 		Assert.assertNull(header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
@@ -216,7 +216,7 @@ public class ContainerUseTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
 		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertNull(header0d.getContainerUse());
 		Assert.assertEquals(header0d, cntrUse0d.getOrderHeader()); 
 		
@@ -227,14 +227,14 @@ public class ContainerUseTest extends DomainTestABC {
 		header0.addHeadersContainerUse(cntrUse1);
 		OrderHeader.DAO.store(header0);
 		ContainerUse.DAO.store(cntrUse1);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse1, header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse1.getOrderHeader());
 
 		this.getPersistenceService().beginTenantTransaction();
 		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
 		cntrUse1d = ContainerUse.DAO.findByPersistentId(cntrUse1Uuid);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse1d, header0d.getContainerUse());
 		Assert.assertEquals(header0d, cntrUse1d.getOrderHeader());
 		// did not clean up the fact that cntrUse0 still points to header0 also. We just wanted that fact to not interfere with otherwise valid setting.
@@ -247,12 +247,12 @@ public class ContainerUseTest extends DomainTestABC {
 
 		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
 		List<ContainerUse> uses = ContainerUse.DAO.findByFilterAndClass("containerUsesByChe",
 			ImmutableMap.<String, Object>of("cheId", UUID.randomUUID().toString()),
 			ContainerUse.class);
 		Assert.assertEquals(0, uses.size());
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

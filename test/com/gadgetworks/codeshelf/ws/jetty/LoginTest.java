@@ -72,7 +72,7 @@ public class LoginTest extends DomainTestABC {
 		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
 		Assert.assertEquals(user.getDomainId(), loginResponse.getUser().getDomainId());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class LoginTest extends DomainTestABC {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -142,6 +142,6 @@ public class LoginTest extends DomainTestABC {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

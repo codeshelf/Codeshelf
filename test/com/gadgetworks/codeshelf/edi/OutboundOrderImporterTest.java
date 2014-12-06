@@ -56,7 +56,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		importer = createOrderImporter();
 		facilityId = getTestFacility("O-" + getTestName(), "F-" + getTestName()).getPersistentId();
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -106,7 +106,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(detail931b, detail931);
 		Assert.assertEquals(detail931DomainID, "10706962"); // This is the itemID from file above.
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.PARALLEL);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -187,7 +187,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 1);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -241,7 +241,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		// Seems possibly wrong! Got a detail for missing itemID.
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -325,7 +325,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -377,7 +377,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -415,7 +415,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(Integer.valueOf(0), orderDetail.getMinQuantity());
 		Assert.assertEquals(Integer.valueOf(5), orderDetail.getMaxQuantity());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -528,7 +528,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -629,7 +629,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 9);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -669,7 +669,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -693,7 +693,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(4, theCounts.mActiveDetails);
 		Assert.assertEquals(2, theCounts.mActiveCntrUses);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	
@@ -728,7 +728,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
 		}
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -749,7 +749,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0,  orderDetails.get(0).getQuantity().intValue());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -767,7 +767,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0,  orderDetails.get(0).getQuantity().intValue());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	
@@ -878,7 +878,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 6);
 		Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 

@@ -201,7 +201,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		theString = facility.toString();
 		// no containerUse in this test case
 	
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -259,7 +259,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		wi.getOrderDetail().getDao().store(wi.getOrderDetail());
 		
 		WorkInstruction.DAO.store(wi);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		this.getPersistenceService().beginTenantTransaction();
 		Map<String, Object> params = ImmutableMap.<String, Object>of(
@@ -267,7 +267,7 @@ public class WorkInstructionTest extends DomainTestABC {
 			"assignedTimestamp", wi.getAssigned().getTime());
 		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime", params, WorkInstruction.class);
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {

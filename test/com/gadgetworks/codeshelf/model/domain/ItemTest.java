@@ -32,7 +32,7 @@ public class ItemTest extends DomainTestABC {
 		String result = item.getPosAlongPathui();
 		Assert.assertEquals("0", result);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -50,7 +50,7 @@ public class ItemTest extends DomainTestABC {
 		item.setItemCmFromLeft(" "); //allowed
 		Assert.assertNull(item.getPosAlongPath());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -60,7 +60,7 @@ public class ItemTest extends DomainTestABC {
 
 		Item.DAO.findByFilterAndClass("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()), Item.class);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 	}
 

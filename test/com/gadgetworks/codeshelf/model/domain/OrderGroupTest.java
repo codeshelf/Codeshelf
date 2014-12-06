@@ -77,7 +77,7 @@ public class OrderGroupTest extends DomainTestABC {
 				
 		Assert.assertFalse(orderGroup.release());	
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -115,6 +115,6 @@ public class OrderGroupTest extends DomainTestABC {
 		
 		Assert.assertFalse(orderGroup.release());	
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

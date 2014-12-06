@@ -91,7 +91,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -141,6 +141,6 @@ public class FacilityOutlineTest extends DomainTestABC {
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

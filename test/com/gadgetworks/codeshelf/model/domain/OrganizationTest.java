@@ -13,6 +13,6 @@ public class OrganizationTest extends DomainTestABC {
 		mOrganizationDao.store(organization);
 		organization.createFacility("FACILITY NAME", "INDESCRIPTIONS", 0.0, 1.0);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

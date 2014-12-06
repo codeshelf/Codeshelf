@@ -61,7 +61,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -83,7 +83,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -102,7 +102,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	
@@ -135,7 +135,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -163,7 +163,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		location = facility.findLocationById("AisleC");
 		Assert.assertNull(location);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 }

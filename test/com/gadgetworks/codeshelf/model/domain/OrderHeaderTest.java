@@ -55,7 +55,7 @@ public class OrderHeaderTest extends DomainTestABC {
 		Assert.assertEquals(a2, orderLocationAfterInactivating.getLocation());
 		
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -67,7 +67,7 @@ public class OrderHeaderTest extends DomainTestABC {
 												"facilityId", UUID.randomUUID(),
 												"orderType", OrderTypeEnum.OUTBOUND.name()),
 											 OrderHeader.class);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	private Path createAssociatedPath(Aisle a1, Aisle a2) {

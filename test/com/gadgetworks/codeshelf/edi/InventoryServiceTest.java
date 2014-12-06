@@ -34,7 +34,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		generator.setupOrders(facility);
 		
 		this.facilityId=facility.getPersistentId();
-		PersistenceService.getInstance().endTenantTransaction();
+		PersistenceService.getInstance().commitTenantTransaction();
 	}
 	
 	/**
@@ -51,7 +51,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String testUom = "each";
 		testMove(facility,testUom);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -62,7 +62,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String testUom = "EA";
 		testMove(facility,testUom);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	/**
@@ -96,7 +96,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Assert.assertEquals(createdItem.getUomMaster(), additionalItem.getUomMaster());
 		Assert.assertEquals(createdItem.getItemId(), additionalItem.getItemId());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 
@@ -124,7 +124,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), updatedItem.getPersistentId());
 		Assert.assertEquals(testCmFromLeft, updatedItem.getCmFromLeft());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 
@@ -165,7 +165,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.hasViolationForProperty("storedLocation"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -186,7 +186,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.hasViolationForProperty("storedLocation"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -208,7 +208,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -230,7 +230,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -252,7 +252,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.hasViolationForProperty("cmFromLeft"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@SuppressWarnings("unused")
@@ -274,7 +274,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.hasViolationForProperty("positionFromLeft"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -289,7 +289,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -304,7 +304,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@SuppressWarnings("unused")
@@ -326,7 +326,7 @@ public class InventoryServiceTest extends EdiTestABC {
 			Assert.assertTrue(e.toString(), e.hasViolationForProperty("uomMasterId"));
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -341,7 +341,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH");
 		Assert.assertEquals(tier, item.getStoredLocation());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -357,7 +357,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(tier, item.getStoredLocation());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -373,7 +373,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId());
 		Assert.assertEquals(tier, item.getStoredLocation());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 }

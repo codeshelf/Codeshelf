@@ -397,7 +397,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		locationA1B1T1S1 = facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertTrue(locationA1B1T1S1.getActive());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -442,7 +442,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertNotNull(locationA1B2T1S5);
 		Assert.assertTrue(locationA1B2T1S5.isActive());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -454,7 +454,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		Facility facility = setUpSimpleSlottedFacility("LD03", SMALLER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -549,7 +549,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
 		Assert.assertNotNull(item9923);		
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 }
