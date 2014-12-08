@@ -263,7 +263,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		try {
 			this.getDao().store(this);
 		} catch (DaoException e) {
-			LOGGER.error("makeInactive", e);
+			LOGGER.error("unable to inactivate: " + this, e);
 		}
 
 		List<Location> childList = getActiveChildren();
