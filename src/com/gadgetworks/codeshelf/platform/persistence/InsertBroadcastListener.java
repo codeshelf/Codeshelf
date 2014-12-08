@@ -1,7 +1,7 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import org.hibernate.event.spi.PostCommitInsertEventListener;
 import org.hibernate.event.spi.PostInsertEvent;
-import org.hibernate.event.spi.PostInsertEventListener;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 
-public class InsertBroadcastListener implements PostInsertEventListener {
+public class InsertBroadcastListener implements PostCommitInsertEventListener {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DeleteBroadcastListener.class);
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
@@ -29,7 +29,13 @@ public class InsertBroadcastListener implements PostInsertEventListener {
 
 	@Override
 	public boolean requiresPostCommitHanding(EntityPersister arg0) {
-		return false;
+		return true;
+	}
+	
+	@Override
+	public void onPostInsertCommitFailed(PostInsertEvent event) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

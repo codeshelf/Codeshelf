@@ -3,8 +3,8 @@ package com.gadgetworks.codeshelf.platform.persistence;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.event.spi.PostCommitUpdateEventListener;
 import org.hibernate.event.spi.PostUpdateEvent;
-import org.hibernate.event.spi.PostUpdateEventListener;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,7 +13,9 @@ import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.google.common.base.Objects;
 
-public class UpdateBroadcastListener implements PostUpdateEventListener {
+public class UpdateBroadcastListener implements PostCommitUpdateEventListener {
+
+	private static final long	serialVersionUID	= 1L;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(UpdateBroadcastListener.class);
 
@@ -54,8 +56,15 @@ public class UpdateBroadcastListener implements PostUpdateEventListener {
 	}
 
 	@Override
-	public boolean requiresPostCommitHanding(EntityPersister arg0) {
-		return false;
+	public boolean requiresPostCommitHanding(EntityPersister persister) {
+		// TODO Auto-generated method stub
+		return true;
+	}
+
+	@Override
+	public void onPostUpdateCommitFailed(PostUpdateEvent event) {
+		// TODO Auto-generated method stub
+		
 	}
 	
 }
