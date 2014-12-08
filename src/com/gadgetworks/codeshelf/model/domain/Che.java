@@ -21,6 +21,8 @@ import javax.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.exception.DataException;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,14 +77,14 @@ public class Che extends WirelessDeviceABC {
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	@JoinColumn(name="current_work_area_persistentid")
+	@JoinColumn(name = "current_work_area_persistentid")
 	private WorkArea				currentWorkArea;
 
 	// The current user.
 	@ManyToOne(optional = true)
 	@Getter
 	@Setter
-	@JoinColumn(name="current_user_persistentid")
+	@JoinColumn(name = "current_user_persistentid")
 	private User					currentUser;
 
 	@NotNull
@@ -127,8 +129,8 @@ public class Che extends WirelessDeviceABC {
 		Che previousChe = inContainerUse.getCurrentChe();
 		if (previousChe == null) {
 			uses.add(inContainerUse);
-			inContainerUse.setCurrentChe(this); 
-		} else if (previousChe.equals(this)) { 
+			inContainerUse.setCurrentChe(this);
+		} else if (previousChe.equals(this)) {
 			LOGGER.warn("call to add ContainerUse " + inContainerUse.getDomainId() + " to " + this.getDomainId()
 					+ " when it already is. This is a noOp ");
 		} else {
@@ -221,15 +223,33 @@ public class Che extends WirelessDeviceABC {
 		return null;
 	}
 
+	private void doIntentionalPersistenceError() {
+		// If you want to test this, change value of doThrowInstead in method below. Then from the UI, select a CHE and
+		// do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
+		// DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
+		String desc = "";
+		for (int count = 0; count < 500; count++) {
+			desc += "X";
+		}
+		// No try/catch here. The intent is to fail badly and see how the system handles it.
+		this.setDescription(desc);
+		Che.DAO.store(this);
+		LOGGER.warn("Intentional database persistence error. Setting too long description on " + this.getDomainId());
+	}
+
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(String inContainers) {
+		final boolean doThrowInstead = false;
 		CodeshelfNetwork network = this.getParent();
 		if (network == null)
 			return;
 		Facility facility = network.getParent();
 		if (facility == null)
 			return;
-		facility.setUpCheContainerFromString(this, inContainers);
+		if (doThrowInstead)
+			doIntentionalPersistenceError();
+		else
+			facility.setUpCheContainerFromString(this, inContainers);
 	}
 
 	// --------------------------------------------------------------------------
