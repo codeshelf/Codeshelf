@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.filter.EventType;
-import com.gadgetworks.codeshelf.filter.Listener;
+import com.gadgetworks.codeshelf.filter.Filter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -48,15 +48,15 @@ public class RegisterListenerCommand extends CommandABC {
 				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
 
 				// create listener
-				Listener listener = new Listener((Class<IDomainObject>) classObject, request.getMessageId());				
-				listener.setMatchList(request.getObjectIds());
-				listener.setPropertyNames(request.getPropertyNames());
-				this.session.registerObjectEventListener(listener);
+				Filter filter = new Filter((Class<IDomainObject>) classObject, request.getMessageId());				
+				filter.setMatchList(request.getObjectIds());
+				filter.setPropertyNames(request.getPropertyNames());
+				this.session.registerObjectEventListener(filter);
 
 				// generate response
 				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
 				List<IDomainObject> objectMatchList = dao.findByPersistentIdList(request.getObjectIds());
-				List<Map<String, Object>> results = listener.getProperties(objectMatchList, EventType.Update);
+				List<Map<String, Object>> results = filter.getProperties(objectMatchList, EventType.Update);
 				ObjectChangeResponse response = new ObjectChangeResponse();
 				response.setResults(results);
 				response.setStatus(ResponseStatus.Success);
