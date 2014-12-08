@@ -756,6 +756,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 					+ " because it isn't found in children");
 		}
 	}
+	
+	public final void removeAllVertices(){
+		LOGGER.info("removeNonAnchorVertices");
+		if (vertices == null || vertices.isEmpty()){return;}
+		for (Vertex v : vertices) {
+			Vertex.DAO.delete(v);
+		}
+		setAnchorPoint(Point.getZeroPoint());
+		vertices.clear();
+	}
 
 	public final void addAlias(LocationAlias inAlias) {
 		Location previousLocation = inAlias.getMappedLocation();
