@@ -6,14 +6,14 @@ public enum EventType {
 	Update("upd"),
 	Delete("del");
 	
-	private String name;
+	private String code;
 	
-	private EventType(String name) {
-		this.name = name;
+	private EventType(String code) {
+		this.code = code;
 	}
 	
 	@Override
 	public String toString() {
-		return this.name;
+		return this.code;
 	}
 }

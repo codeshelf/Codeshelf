@@ -19,6 +19,8 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
 
 public class Listener implements ObjectEventListener {
 	
@@ -59,12 +61,12 @@ public class Listener implements ObjectEventListener {
 	}
 
 	@Override
-	public ResponseABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
-		ResponseABC deleteResponse = this.processEvent(domainClass, domainPersistentId, EventType.Delete);
-		if (deleteResponse != null && deleteResponse.isSuccess()) {
-			this.matchList.remove(domainPersistentId);
-			
-		}
+	public ResponseABC processObjectDelete(Class<? extends IDomainObject> inDomainClass, final UUID inDomainPersistentId) {
+		Map<String, Object> deletedObjectProperties = getPropertiesForDeleted(inDomainClass, inDomainPersistentId);
+		ObjectChangeResponse deleteResponse = new ObjectChangeResponse();
+		deleteResponse.setResults(ImmutableList.of(deletedObjectProperties));
+		deleteResponse.setRequestId(this.id);
+		this.matchList.remove(inDomainPersistentId);
 		return deleteResponse;
 	}
 	
@@ -89,6 +91,16 @@ public class Listener implements ObjectEventListener {
 		}	
 		return null;
 	}	
+	
+	public Map<String, Object> getPropertiesForDeleted(Class<? extends IDomainObject> inDomainClass, UUID inPersistentId) {
+		Map<String, Object> propertiesMap = Maps.newHashMap();
+		// Always include the class name and persistent ID in the results.
+		propertiesMap.put(CLASSNAME, inDomainClass);
+		propertiesMap.put(OP_TYPE, EventType.Delete.toString());
+		propertiesMap.put(PERSISTENT_ID, inPersistentId);
+		return propertiesMap;
+		
+	}
 	
 	public List<Map<String, Object>> getProperties(List<IDomainObject> inDomainObjectList, EventType type) {
 		try {
