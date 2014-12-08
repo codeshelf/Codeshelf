@@ -61,15 +61,17 @@ public class LightService implements IApiService {
 	// --------------------------------------------------------------------------
 	/**
 	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
-	 * May be called with BLACK to clear whatever you just sent.
 	 */
 	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
-
+		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
 		Facility facility = checkFacility(facilityPersistentId);
 
-		Item theItem = checkNotNull(Item.DAO.findByPersistentId(inItemPersistentId),
-			"persistented id for item not found: %s",
-			inItemPersistentId);
+		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
+		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
+		if (theItem == null) {
+			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
+			return;
+		}
 
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		if (theItem.isLightable()) {
