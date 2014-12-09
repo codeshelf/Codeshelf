@@ -111,9 +111,6 @@ public class CreatePathCommandTest extends DomainTestABC {
 		
 		Facility testFacility = this.createDefaultFacility(testPathDomainId);
 	
-		Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
-		Assert.assertNull(noPath);
-		
 		PathSegment[] segments = createPathSegment(numberOfSegments);
 		
 		List<ArgsClass> args = new LinkedList<ArgsClass>();
@@ -135,11 +132,13 @@ public class CreatePathCommandTest extends DomainTestABC {
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get());
 
 		ResponseABC response = processor.handleRequest(session, request);
-
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
-		Path createdPath1 = Path.DAO.findByDomainId(testFacility, testPathDomainId);
-		Assert.assertNotNull(createdPath1);
+		List<Path> pathList = testFacility.getPaths();
+		Path createdPath1 = pathList.get(0);
+		// Why is facility F1? Passed in DOMID above.
+		Assert.assertEquals("F1.1", createdPath1.getDomainId());	
+		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 
 		this.getPersistenceService().commitTenantTransaction();
