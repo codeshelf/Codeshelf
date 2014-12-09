@@ -268,8 +268,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inHead
 	 * @param inTail
 	 */
-	public final PathSegment createPathSegment(final String inSegmentId,
-		final Integer inSegmentOrder,
+	public final PathSegment createPathSegment(final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
 
@@ -278,11 +277,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			throw new IllegalArgumentException("inHead and inPath points should not be the same");
 		}
 		*/
+		String segmentDomainId = this.getDomainId() + "." + inSegmentOrder;
 
 		// The path segment goes along the longest segment of the aisle.
 		PathSegment result = new PathSegment();
 		result.setSegmentOrder(inSegmentOrder);
-		result.setDomainId(inSegmentId);
+		result.setDomainId(segmentDomainId);
 		result.setStartPoint(inHead);
 		result.setEndPoint(inTail);
 		this.addPathSegment(result);

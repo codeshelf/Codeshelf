@@ -78,13 +78,13 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest("F5X.1", facility);
+		Path aPath = createPathForTest(facility);
 		
 		// forward path b1 -> b2
 		// PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 12.85, 48.45, 22.00, 48.45);
 		
 		// backward path b2 -> b1
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);

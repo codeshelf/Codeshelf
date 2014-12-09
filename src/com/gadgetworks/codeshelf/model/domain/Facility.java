@@ -583,9 +583,36 @@ public class Facility extends Location {
 		return result;
 	}
 
+	private String nextPathDomainId() {
+		// The first path is domainId.1, etc.
+		// Currently, path are deleted, and not merely inactivated. So no need to worry about reactivating paths
+		String facilityID = getDomainId();
+		String pathId;
+		Integer index = 0;
+		while (true) {
+			index++;
+			pathId = facilityID + "." + index;
+			Path existingPath = Path.DAO.findByDomainId(this, pathId);
+			if (existingPath == null)
+				break;
+			// just fear of infinite loops
+			if (index > 100) {
+				LOGGER.error("infinite loop in nextPathDomainId()");
+				break;
+				// should throw later on database constraint disallowing duplicate
+			}
+		}		
+		return pathId;
+	}
+	
 	public final Path createPath(String inDomainId) {
 		Path path = new Path();
-		path.setDomainId(inDomainId);
+		// Start keeping the API, but not respecting the suggested domainId
+		String pathDomainId = nextPathDomainId();
+		if (!inDomainId.isEmpty() && !pathDomainId.equals(inDomainId)){
+			LOGGER.warn("revise createPath() caller or API");
+		}
+		path.setDomainId(pathDomainId);
 
 		this.addPath(path);
 		Path.DAO.store(path);
@@ -601,15 +628,23 @@ public class Facility extends Location {
 	 */
 	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
+		// Started above by keeping the API, but not respecting the suggested domainId. See what domainId we actually got
+		String pathDomainId = path.getDomainId();
+		String segmentDomainId;
+		Integer index = -1;
+
 		for (PathSegment pathSegment : inPathSegments) {
+			index++;
+			// Just checking that the UI or whatever called this set the correct order
+			if (!index.equals(pathSegment.getSegmentOrder()))
+				LOGGER.error("looks like incorrect segment orders in createPath()");
+			segmentDomainId = pathDomainId + "." + pathSegment.getSegmentOrder();
+			pathSegment.setDomainId(segmentDomainId);
+			
 			path.addPathSegment(pathSegment);
 			PathSegment.DAO.store(pathSegment);
 		}
 		return path;
-		// Recompute the distances of the structures?
-		// This does no good as the path segments are not associated to aisles yet.
-		//recomputeLocationPathDistances(path);
-
 	}
 
 	// --------------------------------------------------------------------------

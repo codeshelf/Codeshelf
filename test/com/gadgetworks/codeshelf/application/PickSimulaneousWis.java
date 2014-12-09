@@ -100,8 +100,8 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Aisle aisle1 = facility.getAisle("A1");// Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
@@ -110,8 +110,8 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest("F5X.3", facility);
-		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(facility);
+		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 //		facility.getLocations().get("A2")l
 		Aisle aisle3 = facility.getAisle("A3");//Aisle.DAO.findByDomainId(facility, "A3");

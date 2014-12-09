@@ -126,8 +126,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest("F5X.1", getFacility());
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
@@ -136,8 +136,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest("F5X.3", getFacility());
-		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(getFacility());
+		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 		Aisle aisle3 = Aisle.DAO.findByDomainId(getFacility(), "A3");
 		Assert.assertNotNull(aisle3);

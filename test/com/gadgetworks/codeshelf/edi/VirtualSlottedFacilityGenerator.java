@@ -88,8 +88,8 @@ public class VirtualSlottedFacilityGenerator {
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
@@ -98,8 +98,8 @@ public class VirtualSlottedFacilityGenerator {
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest("F5X.3", facility);
-		PathSegment segment02 = addPathSegmentForTest("F5X.3.0", path2, 0, 22.0, 58.45, 10.85, 58.45);
+		Path path2 = createPathForTest(facility);
+		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 10.85, 58.45);
 
 		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
@@ -154,11 +154,11 @@ public class VirtualSlottedFacilityGenerator {
 	
 	public void setupOrders(Facility inFacility) throws IOException {
 		String firstCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nUSF314,COSTCO,123,123,123.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -179,12 +179,13 @@ public class VirtualSlottedFacilityGenerator {
 		}
 	}
 	
-	protected Path createPathForTest(String inDomainId, Facility inFacility) {
-		return inFacility.createPath(inDomainId);
+	
+	protected Path createPathForTest(Facility inFacility) {
+		return inFacility.createPath("");
 	}
 	
-	protected PathSegment addPathSegmentForTest(final String inSegmentId,
-		final Path inPath,
+	
+	protected PathSegment addPathSegmentForTest(final Path inPath,
 		final Integer inSegmentOrder,
 		Double inStartX,
 		Double inStartY,
@@ -193,7 +194,7 @@ public class VirtualSlottedFacilityGenerator {
 
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
 		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentId, inSegmentOrder, head, tail);
+		PathSegment returnSeg = inPath.createPathSegment(inSegmentOrder, head, tail);
 		return returnSeg;
 	}
 

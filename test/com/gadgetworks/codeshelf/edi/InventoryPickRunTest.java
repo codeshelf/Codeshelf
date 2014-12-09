@@ -97,8 +97,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 10.85, 48.45, 22.0, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 10.85, 48.45, 22.0, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);

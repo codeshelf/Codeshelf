@@ -74,7 +74,7 @@ public class OrderHeaderTest extends DomainTestABC {
 		Facility facility = a1.getParentAtLevel(Facility.class);
 		
 		Path path = facility.createPath(a1.getDomainId() + ":" + a2.getDomainId());
-		PathSegment segment = path.createPathSegment("a1->a2", 0, a1.getAnchorPoint(), a2.getAnchorPoint());
+		PathSegment segment = path.createPathSegment(0, a1.getAnchorPoint(), a2.getAnchorPoint());
 		a1.associatePathSegment(segment);
 		a2.associatePathSegment(segment);
 		return path;
