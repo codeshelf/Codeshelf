@@ -1,7 +1,7 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import org.hibernate.event.spi.PostCommitDeleteEventListener;
 import org.hibernate.event.spi.PostDeleteEvent;
-import org.hibernate.event.spi.PostDeleteEventListener;
 import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 
-public class DeleteBroadcastListener implements PostDeleteEventListener {
+public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 
 	private static final long	serialVersionUID	= -3661846171219447596L;
 
@@ -33,7 +33,13 @@ public class DeleteBroadcastListener implements PostDeleteEventListener {
 
 	@Override
 	public boolean requiresPostCommitHanding(EntityPersister arg0) {
-		return false;
+		return true;
+	}
+
+	@Override
+	public void onPostDeleteCommitFailed(PostDeleteEvent event) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

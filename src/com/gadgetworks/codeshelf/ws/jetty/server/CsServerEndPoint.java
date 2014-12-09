@@ -14,6 +14,7 @@ import javax.websocket.server.ServerEndpoint;
 
 import lombok.Getter;
 
+import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,13 +67,12 @@ public class CsServerEndPoint {
     }
 
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
-    public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
+    public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
-    	this.getPersistenceService().beginTenantTransaction();
-    	UserSession csSession = sessionManager.getSession(session);
-		ContextLogging.setSession(csSession);
-    	
     	try{
+        	this.getPersistenceService().beginTenantTransaction();
+        	UserSession csSession = sessionManager.getSession(session);
+    		ContextLogging.setSession(csSession);
     		sessionManager.messageReceived(session);
         	if (message instanceof ResponseABC) {
         		ResponseABC response = (ResponseABC) message;
@@ -98,10 +98,14 @@ public class CsServerEndPoint {
             	LOGGER.debug("Received message on session "+csSession+": "+message);
             	messageProcessor.handleMessage(csSession, message);
         	}
-    	} finally {
+			this.getPersistenceService().commitTenantTransaction();
+		} catch (RuntimeException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			LOGGER.error("Unable to persist during message handling: " + message, e);
+		}
+    	finally {
     		ContextLogging.clearSession();
-        	this.getPersistenceService().endTenantTransaction();
-    	}
+		}
     }
     
 	@OnClose

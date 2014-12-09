@@ -87,7 +87,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertWillLightItem(itemIterator.next(), message);
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 
@@ -106,7 +106,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -126,7 +126,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	
@@ -155,7 +155,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 		
 
@@ -178,7 +178,7 @@ public class LightServiceTest extends EdiTestABC {
 			}
 		}
 	
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	
@@ -200,7 +200,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	

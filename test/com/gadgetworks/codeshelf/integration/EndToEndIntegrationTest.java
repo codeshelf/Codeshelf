@@ -164,7 +164,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		}
 		this.che2PersistentId = che2.getPersistentId();
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		// start web socket server
 		webSocketServer = websocketServerInjector.getInstance(JettyWebSocketServer.class);

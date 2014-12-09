@@ -126,7 +126,7 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 
 		workService.stop();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -155,7 +155,7 @@ public class WorkServiceTest extends DAOTestABC {
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
 		
 		workService.stop();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -188,7 +188,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(List.class));
 		workService.stop();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -209,7 +209,7 @@ public class WorkServiceTest extends DAOTestABC {
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
 		
 		workService.stop();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -232,7 +232,7 @@ public class WorkServiceTest extends DAOTestABC {
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(wiList));
 		workService.stop();
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -265,7 +265,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 		workService.stop();
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -291,7 +291,7 @@ public class WorkServiceTest extends DAOTestABC {
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi1)));
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi2)));
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	
@@ -320,7 +320,7 @@ public class WorkServiceTest extends DAOTestABC {
 		callBlocker.unlock();
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -350,7 +350,7 @@ public class WorkServiceTest extends DAOTestABC {
 			}
 		}
 		workService.stop();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	private WorkService createWorkService(int capacity, IEdiService ediService, long retryDelay) {

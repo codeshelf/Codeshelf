@@ -269,14 +269,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 		List<Container> containers = facility.getContainers();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings({ "unused", "rawtypes" })
@@ -391,7 +391,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(3, actives);
 		Assert.assertEquals(1, shorts);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings({ "unused", "rawtypes" })
@@ -463,7 +463,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		// Turn off housekeeping work instructions so as to not confuse the counts
@@ -493,7 +493,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 1000);
 		picker.logout();
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -510,7 +510,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		// perform pick operations
 		this.getPersistenceService().beginTenantTransaction();
@@ -627,7 +627,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(immediateShortWi.getAssigned(), userShortWi.getAssigned());
 		Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -636,7 +636,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		// perform pick operation
 		this.getPersistenceService().beginTenantTransaction();
@@ -697,7 +697,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
 
-		this.persistenceService.endTenantTransaction();
+		this.persistenceService.commitTenantTransaction();
 	}
 
 	private void assertWIColor(WorkInstruction wi, Che che) {

@@ -326,7 +326,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Need more cases for BayDistanceTopLast.
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -403,7 +403,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		HousekeepingInjector.restoreHKDefaults();
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}	
 
 }

@@ -84,7 +84,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 		}
 		Assert.assertTrue("Did not find work instruction message", found);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	
@@ -110,7 +110,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 			e.printStackTrace();
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
@@ -135,7 +135,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 			e.printStackTrace();
 
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 }
 	}
 

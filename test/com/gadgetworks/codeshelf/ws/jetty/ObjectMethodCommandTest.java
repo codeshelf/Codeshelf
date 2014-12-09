@@ -96,6 +96,6 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(updateResponse.toString(), ResponseStatus.Success, updateResponse.getStatus());
 		
-		getPersistenceService().endTenantTransaction();
+		getPersistenceService().commitTenantTransaction();
 	}
 }

@@ -56,7 +56,8 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	DateTimeParser					mDateTimeParser;
 
 	@Inject
-	public OutboundOrderCsvImporter(final EventProducer inProducer, final ITypedDao<OrderGroup> inOrderGroupDao,
+	public OutboundOrderCsvImporter(final EventProducer inProducer,
+		final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
 		final ITypedDao<Container> inContainerDao,
@@ -97,7 +98,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				}
 				batchResult.add(orderBean);
 				produceRecordSuccessEvent(orderBean);
-			} catch(Exception e) {
+			} catch (Exception e) {
 				LOGGER.error("unable to import order line: " + orderBean, e);
 				batchResult.addLineViolation(lineCount, orderBean, e);
 			}
@@ -126,7 +127,9 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	 * @param inOrderIdList
 	 * @param inProcessTime
 	 */
-	private void archiveCheckOneOrder(final Facility inFacility, final Collection<OrderHeader> inOrderList, final Timestamp inProcessTime) {
+	private void archiveCheckOneOrder(final Facility inFacility,
+		final Collection<OrderHeader> inOrderList,
+		final Timestamp inProcessTime) {
 		for (OrderHeader order : inOrderList) {
 			for (OrderDetail orderDetail : order.getOrderDetails()) {
 				if (!Objects.equal(orderDetail.getUpdated(), inProcessTime)) {
@@ -151,58 +154,50 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 		// Inactivate the *order details* that don't match the import timestamp.
 		// All orders and related items get marked with the same timestamp when imported from the same interchange.
-		try {
-			//mOrderGroupDao.beginTransaction();
-
-			// Iterate all of the order groups to see if they're still active.
-			for (OrderGroup group : inFacility.getOrderGroups()) {
-				if (!group.getUpdated().equals(inProcessTime)) {
-					LOGGER.trace("Archive old order group: " + group.getOrderGroupId());
-					group.setActive(false);
-					mOrderGroupDao.store(group);
-				}
+		// Iterate all of the order groups to see if they're still active.
+		for (OrderGroup group : inFacility.getOrderGroups()) {
+			if (!group.getUpdated().equals(inProcessTime)) {
+				LOGGER.trace("Archive old order group: " + group.getOrderGroupId());
+				group.setActive(false);
+				mOrderGroupDao.store(group);
 			}
+		}
 
-			// Iterate all of the order headers in this order group to see if they're still active.
-			for (OrderHeader order : inFacility.getOrderHeaders()) {
-				try {
-					if (order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
-						Boolean orderHeaderIsActive = false;
+		// Iterate all of the order headers in this order group to see if they're still active.
+		for (OrderHeader order : inFacility.getOrderHeaders()) {
+			try {
+				if (order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+					Boolean orderHeaderIsActive = false;
 
-						// Iterate all of the order details in this order header to see if they're still active.
-						for (OrderDetail orderDetail : order.getOrderDetails()) {
-							try {
-								if (orderDetail.getUpdated().equals(inProcessTime)) {
-									orderHeaderIsActive = true;
-								} else {
-									LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
-									orderDetail.setActive(false);
-									// orderDetail.setQuantity(0);
-									// orderDetail.setMinQuantity(0);
-									// orderDetail.setMaxQuantity(0);
-									mOrderDetailDao.store(orderDetail);
-								}
-							} catch (RuntimeException e) {
-								LOGGER.warn("Unable to archive order detail: " + orderDetail, e);
-								throw e;
+					// Iterate all of the order details in this order header to see if they're still active.
+					for (OrderDetail orderDetail : order.getOrderDetails()) {
+						try {
+							if (orderDetail.getUpdated().equals(inProcessTime)) {
+								orderHeaderIsActive = true;
+							} else {
+								LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
+								orderDetail.setActive(false);
+								// orderDetail.setQuantity(0);
+								// orderDetail.setMinQuantity(0);
+								// orderDetail.setMaxQuantity(0);
+								mOrderDetailDao.store(orderDetail);
 							}
-						}
-
-						if (!orderHeaderIsActive) {
-							LOGGER.trace("Archive old order header: " + order.getOrderId());
-							order.setActive(false);
-							mOrderHeaderDao.store(order);
+						} catch (RuntimeException e) {
+							LOGGER.warn("Unable to archive order detail: " + orderDetail, e);
+							throw e;
 						}
 					}
-				} catch (RuntimeException e) {
-					LOGGER.warn("Unable to archive order: " + order, e);
-					throw e;
-				}
-			}
 
-			//mOrderGroupDao.commitTransaction();
-		} finally {
-			//mOrderGroupDao.endTransaction();
+					if (!orderHeaderIsActive) {
+						LOGGER.trace("Archive old order header: " + order.getOrderId());
+						order.setActive(false);
+						mOrderHeaderDao.store(order);
+					}
+				}
+			} catch (RuntimeException e) {
+				LOGGER.warn("Unable to archive order: " + order, e);
+				throw e;
+			}
 		}
 
 	}
@@ -215,43 +210,34 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	private void archiveCheckAllContainers(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced container data");
 
-		try {
-			//mContainerDao.beginTransaction();
+		// Iterate all of the containers to see if they're still active.
+		for (Container container : inFacility.getContainers()) {
+			Boolean shouldInactivateContainer = true;
 
-			// Iterate all of the containers to see if they're still active.
-			for (Container container : inFacility.getContainers()) {
-				Boolean shouldInactivateContainer = true;
-
-				for (ContainerUse containerUse : container.getUses()) {
-					// ContainerUse.getOrderHeader() can be null if the EDI is not fully consistent. Don't NPE. Don't fail to archive.
-					OrderHeader header = containerUse.getOrderHeader();
-					if (header == null) {
-						shouldInactivateContainer = false; // Should the container be inactivated? If this is the only use for the container, perhaps.
-						// neglect this case for now.
+			for (ContainerUse containerUse : container.getUses()) {
+				// ContainerUse.getOrderHeader() can be null if the EDI is not fully consistent. Don't NPE. Don't fail to archive.
+				OrderHeader header = containerUse.getOrderHeader();
+				if (header == null) {
+					shouldInactivateContainer = false; // Should the container be inactivated? If this is the only use for the container, perhaps.
+					// neglect this case for now.
+					containerUse.setActive(false);
+					mContainerUseDao.store(containerUse);
+				} else if (!header.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+					shouldInactivateContainer = false;
+				} else {
+					if (containerUse.getUpdated().equals(inProcessTime)) {
+						shouldInactivateContainer = false;
+					} else {
 						containerUse.setActive(false);
 						mContainerUseDao.store(containerUse);
 					}
-					else if (!header.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
-						shouldInactivateContainer = false;
-					} else {
-						if (containerUse.getUpdated().equals(inProcessTime)) {
-							shouldInactivateContainer = false;
-						} else {
-							containerUse.setActive(false);
-							mContainerUseDao.store(containerUse);
-						}
-					}
-				}
-
-				if (shouldInactivateContainer) {
-					container.setActive(false);
-					mContainerDao.store(container);
 				}
 			}
 
-			//mContainerDao.commitTransaction();
-		} finally {
-			//mContainerDao.endTransaction();
+			if (shouldInactivateContainer) {
+				container.setActive(false);
+				mContainerDao.store(container);
+			}
 		}
 
 	}
@@ -282,29 +268,23 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 		LOGGER.info(inCsvBean.toString());
 
-		try {
-			//mOrderHeaderDao.beginTransaction();
-			String errorMsg = inCsvBean.validateBean();
-			if (errorMsg != null) {
-				throw new InputValidationException(inCsvBean, errorMsg);
-			} 
-
-			OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-			order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-			@SuppressWarnings("unused")
-			Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-			UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
-			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
-				inCsvBean.getDescription(),
-				inFacility,
-				inEdiProcessTime,
-				uomMaster);
-			@SuppressWarnings("unused")
-			OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
-			//mOrderHeaderDao.commitTransaction();
-		} finally {
-			//mOrderHeaderDao.endTransaction();
+		String errorMsg = inCsvBean.validateBean();
+		if (errorMsg != null) {
+			throw new InputValidationException(inCsvBean, errorMsg);
 		}
+
+		OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
+		order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
+		@SuppressWarnings("unused")
+		Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+		UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
+		ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+			inCsvBean.getDescription(),
+			inFacility,
+			inEdiProcessTime,
+			uomMaster);
+		@SuppressWarnings("unused")
+		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 
 		return order;
 	}
@@ -395,11 +375,11 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				// No worries for container, as no way containerUse can change to different container owner.
 				if (prevOrder == null)
 					inOrder.addHeadersContainerUse(use);
-				else if (!prevOrder.equals(inOrder)){
+				else if (!prevOrder.equals(inOrder)) {
 					prevOrder.removeHeadersContainerUse(use);
-					inOrder.addHeadersContainerUse(use);					
+					inOrder.addHeadersContainerUse(use);
 				}
-			}			
+			}
 
 			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 			use.setUsedOn(timestamp);
@@ -598,14 +578,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
-		
+
 		int quantities = 0;
-		try {	
+		try {
 			if (!Strings.isNullOrEmpty(inCsvBean.getQuantity())) {
 				quantities = Integer.valueOf(inCsvBean.getQuantity());
 			}
-		}
-		catch(NumberFormatException e) {
+		} catch (NumberFormatException e) {
 			LOGGER.warn("quantity could not be coerced to integer, setting to zero: " + inCsvBean);
 		}
 		result.setQuantities(quantities);

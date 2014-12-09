@@ -20,7 +20,7 @@ public class IronMqServiceDaoTest extends DomainTestABC {
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);
 			
 		} finally {
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 		}
 	}
 	

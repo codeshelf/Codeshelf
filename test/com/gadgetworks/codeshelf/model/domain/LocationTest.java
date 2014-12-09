@@ -29,6 +29,6 @@ public class LocationTest extends DomainTestABC {
 		String facilityId = bay.getLocationIdToParentLevel(Facility.class);
 		Assert.assertEquals(facilityId, "F1.A1.B1");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

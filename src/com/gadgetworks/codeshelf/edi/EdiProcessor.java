@@ -9,6 +9,7 @@ import java.util.concurrent.BlockingQueue;
 
 import lombok.Getter;
 
+import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +36,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	private long						mLastProcessMillis;
 	private boolean						mShouldRun;
 	private Thread						mProcessorThread;
-	
+
 	@Getter
 	private PersistenceService			persistenceService;
 
@@ -46,8 +47,8 @@ public final class EdiProcessor implements IEdiProcessor {
 	private ICsvAislesFileImporter		mCsvAislesFileImporter;
 	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
 	private ITypedDao<Facility>			mFacilityDao;
-	
-	private final Timer ediProcessingTimer = MetricsService.addTimer(MetricsGroup.EDI,"processing-time");
+
+	private final Timer					ediProcessingTimer		= MetricsService.addTimer(MetricsGroup.EDI, "processing-time");
 
 	@Inject
 	public EdiProcessor(final ICsvOrderImporter inCsvOrdersImporter,
@@ -69,7 +70,7 @@ public final class EdiProcessor implements IEdiProcessor {
 
 		mShouldRun = false;
 		mLastProcessMillis = 0;
-		
+
 		this.persistenceService = persistenceService;
 
 	}
@@ -107,8 +108,7 @@ public final class EdiProcessor implements IEdiProcessor {
 			} catch (InterruptedException e) {
 				LOGGER.error("EdiProcessor thread did not stop within " + timeout, e);
 			}
-		}
-		else {
+		} else {
 			LOGGER.warn("EdiProcessor has not been started");
 		}
 	}
@@ -144,9 +144,9 @@ public final class EdiProcessor implements IEdiProcessor {
 	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
 		LOGGER.debug("Begin EDI process.");
 		this.getPersistenceService().beginTenantTransaction();
-		
-    	final Timer.Context context = ediProcessingTimer.time();
-    	try {
+
+		final Timer.Context context = ediProcessingTimer.time();
+		try {
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
 			for (Facility facility : mFacilityDao.getAll()) {
 				for (IEdiService ediService : facility.getEdiServices()) {
@@ -167,11 +167,14 @@ public final class EdiProcessor implements IEdiProcessor {
 					}
 				}
 			}
-    	} finally {
-    		context.stop();
-    	}
+			this.getPersistenceService().commitTenantTransaction();
+		} catch (RuntimeException e) {
+			this.getPersistenceService().rollbackTenantTransaction();
+			LOGGER.error("Unable to process edi", e);
+		} finally {
+			context.stop();
+		}
 
-    	this.getPersistenceService().endTenantTransaction();
 		LOGGER.debug("End EDI process.");
 	}
 }

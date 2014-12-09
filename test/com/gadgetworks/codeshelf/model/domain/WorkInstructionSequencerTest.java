@@ -213,7 +213,7 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 				Assert.fail("Invalid WI location: "+wi.getLocation().getLocationId());
 			}
 		}	
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -315,7 +315,7 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 				Assert.fail("Invalid WI location: "+wi.getLocation().getLocationId());
 			}
 		}
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 }

@@ -44,7 +44,7 @@ public class TestDatabaseTest extends DomainTestABC {
 			Organization.DAO.store(org);
 			
 			// new transaction
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 			this.getPersistenceService().beginTenantTransaction();
 
 			// org just created should still exist

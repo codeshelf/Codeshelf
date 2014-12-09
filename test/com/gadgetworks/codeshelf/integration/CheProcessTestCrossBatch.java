@@ -257,7 +257,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
@@ -266,7 +266,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		List<Container> containers = facility.getContainers();
 		int containerCount = containers.size(); // This can throw if  we did not re-get the facility in the new transaction boundary. Just testing that.
 		Assert.assertTrue(containerCount == 7);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -275,7 +275,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
@@ -324,7 +324,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -334,7 +334,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
@@ -391,7 +391,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 

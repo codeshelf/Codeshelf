@@ -45,12 +45,13 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
 	@Inject
-	public InventoryCsvImporter(final EventProducer inProducer, final ITypedDao<ItemMaster> inItemMasterDao,
+	public InventoryCsvImporter(final EventProducer inProducer,
+		final ITypedDao<ItemMaster> inItemMasterDao,
 		final ITypedDao<Item> inItemDao,
 		final ITypedDao<UomMaster> inUomMaster) {
 
 		super(inProducer);
-		
+
 		mItemMasterDao = inItemMasterDao;
 		mItemDao = inItemDao;
 		mUomMasterDao = inUomMaster;
@@ -113,19 +114,18 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader,
-		Facility inFacility,
-		Timestamp inProcessTime) {
+	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 
 		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
 		return importSlottedInventory(inventoryBeanList, inFacility, inProcessTime);
-		
+
 	}
+
 	public boolean importSlottedInventory(List<InventorySlottedCsvBean> inventoryBeanList,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
-			// TODO Auto-generated method stub
+		// TODO Auto-generated method stub
 		if (inventoryBeanList.size() > 0) {
 
 			LOGGER.debug("Begin slotted inventory import.");
@@ -135,12 +135,10 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				try {
 					slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
 					produceRecordSuccessEvent(slottedInventoryBean);
-				}
-				catch(InputValidationException e) {
+				} catch (InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, slottedInventoryBean);
 					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
-				}
-				catch(Exception e) {
+				} catch (Exception e) {
 					produceRecordViolationEvent(EventSeverity.ERROR, e, slottedInventoryBean);
 					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
 				}
@@ -163,29 +161,23 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		// JR says this all looks dangerous. Not calling for now.
 
 		// Inactivate the DDC item that don't match the import timestamp.
-		try {
-			//mItemMasterDao.beginTransaction();
-			for (ItemMaster itemMaster : inFacility.getItemMasters()) {
-				Boolean itemMasterIsActive = false;
-				for (Item item : itemMaster.getItems()) {
-					if (item.getUpdated().equals(inProcessTime)) {
-						itemMasterIsActive = true;
-					} else {
-						LOGGER.info("Archive old item: " + itemMaster.getItemId());
-						item.setActive(false);
-						mItemDao.store(item);
-					}
-				}
-
-				if (!itemMasterIsActive) {
-					LOGGER.info("Archive old item master: " + itemMaster.getItemId());
-					itemMaster.setActive(false);
-					mItemMasterDao.store(itemMaster);
+		for (ItemMaster itemMaster : inFacility.getItemMasters()) {
+			Boolean itemMasterIsActive = false;
+			for (Item item : itemMaster.getItems()) {
+				if (item.getUpdated().equals(inProcessTime)) {
+					itemMasterIsActive = true;
+				} else {
+					LOGGER.info("Archive old item: " + itemMaster.getItemId());
+					item.setActive(false);
+					mItemDao.store(item);
 				}
 			}
-			//mItemMasterDao.commitTransaction();
-		} finally {
-			//mItemMasterDao.endTransaction();
+
+			if (!itemMasterIsActive) {
+				LOGGER.info("Archive old item master: " + itemMaster.getItemId());
+				itemMaster.setActive(false);
+				mItemMasterDao.store(itemMaster);
+			}
 		}
 
 	}
@@ -199,39 +191,31 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
-		try {
-			//mItemDao.beginTransaction();
+		LOGGER.debug("Import ddc item: " + inCsvBean.toString());
 
-			LOGGER.debug("Import ddc item: " + inCsvBean.toString());
+		try {
+			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
+
+			// Create or update the DDC item master, and then set the DDC ID for it.
+			ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+				inCsvBean.getDescription(),
+				inFacility,
+				inEdiProcessTime,
+				uomMaster);
+			itemMaster.setDdcId(inCsvBean.getDdcId());
+			itemMaster.setDescription(inCsvBean.getDescription());
 
 			try {
-				UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
-
-				// Create or update the DDC item master, and then set the DDC ID for it.
-				ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
-					inCsvBean.getDescription(),
-					inFacility,
-					inEdiProcessTime,
-					uomMaster);
-				itemMaster.setDdcId(inCsvBean.getDdcId());
-				itemMaster.setDescription(inCsvBean.getDescription());
-
-				try {
-					mItemMasterDao.store(itemMaster);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
-
-				@SuppressWarnings("unused")
-				Item item = updateDdcItem(inCsvBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
-
-			} catch (Exception e) {
+				mItemMasterDao.store(itemMaster);
+			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
-			//mItemDao.commitTransaction();
 
-		} finally {
-			//mItemDao.endTransaction();
+			@SuppressWarnings("unused")
+			Item item = updateDdcItem(inCsvBean, inFacility, inEdiProcessTime, itemMaster, uomMaster);
+
+		} catch (Exception e) {
+			LOGGER.error("", e);
 		}
 	}
 
@@ -244,30 +228,23 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException {
 
-		try {
-			//mItemDao.beginTransaction();
-			
 			LOGGER.info(inCsvBean.toString());
 			String errorMsg = inCsvBean.validateBean();
 			if (errorMsg != null) {
 				throw new InputValidationException(inCsvBean, errorMsg);
-			} 
-			
+			}
+
 			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
 
 			String theItemID = inCsvBean.getItemId();
-			ItemMaster itemMaster = updateItemMaster(theItemID,
-				inCsvBean.getDescription(),
-				inFacility,
-				inEdiProcessTime,
-				uomMaster);
-			
+			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
+
 			String theLocationID = inCsvBean.getLocationId();
 			Location location = inFacility.findSubLocationById(theLocationID);
 			// Remember, findSubLocationById will find inactive locations.
 			// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
 			if (location == null) {
-				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_NOT_FOUND);			
+				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 				produceRecordViolationEvent(inCsvBean, "Using facility for missing location");
 				//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
 				location = inFacility;
@@ -275,7 +252,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
 			// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
 			else if (!location.isActive()) {
-				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_INACTIVE);			
+				produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_REFERENCE_INACTIVE);
 				produceRecordViolationEvent(inCsvBean, "Using facility for inactive location");
 				//produceRecordViolationEvent(inCsvBean, "locationId", theLocationID, ErrorCode.FIELD_IMPLIED_VALUE, inFacility.getLocationId());			
 				location = inFacility;
@@ -290,12 +267,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			}
 			@SuppressWarnings("unused")
 			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
-
-				//mItemDao.commitTransaction();
-
-		} finally {
-			//mItemDao.endTransaction();
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -404,7 +375,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				LOGGER.error("", e);
 			}
 		} else {
-			LOGGER.warn("Failed to update inventory item with ID "+inCsvBean.getItemId());
+			LOGGER.warn("Failed to update inventory item with ID " + inCsvBean.getItemId());
 		}
 
 		return result;
@@ -418,21 +389,22 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @param inUomMaster
 	 * @return
 	 */
-	public Item updateSlottedItem(boolean useLenientValidation, final InventorySlottedCsvBean inCsvBean,
+	public Item updateSlottedItem(boolean useLenientValidation,
+		final InventorySlottedCsvBean inCsvBean,
 		final Location inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
 		final UomMaster inUomMaster) throws InputValidationException {
-		
+
 		DefaultErrors errors = new DefaultErrors(Item.class);
 		if (inLocation == null) {
 			errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_REQUIRED);
-		} 
+		}
 
 		if (inItemMaster == null) {
 			errors.rejectValue("parent", inItemMaster, ErrorCode.FIELD_REQUIRED);
 		}
-		
+
 		Double quantity = 0.0d;
 		String quantityString = inCsvBean.getQuantity();
 		try {
@@ -441,15 +413,14 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				quantity = 0.0d;
 				errors.rejectValue("quantity", quantity, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
-		}
-		catch(NumberFormatException e) {
+		} catch (NumberFormatException e) {
 			errors.rejectValue("quantity", quantityString, ErrorCode.FIELD_NUMBER_REQUIRED);
 		}
-		
+
 		if (errors.hasErrors() && !useLenientValidation) {
 			throw new InputValidationException(errors);
 		}
-		
+
 		// Refine using the cm value if there is one
 		Integer cmValue = null;
 		String cmFromLeftString = inCsvBean.getCmFromLeft();
@@ -467,9 +438,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 							if (cmValue / 100.0 > pickEndWidthMeters) {
 								errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
 							}
-						}	
-					}
-					else {
+						}
+					} else {
 						errors.rejectValue("storedLocation", null, ErrorCode.FIELD_REQUIRED); //when cmFromLeft
 					}
 				}
@@ -477,26 +447,25 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				errors.rejectValue("positionFromLeft", cmFromLeftString, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 			}
 		}
-		
-		
-		if(errors.hasErrors()) {
+
+		if (errors.hasErrors()) {
 			if (!useLenientValidation) {
-				throw new InputValidationException(errors); 
+				throw new InputValidationException(errors);
 			}
-		} 
-		
-		Item result = inItemMaster.findOrCreateItem(inLocation,inUomMaster);
-		
+		}
+
+		Item result = inItemMaster.findOrCreateItem(inLocation, inUomMaster);
+
 		result.setQuantity(quantity);
 		if (cmValue != null)
 			result.setPositionFromLeft(cmValue);
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
-		
+
 		mItemDao.store(result);
 		return result;
 	}
-	
+
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.INVENTORY_SLOTTED);

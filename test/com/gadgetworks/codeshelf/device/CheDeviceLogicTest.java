@@ -85,7 +85,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), wi.getPickInstruction());
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), "COMPLETE");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -125,7 +125,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 	
 		verifyDisplay(radioController, "NO WORK TO DO");
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test

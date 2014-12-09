@@ -201,7 +201,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// LED command/processing stream.
 	// A formatted stream of LED processing commands that tells the site gateway how to lights LEDs for this WI.
 	// See LedStreamProcessor
-	@Column(nullable = true,name="led_cmd_stream")
+	@Column(nullable = true,name="led_cmd_stream",columnDefinition="TEXT")
 	@Getter
 	@Setter
 	@JsonProperty

@@ -26,7 +26,7 @@ public class FacilityTest extends DomainTestABC {
 		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
 		Tier nullParent = facility.getParentAtLevel(Tier.class);
 		Assert.assertNull(nullParent);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -35,7 +35,7 @@ public class FacilityTest extends DomainTestABC {
 		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -61,7 +61,7 @@ public class FacilityTest extends DomainTestABC {
 		hasCrossBatchOrders = retrievedFacility.hasCrossBatchOrders();
 		
 		Assert.assertTrue(hasCrossBatchOrders);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	/**
@@ -75,6 +75,6 @@ public class FacilityTest extends DomainTestABC {
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));
 		Assert.assertNotNull(objectNode.findValue("hasCrossBatchOrders"));
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

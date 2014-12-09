@@ -52,14 +52,14 @@ import com.google.inject.Singleton;
 public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implements ICsvAislesFileImporter {
 
 	public static enum ControllerLayout {
-		zigzagLeft, 
-		zigzagRight,
 		zigzagB1S1Side,
 		zigzagNotB1S1Side,
-		tierRight, 
-		tierLeft,
 		tierB1S1Side,
-		tierNotB1S1Side
+		tierNotB1S1Side,
+		zigzagLeft, //deprecated, use zigzagB1S1Side
+		zigzagRight, //deprecated, use zigzagNotB1S1Side
+		tierRight,  //deprecated, use tierB1S1Side
+		tierLeft,   //deprecated, use tierNotB1S1Side
 	}
 	
 	private static double			CM_PER_M		= 100D;

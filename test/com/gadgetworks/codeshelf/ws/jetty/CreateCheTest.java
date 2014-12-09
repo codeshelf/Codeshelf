@@ -81,7 +81,7 @@ public class CreateCheTest extends DAOTestABC {
 		Che changedChe = (Che) result;
 		Assert.assertEquals(description2, changedChe.getDescription());
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -129,7 +129,7 @@ public class CreateCheTest extends DAOTestABC {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -175,7 +175,7 @@ public class CreateCheTest extends DAOTestABC {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -246,6 +246,6 @@ public class CreateCheTest extends DAOTestABC {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

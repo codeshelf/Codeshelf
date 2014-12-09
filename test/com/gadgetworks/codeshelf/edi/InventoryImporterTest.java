@@ -73,7 +73,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -90,7 +90,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -107,7 +107,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
 		Assert.assertNull(item);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -127,7 +127,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -145,7 +145,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -196,7 +196,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	
@@ -255,7 +255,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		// The last slot in bay3 should have same path value as the bay
 		Assert.assertEquals(slot4Pos, bay3Pos);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -364,7 +364,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(32, theLedRange3.getFirstLedToLight());
 		Assert.assertEquals(35, theLedRange3.getLastLedToLight());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -410,7 +410,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(112, theLedRange.getFirstLedToLight());
 		Assert.assertEquals(115, theLedRange.getLastLedToLight());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("rawtypes")
@@ -443,7 +443,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(item1123Loc403CS);
 		// Not tested here. Later, we will enforce only one each location per item in a facility (or perhaps work area) even as we allow multiple case locations.
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	private Facility setupInventoryData(Facility facility, String csvString) {
@@ -584,7 +584,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(1, shorts);
 		Assert.assertEquals(2, actives);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -724,7 +724,7 @@ public class InventoryImporterTest extends EdiTestABC {
 			Assert.assertTrue(LightLedsMessage.verifyCommandString(djsonLedCmdGroupsString));
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 
 	}

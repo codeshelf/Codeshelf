@@ -54,7 +54,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		
 		facilityId = facility.getPersistentId();
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	private ItemMaster createItemMaster(final String inItemMasterId, final String inUom, final Facility inFacility) {
@@ -101,7 +101,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -118,7 +118,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -142,7 +142,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			Assert.assertTrue("Did not contain quantity: " + csvString, csvString.contains(invalidQuantity));// sanity check
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -203,7 +203,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			Assert.assertEquals(1,  status.getResult().getViolations().size());
 		}
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
@@ -235,7 +235,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		OrderHeader order = group.getOrderHeader(OrderHeader.computeCrossOrderId("C333", ediProcessTime));
 		Assert.assertNotNull(order);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -313,7 +313,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -380,7 +380,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 500);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -430,7 +430,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 999);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -502,7 +502,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -592,7 +592,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts3.mActiveDetails == 5);
 		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -622,7 +622,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		int count = importCsvString(facility, firstCsvString, firstEdiProcessTime);
 		Assert.assertEquals(6,  count);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
 
 		
@@ -697,6 +697,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 12);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 4);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 }

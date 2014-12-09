@@ -241,7 +241,7 @@ public class PersistenceService extends Service {
 		return txBegun;
 	}
 
-	public final void endTenantTransaction() {
+	public final void commitTenantTransaction() {
 		Session session = getCurrentTenantSession();
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {

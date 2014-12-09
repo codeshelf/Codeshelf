@@ -75,7 +75,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		exporter  = new WorkInstructionCSVExporter();
 		
 		this.facilityId = facility.getPersistentId();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -105,7 +105,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 			}
 		}
 		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	private List<String[]> toTable(List<WorkInstruction> wiList) throws IOException {
@@ -131,7 +131,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		for (String[] dataRow : ImmutableList.copyOf(dataRows)) {
 			assertEachDateField(workInstructions.next(), dataRow);
 		}		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -157,7 +157,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "uom", "");		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 	}
 	
@@ -180,7 +180,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "orderId", expectedValue);		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -203,7 +203,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "orderGroupId", expectedValue);		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -218,7 +218,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "orderGroupId", "");		
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -238,7 +238,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		assertField(dataRow, "actualQuantity", "");
 		assertField(dataRow, "planQuantity", "");
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	private WorkInstruction generateValidFullWorkInstruction(Facility facility) {

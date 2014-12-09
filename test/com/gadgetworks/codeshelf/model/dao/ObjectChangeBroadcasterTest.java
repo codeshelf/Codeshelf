@@ -26,7 +26,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 		Organization org = new Organization();
 		org.setDomainId("A");
 		this.getPersistenceService().getCurrentTenantSession().save(org);
-		this.getPersistenceService().endTenantTransaction();		
+		this.getPersistenceService().commitTenantTransaction();		
 	}
 	
 	@Test
@@ -75,7 +75,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			organization.setDescription(orgDesc);
 			mOrganizationDao.store(organization);
 			UUID id = organization.getPersistentId();
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 
 			// make sure org exists and then update it
 			this.getPersistenceService().beginTenantTransaction();
@@ -85,7 +85,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Assert.assertEquals(orgDesc,foundOrganization.getDescription());
 			foundOrganization.setDescription(updatedDesc);
 			mOrganizationDao.store(foundOrganization);
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 
 			Thread.sleep(1000); //shame on me
 			Assert.assertNotNull(foundOrganization);
@@ -99,7 +99,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			foundOrganization = mOrganizationDao.findByPersistentId(id);
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(updatedDesc,foundOrganization.getDescription());
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 		} finally {
 			broadcaster.unregisterDAOListener(l);
 		}

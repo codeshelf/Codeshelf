@@ -21,7 +21,7 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gadgetworks.codeshelf.filter.Listener;
+import com.gadgetworks.codeshelf.filter.Filter;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
@@ -72,7 +72,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 
 		try {
 			/* register a filter like the UI does */
-			viewSession.registerObjectEventListener(new Listener(PathSegment.class, "ID1"));
+			viewSession.registerObjectEventListener(new Filter(PathSegment.class, "ID1"));
 			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
 			
 			
@@ -96,7 +96,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		}
 		finally {
 			objectChangeBroadcaster.unregisterDAOListener(viewSession);
-			this.getPersistenceService().endTenantTransaction();
+			this.getPersistenceService().commitTenantTransaction();
 		}
 
 	}
@@ -142,7 +142,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		Assert.assertNotNull(createdPath1);
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

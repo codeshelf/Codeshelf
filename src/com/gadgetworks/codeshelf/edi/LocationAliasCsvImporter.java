@@ -34,7 +34,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> implements ICsvLocationAliasImporter {
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
 
 	private final ITypedDao<LocationAlias>	mLocationAliasDao;
 
@@ -64,12 +64,10 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 					if (locationAlias != null) {
 						produceRecordSuccessEvent(locationAliasBean);
 					}
-				}
-				catch(InputValidationException e) {
+				} catch (InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, locationAliasBean);
 					LOGGER.warn("Unable to process record: " + locationAliasBean, e);
-				}
-				catch(Exception e) {
+				} catch (Exception e) {
 					produceRecordViolationEvent(EventSeverity.ERROR, e, locationAliasBean);
 					LOGGER.error("Unable to process record: " + locationAliasBean, e);
 				}
@@ -91,20 +89,13 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 		LOGGER.debug("Archive unreferenced location alias data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
-		try {
-			//mLocationAliasDao.beginTransaction();
-			for (LocationAlias locationAlias : inFacility.getLocationAliases()) {
-				if (!locationAlias.getUpdated().equals(inProcessTime)) {
-					LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
-					locationAlias.setActive(false);
-					mLocationAliasDao.store(locationAlias);
-				}
+		for (LocationAlias locationAlias : inFacility.getLocationAliases()) {
+			if (!locationAlias.getUpdated().equals(inProcessTime)) {
+				LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
+				locationAlias.setActive(false);
+				mLocationAliasDao.store(locationAlias);
 			}
-			//mLocationAliasDao.commitTransaction();
-		} finally {
-			//mLocationAliasDao.endTransaction();
 		}
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -118,53 +109,46 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException, DaoException {
 
-		try {
-			//mLocationAliasDao.beginTransaction();
-
-			LOGGER.info(inCsvBean.toString());
-			String errorMsg = inCsvBean.validateBean();
-			if (errorMsg != null) {
-				produceRecordViolationEvent(inCsvBean, errorMsg);
-				return null;
-			}
-
-			// Get or create the item at the specified location.
-			String locationAliasId = inCsvBean.getLocationAlias();
-			LocationAlias result = inFacility.getLocationAlias(locationAliasId);
-			String mappedLocationId = inCsvBean.getMappedLocationId();
-			Location mappedLocation = inFacility.findSubLocationById(mappedLocationId);
-			
-			// Check for deleted location
-			if (mappedLocation == null || mappedLocation instanceof Facility) {
-				produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-				return null;
-			}
-			if (!mappedLocation.isActive() ){
-				produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_INACTIVE);
-				return null;
-			}
-
-			if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
-				// create a new alias
-				result = new LocationAlias();
-				result.setDomainId(locationAliasId);
-				inFacility.addLocationAlias(result);
-			} 
-
-			if (result != null) {
-				// If we were able to get/create an item then update it.
-				mappedLocation.addAlias(result);
-				result.setActive(true);
-				result.setUpdated(inEdiProcessTime);
-				mLocationAliasDao.store(result);
-			}
-			//mLocationAliasDao.commitTransaction();
-			return result;
-		} finally {
-			//mLocationAliasDao.endTransaction();
+		LOGGER.info(inCsvBean.toString());
+		String errorMsg = inCsvBean.validateBean();
+		if (errorMsg != null) {
+			produceRecordViolationEvent(inCsvBean, errorMsg);
+			return null;
 		}
+
+		// Get or create the item at the specified location.
+		String locationAliasId = inCsvBean.getLocationAlias();
+		LocationAlias result = inFacility.getLocationAlias(locationAliasId);
+		String mappedLocationId = inCsvBean.getMappedLocationId();
+		Location mappedLocation = inFacility.findSubLocationById(mappedLocationId);
+
+		// Check for deleted location
+		if (mappedLocation == null || mappedLocation instanceof Facility) {
+			produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			return null;
+		}
+		if (!mappedLocation.isActive()) {
+			produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_INACTIVE);
+			return null;
+		}
+
+		if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
+			// create a new alias
+			result = new LocationAlias();
+			result.setDomainId(locationAliasId);
+			inFacility.addLocationAlias(result);
+		}
+
+		if (result != null) {
+			// If we were able to get/create an item then update it.
+			mappedLocation.addAlias(result);
+			result.setActive(true);
+			result.setUpdated(inEdiProcessTime);
+			mLocationAliasDao.store(result);
+		}
+		return result;
 	}
-	
+
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS);

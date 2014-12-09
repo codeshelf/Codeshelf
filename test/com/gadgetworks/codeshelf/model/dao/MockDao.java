@@ -151,17 +151,14 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public void beginTransaction() {
-	}
-
-	@Override
-	public void endTransaction() {
-	}
-
-	@Override
 	public T findByPersistentId(String inPersistentIdAsString) {
 		UUID persistentId = UUID.fromString(inPersistentIdAsString);
 		return this.findByPersistentId(persistentId);
+	}
+
+	@Override
+	public boolean matchesFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs, Class<T> inClass, UUID persistentId) {
+		throw new NotImplementedException();
 	}
 
 }

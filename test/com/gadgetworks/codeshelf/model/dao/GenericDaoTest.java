@@ -44,7 +44,7 @@ public class GenericDaoTest extends DAOTestABC {
 		filterParams.add(Restrictions.eq("domainId", "LOADBYFILTERTEST1"));
 		List<Organization> foundOrganizationList = mOrganizationDao.findByFilter(filterParams);
 		
-		this.persistenceService.endTenantTransaction();
+		this.persistenceService.commitTenantTransaction();
 		Assert.assertEquals(1, foundOrganizationList.size());
 	}
 
@@ -59,12 +59,12 @@ public class GenericDaoTest extends DAOTestABC {
 		organization.setDescription(desc);
 		mOrganizationDao.store(organization);
 
-		this.persistenceService.endTenantTransaction();
+		this.persistenceService.commitTenantTransaction();
 
 		// load stored org and check data in a sep transaction
 		this.persistenceService.beginTenantTransaction();
 		Organization foundOrganization = mOrganizationDao.findByPersistentId(organization.getPersistentId());
-		this.persistenceService.endTenantTransaction();
+		this.persistenceService.commitTenantTransaction();
 
 		Assert.assertNotNull(foundOrganization);
 		Assert.assertEquals(desc, foundOrganization.getDescription());
@@ -86,12 +86,12 @@ public class GenericDaoTest extends DAOTestABC {
 		organization.setDescription("LOADBYLIST-TEST2");
 		mOrganizationDao.store(organization);
 		persistentIdList.add(organization.getPersistentId());
-		this.persistenceService.endTenantTransaction();
+		this.persistenceService.commitTenantTransaction();
 
 		this.persistenceService.beginTenantTransaction();
 		List<Organization> foundOrganizationList = mOrganizationDao.findByPersistentIdList(persistentIdList);
 		Assert.assertEquals(2, foundOrganizationList.size());
-		this.persistenceService.endTenantTransaction();
+		this.persistenceService.commitTenantTransaction();
 	}
 
 	@Test

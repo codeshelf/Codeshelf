@@ -47,20 +47,17 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
-	
-	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage){
+
+	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage) {
 		// Replace with EventProducer call
 		LOGGER.warn(inMessage);
 	}
-
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader,
-		Facility inFacility,
-		Timestamp inProcessTime) {
+	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 		boolean result = true;
 		List<OrderLocationCsvBean> orderLocationBeanList = toCsvBean(inCsvReader, OrderLocationCsvBean.class);
 		//Sort to put orders with same id together
@@ -73,16 +70,16 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			String lastOrderId = null; //when changes, locations should be cleared
 			// Iterate over the order location map import beans.
 			for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
-				try {	
+				try {
 					lastOrderId = orderLocationCsvBeanImport(lastOrderId, orderLocationBean, inFacility, inProcessTime);
 					produceRecordSuccessEvent(orderLocationBean);
-				} catch(DaoException | EdiFileReadException | InputValidationException e) {
+				} catch (DaoException | EdiFileReadException | InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, orderLocationBean);
 					LOGGER.warn("Unable to process record: " + orderLocationBean, e);
 				} catch (Exception e) {
 					produceRecordViolationEvent(EventSeverity.ERROR, e, orderLocationBean);
 					LOGGER.error("Unable to process record: " + orderLocationBean, e);
-				} 
+				}
 			}
 
 			archiveCheckOrderLocations(inFacility, inProcessTime);
@@ -124,34 +121,28 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private String orderLocationCsvBeanImport(final String lastOrderId, final OrderLocationCsvBean inCsvBean,
+	private String orderLocationCsvBeanImport(final String lastOrderId,
+		final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
 		LOGGER.info(inCsvBean.toString());
-		try {	
-			//mOrderLocationDao.beginTransaction();
-			String errorMsg = inCsvBean.validateBean();
-			if (errorMsg != null) {
-				throw new InputValidationException(inCsvBean, errorMsg);
-			} 
-			if (!inCsvBean.getOrderId().equals(lastOrderId)) {
-				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
-			}
-		
-			if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-				deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
-			} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
-				deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
-			} else {
-				updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
-			}
-			//mOrderLocationDao.commitTransaction();
-			return inCsvBean.getOrderId();
+		String errorMsg = inCsvBean.validateBean();
+		if (errorMsg != null) {
+			throw new InputValidationException(inCsvBean, errorMsg);
 		}
-		finally {
-			//mOrderLocationDao.endTransaction();
+		if (!inCsvBean.getOrderId().equals(lastOrderId)) {
+			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
 		}
+
+		if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
+			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+		} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
+			deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+		} else {
+			updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+		}
+		return inCsvBean.getOrderId();
 	}
 
 	// --------------------------------------------------------------------------
@@ -180,8 +171,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			// throw new EdiFileReadException("No location found for location: " + locationId);
 			produceRecordViolationEvent(inCsvBean, "locationId", locationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			return null;
-		}
-		else if (!mappedLocation.isActive()){
+		} else if (!mappedLocation.isActive()) {
 			produceRecordViolationEvent(inCsvBean, "locationId", locationId, ErrorCode.FIELD_REFERENCE_INACTIVE);
 			return null;
 		}
@@ -208,10 +198,10 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
 				mOrderLocationDao.store(result);
-			} 
-			
+			}
+
 		}
- 
+
 		return result;
 	}
 
@@ -257,7 +247,6 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			}
 		}
 	}
-	
 
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {

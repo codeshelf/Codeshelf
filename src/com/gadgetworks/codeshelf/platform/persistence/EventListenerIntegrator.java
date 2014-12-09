@@ -38,9 +38,9 @@ public class EventListenerIntegrator implements Integrator {
         //eventListenerRegistry.setListeners( EventType.AUTO_FLUSH, myCompleteSetOfListeners );
         //     2) This form adds the specified listener(s) to the beginning of the listener chain
         //eventListenerRegistry.prependListeners( EventType.UPDATE, EventListener.class);
-        eventListenerRegistry.prependListeners( EventType.POST_UPDATE, new UpdateBroadcastListener(changeBroadcaster));
-        eventListenerRegistry.prependListeners( EventType.POST_DELETE, new DeleteBroadcastListener(changeBroadcaster));
-        eventListenerRegistry.prependListeners( EventType.POST_INSERT, new InsertBroadcastListener(changeBroadcaster));
+        eventListenerRegistry.prependListeners( EventType.POST_COMMIT_UPDATE, new UpdateBroadcastListener(changeBroadcaster));
+        eventListenerRegistry.prependListeners( EventType.POST_COMMIT_DELETE, new DeleteBroadcastListener(changeBroadcaster));
+        eventListenerRegistry.prependListeners( EventType.POST_COMMIT_INSERT, new InsertBroadcastListener(changeBroadcaster));
         //eventListenerRegistry.prependListeners( EventType.DELETE, EventListener.class);
         //     3) This form adds the specified listener(s) to the end of the listener chain
         //eventListenerRegistry.appendListeners( EventType.AUTO_FLUSH, myListenersToBeCalledLast );
