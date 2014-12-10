@@ -20,9 +20,11 @@ import javax.websocket.WebSocketContainer;
 import lombok.Getter;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -41,6 +43,11 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 public class CsDeviceManagerTest {
 	@Getter
 	PersistenceService persistenceService = PersistenceService.getInstance();
+
+	@Before
+	public final void setup() {
+		Configuration.loadConfig("test");
+	}	
 
 	@Test
 	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {
