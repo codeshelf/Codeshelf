@@ -20,12 +20,11 @@ import javax.websocket.WebSocketContainer;
 import lombok.Getter;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
+import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -40,16 +39,7 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
-public class CsDeviceManagerTest {
-	@Getter
-	PersistenceService persistenceService;
-
-	@Before
-	public final void setup() {
-		Configuration.loadConfig("test");
-		persistenceService = PersistenceService.getInstance();
-	}	
-
+public class CsDeviceManagerTest extends DAOTestABC {
 	@Test
 	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
