@@ -21,12 +21,11 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public class OptimisticLockExceptionTest {
 	@Getter
-	PersistenceService persistenceService;
+	PersistenceService persistenceService = PersistenceService.getInstance();
 
 	@Before
 	public final void setup() {
 		Configuration.loadConfig("test");
-		persistenceService = PersistenceService.getInstance();
 	}
 
 	@Test

@@ -63,15 +63,17 @@ public class EdiProcessorTest extends EdiTestABC {
 		
 		Assert.assertFalse(foundThread == null);
 
-		ediProcessor.stopProcessor();
-		// That thread might be sleeping.
-		if (foundThread != null) {
-			foundThread.interrupt();
+		for(int try=0;try<3 && findEdiThread!=null;try++) {
+			ediProcessor.stopProcessor();
+			// That thread might be sleeping.
+			if (foundThread != null) {
+				foundThread.interrupt();
+			}
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+			} // wait a moment for EDI processor thread to stop
 		}
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		} // wait a moment for EDI processor thread to stop
 
 		Assert.assertNull(findEdiThread());
 	}
