@@ -132,7 +132,7 @@ public class Filter implements ObjectEventListener {
 	public Map<String, Object> getPropertiesForDeleted(Class<? extends IDomainObject> inDomainClass, UUID inPersistentId) {
 		Map<String, Object> propertiesMap = Maps.newHashMap();
 		// Always include the class name and persistent ID in the results.
-		propertiesMap.put(CLASSNAME, inDomainClass);
+		propertiesMap.put(CLASSNAME, inDomainClass.getSimpleName());
 		propertiesMap.put(OP_TYPE, EventType.Delete.toString());
 		propertiesMap.put(PERSISTENT_ID, inPersistentId);
 		return propertiesMap;

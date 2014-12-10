@@ -91,17 +91,17 @@ public class FacilityTest extends DomainTestABC {
 		createAndSaveVertex(facility, "V02", 1, -120d, 30d);
 		createAndSaveVertex(facility, "V03", 2, -119.999d, 29.999d);
 		createAndSaveVertex(facility, "V04", 2, -120d, 29.999d);
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 		
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(id);
 		facility.removeAllVertices();
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();;
 		
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(id);
 
-		this.getPersistenceService().endTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();;
 
 	}
 	
