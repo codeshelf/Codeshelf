@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -17,6 +18,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +64,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAlias.class);
 
 	// Attachment credential.
-	@SuppressWarnings("rawtypes")
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@JoinColumn(name="mapped_location_persistentid")
 	@JsonProperty
 	private Location			mappedLocation;
@@ -81,11 +82,10 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private Timestamp			updated;
 
 	// The owning facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility			parent;
 
 	public LocationAlias() {
-
 	}
 
 	public LocationAlias(Facility facility, String domainId, Location mappedLocation) {
@@ -105,13 +105,15 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+		}		
 		return parent;
 	}
 	
 	public final Facility getFacility() {
 		return getParent();
 	}
-
 
 	public final void setParent(Facility inParent) {
 		parent = inParent;
@@ -126,6 +128,9 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Location getMappedLocation() {
+		if (this.mappedLocation instanceof HibernateProxy) {
+			this.mappedLocation = Location.deproxify(this.mappedLocation);
+		}
 		return mappedLocation;
 	}
 

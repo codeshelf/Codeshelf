@@ -116,7 +116,7 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers			= new HashMap<String, Container>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 

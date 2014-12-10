@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -17,6 +18,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,16 +70,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
 
 	// The owning location.
-	@ManyToOne(optional = false)
-	@Getter
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Setter
 	private ItemMaster			parent;
 
 	// The stored location.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@JoinColumn(name="stored_location_persistentid")
-	@Getter
-	//	@Setter
 	private Location			storedLocation;
 
 	// Quantity.
@@ -88,9 +87,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private Double				quantity;
 
 	// The actual UoM.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@JoinColumn(name="uom_master_persistentid")
-	@Getter
 	@Setter
 	private UomMaster			uomMaster;
 
@@ -132,6 +130,28 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public Item() {
 	}
+	
+	@Override
+	public ItemMaster getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (ItemMaster) DomainObjectABC.deproxify(this.parent);
+		}
+		return this.parent;
+	}
+	
+	public Location getStoredLocation() {
+		if (this.storedLocation instanceof HibernateProxy) {
+			this.storedLocation = (Location) DomainObjectABC.deproxify(this.storedLocation);
+		}
+		return storedLocation;
+	}
+	
+	public UomMaster getUomMaster() {
+		if (this.uomMaster instanceof HibernateProxy) {
+			this.uomMaster = (UomMaster) DomainObjectABC.deproxify(this.uomMaster);
+		}
+		return uomMaster;
+	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Item> getDao() {
@@ -142,7 +162,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return "IT";
 	}
 
-	@ManyToOne
 	public final String getItemId() {
 		return parent.getItemId();
 	}

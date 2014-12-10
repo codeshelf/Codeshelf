@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
@@ -18,6 +19,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +65,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ContainerUse.class);
 
 	// The container used.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Container			parent;
 
 	// Use date.
@@ -74,16 +76,14 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	private Timestamp			usedOn;
 
 	// The order where we used this container.
-	@OneToOne(optional = true)
+	@OneToOne(optional = true, fetch=FetchType.LAZY)
 	@JoinColumn(name="order_header_persistentid")
-	@Getter
 	@Setter
 	private OrderHeader			orderHeader;
 
 	// The che where we're using this container.
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@JoinColumn(name="current_che_persistentid")
-	@Getter
 	@Setter
 	private Che					currentChe;
 
@@ -101,6 +101,13 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	public ContainerUse() {
 	}
+	
+	public Che getCurrentChe() {
+		if (this.currentChe instanceof HibernateProxy) {
+			this.currentChe = (Che) DomainObjectABC.deproxify(this.currentChe);
+		}
+		return currentChe;
+	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ContainerUse> getDao() {
@@ -112,7 +119,17 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	}
 
 	public final Container getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Container) DomainObjectABC.deproxify(this.parent);
+		}		
 		return this.parent;
+	}
+	
+	public OrderHeader getOrderHeader() {
+		if (this.orderHeader instanceof HibernateProxy) {
+			this.orderHeader = (OrderHeader) DomainObjectABC.deproxify(this.orderHeader);
+		}		
+		return orderHeader;
 	}
 
 	public final Facility getFacility() {

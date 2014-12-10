@@ -15,6 +15,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
@@ -23,6 +24,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +74,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
 	// The parent facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Facility						parent;
 
 	// The description.
@@ -112,9 +114,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private Integer							ddcPackDepth;
 
 	// The standard UoM.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	@JoinColumn(name="standard_uom_persistentid")
-	@Getter
 	@Setter
 	private UomMaster						standardUom;
 
@@ -141,16 +142,12 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		updated = new Timestamp(System.currentTimeMillis());
 	}
 
-	/*
-	public ItemMaster(Facility inParent, String inItemId, UomMaster standardUom) {
-		super(inItemId);
-		this.parent = inParent;
-		this.standardUom = standardUom;
-		lotHandlingEnum = LotHandlingEnum.FIFO;
-		active = true;
-		updated = new Timestamp(System.currentTimeMillis());
+	public UomMaster getStandardUom() {
+		if (standardUom instanceof HibernateProxy) {
+			this.standardUom = (UomMaster) deproxify(this.standardUom);
+		}
+		return standardUom;
 	}
-	*/
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
@@ -162,6 +159,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (parent instanceof HibernateProxy) {
+			this.parent = (Facility) deproxify(this.parent);
+		}		
 		return parent;
 	}
 

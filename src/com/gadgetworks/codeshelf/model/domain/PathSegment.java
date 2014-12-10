@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -17,6 +18,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +73,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
 
 	// The owning organization.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Path parent;
 
 	// The order of this path segment in the path (from the tail/origin).
@@ -153,6 +155,9 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public final Path getParent() {
+		if (parent instanceof HibernateProxy) {
+			this.parent = (Path) deproxify(this.parent);
+		}						
 		return parent;
 	}
 

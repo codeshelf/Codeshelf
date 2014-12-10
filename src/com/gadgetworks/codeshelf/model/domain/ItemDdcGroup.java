@@ -7,12 +7,14 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,8 +59,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemDdcGroup.class);
 
 	// The parent location.
-	@SuppressWarnings("rawtypes")
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Location			parent;
 
 	// The start position of this DDC group along the pick path.
@@ -89,6 +90,9 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 	}
 
 	public final Location getParent() {
+		if (parent instanceof HibernateProxy) {
+			this.parent = (Location) deproxify(this.parent);
+		}		
 		return parent;
 	}
 	

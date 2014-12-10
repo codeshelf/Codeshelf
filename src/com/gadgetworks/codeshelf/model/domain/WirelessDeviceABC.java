@@ -10,6 +10,7 @@ import java.util.Arrays;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
@@ -17,6 +18,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +66,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
 
 	// The owning network.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	protected CodeshelfNetwork		parent;
 
 	@Column(nullable = false,name="device_guid")
@@ -114,6 +116,9 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	}
 
 	public final CodeshelfNetwork getParent() {
+		if (parent instanceof HibernateProxy) {
+			this.parent = (CodeshelfNetwork) deproxify(this.parent);
+		}
 		return parent;
 	}
 

@@ -1523,7 +1523,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
-	@SuppressWarnings({ "unused", "rawtypes" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPath() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -1614,12 +1614,10 @@ public class AisleImporterTest extends EdiTestABC {
 		// Then we need to associate the aisles to the path segment. Use the same function as the UI does
 		String segmentId = segment0.getPersistentId().toString();
 		UUID facilityID = facility.getPersistentId();
+		aisle31.associatePathSegment(segmentId);
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
-
-		aisle31.associatePathSegment(segmentId);
-
 		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31);
 
 		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
@@ -1726,7 +1724,9 @@ public class AisleImporterTest extends EdiTestABC {
 		//From the facility now (after associating aisle to path segment)
 		Facility retrievedFacility = Facility.DAO.findByPersistentId(facilityID);
 		Path memberPath = retrievedFacility.getPath("F3X.1");
+		Assert.assertNotNull(memberPath);
 		PathSegment memberPathFirstSegment = memberPath.getPathSegment(0);
+		Assert.assertNotNull(memberPathFirstSegment);
 		Assert.assertEquals(memberSegment, memberPathFirstSegment);
 		Assert.assertEquals(Arrays.asList(locations), memberPathFirstSegment.getLocations());
 	}
@@ -2065,7 +2065,6 @@ public class AisleImporterTest extends EdiTestABC {
 		Slot.DAO.store(slotB1T1S5);
 		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
-
 	}
 
 	@Test
@@ -2128,7 +2127,6 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5.getLedChannel() == 3);
-
 	}
 
 }

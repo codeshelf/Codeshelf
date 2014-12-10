@@ -15,6 +15,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
@@ -24,6 +25,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +77,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	 
 	
 	// The owning Facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility					parent;
 
 	// The provider.
@@ -111,6 +113,9 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+		}
 		return parent;
 	}
 	

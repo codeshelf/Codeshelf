@@ -17,6 +17,7 @@ import java.util.TreeSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -26,6 +27,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,8 +77,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER						= LoggerFactory.getLogger(Path.class);
 
 	// The parent facility.
-	@ManyToOne(optional = false)
-	@Getter
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	@Setter
 	private Facility					parent;
 
@@ -95,41 +96,38 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// The work area that goes with this path.
 	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
-	@OneToOne(mappedBy = "parent")
-	@Getter
+	@OneToOne(mappedBy = "parent",fetch=FetchType.LAZY)
 	private WorkArea					workArea;
 
 	// The computed path length.
 	@Setter
 	private Double						length;
 
-	// All of the path segments that belong to this path.
+	// All of the path segments that belong to this path.95
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "segmentOrder")
-	//	@Getter
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 
-	// private Map<Integer, PathSegment>	segments					= null;
-/*
-	public static final Path create(Facility parent, String inDomainId) {
-		Path path = new Path(parent, inDomainId, "A Facility Path");
-		DAO.store(path);
-		return path;
-	}
-	*/
 	public Path() {
 		description = "";
 		travelDir = TravelDirectionEnum.FORWARD;
 	}
 
-	/*
-	public Path(Facility facility, String inDomainId, String inDescription) {
-		super(inDomainId);
-		parent = facility;
-		description = inDescription;
-		travelDirEnum = TravelDirectionEnum.FORWARD;
+	@Override
+	public Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+		}
+		return this.parent;
 	}
-*/
+	
+	public WorkArea getWorkArea() {
+		if (this.workArea instanceof HibernateProxy) {
+			this.workArea = (WorkArea) DomainObjectABC.deproxify(this.workArea);
+		}
+		return workArea;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Path> getDao() {
 		return Path.DAO;

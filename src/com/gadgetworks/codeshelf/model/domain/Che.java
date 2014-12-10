@@ -12,8 +12,6 @@ import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
@@ -68,24 +66,21 @@ public class Che extends WirelessDeviceABC {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(Che.class);
 
+	// The current work area. appears not to be used anywhere.
 	/*
-	@ManyToOne(optional = false)
-	private CodeshelfNetwork parent;
-	 */
-
-	// The current work area.
-	@ManyToOne(optional = true)
-	@Getter
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@Setter
 	@JoinColumn(name = "current_work_area_persistentid")
 	private WorkArea				currentWorkArea;
+	*/
 
-	// The current user.
-	@ManyToOne(optional = true)
-	@Getter
+	// The current user. appears not to be used anywhere.
+	/*
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@Setter
 	@JoinColumn(name = "current_user_persistentid")
 	private User					currentUser;
+	*/
 
 	@NotNull
 	@Enumerated(value = EnumType.STRING)
@@ -121,6 +116,24 @@ public class Che extends WirelessDeviceABC {
 		Che.DAO = dao;
 	}
 
+	/*
+	// appears not to be used anywhere
+	public User getCurrentUser() {
+		if (currentUser instanceof HibernateProxy) {
+			currentUser = (User) DomainObjectABC.deproxify(currentUser);
+		}
+		return currentUser;
+	}
+
+	// appears not to be used anywhere
+	public WorkArea getCurrentWorkArea() {
+		if (currentWorkArea instanceof HibernateProxy) {
+			currentWorkArea = (WorkArea) DomainObjectABC.deproxify(currentWorkArea);
+		}
+		return currentWorkArea;
+	}
+	*/
+	
 	public final String getDefaultDomainIdPrefix() {
 		return "CHE";
 	}

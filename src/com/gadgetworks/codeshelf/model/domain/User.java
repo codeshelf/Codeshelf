@@ -17,6 +17,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -24,6 +25,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,8 +80,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public static final int		PBKDF2_INDEX		= 2;
 
 	// The owning organization.
-	// @Column(name = "parentOrganization")
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Organization		parent;
 
 	// The hash salt.
@@ -87,7 +88,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@NonNull
 	@Getter
 	@Setter
-	//@JsonProperty
 	private String				hashSalt;
 
 	// The hash iterations.
@@ -95,16 +95,11 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@NonNull
 	@Getter
 	@Setter
-	//@JsonProperty
 	private Integer				hashIterations;
 
-	// The hashed password.
+	// The hashed password. It's not safe to expose these values outside this object!
 	@Column(nullable = false,name="hashed_password")
 	@NonNull
-	// It's not safe to expose these values outside this object!
-	//	@Getter
-	//	@Setter
-	//@JsonProperty
 	private String				hashedPassword;
 
 	// sitecon, webapp, system user etc
@@ -148,6 +143,9 @@ public class User extends DomainObjectTreeABC<Organization> {
 	}
 
 	public final Organization getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Organization) DomainObjectABC.deproxify(this.parent);
+		}
 		return parent;
 	}
 

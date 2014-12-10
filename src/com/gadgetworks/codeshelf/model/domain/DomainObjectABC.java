@@ -22,7 +22,9 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.atteo.classindex.IndexSubclasses;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -146,5 +148,29 @@ public abstract class DomainObjectABC implements IDomainObject {
 			addDeclaredAndInheritedFields(superClass, inFields);
 		}
 	}
+
+	public static IDomainObject deproxify(IDomainObject domainObject) {
+		if (domainObject==null) {
+			return null;
+		}
+	    if (domainObject instanceof HibernateProxy) {
+	        Hibernate.initialize(domainObject);
+	        DomainObjectABC realDomainObject = (DomainObjectABC) ((HibernateProxy) domainObject)
+	                  .getHibernateLazyInitializer()
+	                  .getImplementation();
+	        return realDomainObject;
+	    }
+		return domainObject;
+	}
+
+	/*
+	public static <T extends IDomainObject> T as(T domainObject) {
+		if (domainObject==null) {
+			return null;
+		}
+		domainObject = (T) deproxify(domainObject);
+	    return domainObject;
+	}
+	*/		
 
 }

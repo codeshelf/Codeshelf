@@ -24,9 +24,11 @@ import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -50,7 +52,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	private ConvertUtilsBean converter;
 
 	@Inject
-	@SuppressWarnings("rawtypes")
 	public GenericDaoABC(PersistenceService persistenceService) {
 		this.persistenceService = persistenceService;
 		this.converter = new ConverterProvider().get();
@@ -63,12 +64,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	public final T findByPersistentId(UUID inPersistentId) {
 		T result = null;
-		try {
-			Session session = getCurrentSession();
-			result = (T) session.get(getDaoClass(), inPersistentId);
-		} 
-		catch (Exception e) {
-			LOGGER.error("Failed to find object with persistent ID "+inPersistentId, e);
+		Session session = getCurrentSession();
+		result = (T) session.get(getDaoClass(), inPersistentId);
+		if (result!=null && result instanceof HibernateProxy) {
+			result = (T) DomainObjectABC.deproxify(result);
 		}
 		return result;
 	}

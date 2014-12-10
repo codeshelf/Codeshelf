@@ -57,11 +57,6 @@ public class LedController extends WirelessDeviceABC {
 
 	private static final Logger		LOGGER		= LoggerFactory.getLogger(LedController.class);
 	
-	// parent of che is network
-	//@Getter @Setter
-	//@ManyToOne(optional = false)
-	//private CodeshelfNetwork parent;
-
 	// All of the locations that use this controller.
 	@OneToMany(targetEntity=Location.class)
 	@Getter

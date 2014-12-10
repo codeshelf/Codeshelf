@@ -11,12 +11,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +64,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(EdiDocumentLocator.class);
 
 	// The owning EdiService.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private EdiServiceABC			parent;
 
 	// Document Path
@@ -119,7 +121,10 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 	}
 
 	public final EdiServiceABC getParent() {
-		return parent;
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (EdiServiceABC) DomainObjectABC.deproxify(this.parent);
+		}
+		return this.parent;
 	}
 
 	public final Facility getFacility() {

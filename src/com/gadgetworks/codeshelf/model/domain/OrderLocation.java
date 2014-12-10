@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -16,6 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +63,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocation.class);
 
-	@SuppressWarnings("rawtypes")
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	@JsonProperty
 	private Location			location;
 
@@ -79,7 +80,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	private Timestamp			updated;
 
 	// The owning facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private OrderHeader			parent;
 
 	// --------------------------------------------------------------------------
@@ -107,6 +108,9 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final OrderHeader getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (OrderHeader) DomainObjectABC.deproxify(this.parent);
+		}		
 		return parent;
 	}
 
@@ -119,6 +123,9 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final Location getLocation() {
+		if (this.location instanceof HibernateProxy) {
+			this.location = Location.deproxify(this.location);
+		}		
 		return location;
 	}
 
