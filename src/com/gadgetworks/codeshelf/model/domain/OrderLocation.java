@@ -61,7 +61,6 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocation.class);
 
-	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
 	@JsonProperty
 	private Location			location;

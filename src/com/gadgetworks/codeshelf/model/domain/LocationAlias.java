@@ -62,7 +62,6 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAlias.class);
 
 	// Attachment credential.
-	@SuppressWarnings("rawtypes")
 	@ManyToOne(optional = false)
 	@JoinColumn(name="mapped_location_persistentid")
 	@JsonProperty

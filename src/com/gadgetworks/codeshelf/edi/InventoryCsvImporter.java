@@ -155,7 +155,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	/**
 	 * @param inFacility
 	 * @param inProcessTime
-	 */
 	private void archiveCheckItemStatuses(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.info("Archive unreferenced item data");
 		// JR says this all looks dangerous. Not calling for now.
@@ -181,12 +180,13 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		}
 
 	}
+	 */
+	
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvBean
 	 * @param inFacility
-	 */
 	private void ddcInventoryCsvBeanImport(final InventoryDdcCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
@@ -218,6 +218,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			LOGGER.error("", e);
 		}
 	}
+	 */
 
 	// --------------------------------------------------------------------------
 	/**
@@ -351,7 +352,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @param inItemMaster
 	 * @param inUomMaster
 	 * @return
-	 */
 	private Item updateDdcItem(final InventoryDdcCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
@@ -380,6 +380,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 		return result;
 	}
+	 */
 
 	// --------------------------------------------------------------------------
 	/**

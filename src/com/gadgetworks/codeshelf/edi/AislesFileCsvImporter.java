@@ -350,7 +350,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// First get our list of slot. Fighting through the cast.
 		List<Slot> slotList = new ArrayList<Slot>();
 
-		@SuppressWarnings("rawtypes")
 		List<? extends Location> locationList = inTier.getActiveChildren();
 
 		@SuppressWarnings("unchecked")

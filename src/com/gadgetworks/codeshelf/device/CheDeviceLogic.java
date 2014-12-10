@@ -984,7 +984,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/**
 	 * Sort the WIs by their distance along the path.
-	 */
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -1001,6 +1000,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			return wi1Pos.compareTo(wi2Pos);
 		}
 	};
+	 */
 
 	// --------------------------------------------------------------------------
 	/**

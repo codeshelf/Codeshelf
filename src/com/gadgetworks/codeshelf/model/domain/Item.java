@@ -48,8 +48,6 @@ import com.google.inject.Singleton;
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
 
-	private static final long	serialVersionUID	= 1L;
-
 	@Inject
 	public static ITypedDao<Item>	DAO;
 

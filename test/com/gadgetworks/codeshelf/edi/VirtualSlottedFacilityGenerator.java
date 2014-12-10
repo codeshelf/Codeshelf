@@ -34,7 +34,6 @@ public class VirtualSlottedFacilityGenerator {
 		this.orderImporter = orderImporter;
 	}
 	
-	@SuppressWarnings("rawtypes")
 	public Facility generateFacilityForVirtualSlotting(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -127,7 +126,9 @@ public class VirtualSlottedFacilityGenerator {
 		locationAliasImporter.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(organization,nName);
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		organization.createDefaultSiteControllerUser(network); 
+
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 

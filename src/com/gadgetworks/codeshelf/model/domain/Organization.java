@@ -197,7 +197,8 @@ public class Organization extends DomainObjectABC {
 		}
 
 		// Create the default network for the facility.
-		CodeshelfNetwork network = facility.createNetwork(this,CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		createDefaultSiteControllerUser(network); 
 
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
@@ -268,8 +269,6 @@ public class Organization extends DomainObjectABC {
 		// Recompute path positions,
 		//   and ensure IronMq configuration
 		//   and create a default site controller user if doesn't already exist
-		List<Organization> orgs = Organization.DAO.getAll();
-		Organization organization = orgs.get(0);
 		for (Facility facility : Facility.DAO.getAll()) {
 			for (Path path : facility.getPaths()) {
 				// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
@@ -309,13 +308,13 @@ public class Organization extends DomainObjectABC {
 	 * 
 	 * @return user
 	 */
-	public static User createDefaultSiteControllerUser(Organization org,CodeshelfNetwork network) {
+	public User createDefaultSiteControllerUser(CodeshelfNetwork network) {
 		User siteconUser = User.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
 		if(siteconUser == null) {
 			// no default site controller user exists. check for default site controller.
 			SiteController sitecon = SiteController.DAO.findByDomainId(null,CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
 			if(sitecon == null) {
-				siteconUser = createSiteControllerAndUser(network,org,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Test Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+				siteconUser = createSiteControllerAndUser(network,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Test Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
 			} else {
 				LOGGER.error("Default site controller user doesn't exist, but default site controller does exist");
 			}
@@ -323,7 +322,7 @@ public class Organization extends DomainObjectABC {
 		return siteconUser;
 	}
 	
-	public static User createSiteControllerAndUser(CodeshelfNetwork network,Organization org, String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
+	public User createSiteControllerAndUser(CodeshelfNetwork network,String inDomainId, String inDescribeLocation, Boolean inMonitor, String inPassword) {
 		User siteconUser = User.DAO.findByDomainId(null,inDomainId);
 		if(siteconUser == null) {
 			// no default site controller user exists. check for default site controller.
@@ -344,8 +343,8 @@ public class Organization extends DomainObjectABC {
 					sitecon=null;
 				}
 				
-				if(sitecon!=null && org!=null) {
-					siteconUser = org.createUser(inDomainId, inPassword, UserType.SITECON);
+				if(sitecon!=null) {
+					siteconUser = createUser(inDomainId, inPassword, UserType.SITECON);
 					
 					if (siteconUser == null) {
 						LOGGER.error("Failed to create user for new site controller "+inDomainId);

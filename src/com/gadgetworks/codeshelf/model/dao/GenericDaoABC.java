@@ -47,7 +47,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	private ConvertUtilsBean converter;
 
 	@Inject
-	@SuppressWarnings("rawtypes")
 	public GenericDaoABC(PersistenceService persistenceService) {
 		this.persistenceService = persistenceService;
 		this.converter = new ConverterProvider().get();

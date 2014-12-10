@@ -357,7 +357,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @author jeffw
 	 *
 	 */
-	@SuppressWarnings("rawtypes")
 	private class LocationsComparable implements Comparator<Location> {
 
 		public int compare(Location inLoc1, Location inLoc2) {

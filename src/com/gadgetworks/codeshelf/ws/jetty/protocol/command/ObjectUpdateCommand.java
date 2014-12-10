@@ -32,7 +32,7 @@ public class ObjectUpdateCommand extends CommandABC {
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ResponseABC exec() {
 		ObjectUpdateResponse response = new ObjectUpdateResponse();
 		

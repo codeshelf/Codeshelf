@@ -900,10 +900,8 @@ public class AisleImporterTest extends EdiTestABC {
 		// Remember, tier in second bay pickface is relative to the bay. It will be about 1.41
 		Assert.assertTrue(b2T2FaceEnd < 2.0);
 
-		@SuppressWarnings("rawtypes")
 		List<Location> theB1T1Slots = tierB1T1.getActiveChildren();
 		Assert.assertTrue(theB1T1Slots.size() == 5);
-		@SuppressWarnings("rawtypes")
 		List<Location> theB1T2Slots = tierB1T2.getActiveChildren();
 		Assert.assertTrue(theB1T2Slots.size() == 4);
 		short tierB1T2First = tierB1T2.getFirstLedNumAlongPath();
@@ -1523,7 +1521,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
-	@SuppressWarnings({ "unused", "rawtypes" })
+	@SuppressWarnings("unused")
 	@Test
 	public final void testPath() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -1955,6 +1953,7 @@ public class AisleImporterTest extends EdiTestABC {
 			this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testThrowInTransaction() {
 		// DAO-correct

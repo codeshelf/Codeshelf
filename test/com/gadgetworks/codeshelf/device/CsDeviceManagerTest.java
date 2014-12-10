@@ -17,8 +17,6 @@ import javax.websocket.Endpoint;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
 
-import lombok.Getter;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -29,7 +27,6 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.MemoryConfiguration;
 import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
@@ -40,12 +37,14 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest extends DAOTestABC {
+	Organization org = new Organization();
+	
 	@Test
 	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(null,mockRadioController);		
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(org,mockRadioController);		
 
 		attachedDeviceManager.disconnected();
 		
@@ -64,7 +63,7 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(null,mockRadioController);
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(org,mockRadioController);
 
 		attachedDeviceManager.disconnected();
 		
@@ -93,7 +92,8 @@ public class CsDeviceManagerTest extends DAOTestABC {
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		CodeshelfNetwork network = facility.createNetwork(organization,"DEFAULTTEST");
+		CodeshelfNetwork network = facility.createNetwork("DEFAULTTEST");
+		organization.createDefaultSiteControllerUser(network); 
 		Che che = new Che();
 		che.setPersistentId(UUID.randomUUID());
 		che.setDeviceNetGuid(cheGuid);

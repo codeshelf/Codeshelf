@@ -14,6 +14,7 @@ import com.google.inject.Inject;
 
 public class ObjectChangeBroadcaster {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(ObjectChangeBroadcaster.class);
 
 	private SetMultimap<Class<? extends IDomainObject>, IDaoListener> mListeners = HashMultimap.create();

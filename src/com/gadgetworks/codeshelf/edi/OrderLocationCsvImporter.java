@@ -47,12 +47,12 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 
 		mOrderLocationDao = inOrderLocationDao;
 	}
-
+/*
 	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage) {
 		// Replace with EventProducer call
 		LOGGER.warn(inMessage);
 	}
-
+*/
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
