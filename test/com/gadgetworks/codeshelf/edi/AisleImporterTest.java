@@ -1395,15 +1395,15 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE4X");
+		organization.setDomainId("O4X");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-AISLE4X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE4X");
+		organization.createFacility("F4X", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F4X");
 
-		Path aPath = createPathForTest("F4X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F4X.1.0", aPath, 0, 22.0, 48.0, 12.0, 48.0);
-		PathSegment segment1 = addPathSegmentForTest("F4X.1.1", aPath, 1, 12.0, 48.0, 12.0, 58.0);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.0, 12.0, 48.0);
+		PathSegment segment1 = addPathSegmentForTest(aPath, 1, 12.0, 48.0, 12.0, 58.0);
 		SortedSet<PathSegment> segments = aPath.getSegments();
 		int countSegments = segments.size();
 		Assert.assertTrue(countSegments == 2);
@@ -1489,8 +1489,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
 
-		Path aPath = createPathForTest("F5X.1", facility);
-		PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 22.0, 48.45, 12.00, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.00, 48.45);
 
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
@@ -1555,11 +1555,11 @@ public class AisleImporterTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE3X");
+		organization.setDomainId("O-3X");
 		mOrganizationDao.store(organization);
 
-		organization.createFacility("F-AISLE3X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE3X");
+		organization.createFacility("F3X", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F3X");
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1592,9 +1592,9 @@ public class AisleImporterTest extends EdiTestABC {
 		// For A31, B2 will be at the start of the path. And pos along path should be about the same for pairs of slots from A31 and A32
 		// For A32, B1 will be at the start of the path
 
-		Path aPath = createPathForTest("F3X.1", facility);
+		Path aPath = createPathForTest(facility);
 
-		PathSegment segment0 = addPathSegmentForTest("F3X.1.0", aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		// Mostly check the parent relationship these 4 lines
 		TravelDirectionEnum direction1 = aPath.getTravelDir();
@@ -1768,9 +1768,9 @@ public class AisleImporterTest extends EdiTestABC {
 		Aisle aisle61 = Aisle.DAO.findByDomainId(facility, "A61");
 		Assert.assertNotNull(aisle61);
 
-		Path aPath = createPathForTest("F5X.1", facility);
+		Path aPath = createPathForTest(facility);
 		// this path goes from right to left, and should easily extend beyond the aisle boundaries.
-		PathSegment segment0 = addPathSegmentForTest("F6X.1.0", aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
 		// let's check that assumption.
 		Double segmentLeftMostX = segment0.getEndPosX();
 		Double segmentRightMostX = segment0.getStartPosX();

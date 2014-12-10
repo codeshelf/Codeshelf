@@ -103,7 +103,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	protected PathSegment getDefaultPathSegment(Path path, Integer inOrder) {
 		PathSegment segment = path.getPathSegment(inOrder); 
 		if (segment == null) {
-			segment = path.createPathSegment(inOrder.toString(), inOrder,  anyPoint(), anyPoint());
+			segment = path.createPathSegment(inOrder,  anyPoint(), anyPoint());
 			// createPathSegment() does the store
 			// mPathSegmentDao.store(segment);
 		}
@@ -215,7 +215,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		resultFacility.addPath(path);
 
 		Point startPoint1 = Point.getZeroPoint().add(5.0,0.0);
-		PathSegment pathSegment1 = path.createPathSegment("PS1", 0, startPoint1, Point.getZeroPoint());
+		PathSegment pathSegment1 = path.createPathSegment(0, startPoint1, Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment1);
 
 		aisle1.setPathSegment(pathSegment1);
@@ -256,7 +256,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		baya4b2.setLedChannel(channel1);
 		mBayDao.store(baya4b2);
 
-		PathSegment pathSegment2 = path.createPathSegment("PS2", 1, Point.getZeroPoint(), Point.getZeroPoint());
+		PathSegment pathSegment2 = path.createPathSegment(1, Point.getZeroPoint(), Point.getZeroPoint());
 		mPathSegmentDao.store(pathSegment2);
 
 		aisle3.setPathSegment(pathSegment2);
@@ -526,8 +526,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return new Point(PositionTypeEnum.METERS_FROM_PARENT, Math.random()*10, Math.random()*10, Math.random()*10);
 	}
 	
-	protected PathSegment addPathSegmentForTest(final String inSegmentId,
-		final Path inPath,
+	protected PathSegment addPathSegmentForTest(final Path inPath,
 		final Integer inSegmentOrder,
 		Double inStartX,
 		Double inStartY,
@@ -536,12 +535,13 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
 		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentId, inSegmentOrder, head, tail);
+		PathSegment returnSeg = inPath.createPathSegment(inSegmentOrder, head, tail);
 		return returnSeg;
 	}
 
-	protected Path createPathForTest(String inDomainId, Facility inFacility) {
-		return inFacility.createPath(inDomainId);
+	protected Path createPathForTest(Facility inFacility) {
+		
+		return inFacility.createPath("");
 	}
 
 }
