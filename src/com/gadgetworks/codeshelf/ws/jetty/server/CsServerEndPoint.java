@@ -1,9 +1,6 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
-import java.io.IOException;
-
 import javax.websocket.CloseReason;
-import javax.websocket.EncodeException;
 import javax.websocket.EndpointConfig;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
@@ -14,7 +11,6 @@ import javax.websocket.server.ServerEndpoint;
 
 import lombok.Getter;
 
-import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

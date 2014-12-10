@@ -8,12 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;

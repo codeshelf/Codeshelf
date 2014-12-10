@@ -14,7 +14,6 @@ import java.util.concurrent.BlockingQueue;
 import lombok.Getter;
 
 import org.hibernate.HibernateException;
-import org.hibernate.exception.DataException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -17,7 +17,6 @@ import org.hibernate.NonUniqueObjectException;
 import org.hibernate.exception.DataException;
 import org.junit.Assert;
 import org.junit.Test;
-import org.postgresql.util.PSQLException;
 // domain objects needed
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

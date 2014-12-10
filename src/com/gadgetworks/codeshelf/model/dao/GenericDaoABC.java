@@ -14,8 +14,6 @@ import java.util.UUID;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.PersistenceException;
 
-import junit.framework.Assert;
-
 import org.apache.commons.beanutils.ConversionException;
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.hibernate.Criteria;
@@ -32,7 +30,6 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 

@@ -27,25 +27,22 @@ public class OptimisticLockExceptionTest {
 	public final void setup() {
 		Configuration.loadConfig("test");
 		persistenceService = PersistenceService.getInstance();
+		OrderHeader.DAO = new OrderHeaderDao(persistenceService);
+		OrderDetail.DAO = new OrderDetailDao(persistenceService);
+		Organization.DAO = new OrganizationDao(persistenceService);
+		Facility.DAO = new FacilityDao(persistenceService);
+		Organization.DAO = new OrganizationDao(persistenceService);
+		Facility.DAO = new FacilityDao(persistenceService);
 	}
 
 	@Test
 	public final void optimisticLockExceptionTest() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		// EbeanServer defaultServer = Ebean.getServer(null);
-
-		OrderHeader.DAO = new OrderHeaderDao(persistenceService);
-		OrderDetail.DAO = new OrderDetailDao(persistenceService);
-		Organization.DAO = new OrganizationDao(persistenceService);
-		Facility.DAO = new FacilityDao(persistenceService);
-
-		Organization.DAO = new OrganizationDao(persistenceService);
 		Organization organization = new Organization();
 		organization.setOrganizationId("OPTIMISTIC-O1");
 		Organization.DAO.store(organization);
 
-		Facility.DAO = new FacilityDao(persistenceService);
 		Facility facility = new Facility();
 		facility.setFacilityId("OPTIMISTIC-F1");
 		facility.setAnchorPoint(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
