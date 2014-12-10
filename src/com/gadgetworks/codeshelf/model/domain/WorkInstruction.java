@@ -365,7 +365,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			result = true;
 		} else {
 			// The check location is parent of the WI location, so it contains it.
-			@SuppressWarnings("unchecked")
 			Location parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;

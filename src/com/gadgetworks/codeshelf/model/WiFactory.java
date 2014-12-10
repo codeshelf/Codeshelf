@@ -403,7 +403,6 @@ public class WiFactory {
 	 * @param inItem
 	 * @param inColor
 	 */
-	@SuppressWarnings("rawtypes")
 	public static List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
 		final ColorEnum inColor,
 		final Location inLocation) {

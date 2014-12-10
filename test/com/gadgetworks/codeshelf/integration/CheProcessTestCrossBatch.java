@@ -55,6 +55,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 	}
 
 	// @SuppressWarnings("rawtypes")
+	@SuppressWarnings("unused")
 	private Facility setUpSimpleSlottedFacility() {
 		// This returns a facility with aisle A1 and A2, with two bays with two tier each. 5 slots per tier, like GoodEggs. With a path, associated to both aisles.
 		// Zigzag bays like GoodEggs. 10 valid locations per aisle, named as GoodEggs
@@ -177,6 +178,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 	}
 
 	// @SuppressWarnings("unused")
+	@SuppressWarnings("unused")
 	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15

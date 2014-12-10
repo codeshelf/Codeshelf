@@ -400,10 +400,10 @@ public class EdiProcessorTest extends EdiTestABC {
 		return new ICsvOrderImporter() {
 
 			@Override
-			public BatchResult importOrdersFromCsvStream(Reader inCsvStreamReader,
+			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) throws IOException {
-				BatchResult result = new BatchResult();
+				BatchResult<Object> result = new BatchResult<Object>();
 				result.addViolation("bad", "bad", "msg");
 				return result;
 			}

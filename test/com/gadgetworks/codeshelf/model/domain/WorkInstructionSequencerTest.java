@@ -109,13 +109,15 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(organization,nName);
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		organization.createDefaultSiteControllerUser(network); 
+
 		Che che = network.createChe("CHE1", new NetGuid("0x00000001"));
 
 		return facility;
 	}	
 	
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testBayDistanceSequencer()  throws IOException{
 		this.getPersistenceService().beginTenantTransaction();
@@ -217,7 +219,7 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 
 	}
 	
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testBayDistanceTopLastSequencer()  throws IOException{
 		this.getPersistenceService().beginTenantTransaction();

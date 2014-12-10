@@ -72,7 +72,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
 
-	// The owning organization.
+	// The owning path.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Path parent;
 

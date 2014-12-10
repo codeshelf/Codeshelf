@@ -241,6 +241,7 @@ public class ContainerUseTest extends DomainTestABC {
 		// Good enough. (knowing how the code works.)
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testEmptyCriteriaByChe() {
 		this.getPersistenceService().beginTenantTransaction();

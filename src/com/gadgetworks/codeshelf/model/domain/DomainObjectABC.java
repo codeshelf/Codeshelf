@@ -51,6 +51,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @ToString(doNotUseGetters = true, of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
 
 	// This is the internal GUID for the object.org.hibernate.

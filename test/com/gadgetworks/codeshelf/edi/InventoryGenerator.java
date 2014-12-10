@@ -34,6 +34,7 @@ public class InventoryGenerator {
 	}
 
 	
+	@SuppressWarnings("deprecation")
 	private InventorySlottedCsvBean generateInventoryRecord(Location location, int cmFromLeft) {
 		InventorySlottedCsvBean bean = new InventorySlottedCsvBean();
 		bean.setItemId(generateItemId());
