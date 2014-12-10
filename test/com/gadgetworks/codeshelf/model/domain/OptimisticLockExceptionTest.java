@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
@@ -19,12 +20,12 @@ import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public class OptimisticLockExceptionTest {
-
 	@Getter
 	PersistenceService persistenceService = PersistenceService.getInstance();
 
 	@Before
 	public final void setup() {
+		Configuration.loadConfig("test");
 	}
 
 	@Test
