@@ -42,11 +42,12 @@ import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest {
 	@Getter
-	PersistenceService persistenceService = PersistenceService.getInstance();
+	PersistenceService persistenceService;
 
 	@Before
 	public final void setup() {
 		Configuration.loadConfig("test");
+		persistenceService = PersistenceService.getInstance();
 	}	
 
 	@Test
