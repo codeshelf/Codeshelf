@@ -436,13 +436,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 		OrderGroup result = null;
 		
 		result = new OrderGroup();
-		result.setParent(inFacility);
 		result.setOrderGroupId(inOrderGroupId);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		inFacility.addOrderGroup(result);
 		mOrderGroupDao.store(result);
 		
-		inFacility.addOrderGroup(result);
 		
 		return result;
 	}
@@ -468,7 +467,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderHeaderDao.store(result);
 		inFacility.addOrderHeader(result);
-
+		if (inOrderGroup != null) {
+			inOrderGroup.addOrderHeader(result);
+		}
 		return result;
 	}
 
