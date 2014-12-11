@@ -342,7 +342,7 @@ public class Facility extends Location {
 			wi.setParent(this);
 		} else if (!previousFacility.equals(this)) {
 			LOGGER.error("cannot add WorkInstruction " + wi.getPersistentId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
+					+ " because it has not been removed from " + previousFacility.getDomainId(), new Exception());
 		}
 	}
 
@@ -352,7 +352,7 @@ public class Facility extends Location {
 			workInstructions.remove(wi);
 		} else {
 			LOGGER.error("cannot remove WorkInstruction " + wi.getPersistentId() + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+					+ " because it isn't found in children", new Exception());
 		}
 	}
 
@@ -363,7 +363,7 @@ public class Facility extends Location {
 			inItemMaster.setParent(this);
 		} else if (!previousFacility.equals(this)) {
 			LOGGER.error("cannot add ItemMaster " + inItemMaster.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
+					+ " because it has not been removed from " + previousFacility.getDomainId(), new Exception());
 		}
 	}
 

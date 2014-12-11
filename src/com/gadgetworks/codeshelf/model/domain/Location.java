@@ -420,9 +420,9 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 					result = (T) checkParent.getParentAtLevel(inClassWanted);
 				}
 			}
-		} else {
-			LOGGER.error("parent location of: " + this + " could not be retrieved");
-		}
+		} else 
+			LOGGER.error("parent location of: " + this + " could not be retrieved", new Exception());
+		
 		return result;
 	}
 
@@ -688,7 +688,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			inAlias.setMappedLocation(this);
 		} else if (!previousLocation.equals(this)) {
 			LOGGER.error("cannot map Alias " + inAlias.getDomainId() + " to " + this.getDomainId()
-					+ " because it is still mapped to " + previousLocation.getDomainId());
+					+ " because it is still mapped to " + previousLocation.getDomainId(), new Exception());
 		}
 	}
 
@@ -698,7 +698,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			aliases.remove(inAlias);
 		} else {
 			LOGGER.error("cannot unmap Alias " + inAlias.getDomainId() + " from " + this.getDomainId()
-					+ " because it isn't found in aliases");
+					+ " because it isn't found in aliases", new Exception());
 		}
 	}
 
@@ -776,7 +776,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			if (iterItem.equals(inItem)) {
 				storedItem = iterItem;
 				LOGGER.error("removeStoredItem  found" + itemDomainId + " in " + this.getDomainId()
-						+ " but not keyed by domainId correctly");  // This is bug 2)
+						+ " but not keyed by domainId correctly", new Exception());  // This is bug 2)
 				break;
 			}
 		}
@@ -786,7 +786,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			// How do we remove it from stored items?
 		} else {
 			LOGGER.error("cannot removeStoredItem " + itemDomainId + " from " + this.getDomainId()
-					+ " because it isn't found in children"); // This is bug 1)
+					+ " because it isn't found in children", new Exception()); // This is bug 1)
 		}
 	}
 
