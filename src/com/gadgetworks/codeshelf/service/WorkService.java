@@ -199,9 +199,9 @@ public class WorkService implements IApiService {
 	public void exportWorkInstruction(WorkInstruction inWorkInstruction) {
 		// jr/hibernate  tracking down an error
 		if (completedWorkInstructions == null)
-			LOGGER.error("null completedWorkInstructions in WorkService.exportWorkInstruction");
+			LOGGER.error("null completedWorkInstructions in WorkService.exportWorkInstruction", new Exception());
 		else if (inWorkInstruction == null)
-			LOGGER.error("null input to WorkService.exportWorkInstruction");
+			LOGGER.error("null input to WorkService.exportWorkInstruction", new Exception());
 		else {
 			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
 			completedWorkInstructions.add(inWorkInstruction);
