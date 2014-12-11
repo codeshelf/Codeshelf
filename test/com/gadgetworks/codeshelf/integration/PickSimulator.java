@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -232,7 +231,25 @@ public class PickSimulator {
 		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);
 	}
 
-	public PosControllerInstr getLastSentPosControllerInstrForPosition(byte position) {
-		return cheDeviceLogic.getPosToLastSetIntrMap().get(position);
+	public boolean hasLastSentInstruction(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position);
+	}
+
+	public Byte getLastSentPositionControllerDisplayValue(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
+			.get(position)
+			.getReqQty() : null;
+	}
+
+	public Byte getLastSentPositionControllerDisplayFreq(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
+			.get(position)
+			.getFreq() : null;
+	}
+
+	public Byte getLastSentPositionControllerDisplayDutyCycle(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
+			.get(position)
+			.getDutyCycle() : null;
 	}
 }

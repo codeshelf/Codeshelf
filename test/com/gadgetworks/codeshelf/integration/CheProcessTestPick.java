@@ -476,6 +476,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.start("D403", 8000, 5000);
 		HousekeepingInjector.restoreHKDefaults();
 
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BRIGHT_FREQ);
+
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction currentWI = picker.nextActiveWi();
 		Assert.assertEquals("SJJ BPP", currentWI.getDescription());
@@ -535,9 +539,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
 		//Make sure position display controller has no instructions for pos 2 and POS assigned code for pos 1
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
-		Assert.assertNull(picker.getLastSentPosControllerInstrForPosition((byte) 2));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.POSITION_ASSIGNED_CODE);
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		// Back to our main test
 		LOGGER.info("Case 2: A happy-day pick startup. No housekeeping jobs.");
@@ -564,17 +567,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		int quant = wi.getPlanQuantity();
 
 		//Pos 1 should be the same
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.POSITION_ASSIGNED_CODE);
 		//After Scanning start location of D303 we should be right next to the 
 		//8oz bowls which is part of order 11111 in position 2 with a quantity of 1
 		//That means the position controller for position 2 should have a quantity of 1:
-		PosControllerInstr instr = picker.getLastSentPosControllerInstrForPosition((byte) button);
-		Assert.assertEquals(instr.getReqQty(), (byte) quant);
 		//Make sure I was right about position 2 (order 11111), quantity 1 of 8oz bowls which has an itemId 1123
-		Assert.assertEquals(quant, 1);
 		Assert.assertEquals(button, 2);
+		Assert.assertEquals(quant, 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), (byte) 1);
 		Assert.assertEquals(wi.getItemId(), "1124");
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) button),
+			PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) button), PosControllerInstr.BRIGHT_FREQ);
 
 		// pick first item
 		picker.pick(button, quant);
@@ -584,18 +589,15 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		LOGGER.info("Case 3: A happy-day short, with one short-ahead");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
 
 		//Third job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		instr = picker.getLastSentPosControllerInstrForPosition((byte) button);
-		Assert.assertEquals(instr.getReqQty(), wi.getPlanQuantity().byteValue());
 		//Make sure we have the right position and quantities and itemId
 		Assert.assertEquals(quant, 1);
 		Assert.assertEquals(button, 2);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), (byte) 1);
 		// the third job is for 1522, which happens to be the one item going to both orders. So it should short-ahead
 		Assert.assertEquals("1522", wi.getItemId());
-		//Pos 1 should be the same on the poscontroller
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
 
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
@@ -609,18 +611,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 
-		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		instr = picker.getLastSentPosControllerInstrForPosition((byte) button);
-		Assert.assertEquals(instr.getReqQty(), wi.getPlanQuantity().byteValue());
-		//Make sure we have the right position and quantities and itemId
-		Assert.assertEquals(quant, 1);
-		Assert.assertEquals(button, 2);
-		// next item is 1122 (with quantity 1 above)
-		Assert.assertEquals("1122", wi.getItemId());
-		//Pos 1 should be the same on the poscontroller
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
-
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
 		picker.pick(button, 0);
@@ -631,19 +621,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2); // same work instruction still on
 
-		//Same WI means we can reAssert the position controller instructions from above: (copy and pasted)
-		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		instr = picker.getLastSentPosControllerInstrForPosition((byte) button);
-		Assert.assertEquals(instr.getReqQty(), wi.getPlanQuantity().byteValue());
-		//Make sure we have the right position and quantities and itemId
-		Assert.assertEquals(quant, 1);
-		Assert.assertEquals(button, 2);
-		// next item is 1122 (with quantity 1 above)
-		Assert.assertEquals("1122", wi.getItemId());
-		//Pos 1 should be the same on the poscontroller
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
-
 		LOGGER.info("Case 5: Inappropriate location scan, then normal button press works");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
@@ -652,16 +629,11 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
 
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		instr = picker.getLastSentPosControllerInstrForPosition((byte) button);
-		Assert.assertEquals(instr.getReqQty(), wi.getPlanQuantity().byteValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), wi.getPlanQuantity()
+			.byteValue());
 		//Make sure we have the right position and quantities and itemId
 		Assert.assertEquals(quant, 1);
 		Assert.assertEquals(button, 2);
-		// next item is 1122 (with quantity 1 above)
-		Assert.assertEquals("1122", wi.getItemId());
-		//Pos 1 should be the same on the poscontroller
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
 
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
@@ -672,16 +644,11 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Last check:
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		instr = picker.getLastSentPosControllerInstrForPosition((byte) button);
-		Assert.assertEquals(instr.getReqQty(), wi.getPlanQuantity().byteValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), wi.getPlanQuantity()
+			.byteValue());
 		//Make sure we have the right position and quantities and itemId
 		Assert.assertEquals(quant, 1);
 		Assert.assertEquals(button, 2);
-		// next item is 1523 (with quantity 1 above). Determined from the order
-		Assert.assertEquals("1523", wi.getItemId());
-		//Pos 1 should be the same on the poscontroller
-		Assert.assertEquals(picker.getLastSentPosControllerInstrForPosition((byte) 1).getReqQty(),
-			PosControllerInstr.POSITION_ASSIGNED_CODE.byteValue());
 
 		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		
@@ -741,6 +708,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Taking more than 3 seconds for the recompute and wrap. 
 		picker.start("D301", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
+
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2),
+			PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.BRIGHT_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.POSITION_ASSIGNED_CODE);
 
 		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
 		// the itemMaster field is null.
