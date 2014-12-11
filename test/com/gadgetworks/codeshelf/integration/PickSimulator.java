@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -229,5 +230,9 @@ public class PickSimulator {
 		}
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
 		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);
+	}
+
+	public PosControllerInstr getLastSentPosControllerInstrForPosition(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().get(position);
 	}
 }
