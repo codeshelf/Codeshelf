@@ -63,7 +63,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	}
 
-	@SuppressWarnings("rawtypes")
 	private Facility setUpSimpleNoSlotFacility() {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -262,6 +261,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testDataSetup() throws IOException {
 
@@ -279,7 +279,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings({ "unused", "rawtypes" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -394,7 +394,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings({ "unused", "rawtypes" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPickViaChe() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -496,6 +496,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testCheProcess1() throws IOException {
 		// Test cases:

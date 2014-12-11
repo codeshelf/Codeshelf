@@ -87,6 +87,7 @@ public class Tier extends Location {
 	@Setter
 	private boolean				mTransientLedsIncrease;
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 /*
 	public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {

@@ -13,6 +13,7 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 
 	private static final long	serialVersionUID	= -3661846171219447596L;
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DeleteBroadcastListener.class);
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;

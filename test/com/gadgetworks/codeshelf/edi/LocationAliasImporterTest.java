@@ -36,6 +36,7 @@ import com.gadgetworks.codeshelf.validation.Errors;
  */
 public class LocationAliasImporterTest extends EdiTestABC {
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public final void successEventsProduced() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -64,6 +65,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public final void violationEventProducedWhenLocationInactive() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -86,6 +88,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public final void violationEventProducedWhenLocationNotFound() {
 		this.getPersistenceService().beginTenantTransaction();

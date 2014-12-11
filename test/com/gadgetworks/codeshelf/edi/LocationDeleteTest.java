@@ -83,7 +83,9 @@ public class LocationDeleteTest extends EdiTestABC {
 		readLocationAliases(facility);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(organization,nName);
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		organization.createDefaultSiteControllerUser(network); 
+
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));
@@ -457,6 +459,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void locationDelete4() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();

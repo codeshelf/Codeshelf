@@ -133,7 +133,7 @@ public class Che extends WirelessDeviceABC {
 					+ " when it already is. This is a noOp ");
 		} else {
 			LOGGER.error("cannot add ContainerUse " + inContainerUse.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousChe.getDomainId());
+					+ " because it has not been removed from " + previousChe.getDomainId(), new Exception());
 		}
 	}
 
@@ -143,7 +143,7 @@ public class Che extends WirelessDeviceABC {
 			uses.remove(inContainerUse);
 		} else {
 			LOGGER.error("cannot remove ContainerUse " + inContainerUse.getDomainId() + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+					+ " because it isn't found in children", new Exception());
 		}
 	}
 
@@ -154,7 +154,7 @@ public class Che extends WirelessDeviceABC {
 			inWorkInstruction.setAssignedChe(this);
 		} else if (!previousChe.equals(this)) {
 			LOGGER.error("cannot add WorkInstruction " + inWorkInstruction.getPersistentId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousChe.getDomainId());
+					+ " because it has not been removed from " + previousChe.getDomainId(), new Exception());
 		}
 	}
 
@@ -164,7 +164,7 @@ public class Che extends WirelessDeviceABC {
 			cheWorkInstructions.remove(inWorkInstruction);
 		} else {
 			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getPersistentId() + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+					+ " because it isn't found in children", new Exception());
 		}
 	}
 

@@ -268,6 +268,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
 		this.getPersistenceService().beginTenantTransaction();

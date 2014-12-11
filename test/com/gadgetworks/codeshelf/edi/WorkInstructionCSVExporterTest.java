@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.edi;
 
-import static org.mockito.Mockito.mock;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
@@ -19,13 +17,9 @@ import org.junit.Test;
 import au.com.bytecode.opencsv.CSVReader;
 
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -267,7 +261,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		Assert.assertEquals(expectedValue,  fieldValue);
 
 	}
-	
+	/*
 	private Location mockSubLocation(String domainId) {
 		
 		Location mockLocation = new Location() {
@@ -293,4 +287,5 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 			
 		return mockLocation;
 	}
+	*/
 }

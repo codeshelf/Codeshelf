@@ -139,13 +139,15 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		
 		CodeshelfNetwork network = facility.getNetwork(networkId);
 		if (network==null) {
-			network = facility.createNetwork(organization,networkId);
+			network = facility.createNetwork(networkId);
+			organization.createDefaultSiteControllerUser(network); 
+
 			facility.addNetwork(network);
 			mCodeshelfNetworkDao.store(network);
 		}
 		this.networkPersistentId = network.getPersistentId();
 
-		User scUser = Organization.createDefaultSiteControllerUser(organization,network);
+		User scUser = organization.createDefaultSiteControllerUser(network);
 		Che che1 = network.getChe(cheId1);
 		if (che1==null) {
 			che1=network.createChe(cheId1, cheGuid1);

@@ -51,6 +51,7 @@ import com.google.common.base.Objects.ToStringHelper;
 
 public class LightServiceTest extends EdiTestABC {
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -133,7 +134,6 @@ public class LightServiceTest extends EdiTestABC {
 	/**
 	 * Special cased for now
 	 */
-	@SuppressWarnings("rawtypes")
 	@Test
 	public final void lightAisleWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -159,7 +159,6 @@ public class LightServiceTest extends EdiTestABC {
 	}
 		
 
-	@SuppressWarnings("rawtypes")
 	@Test
 	public final void lightBayWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -172,6 +171,7 @@ public class LightServiceTest extends EdiTestABC {
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> tiers = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*1 bays x 1 tiers*/);
+		@SuppressWarnings("unused")
 		Iterator<MessageABC> messageIter = messages.iterator();
 		for (Location tier : tiers) {
 			if (tier.getDomainId().equals("T2")) {
@@ -185,7 +185,6 @@ public class LightServiceTest extends EdiTestABC {
 	/**
 	 * Special cased for now
 	 */
-	@SuppressWarnings("rawtypes")
 	@Test
 	public final void checkChildLocationSequenceForZigZagLayoutAisle() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -204,6 +203,7 @@ public class LightServiceTest extends EdiTestABC {
 	}
 
 	
+	@SuppressWarnings("unchecked")
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent, int expectedTotal) throws InterruptedException, ExecutionException {
 		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
 		SessionManager sessionManager = mock(SessionManager.class);
@@ -359,7 +359,9 @@ public class LightServiceTest extends EdiTestABC {
 		importer2.importLocationAliasesFromCsvStream(new StringReader(csvLocationAlias), facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(organization,nName);
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		organization.createDefaultSiteControllerUser(network); 
+
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));

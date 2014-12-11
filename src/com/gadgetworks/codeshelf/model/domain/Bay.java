@@ -57,7 +57,6 @@ public class Bay extends Location {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
 
-	@SuppressWarnings("rawtypes")
 	private static Comparator<Location> topDownTierOrder = new TopDownTierOrder();
 	
 	public Bay() {
@@ -95,7 +94,6 @@ public class Bay extends Location {
 	
 	@Override
 	public List<Location> getSubLocationsInWorkingOrder() {
-		@SuppressWarnings("rawtypes")
 		List<Location> copy = new ArrayList<Location>(getActiveChildren());
 		Collections.sort(copy, topDownTierOrder);
 		List<Location> result = new ArrayList<Location>();
@@ -109,7 +107,6 @@ public class Bay extends Location {
 
 	}
 	
-	@SuppressWarnings("rawtypes")
 	private static final class TopDownTierOrder implements Comparator<Location> {
 		final Ordering<Double> doubleOrdering = Ordering.<Double>natural().reverse().nullsLast();
 

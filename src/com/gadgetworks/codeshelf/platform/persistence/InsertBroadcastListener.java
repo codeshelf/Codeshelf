@@ -10,6 +10,7 @@ import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 
 public class InsertBroadcastListener implements PostCommitInsertEventListener {
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DeleteBroadcastListener.class);
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;

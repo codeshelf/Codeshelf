@@ -23,21 +23,11 @@ import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.MockDao;
 import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
@@ -182,27 +172,13 @@ public class CodeshelfApplicationTest {
 	public void testStartStopApplication() {
 		Configuration.loadConfig("test");
 
-		ITypedDao<Organization> organizationDao = Organization.DAO = new MockDao<Organization>();
-		ITypedDao<User> userDao = User.DAO = new MockDao<User>();
-		ITypedDao<Facility> facilityDao = Facility.DAO = new MockDao<Facility>();
-		ITypedDao<Aisle> aisleDao = Aisle.DAO = new MockDao<Aisle>();
-		ITypedDao<Bay> bayDao = Bay.DAO = new MockDao<Bay>();
-		ITypedDao<Tier> tierDao = Tier.DAO = new MockDao<Tier>();
-		ITypedDao<Slot> slotDao = Slot.DAO = new MockDao<Slot>();
-		ITypedDao<OrderGroup> orderGroupDao = new MockDao<OrderGroup>();
-		ITypedDao<OrderHeader> orderHeaderDao = new MockDao<OrderHeader>();
-		ITypedDao<OrderDetail> orderDetailDao = new MockDao<OrderDetail>();
-		ITypedDao<Container> containerDao = new MockDao<Container>();
-		ITypedDao<ContainerUse> containerUseDao = new MockDao<ContainerUse>();
-		ITypedDao<ItemMaster> itemMasterDao = new MockDao<ItemMaster>();
-		ITypedDao<Item> itemDao = new MockDao<Item>();
-		//ITypedDao<Che> cheDao = new MockDao<Che>();
-		//ITypedDao<WorkInstruction> workInstructionDao = new MockDao<WorkInstruction>();
-		ITypedDao<LocationAlias> locationAliasDao = new MockDao<LocationAlias>();
-		ITypedDao<OrderLocation> orderLocationDao = new MockDao<OrderLocation>();
-
-		//Injector injector = new MockInjector();
-		//IDaoProvider daoProvider = new DaoProvider(injector);
+		Organization.DAO = new MockDao<Organization>();
+		User.DAO = new MockDao<User>();
+		Facility.DAO = new MockDao<Facility>();
+		Aisle.DAO = new MockDao<Aisle>();
+		Bay.DAO = new MockDao<Bay>();
+		Tier.DAO = new MockDao<Tier>();
+		Slot.DAO = new MockDao<Slot>();
 
 		IHttpServer httpServer = new HttpServer("./",
 			"localhost",
@@ -224,17 +200,10 @@ public class CodeshelfApplicationTest {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			facilityDao,
+			Facility.DAO,
 			PersistenceService.getInstance());
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
-/*		ISchemaManager schemaManager = new H2SchemaManager(
-			"codeshelf",
-			"codeshelf",
-			"codeshelf",
-			"codeshelf",
-			"localhost",
-			"");
-	*/	
+
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
@@ -244,7 +213,7 @@ public class CodeshelfApplicationTest {
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
-			userDao,
+			User.DAO,
 			adminServer,
 			jettyServer,
 			PersistenceService.getInstance());

@@ -149,7 +149,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			segments.put(inPathSegment.getSegmentOrder(), inPathSegment);
 			inPathSegment.setParent(this);
 		} else if (previousPath!=this) {
-			LOGGER.error("cannot add PathSegment "+inPathSegment.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousPath.getDomainId());
+			LOGGER.error("cannot add PathSegment "+inPathSegment.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousPath.getDomainId(), new Exception());
 		}	
 	}
 
@@ -163,7 +163,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			pathSegment.setParent(null);
 			segments.remove(inOrder);
 		} else {
-			LOGGER.error("cannot remove PathSegment "+inOrder+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove PathSegment "+inOrder+" from "+this.getDomainId()+" because it isn't found in children", new Exception());
 		}
 	}
 
@@ -357,7 +357,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @author jeffw
 	 *
 	 */
-	@SuppressWarnings("rawtypes")
 	private class LocationsComparable implements Comparator<Location> {
 
 		public int compare(Location inLoc1, Location inLoc2) {

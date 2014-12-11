@@ -76,7 +76,8 @@ import com.google.inject.Singleton;
 /**
  * Facility
  *
- * The basic unit that holds all of the locations and equipment for a single facility in an organization.
+ * The basic unit that holds all of the locations and equipment for a single facility.
+ * At root of domain object tree, parent always null.
  *
  * @author jeffw
  */
@@ -85,8 +86,6 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("FACILITY")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends Location {
-
-	private static final long			serialVersionUID	= 1L;
 
 	private static final String			IRONMQ_DOMAINID		= "IRONMQ";
 
@@ -343,7 +342,7 @@ public class Facility extends Location {
 			wi.setParent(this);
 		} else if (!previousFacility.equals(this)) {
 			LOGGER.error("cannot add WorkInstruction " + wi.getPersistentId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
+					+ " because it has not been removed from " + previousFacility.getDomainId(), new Exception());
 		}
 	}
 
@@ -353,7 +352,7 @@ public class Facility extends Location {
 			workInstructions.remove(wi);
 		} else {
 			LOGGER.error("cannot remove WorkInstruction " + wi.getPersistentId() + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+					+ " because it isn't found in children", new Exception());
 		}
 	}
 
@@ -364,7 +363,7 @@ public class Facility extends Location {
 			inItemMaster.setParent(this);
 		} else if (!previousFacility.equals(this)) {
 			LOGGER.error("cannot add ItemMaster " + inItemMaster.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
+					+ " because it has not been removed from " + previousFacility.getDomainId(), new Exception());
 		}
 	}
 
@@ -880,7 +879,7 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final CodeshelfNetwork createNetwork(Organization org,final String inNetworkName) {
+	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
 
@@ -899,7 +898,6 @@ public class Facility extends Location {
 			LOGGER.error("DaoException persistence error storing CodeshelfNetwork", e);
 		}
 
-		Organization.createDefaultSiteControllerUser(org,result); // this should go away. will only create default user+sitecon if it doesn't exist
 		return result;
 	}
 
@@ -1978,11 +1976,6 @@ public class Facility extends Location {
 		}
 	}
 
-	@Override
-	public Location getParent() {
-		return null;
-	}
-
 	public Aisle createAisle(String inAisleId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Aisle aisle = new Aisle();
 		aisle.setDomainId(inAisleId);
@@ -1995,9 +1988,18 @@ public class Facility extends Location {
 	}
 
 	@Override
+	public Location getParent() {
+		return null;
+	}
+
+	@Override
 	public void setParent(Location inParent) {
-		LOGGER.error("tried to set Facility " + this.getDomainId() + " parent to non-organization " + inParent.getClassName() + " "
-				+ inParent.getDomainId());
+		if(inParent!=null) {
+			String msg="tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
+					+ inParent.getDomainId();
+			LOGGER.error(msg);
+			throw new UnsupportedOperationException(msg);
+		}
 	}
 
 	public UomMaster createUomMaster(String inDomainId) {

@@ -173,7 +173,7 @@ public class SchemaManager {
 
 		Statement stmt = conn.createStatement();
 //		ResultSet result=stmt.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = '"+schemaName+"';");
-		boolean result = stmt.execute("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
+		stmt.execute("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
 		stmt.close();
 		conn.close();
 	}

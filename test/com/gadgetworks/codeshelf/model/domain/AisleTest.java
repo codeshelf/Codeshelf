@@ -15,6 +15,7 @@ import org.mockito.Mockito;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 
 public class AisleTest extends DomainTestABC {
+	Organization org=new Organization();
 
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
@@ -31,7 +32,7 @@ public class AisleTest extends DomainTestABC {
 	public final void updateControllerOnAisle() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		LedController controller = getDefaultController(getDefaultNetwork(null,getDefaultFacility()), "0xABCDEF");
+		LedController controller = getDefaultController(getDefaultNetwork(org,getDefaultFacility()), "0xABCDEF");
 		Aisle aisle = getDefaultAisle(getDefaultFacility(getDefaultOrganization("Org1")), "A1");
 
 		Short testChannel = 8;
@@ -61,7 +62,6 @@ public class AisleTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public final void associatePathSegment() {
 		this.getPersistenceService().beginTenantTransaction();
