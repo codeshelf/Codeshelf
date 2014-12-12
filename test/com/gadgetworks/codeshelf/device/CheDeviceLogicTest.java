@@ -10,7 +10,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.hamcrest.Description;
@@ -22,6 +24,7 @@ import org.mockito.InOrder;
 
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
+import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -70,8 +73,13 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		
 		cheDeviceLogic.scanCommandReceived("X%START");
 		
-		cheDeviceLogic.assignComputedWorkCount(wiToDo.size());
+		//This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.
+		//We will pass in a map containing good counts with no bad counts.
+		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
+		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity().byteValue(), (byte) 0));
 		
+		cheDeviceLogic.processWorkInstructionCounts(wiToDo.size(), containerToWorkInstructionMap);
+
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONBEFOREPICK");
 		
 		
@@ -113,7 +121,10 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		
 		cheDeviceLogic.scanCommandReceived("X%START");
 		
-		cheDeviceLogic.assignComputedWorkCount(wiToDo.size());
+		//This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.
+		//We will pass in a map containing good counts with no bad counts.
+		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
+		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity().byteValue(), (byte) 0));
 		
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
 	
@@ -147,7 +158,9 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		
 		cheDeviceLogic.scanCommandReceived("X%START");
 
-		cheDeviceLogic.assignComputedWorkCount(0);
+		//Empty map for workinstructionMap. Since totalWiCount is 0. LOCATION_REVIEW should not happen
+		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
+		cheDeviceLogic.processWorkInstructionCounts(0, containerToWorkInstructionMap);
 		
 		verifyDisplay(radioController, "NO WORK TO DO");
 		

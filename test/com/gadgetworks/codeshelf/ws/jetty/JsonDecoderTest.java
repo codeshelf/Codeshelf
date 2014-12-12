@@ -14,12 +14,14 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.ObjectMixIn;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 
 public class JsonDecoderTest  {
 
@@ -130,6 +132,21 @@ public class JsonDecoderTest  {
 		return segments;
 	}
 	
+	@Test
+	private void testComputeWorkResponseDeserialization() throws IOException {
+		ComputeWorkResponse computeWorkResp = new ComputeWorkResponse();
+		computeWorkResp.addWorkInstructionCount("Container1", new WorkInstructionCount((byte) 0, (byte) 5));
+		computeWorkResp.addWorkInstructionCount("Container2", new WorkInstructionCount((byte) 12, (byte) 0));
+		computeWorkResp.addWorkInstructionCount("01234567890123456789", new WorkInstructionCount((byte) 255, (byte) 66));
+		computeWorkResp.setTotalWorkInstructionCount(300);
+
+		//Serialize and Deserialize
+		ObjectMapper mapper = new ObjectMapper();
+		String serialized = mapper.writeValueAsString(computeWorkResp);
+		ComputeWorkResponse deserializedWorkResp = mapper.readValue(serialized, ComputeWorkResponse.class);
+		Assert.assertEquals(deserializedWorkResp, computeWorkResp);
+	}
+
 	/*
 	@Test
 	public void testObjectMethodRequest() throws DecodeException {
