@@ -7,11 +7,14 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import org.hibernate.Transaction;
+
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public abstract class DomainTestABC extends DAOTestABC {
@@ -436,13 +439,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 		OrderGroup result = null;
 		
 		result = new OrderGroup();
-		result.setParent(inFacility);
 		result.setOrderGroupId(inOrderGroupId);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		inFacility.addOrderGroup(result);
 		mOrderGroupDao.store(result);
 		
-		inFacility.addOrderGroup(result);
 		
 		return result;
 	}
@@ -468,7 +470,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderHeaderDao.store(result);
 		inFacility.addOrderHeader(result);
-
+		if (inOrderGroup != null) {
+			inOrderGroup.addOrderHeader(result);
+		}
 		return result;
 	}
 
@@ -547,5 +551,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		return inFacility.createPath("");
 	}
+
+	public Transaction beginTenantTransaction() {
+		return PersistenceService.getInstance().beginTenantTransaction();
+	}
+	
+	public void commitTenantTransaction() {
+		PersistenceService.getInstance().commitTenantTransaction();
+	}
+
 
 }

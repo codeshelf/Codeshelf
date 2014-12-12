@@ -1008,6 +1008,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
+	@JsonIgnore
 	public final Boolean isPathIncreasingFromAnchor() {
 		Aisle theAisle = this.getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
@@ -1018,6 +1019,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
+	@JsonIgnore
 	public final Boolean isLowerLedNearAnchor() {
 		// This answer may not be meaningful for some locations, such as for a bay with zigzag led pattern.
 		Boolean answer = getLowerLedNearAnchor();
