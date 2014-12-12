@@ -3,37 +3,62 @@ package com.gadgetworks.codeshelf.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * 
  * @author saba
- * A class used in the CheDeviceLogic and ComputeWorkResponse to hold counts for various types of work instruction. (Good/Bad for now)
+ * A class used in the CheDeviceLogic and ComputeWorkResponse to hold counts for various types of work instruction.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkInstructionCount {
 
 	@Getter
 	@Setter
-	private byte	goodCount;
+	private int	goodCount	= 0;
 
 	@Getter
 	@Setter
-	private byte	badCount;
+	private int	unknownOrderIdCount	= 0;
 
-	public WorkInstructionCount(byte goodCount, byte badCount) {
+	@Getter
+	@Setter
+	private int	immediateShortCount	= 0;
+
+
+	public WorkInstructionCount(int goodCount, int unknownOrderIdCount, int immediateShortCount) {
 		super();
 		this.goodCount = goodCount;
-		this.badCount = badCount;
+		this.unknownOrderIdCount = unknownOrderIdCount;
+		this.immediateShortCount = immediateShortCount;
 	}
 
-	/*
-	 * No args-constructor for jackson
+	/**
+	 * No-arg constructor for jackson
 	 */
 	public WorkInstructionCount() {
 		super();
 	}
 
 	/**
-	 * Equals is used for unit test
+	 * A work instruction is already done if there are no good work instructions. No bad works instructions (immediate short, etc)
+	 * And the work was valid (it did not have an unknown orderId)
 	 */
+	public boolean isAlreadyDone() {
+		return unknownOrderIdCount == 0 && goodCount == 0 && immediateShortCount == 0;
+	}
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + goodCount;
+		result = prime * result + immediateShortCount;
+		result = prime * result + unknownOrderIdCount;
+		return result;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
@@ -43,11 +68,14 @@ public class WorkInstructionCount {
 		if (getClass() != obj.getClass())
 			return false;
 		WorkInstructionCount other = (WorkInstructionCount) obj;
-		if (badCount != other.badCount)
-			return false;
 		if (goodCount != other.goodCount)
+			return false;
+		if (immediateShortCount != other.immediateShortCount)
+			return false;
+		if (unknownOrderIdCount != other.unknownOrderIdCount)
 			return false;
 		return true;
 	}
+
 
 }

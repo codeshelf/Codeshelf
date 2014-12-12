@@ -76,7 +76,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		//This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.
 		//We will pass in a map containing good counts with no bad counts.
 		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
-		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity().byteValue(), (byte) 0));
+		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity(), 0, 0));
 		
 		cheDeviceLogic.processWorkInstructionCounts(wiToDo.size(), containerToWorkInstructionMap);
 
@@ -124,7 +124,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		//This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.
 		//We will pass in a map containing good counts with no bad counts.
 		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
-		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity().byteValue(), (byte) 0));
+		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity(), 0, 0));
 		
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
 	
