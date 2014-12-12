@@ -31,6 +31,8 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
+import com.gadgetworks.codeshelf.validation.ErrorCode;
+import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -199,7 +201,16 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		setStoredLocation(loc);
 	}
 
-	public final String getItemCmFromLeft() {
+	public final String getItemMasterId() {
+		ItemMaster master = getParent();
+		return master.getDomainId();
+	}
+
+	/**
+	 * Property that uses String type
+	 * @return
+	 */
+	public final String getCmFromLeftui() {
 		Integer value = getCmFromLeft();
 		if (value != 0)
 			return value.toString();
@@ -208,20 +219,23 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 	
-	public final String getItemMasterId() {
-		ItemMaster master = getParent();
-		return master.getDomainId();
-	}
-
-	public final void setItemCmFromLeft(String inValueFromLeft) {
-		Integer positionValue;
+	/**
+	 * Property that uses String type
+	 * @return
+	 */
+	public final void setCmFromLeftui(String inValueFromLeft) {
+		Integer positionValue = null;
 		if (Strings.isNullOrEmpty(inValueFromLeft) || inValueFromLeft.trim().length() == 0) {
 			positionValue = null;
 		}
 		else {
-			positionValue = Integer.valueOf(inValueFromLeft);
+			try {
+				positionValue = Integer.valueOf(inValueFromLeft);
+			} catch (NumberFormatException e) {
+				throw new InputValidationException(this, "cmFromLeft", inValueFromLeft, ErrorCode.FIELD_WRONG_TYPE);
+			}
 		}
-		setPositionFromLeft(positionValue);
+		setCmFromLeft(positionValue);
 	}
 
 	public final String getPosAlongPathui() {
@@ -302,32 +316,30 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	// Public setter/getter/validate functions for our cmFromLeft feature
-	public final void setPositionFromLeft(Integer inCmFromLeft) {
+	public final void setCmFromLeft(Integer inCmFromLeft) {
 		if (inCmFromLeft == null) {
 			setMetersFromAnchor(null);
 		}
 		else {
 			Double value = 0.0;
 			Location theLocation = this.getStoredLocation();
-			
 			if (!theLocation.isFacility()) {
-				Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
-				if (theLocation.isLeftSideTowardsAnchor()) {
-					value = inCmFromLeft / 100.0;
-				} else {
-					value = pickEndWidthMeters - (inCmFromLeft / 100.0);
-				}
-				if (value > pickEndWidthMeters) {
-					LOGGER.error("setPositionFromLeft value out of range");
-					value = pickEndWidthMeters;
-				}
-				if (value < 0.0) {
-					LOGGER.error("ssetPositionFromLeft value out of range");
-					value = 0.0;
+				if (inCmFromLeft < 0) {
+					throw new InputValidationException(this,  "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
+				} else if (theLocation != null && !theLocation.isFacility()) {
+					Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
+					if (theLocation.isLeftSideTowardsAnchor()) {
+						value = inCmFromLeft / 100.0;
+					} else {
+						value = pickEndWidthMeters - (inCmFromLeft / 100.0);
+					}
+					if (value > pickEndWidthMeters || value < 0) {
+						throw new InputValidationException(this,  "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
+					}
 				}
 				setMetersFromAnchor(value);
 			} else {
-				LOGGER.error("unexpected setPositionFromLeft on facility");
+				LOGGER.debug("unexpected setCmFromLeft on facility");
 			}
 		}
 	}

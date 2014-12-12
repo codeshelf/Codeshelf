@@ -47,7 +47,7 @@ public class ItemTest extends DomainTestABC {
 		itemMaster.addItemToMaster(item);
 		
 		item.setStoredLocation(anyLocation);
-		item.setItemCmFromLeft(" "); //allowed
+		item.setCmFromLeftui(" "); //allowed
 		Assert.assertNull(item.getPosAlongPath());
 		
 		this.getPersistenceService().commitTenantTransaction();
