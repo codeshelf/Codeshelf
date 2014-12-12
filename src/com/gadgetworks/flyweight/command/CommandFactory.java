@@ -60,7 +60,7 @@ public final class CommandFactory {
 				break;
 
 			default:
-				LOGGER.error("Invalid command in packet: " + cmdGroupID.getCommandEnum());
+				LOGGER.error("Invalid command in packet: " + cmdGroupID.getCommandEnum(), new Exception()); // give the stack trace
 				break;
 
 		}
