@@ -9,4 +9,5 @@
 	<include file="db.changelog-v10.2.xml" />
 	<include file="db.changelog-v10.3.xml" />
 	<include file="db.changelog-v10.4.xml" />
+	<include file="db.changelog-v10.5.xml" />
 </databaseChangeLog>
