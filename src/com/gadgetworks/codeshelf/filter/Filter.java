@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import junit.framework.Assert;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -21,6 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
 
@@ -82,6 +84,10 @@ public class Filter implements ObjectEventListener {
 		//rough rule of thumb to catch soft addition (where active went from false to true)
 		// start by ignoring if this filter is not looking for super class
 		if(this.getPersistenceClass().isAssignableFrom(domainClass)) {
+			// getting NPE from MAT on long line. What is null?
+			Preconditions.checkNotNull(dao, "dao is null for class " + domainClass);
+			Preconditions.checkNotNull(params, "params is null for class " + domainClass); // could null be ok for this?
+			
 			boolean matches = dao.matchesFilterAndClass(criteriaName,params,dao.getDaoClass(), domainPersistentId);
 			if (matches) {
 				if (this.matchList.contains(domainPersistentId)) {
