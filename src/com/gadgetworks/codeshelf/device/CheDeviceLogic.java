@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
+import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -402,9 +403,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * @param inWorkInstructionCount
 	 */
-	public final void assignComputedWorkCount(final Integer inWorkInstructionCount) {
+	public final void assignComputedWorkCount(final Integer inWorkInstructionCount,
+		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		// The back-end returned the work instruction count.
 		if (inWorkInstructionCount > 0) {
+			//TODO Use the map to determine if we need to go to location_select or review
 			setState(CheStateEnum.LOCATION_SELECT);
 		} else {
 			setState(CheStateEnum.NO_WORK);
