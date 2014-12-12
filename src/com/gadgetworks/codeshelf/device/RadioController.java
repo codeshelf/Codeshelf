@@ -24,6 +24,7 @@ import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 import com.gadgetworks.flyweight.command.AckStateEnum;
 import com.gadgetworks.flyweight.command.CommandAssocABC;
 import com.gadgetworks.flyweight.command.CommandAssocAck;
@@ -99,10 +100,10 @@ public class RadioController implements IRadioController {
 	private Boolean												mShouldRun					= true;
 	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
 	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
-	
+
 	@Getter
 	private IGatewayInterface									gatewayInterface;
-	
+
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
@@ -111,7 +112,7 @@ public class RadioController implements IRadioController {
 	private long												mLastIntfCheckMillis;
 	private long												mLastPacketSentMillis;
 	@SuppressWarnings("unused")
-	private boolean												mIntfCheckPending; // actually, this is used, suppressing bogus warning
+	private boolean												mIntfCheckPending;																// actually, this is used, suppressing bogus warning
 	private byte												mAckId;
 	private volatile Map<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
 
@@ -125,10 +126,11 @@ public class RadioController implements IRadioController {
 	private Thread												mPacketProcessorThread;
 
 	private byte												mNextAddress;
-	
-	private boolean 											mRunning;
-	
-	private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
+
+	private boolean												mRunning;
+
+	private final Counter										packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
+																								"packets.sent");
 
 	// --------------------------------------------------------------------------
 	/**
@@ -154,10 +156,10 @@ public class RadioController implements IRadioController {
 		mDeviceGuidMap = new HashMap<NetGuid, INetworkDevice>();
 		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
 		mNextAddress = 1;
-		
-		mRunning=false;
+
+		mRunning = false;
 	}
-	
+
 	public final void setNetworkId(NetworkId inNetworkId) {
 		if (mRunning) {
 			if (!this.mNetworkId.equals(inNetworkId)) {
@@ -166,7 +168,7 @@ public class RadioController implements IRadioController {
 			return;
 		}
 		mNetworkId = inNetworkId;
-		
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -217,7 +219,7 @@ public class RadioController implements IRadioController {
 				LOGGER.error("", e);
 			}
 		}
-		mRunning=false;
+		mRunning = false;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -290,7 +292,7 @@ public class RadioController implements IRadioController {
 					mIntfCheckPending = true;
 					long currentTime = System.currentTimeMillis();
 					Long durationSinceLastCheck = currentTime - mLastIntfCheckMillis;
-					if (durationSinceLastCheck >  TOO_LONG_DURATION_MILLIS) {
+					if (durationSinceLastCheck > TOO_LONG_DURATION_MILLIS) {
 						LOGGER.warn("Duration since last beacon sent to radio: " + durationSinceLastCheck + "millis");
 					}
 					mLastIntfCheckMillis = currentTime;
@@ -351,7 +353,7 @@ public class RadioController implements IRadioController {
 						IPacket packet = queue.peek();
 						if (packet != null) {
 							INetworkDevice device = this.mDeviceNetAddrMap.get(packet.getDstAddr());
-							if(device != null) {
+							if (device != null) {
 								ContextLogging.setNetGuid(device.getGuid());
 							}
 							try {
@@ -369,12 +371,11 @@ public class RadioController implements IRadioController {
 										queue.remove();
 									}
 								}
-								
+
 							} finally {
 								ContextLogging.clearNetGuid();
 							}
-							
-							
+
 						}
 					}
 				}
@@ -513,7 +514,7 @@ public class RadioController implements IRadioController {
 				default:
 					break;
 			}
-			
+
 		}
 	}
 
@@ -535,7 +536,7 @@ public class RadioController implements IRadioController {
 	 */
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
 		INetworkDevice device = this.mDeviceNetAddrMap.get(inDstAddr);
-		if(device != null) {
+		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
 		try {
@@ -591,7 +592,7 @@ public class RadioController implements IRadioController {
 			} else {
 				sendPacket(packet);
 			}
-			
+
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -791,16 +792,23 @@ public class RadioController implements IRadioController {
 
 		// First get the unique ID from the command.
 		String uid = inCommand.getGUID();
+		NetGuid theGuid = null;
+
+		//DEV-544 see garbage once in a while during MAT test.  This may throw
+		try {
+			theGuid = new NetGuid("0x" + uid);
+		} catch (OutOfRangeException e) {
+			LOGGER.warn("Bad uid: " + uid + " for processAssocReqCommand ", e);
+			return;
+		}
 
 		// LOGGER.info("AssocReq rcvd: " + inCommand.toString()); No longer do this. Happens all the time.
-
-		// This is a device running on the radio network.
 
 		// First let's make sure that this is a request from an actor that we are managing.
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
 		for (IRadioControllerEventListener listener : mEventListeners) {
-			if (listener.canNetworkDeviceAssociate(new NetGuid("0x" + uid))) {
+			if (listener.canNetworkDeviceAssociate(theGuid)) {
 				canAssociate = true;
 			}
 		}
@@ -809,12 +817,12 @@ public class RadioController implements IRadioController {
 			// LOGGER.info("Device not allowed: " + uid); No longer do this. Happens all the time, especially in the office
 			// Could keep a counter on these.
 		} else {
-			INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
+			INetworkDevice foundDevice = mDeviceGuidMap.get(theGuid);
 
 			if (foundDevice != null) {
 				ContextLogging.setNetGuid(foundDevice.getGuid());
 				try {
-					
+
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 
 					//LOGGER.info("----------------------------------------------------");
@@ -840,7 +848,10 @@ public class RadioController implements IRadioController {
 					//LOGGER.info("----------------------------------------------------");
 
 					// Create and send an assign command to the remote that just woke up.
-					CommandAssocResp assignCmd = new CommandAssocResp(uid, mNetworkId, foundDevice.getAddress(), foundDevice.getSleepSeconds());
+					CommandAssocResp assignCmd = new CommandAssocResp(uid,
+						mNetworkId,
+						foundDevice.getAddress(),
+						foundDevice.getSleepSeconds());
 					this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 				} finally {
@@ -933,7 +944,7 @@ public class RadioController implements IRadioController {
 					try {
 						if (gatewayInterface.isStarted()) {
 							IPacket packet = gatewayInterface.receivePacket(mNetworkId);
-							receivePacket(packet);			
+							receivePacket(packet);
 						} else {
 							try {
 								Thread.sleep(CTRL_START_DELAY_MILLIS);
@@ -951,16 +962,15 @@ public class RadioController implements IRadioController {
 		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
 		gwThread.start();
 	}
-	
+
 	private void receivePacket(IPacket packet) {
 		if (packet != null) {
-			INetworkDevice device = 
-					this.mDeviceNetAddrMap.get(packet.getSrcAddr());
-			if(device!=null) {
+			INetworkDevice device = this.mDeviceNetAddrMap.get(packet.getSrcAddr());
+			if (device != null) {
 				ContextLogging.setNetGuid(device.getGuid());
 			}
-			
-			try {				
+
+			try {
 				if (packet.getPacketType() == IPacket.ACK_PACKET) {
 					LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
 					processAckPacket(packet);
@@ -987,8 +997,8 @@ public class RadioController implements IRadioController {
 	 */
 	private void respondToAck(final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
 		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
-		if (device==null) {
-			LOGGER.warn("Unable to respond to ack: Device with address "+inSrcAddr+" not found");
+		if (device == null) {
+			LOGGER.warn("Unable to respond to ack: Device with address " + inSrcAddr + " not found");
 			return;
 		}
 		ContextLogging.setNetGuid(device.getGuid());
@@ -998,8 +1008,8 @@ public class RadioController implements IRadioController {
 				LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
 
 				device.setLastAckId(inAckId);
-				CommandAssocAck ackCmd = new CommandAssocAck("00000000",
-					new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
+				CommandAssocAck ackCmd = new CommandAssocAck("00000000", new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS,
+					(byte) 0));
 
 				sendCommand(ackCmd, inNetId, inSrcAddr, false);
 				IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
@@ -1010,7 +1020,6 @@ public class RadioController implements IRadioController {
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
-
 
 	}
 
@@ -1105,7 +1114,7 @@ public class RadioController implements IRadioController {
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
-		
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1156,7 +1165,7 @@ public class RadioController implements IRadioController {
 
 			mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
 			mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
-			
+
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -1191,14 +1200,14 @@ public class RadioController implements IRadioController {
 	public boolean isRunning() {
 		return this.mRunning;
 	}
-	
+
 	public NetGuid getNetGuidFromNetAddress(byte networkAddr) {
-		return getNetGuidFromNetAddress(new NetAddress(networkAddr));		
+		return getNetGuidFromNetAddress(new NetAddress(networkAddr));
 	}
 
 	public NetGuid getNetGuidFromNetAddress(NetAddress netAddress) {
 		INetworkDevice device = this.mDeviceNetAddrMap.get(netAddress);
-		if(device != null) {
+		if (device != null) {
 			return device.getGuid();
 		} //else
 		return null;
