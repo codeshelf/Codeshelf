@@ -145,6 +145,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testCrossBatchImporter() {
 		this.getPersistenceService().beginTenantTransaction();

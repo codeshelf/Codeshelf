@@ -79,7 +79,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private String				description;
 
 	// A work area is a collection of locations.
-	@SuppressWarnings("rawtypes")
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<Location>	locations	= new ArrayList<Location>();

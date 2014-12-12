@@ -114,6 +114,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Getter
 	private List<WorkInstruction>	mAllPicksWiList;
 
+	//Container Position to last SetInstruction Map
+	@Accessors(prefix = "m")
+	@Getter
+	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
+
 	// The active pick WIs.
 	@Accessors(prefix = "m")
 	@Getter
@@ -137,8 +142,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mContainersMap = new HashMap<String, String>();
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
+		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
 	}
 
+	@Override
 	public final short getSleepSeconds() {
 		return 180;
 	}
@@ -260,13 +267,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send a pick request command to the CHE to light a position
+	 * Send a command to set update the position controller
+	 * Common Use: Send a pick request command to the CHE to light a position
+	 * 
 	 * @param inPos
 	 * @param inReqQty
 	 * @param inMinQty
 	 * @param inMaxQty
 	 */
-	private void sendPickRequestCommand(List<PosControllerInstr> inInstructions) {
+	private void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
+		//Update the last sent posControllerInstr for the position 
+		for (PosControllerInstr instr : inInstructions) {
+			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
+		}
+
 		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, inInstructions);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
@@ -376,6 +390,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
 	 */
+	@Override
 	public final void startDevice() {
 		LOGGER.info("Start CHE controller (after association) ");
 
@@ -643,7 +658,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
 				PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
 			instructions.add(instruction);
-			sendPickRequestCommand(instructions);
+			sendPositionControllerInstructions(instructions);
 		}
 	}
 
@@ -685,6 +700,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void logout() {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
+		mPosToLastSetIntrMap.clear();
 		mContainersMap.clear();
 		mContainerInSetup = "";
 		mActivePickWiList.clear();
@@ -703,6 +719,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Setup work");
 
 		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
+			mPosToLastSetIntrMap.clear();
 			mContainersMap.clear();
 			mContainerInSetup = "";
 			setState(CheStateEnum.CONTAINER_SELECT);
@@ -984,7 +1001,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// --------------------------------------------------------------------------
 	/**
 	 * Sort the WIs by their distance along the path.
-	 */
 	private class WiDistanceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
@@ -1001,6 +1017,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			return wi1Pos.compareTo(wi2Pos);
 		}
 	};
+	 */
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1008,6 +1025,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private class WiGroupSortComparator implements Comparator<WorkInstruction> {
 
+		@Override
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
 
 			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
@@ -1099,6 +1117,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private class CmdGroupComparator implements Comparator<LedCmdGroup> {
 
+		@Override
 		public int compare(LedCmdGroup inGroup1, LedCmdGroup inGroup2) {
 			if (inGroup1 == null) {
 				return -1;
@@ -1158,7 +1177,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			String myGuidStr = getMyGuidStrForLog();
 
 			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-				LedCmdGroup ledCmdGroup = (LedCmdGroup) iterator.next();
+				LedCmdGroup ledCmdGroup = iterator.next();
 
 				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
 				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
@@ -1245,7 +1264,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 						}
 					}
 				}
-				sendPickRequestCommand(instructions);
+				sendPositionControllerInstructions(instructions);
 			}
 
 		}
@@ -1474,6 +1493,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	private void clearOnePositionController(Byte inPosition) {
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
+
+		//Remove lastSent Set Instr from map to indicate the clear
+		mPosToLastSetIntrMap.remove(inPosition);
+
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
@@ -1523,7 +1546,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				PosControllerInstr.MED_DUTYCYCLE);
 			instructions.add(instruction);
 		}
-		sendPickRequestCommand(instructions);
+		sendPositionControllerInstructions(instructions);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1554,7 +1577,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 		}
 		if (instructions.size() > 0)
-			sendPickRequestCommand(instructions);
+			sendPositionControllerInstructions(instructions);
 		else
 			LOGGER.error("container match not found in showSpecialPositionCode");
 	}
@@ -1575,6 +1598,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, inContainerId);
 	}
 
+	@Override
 	public String toString() {
 		return Objects.toStringHelper(this).add("netGuid", getGuid()).toString();
 	}

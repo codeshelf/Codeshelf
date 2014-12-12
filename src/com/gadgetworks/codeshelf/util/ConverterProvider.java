@@ -36,6 +36,7 @@ public class ConverterProvider implements Provider<ConvertUtilsBean> {
 	
 	@SuppressWarnings("rawtypes")
 	private static class EnumConverter extends AbstractConverter {
+		@SuppressWarnings("unchecked")
 		@Override
 		protected Object convertToType(Class inClass, Object inValue) throws Throwable {
 			return Enum.valueOf(inClass, String.valueOf(inValue));

@@ -200,7 +200,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	}
 
 	
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({"unused" })
 	@Test
 	public final void testBayAnchors() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -259,7 +259,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedInventory() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -367,7 +367,6 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Test
 	public final void testNonSlottedInventory2() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -413,7 +412,6 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Test
 	public final void testNonSlottedInventory3() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -453,7 +451,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		return facility.getDao().findByPersistentId(facility.getPersistentId());
 	}
 
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -591,7 +589,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	/**
 	 * Attempting to demonstrate when we might get several work instructions that would work simultaneously
 	 */
-	@SuppressWarnings({ "rawtypes", "unused" })
+	@SuppressWarnings("unused")
 	@Test
 	public final void testSameProductPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();

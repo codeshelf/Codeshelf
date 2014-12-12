@@ -161,7 +161,8 @@ public class CrossBatchRunTest extends EdiTestABC {
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(organization, nName);
+		CodeshelfNetwork network = facility.createNetwork(nName);
+		organization.createDefaultSiteControllerUser(network); 
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));
@@ -248,6 +249,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -489,6 +491,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void parentChildTransactions() throws IOException {
 		// This uses the cross batch setup because the containers are convenient.

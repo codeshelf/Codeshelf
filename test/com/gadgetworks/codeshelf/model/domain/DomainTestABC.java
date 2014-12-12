@@ -65,8 +65,10 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		CodeshelfNetwork codeshelfNetwork = mCodeshelfNetworkDao.findByDomainId(inFacility, defaultDomainId);
 		if (codeshelfNetwork == null) {
-			codeshelfNetwork = inFacility.createNetwork(organization,defaultDomainId);
+			codeshelfNetwork = inFacility.createNetwork(defaultDomainId);
 			codeshelfNetwork.getDao().store(codeshelfNetwork);
+			organization.createDefaultSiteControllerUser(codeshelfNetwork); 
+
 		}
 		return codeshelfNetwork;
 	}
@@ -170,7 +172,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		Facility resultFacility = getDefaultFacility(organization);
 		
-		CodeshelfNetwork network = resultFacility.createNetwork(organization,"WITEST");
+		CodeshelfNetwork network = resultFacility.createNetwork("WITEST");
+		organization.createDefaultSiteControllerUser(network); 
+
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 
 		LedController controller = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000002"));
@@ -435,13 +439,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 		OrderGroup result = null;
 		
 		result = new OrderGroup();
-		result.setParent(inFacility);
 		result.setOrderGroupId(inOrderGroupId);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		inFacility.addOrderGroup(result);
 		mOrderGroupDao.store(result);
 		
-		inFacility.addOrderGroup(result);
 		
 		return result;
 	}
@@ -467,7 +470,9 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderHeaderDao.store(result);
 		inFacility.addOrderHeader(result);
-
+		if (inOrderGroup != null) {
+			inOrderGroup.addOrderHeader(result);
+		}
 		return result;
 	}
 

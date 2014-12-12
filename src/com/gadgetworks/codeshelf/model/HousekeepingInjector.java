@@ -93,7 +93,7 @@ public class HousekeepingInjector {
 	}
 
 	// helper function
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ })
 	private static boolean isDifferentNotNullBay(Location inLoc1, Location inLoc2) {
 		Location bay1 = inLoc1.getParentAtLevel(Bay.class);
 		Location bay2 = inLoc2.getParentAtLevel(Bay.class);
@@ -103,7 +103,6 @@ public class HousekeepingInjector {
 	}
 
 	// helper function
-	@SuppressWarnings("rawtypes")
 	private static boolean hasDifferentNotNullPathSegment(Location inLoc1, Location inLoc2) {
 		PathSegment segment1 = inLoc1.getAssociatedPathSegment();
 		PathSegment segment2 = inLoc2.getAssociatedPathSegment();
@@ -116,7 +115,7 @@ public class HousekeepingInjector {
 	/**
 	 * Three choices of behavior
 	 */
-	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@SuppressWarnings({ })
 	private static boolean wantBayChangeBetween(BayChangeChoice inBayChangeChoice,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi) {

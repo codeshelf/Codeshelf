@@ -137,7 +137,6 @@ public class LightService implements IApiService {
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
-	@SuppressWarnings("rawtypes")
 	Future<Void> lightChildLocations(final Facility facility, final Location theLocation) {
 
 		List<Set<LightLedsMessage>> ledMessages = Lists.newArrayList();

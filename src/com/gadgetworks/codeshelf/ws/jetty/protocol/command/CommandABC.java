@@ -7,6 +7,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public abstract class CommandABC {
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CommandABC.class);
 
 	UserSession session;

@@ -230,4 +230,26 @@ public class PickSimulator {
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
 		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);
 	}
+
+	public boolean hasLastSentInstruction(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position);
+	}
+
+	public Byte getLastSentPositionControllerDisplayValue(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
+			.get(position)
+			.getReqQty() : null;
+	}
+
+	public Byte getLastSentPositionControllerDisplayFreq(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
+			.get(position)
+			.getFreq() : null;
+	}
+
+	public Byte getLastSentPositionControllerDisplayDutyCycle(byte position) {
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
+			.get(position)
+			.getDutyCycle() : null;
+	}
 }

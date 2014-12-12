@@ -339,7 +339,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return null;
 		}
 		// see Facility.toAllMatchingOutboundOrderDetails
-		OrderDetail returnDetail = null;
 		OrderGroup theGroup = getParent().getOrderGroup();
 		if (theGroup == null)
 			return null;

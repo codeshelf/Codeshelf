@@ -28,7 +28,6 @@ import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -43,8 +42,6 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DomainTestABC {
 
-	PersistenceService persistenceService = PersistenceService.getInstance();
-	
 	@Mock
 	private ServiceFactory mockServiceFactory;
 
@@ -101,7 +98,6 @@ public class CreatePathCommandTest extends DomainTestABC {
 
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
