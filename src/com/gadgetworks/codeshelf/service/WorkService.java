@@ -63,7 +63,7 @@ public class WorkService implements IApiService {
 		});
 	}
 
-	public WorkService(PersistenceService persistenceService, IEdiExportServiceProvider exportServiceProvider) {
+	public WorkService(IEdiExportServiceProvider exportServiceProvider) {
 		init(exportServiceProvider);
 	}
 
@@ -84,18 +84,7 @@ public class WorkService implements IApiService {
 		public void run() {
 			WorkService.aWorkServiceThreadExists = true;
 			try {
-				while (!Thread.currentThread().isInterrupted()) {
-					try {
-						persistenceService.beginTenantTransaction();
-						sendWorkInstructions();
-						persistenceService.commitTenantTransaction();
-					} catch (Exception e) {
-						persistenceService.rollbackTenantTransaction();
-						LOGGER.error("Unable to send work instructions", e);
-					}
-
-
-				}
+				sendWorkInstructions();
 			} catch (Exception e) {
 				LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
 			}
@@ -127,10 +116,12 @@ public class WorkService implements IApiService {
 	}
 
 	private void sendWorkInstructions() throws InterruptedException {
-
 		while (!Thread.currentThread().isInterrupted()) {
-			WorkInstruction wi = completedWorkInstructions.take();
+			
+			WorkInstruction wi = completedWorkInstructions.take(); //blocking
 			try {
+				//transaction begun and closed after blocking call so that it is not held open
+				persistenceService.beginTenantTransaction();
 				boolean sent = false;
 				while (!sent) {
 					List<WorkInstruction> wiList = ImmutableList.of(wi);
@@ -144,8 +135,10 @@ public class WorkService implements IApiService {
 						Thread.sleep(retryDelay);
 					}
 				}
+				persistenceService.commitTenantTransaction();
 			} catch (Exception e) {
-				LOGGER.warn("Unexpected exception sending work instruction, skipping: " + wi, e);
+				persistenceService.rollbackTenantTransaction();
+				LOGGER.error("Unexpected exception sending work instruction, skipping: " + wi, e);
 			}
 		}
 	}
