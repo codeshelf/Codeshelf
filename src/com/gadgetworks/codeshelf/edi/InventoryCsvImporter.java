@@ -422,30 +422,24 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			throw new InputValidationException(errors);
 		}
 
+		Item result = inItemMaster.findOrCreateItem(inLocation, inUomMaster);
+		
 		// Refine using the cm value if there is one
-		Integer cmValue = null;
 		String cmFromLeftString = inCsvBean.getCmFromLeft();
 		if (!Strings.isNullOrEmpty(cmFromLeftString)) {
-			try {
-				cmValue = Integer.valueOf(cmFromLeftString);
-				if (cmValue < 0) {
-					errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
-				} else {
-					if (inLocation != null) {
-						if (inLocation.isFacility()) {
-							errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_WRONG_TYPE);
-						} else {
-							Double pickEndWidthMeters = inLocation.getLocationWidthMeters();
-							if (cmValue / 100.0 > pickEndWidthMeters) {
-								errors.rejectValue("cmFromLeft", cmValue, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
-							}
-						}
-					} else {
-						errors.rejectValue("storedLocation", null, ErrorCode.FIELD_REQUIRED); //when cmFromLeft
-					}
+			if (inLocation != null) {
+				if (inLocation.isFacility()) {
+					errors.rejectValue("storedLocation", inLocation, ErrorCode.FIELD_WRONG_TYPE);
 				}
-			} catch (NumberFormatException e) {
-				errors.rejectValue("positionFromLeft", cmFromLeftString, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
+			}
+			else {
+				errors.rejectValue("storedLocation", null, ErrorCode.FIELD_REQUIRED); //when cmFromLeft
+			}
+			try {
+				result.setCmFromLeftui(cmFromLeftString);
+			}
+			catch (InputValidationException e) {
+				errors.addAllErrors(e.getErrors());
 			}
 		}
 
@@ -455,11 +449,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			}
 		}
 
-		Item result = inItemMaster.findOrCreateItem(inLocation, inUomMaster);
 
 		result.setQuantity(quantity);
-		if (cmValue != null)
-			result.setPositionFromLeft(cmValue);
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 
