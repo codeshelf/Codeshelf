@@ -31,7 +31,7 @@ public class ComputeWorkCommand extends CommandABC {
 			// Get the work instructions for this CHE at this location for the given containers.
 			Integer wiCount = facility.computeWorkInstructions(che, request.getContainerIds());
 			// ~bhe: should we check for null/zero and return a different status?
-			response.setWorkInstructionCount(wiCount);
+			response.setTotalWorkInstructionCount(wiCount);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
 			return response;
