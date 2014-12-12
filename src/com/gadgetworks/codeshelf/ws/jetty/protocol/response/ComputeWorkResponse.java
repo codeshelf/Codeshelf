@@ -17,6 +17,7 @@ public class ComputeWorkResponse extends ResponseABC {
 	Integer totalWorkInstructionCount = null;
 
 	@Getter
+	@Setter
 	Map<String, WorkInstructionCount>	containerToWorkInstructionCountMap	= new HashMap<String, WorkInstructionCount>();
 
 	public void addWorkInstructionCount(String containerId, WorkInstructionCount workInstructionCount) {

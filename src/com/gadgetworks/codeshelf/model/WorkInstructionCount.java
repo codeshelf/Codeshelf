@@ -25,6 +25,10 @@ public class WorkInstructionCount {
 	@Setter
 	private int	immediateShortCount	= 0;
 
+	@Getter
+	@Setter
+	private int	completeCount		= 0;
+
 
 	public WorkInstructionCount(int goodCount, int unknownOrderIdCount, int immediateShortCount) {
 		super();
@@ -33,19 +37,24 @@ public class WorkInstructionCount {
 		this.immediateShortCount = immediateShortCount;
 	}
 
-	/**
-	 * No-arg constructor for jackson
-	 */
 	public WorkInstructionCount() {
 		super();
 	}
 
-	/**
-	 * A work instruction is already done if there are no good work instructions. No bad works instructions (immediate short, etc)
-	 * And the work was valid (it did not have an unknown orderId)
-	 */
-	public boolean isAlreadyDone() {
-		return unknownOrderIdCount == 0 && goodCount == 0 && immediateShortCount == 0;
+	public void incrementGoodCount() {
+		goodCount++;
+	}
+
+	public void incrementImmediateShortCount() {
+		immediateShortCount++;
+	}
+
+	public void incrementUnknownOrderIdCount() {
+		unknownOrderIdCount++;
+	}
+
+	public void incrementCompleteCount() {
+		completeCount++;
 	}
 
 

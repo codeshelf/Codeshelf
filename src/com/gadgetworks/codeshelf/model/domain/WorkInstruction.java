@@ -77,6 +77,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			super(persistenceService);
 		}
 
+		@Override
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}
@@ -255,15 +256,18 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
 		return DAO;
 	}
 
+	@Override
 	public final String getDefaultDomainIdPrefix() {
 		return "WI";
 	}
 
+	@Override
 	public final Facility getParent() {
 		return parent;
 	}
@@ -273,6 +277,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return orderDetail;
 	}
 
+	@Override
 	public final void setParent(Facility inParent) {
 		parent = inParent;
 	}
@@ -282,7 +287,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Location getLocation() {
-		return (Location) location;
+		return location;
 	}
 
 	// Denormalized for serialized WIs at the site controller.
@@ -578,7 +583,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return "";
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
