@@ -401,12 +401,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inWorkInstructionCount
+	 * @param totalWorkInstructionCount
+	 * @param containerToWorkInstructionCountMap - Map containerIds to WorkInstructionCount objects
 	 */
-	public final void assignComputedWorkCount(final Integer inWorkInstructionCount,
+	public final void processWorkInstructionCounts(final Integer totalWorkInstructionCount,
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		// The back-end returned the work instruction count.
-		if (inWorkInstructionCount > 0) {
+		if (totalWorkInstructionCount > 0) {
 			//TODO Use the map to determine if we need to go to location_select or review
 			setState(CheStateEnum.LOCATION_SELECT);
 		} else {

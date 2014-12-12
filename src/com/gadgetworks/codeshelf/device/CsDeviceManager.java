@@ -468,7 +468,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
-			cheDevice.assignComputedWorkCount(workInstructionCount, containerToWorkInstructionCountMap);
+			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		}
 		else {
 			LOGGER.warn("Unable to assign work count to CHE "+cheId+": CHE not found");
