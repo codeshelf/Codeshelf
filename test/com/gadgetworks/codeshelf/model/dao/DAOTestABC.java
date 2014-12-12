@@ -192,12 +192,6 @@ public abstract class DAOTestABC {
 
 		mSiteControllerDao = new SiteControllerDao(persistenceService);
 		SiteController.DAO = mSiteControllerDao;
-/*
-		mSubLocationDao = new SubLocationDao(persistenceService);
-		SubLocationABC.DAO = mSubLocationDao;
-*/
-//		mLocationDao = new LocationABCDao(persistenceService);
-//		LocationABC.DAO = mLocationDao;
 
 		mOrderGroupDao = new OrderGroupDao(persistenceService);
 		OrderGroup.DAO = mOrderGroupDao;

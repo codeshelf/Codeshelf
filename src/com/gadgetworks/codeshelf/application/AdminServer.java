@@ -44,6 +44,9 @@ public class AdminServer {
 			// add ping servlet
 			context.addServlet(new ServletHolder(new PingServlet()),"/ping");
 			
+			// log level runtime change servlet
+			context.addServlet(new ServletHolder(new LoggingServlet()),LoggingServlet.urlPath);
+			
 			if(deviceManager != null) {
 				context.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
 			}
