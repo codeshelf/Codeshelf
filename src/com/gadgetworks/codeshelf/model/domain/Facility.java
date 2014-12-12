@@ -99,6 +99,7 @@ public class Facility extends Location {
 			super(persistenceService);
 		}
 
+		@Override
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
@@ -189,10 +190,12 @@ public class Facility extends Location {
 		Facility.DAO = dao;
 	}
 
+	@Override
 	public final String getDefaultDomainIdPrefix() {
 		return "F";
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Facility> getDao() {
 		return DAO;
@@ -535,6 +538,7 @@ public class Facility extends Location {
 		return new ArrayList<LocationAlias>(locationAliases.values());
 	}
 
+	@Override
 	public final Point getAbsoluteAnchorPoint() {
 		return Point.getZeroPoint();
 	}
@@ -913,7 +917,7 @@ public class Facility extends Location {
 	 * @param inContainerIdList
 	 * @return
 	 */
-	public final Integer computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+	public final List<WorkInstruction> computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
@@ -1025,8 +1029,8 @@ public class Facility extends Location {
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 
 		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
-
-		return finalWIResults.size();
+		
+		return finalWIResults;
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
@@ -1036,6 +1040,7 @@ public class Facility extends Location {
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
 		// Sort the WIs by their sort code. This is identical to CheDeviceLogic.WiGroupSortComparator
 
+		@Override
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
 
 			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
@@ -1582,6 +1587,7 @@ public class Facility extends Location {
 	 */
 	private class DdcItemComparator implements Comparator<Item> {
 
+		@Override
 		public int compare(Item inItem1, Item inItem2) {
 			return inItem1.getParent().getDdcId().compareTo(inItem2.getParent().getDdcId());
 		}
@@ -1592,6 +1598,7 @@ public class Facility extends Location {
 	 */
 	private class DdcItemMasterComparator implements Comparator<ItemMaster> {
 
+		@Override
 		public int compare(ItemMaster inItemMaster1, ItemMaster inItemMaster2) {
 			return inItemMaster1.getDdcId().compareTo(inItemMaster2.getDdcId());
 		}
@@ -2036,6 +2043,7 @@ public class Facility extends Location {
 		return null;
 	}
 	
+	@Override
 	public String toString() {
 		return getDomainId();
 	}

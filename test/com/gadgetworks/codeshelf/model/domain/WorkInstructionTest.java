@@ -204,7 +204,6 @@ public class WorkInstructionTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	// @Test
 	// edi/CrossBatchRunTest.java is a much better test.  This is failing now (after WI schema change for v5) for not finding the facility persistentId in the locations table in H2.
 	public final void crossBatchOrderGroupTest() {
@@ -219,7 +218,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		CodeshelfNetwork network = facility.getNetwork("WITEST");
 		Che che = network.getChe("WITEST");
 
-		Integer wiCount = facility.computeWorkInstructions(che, containerIdList);
+		facility.computeWorkInstructions(che, containerIdList);
 
 		OrderHeader out1Group1 = facility.getOrderHeader("OUT1GROUP1");
 		Assert.assertNotNull(out1Group1);

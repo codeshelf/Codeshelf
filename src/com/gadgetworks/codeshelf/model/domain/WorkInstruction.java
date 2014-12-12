@@ -79,6 +79,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			super(persistenceService);
 		}
 
+		@Override
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}
@@ -270,15 +271,18 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return assignedChe;
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
 		return DAO;
 	}
 
+	@Override
 	public final String getDefaultDomainIdPrefix() {
 		return "WI";
 	}
 
+	@Override
 	public final Facility getParent() {
 		if (this.parent instanceof HibernateProxy) {
 			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
@@ -293,6 +297,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return orderDetail;
 	}
 
+	@Override
 	public final void setParent(Facility inParent) {
 		parent = inParent;
 	}
@@ -601,7 +606,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return "";
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
