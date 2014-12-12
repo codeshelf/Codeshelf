@@ -133,7 +133,7 @@ public class JsonDecoderTest  {
 	}
 	
 	@Test
-	private void testComputeWorkResponseDeserialization() throws IOException {
+	public void testComputeWorkResponseDeserialization() throws IOException {
 		ComputeWorkResponse computeWorkResp = new ComputeWorkResponse();
 		computeWorkResp.addWorkInstructionCount("Container1", new WorkInstructionCount((byte) 0, (byte) 5));
 		computeWorkResp.addWorkInstructionCount("Container2", new WorkInstructionCount((byte) 12, (byte) 0));
@@ -144,7 +144,15 @@ public class JsonDecoderTest  {
 		ObjectMapper mapper = new ObjectMapper();
 		String serialized = mapper.writeValueAsString(computeWorkResp);
 		ComputeWorkResponse deserializedWorkResp = mapper.readValue(serialized, ComputeWorkResponse.class);
-		Assert.assertEquals(deserializedWorkResp, computeWorkResp);
+		Assert.assertEquals(deserializedWorkResp.getMessageId(), computeWorkResp.getMessageId());
+		Assert.assertEquals(deserializedWorkResp.getNetworkGuid(), computeWorkResp.getNetworkGuid());
+		Assert.assertEquals(deserializedWorkResp.getRequestId(), computeWorkResp.getRequestId());
+		Assert.assertEquals(deserializedWorkResp.getStatusMessage(), computeWorkResp.getStatusMessage());
+		Assert.assertEquals(deserializedWorkResp.getContainerToWorkInstructionCountMap(),
+			computeWorkResp.getContainerToWorkInstructionCountMap());
+		Assert.assertEquals(deserializedWorkResp.getStatus(), computeWorkResp.getStatus());
+		Assert.assertEquals(deserializedWorkResp.getTotalWorkInstructionCount(), computeWorkResp.getTotalWorkInstructionCount());
+
 	}
 
 	/*

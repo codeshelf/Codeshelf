@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.model;
 
 import lombok.Getter;
+import lombok.Setter;
 
 /**
  * 
@@ -10,15 +11,43 @@ import lombok.Getter;
 public class WorkInstructionCount {
 
 	@Getter
-	private final byte	goodCount;
+	@Setter
+	private byte	goodCount;
 
 	@Getter
-	private final byte	badCount;
+	@Setter
+	private byte	badCount;
 
 	public WorkInstructionCount(byte goodCount, byte badCount) {
 		super();
 		this.goodCount = goodCount;
 		this.badCount = badCount;
+	}
+
+	/*
+	 * No args-constructor for jackson
+	 */
+	public WorkInstructionCount() {
+		super();
+	}
+
+	/**
+	 * Equals is used for unit test
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		WorkInstructionCount other = (WorkInstructionCount) obj;
+		if (badCount != other.badCount)
+			return false;
+		if (goodCount != other.goodCount)
+			return false;
+		return true;
 	}
 
 }
