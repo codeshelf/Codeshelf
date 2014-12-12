@@ -101,6 +101,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
@@ -112,6 +113,7 @@ import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
@@ -193,6 +195,8 @@ public final class ServerMain {
 
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
 
+				
+				
 				//
 				// bind(DaoProvider.class).to(PersistenceService.class).in(Singleton.class);
 				
@@ -351,6 +355,14 @@ public final class ServerMain {
 				requestStaticInjection(WorkInstruction.class);
 				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
 				}).to(WorkInstructionDao.class);
+			}
+			
+			@Provides
+			public WorkService createWorkService() {
+				WorkService workService = new WorkService();
+				workService.start();
+				return workService;
+				
 			}
 		});
 
