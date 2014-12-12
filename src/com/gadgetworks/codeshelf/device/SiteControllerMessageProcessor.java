@@ -73,7 +73,8 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
 			if (response.getStatus() == ResponseStatus.Success) {
 				this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
-					computeWorkResponse.getWorkInstructionCount());
+					computeWorkResponse.getTotalWorkInstructionCount(),
+					computeWorkResponse.getContainerToWorkInstructionCountMap());
 			}
 		}
 		//////////////////////////////////////////

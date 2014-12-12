@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -22,6 +23,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
@@ -120,6 +122,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 	}
 
+	@Override
 	public final void start() {
 		startWebSocketClient();
 
@@ -141,6 +144,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 	}
 
+	@Override
 	public final List<AisleDeviceLogic> getAisleControllers() {
 		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
 		for (INetworkDevice theDevice :mDeviceMap.values()) {
@@ -150,6 +154,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		return aList;
 	}
 
+	@Override
 	public final List<CheDeviceLogic> getCheControllers() {
 		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();
 		for (INetworkDevice theDevice :mDeviceMap.values()) {
@@ -168,6 +173,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
     	connectionManagerThread.start();
 	}
 
+	@Override
 	public final void stop() {
 		radioController.stopController();
 		connectionManagerThread.setExit(true);
@@ -231,6 +237,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
+	@Override
 	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
 		LOGGER.debug("Compute work: Che: " + inCheId + " Container: " + inContainerIdList.toString());
 		String cheId = inPersistentId.toString();
@@ -246,6 +253,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
+	@Override
 	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
 		LOGGER.debug("Get work: Che: " + inCheId + " Loc: " + inLocationId);
 		String cheId = inPersistentId.toString();
@@ -454,11 +462,13 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		LOGGER.debug("Network updated: "+updateDevices.size()+" active devices, "+ deleteDevices.size()+" removed");
 	}
 
-	public void processComputeWorkResponse(String networkGuid, Integer workInstructionCount) {
+	public void processComputeWorkResponse(String networkGuid,
+		Integer workInstructionCount,
+		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
-			cheDevice.assignComputedWorkCount(workInstructionCount);
+			cheDevice.assignComputedWorkCount(workInstructionCount, containerToWorkInstructionCountMap);
 		}
 		else {
 			LOGGER.warn("Unable to assign work count to CHE "+cheId+": CHE not found");
