@@ -505,8 +505,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 					result = (T) checkParent.getParentAtLevel(inClassWanted);
 				}
 			}
-		} else 
-			LOGGER.error("parent location of: " + this + " could not be retrieved", new Exception());
+		}
+		// this is totally normal, not all locations have a parent
+		// else 
+		//	LOGGER.error("parent location of: " + this + " could not be retrieved", new Exception());
 		
 		return result;
 	}
