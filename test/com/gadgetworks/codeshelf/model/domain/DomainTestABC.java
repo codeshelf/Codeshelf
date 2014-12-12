@@ -7,11 +7,14 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import org.hibernate.Transaction;
+
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public abstract class DomainTestABC extends DAOTestABC {
@@ -543,5 +546,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		return inFacility.createPath("");
 	}
+
+	public Transaction beginTenantTransaction() {
+		return PersistenceService.getInstance().beginTenantTransaction();
+	}
+	
+	public void commitTenantTransaction() {
+		PersistenceService.getInstance().commitTenantTransaction();
+	}
+
 
 }

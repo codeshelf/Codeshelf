@@ -51,9 +51,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
 
-	// This is the internal GUID for the object.org.hibernate.
+	// This is the internal GUID
 	@Id
-	// @GeneratedValue(strategy = GenerationType.AUTO, generator = "com.gadgetworks.codeshelf.model.dao.UuidGenGw")
 	@NonNull
 	@Column(name = "persistentid", nullable = false)
 	@Getter
