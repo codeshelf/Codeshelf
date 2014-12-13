@@ -50,6 +50,10 @@ public class WorkInstructionCount {
 		super();
 	}
 
+	public boolean hasAnyBadCounts() {
+		return completeCount > 0 || unknownOrderIdCount > 0 || immediateShortCount > 0 || invalidOrUnknownStatusCount > 0;
+	}
+
 	public void incrementGoodCount() {
 		goodCount++;
 	}
