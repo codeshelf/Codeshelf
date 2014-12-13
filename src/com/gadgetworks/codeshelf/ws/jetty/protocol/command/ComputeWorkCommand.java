@@ -40,8 +40,10 @@ public class ComputeWorkCommand extends CommandABC {
 			Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
 			List<WorkInstruction> workInstructions = facility.computeWorkInstructions(che, request.getContainerIds());
-			//TODO put this method in facility. In this class
-			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workInstructions);
+
+			//Get the counts
+			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workInstructions,
+				request.getContainerIds());
 			
 			// ~bhe: should we check for null/zero and return a different status?
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
@@ -59,7 +61,8 @@ public class ComputeWorkCommand extends CommandABC {
 	 * Compute work instruction counts by containerId. We currently do not support counts for invalid (or null) workInstruction
 	 * statuses.
 	 */
-	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(List<WorkInstruction> workInstructions) {
+	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(List<WorkInstruction> workInstructions,
+		List<String> containerIds) {
 		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
 		for (WorkInstruction wi : workInstructions) {
 			//Grab count reference
@@ -70,20 +73,32 @@ public class ComputeWorkCommand extends CommandABC {
 				containerToWorkInstructCountMap.put(containerId, count);
 			}
 
-			if (wi.getStatus() == null) {
-				//This should never happen. Log for now
+			if (wi.getStatus() == null || wi.getStatus() == WorkInstructionStatusEnum.INVALID) {
+				//This should never happen. Log for now. We need to have a count for this because it is work instruction that will
+				//be represented in the total count
 				LOGGER.error("WorkInstruction status is null or invalid. Wi={}", wi);
+				count.incrementInvalidOrUnknownStatusCount();
 			} else if (wi.getStatus() == WorkInstructionStatusEnum.SHORT) {
 				count.incrementImmediateShortCount();
 			} else if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE) {
 				count.incrementCompleteCount();
 			} else if (wi.getStatus() == WorkInstructionStatusEnum.NEW || wi.getStatus() == WorkInstructionStatusEnum.INPROGRESS) {
 				count.incrementGoodCount();
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.INVALID) {
-				//TODO be 100% INVALID means unknown order ID
-				count.incrementUnknownOrderIdCount();
 			}
 		}
+
+		//Add "Unknown OrderID" counts for containers with no WI
+		containerIds.removeAll(containerToWorkInstructCountMap.keySet());
+		for (String containerIdWithNoWIs : containerIds) {
+			WorkInstructionCount count = containerToWorkInstructCountMap.get(containerIdWithNoWIs);
+			//This should always be null but I did it this way in case it is not in the future so it won't replace counts.
+			if (count == null) {
+				count = new WorkInstructionCount();
+				containerToWorkInstructCountMap.put(containerIdWithNoWIs, count);
+			}
+			count.incrementUnknownOrderIdCount();
+		}
+
 		return containerToWorkInstructCountMap;
 	}
 

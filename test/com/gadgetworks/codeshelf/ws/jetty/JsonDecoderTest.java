@@ -135,9 +135,13 @@ public class JsonDecoderTest  {
 	@Test
 	public void testComputeWorkResponseDeserialization() throws IOException {
 		ComputeWorkResponse computeWorkResp = new ComputeWorkResponse();
-		computeWorkResp.addWorkInstructionCount("Container1", new WorkInstructionCount(0, 5, 0));
-		computeWorkResp.addWorkInstructionCount("Container2", new WorkInstructionCount(12, 45565, 0));
-		computeWorkResp.addWorkInstructionCount("01234567890123456789", new WorkInstructionCount(255, 66, Integer.MAX_VALUE));
+		computeWorkResp.addWorkInstructionCount("Container1", new WorkInstructionCount(0, 5, 0, 5, 6));
+		computeWorkResp.addWorkInstructionCount("Container2", new WorkInstructionCount(12, 45565, 0, 0, 0));
+		computeWorkResp.addWorkInstructionCount("01234567890123456789", new WorkInstructionCount(255,
+			66,
+			Integer.MAX_VALUE,
+			Integer.MIN_VALUE,
+			-1));
 		computeWorkResp.setTotalWorkInstructionCount(300);
 
 		//Serialize and Deserialize

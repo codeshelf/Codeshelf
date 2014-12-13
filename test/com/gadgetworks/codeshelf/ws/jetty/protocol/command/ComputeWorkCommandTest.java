@@ -19,8 +19,13 @@ public class ComputeWorkCommandTest {
 
 	@Test
 	public void containerWorkCounts() {
-		List<WorkInstruction> workInstructions = new ArrayList<WorkInstruction>();
+		List<String> containers = new ArrayList<String>();
+		containers.add("Container0");
+		containers.add("Container1");
+		containers.add("Container2");
+		containers.add("Container3");
 
+		List<WorkInstruction> workInstructions = new ArrayList<WorkInstruction>();
 		//Container 1 has 2 new wi, 1 in progress wi, 1 immediate short
 		WorkInstruction newWI = mock(WorkInstruction.class);
 		when(newWI.getContainerId()).thenReturn("Container1");
@@ -48,7 +53,7 @@ public class ComputeWorkCommandTest {
 		when(completeWI.getStatus()).thenReturn(WorkInstructionStatusEnum.COMPLETE);
 		workInstructions.add(completeWI);
 
-		//Container 3 has 1 good and unknwon order id
+		//Container 3 has 1 good and one invalid WI
 		WorkInstruction goodWI3 = mock(WorkInstruction.class);
 		when(goodWI3.getContainerId()).thenReturn("Container3");
 		when(goodWI3.getStatus()).thenReturn(WorkInstructionStatusEnum.INPROGRESS);
@@ -59,28 +64,41 @@ public class ComputeWorkCommandTest {
 		when(invalidWI.getStatus()).thenReturn(WorkInstructionStatusEnum.INVALID);
 		workInstructions.add(invalidWI);
 
-		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workInstructions);
+		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workInstructions,
+			containers);
 
 		//Make sure we have 3 entries with proper counts
-		assertTrue(containerToWICountMap.size() == 3);
+		assertTrue(containerToWICountMap.size() == 4);
+
+		//Check Container 0
+		assertEquals(containerToWICountMap.get("Container0").getCompleteCount(), 0);
+		assertEquals(containerToWICountMap.get("Container0").getGoodCount(), 0);
+		assertEquals(containerToWICountMap.get("Container0").getImmediateShortCount(), 0);
+		assertEquals(containerToWICountMap.get("Container0").getUnknownOrderIdCount(), 1);
+		assertEquals(containerToWICountMap.get("Container0").getInvalidOrUnknownStatusCount(), 0);
 
 		//Check Container 1
 		assertEquals(containerToWICountMap.get("Container1").getCompleteCount(), 0);
 		assertEquals(containerToWICountMap.get("Container1").getGoodCount(), 3);
 		assertEquals(containerToWICountMap.get("Container1").getImmediateShortCount(), 1);
 		assertEquals(containerToWICountMap.get("Container1").getUnknownOrderIdCount(), 0);
+		assertEquals(containerToWICountMap.get("Container1").getInvalidOrUnknownStatusCount(), 0);
 
 		//Check Container 2
 		assertEquals(containerToWICountMap.get("Container2").getCompleteCount(), 1);
 		assertEquals(containerToWICountMap.get("Container2").getGoodCount(), 0);
 		assertEquals(containerToWICountMap.get("Container2").getImmediateShortCount(), 0);
 		assertEquals(containerToWICountMap.get("Container2").getUnknownOrderIdCount(), 0);
+		assertEquals(containerToWICountMap.get("Container2").getInvalidOrUnknownStatusCount(), 0);
+
 
 		//Check Container 3
 		assertEquals(containerToWICountMap.get("Container3").getCompleteCount(), 0);
 		assertEquals(containerToWICountMap.get("Container3").getGoodCount(), 1);
 		assertEquals(containerToWICountMap.get("Container3").getImmediateShortCount(), 0);
-		assertEquals(containerToWICountMap.get("Container3").getUnknownOrderIdCount(), 1);
+		assertEquals(containerToWICountMap.get("Container3").getUnknownOrderIdCount(), 0);
+		assertEquals(containerToWICountMap.get("Container3").getInvalidOrUnknownStatusCount(), 1);
+
 	}
 
 }
