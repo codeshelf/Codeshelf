@@ -538,8 +538,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
-		//Make sure position display controller has no instructions for pos 2 and POS assigned code for pos 1
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.POSITION_ASSIGNED_CODE);
+		//Make sure position display controllers are cleared
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		// Back to our main test
@@ -567,8 +567,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		int quant = wi.getPlanQuantity();
 
 		//Pos 1 should be the same
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
-			PosControllerInstr.POSITION_ASSIGNED_CODE);
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 		//After Scanning start location of D303 we should be right next to the 
 		//8oz bowls which is part of order 11111 in position 2 with a quantity of 1
 		//That means the position controller for position 2 should have a quantity of 1:
@@ -713,7 +712,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2),
 			PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.BRIGHT_FREQ);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.POSITION_ASSIGNED_CODE);
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 
 		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
 		// the itemMaster field is null.
