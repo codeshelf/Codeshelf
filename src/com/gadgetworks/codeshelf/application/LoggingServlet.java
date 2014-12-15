@@ -15,8 +15,6 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
 public class LoggingServlet extends HttpServlet {
-	public static String	urlPath = "/loglevel";
-
 	private static final String CONTENT_TYPE_TEXT = "text/html";
 	private static final String CACHE_CONTROL_HEADER = "Cache-Control";
     private static final String NO_CACHE = "must-revalidate,no-cache,no-store";
@@ -49,14 +47,14 @@ public class LoggingServlet extends HttpServlet {
         if(response!=null) 
         	out.println("* Last action: "+response+"<br>");
         
-        out.println("<br><form action="+urlPath+" method=GET onsubmit=\"return confirm('Are you sure?');\">");
+        out.println("<br><form action=\"#\" method=GET onsubmit=\"return confirm('Are you sure?');\">");
         out.println("<table border=0><tr><td nowrap>logger<td nowrap>level<td></tr>");        
         out.println("<tr><td nowrap><input type=text name=class1><td nowrap><select name=level1>"+LEVEL_OPTIONS+"</select></tr>");
         out.println("<tr><td nowrap><input type=text name=class2><td nowrap><select name=level2>"+LEVEL_OPTIONS+"</select></tr>");
         out.println("<tr><td colspan=2 align=center><input type=submit value=Change></tr></table><br><h4>presets:</h4>");
         
         for(String preset : presets.keySet()) {
-        	out.println("<a href=\""+urlPath+"?"+presets.get(preset)+"\">"+preset+"</a><br>");
+        	out.println("<a href=\"?"+presets.get(preset)+"\">"+preset+"</a><br>");
         }
         
         out.println("</form></body></html>");
