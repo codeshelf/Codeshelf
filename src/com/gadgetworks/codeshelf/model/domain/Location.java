@@ -62,143 +62,143 @@ import com.google.common.collect.Ordering;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class Location extends DomainObjectTreeABC<Location> {
 
-	static Double BAY_ALIGNMENT_FUDGE = 0.25;
-	
+	static Double						BAY_ALIGNMENT_FUDGE	= 0.25;
+
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
-	public static final Double										METERS_PER_LED_POS	= 0.03125;
+	public static final Double			METERS_PER_LED_POS	= 0.03125;
 
-	private static final Logger										LOGGER				= LoggerFactory.getLogger(Location.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(Location.class);
 
 	// The position type (GPS, METERS, etc.).
-	@Column(nullable = false,name="anchor_pos_type")
+	@Column(nullable = false, name = "anchor_pos_type")
 	@Enumerated(value = EnumType.STRING)
 	@JsonProperty
 	@Getter
-	private PositionTypeEnum										anchorPosType;
+	private PositionTypeEnum			anchorPosType;
 
 	// The X anchor position.
-	@Column(nullable = false,name="anchor_pos_x")
+	@Column(nullable = false, name = "anchor_pos_x")
 	@JsonProperty
 	@Getter
-	private Double													anchorPosX;
+	private Double						anchorPosX;
 
 	// The Y anchor position.
-	@Column(nullable = false,name="anchor_pos_y")
+	@Column(nullable = false, name = "anchor_pos_y")
 	@JsonProperty
 	@Getter
-	private Double													anchorPosY;
+	private Double						anchorPosY;
 
 	// The Z anchor position.
-	@Column(nullable = false,name="anchor_pos_z")
+	@Column(nullable = false, name = "anchor_pos_z")
 	@JsonProperty
 	@Getter
-	private Double													anchorPosZ;
+	private Double						anchorPosZ;
 
 	// The location description.
 	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
-	private String													description;
+	private String						description;
 
 	// How far this location is from the path's origin.
-	@Column(nullable = true,name="pos_along_path")
+	@Column(nullable = true, name = "pos_along_path")
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double													posAlongPath;
+	private Double						posAlongPath;
 
 	// Associated path segment (optional)
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
-	@JoinColumn(name="path_segment_persistentid")
+	@JoinColumn(name = "path_segment_persistentid")
 	@Setter
-	private PathSegment												pathSegment;
+	private PathSegment					pathSegment;
 	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
 	// DomainObjectABC will manufacture a call to getPathSegment during DAO.store(). So do not skip the getter with complicated overrides
 
 	// The LED controller.
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
-	@JoinColumn(name="led_controller_persistentid")
+	@JoinColumn(name = "led_controller_persistentid")
 	@Setter
-	private LedController											ledController;
+	private LedController				ledController;
 
 	// The LED controller's channel that lights this location.
-	@Column(nullable = true,name="led_channel")
+	@Column(nullable = true, name = "led_channel")
 	@Getter
 	@Setter
-	private Short													ledChannel;
+	private Short						ledChannel;
 
 	// The bay's first LED position on the channel.
-	@Column(nullable = true,name="first_led_num_along_path")
+	@Column(nullable = true, name = "first_led_num_along_path")
 	@Getter
 	@Setter
-	private Short													firstLedNumAlongPath;
+	private Short						firstLedNumAlongPath;
 
 	// The number of LED positions in the bay.
-	@Column(nullable = true,name="last_led_num_along_path")
+	@Column(nullable = true, name = "last_led_num_along_path")
 	@Getter
 	@Setter
-	private Short													lastLedNumAlongPath;
+	private Short						lastLedNumAlongPath;
 
 	// The first DDC ID for this location (if it has one).
-	@Column(nullable = true,name="first_ddc_id")
+	@Column(nullable = true, name = "first_ddc_id")
 	@Getter
 	@Setter
 	@JsonProperty
-	private String													firstDdcId;
+	private String						firstDdcId;
 
 	// The last DDC ID for this location (if it has one).
-	@Column(nullable = true,name="last_ddc_id")
+	@Column(nullable = true, name = "last_ddc_id")
 	@Getter
 	@Setter
 	@JsonProperty
-	private String													lastDdcId;
+	private String						lastDdcId;
 
 	// All of the vertices that define the location's footprint.
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	private List<Vertex>											vertices			= new ArrayList<Vertex>();
+	private List<Vertex>				vertices			= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Location>	locations			= new HashMap<String, Location>();
+	private Map<String, Location>		locations			= new HashMap<String, Location>();
 
 	// The location aliases for this location.
 	@OneToMany(mappedBy = "mappedLocation")
 	@Getter
 	@Setter
-	private List<LocationAlias>										aliases				= new ArrayList<LocationAlias>();
+	private List<LocationAlias>			aliases				= new ArrayList<LocationAlias>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "storedLocation")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Item>										storedItems			= new HashMap<String, Item>();
+	private Map<String, Item>			storedItems			= new HashMap<String, Item>();
 
 	// The DDC groups stored in this location.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, ItemDdcGroup>								itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
+	private Map<String, ItemDdcGroup>	itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
 
 	// For this location, is the lower led on the anchor side?
-	@Column(nullable = true,name="lower_led_near_anchor")
+	@Column(nullable = true, name = "lower_led_near_anchor")
 	@Getter
 	@Setter
-	private Boolean													lowerLedNearAnchor;
+	private Boolean						lowerLedNearAnchor;
 
 	// Is this location active?
 	@Column(nullable = false)
 	@Getter
 	@Setter
-	private Boolean													active;
+	private Boolean						active;
 	
 	// The owning location.
 	@ManyToOne(optional=true,fetch=FetchType.LAZY)
@@ -245,7 +245,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		setAnchorPoint(inAnchorPoint);
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
-	
+
 	@Override
 	public Location getParent() {
 		if (parent instanceof HibernateProxy) {
@@ -444,16 +444,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 
 		Location parent = (Location) getParent();
-		
+
 		// return location id without traversing the hierarchy further, if parent is undefined or facility
-		if (parent==null) {
+		if (parent == null) {
 			LOGGER.error("location without a parent in getNominalLocationIdExcludeBracket");
 			return getLocationId();
 		}
 		if (parent.isFacility()) {
 			return getLocationId();
-		} 
-			
+		}
+
 		// The current parent is not the class we want so recurse up the hierarchy.
 		String result = parent.getNominalLocationIdExcludeBracket();
 		result = result + "." + getLocationId();
@@ -509,7 +509,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		// this is totally normal, not all locations have a parent
 		// else 
 		//	LOGGER.error("parent location of: " + this + " could not be retrieved", new Exception());
-		
+
 		return result;
 	}
 
@@ -577,7 +577,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 */
 	public final Location findLocationById(String inLocationId) {
 		if (this.getClass().equals(Facility.class)) {
-			Facility facility = (Facility)this;
+			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
 			if ((alias != null) && (alias.getActive())) {
 				return alias.getMappedLocation();
@@ -641,7 +641,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (isFacility()) {
 			return null;
 		}
-		
+
 		PathSegment result = null;
 
 		if (pathSegment == null) {
@@ -758,10 +758,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 					+ " because it isn't found in children");
 		}
 	}
-	
-	public final void removeAllVertices(){
+
+	public final void removeAllVertices() {
 		LOGGER.info("removeNonAnchorVertices");
-		if (vertices == null || vertices.isEmpty()){return;}
+		if (vertices == null || vertices.isEmpty()) {
+			return;
+		}
 		for (Vertex v : vertices) {
 			Vertex.DAO.delete(v);
 		}
@@ -864,11 +866,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			if (iterItem.equals(inItem)) {
 				storedItem = iterItem;
 				LOGGER.error("removeStoredItem  found" + itemDomainId + " in " + this.getDomainId()
-						+ " but not keyed by domainId correctly", new Exception());  // This is bug 2)
+						+ " but not keyed by domainId correctly", new Exception()); // This is bug 2)
 				break;
 			}
 		}
-		
+
 		if (storedItem != null) {
 			storedItem.setStoredLocation(null);
 			// How do we remove it from stored items?
@@ -1005,7 +1007,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Get all of the children (one level down) of this location, in working order.
@@ -1042,7 +1043,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (isFacility()) {
 			return null;
 		}
-		
+
 		// See if we have the controller. Then recursively ask each parent until found.
 		LedController theController = getLedController();
 		if (theController == null) {
@@ -1059,7 +1060,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (isFacility()) {
 			return null;
 		}
-				
+
 		// See if we have the controller. Then recursively ask each parent until found.
 		Short theChannel = getLedChannel();
 		if (theChannel == null) {
@@ -1283,7 +1284,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	/**
 	 * Both Aisle and Tier have setControllerChannel functions that call through to this.
-	 * Side effect adds a little complexity. If setting to a valid controller, make sure there is a channel (default 1) even if never set to user set to 0.
+	 * Side effect adds a little complexity. If setting to a valid controller, make sure there is a channel (default 1) even if user never set it.
 	 */
 	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 
@@ -1292,36 +1293,41 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		// Get the LedController
 		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
-		LedController theLedController = LedController.DAO.findByPersistentId(persistentId);
-
-		// set this tier's
-		if (theLedController != null) {
-			// Get the channel
-			Short theChannel;
-			try {
-				theChannel = Short.valueOf(inChannelStr);
-			} catch (NumberFormatException e) {
-				theChannel = 0; // not recognizable as a number
-			}
-			if (theChannel < 0) {
-				theChannel = 0; // means don't change if there is a channel. Or set to 1 if there isn't.
-			}
-
-			// set the controller. And set the channel
-			theLedController.addLocation(this);
-			if (theChannel != null && theChannel > 0) {
-				this.setLedChannel(theChannel);
-			} else {
-				// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
-				Short thisLedChannel = this.getLedChannel();
-				if (thisLedChannel == null || thisLedChannel <= 0)
-					this.setLedChannel((short) 1);
-			}
-
-			this.getDao().store(this);
-		} else {
+		LedController newLedController = LedController.DAO.findByPersistentId(persistentId);
+		if (newLedController == null)
 			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
+
+		LedController oldController = this.getLedController();
+
+		// Get the channel
+		Short theChannel;
+		try {
+			theChannel = Short.valueOf(inChannelStr);
+		} catch (NumberFormatException e) {
+			theChannel = 0; // not recognizable as a number
 		}
+		if (theChannel < 0) {
+			theChannel = 0; // means don't change if there is a channel. Or set to 1 if there isn't.
+		}
+
+		if (theChannel != null && theChannel > 0) {
+			this.setLedChannel(theChannel);
+		} else {
+			// if channel passed is 0 or null Short, make sure tier has a ledChannel. Set to 1 if there is not yet a channel.
+			Short thisLedChannel = this.getLedChannel();
+			if (thisLedChannel == null || thisLedChannel <= 0)
+				this.setLedChannel((short) 1);
+		}
+
+		if (oldController != null && !oldController.equals(newLedController))
+			oldController.removeLocation(this);
+
+		if (oldController == null || !oldController.equals(newLedController))
+			newLedController.addLocation(this);
+		// cannot just return on the controller stuff, because we might be saving a channel only change
+
+		this.getDao().store(this);
+
 	}
 
 	// converts A3 into 003.  Could put the A back on.  Could be a static, but called this way conveniently from tier and from bay
@@ -1389,5 +1395,3 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 }
-
-
