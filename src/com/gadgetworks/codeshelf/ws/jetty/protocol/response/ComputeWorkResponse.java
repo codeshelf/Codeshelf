@@ -14,7 +14,7 @@ public class ComputeWorkResponse extends ResponseABC {
 	String networkGuid;
 	
 	@Getter @Setter
-	Integer								totalGoodWorkInstructions			= null;
+	Integer	totalGoodWorkInstructions = null;
 
 	@Getter
 	@Setter
