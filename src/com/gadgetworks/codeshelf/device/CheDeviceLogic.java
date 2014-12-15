@@ -414,43 +414,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			//TODO Use the map to determine if we need to go to location_select or review
 			boolean doesNeedReview = false;
 			for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
-				if (wiCount.getGoodCount() == 0 || wiCount.hasAnyBadCounts()) {
+				if (wiCount.getGoodCount() == 0 || wiCount.hasNonGoodCounts()) {
 					doesNeedReview = true;
 					break;
 				}
 			}
+
+			//Show counts on position controllers
+			this.showPositionFeedback(containerToWorkInstructionCountMap);
+
 			if(doesNeedReview) {
-				//Generate position controller commands
-				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-
-				for (Entry<String, String> containerMapEntry : mContainersMap.entrySet()) {
-					String containerId = containerMapEntry.getValue();
-					byte position = Byte.valueOf(containerMapEntry.getKey());
-					WorkInstructionCount wiCount = containerToWorkInstructionCountMap.get(containerId);
-					//count should never be null. We could also move the logic that determines whether we have an invalid
-					//container id as one that has no count.
-					byte count = (byte) wiCount.getGoodCount();
-					if (count == 0 || wiCount.hasAnyBadCounts()) {
-						//Flash
-						instructions.add(new PosControllerInstr(position,
-							count,
-							count,
-							count,
-							PosControllerInstr.BLINK_FREQ.byteValue(),
-							PosControllerInstr.BLINK_DUTYCYCLE.byteValue()));
-					} else {
-						//No Flash
-						instructions.add(new PosControllerInstr(position,
-							count,
-							count,
-							count,
-							PosControllerInstr.BRIGHT_FREQ.byteValue(),
-							PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
-					}
-				}
-
-				//Show counts on position controllers
-				sendPositionControllerInstructions(instructions);
 				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
@@ -459,6 +432,44 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		} else {
 			setState(CheStateEnum.NO_WORK);
 		}
+	}
+
+	/** Shows the count feedback on the position controller
+	 * @param containerToWorkInstructionCountMap - Map of containerIds to WorkInstructionCount
+	 */
+	private void showPositionFeedback(Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+		//Generate position controller commands
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+		for (Entry<String, String> containerMapEntry : mContainersMap.entrySet()) {
+			String containerId = containerMapEntry.getValue();
+			byte position = Byte.valueOf(containerMapEntry.getKey());
+			WorkInstructionCount wiCount = containerToWorkInstructionCountMap.get(containerId);
+			//count should never be null. We could also move the logic that determines whether we have an invalid
+			//container id as one that has no count.
+			byte count = (byte) wiCount.getGoodCount();
+			LOGGER.info("POS {} Counts {}", position, wiCount);
+			if (count == 0 || wiCount.hasNonGoodCounts()) {
+				//Flash
+				instructions.add(new PosControllerInstr(position,
+					count,
+					count,
+					count,
+					PosControllerInstr.BLINK_FREQ.byteValue(),
+					PosControllerInstr.BLINK_DUTYCYCLE.byteValue()));
+			} else {
+				//No Flash
+				instructions.add(new PosControllerInstr(position,
+					count,
+					count,
+					count,
+					PosControllerInstr.BRIGHT_FREQ.byteValue(),
+					PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+			}
+		}
+
+		//Show counts on position controllers
+		sendPositionControllerInstructions(instructions);
 	}
 
 	// --------------------------------------------------------------------------
@@ -516,6 +527,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					break;
 
 				case LOCATION_SELECT:
+					processLocationScan(scanPrefixStr, scanStr);
+					break;
+
+				case LOCATION_SELECT_REVIEW:
 					processLocationScan(scanPrefixStr, scanStr);
 					break;
 
@@ -1384,9 +1399,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			this.mLocationId = inScanStr;
-
-			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
+
+			//With DEV-515 Cart Setup feedback. The position controllers should currently display 
+			//their feedback. We want to clear that before proceeding to the next state.
+			this.clearAllPositionControllers();
 
 			setState(CheStateEnum.GET_WORK);
 
@@ -1552,7 +1569,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 
 		//Remove lastSent Set Instr from map to indicate the clear
-		mPosToLastSetIntrMap.remove(inPosition);
+		if (PosControllerInstr.POSITION_ALL.equals(inPosition)) {
+			mPosToLastSetIntrMap.clear();
+		} else {
+			mPosToLastSetIntrMap.remove(inPosition);
+		}
 
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
