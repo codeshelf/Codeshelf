@@ -104,6 +104,12 @@ public class WorkInstructionCount {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "WorkInstructionCount [goodCount=" + goodCount + ", unknownOrderIdCount=" + unknownOrderIdCount
+				+ ", immediateShortCount=" + immediateShortCount + ", completeCount=" + completeCount
+				+ ", invalidOrUnknownStatusCount=" + invalidOrUnknownStatusCount + "]";
+	}
 
 
 }

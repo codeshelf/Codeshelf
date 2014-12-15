@@ -142,7 +142,7 @@ public class JsonDecoderTest  {
 			Integer.MAX_VALUE,
 			Integer.MIN_VALUE,
 			-1));
-		computeWorkResp.setTotalWorkInstructionCount(300);
+		computeWorkResp.setTotalGoodWorkInstructions(300);
 
 		//Serialize and Deserialize
 		ObjectMapper mapper = new ObjectMapper();
@@ -155,7 +155,7 @@ public class JsonDecoderTest  {
 		Assert.assertEquals(deserializedWorkResp.getContainerToWorkInstructionCountMap(),
 			computeWorkResp.getContainerToWorkInstructionCountMap());
 		Assert.assertEquals(deserializedWorkResp.getStatus(), computeWorkResp.getStatus());
-		Assert.assertEquals(deserializedWorkResp.getTotalWorkInstructionCount(), computeWorkResp.getTotalWorkInstructionCount());
+		Assert.assertEquals(deserializedWorkResp.getTotalGoodWorkInstructions(), computeWorkResp.getTotalGoodWorkInstructions());
 
 	}
 
