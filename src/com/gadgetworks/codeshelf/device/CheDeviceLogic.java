@@ -419,7 +419,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					break;
 				}
 			}
-
+			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
 			//Show counts on position controllers
 			this.showPositionFeedback(containerToWorkInstructionCountMap);
 
@@ -448,7 +448,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			//count should never be null. We could also move the logic that determines whether we have an invalid
 			//container id as one that has no count.
 			byte count = (byte) wiCount.getGoodCount();
-			LOGGER.info("POS {} Counts {}", position, wiCount);
+			LOGGER.info("Position Feedback: Poisition={} Counts={}", position, wiCount);
 			if (count == 0 || wiCount.hasNonGoodCounts()) {
 				//Flash
 				instructions.add(new PosControllerInstr(position,

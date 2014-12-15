@@ -473,7 +473,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
-		picker.start("D403", 8000, 5000);
+		picker.startAndSkipReview("D403", 8000, 5000);
 		HousekeepingInjector.restoreHKDefaults();
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
@@ -549,11 +549,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// Enhancement from v9 for Accu-Logistics
 		picker.setupOrderIdAsContainer("11111", "2"); // This did not prepend. Scan "11111" and hope it is a preassigned containerId on the order.
-		picker.scanCommand("START");
-		System.out.println("TEST " + picker.getLastSentPositionControllerDisplayValue((byte) 1));
-		System.out.println("TEST " + picker.getLastSentPositionControllerDisplayValue((byte) 2));
 
-		//picker.start("D303", 5000, 3000);
+		picker.startAndSkipReview("D303", 5000, 3000);
 
 		HousekeepingInjector.restoreHKDefaults();
 
@@ -711,7 +708,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap. 
-		picker.start("D301", 5000, 3000);
+		picker.startAndSkipReview("D301", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), 1);
