@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.List;
 import java.util.Locale;
 
 import javax.persistence.Column;
@@ -838,7 +837,7 @@ public class DropboxService extends EdiServiceABC {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.IEdiService#sendCompletedWorkInstructions(java.util.List)
 	 */
-	public void sendWorkInstructionsToHost(final List<WorkInstruction> inWiMessage) {
+	public void sendWorkInstructionsToHost(final String exportMessage) {
 		// Do nothing at DropBox (for now).
 	}
 }

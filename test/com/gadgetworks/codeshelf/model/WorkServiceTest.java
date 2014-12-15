@@ -32,6 +32,7 @@ import org.mockito.invocation.InvocationOnMock;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
+import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
@@ -186,12 +187,11 @@ public class WorkServiceTest extends DAOTestABC {
 
 		workService.completeWorkInstruction(cheId, wiToRecord);
 
-		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(List.class));
+		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
 		workService.stop();
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void allWorkInstructionsSent() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -206,7 +206,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 		}
 
-		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
+		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
 		workService.stop();
 		this.getPersistenceService().commitTenantTransaction();
@@ -219,20 +219,28 @@ public class WorkServiceTest extends DAOTestABC {
 		long expectedRetryDelay = 1L;
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		List<WorkInstruction> wiList = ImmutableList.of(wi);
+
+		String messageBody = format(wi);
+		
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 		doThrow(new IOException("test io")).
 		doThrow(new IOException("second one")).
-		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(wiList);
+		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(messageBody);
 
 		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi);
 
 		//Wait up to a second per invocation to verify
-		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(wiList));
+		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
 		workService.stop();
 		
 		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	private String format(WorkInstruction wi) throws IOException {
+		WorkInstructionCSVExporter exporter = new WorkInstructionCSVExporter();
+		// TODO Auto-generated method stub
+		return exporter.exportWorkInstructions(ImmutableList.of(wi));
 	}
 
 	@Test
@@ -241,8 +249,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		List<WorkInstruction> wiList = ImmutableList.of(wi);
-
+		String testMessage = format(wi);
 
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 
@@ -250,13 +257,13 @@ public class WorkServiceTest extends DAOTestABC {
 		doAnswer(new TimedExceptionAnswer(new IOException("test io"), timings)).
 		doAnswer(new TimedExceptionAnswer(new IOException("test io"), timings)).
 		doAnswer(new TimedDoesNothing(timings)).
-			when(mockEdiExportService).sendWorkInstructionsToHost(wiList);
+			when(mockEdiExportService).sendWorkInstructionsToHost(testMessage);
 
 		long expectedRetryDelay = 2000;
 		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi);
 
-		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(wiList));
+		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(testMessage));
 		long previousTimestamp = timings.remove(0);
 		for (Long timestamp : timings) {
 			long diff = timestamp - previousTimestamp;
@@ -268,7 +275,6 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -279,7 +285,7 @@ public class WorkServiceTest extends DAOTestABC {
 		WorkInstruction wi2 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 		doThrow(new RuntimeException("test io")).
-		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));
+		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
 		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi1);
@@ -289,14 +295,16 @@ public class WorkServiceTest extends DAOTestABC {
 		// Normal behavior is to keep retrying the first on IOException
 		//   in this case it should skip to the second one and send it
 		Assert.assertNotEquals(wi1,  wi2);
-		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi1)));
-		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(ImmutableList.of(wi2)));
+		
+		String export1 = format(wi1);
+		String export2 = format(wi2); 
+		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(export1));
+		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(export2));
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	
-	@SuppressWarnings("unchecked")
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -305,7 +313,7 @@ public class WorkServiceTest extends DAOTestABC {
 		Lock callBlocker = new ReentrantLock();
 		callBlocker.lock();
 		final IEdiService mockEdiExportService = createBlockingService(callBlocker);
-		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));
+		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
 		final WorkService workService = spy(createWorkService(total +1, mockEdiExportService, 1L));
 		doCallRealMethod().when(workService).exportWorkInstruction(any(WorkInstruction.class));
@@ -317,9 +325,9 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 
 		verify(workService, Mockito.timeout(2000).times(total)).exportWorkInstruction(any(WorkInstruction.class));
-		verify(mockEdiExportService, Mockito.times(1)).sendWorkInstructionsToHost(any(List.class));
+		verify(mockEdiExportService, Mockito.times(1)).sendWorkInstructionsToHost(any(String.class));
 		callBlocker.unlock();
-		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(List.class));
+		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -414,10 +422,9 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private IEdiService createBlockingService(Lock callBlocker) throws IOException {
 		final IEdiService mockEdiExportService = mock(IEdiService.class);
-		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(List.class));
+		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 		return mockEdiExportService;
 	}
 
