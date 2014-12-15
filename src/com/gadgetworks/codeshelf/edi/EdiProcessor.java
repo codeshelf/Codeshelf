@@ -141,11 +141,15 @@ public final class EdiProcessor implements IEdiProcessor {
 	/**
 	 */
 	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
-		LOGGER.debug("Begin EDI process.");
-		this.getPersistenceService().beginTenantTransaction();
+		boolean completed = false;
+		int numChecked = 0;
 
+		LOGGER.trace("Begin EDI process.");
 		final Timer.Context context = ediProcessingTimer.time();
 		try {
+			this.getPersistenceService().beginTenantTransaction();
+
+
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
 			for (Facility facility : mFacilityDao.getAll()) {
 				for (IEdiService ediService : facility.getEdiServices()) {
@@ -156,24 +160,30 @@ public final class EdiProcessor implements IEdiProcessor {
 							mCsvLocationAliasImporter,
 							mCsvCrossBatchImporter,
 							mCsvAislesFileImporter)) {
+							numChecked ++;
 							// Signal other threads that we've just processed new EDI.
 							try {
 								inEdiSignalQueue.put(ediService.getServiceName());
 							} catch (InterruptedException e) {
-								LOGGER.error("", e);
+								LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
 							}
 						}
 					}
 				}
 			}
 			this.getPersistenceService().commitTenantTransaction();
+			completed = true;
 		} catch (RuntimeException e) {
 			this.getPersistenceService().rollbackTenantTransaction();
 			LOGGER.error("Unable to process edi", e);
 		} finally {
 			context.stop();
+			if(completed) {
+				LOGGER.info("Checked for updates from "+numChecked+" EDI services");
+			} else {
+				LOGGER.warn("EDI process did not complete successfully.");
+			}
 		}
 
-		LOGGER.debug("End EDI process.");
 	}
 }

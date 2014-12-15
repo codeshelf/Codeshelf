@@ -79,6 +79,8 @@ public class ServerWatchdogThread extends Thread {
 	}
 	
 	private void doSessionWatchdog() {
+		int pings = 0;
+		
 		// check status, send keepalive etc on all sessions
 		Collection<UserSession> sessions = this.sessionManager.getSessions();
 		for (UserSession session : sessions) {
@@ -89,8 +91,9 @@ public class ServerWatchdogThread extends Thread {
 				PingRequest request = new PingRequest();
 				long now = System.currentTimeMillis();
 				session.setLastPingSent(now);
-				LOGGER.debug("Sending ping on "+session.getSessionId());
+				LOGGER.trace("Sending ping on "+session.getSessionId());
 				session.sendMessage(request);
+				pings++;
 			}
 			try {
 				processSession(session);
@@ -98,6 +101,9 @@ public class ServerWatchdogThread extends Thread {
 				ContextLogging.clearSession();
 			}
 			// check if keep alive needs to be sent
+		}
+		if(pings>0) {
+			LOGGER.info("Watchdog sent "+pings+" pings");
 		}
 	}
 	

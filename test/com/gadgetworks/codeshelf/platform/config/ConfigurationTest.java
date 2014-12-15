@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 
 public class ConfigurationTest extends DomainTestABC {
 	
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ConfigurationTest.class);
 
 	@Test
