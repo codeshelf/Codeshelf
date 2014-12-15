@@ -12,7 +12,6 @@ import io.iron.ironmq.Messages;
 import io.iron.ironmq.Queue;
 
 import java.io.IOException;
-import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -34,7 +33,6 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
@@ -92,9 +90,6 @@ public class IronMqService extends EdiServiceABC {
 
 
 	@Transient
-	private WorkInstructionCSVExporter	wiCSVExporter;
-
-	@Transient
 	private Counter exportCounter = MetricsService.addCounter(MetricsGroup.WSS,"exports.ironmq");
 
 	@Transient
@@ -132,7 +127,7 @@ public class IronMqService extends EdiServiceABC {
 	}
 
 	public IronMqService() {
-		this(new WorkInstructionCSVExporter(), new ClientProvider() {
+		this(new ClientProvider() {
 
 			@Override
 			public Client get(String projectId, String token) {
@@ -142,8 +137,7 @@ public class IronMqService extends EdiServiceABC {
 		});
 	}
 
-	IronMqService(WorkInstructionCSVExporter exporter, ClientProvider clientProvider) {
-		wiCSVExporter = exporter;
+	IronMqService(ClientProvider clientProvider) {
 		this.clientProvider = clientProvider;
 	}
 
@@ -202,29 +196,35 @@ public class IronMqService extends EdiServiceABC {
 		return false;
 	}
 
-	public final void sendWorkInstructionsToHost(final List<WorkInstruction> inWiList) throws IOException, IllegalStateException {
+	public final void sendWorkInstructionsToHost(final String exportMessage) throws IOException, IllegalStateException {
 		Optional<Queue> queue = getWorkInstructionQueue();
 		if (queue.isPresent()) {
-			LOGGER.debug("attempting send of work instructions: " + inWiList);
-			String message = wiCSVExporter.exportWorkInstructions(inWiList);
-			queue.get().push(message);
+			LOGGER.debug("attempting send exportMessage: " + exportMessage);
+			queue.get().push(exportMessage);
 			exportCounter.inc();
-			LOGGER.debug("Sent " + inWiList.size() + " work instructions to iron mq service");
+			LOGGER.debug("Sent work instructions to iron mq service");
 		}
 		else {
 			LOGGER.debug("Unable to send work instruction, no credentials for IronMqService");
 		}
 	}
 
-	String[] getMessages(@Max(100) int numberOfMessages, int timeoutInSeconds) throws IOException {
+	String[] consumeMessages(@Max(100) int numberOfMessages, int timeoutInSeconds) throws IOException {
 		Optional<Queue> queue = getWorkInstructionQueue();
 		if (queue.isPresent()) {
-			Messages messages = queue.get().get(numberOfMessages, timeoutInSeconds);
+			Queue ironMqQueue = queue.get();
+			Messages messages = ironMqQueue.get(numberOfMessages, timeoutInSeconds);
 			Message[] messageArray = messages.getMessages();
 			String[] bodies = new String[messageArray.length];
+			String[] ids = new String[messageArray.length];
 			for (int i = 0; i < messageArray.length; i++) {
 				Message message = messageArray[i];
 				bodies[i] = message.getBody();
+				ids[i] = message.getId();
+			}
+			for (int i = 0; i < ids.length; i++) { //A newer client allos for deleting messages in batch
+				String id = ids[i];
+				ironMqQueue.deleteMessage(id);
 			}
 			return bodies;
 		} else {

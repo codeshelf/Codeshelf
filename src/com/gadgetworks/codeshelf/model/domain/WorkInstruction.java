@@ -505,41 +505,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * For a UI simulation
-	 * @return
-	 */
-	public final void fakeCompleteWi(String inCompleteStr) {
-		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
-		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
-
-		// default to complete values
-		Integer actualQuant = this.getPlanQuantity();
-		WorkInstructionStatusEnum newStatus = WorkInstructionStatusEnum.COMPLETE;
-
-		if (doComplete) {
-		} else if (doShort) {
-			actualQuant--;
-			newStatus = WorkInstructionStatusEnum.SHORT;
-		}
-		Timestamp completeTime = new Timestamp(System.currentTimeMillis());
-		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
-
-		this.setActualQuantity(actualQuant);
-		this.setCompleted(completeTime);
-		this.setStarted(startTime);
-		this.setStatus(newStatus);
-		this.setType(WorkInstructionTypeEnum.ACTUAL);
-
-		try {
-			WorkInstruction.DAO.store(this);
-		} catch (DaoException e) {
-			LOGGER.error("", e);
-		}
-
-	}
-
 	// A UI meta-field. Should match what actually lights as it calls the same computation.
 	public String getLitLedsForWi() {
 		// Questions before we can code this.

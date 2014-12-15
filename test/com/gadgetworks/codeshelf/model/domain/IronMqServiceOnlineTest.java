@@ -11,9 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
-import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
-import com.google.common.collect.ImmutableList;
 
 // TODO: should use mock DAO 
 public class IronMqServiceOnlineTest extends DomainTestABC {
@@ -62,10 +60,8 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	public void networkConnectionTest() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		
-		WorkInstructionGenerator workInstructionGenerator = new WorkInstructionGenerator();
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		WorkInstruction wi = workInstructionGenerator.generateValid(facility);
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
@@ -73,16 +69,20 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 		facility.addEdiService(service);
 
 		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
-		service.sendWorkInstructionsToHost(ImmutableList.of(wi));
-		String[] messages = service.getMessages(IronMqService.MAX_NUM_MESSAGES, 5);
-		Assert.assertTrue(messages.length > 0);
+		String message = "TESTMESSAGE" + System.currentTimeMillis();
+		service.sendWorkInstructionsToHost(message);
+		String[] messages = new String[0];
 		boolean found = false;
-		for (int i = 0; i < messages.length; i++) {
-			String string = messages[i];
-			found = string.contains(wi.getDomainId());
-			if (found) break;
+		do {
+			messages = service.consumeMessages(IronMqService.MAX_NUM_MESSAGES, 5);
+			for (int i = 0; i < messages.length; i++) {
+				String string = messages[i];
+				found = string.contains(message);
+				if (found) break;
+			}
 		}
-		Assert.assertTrue("Did not find work instruction message", found);
+		while(messages.length > 0);
+		Assert.assertTrue("Did not find work instruction message: " + message, found);
 		
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -92,10 +92,8 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	public void badTokenTest() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		WorkInstructionGenerator workInstructionGenerator = new WorkInstructionGenerator();
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		WorkInstruction wi = workInstructionGenerator.generateValid(facility);
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
@@ -104,7 +102,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 
 		service.storeCredentials("540e1486364af100050000b4", "BAD");
 		try {
-			service.sendWorkInstructionsToHost(ImmutableList.of(wi));
+			service.sendWorkInstructionsToHost("TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -117,10 +115,8 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	public void badProjectId() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		WorkInstructionGenerator workInstructionGenerator = new WorkInstructionGenerator();
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		WorkInstruction wi = workInstructionGenerator.generateValid(facility);
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
@@ -129,7 +125,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 
 		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		try {
-			service.sendWorkInstructionsToHost(ImmutableList.of(wi));
+			service.sendWorkInstructionsToHost("TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
