@@ -2,6 +2,9 @@ package com.gadgetworks.codeshelf.application;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +16,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+
+import antlr.collections.List;
 
 public class LoggingServlet extends HttpServlet {
 	private static final String CONTENT_TYPE_TEXT = "text/html";
@@ -35,10 +40,9 @@ public class LoggingServlet extends HttpServlet {
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setHeader(CACHE_CONTROL_HEADER, NO_CACHE);
         resp.setContentType(CONTENT_TYPE_TEXT);
-
-        
+                
         PrintWriter out = resp.getWriter();
-        out.println("<html><head><title>log level override</title></head><body><h4>log level override</h4>");
+        out.println("<html><head><title>log level override</title></head><body><h4>logger level overrides:</h4>");
 
         String response = setLevel(req.getParameter("class1"),req.getParameter("level1"));
         if(response!=null) 
@@ -47,7 +51,7 @@ public class LoggingServlet extends HttpServlet {
         if(response!=null) 
         	out.println("* Last action: "+response+"<br>");
         
-        out.println("<br><form action=\"#\" method=GET onsubmit=\"return confirm('Are you sure?');\">");
+        out.println("<form action=\"#\" method=GET onsubmit=\"return confirm('Are you sure?');\">");
         out.println("<table border=0><tr><td nowrap>logger<td nowrap>level<td></tr>");        
         out.println("<tr><td nowrap><input type=text name=class1><td nowrap><select name=level1>"+LEVEL_OPTIONS+"</select></tr>");
         out.println("<tr><td nowrap><input type=text name=class2><td nowrap><select name=level2>"+LEVEL_OPTIONS+"</select></tr>");
@@ -57,7 +61,24 @@ public class LoggingServlet extends HttpServlet {
         	out.println("<a href=\"?"+presets.get(preset)+"\">"+preset+"</a><br>");
         }
         
-        out.println("</form></body></html>");
+        out.println("</form><h4>available loggers:</h4>");
+        Enumeration<?> loggers = LogManager.getCurrentLoggers();
+        ArrayList<String> loggerDescriptions = new ArrayList<String>();
+        while(loggers.hasMoreElements()) {
+        	Object loggerItem = loggers.nextElement();
+        	if(loggerItem instanceof Logger) {
+        		Logger logger = (Logger) loggerItem;
+        		loggerDescriptions.add(logger.getName());
+        	} else {
+        		loggerDescriptions.add(loggerItem.toString());
+        	}
+        }
+        Collections.sort(loggerDescriptions);
+        for(String description : loggerDescriptions) {
+        	out.println("<li>"+description);
+        }
+
+        out.println("</body></html>");
         
         out.close();
 
