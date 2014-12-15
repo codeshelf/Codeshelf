@@ -64,8 +64,6 @@ public class AisleTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 		
 		// Case 3: Make sure prior controller is removed
-		/* IVAN UNCOMMENT THIS BLOCK
-		 * 
 		this.getPersistenceService().beginTenantTransaction();
 		LedController controller2 = getDefaultController(network, "0x000FFF");
 		aisle.setControllerChannel(controller2.getPersistentId().toString(),"3");
@@ -74,7 +72,6 @@ public class AisleTest extends DomainTestABC {
 		LOGGER.info("controller1: "+ controller1.getPersistentId().toString());
 		LOGGER.info("controller2: "+ controller2.getPersistentId().toString());
 		this.getPersistenceService().commitTenantTransaction();
-		*/
 
 	}
 

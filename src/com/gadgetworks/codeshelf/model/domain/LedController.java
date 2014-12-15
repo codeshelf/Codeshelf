@@ -58,7 +58,7 @@ public class LedController extends WirelessDeviceABC {
 	private static final Logger		LOGGER		= LoggerFactory.getLogger(LedController.class);
 	
 	// All of the locations that use this controller.
-	@OneToMany(targetEntity=Location.class)
+	@OneToMany(targetEntity=Location.class, mappedBy = "ledController")
 	@Getter
 	private List<Location> locations	= new ArrayList<Location>();
 
