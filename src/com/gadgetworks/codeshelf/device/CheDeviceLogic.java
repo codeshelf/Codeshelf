@@ -1499,7 +1499,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 
 		//Remove lastSent Set Instr from map to indicate the clear
-		mPosToLastSetIntrMap.remove(inPosition);
+		if (PosControllerInstr.POSITION_ALL.equals(inPosition)) {
+			mPosToLastSetIntrMap.clear();
+		} else {
+			mPosToLastSetIntrMap.remove(inPosition);
+		}
 
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
