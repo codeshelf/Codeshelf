@@ -207,6 +207,7 @@ public class CodeshelfApplicationTest {
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
+		ApiServer apiServer = new ApiServer();
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			config,
@@ -216,7 +217,8 @@ public class CodeshelfApplicationTest {
 			User.DAO,
 			adminServer,
 			jettyServer,
-			PersistenceService.getInstance());
+			PersistenceService.getInstance(),
+			apiServer);
 
 		final Result checkAppRunning = new Result();
 

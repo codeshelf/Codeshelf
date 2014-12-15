@@ -4,6 +4,8 @@
 	<classpathentry kind="lib" path="lib/dist/xalan-2.7.2.jar"/>
 	<classpathentry kind="lib" path="lib/dist/liquibase-hibernate4-3.4.jar" sourcepath="APIs/liquibase-hibernate-liquibase-hibernate4-3.4.zip"/>
 	<classpathentry kind="lib" path="lib/drivers/linux"/>
+	<classpathentry kind="lib" path="lib/dist/jackson-jaxrs-json-provider-2.4.4.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jackson-jaxrs-base-2.4.4.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="lib" path="resources"/>
