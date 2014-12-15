@@ -160,7 +160,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			@Override
-			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
+			public void sendWorkInstructionsToHost(String inWiList) {
 				// TODO Auto-generated method stub
 
 			}
@@ -276,7 +276,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			}
 
 			@Override
-			public void sendWorkInstructionsToHost(List<WorkInstruction> inWiList) {
+			public void sendWorkInstructionsToHost(String exportMessage) {
 				// TODO Auto-generated method stub
 
 			}

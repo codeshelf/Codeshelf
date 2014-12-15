@@ -6,7 +6,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.io.IOException;
-import java.util.List;
 
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
 import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
@@ -29,6 +28,6 @@ public interface IEdiService extends IDomainObjectTree<Facility> {
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter);
 	
-	void sendWorkInstructionsToHost(final List<WorkInstruction> inCompletedWorkInstructions) throws IOException;
+	void sendWorkInstructionsToHost(final String exportMessage) throws IOException;
 
 }
