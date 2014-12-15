@@ -24,7 +24,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterListenerCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -40,7 +39,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterListenerRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -148,11 +146,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 				objectUpdateCounter.inc();
 				applicationRequestCounter.inc();
 			}
-			else if (request instanceof RegisterListenerRequest) {
-				command = new RegisterListenerCommand(csSession, (RegisterListenerRequest) request, objectChangeBroadcaster);
-				objectListenerCounter.inc();
-				applicationRequestCounter.inc();
-			}			
 			else if (request instanceof RegisterFilterRequest) {
 				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, objectChangeBroadcaster);
 				objectFilterCounter.inc();
