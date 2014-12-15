@@ -47,7 +47,7 @@ public class ComputeWorkCommand extends CommandABC {
 			
 			// ~bhe: should we check for null/zero and return a different status?
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
-			response.setTotalWorkInstructionCount(workInstructions.size());
+			response.setTotalGoodWorkInstructions(getTotalGoodWorkInstructionsCount(containerToCountMap));
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
 			return response;
@@ -99,6 +99,17 @@ public class ComputeWorkCommand extends CommandABC {
 		}
 
 		return containerToWorkInstructCountMap;
+	}
+
+	/**
+	 * Adds up the good work instructions in the map and returns the total
+	 */
+	public static final int getTotalGoodWorkInstructionsCount(Map<String, WorkInstructionCount> containerToWorkInstructionMap) {
+		int total = 0;
+		for (WorkInstructionCount count : containerToWorkInstructionMap.values()) {
+			total += count.getGoodCount();
+		}
+		return total;
 	}
 
 }
