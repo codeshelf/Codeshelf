@@ -538,8 +538,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
-		//Make sure position display controller has no instructions for pos 2 and POS assigned code for pos 1
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.POSITION_ASSIGNED_CODE);
+		//Make sure position display controllers are cleared
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		// Back to our main test
@@ -549,6 +549,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// Enhancement from v9 for Accu-Logistics
 		picker.setupOrderIdAsContainer("11111", "2"); // This did not prepend. Scan "11111" and hope it is a preassigned containerId on the order.
+		picker.scanCommand("START");
+		System.out.println("TEST " + picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		System.out.println("TEST " + picker.getLastSentPositionControllerDisplayValue((byte) 2));
+
 		//picker.start("D303", 5000, 3000);
 
 		HousekeepingInjector.restoreHKDefaults();

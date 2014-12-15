@@ -1401,10 +1401,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
-			//With DEV-515 Cart Setup feedback. The position controllers should currently display 
-			//their feedback. We want to clear that before proceeding to the next state.
-			this.clearAllPositionControllers();
-
 			setState(CheStateEnum.GET_WORK);
 
 		} else {
