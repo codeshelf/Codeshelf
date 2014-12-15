@@ -1331,8 +1331,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			this.mLocationId = inScanStr;
-
-			new ArrayList<String>(mContainersMap.values());
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
 			setState(CheStateEnum.GET_WORK);
