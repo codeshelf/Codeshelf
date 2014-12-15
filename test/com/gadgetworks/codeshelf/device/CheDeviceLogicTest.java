@@ -96,6 +96,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public void showsNoWorkIfNothingAheadOfLocation() {
 		this.getPersistenceService().beginTenantTransaction();

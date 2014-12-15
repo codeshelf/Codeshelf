@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import junit.framework.Assert;
 import lombok.Getter;
 import lombok.Setter;
 

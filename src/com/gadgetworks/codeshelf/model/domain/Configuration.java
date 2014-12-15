@@ -52,7 +52,7 @@ public class Configuration {
 	@Column(length=50, nullable=false)
 	String name;
 	
-	@Getter @Setter
+	@Getter
 	@Column(length=200, nullable=false)
 	String value;
 	
@@ -77,6 +77,11 @@ public class Configuration {
 	public Configuration(IDomainObject object, String name, String value, String description) {
 		this(object,name,value);
 		this.description = description;
+	}
+	
+	public Configuration setValue(String stringValue) {
+		this.value = stringValue;
+		return this;
 	}
 	
 	public Configuration setValue(int intValue) {
