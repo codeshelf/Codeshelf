@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import junit.framework.Assert;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -48,8 +47,7 @@ public class Filter implements ObjectEventListener {
 	List<String> propertyNames;
 
 	
-	@Setter
-	ITypedDao<IDomainObject> dao;
+	final ITypedDao<IDomainObject> dao;
 	
 	@Getter @Setter
 	String criteriaName;
@@ -60,9 +58,10 @@ public class Filter implements ObjectEventListener {
 	
 	PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 
-	public Filter(Class<? extends IDomainObject> persistenceClass, String id) {
+	public Filter(ITypedDao<IDomainObject> dao, Class<? extends IDomainObject> persistenceClass, String id) {
 		this.persistenceClass = persistenceClass;
 		this.id = id;
+		this.dao = dao;
 	}
 
 	@Override

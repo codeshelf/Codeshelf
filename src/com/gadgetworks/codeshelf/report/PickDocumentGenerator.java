@@ -5,20 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.report;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-
-import net.sf.jasperreports.engine.JRException;
-import net.sf.jasperreports.engine.JasperExportManager;
-import net.sf.jasperreports.engine.JasperFillManager;
-import net.sf.jasperreports.engine.JasperPrint;
-import net.sf.jasperreports.engine.JasperReport;
-import net.sf.jasperreports.engine.data.JRXmlDataSource;
-import net.sf.jasperreports.engine.util.JRLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +74,7 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 
 				if (!signalName.equals(SHUTDOWN)) {
 					LOGGER.debug("Pick doc generator received signal from: " + signalName);
-					createDocuments();
+					//createDocuments();
 				}
 
 			} catch (Exception e) {
@@ -99,7 +86,6 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 
 	// --------------------------------------------------------------------------
 	/**
-	 */
 	private void createDocuments() {
 		try {
 			URL defaultDocUrl = ClassLoader.getSystemClassLoader().getResource("conf/DefaultPickDoc.jasper");
@@ -122,4 +108,5 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 		}
 
 	}
+	 */
 }

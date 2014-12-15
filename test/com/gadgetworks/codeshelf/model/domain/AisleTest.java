@@ -90,6 +90,21 @@ public class AisleTest extends DomainTestABC {
 		verify(listener, times(1)).objectAdded(eq(Aisle.class), eq(storedAisle.getPersistentId()));
 		this.getPersistenceService().commitTenantTransaction();
 		
+		// Cover the odd-ball case of aisle has a path segment, but try to assign to a bad one.
+		this.getPersistenceService().beginTenantTransaction();
+		try {
+			aisle.associatePathSegment(UUID.randomUUID().toString());
+			fail("Should have thrown an exception");
+		}
+		catch(Exception e) {
+			
+		}
+		// verify that no change happened.
+		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
+
+
+		this.getPersistenceService().commitTenantTransaction();
+		
 	}
 	
 	@Test

@@ -60,7 +60,7 @@ public class ConnectionManagerThread extends Thread {
 					long timeSinceLastSent = System.currentTimeMillis() - client.getLastMessageSent();
 					if (!deviceManager.isSuppressKeepAlive()) {
 						if (timeSinceLastSent>keepAliveInterval) {
-							LOGGER.debug("Sending keep alive from the site controller");
+							LOGGER.info("Sending keep alive from the site controller");
 							client.sendMessage(new KeepAlive());
 						}
 					}

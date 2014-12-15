@@ -58,8 +58,7 @@ public class ComputeWorkCommand extends CommandABC {
 	}
 
 	/**
-	 * Compute work instruction counts by containerId. We currently do not support counts for invalid (or null) workInstruction
-	 * statuses.
+	 * Compute work instruction counts by containerId
 	 */
 	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(List<WorkInstruction> workInstructions,
 		List<String> containerIds) {

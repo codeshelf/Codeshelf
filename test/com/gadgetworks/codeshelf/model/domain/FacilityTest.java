@@ -119,6 +119,7 @@ public class FacilityTest extends DomainTestABC {
 		Vertex.DAO.store(v);		
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testProductivitySummary() throws EncodeException {
 		//This method doesn't assert anything at the moment, as we are just building out productivity reporting
