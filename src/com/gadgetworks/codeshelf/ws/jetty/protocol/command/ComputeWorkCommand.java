@@ -81,7 +81,12 @@ public class ComputeWorkCommand extends CommandABC {
 				count.incrementImmediateShortCount();
 			} else if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE) {
 				count.incrementCompleteCount();
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.NEW || wi.getStatus() == WorkInstructionStatusEnum.INPROGRESS) {
+			} else if (wi.getStatus() == WorkInstructionStatusEnum.NEW) {
+				//Ignore Housekeeping
+				if (!wi.amIHouseKeepingWi()) {
+					count.incrementGoodCount();
+				}
+			} else if (wi.getStatus() == WorkInstructionStatusEnum.INPROGRESS) {
 				count.incrementGoodCount();
 			}
 		}

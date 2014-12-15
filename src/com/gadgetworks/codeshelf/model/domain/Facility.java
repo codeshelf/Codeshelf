@@ -917,8 +917,7 @@ public class Facility extends Location {
 	 * @param inContainerIdList
 	 * @return
 	 */
-	public final List<WorkInstruction> computeWorkInstructions(final Che inChe,
-		final List<String> inContainerIdList) {
+	public final List<WorkInstruction> computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
@@ -1041,7 +1040,6 @@ public class Facility extends Location {
 
 		return finalWIResults;
 	}
-
 
 	private WorkInstructionSequencerABC getSequencer() {
 		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
