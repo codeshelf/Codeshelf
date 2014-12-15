@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -69,7 +70,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 
 		try {
 			/* register a filter like the UI does */
-			viewSession.registerObjectEventListener(new Filter(PathSegment.class, "ID1"));
+			viewSession.registerObjectEventListener(new Filter(PersistenceService.getDao(PathSegment.class), PathSegment.class, "ID1"));
 			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
 			
 			

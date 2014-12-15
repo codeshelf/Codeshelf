@@ -85,16 +85,15 @@ public class RegisterFilterCommand extends CommandABC {
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
 
-				// create listener
 				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
+				// create listener
 				
 				String filterClause = request.getFilterClause();
 					
-				Filter filter = new Filter((Class<IDomainObject>) classObject, request.getMessageId());				
+				Filter filter = new Filter(dao, (Class<IDomainObject>) classObject, request.getMessageId());				
 				filter.setPropertyNames(request.getPropertyNames());
 				filter.setParams(processedParams);
 				filter.setCriteriaName(filterClause);
-				filter.setDao(dao);
 				List<IDomainObject> objectMatchList = filter.refreshMatchList();
 				this.session.registerObjectEventListener(filter);
 
