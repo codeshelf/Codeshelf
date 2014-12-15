@@ -35,7 +35,7 @@ import com.google.inject.Singleton;
 @DiscriminatorValue("AISLE")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Aisle extends Location {
-	
+
 	@Inject
 	public static ITypedDao<Aisle>	DAO;
 
@@ -52,7 +52,7 @@ public class Aisle extends Location {
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Aisle.class);
-	
+
 	public Aisle() {
 		super();
 	}
@@ -66,28 +66,48 @@ public class Aisle extends Location {
 		return "A";
 	}
 
+	/**
+	 * this is for callMethod from the UI.  The main complexity is that this aisle may have been set to different path segment earlier. If so, that should be removed first.
+	 */
 	public final void associatePathSegment(String inPathSegPersistentID) {
-		// to support setting of list view meta-field pathSegId
-		// Get the PathSegment
+		/* In all cases, the result should be aisle has its pathseg field set, the pathseg should have this aisle in its list.  AND this aisle should not be in other path seg lists.
+		 * 1a) Simple. No path association yet. Normal add. 
+		 * 1b) Simple error. No path association yet. Throws. Covered in test updateNonexistantPathSegment()
+		 * 2) Repeat association. Aisle already associated to this path segment. Nothing happens.
+		 * 3a) Aisle associated to different segment. Remove. Then add.
+		 * 3b) Aisle associated to different segment, but this add does not resolve. No actions aside from Throw. Covered in test associatePathSegment()
+		 */
 		UUID persistentId = UUID.fromString(inPathSegPersistentID);
-		PathSegment pathSegment = PathSegment.DAO.findByPersistentId(persistentId);
-		if (pathSegment != null) {
-			associatePathSegment(pathSegment);
-		} else {
+		PathSegment newPathSegment = PathSegment.DAO.findByPersistentId(persistentId);
+		if (newPathSegment == null) {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
 		}
+
+		associatePathSegment(newPathSegment);
 	}
 
-	public final void associatePathSegment(PathSegment pathSegment) {
+	public final void associatePathSegment(PathSegment inPathSegment) {
 
-		// Some checking 
-		int initialLocationCount = pathSegment.getLocations().size();
+		if (inPathSegment == null) {
+			throw new DaoException("null call to associatePathSegment");
+		}
 
-		pathSegment.addLocation(this);
-		this.computePosAlongPath(pathSegment);
+		PathSegment oldPathSegment = this.getAssociatedPathSegment();
+		// don't add a second time if the UI chose to do what is already there.
+		if (oldPathSegment != null && oldPathSegment.equals(inPathSegment))
+			return;
+
+		if (oldPathSegment != null)
+			oldPathSegment.removeLocation(this);
+		// normally we would call this.getDao().store(this); after remove. But store will be called soon.
+
+		// Just an extra check on locations Array maintenance. Barely worth it.
+		int initialLocationCount = inPathSegment.getLocations().size();
+		inPathSegment.addLocation(this);
+		this.computePosAlongPath(inPathSegment);
 		this.getDao().store(this);
 
-		int afterLocationCount = pathSegment.getLocations().size();
+		int afterLocationCount = inPathSegment.getLocations().size();
 		if (initialLocationCount == afterLocationCount)
 			LOGGER.error("associatePathSegment did not correctly update locations array");
 	}
@@ -99,7 +119,7 @@ public class Aisle extends Location {
 	 */
 	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
-		
+
 		List<Tier> aList = getActiveChildrenAtLevel(Tier.class);
 		for (Tier aTier : aList) {
 			aTier.clearControllerChannel();
@@ -156,14 +176,15 @@ public class Aisle extends Location {
 	public static void setDao(ITypedDao<Aisle> inAisleDao) {
 		Aisle.DAO = inAisleDao;
 	}
+
 	public Bay createBay(String inBayId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Bay bay = new Bay();
 		bay.setDomainId(inBayId);
 		bay.setAnchorPoint(inAnchorPoint);
 		bay.setPickFaceEndPoint(inPickFaceEndPoint);
-		
+
 		this.addLocation(bay);
-		
+
 		return bay;
 	}
 	
