@@ -634,9 +634,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case LOCATION_SELECT_REVIEW:
 				sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
-					EMPTY_MSG,
 					LOCATION_SELECT_REVIEW_MSG_LINE_2,
-					LOCATION_SELECT_REVIEW_MSG_LINE_3);
+					LOCATION_SELECT_REVIEW_MSG_LINE_3,
+					EMPTY_MSG);
 				break;
 
 			case CONTAINER_SELECT:
