@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.application.apiresources;
 
+import java.io.Serializable;
 import java.util.UUID;
 
 import javax.ws.rs.core.Response;
@@ -20,5 +21,27 @@ public class BaseResponse {
 	
 	public Response buildResponse(){
 		return Response.status(status).entity(this).build();
+	}
+	
+	public static class UUIDParam implements Serializable{
+		private String raw;
+		private UUID uuid; 
+				
+		public UUIDParam(String str) {
+			raw = str;
+			try {
+				uuid = UUID.fromString(str);
+			} catch (Exception e) {
+				
+			}
+		}
+
+		public String getRawValue(){
+			return raw;
+		}
+
+		public UUID getUUID(){
+			return uuid;
+		}
 	}
 }

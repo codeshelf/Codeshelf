@@ -33,6 +33,7 @@ public class ErrorResponse extends BaseResponse{
 	}
 	
 	public void processException(Exception e) {
+		addError(e.getMessage());
 		if (e instanceof NotFoundException) {
 			setStatus(HttpServletResponse.SC_NOT_FOUND);
 		} else {

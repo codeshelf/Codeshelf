@@ -10,11 +10,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import com.gadgetworks.codeshelf.application.apiresources.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.model.domain.ProductivitySummary;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
 
 @Path("/productivity")
 public class ProductivityResource {
@@ -23,25 +22,25 @@ public class ProductivityResource {
 	@GET
 	@Path("/summary")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getEmployee(@QueryParam("facilityId") String facilityId) {
+	public Response getEmployee(@QueryParam("facilityId") UUIDParam facilityIdParam) {
 		ErrorResponse errors = new ErrorResponse();
 		//Initial validation
-		if (facilityId == null) {
+		if (facilityIdParam == null) {
 			errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			errors.addErrorMissingQueryParam("facilityId");
 			return errors.buildResponse();
 		}
-		UUID facilityIdUUID = BaseResponse.parseUUID(facilityId);
-		if (facilityIdUUID == null) {
+		UUID facilityId = facilityIdParam.getUUID();
+		if (facilityId == null) {
 			errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			errors.addErrorBadUUID(facilityId);
+			errors.addErrorBadUUID(facilityIdParam.getRawValue());
 			return errors.buildResponse();
 		}
 		
 		//Try to get Productivity Summary
 		try {
 			persistence.beginTenantTransaction();
-			ProductivitySummary result = WorkService.getProductivitySummary(facilityIdUUID);
+			ProductivitySummary result = WorkService.getProductivitySummary(facilityId);
 			return result.buildResponse();
 		} catch (Exception e) {
 			errors.processException(e);
