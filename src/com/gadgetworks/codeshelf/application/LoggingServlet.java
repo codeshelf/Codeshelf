@@ -68,7 +68,7 @@ public class LoggingServlet extends HttpServlet {
         	Object loggerItem = loggers.nextElement();
         	if(loggerItem instanceof Logger) {
         		Logger logger = (Logger) loggerItem;
-        		loggerDescriptions.add(logger.getName());
+        		loggerDescriptions.add(logger.getName() + " (" + logger.getEffectiveLevel().toString()+")");
         	} else {
         		loggerDescriptions.add(loggerItem.toString());
         	}
