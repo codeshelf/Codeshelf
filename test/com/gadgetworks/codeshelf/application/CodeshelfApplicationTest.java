@@ -207,7 +207,7 @@ public class CodeshelfApplicationTest {
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
-		ApiServer apiServer = new ApiServer();
+		ApiServer apiServer = new ApiServer(new JVMSystemConfiguration());
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			config,
