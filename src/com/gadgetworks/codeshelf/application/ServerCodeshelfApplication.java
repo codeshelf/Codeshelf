@@ -17,6 +17,7 @@ import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
@@ -42,7 +43,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IEdiProcessor			mEdiProcessor;
 	private IHttpServer				mHttpServer;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
-
+	private ApiServer				mApiServer;
+	
 	@Getter
 	private PersistenceService		persistenceService;
 
@@ -62,7 +64,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<User> inUserDao,
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer,
-		final PersistenceService persistenceService) {
+		final PersistenceService persistenceService,
+		final ApiServer apiServer) {
 		super(inAdminServer);
 		this.configuration = configuration;
 		mHttpServer = inHttpServer;
@@ -70,6 +73,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		webSocketServer = inAlternativeWebSocketServer;
 		this.persistenceService = persistenceService;
+		mApiServer = apiServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -110,6 +114,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
 		mHttpServer.startServer();
+
+		//Start API Server
+		mApiServer.startServer();
 
 		startAdminServer(null);
 		startTsdbReporter();
@@ -181,6 +188,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer.stopServer();
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
+		mApiServer.stopServer();
 		// Stop the web socket server
 		try {
 			webSocketServer.stop();
