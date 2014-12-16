@@ -305,6 +305,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		if (this.location instanceof HibernateProxy) {
 			this.location = Location.deproxify(this.location);
 		}
+		return this.location;
 	}
 
 	// Denormalized for serialized WIs at the site controller.
