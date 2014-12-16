@@ -121,7 +121,7 @@ public class FacilityTest extends DomainTestABC {
 	
 	@SuppressWarnings("unused")
 	@Test
-	public void testProductivitySummary() throws EncodeException {
+	public void testProductivitySummary() throws Exception {
 		//This method doesn't assert anything at the moment, as we are just building out productivity reporting
 		this.getPersistenceService().beginTenantTransaction();
 		WorkService ws = new WorkService();
@@ -130,7 +130,7 @@ public class FacilityTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 		
 		this.getPersistenceService().beginTenantTransaction();
-		ProductivitySummary productivitySummary = ws.getProductivitySummary(facilityId);
+		ProductivitySummary productivitySummary = WorkService.getProductivitySummary(facilityId);
 		JsonEncoder encoder = new JsonEncoder();
 		ServiceMethodResponse response = new ServiceMethodResponse();
 		response.setResults(productivitySummary);

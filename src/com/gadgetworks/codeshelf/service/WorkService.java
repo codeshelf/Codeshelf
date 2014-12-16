@@ -8,7 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.Transient;
-
+import javassist.NotFoundException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -301,8 +301,9 @@ public class WorkService implements IApiService {
 		}
 	}
 	
-	public ProductivitySummary getProductivitySummary(UUID facilityId){
+	public static ProductivitySummary getProductivitySummary(UUID facilityId) throws Exception{
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		if (facility == null) {throw new NotFoundException("Facility " + facilityId + " does not exist");}
 		ProductivitySummary productivitySummary = new ProductivitySummary(facility);
 		return productivitySummary;
 	}
