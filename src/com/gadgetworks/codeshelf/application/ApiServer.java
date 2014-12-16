@@ -77,7 +77,7 @@ public class ApiServer {
 			sh.setInitParameter("com.sun.jersey.config.property.resourceConfigClass", "com.sun.jersey.api.core.PackagesResourceConfig");
 	        sh.setInitParameter("com.sun.jersey.config.property.packages", "com.gadgetworks.codeshelf.application.apiresources");
 	        sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-			context.addServlet(sh, "/api/*");
+			context.addServlet(sh, "/*");
 
 			mServer.start();
 		} catch (Exception e) {

@@ -252,7 +252,7 @@ public class WorkService implements IApiService {
 		}
 	}
 	
-	public ProductivitySummary getProductivitySummary(UUID facilityId){
+	public static ProductivitySummary getProductivitySummary(UUID facilityId){
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		ProductivitySummary productivitySummary = new ProductivitySummary(facility);
 		return productivitySummary;
