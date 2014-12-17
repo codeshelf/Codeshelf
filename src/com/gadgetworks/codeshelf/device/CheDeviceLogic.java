@@ -615,6 +615,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mCheStateEnum = inCheState;
 		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
 
+		if (wasSameState && !mPosToLastSetIntrMap.isEmpty()) {
+			//wasSameState is true when the device associates - Resend last send position controller instructions to ensure
+			//the device is in the same state
+			this.sendPositionControllerInstructions(new ArrayList<PosControllerInstr>(mPosToLastSetIntrMap.values()));
+		}
+
 		switch (inCheState) {
 			case IDLE:
 				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
