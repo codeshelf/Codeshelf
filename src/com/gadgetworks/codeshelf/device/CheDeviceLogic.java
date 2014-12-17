@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 /**
  * @author jeffw
@@ -515,7 +517,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
 		// Cannot clear position controller on SHORT. (However, we would kind of like to change them all to flash their current number.)
-		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM))
+		// Do not clear on container select and container position IF 
+		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM)
+				&& (mCheStateEnum != CheStateEnum.CONTAINER_SELECT) && (mCheStateEnum != CheStateEnum.CONTAINER_POSITION))
 			clearAllPositionControllers();
 
 		// A command scan is always an option at any state.
@@ -1411,6 +1415,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+			//clearAllPositionControllers();
+			
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
@@ -1446,7 +1452,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
 			// this is a "ride along" error. Would be nice if the user could see it immediately.
 
-			showAssignedPositions();
+			//This is called when we set the container position
+			//showAssignedPositions();
+
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
@@ -1463,8 +1471,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
 			if (mContainersMap.get(inScanStr) == null) {
 				mContainersMap.put(inScanStr, mContainerInSetup);
+				showContainerAsAssigned(mContainerInSetup, Byte.valueOf(inScanStr));
 				mContainerInSetup = "";
-				showAssignedPositions();
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
 				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE_MSG);
@@ -1622,18 +1630,28 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
-	private void showAssignedPositions() {
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		for (String pos : mContainersMap.keySet()) {
-			PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(pos),
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.MED_FREQ,
-				PosControllerInstr.MED_DUTYCYCLE);
-			instructions.add(instruction);
+	private void showContainerAsAssigned(String containerId, Byte position) {
+		Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
+		//Use the last 1-2 characters of the containerId iff the container is numeric.
+		//Otherwise stick to the default character "a"
+		if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
+			if (containerId.length() == 1) {
+				value = Byte.valueOf(containerId);
+			} else {
+				value = Byte.valueOf(containerId.substring(containerId.length() - 2));
+			}
+		} else {
+			LOGGER.error("SABA {}", containerId);
 		}
-		sendPositionControllerInstructions(instructions);
+
+		PosControllerInstr instruction = new PosControllerInstr(position,
+			value,
+			value,
+			value,
+			PosControllerInstr.MED_FREQ,
+			PosControllerInstr.MED_DUTYCYCLE);
+
+		sendPositionControllerInstructions(Lists.newArrayList(instruction));
 	}
 
 	// --------------------------------------------------------------------------

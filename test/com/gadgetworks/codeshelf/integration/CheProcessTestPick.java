@@ -547,8 +547,20 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setup();
 		picker.setupContainer("12345", "1"); // This prepended to scan "C%12345" as per Codeshelf scan specification
 
+		//Check that container show last 2 digits of container id
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+		
 		// Enhancement from v9 for Accu-Logistics
-		picker.setupOrderIdAsContainer("11111", "2"); // This did not prepend. Scan "11111" and hope it is a preassigned containerId on the order.
+		picker.scanOrderId("11111");
+
+		//Make sure we do not lose last container
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+
+		picker.scanLocation("2");
+
+		//Check that containers show last 2 digits of container id
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), Byte.valueOf("11"));
 
 		picker.startAndSkipReview("D303", 5000, 3000);
 
