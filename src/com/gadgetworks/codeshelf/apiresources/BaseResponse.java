@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.application.apiresources;
+package com.gadgetworks.codeshelf.apiresources;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -20,7 +20,7 @@ public class BaseResponse {
 	}
 	
 	public Response buildResponse(){
-		return Response.status(status).entity(this).build();
+		return Response.status(status).entity(this).header("Access-Control-Allow-Origin", "*").build();
 	}
 	
 	public static class UUIDParam implements Serializable{

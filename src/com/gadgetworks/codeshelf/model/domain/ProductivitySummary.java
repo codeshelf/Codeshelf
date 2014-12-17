@@ -6,7 +6,7 @@ import lombok.Getter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.gadgetworks.codeshelf.application.apiresources.BaseResponse;
+import com.gadgetworks.codeshelf.apiresources.BaseResponse;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 

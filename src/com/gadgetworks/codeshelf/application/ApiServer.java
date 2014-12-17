@@ -75,7 +75,7 @@ public class ApiServer {
 			
 			ServletHolder sh = new ServletHolder(ServletContainer.class);
 			sh.setInitParameter("com.sun.jersey.config.property.resourceConfigClass", "com.sun.jersey.api.core.PackagesResourceConfig");
-	        sh.setInitParameter("com.sun.jersey.config.property.packages", "com.gadgetworks.codeshelf.application.apiresources");
+	        sh.setInitParameter("com.sun.jersey.config.property.packages", "com.gadgetworks.codeshelf.apiresources");
 	        sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
 			context.addServlet(sh, "/*");
 

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.application.apiresources;
+package com.gadgetworks.codeshelf.apiresources;
 
 import java.util.UUID;
 
@@ -10,7 +10,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.gadgetworks.codeshelf.application.apiresources.BaseResponse.UUIDParam;
+import com.gadgetworks.codeshelf.apiresources.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.model.domain.ProductivitySummary;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
