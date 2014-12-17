@@ -47,7 +47,7 @@ public class ComputeWorkCommand extends CommandABC {
 			
 			// ~bhe: should we check for null/zero and return a different status?
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
-			response.setTotalWorkInstructionCount(workInstructions.size());
+			response.setTotalGoodWorkInstructions(getTotalGoodWorkInstructionsCount(containerToCountMap));
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
 			return response;
@@ -81,7 +81,12 @@ public class ComputeWorkCommand extends CommandABC {
 				count.incrementImmediateShortCount();
 			} else if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE) {
 				count.incrementCompleteCount();
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.NEW || wi.getStatus() == WorkInstructionStatusEnum.INPROGRESS) {
+			} else if (wi.getStatus() == WorkInstructionStatusEnum.NEW) {
+				//Ignore Housekeeping
+				if (!wi.amIHouseKeepingWi()) {
+					count.incrementGoodCount();
+				}
+			} else if (wi.getStatus() == WorkInstructionStatusEnum.INPROGRESS) {
 				count.incrementGoodCount();
 			}
 		}
@@ -99,6 +104,17 @@ public class ComputeWorkCommand extends CommandABC {
 		}
 
 		return containerToWorkInstructCountMap;
+	}
+
+	/**
+	 * Adds up the good work instructions in the map and returns the total
+	 */
+	public static final int getTotalGoodWorkInstructionsCount(Map<String, WorkInstructionCount> containerToWorkInstructionMap) {
+		int total = 0;
+		for (WorkInstructionCount count : containerToWorkInstructionMap.values()) {
+			total += count.getGoodCount();
+		}
+		return total;
 	}
 
 }

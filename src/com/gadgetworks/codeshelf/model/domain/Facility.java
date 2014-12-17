@@ -1026,10 +1026,18 @@ public class Facility extends Location {
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
 		WorkInstructionSequencerABC sequencer = getSequencer();
+
+		//This will sort and also FILTER out WI's that have no location (i.e. SHORTS)
+		//It uses the iterater or remove items from the existing list and add it to the new one
+		//If all we care about are the counts. Why do we even sort them now?
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 
+		//WI's are only added here and they are of type SHORT (for now at least)
 		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
 		
+		//Add the WI's that were removed back to the final list
+		finalWIResults.addAll(wiResultList);
+
 		return finalWIResults;
 	}
 

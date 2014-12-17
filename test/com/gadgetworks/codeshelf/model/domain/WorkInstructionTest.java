@@ -144,16 +144,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderHeaderDao.store(order1);
 
-		OrderDetail orderDetail = new OrderDetail();
-		orderDetail.setDomainId(itemMaster.getItemId());
-		orderDetail.setItemMaster(itemMaster);
-		orderDetail.setQuantities(5);
-		orderDetail.setUomMaster(uomMaster);
-		orderDetail.setStatus(OrderStatusEnum.CREATED);
-		orderDetail.setActive(true);
-		orderDetail.setUpdated(new Timestamp(System.currentTimeMillis()));
-		order1.addOrderDetail(orderDetail);
-		mOrderDetailDao.store(orderDetail);
+		OrderDetail orderDetail = createOrderDetail(order1, itemMaster);
 
 		WorkInstruction wi = new WorkInstruction();
 		facility.addWorkInstruction(wi);

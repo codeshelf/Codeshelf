@@ -1,11 +1,14 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javax.persistence.Transient;
+import javassist.NotFoundException;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,12 +16,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
+import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WiSummarizer;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -36,20 +42,25 @@ public class WorkService implements IApiService {
 	public static final int					DEFAULT_CAPACITY			= Integer.MAX_VALUE;
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(WorkService.class);
-	private BlockingQueue<WorkInstruction>	completedWorkInstructions;
+	private BlockingQueue<WIMessage>	completedWorkInstructions;
 
 	@Getter
 	@Setter
-	long									retryDelay;
+	private long									retryDelay;
 
 	@Getter
 	@Setter
-	int										capacity;
+	private int										capacity;
 
-	IEdiExportServiceProvider				exportServiceProvider;
+	private IEdiExportServiceProvider				exportServiceProvider;
 
+	@Transient
+	private WorkInstructionCSVExporter	wiCSVExporter;
+
+
+	
 	@Getter
-	PersistenceService						persistenceService;
+	private PersistenceService						persistenceService;
 
 	private WorkServiceThread				wsThread					= null;
 	private static boolean					aWorkServiceThreadExists	= false;
@@ -70,7 +81,7 @@ public class WorkService implements IApiService {
 	private void init(IEdiExportServiceProvider exportServiceProvider) {
 		this.persistenceService = PersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
-
+		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
 		this.capacity = DEFAULT_CAPACITY;
 	}
@@ -96,7 +107,7 @@ public class WorkService implements IApiService {
 		if (WorkService.aWorkServiceThreadExists) {
 			LOGGER.error("Only one WorkService thread is allowed to run at once");
 		}
-		this.completedWorkInstructions = new LinkedBlockingQueue<WorkInstruction>(this.capacity);
+		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
 		this.wsThread = new WorkServiceThread();
 		this.wsThread.start();
 		return this;
@@ -118,17 +129,15 @@ public class WorkService implements IApiService {
 	private void sendWorkInstructions() throws InterruptedException {
 		while (!Thread.currentThread().isInterrupted()) {
 			
-			WorkInstruction wi = completedWorkInstructions.take(); //blocking
+			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
 				persistenceService.beginTenantTransaction();
 				boolean sent = false;
 				while (!sent) {
-					List<WorkInstruction> wiList = ImmutableList.of(wi);
 					try {
-						Facility facility = wi.getParent();
-						IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-						ediExportService.sendWorkInstructionsToHost(wiList);
+						IEdiService ediExportService = exportMessage.exportService;
+						ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
 						sent = true;
 					} catch (IOException e) {
 						LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
@@ -138,7 +147,7 @@ public class WorkService implements IApiService {
 				persistenceService.commitTenantTransaction();
 			} catch (Exception e) {
 				persistenceService.rollbackTenantTransaction();
-				LOGGER.error("Unexpected exception sending work instruction, skipping: " + wi, e);
+				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 			}
 		}
 	}
@@ -149,6 +158,40 @@ public class WorkService implements IApiService {
 		return summarizer.getSummaries();
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI simulation
+	 * @return
+	 */
+	public final void fakeCompleteWi(String wiPersistentId, String inCompleteStr) {
+		WorkInstruction wi = WorkInstruction.DAO.findByPersistentId(wiPersistentId);
+		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
+		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
+
+		// default to complete values
+		Integer actualQuant = wi.getPlanQuantity();
+		WorkInstructionStatusEnum newStatus = WorkInstructionStatusEnum.COMPLETE;
+
+		if (doComplete) {
+		} else if (doShort) {
+			actualQuant--;
+			newStatus = WorkInstructionStatusEnum.SHORT;
+		}
+		Timestamp completeTime = new Timestamp(System.currentTimeMillis());
+		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
+
+		wi.setActualQuantity(actualQuant);
+		wi.setCompleted(completeTime);
+		wi.setStarted(startTime);
+		wi.setStatus(newStatus);
+		wi.setType(WorkInstructionTypeEnum.ACTUAL);
+
+		//send in in like in came from SiteController
+		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
+	}
+
+
+	
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.DAO.findByPersistentId(cheId);
 		if (che != null) {
@@ -157,6 +200,8 @@ public class WorkService implements IApiService {
 				exportWorkInstruction(storedWi);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
+			} catch (IOException e) {
+				LOGGER.error("Unable to export work instruction: " + incomingWI, e);
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
@@ -190,7 +235,7 @@ public class WorkService implements IApiService {
 	 * @throws IOException 
 	 * @throws InterruptedException 
 	 */
-	public void exportWorkInstruction(WorkInstruction inWorkInstruction) {
+	public void exportWorkInstruction(WorkInstruction inWorkInstruction) throws IOException {
 		// jr/hibernate  tracking down an error
 		if (completedWorkInstructions == null)
 			LOGGER.error("null completedWorkInstructions in WorkService.exportWorkInstruction", new Exception());
@@ -198,7 +243,11 @@ public class WorkService implements IApiService {
 			LOGGER.error("null input to WorkService.exportWorkInstruction", new Exception());
 		else {
 			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
-			completedWorkInstructions.add(inWorkInstruction);
+			String messageBody = wiCSVExporter.exportWorkInstructions(ImmutableList.of(inWorkInstruction));
+			Facility facility = inWorkInstruction.getParent();
+			IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+			WIMessage wiMessage = new WIMessage(ediExportService, messageBody);
+			completedWorkInstructions.add(wiMessage);
 		}
 	}
 
@@ -252,9 +301,27 @@ public class WorkService implements IApiService {
 		}
 	}
 	
-	public ProductivitySummary getProductivitySummary(UUID facilityId){
+	public static ProductivitySummary getProductivitySummary(UUID facilityId) throws Exception{
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		if (facility == null) {throw new NotFoundException("Facility " + facilityId + " does not exist");}
 		ProductivitySummary productivitySummary = new ProductivitySummary(facility);
 		return productivitySummary;
+	}
+	
+	/**
+	 * Simple struct to keep associate export settings
+	 * @author pmonteiro
+	 *
+	 */
+	private static class WIMessage {
+		private IEdiService exportService;
+		private String messageBody;
+		public WIMessage(IEdiService exportService, String messageBody) {
+			super();
+			this.exportService = exportService;
+			this.messageBody = messageBody;
+		}
+		
+		
 	}
 }

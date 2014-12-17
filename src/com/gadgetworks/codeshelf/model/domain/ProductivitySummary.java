@@ -6,16 +6,18 @@ import lombok.Getter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.gadgetworks.codeshelf.apiresources.BaseResponse;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-public class ProductivitySummary {
+public class ProductivitySummary extends BaseResponse{
 	@Getter
 	private HashMap<String, GroupSummary> groups = new HashMap<>();
 	
 	private class GroupSummary{
 		@Getter
-		private short invalid, created, release, inprogress, complete, sHort;
+		private short invalid, created, released, inprogress, complete, sHort;
 	}
 	
 	public ProductivitySummary(Facility facility) {
@@ -32,26 +34,28 @@ public class ProductivitySummary {
 			groupSummary = new GroupSummary();
 			groups.put(groupName, groupSummary);
 		}
-		OrderStatusEnum status = orderHeader.getStatus();
-		switch (status) {
-			case INVALID:
-				groupSummary.invalid++;
-				break;
-			case CREATED:
-				groupSummary.created++;
-				break;
-			case RELEASE:
-				groupSummary.release++;
-				break;
-			case INPROGRESS:
-				groupSummary.inprogress++;
-				break;
-			case COMPLETE:
-				groupSummary.complete++;
-				break;
-			case SHORT:
-				groupSummary.sHort++;
-				break;
+		for (OrderDetail orderDetail : orderHeader.getOrderDetails()) {
+			OrderStatusEnum status = orderDetail.getStatus();
+			switch (status) {
+				case INVALID:
+					groupSummary.invalid++;
+					break;
+				case CREATED:
+					groupSummary.created++;
+					break;
+				case RELEASED:
+					groupSummary.released++;
+					break;
+				case INPROGRESS:
+					groupSummary.inprogress++;
+					break;
+				case COMPLETE:
+					groupSummary.complete++;
+					break;
+				case SHORT:
+					groupSummary.sHort++;
+					break;
+			}
 		}
 	}
 }

@@ -50,6 +50,10 @@ public class WorkInstructionCount {
 		super();
 	}
 
+	public boolean hasNonGoodCounts() {
+		return completeCount > 0 || unknownOrderIdCount > 0 || immediateShortCount > 0 || invalidOrUnknownStatusCount > 0;
+	}
+
 	public void incrementGoodCount() {
 		goodCount++;
 	}
@@ -104,6 +108,12 @@ public class WorkInstructionCount {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "WorkInstructionCount [goodCount=" + goodCount + ", unknownOrderIdCount=" + unknownOrderIdCount
+				+ ", immediateShortCount=" + immediateShortCount + ", completeCount=" + completeCount
+				+ ", invalidOrUnknownStatusCount=" + invalidOrUnknownStatusCount + "]";
+	}
 
 
 }

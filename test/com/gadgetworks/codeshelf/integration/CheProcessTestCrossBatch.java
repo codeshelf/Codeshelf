@@ -294,7 +294,10 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.setupContainer("11", "1"); // This prepended to scan "C%11" as per Codeshelf scan specification
 		picker.setupContainer("15", "3");
 		
-		picker.start("D-36", 5000, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
+		picker.scanLocation("D-36");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 
 		LOGGER.info("List the work instructions as the server sees them");
@@ -357,7 +360,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.setupContainer("19", "5"); 
 		picker.setupContainer("11", "6"); // Good one gives two work instruction
 
-		picker.start("D-36", 5000, 3000);
+		picker.startAndSkipReview("D-36", 5000, 3000);
 		HousekeepingInjector.restoreHKDefaults();
 
 		Assert.assertEquals(3, picker.countRemainingJobs());

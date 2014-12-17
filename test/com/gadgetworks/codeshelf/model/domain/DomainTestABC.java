@@ -478,6 +478,8 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Creates an orderdetail using the itemMaster and its standard UOM
+	 * 
 	 * @param inOrderHeader
 	 * @param inItemMaster
 	 * @return
@@ -490,7 +492,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setItemMaster(inItemMaster);
 		result.setQuantities(5);
 		result.setUomMaster(inItemMaster.getStandardUom());
-		result.setStatus(OrderStatusEnum.CREATED);
+		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		mOrderDetailDao.store(result);

@@ -63,7 +63,7 @@ public class LedController extends WirelessDeviceABC {
 	//private CodeshelfNetwork parent;
 
 	// All of the locations that use this controller.
-	@OneToMany(targetEntity=Location.class)
+	@OneToMany(targetEntity=Location.class, mappedBy = "ledController")
 	@Getter
 	private List<Location> locations	= new ArrayList<Location>();
 

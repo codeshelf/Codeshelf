@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class ComputeWorkCommandTest {
@@ -24,6 +25,7 @@ public class ComputeWorkCommandTest {
 		containers.add("Container1");
 		containers.add("Container2");
 		containers.add("Container3");
+		containers.add("Container4");
 
 		List<WorkInstruction> workInstructions = new ArrayList<WorkInstruction>();
 		//Container 1 has 2 new wi, 1 in progress wi, 1 immediate short
@@ -59,16 +61,30 @@ public class ComputeWorkCommandTest {
 		when(goodWI3.getStatus()).thenReturn(WorkInstructionStatusEnum.INPROGRESS);
 		workInstructions.add(goodWI3);
 
-		WorkInstruction invalidWI = mock(WorkInstruction.class);
-		when(invalidWI.getContainerId()).thenReturn("Container3");
-		when(invalidWI.getStatus()).thenReturn(WorkInstructionStatusEnum.INVALID);
-		workInstructions.add(invalidWI);
+		WorkInstruction invalidWI3 = mock(WorkInstruction.class);
+		when(invalidWI3.getContainerId()).thenReturn("Container3");
+		when(invalidWI3.getStatus()).thenReturn(WorkInstructionStatusEnum.INVALID);
+		workInstructions.add(invalidWI3);
+
+		//Container 4 has 1 good and 1 house keeping
+		WorkInstruction goodWI4 = mock(WorkInstruction.class);
+		when(goodWI4.getContainerId()).thenReturn("Container4");
+		when(goodWI4.getStatus()).thenReturn(WorkInstructionStatusEnum.INPROGRESS);
+		workInstructions.add(goodWI4);
+
+		WorkInstruction hkWI4 = mock(WorkInstruction.class);
+		when(hkWI4.getContainerId()).thenReturn("Container4");
+		when(hkWI4.getStatus()).thenReturn(WorkInstructionStatusEnum.NEW);
+		when(hkWI4.getType()).thenReturn(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		//when(hkWI4.amIHouseKeepingWi()).thenReturn(new Boolean(true));
+		workInstructions.add(hkWI4);
+
 
 		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workInstructions,
 			containers);
 
-		//Make sure we have 3 entries with proper counts
-		assertTrue(containerToWICountMap.size() == 4);
+		//Make sure we have 5 entries with proper counts
+		assertTrue(containerToWICountMap.size() == 5);
 
 		//Check Container 0
 		assertEquals(containerToWICountMap.get("Container0").getCompleteCount(), 0);
@@ -99,6 +115,12 @@ public class ComputeWorkCommandTest {
 		assertEquals(containerToWICountMap.get("Container3").getUnknownOrderIdCount(), 0);
 		assertEquals(containerToWICountMap.get("Container3").getInvalidOrUnknownStatusCount(), 1);
 
+		//Check Container 4
+		assertEquals(containerToWICountMap.get("Container3").getCompleteCount(), 0);
+		assertEquals(containerToWICountMap.get("Container3").getGoodCount(), 1);
+		assertEquals(containerToWICountMap.get("Container3").getImmediateShortCount(), 0);
+		assertEquals(containerToWICountMap.get("Container3").getUnknownOrderIdCount(), 0);
+		assertEquals(containerToWICountMap.get("Container3").getInvalidOrUnknownStatusCount(), 1);
 	}
 
 }

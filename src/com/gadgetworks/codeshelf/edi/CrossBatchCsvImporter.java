@@ -241,7 +241,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		}
 
 		if (result != null) {
-			result.setStatus(OrderStatusEnum.CREATED);
+			result.setStatus(OrderStatusEnum.RELEASED);
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -272,7 +272,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		if (result == null) {
 			result = new OrderHeader();
 			result.setDomainId(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
-			result.setStatus(OrderStatusEnum.CREATED);
+			result.setStatus(OrderStatusEnum.RELEASED);
 			inFacility.addOrderHeader(result);
 		}
 
@@ -322,7 +322,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		if (result == null) {
 			result = new OrderDetail();
 			result.setDomainId(inCsvBean.getItemId());
-			result.setStatus(OrderStatusEnum.CREATED);
+			result.setStatus(OrderStatusEnum.RELEASED);
 
 			inOrder.addOrderDetail(result);
 		}

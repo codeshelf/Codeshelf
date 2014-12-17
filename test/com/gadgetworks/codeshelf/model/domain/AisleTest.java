@@ -11,10 +11,14 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 
 public class AisleTest extends DomainTestABC {
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(AisleTest.class);
+
 	Organization org=new Organization();
 
 	@Test
@@ -30,19 +34,45 @@ public class AisleTest extends DomainTestABC {
 	
 	@Test
 	public final void updateControllerOnAisle() {
+		// Case 1: simple add
 		this.getPersistenceService().beginTenantTransaction();
 
-		LedController controller = getDefaultController(getDefaultNetwork(org,getDefaultFacility()), "0xABCDEF");
+		Facility facility = getDefaultFacility();
+		CodeshelfNetwork network = getDefaultNetwork(org,facility);
+		LedController controller1 = getDefaultController(network, "0xABCDEF");
 		Aisle aisle = getDefaultAisle(getDefaultFacility(getDefaultOrganization("Org1")), "A1");
 
 		Short testChannel = 8;
-		aisle.setControllerChannel(controller.getPersistentId().toString(), testChannel.toString());
+		aisle.setControllerChannel(controller1.getPersistentId().toString(), testChannel.toString());
 		
 		Aisle storedAisle = mAisleDao.findByPersistentId(aisle.getPersistentId());
-		assertEquals(controller.getDomainId(), storedAisle.getLedControllerId());
+		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
 		assertEquals(testChannel, storedAisle.getLedChannel());
 
 		this.getPersistenceService().commitTenantTransaction();
+		
+		// Case 2: Cover the odd-ball case of aisle has a controller, but try to assign to a bad one.
+		this.getPersistenceService().beginTenantTransaction();
+		try {
+			aisle.setControllerChannel(UUID.randomUUID().toString(),"2");
+			fail("Should have thrown an exception");
+		}
+		catch(Exception e) {			
+		}
+		// verify that no change happened.
+		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
+		this.getPersistenceService().commitTenantTransaction();
+		
+		// Case 3: Make sure prior controller is removed
+		this.getPersistenceService().beginTenantTransaction();
+		LedController controller2 = getDefaultController(network, "0x000FFF");
+		aisle.setControllerChannel(controller2.getPersistentId().toString(),"3");
+		// verify that the change happened.
+		assertEquals(controller2.getDomainId(), storedAisle.getLedControllerId());
+		LOGGER.info("controller1: "+ controller1.getPersistentId().toString());
+		LOGGER.info("controller2: "+ controller2.getPersistentId().toString());
+		this.getPersistenceService().commitTenantTransaction();
+
 	}
 
 	@Test
@@ -101,10 +131,7 @@ public class AisleTest extends DomainTestABC {
 		}
 		// verify that no change happened.
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
-
-
-		this.getPersistenceService().commitTenantTransaction();
-		
+		this.getPersistenceService().commitTenantTransaction();		
 	}
 	
 	@Test
