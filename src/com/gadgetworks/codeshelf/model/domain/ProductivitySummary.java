@@ -17,7 +17,7 @@ public class ProductivitySummary extends BaseResponse{
 	
 	private class GroupSummary{
 		@Getter
-		private short invalid, created, release, inprogress, complete, sHort;
+		private short invalid, created, released, inprogress, complete, sHort;
 	}
 	
 	public ProductivitySummary(Facility facility) {
@@ -34,26 +34,28 @@ public class ProductivitySummary extends BaseResponse{
 			groupSummary = new GroupSummary();
 			groups.put(groupName, groupSummary);
 		}
-		OrderStatusEnum status = orderHeader.getStatus();
-		switch (status) {
-			case INVALID:
-				groupSummary.invalid++;
-				break;
-			case CREATED:
-				groupSummary.created++;
-				break;
-			case RELEASE:
-				groupSummary.release++;
-				break;
-			case INPROGRESS:
-				groupSummary.inprogress++;
-				break;
-			case COMPLETE:
-				groupSummary.complete++;
-				break;
-			case SHORT:
-				groupSummary.sHort++;
-				break;
+		for (OrderDetail orderDetail : orderHeader.getOrderDetails()) {
+			OrderStatusEnum status = orderDetail.getStatus();
+			switch (status) {
+				case INVALID:
+					groupSummary.invalid++;
+					break;
+				case CREATED:
+					groupSummary.created++;
+					break;
+				case RELEASED:
+					groupSummary.released++;
+					break;
+				case INPROGRESS:
+					groupSummary.inprogress++;
+					break;
+				case COMPLETE:
+					groupSummary.complete++;
+					break;
+				case SHORT:
+					groupSummary.sHort++;
+					break;
+			}
 		}
 	}
 }

@@ -185,25 +185,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		return getOrderHeaders();
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Release the order group to production.
-	 * You can only release an order group in the CREATED state.
-	 * @return
-	 */
-	public final Boolean release() {
-		Boolean result = false;
-
-		// We can only release order groyps that are in the new state.
-		if (getStatus().equals(OrderStatusEnum.CREATED)) {
-			result = true;
-			setStatus(OrderStatusEnum.RELEASE);
-			OrderGroup.DAO.store(this);
-		}
-
-		return result;
-	}
-
 	public static void setDao(OrderGroupDao inOrderGroupDao) {
 		OrderGroup.DAO = inOrderGroupDao;
 	}

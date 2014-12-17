@@ -15,7 +15,7 @@ public enum OrderStatusEnum {
 	// @EnumValue("CREATED")
 	CREATED(OrderStatusNum.CREATED, "CREATED"),
 	// @EnumValue("RELEASE")
-	RELEASE(OrderStatusNum.RELEASE, "RELEASE"),
+	RELEASED(OrderStatusNum.RELEASED, "RELEASED"),
 	// @EnumValue("INPROGRESS")
 	INPROGRESS(OrderStatusNum.INPROGRESS, "INPROGRESS"),
 	// @EnumValue("COMPLETE")
@@ -39,8 +39,8 @@ public enum OrderStatusEnum {
 				result = OrderStatusEnum.CREATED;
 				break;
 
-			case OrderStatusNum.RELEASE:
-				result = OrderStatusEnum.RELEASE;
+			case OrderStatusNum.RELEASED:
+				result = OrderStatusEnum.RELEASED;
 				break;
 
 			case OrderStatusNum.INPROGRESS:
@@ -76,7 +76,7 @@ public enum OrderStatusEnum {
 
 		static final byte	INVALID		= -1;
 		static final byte	CREATED		= 0;
-		static final byte	RELEASE		= 1;
+		static final byte	RELEASED     = 1;
 		static final byte	INPROGRESS	= 2;
 		static final byte	COMPLETE	= 3;
 		static final byte	SHORT		= 4;
