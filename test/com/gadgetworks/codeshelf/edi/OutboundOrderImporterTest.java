@@ -19,10 +19,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
@@ -85,6 +87,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+
+		OrderGroup orderGroup = facility.getOrderGroup("1");
+		Assert.assertNotNull(orderGroup);
+		Assert.assertEquals(OrderStatusEnum.RELEASED, orderGroup.getStatus());
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -565,10 +571,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		order = facility.getOrderHeader("456");
 		Assert.assertNotNull(order);
+		Assert.assertEquals(OrderStatusEnum.RELEASED, order.getStatus());
 		orderDetail = order.getOrderDetail("456.1");
 		Assert.assertNotNull(orderDetail);
 		orderDetail = order.getOrderDetail("456.5");
 		Assert.assertNotNull(orderDetail);
+		Assert.assertEquals(OrderStatusEnum.RELEASED, orderDetail.getStatus());
 		// try what worked in the absence of the order detail ID
 		orderDetail = order.getOrderDetail("456"); // order ID
 		Assert.assertNull(orderDetail);

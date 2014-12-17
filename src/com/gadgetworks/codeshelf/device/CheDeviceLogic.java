@@ -280,6 +280,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inMaxQty
 	 */
 	private void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
+		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
 			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
@@ -614,6 +615,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		boolean wasSameState = inCheState == mCheStateEnum;
 		mCheStateEnum = inCheState;
 		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
+
+		//wasSameState is true when the device associates - Resend last send position controller instructions to ensure
+		//the device displays what it always displayed
+		if (wasSameState && !mPosToLastSetIntrMap.isEmpty()) {
+			if (inCheState != CheStateEnum.DO_PICK && inCheState != CheStateEnum.SHORT_PICK) {
+				//We do not want to resend position controller instructions for these two states
+				//because they already send it themselves.
+				this.sendPositionControllerInstructions(new ArrayList<PosControllerInstr>(mPosToLastSetIntrMap.values()));
+			}
+		}
 
 		switch (inCheState) {
 			case IDLE:
@@ -1220,6 +1231,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
+				//return because setting state to DO_PICK will call this function again
+				return;
 			}
 
 			// Tell the last aisle controller this device displayed on, to remove any led commands for this.

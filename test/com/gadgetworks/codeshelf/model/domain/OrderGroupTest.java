@@ -54,9 +54,6 @@ public class OrderGroupTest extends DomainTestABC {
 		orderGroup.removeOrderHeader(order1.getOrderId());
 		Assert.assertNull(orderGroup.getOrderHeader(order1.getOrderId()));
 		
-		// Release the order group.
-		orderGroup.release();
-		
 		OrderHeader order2 = new OrderHeader();
 		order2.setParent(facility);
 		order2.setOrderId("2");
@@ -75,8 +72,6 @@ public class OrderGroupTest extends DomainTestABC {
 		orderGroup.removeOrderHeader(order2.getOrderId());
 		Assert.assertNull(orderGroup.getOrderHeader(order2.getOrderId()));
 				
-		Assert.assertFalse(orderGroup.release());	
-
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
@@ -111,10 +106,6 @@ public class OrderGroupTest extends DomainTestABC {
 		
 		orderGroup.addOrderHeader(order1);
 		
-		Assert.assertTrue(orderGroup.release());
-		
-		Assert.assertFalse(orderGroup.release());	
-
 		this.getPersistenceService().commitTenantTransaction();
 	}
 }
