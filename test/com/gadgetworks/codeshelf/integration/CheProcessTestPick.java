@@ -549,14 +549,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Check that container show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 		
-		// Enhancement from v9 for Accu-Logistics
 		picker.scanOrderId("11111");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 
 		//Make sure we do not lose last container
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
 
-		picker.scanLocation("2");
+		picker.scanPosition("2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
 		//Check that containers show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
@@ -847,6 +849,11 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Setup container with good count
 		picker.setup();
 		picker.setupOrderIdAsContainer("11111", "1");
+
+		//Check that container show last 2 digits of container id
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("11"));
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
+		
 		picker.scanCommand("START");
 
 		//Check State Make sure we do not hit REVIEW

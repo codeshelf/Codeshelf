@@ -516,12 +516,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		// Cannot clear position controller on SHORT. (However, we would kind of like to change them all to flash their current number.)
-		// Do not clear on container select and container position IF 
-		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM)
-				&& (mCheStateEnum != CheStateEnum.CONTAINER_SELECT) && (mCheStateEnum != CheStateEnum.CONTAINER_POSITION))
-			clearAllPositionControllers();
-
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
@@ -768,15 +762,21 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case SHORT_COMMAND:
+				//Do not clear position controllers here
 				shortPick();
 				break;
 
 			case YES_COMMAND:
+				clearAllPositionControllers();
 			case NO_COMMAND:
+				clearAllPositionControllers();
 				processYesOrNoCommand(inScanStr);
 				break;
 
 			default:
+				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
+					clearAllPositionControllers();
+				}
 				break;
 		}
 	}
@@ -806,6 +806,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Setup work");
 
 		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
+			clearAllPositionControllers();
 			mPosToLastSetIntrMap.clear();
 			mContainersMap.clear();
 			mContainerInSetup = "";
@@ -822,6 +823,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
+		clearAllPositionControllers();
 		if (mContainersMap.values().size() > 0) {
 			mContainerInSetup = "";
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
@@ -1401,6 +1403,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			clearAllPositionControllers();
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -1415,7 +1418,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			//clearAllPositionControllers();
+			clearAllPositionControllers();
 			
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
