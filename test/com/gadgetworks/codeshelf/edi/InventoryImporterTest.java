@@ -660,7 +660,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
 		Integer wiCountAfterScan = wiListAfterScan.size();
-		Assert.assertEquals(wiCountAfterScan, (Integer) 5);
+		Assert.assertEquals((Integer) 5, wiCountAfterScan);
 
 		// The only interesting thing here is probably the group and sort code. (Lack of group code)
 		WorkInstruction wi1 = wiListAfterScan.get(0);

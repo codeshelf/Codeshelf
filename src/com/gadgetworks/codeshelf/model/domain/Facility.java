@@ -31,6 +31,7 @@ import lombok.Setter;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.proxy.HibernateProxy;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -248,7 +249,15 @@ public class Facility extends Location {
 	}
 
 	public final List<Path> getPaths() {
-		return new ArrayList<Path>(paths.values());
+		ArrayList<Path> arrayPaths = new ArrayList<Path>();
+		for(Path p : paths.values()) {
+			if (p instanceof HibernateProxy) {
+				arrayPaths.add(Path.<Path>deproxify(p));
+			} else {
+				arrayPaths.add(p);
+			}
+		}
+		return arrayPaths;
 	}
 
 	public final void removePath(String inPathId) {

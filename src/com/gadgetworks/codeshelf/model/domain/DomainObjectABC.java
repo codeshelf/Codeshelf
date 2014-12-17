@@ -149,16 +149,16 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 	}
 
-	public static IDomainObject deproxify(IDomainObject domainObject) {
+	public static <T extends IDomainObject>T deproxify(T domainObject) {
 		if (domainObject==null) {
 			return null;
 		}
 	    if (domainObject instanceof HibernateProxy) {
 	        Hibernate.initialize(domainObject);
-	        DomainObjectABC realDomainObject = (DomainObjectABC) ((HibernateProxy) domainObject)
+	        T realDomainObject = (T) ((HibernateProxy) domainObject)
 	                  .getHibernateLazyInitializer()
 	                  .getImplementation();
-	        return realDomainObject;
+	        return (T)realDomainObject;
 	    }
 		return domainObject;
 	}
