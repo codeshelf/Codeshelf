@@ -65,7 +65,7 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
-	public void start(String location, int inComputeTimeOut, int inLocationTimeOut) {
+	public void startAndSkipReview(String location, int inComputeTimeOut, int inLocationTimeOut) {
 		// This is both "Start pick" and scan of starting location.
 		// Note: if no jobs at all, it will fail on waiting.
 		scanCommand("START");
@@ -73,7 +73,7 @@ public class PickSimulator {
 			// perform start without location scan, if location is undefined
 			return;
 		}
-		waitForCheState(CheStateEnum.LOCATION_SELECT, inComputeTimeOut);
+		waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, inComputeTimeOut);
 		scanLocation(location);
 		waitForCheState(CheStateEnum.DO_PICK, inLocationTimeOut);
 	}

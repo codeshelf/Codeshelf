@@ -78,6 +78,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
 	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
+	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
+	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
 
 	private static final String		STARTWORK_COMMAND						= "START";
 	private static final String		SETUP_COMMAND							= "SETUP";
@@ -409,10 +412,64 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// The back-end returned the work instruction count.
 		if (totalWorkInstructionCount > 0) {
 			//TODO Use the map to determine if we need to go to location_select or review
-			setState(CheStateEnum.LOCATION_SELECT);
+			boolean doesNeedReview = false;
+			for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
+				if (wiCount.getGoodCount() == 0 || wiCount.hasNonGoodCounts()) {
+					doesNeedReview = true;
+					break;
+				}
+			}
+			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
+			//Show counts on position controllers
+			this.showPositionFeedback(containerToWorkInstructionCountMap);
+
+			if(doesNeedReview) {
+				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
+			} else {
+				setState(CheStateEnum.LOCATION_SELECT);
+			}
+			
 		} else {
 			setState(CheStateEnum.NO_WORK);
 		}
+	}
+
+	/** Shows the count feedback on the position controller
+	 * @param containerToWorkInstructionCountMap - Map of containerIds to WorkInstructionCount
+	 */
+	private void showPositionFeedback(Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+		//Generate position controller commands
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+		for (Entry<String, String> containerMapEntry : mContainersMap.entrySet()) {
+			String containerId = containerMapEntry.getValue();
+			byte position = Byte.valueOf(containerMapEntry.getKey());
+			WorkInstructionCount wiCount = containerToWorkInstructionCountMap.get(containerId);
+			//count should never be null. We could also move the logic that determines whether we have an invalid
+			//container id as one that has no count.
+			byte count = (byte) wiCount.getGoodCount();
+			LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+			if (count == 0 || wiCount.hasNonGoodCounts()) {
+				//Flash
+				instructions.add(new PosControllerInstr(position,
+					count,
+					count,
+					count,
+					PosControllerInstr.BLINK_FREQ.byteValue(),
+					PosControllerInstr.BLINK_DUTYCYCLE.byteValue()));
+			} else {
+				//No Flash
+				instructions.add(new PosControllerInstr(position,
+					count,
+					count,
+					count,
+					PosControllerInstr.BRIGHT_FREQ.byteValue(),
+					PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+			}
+		}
+
+		//Show counts on position controllers
+		sendPositionControllerInstructions(instructions);
 	}
 
 	// --------------------------------------------------------------------------
@@ -470,6 +527,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					break;
 
 				case LOCATION_SELECT:
+					processLocationScan(scanPrefixStr, scanStr);
+					break;
+
+				case LOCATION_SELECT_REVIEW:
 					processLocationScan(scanPrefixStr, scanStr);
 					break;
 
@@ -569,6 +630,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
+				break;
+
+			case LOCATION_SELECT_REVIEW:
+				sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
+					LOCATION_SELECT_REVIEW_MSG_LINE_2,
+					LOCATION_SELECT_REVIEW_MSG_LINE_3,
+					EMPTY_MSG);
 				break;
 
 			case CONTAINER_SELECT:
