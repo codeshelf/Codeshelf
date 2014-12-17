@@ -30,7 +30,7 @@ public class FacilityResource {
 			for (Facility f : facilities){
 				f.initialize();
 			}
-			return Response.status(HttpServletResponse.SC_OK).entity(facilities).header("Access-Control-Allow-Origin", "*").build();
+			return BaseResponse.buildResponse(facilities, HttpServletResponse.SC_OK);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
