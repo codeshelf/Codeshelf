@@ -844,15 +844,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(4, containers.size());
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
 
-		//Setup container with good count
-		picker.setup();
+		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("a1111", "1");
 
 		//Check that container show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+		System.out.println("YOOOOO " + picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 		
 		picker.scanCommand("START");
@@ -868,11 +867,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 
 		
-
 		//Reset Picker
 		picker.logout();
 		picker.login("Picker #1");
-		picker.setup();
 
 		//Continue setting up containers with bad counts
 		picker.setupOrderIdAsContainer("a1111", "1");

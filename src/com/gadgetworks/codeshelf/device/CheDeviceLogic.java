@@ -83,6 +83,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
+	private static final String				SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 
 	private static final String		STARTWORK_COMMAND						= "START";
 	private static final String		SETUP_COMMAND							= "SETUP";
@@ -285,6 +286,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
+			if (PosControllerInstr.POSITION_ALL.equals(instr.getPosition())) {
+				//A POS_ALL instruction overrides all previous instructions
+				mPosToLastSetIntrMap.clear();
+			}
 			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
 		}
 
@@ -652,7 +657,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				if (mContainersMap.size() < 1) {
 					sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
 				} else {
-					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG);
+					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 				}
 				break;
 
