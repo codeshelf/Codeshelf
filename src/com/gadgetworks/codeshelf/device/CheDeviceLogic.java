@@ -614,6 +614,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void setState(final CheStateEnum inCheState) {
+		mCheStateEnum = inCheState;
+
 		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, mCheStateEnum == inCheState);
 
 		switch (inCheState) {
@@ -1626,14 +1628,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void showContainerAssainments() {
 		if (mContainersMap.isEmpty()) {
+			LOGGER.debug("No Container Assaigments to send");
 			return;
 		}
-
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
 		for (Entry<String, String> entry : mContainersMap.entrySet()) {
 			String containerId = entry.getValue();
-			Byte position = Byte.valueOf(containerId);
+			Byte position = Byte.valueOf(entry.getKey());
 
 			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
@@ -1653,6 +1655,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			PosControllerInstr.MED_FREQ,
 				PosControllerInstr.MED_DUTYCYCLE));
 		}
+		LOGGER.debug("Sending Container Assaignments {}", instructions);
+
 		sendPositionControllerInstructions(instructions);
 	}
 
