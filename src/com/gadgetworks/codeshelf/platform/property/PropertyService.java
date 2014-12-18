@@ -82,7 +82,7 @@ public class PropertyService {
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getProperties(IDomainObject object) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
-		String queryString = "from DomainObjectProperty as c where c.type.objectType = :objectType and c.objectId = :objectId ";
+		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.objectId = :objectId ";
 		Query query = session.createQuery(queryString);
         query.setParameter("objectId", object.getPersistentId());
         query.setParameter("objectType", object.getClassName());
@@ -99,7 +99,7 @@ public class PropertyService {
         for (DomainObjectPropertyDefault type : types) {
         	boolean found = false;
         	for (DomainObjectProperty config : configs) {
-        		if (config.getType().equals(type)) {
+        		if (config.getPropertyDefault().equals(type)) {
         			found = true;
         			break;
         		}
@@ -133,7 +133,7 @@ public class PropertyService {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
 
 		// String queryString = "from Configuration as c join c.type as t with t.objectType = :objectType and t.name = :name where c.objectId = :objectId ";
-		String queryString = "from DomainObjectProperty as c where c.type.objectType = :objectType and c.type.name = :name and c.objectId = :objectId ";
+		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
         Query query = session.createQuery(queryString);
 		// String queryString = "from Configuration where objectId = :objectId and objectType = :objectType and name = :name";
         // Query query = session.createQuery(queryString);

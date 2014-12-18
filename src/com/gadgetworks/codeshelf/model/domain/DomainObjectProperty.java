@@ -45,18 +45,18 @@ public class DomainObjectProperty {
 	private UUID objectId = null;
 	
 	@Getter
-	@Column(length=200, nullable=false)
+	@Column(length=120, nullable=false)
 	String value;
 	
 	@Getter @Setter
 	@ManyToOne(fetch=FetchType.EAGER,optional=false)
-	DomainObjectPropertyDefault type;
+	DomainObjectPropertyDefault propertyDefault;
 	
 	public DomainObjectProperty() {
 	}
 	
-	public DomainObjectProperty(IDomainObject object, DomainObjectPropertyDefault type) {
-		this.type = type;
+	public DomainObjectProperty(IDomainObject object, DomainObjectPropertyDefault propertyDefault) {
+		this.propertyDefault = propertyDefault;
 		this.objectId = object.getPersistentId();
 	}
 	
@@ -80,36 +80,46 @@ public class DomainObjectProperty {
 		return this;
 	}
 	
+	public DomainObjectProperty setValue(boolean boolValue) {
+		this.value = Boolean.toString(boolValue);
+		return this;
+	}
+	
 	public int getIntValue() {		
 		if (this.value==null) {
 			return Integer.parseInt(getDefaultValue());
 		}
-		int value = Integer.parseInt(this.value);
-		return value;
+		return Integer.parseInt(this.value);
 	}
 	
 	public double getDoubleValue() {		
 		if (this.value==null) {
 			return Double.parseDouble(getDefaultValue());
 		}
-		double value = Double.parseDouble(this.value);
-		return value;
+		return Double.parseDouble(this.value);
+	}
+		
+	public boolean getBooleanValue() {		
+		if (this.value==null) {
+			return Boolean.parseBoolean(getDefaultValue());
+		}
+		return Boolean.parseBoolean(this.value);
 	}
 		
 	// convenience function to get the property name via default/type object
 	public String getName() {
-		if (type==null) {
+		if (propertyDefault==null) {
 			return null;
 		}
-		return type.getName();
+		return propertyDefault.getName();
 	}
 
 	// convenience function to get the default value via default/type object
 	public String getDefaultValue() {
-		if (type==null) {
+		if (propertyDefault==null) {
 			return null;
 		}
-		return type.getDefaultValue();
+		return propertyDefault.getDefaultValue();
 	}
 
 }

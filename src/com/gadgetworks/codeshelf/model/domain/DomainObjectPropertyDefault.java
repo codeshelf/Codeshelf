@@ -43,18 +43,18 @@ public class DomainObjectPropertyDefault {
 	private UUID persistentId = UUID.randomUUID();
 
 	@Getter
-	@Column(nullable=false)
+	@Column(length=40, nullable=false)
 	String name;
 	
 	@Getter
-	@Column(nullable=false)
+	@Column(length=40, nullable=false)
 	String objectType;
 	
 	@Getter
-	@Column(nullable=false)
+	@Column(length=120, nullable=false)
 	String defaultValue;
 	
 	@Getter
-	@Column(nullable=false)
+	@Column(length=400, nullable=false)
 	String description;	
 }
