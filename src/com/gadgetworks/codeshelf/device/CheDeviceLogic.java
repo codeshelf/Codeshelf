@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 /**
  * @author jeffw
@@ -280,6 +282,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inMaxQty
 	 */
 	private void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
+		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
 			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
@@ -513,10 +516,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		// Cannot clear position controller on SHORT. (However, we would kind of like to change them all to flash their current number.)
-		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM))
-			clearAllPositionControllers();
-
 		// A command scan is always an option at any state.
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
@@ -614,6 +613,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		boolean wasSameState = inCheState == mCheStateEnum;
 		mCheStateEnum = inCheState;
 		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
+
+		//wasSameState is true when the device associates - Resend last send position controller instructions to ensure
+		//the device displays what it always displayed
+		if (wasSameState && !mPosToLastSetIntrMap.isEmpty()) {
+			if (inCheState != CheStateEnum.DO_PICK && inCheState != CheStateEnum.SHORT_PICK) {
+				//We do not want to resend position controller instructions for these two states
+				//because they already send it themselves.
+				this.sendPositionControllerInstructions(new ArrayList<PosControllerInstr>(mPosToLastSetIntrMap.values()));
+			}
+		}
 
 		switch (inCheState) {
 			case IDLE:
@@ -753,15 +762,21 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case SHORT_COMMAND:
+				//Do not clear position controllers here
 				shortPick();
 				break;
 
 			case YES_COMMAND:
+				clearAllPositionControllers();
 			case NO_COMMAND:
+				clearAllPositionControllers();
 				processYesOrNoCommand(inScanStr);
 				break;
 
 			default:
+				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
+					clearAllPositionControllers();
+				}
 				break;
 		}
 	}
@@ -791,6 +806,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Setup work");
 
 		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
+			clearAllPositionControllers();
 			mPosToLastSetIntrMap.clear();
 			mContainersMap.clear();
 			mContainerInSetup = "";
@@ -807,6 +823,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
+		clearAllPositionControllers();
 		if (mContainersMap.values().size() > 0) {
 			mContainerInSetup = "";
 			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
@@ -1220,6 +1237,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
+				//return because setting state to DO_PICK will call this function again
+				return;
 			}
 
 			// Tell the last aisle controller this device displayed on, to remove any led commands for this.
@@ -1384,6 +1403,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			clearAllPositionControllers();
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -1398,6 +1418,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+			clearAllPositionControllers();
+			
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
@@ -1433,7 +1455,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
 			// this is a "ride along" error. Would be nice if the user could see it immediately.
 
-			showAssignedPositions();
+			//This is called when we set the container position
+			//showAssignedPositions();
+
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
@@ -1450,8 +1474,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
 			if (mContainersMap.get(inScanStr) == null) {
 				mContainersMap.put(inScanStr, mContainerInSetup);
+				showContainerAsAssigned(mContainerInSetup, Byte.valueOf(inScanStr));
 				mContainerInSetup = "";
-				showAssignedPositions();
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
 				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE_MSG);
@@ -1609,18 +1633,26 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
-	private void showAssignedPositions() {
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		for (String pos : mContainersMap.keySet()) {
-			PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(pos),
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.MED_FREQ,
-				PosControllerInstr.MED_DUTYCYCLE);
-			instructions.add(instruction);
+	private void showContainerAsAssigned(String containerId, Byte position) {
+		Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
+		//Use the last 1-2 characters of the containerId iff the container is numeric.
+		//Otherwise stick to the default character "a"
+		if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
+			if (containerId.length() == 1) {
+				value = Byte.valueOf(containerId);
+			} else {
+				value = Byte.valueOf(containerId.substring(containerId.length() - 2));
+			}
 		}
-		sendPositionControllerInstructions(instructions);
+
+		PosControllerInstr instruction = new PosControllerInstr(position,
+			value,
+			value,
+			value,
+			PosControllerInstr.MED_FREQ,
+			PosControllerInstr.MED_DUTYCYCLE);
+
+		sendPositionControllerInstructions(Lists.newArrayList(instruction));
 	}
 
 	// --------------------------------------------------------------------------

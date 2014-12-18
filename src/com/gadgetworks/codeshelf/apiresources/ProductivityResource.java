@@ -11,8 +11,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.gadgetworks.codeshelf.apiresources.BaseResponse.UUIDParam;
-import com.gadgetworks.codeshelf.model.domain.ProductivitySummary;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.ProductivitySummary;
 import com.gadgetworks.codeshelf.service.WorkService;
 
 @Path("/productivity")

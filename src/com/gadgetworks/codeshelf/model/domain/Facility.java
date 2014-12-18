@@ -6,6 +6,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Hibernate;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.postgresql.util.PSQLException;
@@ -2055,5 +2057,15 @@ public class Facility extends Location {
 	public String toString() {
 		return getDomainId();
 	}
-
+	
+	public void initialize(){
+		try {
+			Field[] fields = getClass().getDeclaredFields();
+		    for(Field field : fields) {
+		    	Hibernate.initialize(field.get(this));
+		    }
+		} catch (Exception e) {
+			LOGGER.error("Error initializing object: " + e.getMessage());
+		}
+	}
 }

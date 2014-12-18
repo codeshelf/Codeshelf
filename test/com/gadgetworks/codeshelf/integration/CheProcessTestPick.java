@@ -547,8 +547,22 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setup();
 		picker.setupContainer("12345", "1"); // This prepended to scan "C%12345" as per Codeshelf scan specification
 
-		// Enhancement from v9 for Accu-Logistics
-		picker.setupOrderIdAsContainer("11111", "2"); // This did not prepend. Scan "11111" and hope it is a preassigned containerId on the order.
+		//Check that container show last 2 digits of container id
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
+		
+		picker.scanOrderId("11111");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+
+		//Make sure we do not lose last container
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+
+		picker.scanPosition("2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+
+		//Check that containers show last 2 digits of container id
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), Byte.valueOf("11"));
 
 		picker.startAndSkipReview("D303", 5000, 3000);
 
@@ -802,12 +816,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Order 44444 has an immediate short (Item 5 which is out of stock)
 		// Order 55555 has a each pick for an item that only has a case (Item 6)
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,11111,11111,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,a1111,a1111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,a1111,a1111,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,55555,55555,6,Test Item 6,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n1,USF314,COSTCO,5,5,6,Test Item 6,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -834,7 +848,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Setup container with good count
 		picker.setup();
-		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("a1111", "1");
+
+		//Check that container show last 2 digits of container id
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
+		
 		picker.scanCommand("START");
 
 		//Check State Make sure we do not hit REVIEW
@@ -855,20 +875,21 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setup();
 
 		//Continue setting up containers with bad counts
-		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("a1111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
 		picker.setupOrderIdAsContainer("33333", "3"); //missing order id
 		picker.setupOrderIdAsContainer("44444", "4");
-		picker.setupOrderIdAsContainer("55555", "5");
+		picker.setupOrderIdAsContainer("5", "5");
+
+		//Make sure single digit 5 is show on posCon
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 5), Byte.valueOf("5"));
+
 		picker.scanCommand("START");
 
 		//Check State
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 3000);
 
-		//TODO Check that "REVIEW MISSING WORK" is displayed on the CHE
-
 		//Check Screens
-
 		//Case 1: 2 good picks no flashing
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 2);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);

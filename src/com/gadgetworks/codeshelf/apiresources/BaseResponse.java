@@ -3,7 +3,9 @@ package com.gadgetworks.codeshelf.apiresources;
 import java.io.Serializable;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 
 import lombok.Setter;
 
@@ -20,10 +22,20 @@ public class BaseResponse {
 	}
 	
 	public Response buildResponse(){
-		return Response.status(status).entity(this).header("Access-Control-Allow-Origin", "*").build();
+		return buildResponse(this, status);
+	}
+
+	public static Response buildResponse(int status) {
+		return buildResponse(null, status);
+	}
+
+	public static Response buildResponse(Object obj, int status) {
+		ResponseBuilder builder = Response.status(status).header("Access-Control-Allow-Origin", "*");
+		if (obj != null) { builder = builder.entity(obj);}
+		return builder.build();
 	}
 	
-	public static class UUIDParam implements Serializable{
+	public static class UUIDParam {
 		private String raw;
 		private UUID uuid; 
 				
