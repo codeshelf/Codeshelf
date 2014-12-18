@@ -116,6 +116,22 @@ public class DomainObjectProperty {
 		return propertyDefault.getName();
 	}
 
+	// convenience function
+	public String getDescription() {
+		if (propertyDefault==null) {
+			return null;
+		}
+		return propertyDefault.getDescription();
+	}
+
+	// convenience function
+	public String getObjectType() {
+		if (propertyDefault==null) {
+			return null;
+		}
+		return propertyDefault.getObjectType();
+	}
+
 	// convenience function to get the default value via default/type object
 	public String getDefaultValue() {
 		if (propertyDefault==null) {
