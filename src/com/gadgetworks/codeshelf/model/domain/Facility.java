@@ -105,7 +105,7 @@ public class Facility extends Location {
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
-		
+
 		@Override
 		public Facility findByDomainId(final IDomainObject parentObject, final String domainId) {
 			return super.findByDomainId(null, domainId);
@@ -177,7 +177,7 @@ public class Facility extends Location {
 	public Facility() {
 		super();
 	}
-	
+
 	@Override
 	public Facility getFacility() {
 		return this;
@@ -609,7 +609,7 @@ public class Facility extends Location {
 		}		
 		return pathId;
 	}
-	
+
 	public final Path createPath(String inDomainId) {
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
@@ -645,7 +645,7 @@ public class Facility extends Location {
 				LOGGER.error("looks like incorrect segment orders in createPath()");
 			segmentDomainId = pathDomainId + "." + pathSegment.getSegmentOrder();
 			pathSegment.setDomainId(segmentDomainId);
-			
+
 			path.addPathSegment(pathSegment);
 			PathSegment.DAO.store(pathSegment);
 		}
@@ -670,7 +670,7 @@ public class Facility extends Location {
 				location.computePosAlongPath(segment);
 			}
 		}
-		*/
+		 */
 
 		// Paul: comment this block when you uncomment the block above
 		// getting from paths.values() clearly does not work reliable after just making new path
@@ -1017,7 +1017,7 @@ public class Facility extends Location {
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
-		*/
+		 */
 
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
@@ -1035,12 +1035,13 @@ public class Facility extends Location {
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 
 		//WI's are only added here and they are of type SHORT (for now at least)
-		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
-		
-		//Add the WI's that were removed back to the final list
-		finalWIResults.addAll(wiResultList);
+		//DEV-556 - Calc HK WIs in getWork
+		List<WorkInstruction> allWIs = Lists.newArrayList(sortedWIResults); //HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
 
-		return finalWIResults;
+		//Add the WI's that were removed back to the final list
+		allWIs.addAll(wiResultList);
+
+		return allWIs;
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
@@ -1180,14 +1181,10 @@ public class Facility extends Location {
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 
-		final boolean doWrapIfNecessary = true; // DEV- 477 
-		if (!doWrapIfNecessary)
-			return wiResultList;
-
 		// For DEV- 477 from here
 		// If wrapping, we need to get the complete list, then add on the missing bits. AND update the group and sort code for the work instructions
 		// Let's measure how long this takes. If more than 1000 ms, log it.
-		long wrapComputeTime = System.currentTimeMillis();
+		long startTimestamp = System.currentTimeMillis();
 
 		int wiCountFromStartLocation = wiResultList.size();
 		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
@@ -1195,66 +1192,45 @@ public class Facility extends Location {
 
 		int wiCountCompleteRoute = completeRouteWiList.size();
 		Integer leftoverCount = wiCountCompleteRoute - wiCountFromStartLocation;
-		if (leftoverCount == 0) // just return what we had.  This also covers the case of wiCountCompleteRoute == 0.
-			return wiResultList;
-
-		LOGGER.info("Wrapping the CHE route. Add the starting " + leftoverCount
-				+ " jobs from start of path to the end of the CHE route.");
-		Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
-
-		// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
-		// "wrap" to the complete list.
 		List<WorkInstruction> wrappedRouteWiList = new ArrayList<WorkInstruction>();
-		if (wiCountFromStartLocation == 0) {
-			for (WorkInstruction wi : completeRouteWiList)
-				wrappedRouteWiList.add(wi);
+
+		if (leftoverCount == 0) {
+			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
+			wrappedRouteWiList = wiResultList;
 		} else {
-			// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
-			WorkInstruction lastWiFirstPart = null;
-			for (WorkInstruction wi : wiResultList) {
-				wrappedRouteWiList.add(wi);
-				lastWiFirstPart = wi;
-			}
-			WorkInstruction firstWi = wrappedRouteWiList.get(0);
-			boolean firstAdded = false;
-			for (WorkInstruction wi : completeRouteWiList) {
-				if (wi.equals(firstWi))
-					break; // stop adding from the complete list once we reach the point already in it.
-				if (!firstAdded) // We usually need to add a new baychange here
-					wrappedRouteWiList = HousekeepingInjector.addHouseKeepingIfNecessary(this,
-						lastWiFirstPart,
-						wi,
-						wrappedRouteWiList);
-				wrappedRouteWiList.add(wi);
-				firstAdded = true;
-			}
-		}
-		// It could be that our wrap point was just after a housekeeping WI. We should never have bay change or repeat pos last.
-		// We could avoid adding it to our final list above, but we also have to delete the WI.
-		int wrappedSize = wrappedRouteWiList.size();
-		if (wrappedSize > 0) {
-			WorkInstruction lastWi = wrappedRouteWiList.get(wrappedSize - 1);
-			if (lastWi.amIHouseKeepingWi()) { // for now, assume no last housekeeping is valid. That may not be always true.
-				LOGGER.info("deleting one unneeded housekeeping work instruction after wrapping a CHE route that starts in the middle.");
-				wrappedRouteWiList.remove(wrappedSize - 1);
-				try {
-					Che assignedChe = lastWi.getAssignedChe();
-					if (assignedChe != null)
-						assignedChe.removeWorkInstruction(lastWi); // necessary?
-					WorkInstruction.DAO.delete(lastWi);
-				} catch (DaoException e) {
-					LOGGER.error("failed to delete prior work SHORT instruction", e);
+			LOGGER.info("Wrapping the CHE route. Add the starting={} jobs from start of path to the end of the CHE route.",
+				leftoverCount);
+
+			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
+
+			// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
+			// "wrap" to the complete list.
+			if (wiCountFromStartLocation == 0) {
+				wrappedRouteWiList.addAll(completeRouteWiList);
+			} else {
+				// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
+				wrappedRouteWiList.addAll(wiResultList);
+
+				WorkInstruction firstWi = wrappedRouteWiList.get(0);
+				for (WorkInstruction wi : completeRouteWiList) {
+					if (wi.equals(firstWi)) {
+						break; // stop adding from the complete list once we reach the point already in it.
+					}
+					wrappedRouteWiList.add(wi);
 				}
 			}
 		}
 
-		// Now our wrappedRouteWiList is ordered correctly, but group and sort codes are wrong.
-		if (wrappedRouteWiList.size() > 0)
-			wrappedRouteWiList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wrappedRouteWiList);
+		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
+		if (wrappedRouteWiList.size() > 0) {
+			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(this, wrappedRouteWiList);
+		}
 
-		Long wrapComputeDuration = System.currentTimeMillis() - wrapComputeTime;
-		if (wrapComputeDuration > 1000)
-			LOGGER.warn("Route-wrap recompute took " + wrapComputeDuration + " ms.");
+		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
+
+		if (wrapComputeDurationMs > 1000) {
+			LOGGER.warn("Route-wrap recompute took {}", wrapComputeDurationMs);
+		}
 
 		return wrappedRouteWiList;
 	}
@@ -2052,18 +2028,18 @@ public class Facility extends Location {
 		} //else
 		return null;
 	}
-	
+
 	@Override
 	public String toString() {
 		return getDomainId();
 	}
-	
+
 	public void initialize(){
 		try {
 			Field[] fields = getClass().getDeclaredFields();
-		    for(Field field : fields) {
-		    	Hibernate.initialize(field.get(this));
-		    }
+			for (Field field : fields) {
+				Hibernate.initialize(field.get(this));
+			}
 		} catch (Exception e) {
 			LOGGER.error("Error initializing object: " + e.getMessage());
 		}
