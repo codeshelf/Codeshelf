@@ -118,7 +118,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public final Facility getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
 		}
 		return parent;
 	}
@@ -235,7 +235,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	
 	public ContainerKind getKind() {
 		if (this.kind instanceof HibernateProxy) {
-			this.kind = (ContainerKind) DomainObjectABC.deproxify(this.kind);
+			this.kind = (ContainerKind) PersistenceService.deproxify(this.kind);
 		}
 		return kind;
 	}

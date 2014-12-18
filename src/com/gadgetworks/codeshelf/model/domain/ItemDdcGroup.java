@@ -91,7 +91,7 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
 	public final Location getParent() {
 		if (parent instanceof HibernateProxy) {
-			this.parent = (Location) deproxify(this.parent);
+			this.parent = (Location) PersistenceService.deproxify(this.parent);
 		}		
 		return parent;
 	}

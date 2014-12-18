@@ -109,7 +109,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	public final OrderHeader getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (OrderHeader) DomainObjectABC.deproxify(this.parent);
+			this.parent = (OrderHeader) PersistenceService.deproxify(this.parent);
 		}		
 		return parent;
 	}

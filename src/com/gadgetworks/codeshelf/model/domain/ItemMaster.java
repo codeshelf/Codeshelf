@@ -144,7 +144,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	public UomMaster getStandardUom() {
 		if (standardUom instanceof HibernateProxy) {
-			this.standardUom = (UomMaster) deproxify(this.standardUom);
+			this.standardUom = (UomMaster) PersistenceService.deproxify(this.standardUom);
 		}
 		return standardUom;
 	}
@@ -160,7 +160,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	public final Facility getParent() {
 		if (parent instanceof HibernateProxy) {
-			this.parent = (Facility) deproxify(this.parent);
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
 		}		
 		return parent;
 	}

@@ -144,7 +144,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 
 	public final Organization getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Organization) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Organization) PersistenceService.deproxify(this.parent);
 		}
 		return parent;
 	}

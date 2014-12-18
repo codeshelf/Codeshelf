@@ -21,7 +21,6 @@ import java.util.Set;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
@@ -252,7 +251,7 @@ public class Facility extends Location {
 		ArrayList<Path> arrayPaths = new ArrayList<Path>();
 		for(Path p : paths.values()) {
 			if (p instanceof HibernateProxy) {
-				arrayPaths.add(Path.<Path>deproxify(p));
+				arrayPaths.add(PersistenceService.<Path>deproxify(p));
 			} else {
 				arrayPaths.add(p);
 			}

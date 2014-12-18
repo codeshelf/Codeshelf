@@ -104,7 +104,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	
 	public Che getCurrentChe() {
 		if (this.currentChe instanceof HibernateProxy) {
-			this.currentChe = (Che) DomainObjectABC.deproxify(this.currentChe);
+			this.currentChe = (Che) PersistenceService.deproxify(this.currentChe);
 		}
 		return currentChe;
 	}
@@ -120,14 +120,14 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	public final Container getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Container) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Container) PersistenceService.deproxify(this.parent);
 		}		
 		return this.parent;
 	}
 	
 	public OrderHeader getOrderHeader() {
 		if (this.orderHeader instanceof HibernateProxy) {
-			this.orderHeader = (OrderHeader) DomainObjectABC.deproxify(this.orderHeader);
+			this.orderHeader = (OrderHeader) PersistenceService.deproxify(this.orderHeader);
 		}		
 		return orderHeader;
 	}

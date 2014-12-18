@@ -137,7 +137,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	public final Facility getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
 		}		
 		return parent;
 	}

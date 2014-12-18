@@ -116,14 +116,14 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@Override
 	public Facility getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
 		}
 		return this.parent;
 	}
 	
 	public WorkArea getWorkArea() {
 		if (this.workArea instanceof HibernateProxy) {
-			this.workArea = (WorkArea) DomainObjectABC.deproxify(this.workArea);
+			this.workArea = (WorkArea) PersistenceService.deproxify(this.workArea);
 		}
 		return workArea;
 	}

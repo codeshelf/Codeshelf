@@ -26,7 +26,6 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -64,7 +63,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		Session session = getCurrentSession();
 		result = (T) session.get(getDaoClass(), inPersistentId);
 		if (result!=null && result instanceof HibernateProxy) {
-			result = (T) DomainObjectABC.deproxify(result);
+			result = PersistenceService.<T>deproxify(result);
 		}
 		return result;
 	}

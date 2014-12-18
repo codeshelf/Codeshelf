@@ -156,7 +156,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	public final Path getParent() {
 		if (parent instanceof HibernateProxy) {
-			this.parent = (Path) deproxify(this.parent);
+			this.parent = (Path) PersistenceService.deproxify(this.parent);
 		}						
 		return parent;
 	}

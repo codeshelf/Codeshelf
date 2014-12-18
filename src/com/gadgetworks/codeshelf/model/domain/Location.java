@@ -45,6 +45,7 @@ import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
@@ -256,30 +257,20 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	
 	public LedController getLedController() {
 		if (ledController instanceof HibernateProxy) {
-			this.ledController = (LedController) deproxify(this.ledController);
+			this.ledController = (LedController) PersistenceService.deproxify(this.ledController);
 		}
 		return ledController;
 	}
 	
 	public PathSegment getPathSegment() {
 		if (pathSegment instanceof HibernateProxy) {
-			this.pathSegment = (PathSegment) deproxify(this.pathSegment);
+			this.pathSegment = (PathSegment) PersistenceService.deproxify(this.pathSegment);
 		}
 		return pathSegment;
 	}
 	
 	public static Location deproxify(Location location) {
-		if (location==null) {
-			return null;
-		}
-	    if (location instanceof HibernateProxy) {
-	        Hibernate.initialize(location);
-	        Location realLocation = (Location) ((HibernateProxy) location)
-	                  .getHibernateLazyInitializer()
-	                  .getImplementation();
-	        return realLocation;
-	    }
-		return location;
+		return PersistenceService.<Location>deproxify(location);
 	}
 	
 	public boolean isFacility() {
@@ -325,12 +316,17 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public final List<Location> getChildren() {
-		return new ArrayList<Location>(locations.values());
+		List<Location> children = new ArrayList<Location>();
+		for(Location child : locations.values()) {
+			children.add(PersistenceService.<Location>deproxify(child));
+		}
+		return children;
 	}
 
 	public final List<Location> getActiveChildren() {
 		ArrayList<Location> aList = new ArrayList<Location>();
-		for (Location loc : locations.values()) {
+		List<Location> children = getChildren();
+		for (Location loc : children) {
 			if (loc.isActive())
 				aList.add(loc);
 		}
@@ -1181,7 +1177,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		// Add my inventory
 		aList.addAll(getStoredItems().values());
 		// Add my children's inventory
-		for (Location location : locations.values()) {
+		for (Location location : getChildren()) {
 			aList.addAll(location.getInventoryInWorkingOrder());
 		}
 		// Sort as we want it

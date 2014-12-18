@@ -158,14 +158,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	
 	public ItemMaster getItemMaster() {
 		if (this.itemMaster instanceof HibernateProxy) {
-			this.itemMaster = (ItemMaster) DomainObjectABC.deproxify(this.itemMaster);
+			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
 		}
 		return itemMaster;
 	}
 	
 	public UomMaster getUomMaster() {
 		if (this.uomMaster instanceof HibernateProxy) {
-			this.uomMaster = (UomMaster) DomainObjectABC.deproxify(this.uomMaster);
+			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
 		}
 		return uomMaster;
 	}
@@ -189,7 +189,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public final OrderHeader getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (OrderHeader) DomainObjectABC.deproxify(this.parent);
+			this.parent = (OrderHeader) PersistenceService.deproxify(this.parent);
 		}
 		return parent;
 	}

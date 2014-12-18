@@ -31,7 +31,6 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.TimeFormat;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -251,21 +250,21 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	
 	public Container getContainer() {
 		if (this.container instanceof HibernateProxy) {
-			this.container = (Container) DomainObjectABC.deproxify(this.container);
+			this.container = (Container) PersistenceService.deproxify(this.container);
 		}
 		return container;
 	}
 	
 	public ItemMaster getItemMaster() {
 		if (this.itemMaster instanceof HibernateProxy) {
-			this.itemMaster = (ItemMaster) DomainObjectABC.deproxify(this.itemMaster);
+			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
 		}
 		return itemMaster;
 	}
 	
 	public Che getAssignedChe() {
 		if (this.assignedChe instanceof HibernateProxy) {
-			this.assignedChe = (Che) DomainObjectABC.deproxify(this.assignedChe);
+			this.assignedChe = (Che) PersistenceService.deproxify(this.assignedChe);
 		}
 		return assignedChe;
 	}
@@ -281,14 +280,14 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	public final Facility getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
 		}		
 		return parent;
 	}
 
 	public final OrderDetail getOrderDetail() {
 		if (this.orderDetail instanceof HibernateProxy) {
-			this.orderDetail = (OrderDetail) DomainObjectABC.deproxify(this.orderDetail);
+			this.orderDetail = (OrderDetail) PersistenceService.deproxify(this.orderDetail);
 		}		
 		return orderDetail;
 	}

@@ -134,21 +134,21 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Override
 	public ItemMaster getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (ItemMaster) DomainObjectABC.deproxify(this.parent);
+			this.parent = (ItemMaster) PersistenceService.deproxify(this.parent);
 		}
 		return this.parent;
 	}
 	
 	public Location getStoredLocation() {
 		if (this.storedLocation instanceof HibernateProxy) {
-			this.storedLocation = (Location) DomainObjectABC.deproxify(this.storedLocation);
+			this.storedLocation = (Location) PersistenceService.deproxify(this.storedLocation);
 		}
 		return storedLocation;
 	}
 	
 	public UomMaster getUomMaster() {
 		if (this.uomMaster instanceof HibernateProxy) {
-			this.uomMaster = (UomMaster) DomainObjectABC.deproxify(this.uomMaster);
+			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
 		}
 		return uomMaster;
 	}

@@ -44,11 +44,15 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path.
 		for (Location subLocation : bayList) {
+			String subLocStr = subLocation.getNominalLocationId();
 			for (Location workLocation : subLocation.getSubLocationsInWorkingOrder()) {
+				String workLocStr = workLocation.getNominalLocationId();
 				Iterator<WorkInstruction> wiIterator = inWiList.iterator();
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();
-					if (wi.getLocation().equals(workLocation)) {
+					Location wiLoc = wi.getLocation();
+					String wiLocStr = wiLoc.getNominalLocationId();
+					if (wiLoc.equals(workLocation)) {
 						LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 						wiResultList.add(wi);
 						// WorkInstructionSequencerABC sets the sort code and persists

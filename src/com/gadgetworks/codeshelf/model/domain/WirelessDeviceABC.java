@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.application.ContextLogging;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
@@ -117,7 +118,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 
 	public final CodeshelfNetwork getParent() {
 		if (parent instanceof HibernateProxy) {
-			this.parent = (CodeshelfNetwork) deproxify(this.parent);
+			this.parent = (CodeshelfNetwork) PersistenceService.deproxify(this.parent);
 		}
 		return parent;
 	}

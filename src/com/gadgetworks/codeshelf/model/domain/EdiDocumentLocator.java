@@ -122,7 +122,7 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	public final EdiServiceABC getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (EdiServiceABC) DomainObjectABC.deproxify(this.parent);
+			this.parent = (EdiServiceABC) PersistenceService.deproxify(this.parent);
 		}
 		return this.parent;
 	}

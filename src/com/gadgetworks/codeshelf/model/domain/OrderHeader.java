@@ -207,14 +207,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	
 	public OrderGroup getOrderGroup() {
 		if (this.orderGroup instanceof HibernateProxy) {
-			this.orderGroup = (OrderGroup) DomainObjectABC.deproxify(this.orderGroup);
+			this.orderGroup = (OrderGroup) PersistenceService.deproxify(this.orderGroup);
 		}
 		return orderGroup;
 	}
 	
 	public ContainerUse getContainerUse() {
 		if (this.containerUse instanceof HibernateProxy) {
-			this.containerUse = (ContainerUse) DomainObjectABC.deproxify(this.containerUse);
+			this.containerUse = (ContainerUse) PersistenceService.deproxify(this.containerUse);
 		}
 		return containerUse;
 	}
@@ -230,7 +230,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public final Facility getParent() {
 		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) DomainObjectABC.deproxify(this.parent);
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
 		}
 		return parent;
 	}
