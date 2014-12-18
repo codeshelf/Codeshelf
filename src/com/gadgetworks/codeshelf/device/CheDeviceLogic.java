@@ -1643,8 +1643,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			} else {
 				value = Byte.valueOf(containerId.substring(containerId.length() - 2));
 			}
-		} else {
-			LOGGER.error("SABA {}", containerId);
 		}
 
 		PosControllerInstr instruction = new PosControllerInstr(position,
