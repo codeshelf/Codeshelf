@@ -34,7 +34,9 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
 
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Configuration"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectProperty"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault"/>
+
         <mapping class="com.gadgetworks.codeshelf.model.domain.EdiServiceABC"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.DropboxService"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.IronMqService"/>

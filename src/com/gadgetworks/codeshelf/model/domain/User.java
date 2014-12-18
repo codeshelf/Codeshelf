@@ -78,7 +78,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public static final int		PBKDF2_INDEX		= 2;
 
 	// The owning organization.
-	// @Column(name = "parentOrganization")
 	@ManyToOne(optional = false)
 	private Organization		parent;
 
@@ -87,7 +86,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@NonNull
 	@Getter
 	@Setter
-	//@JsonProperty
 	private String				hashSalt;
 
 	// The hash iterations.
@@ -95,16 +93,12 @@ public class User extends DomainObjectTreeABC<Organization> {
 	@NonNull
 	@Getter
 	@Setter
-	//@JsonProperty
 	private Integer				hashIterations;
 
 	// The hashed password.
+	// It's not safe to expose these values outside this object!
 	@Column(nullable = false,name="hashed_password")
 	@NonNull
-	// It's not safe to expose these values outside this object!
-	//	@Getter
-	//	@Setter
-	//@JsonProperty
 	private String				hashedPassword;
 
 	// sitecon, webapp, system user etc
