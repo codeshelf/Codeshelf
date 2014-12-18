@@ -314,7 +314,6 @@ public class WorkService implements IApiService {
 				"		SELECT group_and_sort_code,\n" + 
 				"			COALESCE(g.domainid, 'undefined') AS order_group,\n" + 
 				"			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n" + 
-				"			\n" + 
 				"		FROM codeshelf.work_instruction i\n" + 
 				"			INNER JOIN codeshelf.order_detail d ON i.order_detail_persistentid = d.persistentid\n" + 
 				"			INNER JOIN codeshelf.order_header h ON d.parent_persistentid = h.persistentid\n" + 
@@ -323,8 +322,7 @@ public class WorkService implements IApiService {
 				"	) dur\n" + 
 				"WHERE dur.group_and_sort_code != '0001'\n" + 
 				"GROUP BY dur.order_group\n" + 
-				"ORDER BY dur.order_group\n" + 
-				"")
+				"ORDER BY dur.order_group")
 				.addScalar("group", StandardBasicTypes.STRING)
 				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
 		List<Object[]> picksPerHour = getPicksPerHourQuery.list();
