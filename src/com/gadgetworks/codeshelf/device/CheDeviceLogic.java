@@ -1625,6 +1625,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
 	private void showContainerAssainments() {
+		if (mContainersMap.isEmpty()) {
+			return;
+		}
+
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
 		for (Entry<String, String> entry : mContainersMap.entrySet()) {
