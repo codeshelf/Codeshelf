@@ -1034,10 +1034,11 @@ public class Facility extends Location {
 		//If all we care about are the counts. Why do we even sort them now?
 		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
 
-		//WI's are only added here and they are of type SHORT (for now at least)
-		//DEV-556 - Calc HK WIs in getWork
-		List<WorkInstruction> allWIs = Lists.newArrayList(sortedWIResults); //HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
+		//Save sort
+		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
 
+		//We want to return all the WIs
+		List<WorkInstruction> allWIs = Lists.newArrayList(sortedWIResults);
 		//Add the WI's that were removed back to the final list
 		allWIs.addAll(wiResultList);
 

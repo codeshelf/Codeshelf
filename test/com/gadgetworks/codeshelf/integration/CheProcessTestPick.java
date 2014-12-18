@@ -353,9 +353,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		facility.setUpCheContainerFromString(che1, "12345");
-		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(che1, "");
+		HousekeepingInjector.restoreHKDefaults(); // set it back
+
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
@@ -566,8 +567,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		picker.startAndSkipReview("D303", 5000, 3000);
 
-		HousekeepingInjector.restoreHKDefaults();
-
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		logWiList(serverWiList);
@@ -697,6 +696,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// All should have the same assign time
 		Assert.assertEquals(immediateShortWi.getAssigned(), userShortWi.getAssigned());
 		Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
+
+		HousekeepingInjector.restoreHKDefaults();
 
 		this.getPersistenceService().commitTenantTransaction();
 	}

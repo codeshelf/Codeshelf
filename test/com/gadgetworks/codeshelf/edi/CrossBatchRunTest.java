@@ -300,13 +300,16 @@ public class CrossBatchRunTest extends EdiTestABC {
 		HousekeepingInjector.turnOffHK();
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
-		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+
+		HousekeepingInjector.restoreHKDefaults();
+
 		// Just some quick log output to see it
 		logWiList(wiListAfterScan);
 		Integer wiCountAfterScan = wiListAfterScan.size();
@@ -386,10 +389,10 @@ public class CrossBatchRunTest extends EdiTestABC {
 		HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
 		HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
 		facility.setUpCheContainerFromString(theChe, "15,14");
-		HousekeepingInjector.restoreHKDefaults();
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		HousekeepingInjector.restoreHKDefaults(); // set it back
 
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
@@ -417,10 +420,11 @@ public class CrossBatchRunTest extends EdiTestABC {
 		HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
 		HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
 		facility.setUpCheContainerFromString(theChe, "11,12,13");
-		HousekeepingInjector.restoreHKDefaults(); // set it back
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+
+		HousekeepingInjector.restoreHKDefaults(); // set it back
 
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
