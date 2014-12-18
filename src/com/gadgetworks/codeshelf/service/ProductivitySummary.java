@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.gadgetworks.codeshelf.service;
 
 import java.util.HashMap;
 
@@ -8,7 +8,9 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.gadgetworks.codeshelf.apiresources.BaseResponse;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class ProductivitySummary extends BaseResponse{
