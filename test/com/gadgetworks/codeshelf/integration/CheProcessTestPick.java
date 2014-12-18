@@ -851,7 +851,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check that container show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
-		System.out.println("YOOOOO " + picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 		
 		picker.scanCommand("START");
