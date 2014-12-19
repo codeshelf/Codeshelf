@@ -47,11 +47,11 @@ public class DomainObjectPropertyDefault {
 	String name;
 	
 	@Getter
-	@Column(length=40, nullable=false)
+	@Column(name="object_type",length=40, nullable=false)
 	String objectType;
 	
 	@Getter
-	@Column(length=120, nullable=false)
+	@Column(name="default_value",length=120, nullable=false)
 	String defaultValue;
 	
 	@Getter
