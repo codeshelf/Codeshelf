@@ -280,11 +280,6 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertEquals("0002", groupSortStr2);
 		Double wi2Pos = wi2.getPosAlongPath();
 
-		System.out.println(wiListAfterScan);
-		System.out.println("W1" + wi1);
-		System.out.println("W2" + wi2);
-		System.out.println("SBAA" + wi2Pos + "\t" + wi1Pos);
-
 		Assert.assertTrue(wi2Pos > wi1Pos);
 
 		WorkInstruction wi3 = wiListAfterScan.get(2);
