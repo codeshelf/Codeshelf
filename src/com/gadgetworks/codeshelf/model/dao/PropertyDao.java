@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.property;
+package com.gadgetworks.codeshelf.model.dao;
 
 import java.util.List;
 
@@ -12,23 +12,24 @@ import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
-public class PropertyService {
+public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements ITypedDao<DomainObjectProperty> {
 
-	private static final Logger LOGGER	= LoggerFactory.getLogger(PropertyService.class);
+	private static final Logger LOGGER	= LoggerFactory.getLogger(PropertyDao.class);
 	
-	private static PropertyService theInstance = null;
+	private static PropertyDao theInstance = null;
 	
-	private PropertyService() {
+	private PropertyDao(PersistenceService instance) {
+		super(instance);
 		setInstance();
 	}
 
 	private void setInstance() {
-		PropertyService.theInstance = this;
+		PropertyDao.theInstance = this;
 	}
 
-	public final synchronized static PropertyService getInstance() {
+	public final synchronized static PropertyDao getInstance() {
 		if (theInstance == null) {
-			theInstance = new PropertyService();
+			theInstance = new PropertyDao(PersistenceService.getInstance());
 		}
 		return theInstance;
 	}
@@ -66,19 +67,6 @@ public class PropertyService {
 		return propertyDefault;
 	}
 	
-	public DomainObjectProperty store(DomainObjectProperty config) {
-		Session session = PersistenceService.getInstance().getCurrentTenantSession();
-		session.saveOrUpdate(config);
-		LOGGER.debug("Property stored: "+config);
-		return config;
-	}
-
-	public void delete(DomainObjectProperty prop) {
-		Session session = PersistenceService.getInstance().getCurrentTenantSession();
-		session.delete(prop);
-		LOGGER.debug("Property deleted: "+prop);
-	}
-
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getProperties(IDomainObject object) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
@@ -131,12 +119,8 @@ public class PropertyService {
 
 	public DomainObjectProperty getProperty(IDomainObject object, String name) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
-
-		// String queryString = "from Configuration as c join c.type as t with t.objectType = :objectType and t.name = :name where c.objectId = :objectId ";
 		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
         Query query = session.createQuery(queryString);
-		// String queryString = "from Configuration where objectId = :objectId and objectType = :objectType and name = :name";
-        // Query query = session.createQuery(queryString);
         query.setParameter("objectId", object.getPersistentId());
         query.setParameter("objectType", object.getClassName());
         query.setParameter("name", name); 
@@ -144,4 +128,8 @@ public class PropertyService {
 		return prop;
 	}
 
+	@Override
+	public Class<DomainObjectProperty> getDaoClass() {
+		return DomainObjectProperty.class;
+	}
 }

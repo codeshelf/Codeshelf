@@ -26,7 +26,6 @@ public class ObjectGetCommand extends CommandABC {
 	}
 
 	@Override
-	// @SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		ObjectGetResponse response = new ObjectGetResponse();
 		try {
