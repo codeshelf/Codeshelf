@@ -15,10 +15,11 @@ import lombok.Getter;
 
 public class ProductivityCheSummaryList extends BaseResponse{
 	
+	//Groups->Ches->Runs
 	@Getter
-	private HashMap<String, CheSummary> summaries = new HashMap<>();
+	private HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>> groups = new HashMap<>();
 	
-	private class CheSummary{		
+	private class RunSummary{
 		@Getter
 		private String groupId, cheId;
 		
@@ -28,7 +29,7 @@ public class ProductivityCheSummaryList extends BaseResponse{
 		@Getter
 		private short invalid, New, inprogress, Short, complete, revert;
 		
-		public CheSummary(String groupId, String groupDomainId, String cheId, String cheDomainId) {
+		public RunSummary(String groupId, String groupDomainId, String cheId, String cheDomainId) {
 			this.groupId = groupId;
 			this.cheId = cheId;
 			this.groupDomainId = groupDomainId;
@@ -42,13 +43,30 @@ public class ProductivityCheSummaryList extends BaseResponse{
 		String groupDomainId = group == null? "undefined" : group.getDomainId();
 		String groupId = group == null? "undefined" : group.getPersistentId().toString();
 		Che che = instruction.getAssignedChe();
-		String cheId = che.getPersistentId().toString();
-		String key = keyGen(groupId, cheId);
-		CheSummary summary = summaries.get(key);
-		if (summary == null) {
-			summary = new CheSummary(groupId, groupDomainId, cheId, che.getDomainId());
-			summaries.put(key, summary);
+		UUID cheId = che.getPersistentId();
+		
+		//Get all che's for this group 
+		HashMap<UUID, HashMap<String, RunSummary>> ches = groups.get(groupId);
+		if (ches == null){
+			ches = new HashMap<>();
+			groups.put(groupId, ches);
 		}
+		
+		//Get all runs for this che
+		HashMap<String, RunSummary> cheRuns = ches.get(cheId);
+		if (cheRuns == null){
+			cheRuns = new HashMap<>();
+			ches.put(cheId, cheRuns);
+		}
+		
+		//Get the correct run
+		String time = instruction.getAssignTimeForUi();
+		RunSummary summary = cheRuns.get(time);
+		if (summary == null) {
+			summary = new RunSummary(groupId, groupDomainId, cheId.toString(), che.getDomainId());
+			cheRuns.put(time, summary);
+		}
+		
 		WorkInstructionStatusEnum status = instruction.getStatus();
 		switch (status) {
 			case INVALID:
@@ -70,9 +88,5 @@ public class ProductivityCheSummaryList extends BaseResponse{
 				summary.revert++;
 				break;
 		}
-	}
-	
-	private String keyGen(String groupId, String cheId){
-		return (groupId == null || cheId == null)? null : groupId + "***" + cheId;
 	}
 }
