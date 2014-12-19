@@ -42,7 +42,6 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 
 /**
  * @author jeffw
@@ -83,6 +82,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
+	private static final String				SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 
 	private static final String		STARTWORK_COMMAND						= "START";
 	private static final String		SETUP_COMMAND							= "SETUP";
@@ -114,6 +114,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// The CHE's container map.
 	private Map<String, String>		mContainersMap;
+
+	//Map of containers to work instruction counts
+	private Map<String, WorkInstructionCount>	containerToWorkInstructionCountMap;
 
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
@@ -285,6 +288,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
+			if (PosControllerInstr.POSITION_ALL.equals(instr.getPosition())) {
+				//A POS_ALL instruction overrides all previous instructions
+				mPosToLastSetIntrMap.clear();
+			}
 			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
 		}
 
@@ -412,6 +419,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void processWorkInstructionCounts(final Integer totalWorkInstructionCount,
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+
+		//Store counts
+		this.containerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
+
 		// The back-end returned the work instruction count.
 		if (totalWorkInstructionCount > 0) {
 			//TODO Use the map to determine if we need to go to location_select or review
@@ -423,8 +434,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
-			//Show counts on position controllers
-			this.showPositionFeedback(containerToWorkInstructionCountMap);
 
 			if(doesNeedReview) {
 				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
@@ -440,7 +449,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/** Shows the count feedback on the position controller
 	 * @param containerToWorkInstructionCountMap - Map of containerIds to WorkInstructionCount
 	 */
-	private void showPositionFeedback(Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+	private void showPositionFeedback() {
 		//Generate position controller commands
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
@@ -610,19 +619,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void setState(final CheStateEnum inCheState) {
-		boolean wasSameState = inCheState == mCheStateEnum;
 		mCheStateEnum = inCheState;
-		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
 
-		//wasSameState is true when the device associates - Resend last send position controller instructions to ensure
-		//the device displays what it always displayed
-		if (wasSameState && !mPosToLastSetIntrMap.isEmpty()) {
-			if (inCheState != CheStateEnum.DO_PICK && inCheState != CheStateEnum.SHORT_PICK) {
-				//We do not want to resend position controller instructions for these two states
-				//because they already send it themselves.
-				this.sendPositionControllerInstructions(new ArrayList<PosControllerInstr>(mPosToLastSetIntrMap.values()));
-			}
-		}
+		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, mCheStateEnum == inCheState);
 
 		switch (inCheState) {
 			case IDLE:
@@ -639,6 +638,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
+				this.showPositionFeedback();
 				break;
 
 			case LOCATION_SELECT_REVIEW:
@@ -646,18 +646,21 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					LOCATION_SELECT_REVIEW_MSG_LINE_2,
 					LOCATION_SELECT_REVIEW_MSG_LINE_3,
 					EMPTY_MSG);
+				this.showPositionFeedback();
 				break;
 
 			case CONTAINER_SELECT:
 				if (mContainersMap.size() < 1) {
 					sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
 				} else {
-					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG);
+					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 				}
+				showContainerAssainments();
 				break;
 
 			case CONTAINER_POSITION:
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
+				showContainerAssainments();
 				break;
 
 			case SHORT_PICK_CONFIRM:
@@ -1454,10 +1457,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
 			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
 			// this is a "ride along" error. Would be nice if the user could see it immediately.
-
-			//This is called when we set the container position
-			//showAssignedPositions();
-
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			LOGGER.info("Not a container ID: " + inScanStr);
@@ -1474,7 +1473,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
 			if (mContainersMap.get(inScanStr) == null) {
 				mContainersMap.put(inScanStr, mContainerInSetup);
-				showContainerAsAssigned(mContainerInSetup, Byte.valueOf(inScanStr));
 				mContainerInSetup = "";
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
@@ -1633,26 +1631,38 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
-	private void showContainerAsAssigned(String containerId, Byte position) {
-		Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
-		//Use the last 1-2 characters of the containerId iff the container is numeric.
-		//Otherwise stick to the default character "a"
-		if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
-			if (containerId.length() == 1) {
-				value = Byte.valueOf(containerId);
-			} else {
-				value = Byte.valueOf(containerId.substring(containerId.length() - 2));
-			}
+	private void showContainerAssainments() {
+		if (mContainersMap.isEmpty()) {
+			LOGGER.debug("No Container Assaigments to send");
+			return;
 		}
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
-		PosControllerInstr instruction = new PosControllerInstr(position,
+		for (Entry<String, String> entry : mContainersMap.entrySet()) {
+			String containerId = entry.getValue();
+			Byte position = Byte.valueOf(entry.getKey());
+
+			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
+			//Use the last 1-2 characters of the containerId iff the container is numeric.
+			//Otherwise stick to the default character "a"
+			if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
+				if (containerId.length() == 1) {
+					value = Byte.valueOf(containerId);
+				} else {
+					value = Byte.valueOf(containerId.substring(containerId.length() - 2));
+				}
+			}
+
+			instructions.add(new PosControllerInstr(position,
 			value,
 			value,
 			value,
 			PosControllerInstr.MED_FREQ,
-			PosControllerInstr.MED_DUTYCYCLE);
+				PosControllerInstr.MED_DUTYCYCLE));
+		}
+		LOGGER.debug("Sending Container Assaignments {}", instructions);
 
-		sendPositionControllerInstructions(Lists.newArrayList(instruction));
+		sendPositionControllerInstructions(instructions);
 	}
 
 	// --------------------------------------------------------------------------
