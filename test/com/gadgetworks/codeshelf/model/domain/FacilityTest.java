@@ -120,12 +120,11 @@ public class FacilityTest extends DomainTestABC {
 		Vertex.DAO.store(v);		
 	}
 	
-	@SuppressWarnings("unused")
+	/*
 	@Test
 	public void testProductivitySummary() throws Exception {
 		//This method doesn't assert anything at the moment, as we are just building out productivity reporting
 		this.getPersistenceService().beginTenantTransaction();
-		WorkService ws = new WorkService();
 		Facility facility = createFacilityWithOutboundOrders("FTEST5.O1");
 		UUID facilityId = facility.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
@@ -138,4 +137,5 @@ public class FacilityTest extends DomainTestABC {
 		String encoded = encoder.encode(response);
 		this.getPersistenceService().commitTenantTransaction();
 	}
+	*/
 }

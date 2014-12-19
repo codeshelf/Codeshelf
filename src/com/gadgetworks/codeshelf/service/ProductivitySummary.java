@@ -1,8 +1,12 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.util.HashMap;
+import java.util.List;
+
+import org.hibernate.annotations.Entity;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -20,13 +24,18 @@ public class ProductivitySummary extends BaseResponse{
 	private class GroupSummary{
 		@Getter
 		private short invalid, created, released, inprogress, complete, sHort;
+		
+		@Setter
+		@Getter
+		private Double picksPerHour;
 	}
 	
-	public ProductivitySummary(Facility facility) {
+	public ProductivitySummary(Facility facility, List<Object[]> picksPerHour) {
 		if (facility == null || facility.getOrderHeaders() == null) {return;}
 		for (OrderHeader orderHeader : facility.getOrderHeaders()){
 			processOrder(orderHeader);
 		}
+		assignPicksPerHour(picksPerHour);
 	}
 	
 	private void processOrder(OrderHeader orderHeader){
@@ -59,5 +68,19 @@ public class ProductivitySummary extends BaseResponse{
 					break;
 			}
 		}
+	}
+	
+	private void assignPicksPerHour(List<Object[]> picksPerHour) {
+		GroupSummary group = null;
+		String groupName = null;
+		Double groupPicks = null;
+		for (Object[] picksPerHourOneGroup : picksPerHour) {
+			groupName = picksPerHourOneGroup[0].toString(); 
+			groupPicks = (Double)picksPerHourOneGroup[1];
+			group = groups.get(groupName);
+			if (group != null) {
+				group.setPicksPerHour(groupPicks);
+			}
+		}		
 	}
 }

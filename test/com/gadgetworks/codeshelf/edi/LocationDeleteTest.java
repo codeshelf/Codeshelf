@@ -351,13 +351,16 @@ public class LocationDeleteTest extends EdiTestABC {
 		HousekeepingInjector.turnOffHK();
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
-		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+
+		HousekeepingInjector.restoreHKDefaults();
+
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 2, wiCountAfterScan);
 
