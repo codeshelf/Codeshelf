@@ -8,6 +8,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.Transient;
+import javax.websocket.EncodeException;
+
 import javassist.NotFoundException;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +29,6 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -303,7 +304,7 @@ public class WorkService implements IApiService {
 		}
 	}
 	
-	public static ProductivitySummary getProductivitySummary(UUID facilityId) throws Exception{
+	public static ProductivitySummaryList getProductivitySummary(UUID facilityId) throws Exception{
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {throw new NotFoundException("Facility " + facilityId + " does not exist");}
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
@@ -326,8 +327,24 @@ public class WorkService implements IApiService {
 				.addScalar("group", StandardBasicTypes.STRING)
 				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
 		List<Object[]> picksPerHour = getPicksPerHourQuery.list();
-		ProductivitySummary productivitySummary = new ProductivitySummary(facility, picksPerHour);
+		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
 		return productivitySummary;
+	}
+	
+	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
+		ProductivityCheSummaryList summaryList = new ProductivityCheSummaryList();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		List<OrderHeader> headers = facility.getOrderHeaders();
+		for (OrderHeader header : headers) {
+			List<OrderDetail> details = header.getOrderDetails();
+			for (OrderDetail detail : details) {
+				List<WorkInstruction> instructions = detail.getWorkInstructions();
+				for (WorkInstruction instruction : instructions) {
+					summaryList.processStatus(header, instruction);
+				}
+			}
+		}
+		return summaryList;
 	}
 	
 	/**

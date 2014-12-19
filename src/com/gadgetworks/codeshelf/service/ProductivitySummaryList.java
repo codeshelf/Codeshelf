@@ -17,7 +17,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-public class ProductivitySummary extends BaseResponse{
+public class ProductivitySummaryList extends BaseResponse{
 	@Getter
 	private HashMap<String, GroupSummary> groups = new HashMap<>();
 	
@@ -30,7 +30,7 @@ public class ProductivitySummary extends BaseResponse{
 		private Double picksPerHour;
 	}
 	
-	public ProductivitySummary(Facility facility, List<Object[]> picksPerHour) {
+	public ProductivitySummaryList(Facility facility, List<Object[]> picksPerHour) {
 		if (facility == null || facility.getOrderHeaders() == null) {return;}
 		for (OrderHeader orderHeader : facility.getOrderHeaders()){
 			processOrder(orderHeader);
