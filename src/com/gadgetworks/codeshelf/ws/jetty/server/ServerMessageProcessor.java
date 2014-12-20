@@ -22,6 +22,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectMethodCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectPropertiesCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
@@ -37,6 +38,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
@@ -53,7 +55,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter requestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.processed");
 	private final Counter responseCounter = MetricsService.addCounter(MetricsGroup.WSS,"responses.processed");
 	private final Counter loginCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.logins");
-//	private final Counter statusCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.network-status");
 	private final Counter missingResponseCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.missing-responses");
 	private final Counter echoCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.echo");
 	private final Counter completeWiCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.complete-workinstruction");
@@ -62,15 +63,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Counter objectGetCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-get");
 	private final Counter objectUpdateCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-update");
 	private final Counter objectDeleteCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-delete");
-	private final Counter objectListenerCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-listener");
+	private final Counter objectPropertiesCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-properties");
 	private final Counter objectFilterCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.register-filter");
 	private final Counter keepAliveCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.keep-alive");
 	private final Counter applicationRequestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.application");
 	private final Counter systemRequestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.system");
-//	private final Meter requestMeter = MetricsService.addMeter(MetricsGroup.WSS,"requests.meter");
-//	private final Meter responseMeter = MetricsService.addMeter(MetricsGroup.WSS,"responses.meter");
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
-//	private final Timer responseProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"responses.processing-time");
 	
 	private ServiceFactory	serviceFactory;
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
@@ -141,6 +139,11 @@ public class ServerMessageProcessor extends MessageProcessor {
 				objectUpdateCounter.inc();
 				applicationRequestCounter.inc();
 			}
+			else if (request instanceof ObjectPropertiesRequest) {
+				command = new ObjectPropertiesCommand(csSession,(ObjectPropertiesRequest) request);
+				objectPropertiesCounter.inc();
+				applicationRequestCounter.inc();
+			}
 			else if (request instanceof ServiceMethodRequest) {
 				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request, serviceFactory, converter);
 				objectUpdateCounter.inc();
@@ -184,22 +187,6 @@ public class ServerMessageProcessor extends MessageProcessor {
 	public void handleResponse(UserSession session, ResponseABC response) {
 		responseCounter.inc();
 		LOGGER.warn("Unexpected response received on session "+session+": "+response);
-		/*
-		final Timer.Context context = responseProcessingTimer.time();
-	    try {		
-			if (response instanceof PingResponse) {
-				PingResponse pingResponse = (PingResponse) response;
-				if (csSession!=null) {
-					csSession.pongReceived(pingResponse.getStartTime());
-				}
-				else {
-					LOGGER.warn("Unable to set pong received data: Matching session not found.");
-				}
-			}
-	    } finally {
-	        context.stop();
-	    }
-		*/
 	}
 
 	@Override

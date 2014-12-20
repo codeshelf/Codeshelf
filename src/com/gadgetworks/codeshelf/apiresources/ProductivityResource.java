@@ -1,8 +1,5 @@
 package com.gadgetworks.codeshelf.apiresources;
 
-import java.util.UUID;
-
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -12,7 +9,8 @@ import javax.ws.rs.core.Response;
 
 import com.gadgetworks.codeshelf.apiresources.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.gadgetworks.codeshelf.service.ProductivitySummary;
+import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
+import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.WorkService;
 
 @Path("/productivity")
@@ -24,24 +22,35 @@ public class ProductivityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getEmployee(@QueryParam("facilityId") UUIDParam facilityIdParam) {
 		ErrorResponse errors = new ErrorResponse();
-		//Initial validation
-		if (facilityIdParam == null) {
-			errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			errors.addErrorMissingQueryParam("facilityId");
+		if (!BaseResponse.isUUIDValid(facilityIdParam, "facilityId", errors)){
 			return errors.buildResponse();
 		}
-		UUID facilityId = facilityIdParam.getUUID();
-		if (facilityId == null) {
-			errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-			errors.addErrorBadUUID(facilityIdParam.getRawValue());
+
+		try {
+			persistence.beginTenantTransaction();
+			ProductivitySummaryList result = WorkService.getProductivitySummary(facilityIdParam.getUUID());
+			return result.buildResponse();
+		} catch (Exception e) {
+			errors.processException(e);
+			return errors.buildResponse();
+		} finally {
+			persistence.commitTenantTransaction();
+		}
+	}
+	
+	@GET
+	@Path("/chesummary")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getCheSummary(@QueryParam("facilityId") UUIDParam facilityIdParam) {
+		ErrorResponse errors = new ErrorResponse();
+		if (!BaseResponse.isUUIDValid(facilityIdParam, "facilityId", errors)){
 			return errors.buildResponse();
 		}
 		
-		//Try to get Productivity Summary
 		try {
 			persistence.beginTenantTransaction();
-			ProductivitySummary result = WorkService.getProductivitySummary(facilityId);
-			return result.buildResponse();
+			ProductivityCheSummaryList summaryList = WorkService.getCheByGroupSummary(facilityIdParam.getUUID());
+			return summaryList.buildResponse();
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
