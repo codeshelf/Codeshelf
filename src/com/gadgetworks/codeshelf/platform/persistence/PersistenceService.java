@@ -39,6 +39,9 @@ public class PersistenceService extends Service {
 	private String	userId;
 	private String	password;
 	private String schemaName;
+	
+	@Getter
+	private SchemaManager schemaManager;
 
 	@Getter
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
@@ -120,11 +123,11 @@ public class PersistenceService extends Service {
 
     	// we do not attempt to manage the in-memory test db; that will be done by Hibernate
 		if(!this.connectionUrl.startsWith("jdbc:h2:mem")) {
-			SchemaManager sm = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
+			schemaManager = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
 			
-			sm.applySchemaUpdates();
+			schemaManager.applySchemaUpdates();
 			
-			boolean schemaMatches = sm.checkSchema();
+			boolean schemaMatches = schemaManager.checkSchema();
 			
 			if(!schemaMatches) {
 /*					try {

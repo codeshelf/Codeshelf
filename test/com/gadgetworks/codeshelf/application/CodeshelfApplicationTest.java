@@ -248,7 +248,7 @@ public class CodeshelfApplicationTest {
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
 
-		application.stopApplication();
+		application.stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
 
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}

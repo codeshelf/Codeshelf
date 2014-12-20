@@ -7,6 +7,7 @@
 package com.gadgetworks.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -24,11 +25,17 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public abstract class ApplicationABC implements ICodeshelfApplication {
-
+	public enum ShutdownCleanupReq {
+		NONE , 
+		DROP_SCHEMA
+		};
+		
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
 
 	private boolean				mIsRunning	= true;
@@ -88,11 +95,30 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final void stopApplication() {
+	public final void stopApplication(ShutdownCleanupReq cleanup) {
 
 		LOGGER.info("Stopping application");
+		
+		SchemaManager schemaManager = PersistenceService.getInstance().getSchemaManager();
 
 		doShutdown();
+
+		try {
+			switch (cleanup) {
+				case NONE:
+					break;
+				case DROP_SCHEMA:
+					if (schemaManager != null) {
+						schemaManager.dropSchema();
+					}
+					break;
+				default:
+					break;
+
+			}
+		} catch (SQLException e) {
+			LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+		}
 
 		mIsRunning = false;
 
@@ -127,7 +153,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 				// Only execute this hook if the application is still running at (external) shutdown.
 				// (This is to help where the shutdown is done externally and not through our own means.)
 				if (mIsRunning) {
-					stopApplication();
+					stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
 				}
 			}
 		};
@@ -159,15 +185,17 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	protected void startAdminServer(ICsDeviceManager deviceManager) {
 
 		// start admin server, if enabled
-		String useAdminServer = System.getProperty("metrics.adminserver");
+		String useAdminServer = System.getProperty("adminserver.enable");
 		
 		if ("true".equalsIgnoreCase(useAdminServer)) {
-			Integer port = Integer.getInteger("metrics.adminserver.port");
+			Integer port = Integer.getInteger("adminserver.port");
 			if(port != null) {
-				LOGGER.info("Starting Admin Server");
-				mAdminServer.startServer(port,deviceManager);
+				boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
+
+				LOGGER.info("Starting Admin Server on port "+port+", schema management "+(enableSchemaManagement?"enabled":"disabled"));
+				mAdminServer.startServer(port,deviceManager,this,enableSchemaManagement);
 			} else {
-				LOGGER.error("Could not start admin server, metrics.adminserver.port needs to be specified");
+				LOGGER.error("Could not start admin server, adminserver.port needs to be specified");
 			}
 		}
 		else {

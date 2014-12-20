@@ -14,6 +14,7 @@ import com.codahale.metrics.servlets.PingServlet;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.RadioServlet;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 
 public class AdminServer {
 
@@ -24,7 +25,7 @@ public class AdminServer {
 	public AdminServer() {
 	}
 	
-	public final void startServer(int port, ICsDeviceManager deviceManager) {
+	public final void startServer(int port, ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) {
 		try {
 			Server server = new Server(port);
 			ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -48,11 +49,13 @@ public class AdminServer {
 			context.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
 			
 			if(deviceManager != null) {
+				// only for site controller
 				context.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
-			}
+			} 
+
+			context.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
 
 			server.start();
-			// server.join();
 		} 
 		catch (Exception e) {
 			LOGGER.error("Failed to start admin server", e);

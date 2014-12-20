@@ -9,6 +9,7 @@ import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.ApplicationABC;
 import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
@@ -255,7 +256,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	private void stop() {
 		LOGGER.debug("-------------- Cleaning up after running test case");
 		try {
-			siteController.stopApplication();
+			siteController.stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
 		}
 		catch (Exception e) {
 			LOGGER.error("Failed to stop site controller",e);

@@ -25,7 +25,7 @@ import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 public class ApiServer {
 	String	DEFAULT_HOSTNAME = "localhost";
-	int		DEFAULT_PORTNUM	= 8089;
+	int		DEFAULT_PORTNUM	= 9999; // was 8089, this conflicts with site controller admin server 
 
 	private int mPort = DEFAULT_PORTNUM;
 	private String mHost = DEFAULT_HOSTNAME;
