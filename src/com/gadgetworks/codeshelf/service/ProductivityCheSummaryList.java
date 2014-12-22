@@ -1,9 +1,10 @@
 package com.gadgetworks.codeshelf.service;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.apiresources.BaseResponse;
+import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
@@ -60,11 +61,12 @@ public class ProductivityCheSummaryList extends BaseResponse{
 		}
 		
 		//Get the correct run
-		String time = instruction.getAssignTimeForUi();
-		RunSummary summary = cheRuns.get(time);
+		Timestamp time = instruction.getAssigned();
+		String timeStr = time==null?"":time.toString();
+		RunSummary summary = cheRuns.get(timeStr);
 		if (summary == null) {
 			summary = new RunSummary(groupId, groupDomainId, cheId.toString(), che.getDomainId());
-			cheRuns.put(time, summary);
+			cheRuns.put(timeStr, summary);
 		}
 		
 		WorkInstructionStatusEnum status = instruction.getStatus();

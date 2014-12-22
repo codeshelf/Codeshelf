@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.apiresources;
+package com.gadgetworks.codeshelf.api;
 
 import java.util.ArrayList;
 

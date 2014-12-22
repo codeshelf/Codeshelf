@@ -10,7 +10,7 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.gadgetworks.codeshelf.apiresources.BaseResponse;
+import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
