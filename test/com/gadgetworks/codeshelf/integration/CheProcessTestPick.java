@@ -539,8 +539,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
-		//Make sure position display controllers are cleared
-		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
+		//Make sure position display controllers show proper feedback
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		// Back to our main test
@@ -906,12 +908,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Case 3: Unknown order id so display flashing, dim 0
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue(), 0);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.BLINK_FREQ);
 
 		//Case 4: One immediate short so display dim,flashing 0
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4).intValue(), 0);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.BLINK_FREQ);
 
 		//Case 5: Each pick on a case pick which is an immediate short display solid, bright 1

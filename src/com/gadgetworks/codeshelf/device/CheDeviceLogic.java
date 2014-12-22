@@ -468,7 +468,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					PosControllerInstr.ZERO_QTY,
 					PosControllerInstr.ZERO_QTY,
 					PosControllerInstr.BLINK_FREQ.byteValue(),
-					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+					PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
 				LOGGER.info("Position {} has unknwon container id", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
