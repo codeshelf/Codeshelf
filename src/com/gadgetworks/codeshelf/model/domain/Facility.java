@@ -1027,22 +1027,34 @@ public class Facility extends Location {
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
-		WorkInstructionSequencerABC sequencer = getSequencer();
+		//Filter,Sort, and save actionsable WI's
+		//TODO Consider doing this in getWork?
+		this.sortAndSaveActionableWIs(wiResultList);
+
+		//Return original full list
+		return wiResultList;
+	}
+
+	private void sortAndSaveActionableWIs(List<WorkInstruction> allWIs) {
+		//Create a copy of the list to prevent unintended side effects from filtering
+		allWIs = Lists.newArrayList(allWIs);
+		//Now we want to filer/sort and save the work instructions that are actionable
+
+		//Filter out complete WI's
+		Iterator<WorkInstruction> iter = allWIs.iterator();
+		while (iter.hasNext()) {
+			if (iter.next().getStatus() == WorkInstructionStatusEnum.COMPLETE) {
+				iter.remove();
+			}
+		}
 
 		//This will sort and also FILTER out WI's that have no location (i.e. SHORTS)
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
-		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
+		List<WorkInstruction> sortedWIResults = getSequencer().sort(this, allWIs);
 
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
-
-		//We want to return all the WIs
-		List<WorkInstruction> allWIs = Lists.newArrayList(sortedWIResults);
-		//Add the WI's that were removed back to the final list
-		allWIs.addAll(wiResultList);
-
-		return allWIs;
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
@@ -1373,6 +1385,9 @@ public class Facility extends Location {
 								LOGGER.error("", e);
 							}
 
+						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+							LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
+							wiResultList.addAll(orderDetail.getWorkInstructions());
 						}
 					}
 				}
