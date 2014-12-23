@@ -37,7 +37,7 @@ public class ErrorResponse extends BaseResponse{
 		if (e instanceof NotFoundException) {
 			setStatus(HttpServletResponse.SC_NOT_FOUND);
 		} else {
-			setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
 	}
 }
