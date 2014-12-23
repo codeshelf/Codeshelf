@@ -66,7 +66,7 @@ public class ObjectPropertyCommandTest extends DomainTestABC {
 		assertNotNull(results);
 		assertEquals(results.size(), 1);
 		Map<String, Object> oneResult = results.get(0);
-		assertEquals(oneResult.size(), 6); // see setDefaultPropertyNames().
+		assertEquals(oneResult.size(), 7); // see setDefaultPropertyNames().
 		assertEquals(oneResult.get("name"), "test-prop");
 		assertEquals(oneResult.get("description"), "Property-Description-1");
 
