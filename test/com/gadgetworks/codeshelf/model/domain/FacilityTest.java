@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 
-import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -122,40 +121,5 @@ public class FacilityTest extends DomainTestABC {
 		v.setPoint(new Point(PositionTypeEnum.GPS, inX, inY, 0d));
 		facility.addVertex(v);
 		Vertex.DAO.store(v);		
-	}
-	
-	
-	@Test
-	public void testProductivitySummary() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createFacilityWithOutboundOrders("FTEST5.O1");
-		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
-		
-		this.getPersistenceService().beginTenantTransaction();
-		ProductivitySummaryList productivitySummary = WorkService.getProductivitySummary(facilityId, true);
-		Assert.assertNotNull(productivitySummary);
-		HashMap<String, GroupSummary> groups = productivitySummary.getGroups();
-		Assert.assertEquals(groups.size(), 3);
-		Iterator<String> groupNames = groups.keySet().iterator();
-		while (groupNames.hasNext()) {
-			String groupName = groupNames.next();
-			Assert.assertTrue("undefined".equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
-		}
-		this.getPersistenceService().commitTenantTransaction();
-	}
-	
-	@Test
-	public void testGetCheSummaryOneRun() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createFacilityWithOneRun("FTEST6.O1");
-		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
-		
-		this.getPersistenceService().beginTenantTransaction();
-		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
-		Assert.assertNotNull(cheSummaries);
-		//List<HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>>> groups = new ArrayList<HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>>>(cheSummaries.getGroups().values());
-		this.getPersistenceService().commitTenantTransaction();
 	}
 }
