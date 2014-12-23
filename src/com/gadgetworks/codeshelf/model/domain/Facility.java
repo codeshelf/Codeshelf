@@ -1389,6 +1389,10 @@ public class Facility extends Location {
 							}
 
 						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+							//As of DEV-561 we are adding completed WIs to the list in order to be able
+							//give feedback on complete orders (and differentiate a 100% complete order from
+							//unknown container id. The computeWork method will filter these out before sorting
+							//and saving
 							LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
 							wiResultList.addAll(orderDetail.getWorkInstructions());
 						}
