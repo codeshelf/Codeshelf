@@ -29,7 +29,7 @@ public class ComputeWorkCommandTest {
 		containers.add("Container4");
 
 		List<WorkInstruction> workInstructions = new ArrayList<WorkInstruction>();
-		//Container 1 has 2 new wi, 1 in progress wi, 1 immediate short
+		//Container 1 has 2 new wi, 1 in progress wi, 1  short
 		WorkInstruction newWI = mock(WorkInstruction.class);
 		when(newWI.getContainerId()).thenReturn("Container1");
 		when(newWI.getStatus()).thenReturn(WorkInstructionStatusEnum.NEW);
@@ -92,26 +92,26 @@ public class ComputeWorkCommandTest {
 		//Check Container 1
 		assertEquals(containerToWICountMap.get("Container1").getCompleteCount(), 0);
 		assertEquals(containerToWICountMap.get("Container1").getGoodCount(), 3);
-		assertEquals(containerToWICountMap.get("Container1").getImmediateShortCount(), 1);
+		assertEquals(containerToWICountMap.get("Container1").getShortCount(), 1);
 		assertEquals(containerToWICountMap.get("Container1").getInvalidOrUnknownStatusCount(), 0);
 
 		//Check Container 2
 		assertEquals(containerToWICountMap.get("Container2").getCompleteCount(), 1);
 		assertEquals(containerToWICountMap.get("Container2").getGoodCount(), 0);
-		assertEquals(containerToWICountMap.get("Container2").getImmediateShortCount(), 0);
+		assertEquals(containerToWICountMap.get("Container2").getShortCount(), 0);
 		assertEquals(containerToWICountMap.get("Container2").getInvalidOrUnknownStatusCount(), 0);
 
 
 		//Check Container 3
 		assertEquals(containerToWICountMap.get("Container3").getCompleteCount(), 0);
 		assertEquals(containerToWICountMap.get("Container3").getGoodCount(), 1);
-		assertEquals(containerToWICountMap.get("Container3").getImmediateShortCount(), 0);
+		assertEquals(containerToWICountMap.get("Container3").getShortCount(), 0);
 		assertEquals(containerToWICountMap.get("Container3").getInvalidOrUnknownStatusCount(), 1);
 
 		//Check Container 4
 		assertEquals(containerToWICountMap.get("Container3").getCompleteCount(), 0);
 		assertEquals(containerToWICountMap.get("Container3").getGoodCount(), 1);
-		assertEquals(containerToWICountMap.get("Container3").getImmediateShortCount(), 0);
+		assertEquals(containerToWICountMap.get("Container3").getShortCount(), 0);
 		assertEquals(containerToWICountMap.get("Container3").getInvalidOrUnknownStatusCount(), 1);
 	}
 
