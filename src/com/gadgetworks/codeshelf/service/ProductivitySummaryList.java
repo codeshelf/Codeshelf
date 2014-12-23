@@ -21,7 +21,7 @@ public class ProductivitySummaryList extends BaseResponse{
 	@Getter
 	private HashMap<String, GroupSummary> groups = new HashMap<>();
 	
-	private class GroupSummary{
+	public class GroupSummary{
 		@Getter
 		private short invalid, created, released, inprogress, complete, sHort;
 		
@@ -71,6 +71,7 @@ public class ProductivitySummaryList extends BaseResponse{
 	}
 	
 	private void assignPicksPerHour(List<Object[]> picksPerHour) {
+		if (picksPerHour == null) {return;}
 		GroupSummary group = null;
 		String groupName = null;
 		Double groupPicks = null;

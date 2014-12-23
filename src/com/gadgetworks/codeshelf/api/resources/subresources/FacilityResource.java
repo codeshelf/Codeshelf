@@ -33,7 +33,7 @@ public class FacilityResource {
 
 		try {
 			persistence.beginTenantTransaction();
-			ProductivitySummaryList result = WorkService.getProductivitySummary(mUUIDParam.getUUID());
+			ProductivitySummaryList result = WorkService.getProductivitySummary(mUUIDParam.getUUID(), false);
 			return result.buildResponse();
 		} catch (Exception e) {
 			errors.processException(e);

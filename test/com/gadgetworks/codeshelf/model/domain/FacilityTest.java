@@ -6,10 +6,13 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
-import javax.websocket.EncodeException;
-
+import org.apache.shiro.crypto.hash.Hash;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -17,10 +20,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
+import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList.RunSummary;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
+import com.gadgetworks.codeshelf.service.ProductivitySummaryList.GroupSummary;
 import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
 
 /**
  * @author jeffw
@@ -120,22 +124,38 @@ public class FacilityTest extends DomainTestABC {
 		Vertex.DAO.store(v);		
 	}
 	
-	/*
+	
 	@Test
 	public void testProductivitySummary() throws Exception {
-		//This method doesn't assert anything at the moment, as we are just building out productivity reporting
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithOutboundOrders("FTEST5.O1");
 		UUID facilityId = facility.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
 		
 		this.getPersistenceService().beginTenantTransaction();
-		ProductivitySummary productivitySummary = WorkService.getProductivitySummary(facilityId);
-		JsonEncoder encoder = new JsonEncoder();
-		ServiceMethodResponse response = new ServiceMethodResponse();
-		response.setResults(productivitySummary);
-		String encoded = encoder.encode(response);
+		ProductivitySummaryList productivitySummary = WorkService.getProductivitySummary(facilityId, true);
+		Assert.assertNotNull(productivitySummary);
+		HashMap<String, GroupSummary> groups = productivitySummary.getGroups();
+		Assert.assertEquals(groups.size(), 3);
+		Iterator<String> groupNames = groups.keySet().iterator();
+		while (groupNames.hasNext()) {
+			String groupName = groupNames.next();
+			Assert.assertTrue("undefined".equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
+		}
 		this.getPersistenceService().commitTenantTransaction();
 	}
-	*/
+	
+	@Test
+	public void testGetCheSummaryOneRun() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = createFacilityWithOneRun("FTEST6.O1");
+		UUID facilityId = facility.getPersistentId();
+		this.getPersistenceService().commitTenantTransaction();
+		
+		this.getPersistenceService().beginTenantTransaction();
+		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		Assert.assertNotNull(cheSummaries);
+		//List<HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>>> groups = new ArrayList<HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>>>(cheSummaries.getGroups().values());
+		this.getPersistenceService().commitTenantTransaction();
+	}
 }

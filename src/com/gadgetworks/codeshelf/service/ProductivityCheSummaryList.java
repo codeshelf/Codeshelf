@@ -20,7 +20,7 @@ public class ProductivityCheSummaryList extends BaseResponse{
 	@Getter
 	private HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>> groups = new HashMap<>();
 	
-	private class RunSummary{
+	public class RunSummary{
 		@Getter
 		private String groupId, cheId;
 		
