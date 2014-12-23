@@ -479,12 +479,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
-			if (workInstructions!=null && workInstructions.size()>0) {
-				cheDevice.assignWork(workInstructions);
-			}
-			else {
-				LOGGER.warn("Unable to assign work to CHE "+cheId+": No work instructions");
-			}
+			cheDevice.assignWork(workInstructions);
 		}
 		else {
 			LOGGER.warn("Unable to assign work to CHE "+cheId+": CHE not found");

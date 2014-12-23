@@ -78,7 +78,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
 	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
-	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	private static final String					NO_WORK_MSG_LINE_1						= cheLine("NO WORK TO DO");
+	private static final String					NO_WORK_MSG_LINE_3						= cheLine("REVIEW MISSING WORK");
+	private static final String					NO_WORK_MSG_LINE_4						= cheLine("OR SCAN NEW LOCATION");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
@@ -581,14 +583,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inWorkItemList
 	 */
 	public final void assignWork(final List<WorkInstruction> inWorkItemList) {
-
-		for (WorkInstruction wi : inWorkItemList) {
-			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
-		}
-
-		if (inWorkItemList.size() == 0) {
+		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_WORK);
 		} else {
+			for (WorkInstruction wi : inWorkItemList) {
+				LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
+			}
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
@@ -621,7 +621,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				case IDLE:
 					processIdleStateScan(scanPrefixStr, scanStr);
 					break;
-
+				case NO_WORK:
+					processLocationScan(scanPrefixStr, scanStr);
+					break;
 				case LOCATION_SELECT:
 					processLocationScan(scanPrefixStr, scanStr);
 					break;
@@ -773,7 +775,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case NO_WORK:
-				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
+				sendDisplayCommand(NO_WORK_MSG_LINE_1, EMPTY_MSG, NO_WORK_MSG_LINE_3, NO_WORK_MSG_LINE_4);
 				this.showCartSetupFeedback();
 				break;
 
@@ -1512,8 +1514,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			clearAllPositionControllers();
-			
+
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
