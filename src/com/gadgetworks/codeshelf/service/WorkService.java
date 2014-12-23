@@ -8,7 +8,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.Transient;
-import javax.websocket.EncodeException;
 
 import javassist.NotFoundException;
 import lombok.Getter;
@@ -310,22 +309,25 @@ public class WorkService implements IApiService {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
 		List<Object[]> picksPerHour = null;
 		if (!skipSQL) {
-			SQLQuery getPicksPerHourQuery = session.createSQLQuery("" +
+			String schema = System.getProperty("db.schemaname", "codeshelf");
+			String queryStr = String.format("" + 
 					"SELECT dur.order_group AS group, 3600 / EXTRACT('epoch' FROM avg(dur.duration)) AS picksPerHour\n" + 
 					"FROM \n" + 
 					"	(\n" + 
 					"		SELECT group_and_sort_code,\n" + 
 					"			COALESCE(g.domainid, 'undefined') AS order_group,\n" + 
 					"			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n" + 
-					"		FROM work_instruction i\n" + 
-					"			INNER JOIN order_detail d ON i.order_detail_persistentid = d.persistentid\n" + 
-					"			INNER JOIN order_header h ON d.parent_persistentid = h.persistentid\n" + 
-					"			LEFT JOIN order_group g ON h.order_group_persistentid = g.persistentid\n" + 
+					"		FROM %s.work_instruction i\n" + 
+					"			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n" + 
+					"			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n" + 
+					"			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n" + 
 					"		WHERE  i.item_id != 'Housekeeping'\n" + 
 					"	) dur\n" + 
 					"WHERE dur.group_and_sort_code != '0001'\n" + 
 					"GROUP BY dur.order_group\n" + 
-					"ORDER BY dur.order_group")
+					"ORDER BY dur.order_group",
+					schema, schema, schema, schema);
+			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
 					.addScalar("group", StandardBasicTypes.STRING)
 					.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
 			picksPerHour = getPicksPerHourQuery.list();
