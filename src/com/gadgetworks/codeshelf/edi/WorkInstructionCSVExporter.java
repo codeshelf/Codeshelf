@@ -2,6 +2,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -13,8 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class WorkInstructionCSVExporter {
 
-	private static final String		TIME_FORMAT			= "yyyy-MM-dd'T'HH:mm:ss'Z'";
-
+	private static final SimpleDateFormat TIMESTAMP_FORMATTER = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	private static final String CURRENT_VERSION = "1.0";
 	
 	private static final Integer	FACILITYID_POS			= 0;
@@ -112,13 +112,21 @@ public class WorkInstructionCSVExporter {
 			}
 
 			properties[CHEID_POS] = wi.getAssignedCheName();
-			properties[ASSIGNED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getAssigned());
-			properties[STARTED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getStarted());
-			properties[COMPLETED_POS] = new SimpleDateFormat(TIME_FORMAT).format(wi.getCompleted());
+			properties[ASSIGNED_POS] = formatDate(wi.getAssigned());
+			properties[STARTED_POS] = formatDate(wi.getStarted());
+			properties[COMPLETED_POS] = formatDate(wi.getCompleted());
 			properties[VERSION_POS] = ""; //always blank in the data
 			csvWriter.writeNext(properties);
 		}
 		csvWriter.close();
 		return stringWriter.toString();
+	}
+	
+	private String formatDate(Timestamp time) {
+		if (time == null) {
+			return "";
+		} else {
+			return TIMESTAMP_FORMATTER.format(time);
+		}
 	}
 }
