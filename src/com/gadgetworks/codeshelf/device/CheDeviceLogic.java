@@ -420,6 +420,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public final void processWorkInstructionCounts(final Integer totalWorkInstructionCount,
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 
+		//Store counts
 		this.containerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
 
 		// The back-end returned the work instruction count.
