@@ -129,6 +129,30 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 
 	}
 
+	@Test
+	public void missingDateFieldsAreEmpty() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
+		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		testWi.setAssigned(null);
+		testWi.setCreated(null);
+		testWi.setCompleted(null);
+		testWi.setStarted(null);
+
+		List<WorkInstruction> wiList = ImmutableList.of(testWi);
+		List<String[]> table = toTable(wiList);
+		Iterator<String[]> dataRows = table.iterator();
+		dataRows.next(); //skip header
+		for (String[] dataRow : ImmutableList.copyOf(dataRows)) {
+			for (String dateField : dateFields) {
+				assertField(dataRow, dateField, "");
+			}
+		}		
+		this.getPersistenceService().commitTenantTransaction();
+
+	}
+
 	
 	@Test
 	public void missingUomMasterReturnsEmpty() throws IOException {
@@ -258,7 +282,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		int fieldPosition = Arrays.asList(expectedHeaders).indexOf(fieldName);
 		Assert.assertTrue(fieldPosition >=0);
 		String fieldValue = row[fieldPosition];
-		Assert.assertEquals(expectedValue,  fieldValue);
+		Assert.assertEquals("field " + fieldName + " was not expected value", expectedValue,  fieldValue);
 
 	}
 	/*
