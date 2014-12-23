@@ -935,23 +935,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		//Retest Case 3, 4 and 6:
-
-		//Case 3: No work so display flashing, bright 0 //ERR CODE?
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue(), 0);
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.BLINK_FREQ);
-		//
-		//		//Case 4: One immediate short so display dim,flashing 0
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4).intValue(), 0);
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.BLINK_FREQ);
-		//
-		//		//Case 6: Already complete so display dim, solid 0
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 5).intValue(), 1);
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 5), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		//		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 5), PosControllerInstr.SOLID_FREQ);
-
 		//Make sure position 2 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
 
