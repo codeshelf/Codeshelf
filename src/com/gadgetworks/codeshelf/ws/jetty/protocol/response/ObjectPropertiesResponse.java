@@ -40,7 +40,10 @@ public class ObjectPropertiesResponse extends ResponseABC {
 	PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 
 	private void setDefaultPropertyNames() {
-		// This should come from the UI command request. Just hard code for now, matching what the UI is sending. (See domainObjects.js)
+		// Just as with filter, className must be there. Otherwise the hierarchical list view gets confused in getLevel() call.
+		propertyNames.add("className");
+		// The rest should come from the UI command request. Just hard code for now, matching what the UI is sending. (See domainObjects.js)
+		
 		propertyNames.add("persistentId");
 		propertyNames.add("name");
 		propertyNames.add("value");
