@@ -1031,6 +1031,8 @@ public class Facility extends Location {
 		//TODO Consider doing this in getWork?
 		this.sortAndSaveActionableWIs(wiResultList);
 
+		LOGGER.info("TOTAL WIs {}", wiResultList);
+
 		//Return original full list
 		return wiResultList;
 	}
@@ -1052,6 +1054,7 @@ public class Facility extends Location {
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
 		List<WorkInstruction> sortedWIResults = getSequencer().sort(this, allWIs);
+
 
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
