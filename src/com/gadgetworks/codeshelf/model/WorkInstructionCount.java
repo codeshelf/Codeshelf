@@ -19,7 +19,7 @@ public class WorkInstructionCount {
 
 	@Getter
 	@Setter
-	private int	immediateShortCount	= 0;
+	private int	shortCount	= 0;
 
 	@Getter
 	@Setter
@@ -36,7 +36,7 @@ public class WorkInstructionCount {
 		int invalidOrUnknownStatusCount) {
 		super();
 		this.goodCount = goodCount;
-		this.immediateShortCount = immediateShortCount;
+		this.shortCount = immediateShortCount;
 		this.completeCount = completeCount;
 		this.invalidOrUnknownStatusCount = invalidOrUnknownStatusCount;
 	}
@@ -49,7 +49,7 @@ public class WorkInstructionCount {
 	 * @return immediateShortCount > 0 || invalidOrUnknownStatusCount > 0
 	 */
 	public boolean hasBadCounts() {
-		return immediateShortCount > 0 || invalidOrUnknownStatusCount > 0;
+		return shortCount > 0 || invalidOrUnknownStatusCount > 0;
 	}
 
 	public void incrementGoodCount() {
@@ -57,7 +57,7 @@ public class WorkInstructionCount {
 	}
 
 	public void incrementImmediateShortCount() {
-		immediateShortCount++;
+		shortCount++;
 	}
 
 	public void incrementCompleteCount() {
@@ -74,7 +74,7 @@ public class WorkInstructionCount {
 		int result = 1;
 		result = prime * result + completeCount;
 		result = prime * result + goodCount;
-		result = prime * result + immediateShortCount;
+		result = prime * result + shortCount;
 		result = prime * result + invalidOrUnknownStatusCount;
 		return result;
 	}
@@ -92,7 +92,7 @@ public class WorkInstructionCount {
 			return false;
 		if (goodCount != other.goodCount)
 			return false;
-		if (immediateShortCount != other.immediateShortCount)
+		if (shortCount != other.shortCount)
 			return false;
 		if (invalidOrUnknownStatusCount != other.invalidOrUnknownStatusCount)
 			return false;
@@ -101,7 +101,7 @@ public class WorkInstructionCount {
 
 	@Override
 	public String toString() {
-		return "WorkInstructionCount [goodCount=" + goodCount + ", immediateShortCount=" + immediateShortCount + ", completeCount="
+		return "WorkInstructionCount [goodCount=" + goodCount + ", immediateShortCount=" + shortCount + ", completeCount="
 				+ completeCount + ", invalidOrUnknownStatusCount=" + invalidOrUnknownStatusCount + "]";
 	}
 

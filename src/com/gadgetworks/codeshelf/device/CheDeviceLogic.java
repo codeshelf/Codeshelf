@@ -424,7 +424,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		this.containerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
 
 		// The back-end returned the work instruction count.
-		if (totalWorkInstructionCount > 0) {
+		if (totalWorkInstructionCount > 0 && containerToWorkInstructionCountMap != null
+				&& !containerToWorkInstructionCountMap.isEmpty()) {
 			//Use the map to determine if we need to go to location_select or review
 
 			//Check to see if we have any unknown containerIds. We must have a count for every container
@@ -452,7 +453,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	/** Shows the count feedback on the position controller
-	 * @param containerToWorkInstructionCountMap - Map of containerIds to WorkInstructionCount
 	 */
 	private void showCartSetupFeedback() {
 		//Generate position controller commands
