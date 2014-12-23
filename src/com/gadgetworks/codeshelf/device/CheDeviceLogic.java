@@ -842,7 +842,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void processCommandScan(final String inScanStr) {
-		LOGGER.info("YOOO {}", inScanStr);
+
 		switch (inScanStr) {
 			case LOGOUT_COMMAND:
 				logout();
