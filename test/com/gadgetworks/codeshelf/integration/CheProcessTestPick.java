@@ -1025,7 +1025,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		//Make sure position 2 shows the proper item count for picking
+		//Make sure position 1 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
 
 		picker.pick(1, 1);
@@ -1045,7 +1045,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		 * Now we will do a short pick and cancel it and make sure we never lose feedback.
 		 * Then will redo the short and confirm it and make sure we keep the feedback
 		 */
-		picker.scanCommand("X%SHORT");
+		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
 
 		//Check Screens
@@ -1058,7 +1058,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		picker.buttonPress(2, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
-		picker.scanCommand("X%NO");
+		picker.scanCommand("NO");
 
 		//Check Screens
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
@@ -1070,6 +1070,22 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Make sure position 2 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
+
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker.buttonPress(2, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 3000);
+
+		//Check Screens
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
 		HousekeepingInjector.restoreHKDefaults();
 
