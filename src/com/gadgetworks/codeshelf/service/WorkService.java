@@ -8,6 +8,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.persistence.Transient;
+
 import javassist.NotFoundException;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +28,6 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -303,31 +303,53 @@ public class WorkService implements IApiService {
 		}
 	}
 	
-	public static ProductivitySummary getProductivitySummary(UUID facilityId) throws Exception{
+	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception{
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {throw new NotFoundException("Facility " + facilityId + " does not exist");}
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
-		SQLQuery getPicksPerHourQuery = session.createSQLQuery("" +
-				"SELECT dur.order_group AS group, 3600 / EXTRACT('epoch' FROM avg(dur.duration)) AS picksPerHour\n" + 
-				"FROM \n" + 
-				"	(\n" + 
-				"		SELECT group_and_sort_code,\n" + 
-				"			COALESCE(g.domainid, 'undefined') AS order_group,\n" + 
-				"			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n" + 
-				"		FROM codeshelf.work_instruction i\n" + 
-				"			INNER JOIN codeshelf.order_detail d ON i.order_detail_persistentid = d.persistentid\n" + 
-				"			INNER JOIN codeshelf.order_header h ON d.parent_persistentid = h.persistentid\n" + 
-				"			LEFT JOIN codeshelf.order_group g ON h.order_group_persistentid = g.persistentid\n" + 
-				"		WHERE  i.item_id != 'Housekeeping'\n" + 
-				"	) dur\n" + 
-				"WHERE dur.group_and_sort_code != '0001'\n" + 
-				"GROUP BY dur.order_group\n" + 
-				"ORDER BY dur.order_group")
-				.addScalar("group", StandardBasicTypes.STRING)
-				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
-		List<Object[]> picksPerHour = getPicksPerHourQuery.list();
-		ProductivitySummary productivitySummary = new ProductivitySummary(facility, picksPerHour);
+		List<Object[]> picksPerHour = null;
+		if (!skipSQL) {
+			String schema = System.getProperty("db.schemaname", "codeshelf");
+			String queryStr = String.format("" + 
+					"SELECT dur.order_group AS group, 3600 / EXTRACT('epoch' FROM avg(dur.duration)) AS picksPerHour\n" + 
+					"FROM \n" + 
+					"	(\n" + 
+					"		SELECT group_and_sort_code,\n" + 
+					"			COALESCE(g.domainid, 'undefined') AS order_group,\n" + 
+					"			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n" + 
+					"		FROM %s.work_instruction i\n" + 
+					"			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n" + 
+					"			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n" + 
+					"			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n" + 
+					"		WHERE  i.item_id != 'Housekeeping'\n" + 
+					"	) dur\n" + 
+					"WHERE dur.group_and_sort_code != '0001'\n" + 
+					"GROUP BY dur.order_group\n" + 
+					"ORDER BY dur.order_group",
+					schema, schema, schema, schema);
+			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
+					.addScalar("group", StandardBasicTypes.STRING)
+					.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
+			picksPerHour = getPicksPerHourQuery.list();
+		}
+		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
 		return productivitySummary;
+	}
+	
+	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
+		ProductivityCheSummaryList summaryList = new ProductivityCheSummaryList();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		List<OrderHeader> headers = facility.getOrderHeaders();
+		for (OrderHeader header : headers) {
+			List<OrderDetail> details = header.getOrderDetails();
+			for (OrderDetail detail : details) {
+				List<WorkInstruction> instructions = detail.getWorkInstructions();
+				for (WorkInstruction instruction : instructions) {
+					summaryList.processStatus(header, instruction);
+				}
+			}
+		}
+		return summaryList;
 	}
 	
 	/**

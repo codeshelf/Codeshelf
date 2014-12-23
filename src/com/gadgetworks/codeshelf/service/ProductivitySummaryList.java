@@ -10,18 +10,18 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.gadgetworks.codeshelf.apiresources.BaseResponse;
+import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-public class ProductivitySummary extends BaseResponse{
+public class ProductivitySummaryList extends BaseResponse{
 	@Getter
 	private HashMap<String, GroupSummary> groups = new HashMap<>();
 	
-	private class GroupSummary{
+	public class GroupSummary{
 		@Getter
 		private short invalid, created, released, inprogress, complete, sHort;
 		
@@ -30,7 +30,7 @@ public class ProductivitySummary extends BaseResponse{
 		private Double picksPerHour;
 	}
 	
-	public ProductivitySummary(Facility facility, List<Object[]> picksPerHour) {
+	public ProductivitySummaryList(Facility facility, List<Object[]> picksPerHour) {
 		if (facility == null || facility.getOrderHeaders() == null) {return;}
 		for (OrderHeader orderHeader : facility.getOrderHeaders()){
 			processOrder(orderHeader);
@@ -71,6 +71,7 @@ public class ProductivitySummary extends BaseResponse{
 	}
 	
 	private void assignPicksPerHour(List<Object[]> picksPerHour) {
+		if (picksPerHour == null) {return;}
 		GroupSummary group = null;
 		String groupName = null;
 		Double groupPicks = null;

@@ -13,6 +13,9 @@ import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
+import com.gadgetworks.codeshelf.model.WiFactory;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -366,6 +369,56 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		return resultFacility;
 	}
+
+	
+	protected Facility createFacilityWithOneRun(String orgId){
+		//12/22/14 6:46 PM = 1419291960000
+		Facility facility = createDefaultFacility(orgId);
+		CodeshelfNetwork network = facility.createNetwork("WITEST"); 
+		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
+
+		UomMaster uomMaster = createUomMaster("EA", facility);
+		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);
+		Container container = createContainer("C1", facility);
+		OrderHeader header = createOrderHeader("OH1", OrderTypeEnum.OUTBOUND, facility, null);
+		OrderDetail detail = createOrderDetail(header, itemMaster);
+		
+		WorkInstruction wi = null;
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.REVERT, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		
+		header.setParent(facility);
+		return facility;
+	}
+
+	protected Facility createFacilityWithRuns(String orgId){
+		//12/22/14 6:46 PM = 1419291960000
+		Facility facility = createDefaultFacility(orgId);
+		CodeshelfNetwork network = facility.createNetwork("WITEST"); 
+		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
+
+
+		UomMaster uomMaster = createUomMaster("EA", facility);
+
+		ItemMaster itemMaster1 = createItemMaster("ITEM1", facility, uomMaster);
+		ItemMaster itemMaster2 = createItemMaster("ITEM2", facility, uomMaster);
+		ItemMaster itemMaster3 = createItemMaster("ITEM3", facility, uomMaster);
+
+		Container container1 = createContainer("C1", facility);
+
+		
+		OrderHeader header = createOrderHeader("OH1", OrderTypeEnum.OUTBOUND, facility, null);
+		OrderDetail detail = createOrderDetail(header, itemMaster1);
+		
+		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container1, che, facility, new Timestamp(1419291960000l));
+		
+		header.setParent(facility);
+		return facility;
+	}
+	
 	
 	protected UomMaster createUomMaster(String inUom, Facility inFacility) {
 		UomMaster uomMaster = new UomMaster();

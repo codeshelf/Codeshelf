@@ -10,11 +10,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.platform.property.PropertyService;
 
 public class DomainObjectPropertyTest extends DomainTestABC {
 	
@@ -23,7 +23,7 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 
 	@Test
 	public void testPropertyDefaultOperations() {
-		PropertyService cfgServ = PropertyService.getInstance();
+		PropertyDao cfgServ = PropertyDao.getInstance();
 
 		beginTenantTransaction();
 		Organization org=new Organization();
@@ -67,7 +67,7 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 	
 	@Test
 	public void testPropertyOperations() {
-		PropertyService cfgServ = PropertyService.getInstance();
+		PropertyDao cfgServ = PropertyDao.getInstance();
 		// create organization and set one config value
 		beginTenantTransaction();
 		Organization org=new Organization();
@@ -117,7 +117,7 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 	
 	@Test
 	public void testTypedConvenienceMethods() {
-		PropertyService cfgServ = PropertyService.getInstance();
+		PropertyDao cfgServ = PropertyDao.getInstance();
 
 		beginTenantTransaction();
 		Organization org=new Organization();
@@ -157,7 +157,7 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 
 	@Test
 	public void testPropertiesWithDefaults() {
-		PropertyService cfgServ = PropertyService.getInstance();
+		PropertyDao cfgServ = PropertyDao.getInstance();
 
 		beginTenantTransaction();
 		Organization org=new Organization();

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.apiresources;
+package com.gadgetworks.codeshelf.api;
 
 import java.io.Serializable;
 import java.util.UUID;
@@ -35,6 +35,22 @@ public class BaseResponse {
 		return builder.build();
 	}
 	
+	public static boolean isUUIDValid(UUIDParam uuid, String paramName, ErrorResponse errors) {
+		if (uuid == null) {
+			errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			errors.addErrorMissingQueryParam(paramName);
+			return false;
+		} else {
+			UUID facilityId = uuid.getUUID();
+			if (facilityId == null) {
+				errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				errors.addErrorBadUUID(uuid.getRawValue());
+				return false;
+			}
+		}
+		return true;
+	}
+	
 	public static class UUIDParam {
 		private String raw;
 		private UUID uuid; 
@@ -55,5 +71,5 @@ public class BaseResponse {
 		public UUID getUUID(){
 			return uuid;
 		}
-	}
+	} 
 }

@@ -169,11 +169,17 @@ public class SchemaManager {
 	}        		
 
 	public void createSchemaIfNeeded() throws SQLException {
-		Connection conn = DriverManager.getConnection(url,username,password);
+		this.executeSQL("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
+	}
 
+	public void dropSchema() throws SQLException {
+		this.executeSQL("DROP SCHEMA "+schemaName+" CASCADE");
+	}
+
+	private void executeSQL(String sql) throws SQLException {
+		Connection conn = DriverManager.getConnection(url,username,password);
 		Statement stmt = conn.createStatement();
-//		ResultSet result=stmt.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = '"+schemaName+"';");
-		stmt.execute("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
+		stmt.execute(sql);
 		stmt.close();
 		conn.close();
 	}

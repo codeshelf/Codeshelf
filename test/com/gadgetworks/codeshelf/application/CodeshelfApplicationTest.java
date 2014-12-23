@@ -207,7 +207,6 @@ public class CodeshelfApplicationTest {
 		AdminServer adminServer = new AdminServer();
 		
 		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
-		ApiServer apiServer = new ApiServer(new JVMSystemConfiguration());
 
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			config,
@@ -217,8 +216,7 @@ public class CodeshelfApplicationTest {
 			User.DAO,
 			adminServer,
 			jettyServer,
-			PersistenceService.getInstance(),
-			apiServer);
+			PersistenceService.getInstance());
 
 		final Result checkAppRunning = new Result();
 
@@ -248,7 +246,7 @@ public class CodeshelfApplicationTest {
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
 
-		application.stopApplication();
+		application.stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
 
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}
