@@ -426,11 +426,16 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (totalWorkInstructionCount > 0 && containerToWorkInstructionCountMap != null
 				&& !containerToWorkInstructionCountMap.isEmpty()) {
 			//Use the map to determine if we need to go to location_select or review
-			boolean doesNeedReview = false;
-			for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
-				if (wiCount.getGoodCount() == 0 || wiCount.hasBadCounts()) {
-					doesNeedReview = true;
-					break;
+
+			//Check to see if we have any unknown containerIds. We must have a count for every container
+			boolean doesNeedReview = !(mContainersMap.size() == containerToWorkInstructionCountMap.size());
+
+			if (!doesNeedReview) {
+				for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
+					if (wiCount.getGoodCount() == 0 || wiCount.hasBadCounts()) {
+						doesNeedReview = true;
+						break;
+					}
 				}
 			}
 			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);

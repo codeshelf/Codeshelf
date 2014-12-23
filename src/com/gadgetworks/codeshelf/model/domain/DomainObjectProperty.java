@@ -5,11 +5,9 @@ import java.util.UUID;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Version;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -18,26 +16,17 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.model.dao.PropertyDao;
+import com.google.inject.Inject;
 
 @Entity
 @Table(name = "property")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class DomainObjectProperty {
+public class DomainObjectProperty extends DomainObjectABC implements IDomainObject {
 	
-	@Id
-	@NonNull
-	@Column(name = "persistentid", nullable = false)
-	@Getter
-	@JsonProperty
-	@Type(type="com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
-	private UUID persistentId = UUID.randomUUID();
-
-	@Version
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	private long version;
+	@Inject
+	public static ITypedDao<DomainObjectProperty> DAO = PropertyDao.getInstance();
 
 	@Getter
 	@NonNull
@@ -58,6 +47,7 @@ public class DomainObjectProperty {
 	}
 	
 	public DomainObjectProperty(IDomainObject object, DomainObjectPropertyDefault propertyDefault) {
+		this.setDomainId(propertyDefault.getName());
 		this.propertyDefault = propertyDefault;
 		this.objectId = object.getPersistentId();
 	}
@@ -138,6 +128,22 @@ public class DomainObjectProperty {
 			return null;
 		}
 		return propertyDefault.getDefaultValue();
+	}
+
+	@Override
+	public String getDefaultDomainIdPrefix() {
+		return "PROP";
+	}
+	
+	@Override
+	public Facility getFacility() {
+		throw new RuntimeException("Not Supported");
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public ITypedDao<DomainObjectProperty> getDao() {
+		return DomainObjectProperty.DAO;
 	}
 
 }

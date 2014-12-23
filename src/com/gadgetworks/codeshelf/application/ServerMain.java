@@ -123,7 +123,7 @@ import com.google.inject.name.Names;
  *  @author jeffw
  */
 public final class ServerMain {
-
+	
 	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
 		Configuration.loadConfig("server");
@@ -153,6 +153,7 @@ public final class ServerMain {
 		application.handleEvents();
 
 		LOGGER.info("Exiting Main()");
+		System.exit(0);
 	}
 
 	// --------------------------------------------------------------------------

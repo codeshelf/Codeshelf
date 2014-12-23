@@ -43,7 +43,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IEdiProcessor			mEdiProcessor;
 	private IHttpServer				mHttpServer;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
-	private ApiServer				mApiServer;
 	
 	@Getter
 	private PersistenceService		persistenceService;
@@ -64,8 +63,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final ITypedDao<User> inUserDao,
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer,
-		final PersistenceService persistenceService,
-		final ApiServer apiServer) {
+		final PersistenceService persistenceService) {
 		super(inAdminServer);
 		this.configuration = configuration;
 		mHttpServer = inHttpServer;
@@ -73,7 +71,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		webSocketServer = inAlternativeWebSocketServer;
 		this.persistenceService = persistenceService;
-		mApiServer = apiServer;
 	}
 
 	// --------------------------------------------------------------------------
@@ -114,9 +111,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
 		mHttpServer.startServer();
-
-		//Start API Server
-		mApiServer.startServer();
 
 		startAdminServer(null);
 		startTsdbReporter();
@@ -188,7 +182,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mHttpServer.stopServer();
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
-		mApiServer.stopServer();
 		// Stop the web socket server
 		try {
 			webSocketServer.stop();

@@ -126,7 +126,9 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		//We will pass in a map containing good counts with no bad counts.
 		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
 		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity(), 0, 0, 0, 0));
-		
+
+		cheDeviceLogic.processWorkInstructionCounts(0, containerToWorkInstructionMap);
+
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
 	
 		//Pretend no work ahead of this location

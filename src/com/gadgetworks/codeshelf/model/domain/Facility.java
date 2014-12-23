@@ -1031,6 +1031,8 @@ public class Facility extends Location {
 		//TODO Consider doing this in getWork?
 		this.sortAndSaveActionableWIs(wiResultList);
 
+		LOGGER.info("TOTAL WIs {}", wiResultList);
+
 		//Return original full list
 		return wiResultList;
 	}
@@ -1052,6 +1054,7 @@ public class Facility extends Location {
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
 		List<WorkInstruction> sortedWIResults = getSequencer().sort(this, allWIs);
+
 
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
@@ -1386,6 +1389,10 @@ public class Facility extends Location {
 							}
 
 						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+							//As of DEV-561 we are adding completed WIs to the list in order to be able
+							//give feedback on complete orders (and differentiate a 100% complete order from
+							//unknown container id. The computeWork method will filter these out before sorting
+							//and saving
 							LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
 							wiResultList.addAll(orderDetail.getWorkInstructions());
 						}
