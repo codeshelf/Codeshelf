@@ -830,9 +830,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (sendPositionControllerInstructions) {
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 			PosControllerInstr instruction = new PosControllerInstr(positionControllerToSendTo,
-				PosControllerInstr.ERROR_CODE_QTY,
-				PosControllerInstr.ZERO_QTY,
-				PosControllerInstr.ZERO_QTY,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_LED_BLANK,
+				PosControllerInstr.BITENCODED_LED_E,
 				PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
 				PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 			instructions.add(instruction);
