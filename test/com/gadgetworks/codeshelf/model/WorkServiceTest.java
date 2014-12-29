@@ -46,6 +46,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.LightService;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
@@ -85,7 +86,7 @@ public class WorkServiceTest extends DAOTestABC {
 		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService = mock(WorkService.class);
 		when(workService.workSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
-		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class));
+		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(PropertyService.class));
 		MessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get());
 		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
