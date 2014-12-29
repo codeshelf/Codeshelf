@@ -424,13 +424,19 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		this.containerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
 
 		// The back-end returned the work instruction count.
-		if (totalWorkInstructionCount > 0) {
-			//TODO Use the map to determine if we need to go to location_select or review
-			boolean doesNeedReview = false;
-			for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
-				if (wiCount.getGoodCount() == 0 || wiCount.hasNonGoodCounts()) {
-					doesNeedReview = true;
-					break;
+		if (totalWorkInstructionCount > 0 && containerToWorkInstructionCountMap != null
+				&& !containerToWorkInstructionCountMap.isEmpty()) {
+			//Use the map to determine if we need to go to location_select or review
+
+			//Check to see if we have any unknown containerIds. We must have a count for every container
+			boolean doesNeedReview = !(mContainersMap.size() == containerToWorkInstructionCountMap.size());
+
+			if (!doesNeedReview) {
+				for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
+					if (wiCount.getGoodCount() == 0 || wiCount.hasBadCounts()) {
+						doesNeedReview = true;
+						break;
+					}
 				}
 			}
 			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
@@ -447,9 +453,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	/** Shows the count feedback on the position controller
-	 * @param containerToWorkInstructionCountMap - Map of containerIds to WorkInstructionCount
 	 */
-	private void showPositionFeedback() {
+	private void showCartSetupFeedback() {
 		//Generate position controller commands
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
@@ -457,26 +462,59 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			String containerId = containerMapEntry.getValue();
 			byte position = Byte.valueOf(containerMapEntry.getKey());
 			WorkInstructionCount wiCount = containerToWorkInstructionCountMap.get(containerId);
-			//count should never be null. We could also move the logic that determines whether we have an invalid
-			//container id as one that has no count.
-			byte count = (byte) wiCount.getGoodCount();
-			LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
-			if (count == 0 || wiCount.hasNonGoodCounts()) {
-				//Flash
+
+			//if wiCount is 0 then the server did have any WIs for the order.
+			//this is an "unknown" order id
+			if (wiCount == null) {
+				//TODO send a special code for this?
+				//Right now it matches "done for now" feedback
 				instructions.add(new PosControllerInstr(position,
-					count,
-					count,
-					count,
+					PosControllerInstr.ZERO_QTY,
+					PosControllerInstr.ZERO_QTY,
+					PosControllerInstr.ZERO_QTY,
 					PosControllerInstr.BLINK_FREQ.byteValue(),
-					PosControllerInstr.BLINK_DUTYCYCLE.byteValue()));
-			} else {
-				//No Flash
-				instructions.add(new PosControllerInstr(position,
-					count,
-					count,
-					count,
-					PosControllerInstr.BRIGHT_FREQ.byteValue(),
 					PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+				LOGGER.info("Position {} has unknwon container id", position);
+			} else {
+				byte count = (byte) wiCount.getGoodCount();
+				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+				if (count == 0) {
+					//0 good WI's means dim display
+					if (wiCount.hasBadCounts()) {
+						//If there any bad counts then we are "done for now" - flashing 0
+						instructions.add(new PosControllerInstr(position,
+							count,
+							count,
+							count,
+							PosControllerInstr.BLINK_FREQ.byteValue(),
+							PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+					} else {
+						if (wiCount.getCompleteCount() == 0) {
+							//This should not be possible (unless we only had a single HK WI, which would be a bug)
+							//We will log this for now and treat it as a completed WI
+							LOGGER.error("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
+						}
+						//Ready for packout - solid 0
+						instructions.add(new PosControllerInstr(position,
+							count,
+							count,
+							count,
+							PosControllerInstr.SOLID_FREQ.byteValue(),
+							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+					}
+				} else {
+					//Non-zero good WI's means bright display
+
+					//Blink if we have any bad counts, solid otherwise
+					byte frequency = wiCount.hasBadCounts() ? PosControllerInstr.BLINK_FREQ : PosControllerInstr.SOLID_FREQ;
+
+					instructions.add(new PosControllerInstr(position,
+						count,
+						count,
+						count,
+						frequency,
+						PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+				}
 			}
 		}
 
@@ -638,7 +676,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
-				this.showPositionFeedback();
+				this.showCartSetupFeedback();
 				break;
 
 			case LOCATION_SELECT_REVIEW:
@@ -646,7 +684,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					LOCATION_SELECT_REVIEW_MSG_LINE_2,
 					LOCATION_SELECT_REVIEW_MSG_LINE_3,
 					EMPTY_MSG);
-				this.showPositionFeedback();
+				this.showCartSetupFeedback();
 				break;
 
 			case CONTAINER_SELECT:
@@ -683,6 +721,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case NO_WORK:
 				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
+				this.showCartSetupFeedback();
 				break;
 
 			default:
@@ -736,11 +775,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (sendPositionControllerInstructions) {
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 			PosControllerInstr instruction = new PosControllerInstr(positionControllerToSendTo,
-				PosControllerInstr.ERROR_CODE_QTY,
-				PosControllerInstr.ZERO_QTY,
-				PosControllerInstr.ZERO_QTY,
-				PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
-				PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_LED_BLANK,
+				PosControllerInstr.BITENCODED_LED_E,
+				PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
+				PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 			instructions.add(instruction);
 			sendPositionControllerInstructions(instructions);
 		}
@@ -1335,13 +1374,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
 				// Also pretty easy. Light the position controllers on this CHE
-				byte freq = PosControllerInstr.BRIGHT_FREQ;
+				byte freq = PosControllerInstr.SOLID_FREQ;
 				byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 				// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 				if (planQuantityForPositionController != minQuantityForPositionController
 						|| planQuantityForPositionController != maxQuantityForPositionController) {
-					freq = PosControllerInstr.BLINK_DUTYCYCLE;
-					brightness = PosControllerInstr.BLINK_DUTYCYCLE;
+					freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
+					brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 				}
 
 				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
@@ -1657,7 +1696,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			value,
 			value,
 			value,
-			PosControllerInstr.MED_FREQ,
+				PosControllerInstr.SOLID_FREQ,
 				PosControllerInstr.MED_DUTYCYCLE));
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
@@ -1687,7 +1726,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					codeToSend,
 					codeToSend,
 					codeToSend,
-					PosControllerInstr.MED_FREQ, // change from BRIGHT_FREQ
+					PosControllerInstr.SOLID_FREQ, // change from SOLID_FREQ
 					PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 				instructions.add(instruction);
 			}

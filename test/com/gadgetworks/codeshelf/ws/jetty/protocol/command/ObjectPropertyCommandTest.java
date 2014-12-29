@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -57,16 +58,19 @@ public class ObjectPropertyCommandTest extends DomainTestABC {
 		assertNotNull(resp);
 		assertEquals(ResponseStatus.Success, resp.getStatus());
 		
-		List<DomainObjectProperty> props = resp.getProperties();
 		assertEquals(resp.getClassName(),org.getClassName());
 		assertEquals(resp.getPersistentId(),org.getPersistentId().toString());
-		assertNotNull(props);
-		assertEquals(props.size(), 1);
-		DomainObjectProperty prop = props.get(0);
-		assertNotNull(prop);
-		assertEquals(prop.getValue(), "Default-Value-1");
-		assertEquals(prop.getName(), "test-prop");
-		assertEquals(prop.getDescription(), "Property-Description-1");
+		// The response now has results, and not the raw persistable properties. Do not look for properties.		
+		// test the response results
+		List<Map<String, Object>> results = resp.getResults();
+		assertNotNull(results);
+		assertEquals(results.size(), 1);
+		Map<String, Object> oneResult = results.get(0);
+		assertEquals(oneResult.size(), 7); // see setDefaultPropertyNames().
+		assertEquals(oneResult.get("name"), "test-prop");
+		assertEquals(oneResult.get("description"), "Property-Description-1");
+
+		
 		commitTenantTransaction();
 	}	
 }

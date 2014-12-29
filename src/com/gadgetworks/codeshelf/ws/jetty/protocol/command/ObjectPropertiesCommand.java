@@ -1,6 +1,8 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -22,11 +24,12 @@ public class ObjectPropertiesCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectPropertiesCommand.class);
 
 	private ObjectPropertiesRequest request;
-	
+		
 	public ObjectPropertiesCommand(UserSession session, ObjectPropertiesRequest request) {
 		super(session);
 		this.request = request;
 	}
+	
 
 	@Override
 	public ResponseABC exec() {
@@ -71,7 +74,13 @@ public class ObjectPropertiesCommand extends CommandABC {
 				if (object != null) {
 					// all good. pass back object properties
 					List<DomainObjectProperty> props = PropertyDao.getInstance().getPropertiesWithDefaults(object);
-					response.setProperties(props);
+					// we do not want to just serialize the DomainObjectProperty persistent fields. We need to call methods to get the meta-fields					
+					// prop is a list of DomainObjectProperty. So setProperties(props) is merely a Json string of the persistent fields.
+					// unless there is a getProperties override
+					List<Map<String, Object>> results = response.getPropertyResults(props);
+					response.setResults(results);
+					// response.setProperties(props);
+					
 					response.setStatus(ResponseStatus.Success);
 					return response;
 				}

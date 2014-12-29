@@ -19,11 +19,7 @@ public class WorkInstructionCount {
 
 	@Getter
 	@Setter
-	private int	unknownOrderIdCount	= 0;
-
-	@Getter
-	@Setter
-	private int	immediateShortCount	= 0;
+	private int	shortCount	= 0;
 
 	@Getter
 	@Setter
@@ -40,8 +36,7 @@ public class WorkInstructionCount {
 		int invalidOrUnknownStatusCount) {
 		super();
 		this.goodCount = goodCount;
-		this.unknownOrderIdCount = unknownOrderIdCount;
-		this.immediateShortCount = immediateShortCount;
+		this.shortCount = immediateShortCount;
 		this.completeCount = completeCount;
 		this.invalidOrUnknownStatusCount = invalidOrUnknownStatusCount;
 	}
@@ -50,8 +45,11 @@ public class WorkInstructionCount {
 		super();
 	}
 
-	public boolean hasNonGoodCounts() {
-		return completeCount > 0 || unknownOrderIdCount > 0 || immediateShortCount > 0 || invalidOrUnknownStatusCount > 0;
+	/**
+	 * @return immediateShortCount > 0 || invalidOrUnknownStatusCount > 0
+	 */
+	public boolean hasBadCounts() {
+		return shortCount > 0 || invalidOrUnknownStatusCount > 0;
 	}
 
 	public void incrementGoodCount() {
@@ -59,11 +57,7 @@ public class WorkInstructionCount {
 	}
 
 	public void incrementImmediateShortCount() {
-		immediateShortCount++;
-	}
-
-	public void incrementUnknownOrderIdCount() {
-		unknownOrderIdCount++;
+		shortCount++;
 	}
 
 	public void incrementCompleteCount() {
@@ -80,9 +74,8 @@ public class WorkInstructionCount {
 		int result = 1;
 		result = prime * result + completeCount;
 		result = prime * result + goodCount;
-		result = prime * result + immediateShortCount;
+		result = prime * result + shortCount;
 		result = prime * result + invalidOrUnknownStatusCount;
-		result = prime * result + unknownOrderIdCount;
 		return result;
 	}
 
@@ -99,21 +92,19 @@ public class WorkInstructionCount {
 			return false;
 		if (goodCount != other.goodCount)
 			return false;
-		if (immediateShortCount != other.immediateShortCount)
+		if (shortCount != other.shortCount)
 			return false;
 		if (invalidOrUnknownStatusCount != other.invalidOrUnknownStatusCount)
-			return false;
-		if (unknownOrderIdCount != other.unknownOrderIdCount)
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "WorkInstructionCount [goodCount=" + goodCount + ", unknownOrderIdCount=" + unknownOrderIdCount
-				+ ", immediateShortCount=" + immediateShortCount + ", completeCount=" + completeCount
-				+ ", invalidOrUnknownStatusCount=" + invalidOrUnknownStatusCount + "]";
+		return "WorkInstructionCount [goodCount=" + goodCount + ", immediateShortCount=" + shortCount + ", completeCount="
+				+ completeCount + ", invalidOrUnknownStatusCount=" + invalidOrUnknownStatusCount + "]";
 	}
+
 
 
 }
