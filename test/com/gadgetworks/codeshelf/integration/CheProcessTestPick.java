@@ -537,6 +537,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupContainer("9x9x9", "1"); // unknown container
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
+
 		Assert.assertEquals(0, picker.countActiveJobs());
 		
 		//Make sure position display controllers show proper feedback
@@ -567,7 +568,15 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), Byte.valueOf("11"));
 
-		picker.startAndSkipReview("D303", 5000, 3000);
+		//picker.startAndSkipReview("D303", 5000, 3000);
+		//Check to make sure we can scan a good location after a bad location
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.scanLocation("BAD_LOCATION");
+		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();

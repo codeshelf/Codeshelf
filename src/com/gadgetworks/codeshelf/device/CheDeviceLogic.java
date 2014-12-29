@@ -78,9 +78,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
 	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
-	private static final String					NO_WORK_MSG_LINE_1						= cheLine("NO WORK TO DO");
-	private static final String					NO_WORK_MSG_LINE_3						= cheLine("REVIEW MISSING WORK");
-	private static final String					NO_WORK_MSG_LINE_4						= cheLine("OR SCAN NEW LOCATION");
+	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	private static final String				LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
@@ -808,7 +806,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case NO_WORK:
-				sendDisplayCommand(NO_WORK_MSG_LINE_1, EMPTY_MSG, NO_WORK_MSG_LINE_3, NO_WORK_MSG_LINE_4);
+				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
 				this.showCartSetupFeedback();
 				break;
 
