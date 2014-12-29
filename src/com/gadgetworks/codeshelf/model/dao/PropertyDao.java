@@ -128,6 +128,17 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return prop;
 	}
 
+	public DomainObjectProperty getOrCreateProperty(IDomainObject object, String name) {
+        DomainObjectProperty prop = getProperty(object, name);
+        if (prop != null)
+        	return prop;
+        DomainObjectPropertyDefault theDefault = getPropertyDefault(object, name);
+        prop = createProperty(object, theDefault);
+        return prop;
+	}
+
+	
+
 	@Override
 	public Class<DomainObjectProperty> getDaoClass() {
 		return DomainObjectProperty.class;

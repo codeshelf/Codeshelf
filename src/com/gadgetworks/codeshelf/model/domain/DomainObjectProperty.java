@@ -14,10 +14,14 @@ import lombok.NonNull;
 import lombok.Setter;
 
 import org.hibernate.annotations.Type;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
+import com.gadgetworks.codeshelf.service.PropertyService;
+import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 
 @Entity
@@ -25,6 +29,8 @@ import com.google.inject.Inject;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DomainObjectProperty extends DomainObjectABC implements IDomainObject {
 	
+	private static final Logger				LOGGER							= LoggerFactory.getLogger(DomainObjectProperty.class);
+
 	@Inject
 	public static ITypedDao<DomainObjectProperty> DAO = PropertyDao.getInstance();
 
@@ -145,5 +151,143 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public ITypedDao<DomainObjectProperty> getDao() {
 		return DomainObjectProperty.DAO;
 	}
+	
+	
+	/**
+	 * Converts things like baychange to BayChange.
+	 * Return null if there is no likely match.
+	 */
+	public String toCanonicalForm(String inValue) {
+		if (inValue == null)
+			return null;
+		if (inValue.isEmpty())
+			return null;
+		// Find out which one we are
+		String myName = this.getName();
+		if (myName.equals("BAYCHANG"))
+			return validate_baychang(inValue);
+		else if (myName.equals("RPEATPOS"))
+			return validate_rpeatpos(inValue);
+		else if (myName.equals("WORKSEQR"))
+			return validate_workseqr(inValue);
+		else if (myName.equals("LIGHTSEC"))
+			return validate_integer_in(inValue, 2, 30); // mininum 2, max 30
+		else if (myName.equals("LIGHTCLR"))
+			return validate_color_not_black(inValue);
+		else if (myName.equals("CROSSBCH"))
+			return validate_boolean(inValue);
+		else if (myName.equals("AUTOSHRT"))
+			return validate_boolean(inValue);
+		else {
+			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
+		}
+		
+		return null;
+	}
+	
+	private String validate_baychang(String inValue) {
+		// valid values are "None, BayChange, BayChangeExceptAcrossAisle, PathSegmentChange"
+		final String noneStr = "None";
+		final String bayStr = "BayChange";
+		final String aisleStr = "BayChangeExceptAcrossAisle";
+		final String pathStr = "PathSegmentChange";
+		String returnStr = inValue;
+		if (returnStr.equalsIgnoreCase(noneStr))
+			return noneStr;
+		else if (returnStr.equalsIgnoreCase(bayStr))
+			return bayStr;
+		else if (returnStr.equalsIgnoreCase(aisleStr))
+			return aisleStr;
+		else if (returnStr.equalsIgnoreCase(pathStr))
+			return pathStr;
+		else 
+			return null;
+	}
+	
+	private String validate_rpeatpos(String inValue) {
+		// valid values"
+		final String noneStr = "None";
+		final String cntrStr = "ContainerOnly";
+		final String countStr = "ContainerAndCount";
+		String returnStr = inValue;
+		if (returnStr.equalsIgnoreCase(noneStr))
+			return noneStr;
+		else if (returnStr.equalsIgnoreCase(cntrStr))
+			return cntrStr;
+		else if (returnStr.equalsIgnoreCase(countStr))
+			return countStr;
+		else 
+			return null;
+	}
+
+	private String validate_workseqr(String inValue) {
+		// valid values
+		// We had a "bay distance top tier last" for Accu, but then they decided not to use it. We though it was a bad idea.
+		// Still, there will certainly be other work sequences in the future.
+		final String bayDistanceStr = "BayDistance";
+		String returnStr = inValue;
+		if (returnStr.equalsIgnoreCase(bayDistanceStr))
+			return bayDistanceStr;
+		else 
+			return null;
+	}
+
+	private String validate_integer_in(String inValue, Integer minValue, Integer maxValue) {
+		// return null if value is not a valid integer or is not in range.
+		Integer theValue;
+		try {
+			theValue = Integer.valueOf(inValue);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+		if (theValue >= minValue && theValue <= maxValue) 
+			return theValue.toString(); // usually same as inValue. But these routines are about converting to a canonical form.
+		else
+			return null;
+	}
+
+	private String validate_color_not_black(String inValue) {
+		ColorEnum theColor = ColorEnum.valueOf(inValue);
+		// Let the color Enum do its validation
+		switch (theColor) {
+			case INVALID: 
+			case BLACK: 
+				return null;
+			default: {
+					return theColor.getName();
+				}			
+		}
+	}
+
+	private String validate_boolean(String inValue) {
+		// Our liquidbase table/default definitions is using lower case
+		final String trueStr = "true";
+		final String falseStr = "false";
+		String returnStr = inValue;
+		if (returnStr.equalsIgnoreCase(trueStr))
+			return trueStr;
+		else if (returnStr.equalsIgnoreCase(falseStr))
+			return falseStr;
+		else 
+			return null;
+	}
+	
+	/**
+	 * Validation API. Simple validation types. Then specifics. Eventually there may be fairly elaborate application-level checks.
+	 * Return null if no errors.
+	 */
+	public String validateNewStringValue(String inValue, String inCanonicalForm) {
+		String returnValue = null;
+		if (inValue == null)
+			return ("null value");
+		if (inValue.isEmpty())
+			return ("Empty string");
+		if (inCanonicalForm == null) { // no likely match found. For now the description lists the valid values.
+			return this.getDescription();
+		}
+		
+		return returnValue;
+	}
+
 
 }
