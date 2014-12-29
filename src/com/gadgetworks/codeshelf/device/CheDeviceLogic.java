@@ -1700,8 +1700,19 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		//Decrement count if this is a non-HK WI
 		if (!inWi.amIHouseKeepingWi()) {
-			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(inWi.getContainerId());
+			String containerId = inWi.getContainerId();
+			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 			count.decrementGoodCountAndIncrementCompleteCount();
+
+			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
+			Byte position = null;
+			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
+				if (containerMapEntry.getValue().equals(containerId)) {
+					position = Byte.valueOf(containerMapEntry.getKey());
+					break;
+				}
+			}
+			this.showCartRunFeedbackIfNeeded(position);
 		}
 
 		clearLedControllersForWi(inWi);
