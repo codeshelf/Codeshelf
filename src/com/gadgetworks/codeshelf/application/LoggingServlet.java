@@ -17,8 +17,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import antlr.collections.List;
-
 public class LoggingServlet extends HttpServlet {
 	private static final String CONTENT_TYPE_TEXT = "text/html";
 	private static final String CACHE_CONTROL_HEADER = "Cache-Control";

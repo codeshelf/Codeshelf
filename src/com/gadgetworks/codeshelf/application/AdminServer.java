@@ -14,7 +14,6 @@ import com.codahale.metrics.servlets.PingServlet;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.RadioServlet;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 public class AdminServer {

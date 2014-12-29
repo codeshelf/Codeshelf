@@ -22,26 +22,29 @@ public class PasswordUpdateGenerator {
 	 * 	@throws NoSuchAlgorithmException 
 	 */
 	public static void main(String[] args) throws NoSuchAlgorithmException, InvalidKeySpecException {
-		String usage = "Usage java " + PasswordUpdateGenerator.class.getName() + " -e <email> -o <organizationName> -p <password>";
+		String usage = "Usage java " + PasswordUpdateGenerator.class.getName() + " -e <email> -o <organizationName> -s <schemName> -p <password>";
 		
-		String inOrganizationName = null;
-		String inEmail = null;
-		String inPassword = null;
-		if (args.length != 6) System.err.println(usage);
+		String organizationName = null;
+		String email = null;
+		String password = null;
+		String schemaName = null;
+		if (args.length != 8) System.err.println(usage);
 		for (int i = 0; i < args.length; i++) {
 			String string = args[i];
 			if(string.equals("-o")) {
-				inOrganizationName = args[++i];
+				organizationName = args[++i];
 			} else if(string.equals("-e")) {
-				inEmail = args[++i];
+				email = args[++i];
 			} else if (string.equals("-p")) {
-				inPassword = args[++i];
+				password = args[++i];
+			} else if (string.equals("-s")) {
+				schemaName = args[++i];
 			}
 			else {
 				System.err.println(usage);
 			}
 		} 
-		String updateSql = User.generatePasswordUpdateSql(inOrganizationName, inEmail, inPassword);
+		String updateSql = User.generatePasswordUpdateSql(organizationName, email, password, schemaName);
 		System.out.println(updateSql);
 	}
 
