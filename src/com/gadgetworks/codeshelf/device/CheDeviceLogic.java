@@ -776,6 +776,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case SHORT_PICK_CONFIRM:
+				if (isSameState) {
+					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				}
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
