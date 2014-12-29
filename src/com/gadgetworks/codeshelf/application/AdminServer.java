@@ -48,20 +48,27 @@ public class AdminServer {
 			
 			// log level runtime change servlet
 			context.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
-			
-			if(deviceManager != null) {
-				// only for site controller
-				context.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
-			}
-			
-			ServletHolder sh = new ServletHolder(ServletContainer.class);
-			sh.setInitParameter("com.sun.jersey.config.property.resourceConfigClass", "com.sun.jersey.api.core.PackagesResourceConfig");
-	        sh.setInitParameter("com.sun.jersey.config.property.packages", "com.gadgetworks.codeshelf.api.resources");
-	        sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-			context.addServlet(sh, "/api/*");
 
+			// service control (stop service etc)
 			context.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
 
+			if(deviceManager != null) {
+				// only for site controller
+				
+				// radio packet capture interface
+				context.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
+			} else {
+				// only for app server
+				
+				// REST API for UI
+				ServletHolder sh = new ServletHolder(ServletContainer.class);
+				sh.setInitParameter("com.sun.jersey.config.property.resourceConfigClass", "com.sun.jersey.api.core.PackagesResourceConfig");
+		        sh.setInitParameter("com.sun.jersey.config.property.packages", "com.gadgetworks.codeshelf.api.resources");
+		        sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
+				context.addServlet(sh, "/api/*");
+			}
+			
+			
 			server.start();
 		} 
 		catch (Exception e) {
