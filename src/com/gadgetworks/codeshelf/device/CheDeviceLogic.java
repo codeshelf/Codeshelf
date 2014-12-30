@@ -74,6 +74,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String		PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
 	private static final String		YES_NO_MSG								= cheLine("SCAN YES OR NO");
 	private static final String		NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
+	private static final String					POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
 	private static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
 	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
@@ -1611,9 +1612,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processContainerPosition(final String inScanPrefixStr, String inScanStr) {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
+			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
 				setState(CheStateEnum.CONTAINER_SELECT);
+			} else {
+				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE_MSG);
+				mCheStateEnum = CheStateEnum.CONTAINER_POSITION;
+			}
 		} else {
 			invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
 		}
