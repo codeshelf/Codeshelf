@@ -153,30 +153,59 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	
 	
 	/**
-	 * Converts things like baychange to BayChange.
+	 * Converts things like "baychange" to "BayChange".
+	 * Return null if there is no likely match.
+	 */
+	private String validInputValues() {
+		// Find out which one we are
+		String myName = this.getName();
+		if (myName.equals("BAYCHANG"))
+			return "None, BayChange, BayChangeExceptAcrossAisle, PathSegmentChange";
+		else if (myName.equals("RPEATPOS"))
+			return "None, ContainerOnly, ContainerAndCount";
+		else if (myName.equals("WORKSEQR"))
+			return "BayDistance";
+		else if (myName.equals("LIGHTSEC"))
+			return "number between 2 and 30"; 
+		else if (myName.equals("LIGHTCLR"))
+			return "Red, Green, Blue, Cyan, Orange, Magenta, White";
+		else if (myName.equals("CROSSBCH"))
+			return "true, false";
+		else if (myName.equals("AUTOSHRT"))
+			return "true, false";
+		else {
+			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
+		}
+		
+		return null;
+	}
+
+	/**
+	 * Converts things like "baychange" to "BayChange".
 	 * Return null if there is no likely match.
 	 */
 	public String toCanonicalForm(String inValue) {
 		if (inValue == null)
 			return null;
-		if (inValue.isEmpty())
+		String trimmedValue = inValue.trim();
+		if (trimmedValue.isEmpty())
 			return null;
 		// Find out which one we are
 		String myName = this.getName();
 		if (myName.equals("BAYCHANG"))
-			return validate_baychang(inValue);
+			return validate_baychang(trimmedValue);
 		else if (myName.equals("RPEATPOS"))
-			return validate_rpeatpos(inValue);
+			return validate_rpeatpos(trimmedValue);
 		else if (myName.equals("WORKSEQR"))
-			return validate_workseqr(inValue);
+			return validate_workseqr(trimmedValue);
 		else if (myName.equals("LIGHTSEC"))
-			return validate_integer_in(inValue, 2, 30); // mininum 2, max 30
+			return validate_integer_in(trimmedValue, 2, 30); // mininum 2, max 30
 		else if (myName.equals("LIGHTCLR"))
-			return validate_color_not_black(inValue);
+			return validate_color_not_black(trimmedValue);
 		else if (myName.equals("CROSSBCH"))
-			return validate_boolean(inValue);
+			return validate_boolean(trimmedValue);
 		else if (myName.equals("AUTOSHRT"))
-			return validate_boolean(inValue);
+			return validate_boolean(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
 		}
@@ -282,7 +311,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		if (inValue.isEmpty())
 			return ("Empty string");
 		if (inCanonicalForm == null) { // no likely match found. For now the description lists the valid values.
-			return this.getDescription();
+			return ("Valid values:  " + this.validInputValues());
 		}
 		
 		return returnValue;
