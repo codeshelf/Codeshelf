@@ -7,12 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.PropertyService;
 
 public class HousekeepingInjector {
+	// For multi-tenancy, this must convert from a static usage object to having one HousekeepingInjector per facility.
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(HousekeepingInjector.class);
 
@@ -36,7 +39,48 @@ public class HousekeepingInjector {
 
 	}
 
+	
+	private static Facility getMyFacility() {
+		// fix for multi-tenancy
+		List<Facility> facilityList = Facility.DAO.getAll();
+		int theSize = facilityList.size();
+		if (theSize == 0) 
+			return null;
+		if (theSize >1) {
+			LOGGER.error("fix HousekeepingInjector for multi-tenancy");
+		}
+		return facilityList.get(0);
+	}
+
+	public static void setValuesFromConfigs() {
+		// warning: currently setting the static member variables.
+		Facility facility = getMyFacility();
+		String repeatValue = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.RPEATPOS);
+		String bayValue = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.BAYCHANG);
+		if (repeatValue == null || bayValue == null) {
+			LOGGER.error("problem in setValuesFromConfigs");
+			return;
+		}
+		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
+		if (repeatValue.equals("None"))
+			setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
+		else if (repeatValue.equals("ContainerOnly"))
+			setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
+		else if (repeatValue.equals("ContainerAndCount"))
+			setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
+
+		if (bayValue.equals("None"))
+			setBayChangeChoice(BayChangeChoice.BayChangeNone);
+		else if (bayValue.equals("BayChange"))
+			setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
+		else if (bayValue.equals("PathSegmentChange"))
+			setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
+		else if (bayValue.equals("BayChangeExceptAcrossAisle"))
+			setBayChangeChoice(BayChangeChoice.BayChangeExceptSamePathDistance);
+	}
+
 	public static RepeatPosChoice getRepeatPosChoice() {
+		// This is called often, so should just return the cached member variable. Change to nonstatic for multi-tenancy
 		return mRepeatPosChoice;
 	}
 
@@ -45,6 +89,7 @@ public class HousekeepingInjector {
 	}
 
 	public static BayChangeChoice getBayChangeChoice() {
+		// This is called often, so should just return the cached member variable. Change to nonstatic for multi-tenancy
 		return mBayChangeChoice;
 	}
 
@@ -93,7 +138,7 @@ public class HousekeepingInjector {
 	}
 
 	// helper function
-	@SuppressWarnings({ })
+	@SuppressWarnings({})
 	private static boolean isDifferentNotNullBay(Location inLoc1, Location inLoc2) {
 		Location bay1 = inLoc1.getParentAtLevel(Bay.class);
 		Location bay2 = inLoc2.getParentAtLevel(Bay.class);
@@ -115,7 +160,7 @@ public class HousekeepingInjector {
 	/**
 	 * Three choices of behavior
 	 */
-	@SuppressWarnings({ })
+	@SuppressWarnings({})
 	private static boolean wantBayChangeBetween(BayChangeChoice inBayChangeChoice,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi) {
@@ -221,7 +266,7 @@ public class HousekeepingInjector {
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi,
 		List<WorkInstruction> inWiList) {
-		
+
 		List<WorkInstruction> returnList = inWiList;
 
 		if (inPrevWi == null)
