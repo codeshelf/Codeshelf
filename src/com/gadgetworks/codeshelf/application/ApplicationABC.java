@@ -33,7 +33,8 @@ import com.google.inject.Inject;
 public abstract class ApplicationABC implements ICodeshelfApplication {
 	public enum ShutdownCleanupReq {
 		NONE , 
-		DROP_SCHEMA
+		DROP_SCHEMA , 
+		DELETE_ORDERS_WIS
 		};
 		
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
@@ -113,6 +114,11 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 				case DROP_SCHEMA:
 					if (schemaManager != null) {
 						schemaManager.dropSchema();
+					}
+					break;
+				case DELETE_ORDERS_WIS:
+					if (schemaManager != null) {
+						schemaManager.deleteOrdersWis();
 					}
 					break;
 				default:

@@ -1,6 +1,5 @@
 package com.gadgetworks.codeshelf.api;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;

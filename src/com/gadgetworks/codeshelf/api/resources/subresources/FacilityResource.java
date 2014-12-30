@@ -6,15 +6,15 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import lombok.Setter;
+
 import com.gadgetworks.codeshelf.api.BaseResponse;
-import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
+import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.WorkService;
-
-import lombok.Setter;
 
 public class FacilityResource {
 	private PersistenceService persistence = PersistenceService.getInstance();

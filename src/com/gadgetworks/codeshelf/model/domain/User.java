@@ -270,20 +270,19 @@ public class User extends DomainObjectTreeABC<Organization> {
 	 * @throws NoSuchAlgorithmException 
 	 * 
 	 */
-	public static String generatePasswordUpdateSql(String inOrganizationName, String inEmail, String inPassword) throws NoSuchAlgorithmException, InvalidKeySpecException {
+	public static String generatePasswordUpdateSql(String organizationName, String email, String password, String schemaName) throws NoSuchAlgorithmException, InvalidKeySpecException {
 		byte[] salt = generateSalt();
 		int hashIterations = PBKDF2_ITERATIONS;
-		String passwordOut = hashPassword(inPassword, salt, PBKDF2_ITERATIONS);
-		String sql = "UPDATE codeshelf.\"user\"" +
+		String passwordOut = hashPassword(password, salt, PBKDF2_ITERATIONS);
+		String sql = "UPDATE "+schemaName+".\"users\"" +
 				" SET " +
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
-				" WHERE parent_persistentid = (Select persistentid from codeshelf.organization where domainId = '" + inOrganizationName + "') AND domainId = '" + inEmail + "';";
+				" WHERE parent_persistentid = (Select persistentid from "+schemaName+".organization where domainId = '" + organizationName + "') AND domainId = '" + email + "';";
 		return sql;
 	}
 
 	@Override
 	public Facility getFacility() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	

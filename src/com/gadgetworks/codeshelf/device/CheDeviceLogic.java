@@ -731,8 +731,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void setState(final CheStateEnum inCheState) {
+		CheStateEnum previousState = mCheStateEnum;
+		boolean isSameState = previousState == inCheState;
 		mCheStateEnum = inCheState;
-		boolean isSameState = mCheStateEnum == inCheState;
 		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
 		switch (inCheState) {
@@ -791,7 +792,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case DO_PICK:
-				if (isSameState) {
+				if (isSameState || previousState == CheStateEnum.GET_WORK) {
 					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				}
 				showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
@@ -895,9 +896,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case YES_COMMAND:
-				clearAllPositionControllers();
 			case NO_COMMAND:
-				clearAllPositionControllers();
 				processYesOrNoCommand(inScanStr);
 				break;
 
@@ -1592,6 +1591,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				Entry<String, String> entry = setIterator.next();
 				if (entry.getValue().equals(mContainerInSetup)) {
 					setIterator.remove();
+					this.clearOnePositionController(Byte.valueOf(entry.getKey()));
 					break;
 				}
 			}
