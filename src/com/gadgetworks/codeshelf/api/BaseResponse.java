@@ -1,18 +1,20 @@
 package com.gadgetworks.codeshelf.api;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
+import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+
 import lombok.Setter;
 
-public class BaseResponse {
+public abstract class BaseResponse {
+	
 	@Setter
 	private int status = 200;
-		
+	
 	public static UUID parseUUID(String str) {
 		try {
 			return UUID.fromString(str);

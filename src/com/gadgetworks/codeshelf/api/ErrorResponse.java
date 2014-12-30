@@ -32,6 +32,10 @@ public class ErrorResponse extends BaseResponse{
 		addError("Could not parse uuid " + uuid);
 	}
 	
+	public void addErrorUUIDDoesntExist(String uuid, String type) {
+		addError("Could not find " + type + " " + uuid);
+	}
+	
 	public void processException(Exception e) {
 		addError(e.getMessage());
 		if (e instanceof NotFoundException) {
