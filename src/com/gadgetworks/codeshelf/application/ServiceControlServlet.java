@@ -32,9 +32,15 @@ public class ServiceControlServlet extends HttpServlet {
         	this.schemaManager = PersistenceService.getInstance().getSchemaManager();
     	}
     }
-    
+
     @Override
     protected void doGet(HttpServletRequest req,
+        HttpServletResponse resp) throws ServletException, IOException {
+    	doPost(req,resp);
+    }
+    
+    @Override
+    protected void doPost(HttpServletRequest req,
                          HttpServletResponse resp) throws ServletException, IOException {
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setHeader(CACHE_CONTROL_HEADER, NO_CACHE);
@@ -42,26 +48,41 @@ public class ServiceControlServlet extends HttpServlet {
                 
         PrintWriter out = resp.getWriter();
         out.println("<html><head><title>service control</title></head><body><h4>service control</h4>");
+
+        out.println("<form name=stop action='#' method=post><input type=hidden name='action' value='stop' /></form>");
+        out.println("<form name=dropschema action='#' method=post><input type=hidden name='action' value='dropschema' /></form>");
+        out.println("<form name=deleteorderswis action='#' method=post><input type=hidden name='action' value='deleteorderswis' /></form>");
+
         String action = req.getParameter("action");
         if(action!=null) {
             if(action.equals("stop")) {
-            	out.println("<li>Service will stop in "+ACTION_DELAY_SECONDS+" seconds</li>");
+            	out.println("APP SERVER SHUTDOWN. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
             	stop(ApplicationABC.ShutdownCleanupReq.NONE);
             } else if(schemaManager != null) {
             	// schema actions
             	if(action.equals("dropschema")) {
-                	out.println("<li>DROPPING SCHEMA. Service will stop in "+ACTION_DELAY_SECONDS+" seconds</li>");
+                	out.println("DROP SCHEMA. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
             		stop(ApplicationABC.ShutdownCleanupReq.DROP_SCHEMA);
+            		
+            	} else if(action.equals("deleteorderswis")) {
+                	out.println("DELETE ORDERS AND WORK INSTRUCTIONS. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
+            		stop(ApplicationABC.ShutdownCleanupReq.DELETE_ORDERS_WIS);
+            	} else {
+            		out.println("Invalid command.");
             	}
-            }
+        	} else {
+        		out.println("Invalid command.");
+        	}
             out.println("</br></br>");
+        } else {
+            out.println("<a href=\"javascript:document.stop.submit()\">Shutdown (restart) this service</a></br></br>");
+            if(schemaManager != null) {
+                out.println("<a href=\"javascript:document.dropschema.submit()\">Erase Database, then Shutdown (restart) this service</a></br></br>");
+                out.println("<a href=\"javascript:document.deleteorderswis.submit()\">Delete Orders and Work Instructions, then Shutdown (restart) this service</a></br></br>");        
+            }
+
         }
         
-        out.println("<a href=\"?action=stop\">Shutdown (restart) this service</a></br></br>");
-        if(schemaManager != null) {
-            out.println("<a href=\"?action=dropschema\">Erase Database, then Shutdown (restart) this service</a></br></br>");        
-        }
-
         out.println("</body></html>");        
     }
 

@@ -6,10 +6,8 @@
 package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -20,7 +18,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
-import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList.RunSummary;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList.GroupSummary;
 import com.gadgetworks.codeshelf.service.WorkService;

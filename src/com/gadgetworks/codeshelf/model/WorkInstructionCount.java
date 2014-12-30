@@ -45,6 +45,16 @@ public class WorkInstructionCount {
 		super();
 	}
 
+	public void decrementGoodCountAndIncrementShortCount() {
+		goodCount--;
+		shortCount++;
+	}
+
+	public void decrementGoodCountAndIncrementCompleteCount() {
+		goodCount--;
+		completeCount++;
+	}
+
 	/**
 	 * @return immediateShortCount > 0 || invalidOrUnknownStatusCount > 0
 	 */

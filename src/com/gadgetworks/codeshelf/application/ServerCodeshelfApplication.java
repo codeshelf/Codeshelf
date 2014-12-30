@@ -17,7 +17,6 @@ import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.edi.IEdiProcessor;
 import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
@@ -43,7 +42,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IEdiProcessor			mEdiProcessor;
 	private IHttpServer				mHttpServer;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
-	
+
 	@Getter
 	private PersistenceService		persistenceService;
 
@@ -126,52 +125,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
 		MetricsService.registerHealthCheck(dbxCheck);
 
-		// configure baychange housekeeping work instructions
-		// TODO: replace with configuration via database table
-		String bayChangeWI = configuration.getString("facility.housekeeping.baychange");
-		if (bayChangeWI != null && bayChangeWI.equals("None")) {
-			LOGGER.info("BayChange housekeeping work instructions disabled");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
-		} else if (bayChangeWI != null && bayChangeWI.equals("BayChange")) {
-			LOGGER.info("BayChange housekeeping set to BayChange");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
-		} else if (bayChangeWI != null && bayChangeWI.equals("PathSegmentChange")) {
-			LOGGER.info("BayChange housekeeping set to PathSegmentChange");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
-		} else if (bayChangeWI != null && bayChangeWI.equals("ExceptSamePathDistance")) {
-			LOGGER.info("BayChange housekeeping set to ExceptSamePathDistance");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeExceptSamePathDistance);
-		} else {
-			LOGGER.info("Using default BayChange housekeeping work instructions setting");
-		}
+		// fix for multi-tenancy. Not here on application start. Rather, each facility running on this server  will have its own HousekeepingInjector object
+		HousekeepingInjector.setValuesFromConfigs();
 
-		// configure repeatposition housekeeping work instructions
-		// TODO: replace with configuration via database table		
-		String useRepeatPosWI = configuration.getString("facility.housekeeping.repeatposition");
-		if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerAndCount")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("None")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerOnly")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
-		} else {
-			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");
-		}
-		if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerAndCount")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("None")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerOnly")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
-		} else {
-			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");
-		}
 	}
 
 	// --------------------------------------------------------------------------

@@ -5,18 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
-
-import lombok.Getter;
-import lombok.Setter;
 
 public class ObjectPropertiesResponse extends ResponseABC {
 

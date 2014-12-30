@@ -3,8 +3,6 @@ package com.gadgetworks.codeshelf.service;
 import java.util.HashMap;
 import java.util.List;
 
-import org.hibernate.annotations.Entity;
-
 import lombok.Getter;
 import lombok.Setter;
 

@@ -906,12 +906,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.BLINK_FREQ);
 
-		//Case 3: Unknown order id so display flashing, dim 0
+		//Case 3: Unknown order id so display flashing, bright 0
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue(), 0);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.BLINK_FREQ);
 
-		//Case 4: One immediate short so display dim,flashing 0
+		//Case 4: One immediate short so display bright,flashing 0
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4).intValue(), 0);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.BLINK_FREQ);
@@ -933,10 +933,159 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		
 		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 2 since that is the first task
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
 		//Make sure position 2 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
+
+		//Case 6: Already complete so display dim, solid 0
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
+
+		HousekeepingInjector.restoreHKDefaults();
+
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	@Test
+	public final void testCartRunFeedback() throws IOException {
+		// Test cases:
+		// 1. One good plans for position 1.
+		// 2. One good plan for position 2 and and immediate short.
+		// 3. Unknown order number for position 3.
+		// 4. Only an immediate short for position 4.
+		// 5. One good plans for position 5.
+		// set up data for pick scenario
+
+		// set up data for pick scenario
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		UUID facId = facility.getPersistentId();
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().beginTenantTransaction();
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+
+		this.getPersistenceService().commitTenantTransaction();
+
+		HousekeepingInjector.turnOffHK();
+
+		// Start setting up cart etc
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(facId);
+		List<Container> containers = facility.getContainers();
+		//Make sure we have 4 orders/containers
+		Assert.assertEquals(4, containers.size());
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.setupOrderIdAsContainer("33333", "3"); //missing order id
+		picker.setupOrderIdAsContainer("44444", "4");
+		picker.setupOrderIdAsContainer("55555", "5");
+		picker.startAndSkipReview("D301", 3000, 3000);
+
+		//Check Screens -- Everything should be clear except the one we are picking, which is #1
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
+
+		//Make sure position 1 shows the proper item count for picking
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
+
+		picker.pick(1, 1);
+
+		//Check Screens
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
+
+		//Make sure position 2 shows the proper item count for picking
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
+
+		/**
+		 * Now we will do a short pick and cancel it and make sure we never lose feedback.
+		 * Then will redo the short and confirm it and make sure we keep the feedback
+		 */
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+
+		//Check Screens
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
+
+		picker.buttonPress(2, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker.scanCommand("NO");
+
+		//Check Screens
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
+
+		//Make sure position 2 shows the proper item count for picking
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
+
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker.buttonPress(2, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 3000);
+
+		//Check Screens
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
 		HousekeepingInjector.restoreHKDefaults();
 

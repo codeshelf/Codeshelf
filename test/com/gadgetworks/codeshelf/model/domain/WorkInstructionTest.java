@@ -14,7 +14,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;

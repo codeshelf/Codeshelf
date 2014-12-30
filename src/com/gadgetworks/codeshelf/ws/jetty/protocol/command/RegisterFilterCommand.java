@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Filter;
-import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
