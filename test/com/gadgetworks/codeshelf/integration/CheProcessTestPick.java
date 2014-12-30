@@ -1106,7 +1106,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		UUID facId = facility.getPersistentId();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1146,26 +1145,23 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
-		List<Container> containers = facility.getContainers();
-		//Make sure we have 4 orders/containers
-		Assert.assertEquals(4, containers.size());
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		//Check Screens -- Everything should be clear except the one we are picking, which is #1
+
+		//Check Screens
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == (byte) 11);
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 
-		picker.setupOrderIdAsContainer("22222", "1");
+		picker.setupOrderIdAsContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 
-		//Check Screens -- Everything should be clear except the one we are picking, which is #1
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == (byte) 22);
-		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		//Check Screens
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
 
 
 		HousekeepingInjector.restoreHKDefaults();
@@ -1179,7 +1175,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		UUID facId = facility.getPersistentId();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1219,16 +1214,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
-		List<Container> containers = facility.getContainers();
-		//Make sure we have 4 orders/containers
-		Assert.assertEquals(4, containers.size());
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		picker.login("Picker #1");
 
-		//Scan 2 containers in a row
+		//CASE 1: Scan 2 containers in a row
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.scanOrderId("22222");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
@@ -1251,7 +1242,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.logout();
 		picker.login("Picker #1");
 
-		//Scan 2 positions in a row
+		//CASE 2: Scan 2 positions in a row
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.scanOrderId("22222");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
@@ -1270,6 +1261,44 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == Byte.valueOf("22"));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+
+		//CASE 3: SCAN A TAKEN POSITION
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.scanOrderId("22222");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+		picker.scanPosition("1");
+		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 3000);
+
+		//Make sure we got an error
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+
+		//Make sure Clear Error gets us out
+		picker.scanCommand("Clear Error");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+
+		//CASE 4: SCAN START WORK AFTER CONTAINER W/ NO POSITION
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.scanOrderId("22222");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 3000);
+
+		//Make sure we got an error
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+
+		//Make sure Clear Error gets us out
+		picker.scanCommand("Clear Error");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		HousekeepingInjector.restoreHKDefaults();

@@ -42,6 +42,7 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 /**
  * @author jeffw
@@ -731,8 +732,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void setState(final CheStateEnum inCheState) {
+		CheStateEnum previousState = mCheStateEnum;
 		mCheStateEnum = inCheState;
-		boolean isSameState = mCheStateEnum == inCheState;
+		boolean isSameState = previousState == inCheState;
 		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
 		switch (inCheState) {
@@ -774,7 +776,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
 				showContainerAssainments();
 				break;
+			case CHE_SETUP_ERROR:
 
+				invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
+				break;
 			case SHORT_PICK_CONFIRM:
 				if (isSameState) {
 					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
@@ -817,15 +822,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Stay in the same state, but make the status invalid.
+	 * Change state and display error message
 	 * Send the LED error status as well (color: red effect: error channel: 0).
 	 * 
 	 */
 	private void invalidScanMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
-
-		byte positionControllerToSendTo = PosControllerInstr.POSITION_ALL;
-		boolean sendPositionControllerInstructions = true;
 
 		switch (inCheState) {
 			case IDLE:
@@ -834,14 +836,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, INVALID_SCAN_MSG);
-				break;
-
-			case CONTAINER_SELECT:
-				sendDisplayCommand(SCAN_CONTAINER_MSG, INVALID_SCAN_MSG);
-				break;
-
-			case CONTAINER_POSITION:
-				sendDisplayCommand(SELECT_POSITION_MSG, INVALID_SCAN_MSG);
 				break;
 
 			case DO_PICK:
@@ -857,18 +851,31 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			default:
 				break;
 		}
+		sendErrorCodeToAllPosCons();
+	}
 
-		if (sendPositionControllerInstructions) {
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			PosControllerInstr instruction = new PosControllerInstr(positionControllerToSendTo,
-				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-				PosControllerInstr.BITENCODED_LED_BLANK,
-				PosControllerInstr.BITENCODED_LED_E,
-				PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
-				PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
-			instructions.add(instruction);
-			sendPositionControllerInstructions(instructions);
-		}
+	// --------------------------------------------------------------------------
+	/**
+	 * Stay in the same state, but make the status invalid.
+	 * Send the LED error status as well (color: red effect: error channel: 0).
+	 * 
+	 */
+	private void invalidScanMsg(String lineOne, String lineTwo, String lineThree, String lineFour) {
+		sendDisplayCommand(lineOne, lineTwo, lineThree, lineFour);
+		sendErrorCodeToAllPosCons();
+	}
+
+	/**
+	 * Send Error Code to all PosCons
+	 */
+	private void sendErrorCodeToAllPosCons() {
+		List<PosControllerInstr> instructions = Lists.newArrayList(new PosControllerInstr(PosControllerInstr.POSITION_ALL,
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+			PosControllerInstr.BITENCODED_LED_BLANK,
+			PosControllerInstr.BITENCODED_LED_E,
+			PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
+			PosControllerInstr.MED_DUTYCYCLE)); // change from BRIGHT_DUTYCYCLE v6
+		sendPositionControllerInstructions(instructions);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1622,7 +1629,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				mCheStateEnum = CheStateEnum.CONTAINER_POSITION;
 			}
 		} else {
-			invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
+			setState(CheStateEnum.CHE_SETUP_ERROR);
 		}
 	}
 
