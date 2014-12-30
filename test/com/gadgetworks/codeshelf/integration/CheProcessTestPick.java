@@ -1233,12 +1233,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanOrderId("22222");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 		picker.scanOrderId("44444");
-		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 1000);
 
 		//Make sure we got an error
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+
+		//Make sure Clear Error gets us out
+		picker.scanCommand("Clear Error");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		//Reset
 		picker.logout();
@@ -1251,11 +1258,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanPosition("2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		picker.scanPosition("3");
+		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 3000);
 
 		//Make sure we got an error
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+
+		//Make sure Clear Error gets us out
+		picker.scanCommand("Clear Error");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == Byte.valueOf("22"));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		HousekeepingInjector.restoreHKDefaults();
 

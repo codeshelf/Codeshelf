@@ -33,8 +33,10 @@ public enum CheStateEnum {
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
 	// @EnumValue("NO_WORK")
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
-	// @EnumValue("LOCATION_SELECT_REVIEW)
-	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW");
+	// @EnumValue("LOCATION_SELECT_REVIEW")
+	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW"),
+	// @EnumValue("CHE_SETUP_ERROR")
+	CHE_SETUP_ERROR(CheStateNum.CHE_SETUP_ERROR, "CHE_SETUP_ERROR");
 
 	private int		mValue;
 	private String	mName;
@@ -92,6 +94,10 @@ public enum CheStateEnum {
 				result = CheStateEnum.LOCATION_SELECT_REVIEW;
 				break;
 
+			case CheStateNum.CHE_SETUP_ERROR:
+				result = CheStateEnum.CHE_SETUP_ERROR;
+				break;
+
 			default:
 				result = CheStateEnum.INVALID;
 				break;
@@ -124,6 +130,7 @@ public enum CheStateEnum {
 		static final byte	NO_WORK				= 9;
 		static final byte	SHORT_PICK_CONFIRM	= 10; // added Oct. 2014
 		static final byte	LOCATION_SELECT_REVIEW	= 11;	//Added Dec 12 2014
+		static final byte	CHE_SETUP_ERROR			= 12;	//Added Dec 29 2014
 
 		private CheStateNum() {
 		};
