@@ -35,8 +35,10 @@ public enum CheStateEnum {
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
 	// @EnumValue("LOCATION_SELECT_REVIEW")
 	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW"),
-	// @EnumValue("CHE_SETUP_ERROR")
-	CHE_SETUP_ERROR(CheStateNum.CHE_SETUP_ERROR, "CHE_SETUP_ERROR");
+	// @EnumValue("CONTAINER_POSITION_ERROR")
+	CONTAINER_POSITION_ERROR(CheStateNum.CONTAINER_POSITION_ERROR, "CONTAINER_POSITION_ERROR"),
+	// @EnumValue("CONTAINER_SELECT_ERROR")
+	CONTAINER_SELECT_ERROR(CheStateNum.CONTAINER_SELECT_ERROR, "CONTAINER_SELECT_ERROR");
 
 	private int		mValue;
 	private String	mName;
@@ -94,8 +96,12 @@ public enum CheStateEnum {
 				result = CheStateEnum.LOCATION_SELECT_REVIEW;
 				break;
 
-			case CheStateNum.CHE_SETUP_ERROR:
-				result = CheStateEnum.CHE_SETUP_ERROR;
+			case CheStateNum.CONTAINER_POSITION_ERROR:
+				result = CheStateEnum.CONTAINER_POSITION_ERROR;
+				break;
+
+			case CheStateNum.CONTAINER_SELECT_ERROR:
+				result = CheStateEnum.CONTAINER_SELECT_ERROR;
 				break;
 
 			default:
@@ -130,7 +136,8 @@ public enum CheStateEnum {
 		static final byte	NO_WORK				= 9;
 		static final byte	SHORT_PICK_CONFIRM	= 10; // added Oct. 2014
 		static final byte	LOCATION_SELECT_REVIEW	= 11;	//Added Dec 12 2014
-		static final byte	CHE_SETUP_ERROR			= 12;	//Added Dec 29 2014
+		static final byte	CONTAINER_POSITION_ERROR	= 12;	//Added Dec 29 2014
+		static final byte	CONTAINER_SELECT_ERROR		= 14;	//Addec Dec 30 2014
 
 		private CheStateNum() {
 		};

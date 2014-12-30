@@ -776,9 +776,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
 				showContainerAssainments();
 				break;
-			case CHE_SETUP_ERROR:
-
-				invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
+			case CONTAINER_POSITION_ERROR:
+				invalidScanMsg(lineOne, lineTwo, lineThree, lineFour);
 				break;
 			case SHORT_PICK_CONFIRM:
 				if (isSameState) {
@@ -1627,7 +1626,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				mCheStateEnum = CheStateEnum.CONTAINER_POSITION;
 			}
 		} else {
-			setState(CheStateEnum.CHE_SETUP_ERROR);
+			setState(CheStateEnum.CONTAINER_POSITION_ERROR);
 		}
 	}
 
