@@ -1592,6 +1592,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				Entry<String, String> entry = setIterator.next();
 				if (entry.getValue().equals(mContainerInSetup)) {
 					setIterator.remove();
+					this.clearOnePositionController(Byte.valueOf(entry.getKey()));
 					break;
 				}
 			}
