@@ -1101,6 +1101,167 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@Test
+	public void testContainerReassignmentDuringCHESetup() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		UUID facId = facility.getPersistentId();
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().beginTenantTransaction();
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+
+		this.getPersistenceService().commitTenantTransaction();
+
+		HousekeepingInjector.turnOffHK();
+
+		// Start setting up cart etc
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(facId);
+		List<Container> containers = facility.getContainers();
+		//Make sure we have 4 orders/containers
+		Assert.assertEquals(4, containers.size());
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		//Check Screens -- Everything should be clear except the one we are picking, which is #1
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == (byte) 11);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+
+		picker.setupOrderIdAsContainer("22222", "1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+
+		//Check Screens -- Everything should be clear except the one we are picking, which is #1
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == (byte) 22);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+
+
+		HousekeepingInjector.restoreHKDefaults();
+
+		this.getPersistenceService().commitTenantTransaction();
+
+	}
+
+	@Test
+	public void testCheSetupErrors() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		UUID facId = facility.getPersistentId();
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().beginTenantTransaction();
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+
+		this.getPersistenceService().commitTenantTransaction();
+
+		HousekeepingInjector.turnOffHK();
+
+		// Start setting up cart etc
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(facId);
+		List<Container> containers = facility.getContainers();
+		//Make sure we have 4 orders/containers
+		Assert.assertEquals(4, containers.size());
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+
+		//Scan 2 containers in a row
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.scanOrderId("22222");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		picker.scanOrderId("44444");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+
+		//Make sure we got an error
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+
+		//Reset
+		picker.logout();
+		picker.login("Picker #1");
+
+		//Scan 2 positions in a row
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.scanOrderId("22222");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+		picker.scanPosition("2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		picker.scanPosition("3");
+
+		//Make sure we got an error
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+
+		HousekeepingInjector.restoreHKDefaults();
+
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
 	private void assertWIColor(WorkInstruction wi, Che che) {
 		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
 		Assert.assertEquals(1, cmdGroups.size());
