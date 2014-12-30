@@ -7,9 +7,10 @@ import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import javassist.NotFoundException;
+
 import javax.persistence.Transient;
 
-import javassist.NotFoundException;
 import lombok.Getter;
 import lombok.Setter;
 

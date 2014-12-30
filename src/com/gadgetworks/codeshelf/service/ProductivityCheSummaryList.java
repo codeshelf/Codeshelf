@@ -4,14 +4,14 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.UUID;
 
+import lombok.Getter;
+
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-
-import lombok.Getter;
 
 
 public class ProductivityCheSummaryList extends BaseResponse{
