@@ -274,7 +274,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 		byte[] salt = generateSalt();
 		int hashIterations = PBKDF2_ITERATIONS;
 		String passwordOut = hashPassword(password, salt, PBKDF2_ITERATIONS);
-		String sql = "UPDATE "+schemaName+".\"user\"" +
+		String sql = "UPDATE "+schemaName+".\"users\"" +
 				" SET " +
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
 				" WHERE parent_persistentid = (Select persistentid from "+schemaName+".organization where domainId = '" + organizationName + "') AND domainId = '" + email + "';";

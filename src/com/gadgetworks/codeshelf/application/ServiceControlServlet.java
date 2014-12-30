@@ -48,11 +48,11 @@ public class ServiceControlServlet extends HttpServlet {
                 
         PrintWriter out = resp.getWriter();
         out.println("<html><head><title>service control</title></head><body><h4>service control</h4>");
-        
+
         out.println("<form name=stop action='#' method=post><input type=hidden name='action' value='stop' /></form>");
         out.println("<form name=dropschema action='#' method=post><input type=hidden name='action' value='dropschema' /></form>");
         out.println("<form name=deleteorderswis action='#' method=post><input type=hidden name='action' value='deleteorderswis' /></form>");
-        
+
         String action = req.getParameter("action");
         if(action!=null) {
             if(action.equals("stop")) {

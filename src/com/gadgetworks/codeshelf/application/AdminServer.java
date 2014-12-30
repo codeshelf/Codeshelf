@@ -58,6 +58,7 @@ public class AdminServer {
 				context.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
 			} else {
 				// only for app server
+				context.addServlet(new ServletHolder(new UsersServlet()),"/users");
 				
 				// REST API for UI
 				ServletHolder sh = new ServletHolder(ServletContainer.class);
