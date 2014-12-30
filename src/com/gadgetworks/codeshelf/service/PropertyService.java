@@ -1,13 +1,10 @@
 package com.gadgetworks.codeshelf.service;
 
-import junit.framework.Assert;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 
 public class PropertyService implements IApiService {
