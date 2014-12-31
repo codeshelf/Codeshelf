@@ -61,6 +61,10 @@ public class PropertyService implements IApiService {
 		String propertyName = inProperty.getName();
 		if (propertyName.equals(DomainObjectProperty.BAYCHANG) || propertyName.equals(DomainObjectProperty.RPEATPOS))
 			HousekeepingInjector.setValuesFromConfigs();		
+		else if (propertyName.equals(DomainObjectProperty.LIGHTSEC) || propertyName.equals(DomainObjectProperty.LIGHTCLR)){
+			// find the LightService. How? LightService.setValuesFromConfigs();
+			LOGGER.error("updateWhereNeeded() needs to find the LightService to set these local values.");
+		}
 	}
 	
 	/**

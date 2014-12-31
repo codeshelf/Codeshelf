@@ -1969,11 +1969,6 @@ public class Facility extends Location {
 		return users;
 	}
 
-	// TO come from configuration
-	public ColorEnum getDiagnosticColor() {
-		return ColorEnum.RED;
-	}
-
 	public static class Work {
 		@Getter
 		private OrderDetail		outboundOrderDetail;

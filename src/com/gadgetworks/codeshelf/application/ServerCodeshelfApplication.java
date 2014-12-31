@@ -124,10 +124,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
 		MetricsService.registerHealthCheck(dbxCheck);
-
-		// fix for multi-tenancy. Not here on application start. Rather, each facility running on this server  will have its own HousekeepingInjector object
-		HousekeepingInjector.setValuesFromConfigs();
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -162,5 +158,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			LOGGER.error("unable to create demo organization", e);
 			throw e;
 		}
+		
+		// This is called after startup. Trying to let the config parameter be read to set our services.
+		// Must do within a transaction.
+		// fix for multi-tenancy. Each facility running on this server will have its own HousekeepingInjector object. So do this when adding a facility.
+		this.getPersistenceService().beginTenantTransaction();
+		HousekeepingInjector.setValuesFromConfigs(); // static call. Wrong for multi-tenancy
+		// find the LightService  LightService.setValuesFromConfigs();
+		this.getPersistenceService().commitTenantTransaction();
+
 	}
 }
