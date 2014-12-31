@@ -9,6 +9,8 @@ import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WiFactory;
@@ -22,6 +24,8 @@ import com.gadgetworks.codeshelf.service.ProductivitySummaryList.GroupSummary;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {
+	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
+	
 	@Test
 	public void testProductivitySummary() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
@@ -106,6 +110,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 		//Verify runs
 		RunSummary run1 = cheRuns.get("2014-12-22 15:46:00.0");
 		RunSummary run2 = cheRuns.get("2014-12-23 11:40:20.0");
+		
+		for(String cheRunTime : cheRuns.keySet()) {
+			RunSummary rs = cheRuns.get(cheRunTime);
+			LOGGER.info("run at "+cheRunTime+" - "+rs.getInvalid()+"/"+rs.getNew()+"/"+rs.getInprogress()+"/"+rs.getShort()+"/"+rs.getComplete()+"/"+rs.getRevert());
+		}
+		
 		testRunSummary(run1, 1, 0, 0, 0, 1, 0);
 		testRunSummary(run2, 0, 2, 1, 0, 0, 0);
 		this.getPersistenceService().commitTenantTransaction();
