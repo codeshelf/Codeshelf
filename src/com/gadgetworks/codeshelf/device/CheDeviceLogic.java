@@ -97,13 +97,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	LOGOUT_COMMAND							= "LOGOUT";
 	private static final String	YES_COMMAND								= "YES";
 	private static final String	NO_COMMAND								= "NO";
+	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR ERROR";
 
 	private static final Integer				maxCountForPositionControllerDisplay	= 99;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
-	private CheStateEnum			mCheStateEnum;
+	private CheStateEnum						mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
