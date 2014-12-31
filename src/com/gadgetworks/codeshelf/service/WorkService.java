@@ -312,7 +312,7 @@ public class WorkService implements IApiService {
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");
 			String queryStr = String.format("" + 
-					"SELECT dur.order_group AS group, 3600 / EXTRACT('epoch' FROM avg(dur.duration)) AS picksPerHour\n" + 
+					"SELECT dur.order_group AS group, 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) AS picksPerHour\n" + 
 					"FROM \n" + 
 					"	(\n" + 
 					"		SELECT group_and_sort_code,\n" + 
