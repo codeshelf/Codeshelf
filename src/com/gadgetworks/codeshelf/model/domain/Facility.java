@@ -65,7 +65,6 @@ import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -1097,7 +1096,8 @@ public class Facility extends Location {
 		Location cheLocation = null;
 		cheLocation = findSubLocationById(inScannedLocationId);
 		if (cheLocation == null) {
-			LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
+			LOGGER.warn("Unknown CHE scan location={}; This may due to a misconfigured site or bad barcode at the facility.",
+				inScannedLocationId);
 			return null;
 		}
 
