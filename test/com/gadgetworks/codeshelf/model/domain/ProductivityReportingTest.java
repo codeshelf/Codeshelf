@@ -108,8 +108,8 @@ public class ProductivityReportingTest extends DomainTestABC {
 		HashMap<String, RunSummary> cheRuns = new ArrayList<>(ches.values()).get(0);
 		Assert.assertEquals(cheRuns.size(), 2);
 		//Verify runs
-		RunSummary run1 = cheRuns.get("2014-12-22 15:46:00.0");
-		RunSummary run2 = cheRuns.get("2014-12-23 11:40:20.0");
+		RunSummary run1 = cheRuns.get("2014-12-22 23:46:00.000+0000");
+		RunSummary run2 = cheRuns.get("2014-12-23 19:40:20.000+0000");
 		
 		for(String cheRunTime : cheRuns.keySet()) {
 			RunSummary rs = cheRuns.get(cheRunTime);
