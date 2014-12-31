@@ -35,10 +35,14 @@ public enum CheStateEnum {
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
 	// @EnumValue("LOCATION_SELECT_REVIEW")
 	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW"),
-	// @EnumValue("CONTAINER_POSITION_ERROR")
-	CONTAINER_POSITION_ERROR(CheStateNum.CONTAINER_POSITION_ERROR, "CONTAINER_POSITION_ERROR"),
-	// @EnumValue("CONTAINER_SELECT_ERROR")
-	CONTAINER_SELECT_ERROR(CheStateNum.CONTAINER_SELECT_ERROR, "CONTAINER_SELECT_ERROR");
+	// @EnumValue("CONTAINER_POSITION_INVALID")
+	CONTAINER_POSITION_INVALID(CheStateNum.CONTAINER_POSITION_INVALID, "CONTAINER_POSITION_INVALID"),
+	// @EnumValue("CONTAINER_SELECTION_INVALID")
+	CONTAINER_SELECTION_INVALID(CheStateNum.CONTAINER_SELECTION_INVALID, "CONTAINER_SELECTION_INVALID"),
+	// @EnumValue("CONTAINER_POSITION_IN_USE")
+	CONTAINER_POSITION_IN_USE(CheStateNum.CONTAINER_POSITION_IN_USE, "CONTAINER_POSITION_IN_USE"),
+	// @EnumValue("CLEAR_ERROR_SCAN_INVALID")
+	CLEAR_ERROR_SCAN_INVALID(CheStateNum.CLEAR_ERROR_SCAN_INVALID, "CLEAR_ERROR_SCAN_INVALID");
 
 	private int		mValue;
 	private String	mName;
@@ -96,12 +100,16 @@ public enum CheStateEnum {
 				result = CheStateEnum.LOCATION_SELECT_REVIEW;
 				break;
 
-			case CheStateNum.CONTAINER_POSITION_ERROR:
-				result = CheStateEnum.CONTAINER_POSITION_ERROR;
+			case CheStateNum.CONTAINER_POSITION_INVALID:
+				result = CheStateEnum.CONTAINER_POSITION_INVALID;
 				break;
 
-			case CheStateNum.CONTAINER_SELECT_ERROR:
-				result = CheStateEnum.CONTAINER_SELECT_ERROR;
+			case CheStateNum.CONTAINER_SELECTION_INVALID:
+				result = CheStateEnum.CONTAINER_SELECTION_INVALID;
+				break;
+				
+			case CheStateNum.CLEAR_ERROR_SCAN_INVALID:
+				result = CheStateEnum.CLEAR_ERROR_SCAN_INVALID;
 				break;
 
 			default:
@@ -123,21 +131,25 @@ public enum CheStateEnum {
 
 	final static class CheStateNum {
 
-		static final byte	INVALID				= -1;
-		static final byte	IDLE				= 0;
-		static final byte	COMPUTE_WORK		= 1;
-		static final byte	GET_WORK			= 2;
-		static final byte	LOCATION_SELECT		= 3;
-		static final byte	CONTAINER_SELECT	= 4;
-		static final byte	CONTAINER_POSITION	= 5;
-		static final byte	DO_PICK				= 6;
-		static final byte	SHORT_PICK			= 7;
-		static final byte	PICK_COMPLETE		= 8;
-		static final byte	NO_WORK				= 9;
-		static final byte	SHORT_PICK_CONFIRM	= 10; // added Oct. 2014
-		static final byte	LOCATION_SELECT_REVIEW	= 11;	//Added Dec 12 2014
-		static final byte	CONTAINER_POSITION_ERROR	= 12;	//Added Dec 29 2014
-		static final byte	CONTAINER_SELECT_ERROR		= 14;	//Addec Dec 30 2014
+		static final byte	INVALID							= -1;
+		static final byte	IDLE							= 0;
+		static final byte	COMPUTE_WORK					= 1;
+		static final byte	GET_WORK						= 2;
+		static final byte	LOCATION_SELECT					= 3;
+		static final byte	CONTAINER_SELECT				= 4;
+		static final byte	CONTAINER_POSITION				= 5;
+		static final byte	DO_PICK							= 6;
+		static final byte	SHORT_PICK						= 7;
+		static final byte	PICK_COMPLETE					= 8;
+		static final byte	NO_WORK							= 9;
+		static final byte	SHORT_PICK_CONFIRM				= 10;	//Added Oct. 2014
+		static final byte	LOCATION_SELECT_REVIEW			= 11;	//Added Dec 12 2014
+
+		//Error States
+		static final byte	CONTAINER_POSITION_INVALID		= 12;	//Added Dec 29 2014
+		static final byte	CONTAINER_SELECTION_INVALID		= 14;	//Addec Dec 30 2014
+		static final byte	CONTAINER_POSITION_IN_USE		= 15;	//Added Dec 30 2014
+		static final byte	CLEAR_ERROR_SCAN_INVALID	= 16;	//Added Dec 30 2014
 
 		private CheStateNum() {
 		};

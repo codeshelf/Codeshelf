@@ -1224,7 +1224,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanOrderId("22222");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 		picker.scanOrderId("44444");
-		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 1000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 1000);
 
 		//Make sure we got an error
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
@@ -1249,7 +1249,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanPosition("2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		picker.scanPosition("3");
-		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 3000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, 3000);
 
 		//Make sure we got an error
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
@@ -1268,7 +1268,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanOrderId("22222");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
 		picker.scanPosition("1");
-		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 3000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_IN_USE, 3000);
 
 		//Make sure we got an error
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
@@ -1287,7 +1287,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanOrderId("22222");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.CHE_SETUP_ERROR, 3000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
 
 		//Make sure we got an error
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
