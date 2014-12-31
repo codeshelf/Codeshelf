@@ -334,7 +334,7 @@ public class WiFactory {
 			return;
 		}
 		if (inLocation instanceof Facility) {
-			LOGGER.error("inappropriate call to  setOutboundWorkInstructionLedPatternFromInventoryItem");
+			LOGGER.error("inappropriate call to setOutboundWorkInstructionLedPatternFromInventoryItem (location is Facility)");
 			return;
 		}
 

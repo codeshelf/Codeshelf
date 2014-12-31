@@ -491,15 +491,15 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		OrderDetail result = new OrderDetail();
 		result.setDomainId(inItemMaster.getItemId());
-		result.setParent(inOrderHeader);
 		result.setItemMaster(inItemMaster);
 		result.setQuantities(5);
 		result.setUomMaster(inItemMaster.getStandardUom());
 		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mOrderDetailDao.store(result);
+		
 		inOrderHeader.addOrderDetail(result);
+		mOrderDetailDao.store(result);
 
 		return result;
 	}
