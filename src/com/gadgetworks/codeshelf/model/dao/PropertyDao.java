@@ -41,6 +41,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return propertyDefault;
 	}
 
+	/**
+	 * No known use case for this. A DomainObjectProperty delete might be used to "restore to default". Should not need a DAO override for that purpose.
+	 */
 	public void delete(DomainObjectPropertyDefault propertyDefault) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
 		session.delete(propertyDefault);
@@ -67,6 +70,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return propertyDefault;
 	}
 	
+	/**
+	 * Gets the specific objects in the database for the parent domain objects. No known use case for this.
+	 */
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getProperties(IDomainObject object) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
@@ -78,6 +84,10 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return props;
 	}
 
+	/**
+	 * This is the most useful API. Gets the few in the database, usually for the facility, and creates missing ones to match the defaults. Does not save the new ones. 
+	 * New ones have persistentIds, but they are not meaningful.
+	 */
 	public List<DomainObjectProperty> getPropertiesWithDefaults(IDomainObject object) {
 		// get object properties and types
         List<DomainObjectProperty> configs = getProperties(object);
@@ -108,6 +118,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return prop;
 	}
 	
+	/**
+	 * Gets the specific objects in the database, for all parent domain objects. No known use case for this.
+	 */
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getAllProperties() {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
@@ -117,6 +130,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return props;
 	}
 
+	/**
+	 * Get object if it exists. Often it will not.
+	 */
 	public DomainObjectProperty getProperty(IDomainObject object, String name) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
 		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
@@ -128,6 +144,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		return prop;
 	}
 
+	/**
+	 * Get object if it exists. Otherwise create one from the default. Not saved in this routine.
+	 */
 	public DomainObjectProperty getOrCreateProperty(IDomainObject object, String name) {
         DomainObjectProperty prop = getProperty(object, name);
         if (prop != null)
