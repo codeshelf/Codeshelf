@@ -642,10 +642,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		// A command scan is always an option at any state.
+		// Command scans actions are determined by the scan content (the command issued) then state because they are more likely to be state independent
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
 		} else {
+			//Other scans are split out by state then the scan content
 			switch (mCheStateEnum) {
 				case IDLE:
 					processIdleStateScan(scanPrefixStr, scanStr);
@@ -668,6 +669,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				case CONTAINER_POSITION:
 					// The only thing that makes sense in this state is a position assignment (or a logout covered above).
 					processContainerPosition(scanPrefixStr, scanStr);
+					break;
+
+				//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+				case CONTAINER_POSITION_IN_USE:
+				case CONTAINER_POSITION_INVALID:
+				case CONTAINER_SELECTION_INVALID:
+				case CLEAR_ERROR_SCAN_INVALID:
+					setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
 					break;
 
 				case DO_PICK:
@@ -893,35 +902,43 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		sendPositionControllerInstructions(instructions);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
+	// 
+	/** Command scans are split out by command then state because they are more likely to be state independent
 	 */
 	private void processCommandScan(final String inScanStr) {
 
 		switch (inScanStr) {
+			
 			case LOGOUT_COMMAND:
+				//You can logout at any time
 				logout();
 				break;
 
 			case SETUP_COMMAND:
-				setupChe();
+				setupCommandReceived();
 				break;
 
 			case STARTWORK_COMMAND:
-				startWork();
+				startWorkCommandReceived();
 				break;
 
 			case SHORT_COMMAND:
 				//Do not clear position controllers here
-				shortPick();
+				shortPickCommandReceived();
 				break;
 
 			case YES_COMMAND:
 			case NO_COMMAND:
-				processYesOrNoCommand(inScanStr);
+				yesOrNoCommandReceived(inScanStr);
+				break;
+
+			case CLEAR_ERROR_COMMAND:
+				clearErrorCommandReceived();
 				break;
 
 			default:
+
+				//Legacy Behavior
 				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
 					clearAllPositionControllers();
 				}
@@ -935,6 +952,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void logout() {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
+		mContainerToWorkInstructionCountMap = null;
 		mPosToLastSetIntrMap.clear();
 		mPositionToContainerMap.clear();
 		mContainerInSetup = "";
@@ -946,22 +964,100 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		clearAllPositionControllers();
 	}
 
-	// --------------------------------------------------------------------------
+
 	/**
-	 * The user scanned the SETUP command to start a new batch of containers for the CHE.
+	 * Setup the CHE by clearing all the datastructures
 	 */
 	private void setupChe() {
-		LOGGER.info("Setup work");
+		clearAllPositionControllers();
+		mContainerToWorkInstructionCountMap = null;
+		mPosToLastSetIntrMap.clear();
+		mPositionToContainerMap.clear();
+		mContainerInSetup = "";
+		setState(CheStateEnum.CONTAINER_SELECT);
+	}
 
-		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
-			clearAllPositionControllers();
-			mPosToLastSetIntrMap.clear();
-			mPositionToContainerMap.clear();
-			mContainerInSetup = "";
-			setState(CheStateEnum.CONTAINER_SELECT);
-		} else {
-			// Stay in the same state - the scan made no sense.
-			invalidScanMsg(mCheStateEnum);
+	private void setupCommandReceived() {
+		//TODO Why not be able to redo the setup by scanning setup from any state?
+
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+			case PICK_COMPLETE:
+			case NO_WORK:
+				//Setup the CHE
+				setupChe();
+				break;
+
+			//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case CLEAR_ERROR_SCAN_INVALID:
+				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, SETUP_COMMAND);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, SETUP_COMMAND);
+				break;
+
+			default:
+				// Stay in the same state - the scan made no sense.
+				invalidScanMsg(mCheStateEnum);
+				break;
+
+		}
+	}
+
+	private void clearErrorCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+		//Clear the error
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+
+			case CLEAR_ERROR_SCAN_INVALID:
+				//In the future we may need to figure out which state we need to go back to
+				//after a clear error scan -- for now we only ever need to go to container select
+				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+
+			default:
+				//Do nothing
+				break;
+
+		}
+	}
+
+	private void startWorkCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case CLEAR_ERROR_SCAN_INVALID:
+				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+
+			//Anywhere else we can start work if there's anything setup
+			default:
+				if (mPositionToContainerMap.values().size() > 0) {
+					startWork();
+				} else {
+					setState(CheStateEnum.NO_CONTAINERS_SETUP);
+				}
+				break;
+
 		}
 	}
 
@@ -972,34 +1068,45 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void startWork() {
 		clearAllPositionControllers();
-		if (mPositionToContainerMap.values().size() > 0) {
-			mContainerInSetup = "";
-			List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
-			mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
-
-			setState(CheStateEnum.COMPUTE_WORK);
-		} else {
-			// Stay in the same state - the scan made no sense.
-			sendDisplayCommand(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG);
-		}
+		mContainerInSetup = "";
+		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
+		setState(CheStateEnum.COMPUTE_WORK);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * The user scanned the SHORT_PICK command to tell us there is no product to pick.
 	 */
-	private void shortPick() {
-		if (mActivePickWiList.size() > 0) {
-			// short scan of housekeeping work instruction makes no sense
-			WorkInstruction wi = mActivePickWiList.get(0);
-			if (wi.amIHouseKeepingWi())
-				invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
-			else
-				setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
-		} else {
-			// Stay in the same state - the scan made no sense.
-			invalidScanMsg(mCheStateEnum);
+	private void shortPickCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case CLEAR_ERROR_SCAN_INVALID:
+				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+
+			//Anywhere else we can start work if there's anything setup
+			default:
+				if (mActivePickWiList.size() > 0) {
+					// short scan of housekeeping work instruction makes no sense
+					WorkInstruction wi = mActivePickWiList.get(0);
+					if (wi.amIHouseKeepingWi())
+						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
+					else
+						setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
+				} else {
+					// Stay in the same state - the scan made no sense.
+					invalidScanMsg(mCheStateEnum);
+				}
+				break;
+
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1007,8 +1114,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * The user scanned YES or NO.
 	 * @param inScanStr
 	 */
-	private void processYesOrNoCommand(final String inScanStr) {
+	private void yesOrNoCommandReceived(final String inScanStr) {
+
 		switch (mCheStateEnum) {
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case CLEAR_ERROR_SCAN_INVALID:
+				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+
 			case SHORT_PICK_CONFIRM:
 				confirmShortPick(inScanStr);
 				break;

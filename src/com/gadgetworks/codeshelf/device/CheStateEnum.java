@@ -112,6 +112,10 @@ public enum CheStateEnum {
 				result = CheStateEnum.CLEAR_ERROR_SCAN_INVALID;
 				break;
 
+			case CheStateNum.CONTAINER_POSITION_IN_USE:
+				result = CheStateEnum.CONTAINER_POSITION_IN_USE;
+				break;
+
 			default:
 				result = CheStateEnum.INVALID;
 				break;
@@ -146,9 +150,12 @@ public enum CheStateEnum {
 		static final byte	LOCATION_SELECT_REVIEW			= 11;	//Added Dec 12 2014
 
 		//Error States
+
+		//Container Setup Error States
 		static final byte	CONTAINER_POSITION_INVALID		= 12;	//Added Dec 29 2014
 		static final byte	CONTAINER_SELECTION_INVALID		= 14;	//Addec Dec 30 2014
 		static final byte	CONTAINER_POSITION_IN_USE		= 15;	//Added Dec 30 2014
+		
 		static final byte	CLEAR_ERROR_SCAN_INVALID	= 16;	//Added Dec 30 2014
 
 		private CheStateNum() {
