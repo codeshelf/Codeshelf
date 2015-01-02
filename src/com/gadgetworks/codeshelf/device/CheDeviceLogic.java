@@ -675,6 +675,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				case CONTAINER_POSITION_IN_USE:
 				case CONTAINER_POSITION_INVALID:
 				case CONTAINER_SELECTION_INVALID:
+				case NO_CONTAINERS_SETUP:
 				case CLEAR_ERROR_SCAN_INVALID:
 					setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
 					break;
@@ -804,6 +805,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				break;
 
+			case NO_CONTAINERS_SETUP:
+				invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				break;
+
 			case SHORT_PICK_CONFIRM:
 				if (isSameState) {
 					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
@@ -894,9 +899,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void sendErrorCodeToAllPosCons() {
 		List<PosControllerInstr> instructions = Lists.newArrayList(new PosControllerInstr(PosControllerInstr.POSITION_ALL,
-			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-			PosControllerInstr.BITENCODED_LED_BLANK,
-			PosControllerInstr.BITENCODED_LED_E,
+			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.ERROR_CODE_QTY,
 			PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
 			PosControllerInstr.MED_DUTYCYCLE)); // change from BRIGHT_DUTYCYCLE v6
 		sendPositionControllerInstructions(instructions);
@@ -993,6 +998,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
 			case CLEAR_ERROR_SCAN_INVALID:
 				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
 				break;
@@ -1021,13 +1027,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				clearAllPositionControllers();
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 
 			case CLEAR_ERROR_SCAN_INVALID:
+				clearAllPositionControllers();
 				//In the future we may need to figure out which state we need to go back to
 				//after a clear error scan -- for now we only ever need to go to container select
 				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, CLEAR_ERROR_COMMAND);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, CLEAR_ERROR_COMMAND);
 				break;
 
 			default:
@@ -1045,8 +1062,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
 			case CLEAR_ERROR_SCAN_INVALID:
 				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+				
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, STARTWORK_COMMAND);
 				break;
 
 			//Anywhere else we can start work if there's anything setup
@@ -1086,8 +1112,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
 			case CLEAR_ERROR_SCAN_INVALID:
 				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, SHORT_COMMAND);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, SHORT_COMMAND);
 				break;
 
 			//Anywhere else we can start work if there's anything setup
@@ -1121,8 +1156,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
 			case CLEAR_ERROR_SCAN_INVALID:
 				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, inScanStr);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, inScanStr);
 				break;
 
 			case SHORT_PICK_CONFIRM:
