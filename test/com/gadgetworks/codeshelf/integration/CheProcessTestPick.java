@@ -730,7 +730,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.login("Picker #1");
 
 		LOGGER.info("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
-		picker.setup();
+
 		picker.setupContainer("12345", "1");
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap. 

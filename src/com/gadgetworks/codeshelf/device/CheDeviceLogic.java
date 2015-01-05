@@ -1071,11 +1071,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
 				break;
 
-			case CONTAINER_SELECT:
-				processContainerSelectScan(COMMAND_PREFIX, STARTWORK_COMMAND);
-				break;
-
 			//Anywhere else we can start work if there's anything setup
+			case CONTAINER_SELECT:
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {
 					startWork();
