@@ -64,7 +64,12 @@ public class TestingResource {
 			long order1 = new Date().getTime() / 1000;
 			long order2 = order1 + 1;
 			createOrders(facility, order1, order2);
+			persistence.commitTenantTransaction();
 			
+			System.out.println("Orders created");
+			Thread.sleep(6000);
+			
+			persistence.beginTenantTransaction();
 			List<Che> ches = Che.DAO.getAll();
 			if (ches == null || ches.isEmpty()){
 				errors.addError("Ensure that facility " + facilityUUID.getRawValue() + " has, at least, one che");
@@ -74,9 +79,12 @@ public class TestingResource {
 			List<String> containers = new ArrayList<String>();
 			containers.add(order1 + "");
 			containers.add(order2 + "");
+			facility = Facility.DAO.findByPersistentId(facilityUUID.getUUID());
 			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, containers);
 			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTenantTransaction();
+			System.out.println("Assigned to CHE");
+			
 			int i = 0;
 			for(WorkInstruction instruction : instructions) {
 				persistence.beginTenantTransaction();
@@ -92,6 +100,7 @@ public class TestingResource {
 					detail.setStatus(OrderStatusEnum.COMPLETE);
 				}
 				OrderDetail.DAO.store(detail);
+				WorkInstruction.DAO.store(instruction);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
 				persistence.commitTenantTransaction();
