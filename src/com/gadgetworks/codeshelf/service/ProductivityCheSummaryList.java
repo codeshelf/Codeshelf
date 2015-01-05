@@ -1,7 +1,9 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.TimeZone;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -15,6 +17,8 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 
 public class ProductivityCheSummaryList extends BaseResponse{
+	public final static TimeZone timeZone = TimeZone.getTimeZone("UTC");
+	public final static String timeFormat = "yyyy-MM-dd HH:mm:ss.SSSZ";
 	
 	//Groups->Ches->Runs
 	@Getter
@@ -62,7 +66,16 @@ public class ProductivityCheSummaryList extends BaseResponse{
 		
 		//Get the correct run
 		Timestamp time = instruction.getAssigned();
-		String timeStr = time==null?"":time.toString();
+
+		String timeStr;
+		if(time == null) {
+			timeStr = "";
+		} else {
+			SimpleDateFormat df = new SimpleDateFormat(ProductivityCheSummaryList.timeFormat);
+			df.setTimeZone(ProductivityCheSummaryList.timeZone);
+			timeStr = df.format(time);
+		}
+		
 		RunSummary summary = cheRuns.get(timeStr);
 		if (summary == null) {
 			summary = new RunSummary(groupId, groupDomainId, cheId.toString(), che.getDomainId());

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 
@@ -27,85 +28,95 @@ import com.google.inject.Inject;
 @Table(name = "property")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DomainObjectProperty extends DomainObjectABC implements IDomainObject {
-	
-	private static final Logger				LOGGER							= LoggerFactory.getLogger(DomainObjectProperty.class);
+
+	private static final Logger						LOGGER		= LoggerFactory.getLogger(DomainObjectProperty.class);
 
 	@Inject
-	public static ITypedDao<DomainObjectProperty> DAO = PropertyDao.getInstance();
+	public static ITypedDao<DomainObjectProperty>	DAO			= PropertyDao.getInstance();
 
 	@Getter
 	@NonNull
 	@Column(name = "objectid", nullable = false)
-	@Type(type="com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
-	private UUID objectId = null;
-	
+	@Type(type = "com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
+	private UUID									objectId	= null;
+
 	@Getter
-	@Column(length=120, nullable=false)
-	String value;
-	
-	@Getter @Setter
-	@ManyToOne(fetch=FetchType.EAGER,optional=false)
+	@Column(length = 120, nullable = false)
+	String											value;
+
+	@Getter
+	@Setter
+	@ManyToOne(fetch = FetchType.EAGER, optional = false)
 	@JoinColumn(name = "property_default_persistentid")
-	DomainObjectPropertyDefault propertyDefault;
-	
+	DomainObjectPropertyDefault						propertyDefault;
+
+	// These match contents in liquidbase change .xml files
+	public final static String						BAYCHANG	= "BAYCHANG";
+	public final static String						RPEATPOS	= "RPEATPOS";
+	public final static String						WORKSEQR	= "WORKSEQR";
+	public final static String						LIGHTSEC	= "LIGHTSEC";
+	public final static String						LIGHTCLR	= "LIGHTCLR";
+	public final static String						CROSSBCH	= "CROSSBCH";
+	public final static String						AUTOSHRT	= "AUTOSHRT";
+
 	public DomainObjectProperty() {
 	}
-	
+
 	public DomainObjectProperty(IDomainObject object, DomainObjectPropertyDefault propertyDefault) {
 		this.setDomainId(propertyDefault.getName());
 		this.propertyDefault = propertyDefault;
 		this.objectId = object.getPersistentId();
 	}
-	
+
 	public DomainObjectProperty(IDomainObject object, DomainObjectPropertyDefault type, String value) {
-		this(object,type);
+		this(object, type);
 		this.value = value;
 	}
-	
+
 	public DomainObjectProperty setValue(String stringValue) {
 		this.value = stringValue;
 		return this;
 	}
-	
+
 	public DomainObjectProperty setValue(int intValue) {
 		this.value = Integer.toString(intValue);
 		return this;
 	}
-	
+
 	public DomainObjectProperty setValue(double doubleValue) {
 		this.value = Double.toString(doubleValue);
 		return this;
 	}
-	
+
 	public DomainObjectProperty setValue(boolean boolValue) {
 		this.value = Boolean.toString(boolValue);
 		return this;
 	}
-	
-	public int getIntValue() {		
-		if (this.value==null) {
+
+	public int getIntValue() {
+		if (this.value == null) {
 			return Integer.parseInt(getDefaultValue());
 		}
 		return Integer.parseInt(this.value);
 	}
-	
-	public double getDoubleValue() {		
-		if (this.value==null) {
+
+	public double getDoubleValue() {
+		if (this.value == null) {
 			return Double.parseDouble(getDefaultValue());
 		}
 		return Double.parseDouble(this.value);
 	}
-		
-	public boolean getBooleanValue() {		
-		if (this.value==null) {
+
+	public boolean getBooleanValue() {
+		if (this.value == null) {
 			return Boolean.parseBoolean(getDefaultValue());
 		}
 		return Boolean.parseBoolean(this.value);
 	}
-		
+
 	// convenience function to get the property name via default/type object
 	public String getName() {
-		if (propertyDefault==null) {
+		if (propertyDefault == null) {
 			return null;
 		}
 		return propertyDefault.getName();
@@ -113,7 +124,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 
 	// convenience function
 	public String getDescription() {
-		if (propertyDefault==null) {
+		if (propertyDefault == null) {
 			return null;
 		}
 		return propertyDefault.getDescription();
@@ -121,7 +132,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 
 	// convenience function
 	public String getObjectType() {
-		if (propertyDefault==null) {
+		if (propertyDefault == null) {
 			return null;
 		}
 		return propertyDefault.getObjectType();
@@ -129,7 +140,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 
 	// convenience function to get the default value via default/type object
 	public String getDefaultValue() {
-		if (propertyDefault==null) {
+		if (propertyDefault == null) {
 			return null;
 		}
 		return propertyDefault.getDefaultValue();
@@ -139,44 +150,43 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public String getDefaultDomainIdPrefix() {
 		return "PROP";
 	}
-	
+
 	@Override
 	public Facility getFacility() {
 		throw new RuntimeException("Not Supported");
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public ITypedDao<DomainObjectProperty> getDao() {
 		return DomainObjectProperty.DAO;
 	}
-	
-	
+
 	/**
 	 * Converts things like "baychange" to "BayChange".
 	 * Return null if there is no likely match.
 	 */
-	private String validInputValues() {
+	public String validInputValues() {
 		// Find out which one we are
 		String myName = this.getName();
-		if (myName.equals("BAYCHANG"))
+		if (myName.equals(BAYCHANG))
 			return "None, BayChange, BayChangeExceptAcrossAisle, PathSegmentChange";
-		else if (myName.equals("RPEATPOS"))
+		else if (myName.equals(RPEATPOS))
 			return "None, ContainerOnly, ContainerAndCount";
-		else if (myName.equals("WORKSEQR"))
+		else if (myName.equals(WORKSEQR))
 			return "BayDistance";
-		else if (myName.equals("LIGHTSEC"))
-			return "number between 2 and 30"; 
-		else if (myName.equals("LIGHTCLR"))
+		else if (myName.equals(LIGHTSEC))
+			return "number between 2 and 30";
+		else if (myName.equals(LIGHTCLR))
 			return "Red, Green, Blue, Cyan, Orange, Magenta, White";
-		else if (myName.equals("CROSSBCH"))
+		else if (myName.equals(CROSSBCH))
 			return "true, false";
-		else if (myName.equals("AUTOSHRT"))
+		else if (myName.equals(AUTOSHRT))
 			return "true, false";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
-		
+
 		return null;
 	}
 
@@ -192,27 +202,27 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return null;
 		// Find out which one we are
 		String myName = this.getName();
-		if (myName.equals("BAYCHANG"))
+		if (myName.equals(BAYCHANG))
 			return validate_baychang(trimmedValue);
-		else if (myName.equals("RPEATPOS"))
+		else if (myName.equals(RPEATPOS))
 			return validate_rpeatpos(trimmedValue);
-		else if (myName.equals("WORKSEQR"))
+		else if (myName.equals(WORKSEQR))
 			return validate_workseqr(trimmedValue);
-		else if (myName.equals("LIGHTSEC"))
+		else if (myName.equals(LIGHTSEC))
 			return validate_integer_in(trimmedValue, 2, 30); // mininum 2, max 30
-		else if (myName.equals("LIGHTCLR"))
+		else if (myName.equals(LIGHTCLR))
 			return validate_color_not_black(trimmedValue);
-		else if (myName.equals("CROSSBCH"))
+		else if (myName.equals(CROSSBCH))
 			return validate_boolean(trimmedValue);
-		else if (myName.equals("AUTOSHRT"))
+		else if (myName.equals(AUTOSHRT))
 			return validate_boolean(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
 		}
-		
+
 		return null;
 	}
-	
+
 	private String validate_baychang(String inValue) {
 		// valid values are "None, BayChange, BayChangeExceptAcrossAisle, PathSegmentChange"
 		final String noneStr = "None";
@@ -228,10 +238,10 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return aisleStr;
 		else if (returnStr.equalsIgnoreCase(pathStr))
 			return pathStr;
-		else 
+		else
 			return null;
 	}
-	
+
 	private String validate_rpeatpos(String inValue) {
 		// valid values"
 		final String noneStr = "None";
@@ -244,19 +254,19 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return cntrStr;
 		else if (returnStr.equalsIgnoreCase(countStr))
 			return countStr;
-		else 
+		else
 			return null;
 	}
 
 	private String validate_workseqr(String inValue) {
 		// valid values
-		// We had a "bay distance top tier last" for Accu, but then they decided not to use it. We though it was a bad idea.
+		// We had a "bay distance top tier last" for Accu, but then they decided not to use it. We thought it was a bad idea.
 		// Still, there will certainly be other work sequences in the future.
 		final String bayDistanceStr = "BayDistance";
 		String returnStr = inValue;
 		if (returnStr.equalsIgnoreCase(bayDistanceStr))
 			return bayDistanceStr;
-		else 
+		else
 			return null;
 	}
 
@@ -268,7 +278,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		} catch (NumberFormatException e) {
 			return null;
 		}
-		if (theValue >= minValue && theValue <= maxValue) 
+		if (theValue >= minValue && theValue <= maxValue)
 			return theValue.toString(); // usually same as inValue. But these routines are about converting to a canonical form.
 		else
 			return null;
@@ -278,12 +288,12 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		ColorEnum theColor = ColorEnum.valueOf(inValue);
 		// Let the color Enum do its validation
 		switch (theColor) {
-			case INVALID: 
-			case BLACK: 
+			case INVALID:
+			case BLACK:
 				return null;
 			default: {
-					return theColor.getName();
-				}			
+				return theColor.getName();
+			}
 		}
 	}
 
@@ -296,10 +306,10 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return trueStr;
 		else if (returnStr.equalsIgnoreCase(falseStr))
 			return falseStr;
-		else 
+		else
 			return null;
 	}
-	
+
 	/**
 	 * Validation API. Simple validation types. Then specifics. Eventually there may be fairly elaborate application-level checks.
 	 * Return null if no errors.
@@ -313,9 +323,8 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		if (inCanonicalForm == null) { // no likely match found. For now the description lists the valid values.
 			return ("Valid values:  " + this.validInputValues());
 		}
-		
+
 		return returnValue;
 	}
-
 
 }
