@@ -2,12 +2,17 @@ package com.gadgetworks.codeshelf.service;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
 
+import org.apache.velocity.runtime.directive.Foreach;
+
 import lombok.Getter;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -22,9 +27,34 @@ public class ProductivityCheSummaryList extends BaseResponse{
 	
 	//Groups->Ches->Runs
 	@Getter
+	@JsonIgnore
 	private HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>> groups = new HashMap<>();
 	
+	
+	/**
+	 * By group domain id
+	 */
+	public HashMap<String, List<RunSummary>> getRunsByGroup() {
+		HashMap<String, List<RunSummary>> byGroup = new HashMap<>();
+		
+		for (String groupPersistentid  : groups.keySet()) {
+			ArrayList<RunSummary> runs = new ArrayList<>();
+			for (HashMap<String, RunSummary> byTime : groups.get(groupPersistentid).values()) {
+				runs.addAll(byTime.values());
+			}
+			if (runs.isEmpty() == false) {
+				String groupDomainId = runs.get(0).groupDomainId;
+				byGroup.put(groupDomainId, runs);
+				
+			}
+		}
+		return byGroup;
+	}
+	
 	public class RunSummary{
+		@Getter
+		private String id; //run id
+		
 		@Getter
 		private String groupId, cheId;
 		
@@ -34,7 +64,8 @@ public class ProductivityCheSummaryList extends BaseResponse{
 		@Getter
 		private short invalid, New, inprogress, Short, complete, revert;
 		
-		public RunSummary(String groupId, String groupDomainId, String cheId, String cheDomainId) {
+		public RunSummary(String id, String groupId, String groupDomainId, String cheId, String cheDomainId) {
+			this.id = id;
 			this.groupId = groupId;
 			this.cheId = cheId;
 			this.groupDomainId = groupDomainId;
@@ -78,7 +109,7 @@ public class ProductivityCheSummaryList extends BaseResponse{
 		
 		RunSummary summary = cheRuns.get(timeStr);
 		if (summary == null) {
-			summary = new RunSummary(groupId, groupDomainId, cheId.toString(), che.getDomainId());
+			summary = new RunSummary(timeStr, groupId, groupDomainId, cheId.toString(), che.getDomainId());
 			cheRuns.put(timeStr, summary);
 		}
 		
