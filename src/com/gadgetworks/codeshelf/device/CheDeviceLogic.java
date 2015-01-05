@@ -87,8 +87,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	
 	private static final String	INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	private static final String	INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
-	private static final String	CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR");
-	private static final String	CLEAR_ERROR_MSG_LINE_2					= cheLine("TO CONTINUE");
+	private static final String	CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
+	private static final String	CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
 	
 	private static final String STARTWORK_COMMAND						= "START";
