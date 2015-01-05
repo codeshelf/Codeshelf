@@ -39,11 +39,13 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ForwardingFuture;
+import com.google.inject.Inject;
 
 public class LightService implements IApiService {
 
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(LightService.class);
 
+	private final PropertyService 			propertyService;
 	private final SessionManager			sessionManager;
 	private final ScheduledExecutorService	mExecutorService;
 	private Future<Void>					mLastChaserFuture;
@@ -52,14 +54,16 @@ public class LightService implements IApiService {
 	private ColorEnum						mDiagnosticColor = ColorEnum.RED;
 	private int								mLightDurationSeconds = 20;
 
-	public LightService() {
-		this(SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
+	@Inject
+	public LightService(PropertyService propertyService) {
+		this(propertyService, SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
 		
 		// Cannot do this. LightService is injected. This makes the applciation not start. May have to keep these values elsewhere.
 		// setValuesFromConfigs();
 	}
 
-	public LightService(SessionManager sessionManager, ScheduledExecutorService executorService) {
+	LightService(PropertyService propertyService, SessionManager sessionManager, ScheduledExecutorService executorService) {
+		this.propertyService = propertyService;
 		this.sessionManager = sessionManager;
 		this.mExecutorService = executorService;
 	}

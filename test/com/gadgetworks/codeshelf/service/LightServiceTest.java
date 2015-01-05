@@ -74,7 +74,7 @@ public class LightServiceTest extends EdiTestABC {
 		Assert.assertNotEquals(0,  items.size());
 		
 		SessionManager sessionManager = mock(SessionManager.class);
-		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(mock(PropertyService.class), sessionManager, Executors.newSingleThreadScheduledExecutor());
 		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
@@ -208,7 +208,7 @@ public class LightServiceTest extends EdiTestABC {
 		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
 		SessionManager sessionManager = mock(SessionManager.class);
 		
-		LightService lightService = new LightService(sessionManager, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(mock(PropertyService.class),  sessionManager, Executors.newSingleThreadScheduledExecutor());
 		Future<Void> complete = lightService.lightChildLocations(facility, parent);
 		complete.get(); //wait for completion
 		
