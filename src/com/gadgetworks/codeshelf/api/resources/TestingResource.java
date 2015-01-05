@@ -77,15 +77,20 @@ public class TestingResource {
 			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, containers);
 			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTenantTransaction();
-			
+			int i = 0;
 			for(WorkInstruction instruction : instructions) {
 				persistence.beginTenantTransaction();
 				instruction.setActualQuantity(instruction.getPlanQuantity());
 				//instruction.setPickerId(mUserId);
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
-				instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
 				OrderDetail detail = instruction.getOrderDetail();
-				detail.setStatus(OrderStatusEnum.COMPLETE);
+				if (i++ % 4 == 0) {
+					instruction.setStatus(WorkInstructionStatusEnum.SHORT);
+					detail.setStatus(OrderStatusEnum.SHORT);
+				} else {
+					instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
+					detail.setStatus(OrderStatusEnum.COMPLETE);
+				}
 				OrderDetail.DAO.store(detail);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
@@ -116,8 +121,10 @@ public class TestingResource {
 				+ "1122,%s,8 oz Bowl Lids -PLA Compostable,100,each,6/25/14 12:00,0\r\n"
 				+ "1523,%s,SJJ BPP,100,each,6/25/14 12:00,0\r\n"
 				+ "1124,%s,8 oz Bowls -PLA Compostable,100,each,6/25/14 12:00,0\r\n"
-				+ "1555,%s,paper towel,100,each,6/25/14 12:00,0\r\n",
-				alias, alias, alias, alias, alias, alias, alias, alias);
+				+ "1555,%s,paper towel,100,each,6/25/14 12:00,0\r\n"
+				+ "1556,%s,kit-kat bars,100,each,6/25/14 12:00,0\r\n"
+				+ "1557,%s,mars bars,100,each,6/25/14 12:00,0\r\n",
+				alias, alias, alias, alias, alias, alias, alias, alias, alias, alias);
 		byte[] csvArray = csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -131,15 +138,19 @@ public class TestingResource {
 	private void createOrders(Facility facility, long order1, long order2) throws Exception{		
 		String csvString2 = String.format(
 				"orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				//order1
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1122,8 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1556,kit-kat bars,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				//order2
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1555,,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0",
-				order1, order1, order1, order1, order1, order1, order2, order2, order2, order2, order2, order2, order2, order2, order2, order2);
+				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1555,,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\nTestGroup,USF314,COSTCO,%d,%d,1557,mars bars,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0",
+				order1, order1, order1, order1, order1, order1, order1, order1, order2, order2, order2, order2, order2, order2, order2, order2, order2, order2, order2, order2);
 
 		byte[] csvArray2 = csvString2.getBytes();
 
