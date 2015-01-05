@@ -701,8 +701,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		if (connectedToServer) {
 			// Send a command to clear the position, so the controller knows we've gotten the button press.
-			clearOnePositionController(inButtonCommand.getPosNum());
-			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue(), inButtonCommand.getPosNum());
 		} else {
 			LOGGER.debug("NotConnectedToServer: Ignoring button command: " + inButtonCommand);
 		}
@@ -1806,8 +1805,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Complete the active WI at the selected position.
 	 * @param inButtonNum
 	 * @param inQuantity
+	 * @param buttonPosition 
 	 */
-	private void processButtonPress(Integer inButtonNum, Integer inQuantity) {
+	private void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.
@@ -1818,6 +1818,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
+				clearOnePositionController(buttonPosition);
 				String itemId = wi.getItemId();
 				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
