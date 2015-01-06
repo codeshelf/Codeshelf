@@ -39,31 +39,39 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.ForwardingFuture;
+import com.google.inject.Inject;
 
 public class LightService implements IApiService {
 
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(LightService.class);
 
+	private final PropertyService 			propertyService;
 	private final SessionManager			sessionManager;
 	private final ScheduledExecutorService	mExecutorService;
 	private Future<Void>					mLastChaserFuture;
+	
+	private final static ColorEnum defaultColor = ColorEnum.RED;
+	private final static int defaultLightDurationSeconds = 20;
 
 	// may need to fix for multi-tenancy. Cached value as these are referenced extremely frequently. Is there a separate LightService per facility now?
-	private ColorEnum						mDiagnosticColor = ColorEnum.RED;
-	private int								mLightDurationSeconds = 20;
+	// private ColorEnum						mDiagnosticColor = ColorEnum.RED;
+	// private int								mLightDurationSeconds = 20;
 
-	public LightService() {
-		this(SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
+	@Inject
+	public LightService(PropertyService propertyService) {
+		this(propertyService, SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
 		
-		// Cannot do this. LightService is injected. This makes the applciation not start. May have to keep these values elsewhere.
+		// Cannot do this. LightService is injected. This makes the application not start. May have to keep these values elsewhere.
 		// setValuesFromConfigs();
 	}
 
-	public LightService(SessionManager sessionManager, ScheduledExecutorService executorService) {
+	LightService(PropertyService propertyService, SessionManager sessionManager, ScheduledExecutorService executorService) {
+		this.propertyService = propertyService;
 		this.sessionManager = sessionManager;
 		this.mExecutorService = executorService;
 	}
 
+	/*
 	private ColorEnum getDiagnosticColor() {
 		return mDiagnosticColor;
 	}
@@ -71,7 +79,9 @@ public class LightService implements IApiService {
 	private int getLightDurationSeconds() {
 		return mLightDurationSeconds;
 	}
+	*/
 
+	/*
 	private Facility getMyFacility() {
 		// fix for multi-tenancy. LightService should know its facility.
 		List<Facility> facilityList = Facility.DAO.getAll();
@@ -83,7 +93,9 @@ public class LightService implements IApiService {
 		}
 		return facilityList.get(0);
 	}
+	*/
 
+	/*
 	public void setValuesFromConfigs() {
 		// warning: currently setting the static member variables.
 		Facility facility = getMyFacility();
@@ -97,6 +109,7 @@ public class LightService implements IApiService {
 		mLightDurationSeconds = Integer.parseInt(lightSecondsValue);
 
 	}
+	*/
 
 	// --------------------------------------------------------------------------
 	/**
@@ -105,6 +118,7 @@ public class LightService implements IApiService {
 	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
 		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
 		Facility facility = checkFacility(facilityPersistentId);
+		ColorEnum color = this.propertyService.getPropertyAsColor(facility,DomainObjectProperty.LIGHTCLR,defaultColor);
 
 		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
 		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
@@ -115,7 +129,7 @@ public class LightService implements IApiService {
 
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		if (theItem.isLightable()) {
-			sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(3, getDiagnosticColor(), theItem));
+			sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(facility, 3, color, theItem));
 		} else {
 			LOGGER.warn("The item is not lightable: " + theItem);
 		}
@@ -124,17 +138,19 @@ public class LightService implements IApiService {
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 
 		Facility facility = checkFacility(facilityPersistentId);
+		ColorEnum color = this.propertyService.getPropertyAsColor(facility,DomainObjectProperty.LIGHTCLR,defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 		if (theLocation.getActiveChildren().isEmpty()) {
 			lightOneLocation(facility, theLocation);
 		} else {
-			lightChildLocations(facility, theLocation);
+			lightChildLocations(facility, theLocation, color);
 		}
 	}
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
 		Facility facility = checkFacility(facilityPersistentId);
+		ColorEnum color = this.propertyService.getPropertyAsColor(facility,DomainObjectProperty.LIGHTCLR,defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 
@@ -142,7 +158,7 @@ public class LightService implements IApiService {
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
 			try {
 				if (item.isLightable()) {
-					LightLedsMessage message = toLedsMessage(4, getDiagnosticColor(), item);
+					LightLedsMessage message = toLedsMessage(facility, 4, color, item);
 					messages.add(ImmutableSet.of(message));
 				} else {
 					LOGGER.warn("unable to light item: " + item);
@@ -161,9 +177,11 @@ public class LightService implements IApiService {
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
 	private void lightOneLocation(final Facility facility, final Location theLocation) {
+		ColorEnum color = this.propertyService.getPropertyAsColor(facility,DomainObjectProperty.LIGHTCLR,defaultColor);
+
 		// IMPORTANT. When DEV-411 resumes, change to 4.  For now, we want only 3 LED lit at GoodEggs.
 		if (theLocation.isLightable()) {
-			LightLedsMessage message = toLedsMessage(4, getDiagnosticColor(), theLocation);
+			LightLedsMessage message = toLedsMessage(facility, 4, color, theLocation);
 			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
 		} else {
 			LOGGER.warn("Unable to light location: " + theLocation);
@@ -176,11 +194,11 @@ public class LightService implements IApiService {
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
-	Future<Void> lightChildLocations(final Facility facility, final Location theLocation) {
+	Future<Void> lightChildLocations(final Facility facility, final Location theLocation, ColorEnum color) {
 
 		List<Set<LightLedsMessage>> ledMessages = Lists.newArrayList();
 		if (theLocation instanceof Bay) { //light whole bay at once, consistent across controller configurations
-			ledMessages.add(lightAllAtOnce(4, getDiagnosticColor(), theLocation.getChildrenInWorkingOrder()));
+			ledMessages.add(lightAllAtOnce(facility, 4, color, theLocation.getChildrenInWorkingOrder()));
 		} else {
 			List<Location> children = theLocation.getChildrenInWorkingOrder();
 			for (Location child : children) {
@@ -188,10 +206,10 @@ public class LightService implements IApiService {
 					if (child instanceof Bay) {
 						//when the child we are lighting is a bay, light all of the tiers at once
 						// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
-						ledMessages.add(lightAllAtOnce(4, getDiagnosticColor(), child.getChildrenInWorkingOrder()));
+						ledMessages.add(lightAllAtOnce(facility, 4, color, child.getChildrenInWorkingOrder()));
 					} else {
 						if (child.isLightable()) {
-							ledMessages.add(ImmutableSet.of(toLedsMessage(4, getDiagnosticColor(), child)));
+							ledMessages.add(ImmutableSet.of(toLedsMessage(facility, 4, color, child)));
 						}
 					}
 				} catch (Exception e) {
@@ -228,30 +246,30 @@ public class LightService implements IApiService {
 		return this.sessionManager.sendMessage(users, message);
 	}
 
-	private LightLedsMessage toLedsMessage(int maxNumLeds, final ColorEnum inColor, final Item inItem) {
+	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
 		// Use our utility function to get the leds for the item
 		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
 		Location itemLocation = inItem.getStoredLocation();
 		if (itemLocation.isLightable()) {
-			LightLedsMessage message = getLedCmdGroupListForRange(inColor, itemLocation, theRange);
+			LightLedsMessage message = getLedCmdGroupListForRange(facility, inColor, itemLocation, theRange);
 			return message;
 		} else {
 			return null;
 		}
 	}
 
-	private LightLedsMessage toLedsMessage(int maxNumLeds, final ColorEnum inColor, final Location inLocation) {
+	private LightLedsMessage toLedsMessage(Facility facility,int maxNumLeds, final ColorEnum inColor, final Location inLocation) {
 		LedRange theRange = inLocation.getFirstLastLedsForLocation().capLeds(maxNumLeds);
-		LightLedsMessage message = getLedCmdGroupListForRange(inColor, inLocation, theRange);
+		LightLedsMessage message = getLedCmdGroupListForRange(facility, inColor, inLocation, theRange);
 		return message;
 	}
 
-	private Set<LightLedsMessage> lightAllAtOnce(int numLeds, ColorEnum diagnosticColor, List<Location> children) {
+	private Set<LightLedsMessage> lightAllAtOnce(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
 		for (Location child : children) {
 			try {
 				if (child.isLightable()) {
-					LightLedsMessage ledMessage = toLedsMessage(numLeds, diagnosticColor, child);
+					LightLedsMessage ledMessage = toLedsMessage(facility, numLeds, diagnosticColor, child);
 					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
 
 					//merge messages per controller and key
@@ -281,7 +299,9 @@ public class LightService implements IApiService {
 	 * @param inItem
 	 * @param inColor
 	 */
-	private LightLedsMessage getLedCmdGroupListForRange(final ColorEnum inColor, Location inLocation, final LedRange ledRange) {
+	private LightLedsMessage getLedCmdGroupListForRange(Facility facility, final ColorEnum inColor, Location inLocation, final LedRange ledRange) {
+		int lightDuration = this.propertyService.getPropertyAsInt(facility,DomainObjectProperty.LIGHTSEC,defaultLightDurationSeconds);		
+
 		LedController controller = inLocation.getEffectiveLedController();
 		Short controllerChannel = inLocation.getEffectiveLedChannel();
 		// This should never happen as an ledRange comes in and it had to have controller available to make it.
@@ -302,7 +322,7 @@ public class LightService implements IApiService {
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(controller.getDeviceGuidStr(), controllerChannel, firstLedPosNum, ledSamples);
 		return new LightLedsMessage(controller.getDeviceGuidStr(),
 			controllerChannel,
-			getLightDurationSeconds(),
+			lightDuration,
 			ImmutableList.of(ledCmdGroup));
 	}
 

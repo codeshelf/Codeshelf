@@ -290,7 +290,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.login("Picker #1");
 
 		LOGGER.info("Case 1: A happy-day startup. No housekeeping jobs. Two from one container.");
-		picker.setup();
+
 		picker.setupContainer("11", "1"); // This prepended to scan "C%11" as per Codeshelf scan specification
 		picker.setupContainer("15", "3");
 		
@@ -352,7 +352,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 
 		LOGGER.info("Case 1: Startup. Container 11 will have 2 jobs. We can short one, and see the other short ahead. Container 15 has one job.");
 		LOGGER.info("                  Containers 16-19 do 4 situations that might cause immediate short. They do not. ");
-		picker.setup();
+
 		picker.setupContainer("15", "1"); // Good one gives one work instruction
 		picker.setupContainer("16", "2"); 
 		picker.setupContainer("17", "3"); 
