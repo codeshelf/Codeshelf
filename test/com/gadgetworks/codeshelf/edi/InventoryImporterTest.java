@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
@@ -521,7 +520,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 
 		List<WorkInstruction> wiListBeginningOfPath = facility.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
@@ -539,7 +538,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!

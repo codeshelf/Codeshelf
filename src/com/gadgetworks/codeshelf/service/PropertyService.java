@@ -3,6 +3,9 @@ package com.gadgetworks.codeshelf.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
+import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -27,9 +30,24 @@ public class PropertyService implements IApiService {
 	public void changePropertyValue(final String inFacilityPersistId, final String inPropertyName, final String inNewStringValue) {
 		LOGGER.info("call to update property " + inPropertyName + " to " + inNewStringValue);
 		Facility facility = Facility.DAO.findByPersistentId(inFacilityPersistId);
-		PropertyDao theDao = (PropertyDao) DomainObjectProperty.DAO;
+		if (facility == null) {
+			DefaultErrors errors = new DefaultErrors(DomainObjectProperty.class);
+			String instruction = "unknown facility";
+			errors.rejectValue(inNewStringValue, instruction, ErrorCode.FIELD_INVALID); // "{0} invalid. {1}"
+			throw new InputValidationException(errors);
+		}
+		changePropertyValue(facility, inPropertyName, inNewStringValue);
+	}
 
-		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(facility, inPropertyName);
+	// --------------------------------------------------------------------------
+	/**
+	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
+	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
+	 */
+	public void changePropertyValue(final Facility inFacility, final String inPropertyName, final String inNewStringValue) {		
+		PropertyDao theDao = PropertyDao.getInstance();
+
+		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
 		if (theProperty == null) {
 			LOGGER.error("Unknown property");
 			return;
@@ -51,34 +69,67 @@ public class PropertyService implements IApiService {
 		// storing the string version, so type does not matter. We assume all validation happened so the value is ok to go to the database.
 		theProperty.setValue(canonicalForm);
 		theDao.store(theProperty);
-		
-		// May need to update some local cached version of the changed config
-		// updateWhereNeeded(theProperty);
 	}
-	
-	/*
-	private void updateWhereNeeded(DomainObjectProperty inProperty){
-		// HousekeepingInjector has a local cache for two of them.
-		String propertyName = inProperty.getName();
-		if (propertyName.equals(DomainObjectProperty.BAYCHANG) || propertyName.equals(DomainObjectProperty.RPEATPOS))
-			HousekeepingInjector.setValuesFromConfigs();		
-		else if (propertyName.equals(DomainObjectProperty.LIGHTSEC) || propertyName.equals(DomainObjectProperty.LIGHTCLR)){
-			// find the LightService. How? LightService.setValuesFromConfigs();
-			LOGGER.error("updateWhereNeeded() needs to find the LightService to set these local values.");
+
+	/**
+	 * Necessary convenience APIs to change Housekeeping config values. Should the be on the HousekeepingService? Does not seem right.
+	 */
+	public void setBayChangeChoice(Facility inFacility, BayChangeChoice inBayChangeChoice) {
+		switch(inBayChangeChoice){
+			case BayChangeNone:
+				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "None");
+				break;
+			case BayChangeBayChange:
+				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "BayChange");
+				break;
+			case BayChangePathSegmentChange:
+				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "PathSegmentChange");
+				break;
+			case BayChangeExceptSamePathDistance:
+				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "BayChangeExceptAcrossAisle");
+				break;
+			default:
+				LOGGER.error("unknown value in setBayChangeChoice");
 		}
 	}
-	*/
 	
+	public void setRepeatPosChoice(Facility inFacility, RepeatPosChoice inRepeatPosChoice) {
+		switch(inRepeatPosChoice){
+			case RepeatPosNone:
+				changePropertyValue(inFacility, DomainObjectProperty.RPEATPOS, "None");
+				break;
+			case RepeatPosContainerOnly:
+				changePropertyValue(inFacility, DomainObjectProperty.RPEATPOS, "ContainerOnly");
+				break;
+			case RepeatPosContainerAndCount:
+				changePropertyValue(inFacility, DomainObjectProperty.RPEATPOS, "ContainerAndCount");
+				break;
+			default:
+				LOGGER.error("unknown value in setRepeatPosChoice");
+		}
+	}
+
+	public void restoreHKDefaults(Facility inFacility) {
+		setRepeatPosChoice(inFacility, RepeatPosChoice.RepeatPosContainerOnly);
+		setBayChangeChoice(inFacility, BayChangeChoice.BayChangeBayChange);
+	}
+	public void turnOffHK(Facility inFacility) {
+		setRepeatPosChoice(inFacility, RepeatPosChoice.RepeatPosNone);
+		setBayChangeChoice(inFacility, BayChangeChoice.BayChangeNone);
+
+	}
+
+
 	/**
 	 * Convenient API for application code.
-	 */	
-	public static String getPropertyFromConfig(final Facility inFacility, final String inPropertyName){
-		PropertyDao theDao = (PropertyDao) DomainObjectProperty.DAO;
+	 */
+	public static String getPropertyFromConfig(final Facility inFacility, final String inPropertyName) {
+		PropertyDao theDao = PropertyDao.getInstance();
 		if (theDao == null || inFacility == null) {
 			LOGGER.error("getPropertyFromConfig called before DAO or facility exists");
 			return null;
 		}
-		
+
 		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
 		if (theProperty == null) {
 			LOGGER.error("Unknown property in getPropertyFromConfig()");
@@ -89,14 +140,14 @@ public class PropertyService implements IApiService {
 	}
 
 	public DomainObjectProperty getProperty(IDomainObject object, String name) {
-		PropertyDao theDao = (PropertyDao) DomainObjectProperty.DAO;
+		PropertyDao theDao = PropertyDao.getInstance();
 		DomainObjectProperty prop = theDao.getPropertyWithDefault(object, name);
 		return prop;
 	}
 
 	public ColorEnum getPropertyAsColor(IDomainObject object, String name, ColorEnum defaultColor) {
 		DomainObjectProperty prop = getProperty(object, name);
-		if (prop==null) {
+		if (prop == null) {
 			return defaultColor;
 		}
 		return prop.getColorValue();
@@ -104,7 +155,7 @@ public class PropertyService implements IApiService {
 
 	public int getPropertyAsInt(IDomainObject object, String name, int defaultValue) {
 		DomainObjectProperty prop = getProperty(object, name);
-		if (prop==null) {
+		if (prop == null) {
 			return defaultValue;
 		}
 		return prop.getIntValue();

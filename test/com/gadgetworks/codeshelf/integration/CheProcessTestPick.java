@@ -27,7 +27,6 @@ import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -55,6 +54,7 @@ import com.google.common.base.Strings;
 public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
+
 
 	static {
 		Configuration.loadConfig("test");
@@ -349,13 +349,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(2, itemLocations.size());
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		facility.setUpCheContainerFromString(che1, "12345");
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(che1, "");
-		HousekeepingInjector.restoreHKDefaults(); // set it back
+		mPropertyService.restoreHKDefaults(facility); // set it back
 
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
@@ -465,17 +465,17 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
+		// Turn off housekeeping work instructions for next test so as to not confuse the counts
+		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
-		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
 		// Set up a cart for order 12345, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.startAndSkipReview("D403", 8000, 5000);
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -517,6 +517,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
+		
+		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
 		// perform pick operations
@@ -524,9 +526,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.findByPersistentId(facId);
 		List<Container> containers = facility.getContainers();
 		Assert.assertEquals(2, containers.size());
-
-		HousekeepingInjector.turnOffHK();
-
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -708,7 +707,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(immediateShortWi.getAssigned(), userShortWi.getAssigned());
 		Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -723,7 +722,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// perform pick operation
 		this.getPersistenceService().beginTenantTransaction();
-		// HousekeepingInjector.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
+		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -735,7 +734,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap. 
 		picker.startAndSkipReview("D301", 5000, 3000);
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2),
@@ -845,9 +844,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		
+		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
-
-		HousekeepingInjector.turnOffHK();
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
@@ -954,7 +952,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -1007,9 +1005,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
+		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
-		HousekeepingInjector.turnOffHK();
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
@@ -1096,7 +1094,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 4));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -1139,9 +1137,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
+		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
-
-		HousekeepingInjector.turnOffHK();
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
@@ -1164,7 +1161,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
 
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -1208,9 +1205,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
+		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
-
-		HousekeepingInjector.turnOffHK();
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
@@ -1301,7 +1297,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
