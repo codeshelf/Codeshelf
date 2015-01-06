@@ -84,6 +84,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
 	private static final String	SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
+	private static final String	SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
 	
 	private static final String	INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	private static final String	INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
@@ -97,9 +98,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	LOGOUT_COMMAND							= "LOGOUT";
 	private static final String	YES_COMMAND								= "YES";
 	private static final String	NO_COMMAND								= "NO";
-	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR ERROR";
+	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR_ERROR";
 
-	private static final Integer				maxCountForPositionControllerDisplay	= 99;
+	private static final Integer maxCountForPositionControllerDisplay	= 99;
+
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -766,7 +768,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case LOCATION_SELECT:
-				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
+				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 				this.showCartSetupFeedback();
 				break;
 
@@ -774,7 +776,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
 					LOCATION_SELECT_REVIEW_MSG_LINE_2,
 					LOCATION_SELECT_REVIEW_MSG_LINE_3,
-					EMPTY_MSG);
+					SHOWING_WI_COUNTS);
 				this.showCartSetupFeedback();
 				break;
 
@@ -839,7 +841,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case NO_WORK:
-				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
+				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 				this.showCartSetupFeedback();
 				break;
 

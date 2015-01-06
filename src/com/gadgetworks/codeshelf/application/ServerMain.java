@@ -101,6 +101,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -195,8 +196,8 @@ public final class ServerMain {
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
-
 				
+				bind(PropertyService.class).toInstance(new PropertyService());
 				
 				//
 				// bind(DaoProvider.class).to(PersistenceService.class).in(Singleton.class);
