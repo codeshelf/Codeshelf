@@ -27,7 +27,7 @@ public class PropertyService implements IApiService {
 	 * API to update one property from the UI. Add user login for logability?.
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
-	public void changePropertyValue(final String inFacilityPersistId, final String inPropertyName, final String inNewStringValue) {
+	public void changePropertyValueUI(final String inFacilityPersistId, final String inPropertyName, final String inNewStringValue) {
 		LOGGER.info("call to update property " + inPropertyName + " to " + inNewStringValue);
 		Facility facility = Facility.DAO.findByPersistentId(inFacilityPersistId);
 		if (facility == null) {
