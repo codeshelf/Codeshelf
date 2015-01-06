@@ -26,7 +26,6 @@ import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;

@@ -3,13 +3,13 @@ package com.gadgetworks.codeshelf.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 
 public class PropertyService implements IApiService {
 
