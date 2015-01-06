@@ -478,36 +478,36 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				//TODO send a special code for this?
 				//Right now it matches "done for now" feedback
 				instructions.add(new PosControllerInstr(position,
-					PosControllerInstr.ZERO_QTY,
-					PosControllerInstr.ZERO_QTY,
-					PosControllerInstr.ZERO_QTY,
-					PosControllerInstr.BLINK_FREQ.byteValue(),
-					PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_LED_DASH,
+					PosControllerInstr.BITENCODED_LED_DASH,
+					PosControllerInstr.SOLID_FREQ.byteValue(),
+					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
 				LOGGER.info("Position {} has unknwon container id", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
 				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
 				if (count == 0) {
-					//0 good WI's means dim display
+					//0 good WI's
 					if (wiCount.hasBadCounts()) {
-						//If there any bad counts then we are "done for now" - flashing 0
+						//If there any bad counts then we are "done for now" - dim, solid dashes
 						instructions.add(new PosControllerInstr(position,
-							count,
-							count,
-							count,
-							PosControllerInstr.BLINK_FREQ.byteValue(),
-							PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+							PosControllerInstr.BITENCODED_LED_DASH,
+							PosControllerInstr.BITENCODED_LED_DASH,
+							PosControllerInstr.SOLID_FREQ.byteValue(),
+							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
 					} else {
 						if (wiCount.getCompleteCount() == 0) {
 							//This should not be possible (unless we only had a single HK WI, which would be a bug)
 							//We will log this for now and treat it as a completed WI
 							LOGGER.error("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
 						}
-						//Ready for packout - solid 0
+						//Ready for packout - solid, dim oc
 						instructions.add(new PosControllerInstr(position,
-							count,
-							count,
-							count,
+							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+							PosControllerInstr.BITENCODED_LED_C,
+							PosControllerInstr.BITENCODED_LED_O,
 							PosControllerInstr.SOLID_FREQ.byteValue(),
 							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
 					}
@@ -574,27 +574,37 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		//if wiCount is null then the server did have any WIs for the order.
 		//this is an "unknown" order id
 		if (wiCount == null) {
-			//Right now it matches "done for now" feedback
-			return null;
+			//Unknown order id matches "done for now" - dim, solid, dashes
+			return new PosControllerInstr(position,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_LED_DASH,
+				PosControllerInstr.BITENCODED_LED_DASH,
+				PosControllerInstr.SOLID_FREQ.byteValue(),
+				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 		} else {
 			byte count = (byte) wiCount.getGoodCount();
 			LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
 			if (count == 0) {
 				//0 good WI's means dim display
 				if (wiCount.hasBadCounts()) {
-					//If there any bad counts then we are "done for now" - no feedback for now
-					return null;
+					//If there any bad counts then we are "done for now" - dim, solid, dashes
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 				} else {
 					if (wiCount.getCompleteCount() == 0) {
 						//This should not be possible (unless we only had a single HK WI, which would be a bug)
 						//We will log this for now and treat it as a completed WI
 						LOGGER.error("WorkInstructionCount has no counts {};", wiCount);
 					}
-					//Ready for packout - solid 0
+					//Ready for packout - solid, dim, "oc"
 					return new PosControllerInstr(position,
-						count,
-						count,
-						count,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_C,
+						PosControllerInstr.BITENCODED_LED_O,
 						PosControllerInstr.SOLID_FREQ.byteValue(),
 						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 				}
