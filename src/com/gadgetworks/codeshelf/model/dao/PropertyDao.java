@@ -42,7 +42,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	}
 
 	/**
-	 * No known use case for this. A DomainObjectProperty delete might be used to "restore to default". Should not need a DAO override for that purpose.
+	 * Deletes property default value for a specific tenant.
 	 */
 	public void delete(DomainObjectPropertyDefault propertyDefault) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
@@ -71,7 +71,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	}
 	
 	/**
-	 * Gets the specific objects in the database for the parent domain objects. No known use case for this.
+	 * Gets the specific objects in the database for the parent domain objects. Used by higher level API call that includes default values.
 	 */
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getProperties(IDomainObject object) {
@@ -147,7 +147,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	/**
 	 * Get object if it exists. Otherwise create one from the default. Not saved in this routine.
 	 */
-	public DomainObjectProperty getOrCreateProperty(IDomainObject object, String name) {
+	public DomainObjectProperty getPropertyWithDefault(IDomainObject object, String name) {
         DomainObjectProperty prop = getProperty(object, name);
         if (prop != null)
         	return prop;
@@ -155,8 +155,6 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
         prop = createProperty(object, theDefault);
         return prop;
 	}
-
-	
 
 	@Override
 	public Class<DomainObjectProperty> getDaoClass() {

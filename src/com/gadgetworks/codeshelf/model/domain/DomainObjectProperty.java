@@ -20,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 
@@ -113,6 +112,14 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		}
 		return Boolean.parseBoolean(this.value);
 	}
+	
+	public ColorEnum getColorValue() {
+		if (this.value == null) {
+			return ColorEnum.valueOf(getDefaultValue());
+
+		}
+		return ColorEnum.valueOf(this.value);
+	}
 
 	// convenience function to get the property name via default/type object
 	public String getName() {
@@ -163,6 +170,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	}
 
 	/**
+	 * TODO: should be moved to meta data/default table instead of being hard coded here
 	 * Converts things like "baychange" to "BayChange".
 	 * Return null if there is no likely match.
 	 */
@@ -186,7 +194,6 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
-
 		return null;
 	}
 

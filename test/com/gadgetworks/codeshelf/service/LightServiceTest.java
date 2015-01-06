@@ -18,6 +18,10 @@ import java.util.concurrent.Future;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import static org.mockito.Mockito.*;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
@@ -33,6 +37,7 @@ import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
@@ -74,7 +79,16 @@ public class LightServiceTest extends EdiTestABC {
 		Assert.assertNotEquals(0,  items.size());
 		
 		SessionManager sessionManager = mock(SessionManager.class);
-		LightService lightService = new LightService(mock(PropertyService.class), sessionManager, Executors.newSingleThreadScheduledExecutor());
+		PropertyService mockProp = mock(PropertyService.class);
+		
+		when(mockProp.getPropertyAsColor(any(IDomainObject.class), anyString(), any(ColorEnum.class))).then(new Answer<ColorEnum>() {
+		    @Override
+		    public ColorEnum answer(InvocationOnMock invocation) throws Throwable {
+		    	return ColorEnum.RED;
+		    }
+		});
+		
+		LightService lightService = new LightService(mockProp, sessionManager, Executors.newSingleThreadScheduledExecutor());
 		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
@@ -207,9 +221,10 @@ public class LightServiceTest extends EdiTestABC {
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent, int expectedTotal) throws InterruptedException, ExecutionException {
 		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
 		SessionManager sessionManager = mock(SessionManager.class);
+		ColorEnum color = ColorEnum.RED;
 		
 		LightService lightService = new LightService(mock(PropertyService.class),  sessionManager, Executors.newSingleThreadScheduledExecutor());
-		Future<Void> complete = lightService.lightChildLocations(facility, parent);
+		Future<Void> complete = lightService.lightChildLocations(facility, parent, color);
 		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);

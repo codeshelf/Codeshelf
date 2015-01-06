@@ -6,17 +6,17 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
+import com.gadgetworks.flyweight.command.ColorEnum;
 
 public class PropertyService implements IApiService {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyService.class);
 
 	public void ProperyService() {
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -29,7 +29,7 @@ public class PropertyService implements IApiService {
 		Facility facility = Facility.DAO.findByPersistentId(inFacilityPersistId);
 		PropertyDao theDao = (PropertyDao) DomainObjectProperty.DAO;
 
-		DomainObjectProperty theProperty = theDao.getOrCreateProperty(facility, inPropertyName);
+		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(facility, inPropertyName);
 		if (theProperty == null) {
 			LOGGER.error("Unknown property");
 			return;
@@ -53,9 +53,10 @@ public class PropertyService implements IApiService {
 		theDao.store(theProperty);
 		
 		// May need to update some local cached version of the changed config
-		updateWhereNeeded(theProperty);
+		// updateWhereNeeded(theProperty);
 	}
 	
+	/*
 	private void updateWhereNeeded(DomainObjectProperty inProperty){
 		// HousekeepingInjector has a local cache for two of them.
 		String propertyName = inProperty.getName();
@@ -66,6 +67,7 @@ public class PropertyService implements IApiService {
 			LOGGER.error("updateWhereNeeded() needs to find the LightService to set these local values.");
 		}
 	}
+	*/
 	
 	/**
 	 * Convenient API for application code.
@@ -77,13 +79,35 @@ public class PropertyService implements IApiService {
 			return null;
 		}
 		
-		DomainObjectProperty theProperty = theDao.getOrCreateProperty(inFacility, inPropertyName);
+		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
 		if (theProperty == null) {
 			LOGGER.error("Unknown property in getPropertyFromConfig()");
 			return null;
 		}
 		// the toCanonicalForm() call here ensures that small typos in the liquidbase xml get rectified to the coded canonical forms.
 		return theProperty.toCanonicalForm(theProperty.getValue());
+	}
+
+	public DomainObjectProperty getProperty(IDomainObject object, String name) {
+		PropertyDao theDao = (PropertyDao) DomainObjectProperty.DAO;
+		DomainObjectProperty prop = theDao.getPropertyWithDefault(object, name);
+		return prop;
+	}
+
+	public ColorEnum getPropertyAsColor(IDomainObject object, String name, ColorEnum defaultColor) {
+		DomainObjectProperty prop = getProperty(object, name);
+		if (prop==null) {
+			return defaultColor;
+		}
+		return prop.getColorValue();
+	}
+
+	public int getPropertyAsInt(IDomainObject object, String name, int defaultValue) {
+		DomainObjectProperty prop = getProperty(object, name);
+		if (prop==null) {
+			return defaultValue;
+		}
+		return prop.getIntValue();
 	}
 
 }
