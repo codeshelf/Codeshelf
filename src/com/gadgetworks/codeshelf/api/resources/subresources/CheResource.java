@@ -3,10 +3,10 @@ package com.gadgetworks.codeshelf.api.resources.subresources;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -17,9 +17,8 @@ import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.api.ObjectResponse;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
@@ -32,7 +31,7 @@ public class CheResource {
 	@GET
 	@Path("/computeinstructions")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeWorkInstructions() {
+	public Response computeWorkInstructions(@QueryParam("id") List<String> containers) {
 		ErrorResponse errors = new ErrorResponse();
 		if (!BaseResponse.isUUIDValid(mUUIDParam, "cheId", errors)){
 			return errors.buildResponse();
@@ -45,12 +44,17 @@ public class CheResource {
 				errors.addErrorUUIDDoesntExist(mUUIDParam.getRawValue(), "che");
 				return errors.buildResponse();
 			}
-			User picker = new User();
+			//User picker = new User();
 			//che.setCurrentUser(currentUser);
 			Facility facility = che.getFacility();
-			ArrayList<String> containers = new ArrayList<>();
-			containers.add("11111");
-			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, containers);
+			List<String> validContainers = new ArrayList<>();
+			for (String containerId : containers) {
+				Container container = Container.DAO.findByDomainId(facility, containerId);
+				if (container != null) {
+					validContainers.add(containerId);
+				}
+			}
+			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, validContainers);
 			ObjectResponse response = new ObjectResponse(instructions);
 			return response.buildResponse();
 		} catch (Exception e) {
