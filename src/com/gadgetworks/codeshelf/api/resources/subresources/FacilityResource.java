@@ -16,7 +16,6 @@ import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
-import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList1;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.WorkService;
 
@@ -46,28 +45,7 @@ public class FacilityResource {
 			persistence.commitTenantTransaction();
 		}
 	}
-	
-	@GET
-	@Path("/chesummary")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getCheSummary() {
-		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
-			return errors.buildResponse();
-		}
 		
-		try {
-			persistence.beginTenantTransaction();
-			ProductivityCheSummaryList summaryList = WorkService.getCheByGroupSummary(mUUIDParam.getUUID());
-			return summaryList.buildResponse();
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		} finally {
-			persistence.commitTenantTransaction();
-		}
-	}
-	
 	@GET
 	@Path("/chesummary1")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -80,7 +58,7 @@ public class FacilityResource {
 		try {
 			persistence.beginTenantTransaction();
 			List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
-			ProductivityCheSummaryList1 summary = new ProductivityCheSummaryList1();
+			ProductivityCheSummaryList summary = new ProductivityCheSummaryList();
 			summary.setInstructions(instructions, mUUIDParam.getUUID());
 			return summary.buildResponse();
 		} catch (Exception e) {

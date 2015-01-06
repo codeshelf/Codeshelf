@@ -341,19 +341,10 @@ public class WorkService implements IApiService {
 	}
 	
 	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		ProductivityCheSummaryList summaryList = new ProductivityCheSummaryList();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		List<OrderHeader> headers = facility.getOrderHeaders();
-		for (OrderHeader header : headers) {
-			List<OrderDetail> details = header.getOrderDetails();
-			for (OrderDetail detail : details) {
-				List<WorkInstruction> instructions = detail.getWorkInstructions();
-				for (WorkInstruction instruction : instructions) {
-					summaryList.processStatus(header, instruction);
-				}
-			}
-		}
-		return summaryList;
+		List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
+		ProductivityCheSummaryList summary = new ProductivityCheSummaryList();
+		summary.setInstructions(instructions, facilityId);
+		return summary;
 	}
 	
 	/**
