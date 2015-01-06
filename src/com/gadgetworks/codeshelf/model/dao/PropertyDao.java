@@ -67,6 +67,18 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
         query.setParameter("objectType", object.getClassName());
         query.setParameter("name", name);
         DomainObjectPropertyDefault propertyDefault = (DomainObjectPropertyDefault) query.uniqueResult();
+        
+        // kludgy: we do not want to tie the Junit test to liquidbase change logs. So, if the property default does not exist,
+        // create with correct default value. Does not need to have description.
+        if (propertyDefault == null) {
+        	String defaultStringValue = DomainObjectProperty.nameToDefault(name);
+        	if (defaultStringValue != null) {
+        	propertyDefault = new DomainObjectPropertyDefault(name, object.getClassName(), defaultStringValue, "description");
+        	// must persist. There are db constraints for the DomainObjectProperty to have a default.
+        	store(propertyDefault);
+        	}
+        	// no risk of incorrect code adding garbage new default parameters into the database because nameToDefault will have returned null
+        }
 		return propertyDefault;
 	}
 	

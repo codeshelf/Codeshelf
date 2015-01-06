@@ -20,7 +20,6 @@ import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -186,13 +185,13 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 		
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		facility.setUpCheContainerFromString(theChe, "12345");
 				
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
@@ -289,13 +288,13 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 		
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
 		facility.setUpCheContainerFromString(theChe, "12345");
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);

@@ -57,7 +57,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
-		Assert.assertEquals(cheSummaries.getGroups().size(), 0);
+		Assert.assertEquals(cheSummaries.getRunsByGroup().size(), 0);
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
@@ -73,20 +73,17 @@ public class ProductivityReportingTest extends DomainTestABC {
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		//Get summaries for the only group
-		List<HashMap<UUID, HashMap<String, RunSummary>>> groups = new ArrayList<>(cheSummaries.getGroups().values());
+		List<List<RunSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
 		Assert.assertEquals(groups.size(), 1);
-		//Get summaries for the only che
-		HashMap<UUID, HashMap<String, RunSummary>> ches = groups.get(0);
-		Assert.assertEquals(ches.size(), 1);
-		//Get runs for the che
-		HashMap<String, RunSummary> cheRuns = new ArrayList<>(ches.values()).get(0);
-		Assert.assertEquals(cheRuns.size(), 1);
-		RunSummary run = new ArrayList<>(cheRuns.values()).get(0);
+		//Get runs for the group
+		List<RunSummary> groupRuns = groups.get(0);
+		Assert.assertEquals(groupRuns.size(), 1);
+		RunSummary run = groupRuns.get(0);
 		//Verify retrieved run
 		testRunSummary(run, 0, 0, 2, 0, 2, 1);
 		this.getPersistenceService().commitTenantTransaction();
 	}
-	
+
 	@Test
 	public void testGetCheSummaryTwoRuns() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
@@ -99,22 +96,14 @@ public class ProductivityReportingTest extends DomainTestABC {
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		//Get summaries for the only group
-		List<HashMap<UUID, HashMap<String, RunSummary>>> groups = new ArrayList<>(cheSummaries.getGroups().values());
+		List<List<RunSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
 		Assert.assertEquals(groups.size(), 1);
-		//Get summaries for the only che
-		HashMap<UUID, HashMap<String, RunSummary>> ches = groups.get(0);
-		Assert.assertEquals(ches.size(), 1);
-		//Get runs for the che
-		HashMap<String, RunSummary> cheRuns = new ArrayList<>(ches.values()).get(0);
-		Assert.assertEquals(cheRuns.size(), 2);
+		//Get runs for the group
+		List<RunSummary> groupRuns = groups.get(0);
+		Assert.assertEquals(groupRuns.size(), 2);
 		//Verify runs
-		RunSummary run1 = cheRuns.get("2014-12-22 23:46:00.000+0000");
-		RunSummary run2 = cheRuns.get("2014-12-23 19:40:20.000+0000");
-		
-		for(String cheRunTime : cheRuns.keySet()) {
-			RunSummary rs = cheRuns.get(cheRunTime);
-			LOGGER.info("run at "+cheRunTime+" - "+rs.getInvalid()+"/"+rs.getNew()+"/"+rs.getInprogress()+"/"+rs.getShort()+"/"+rs.getComplete()+"/"+rs.getRevert());
-		}
+		RunSummary run1 = ProductivityCheSummaryList.getRun(groupRuns, "2014-12-22 23:46:00.000+0000");
+		RunSummary run2 = ProductivityCheSummaryList.getRun(groupRuns, "2014-12-23 19:40:20.000+0000");
 		
 		testRunSummary(run1, 1, 0, 0, 0, 1, 0);
 		testRunSummary(run2, 0, 2, 1, 0, 0, 0);
@@ -134,19 +123,17 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Assert.assertNotNull(cheSummaries);
 		
 		//Get groups
-		HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>> groups = cheSummaries.getGroups();
+		HashMap<String, List<RunSummary>> groups = cheSummaries.getRunsByGroup();
 		Assert.assertEquals(groups.size(), 2);
 		Iterator<String> groupNames = groups.keySet().iterator();
 		while (groupNames.hasNext()){
 			String groupName = groupNames.next();
-			List<HashMap<String, RunSummary>> ches = new ArrayList<>(groups.get(groupName).values());
-			Assert.assertEquals(ches.size(), 1);
-			List<RunSummary> cheRuns = new ArrayList<>(ches.get(0).values());
-			Assert.assertEquals(cheRuns.size(), 1);
+			List<RunSummary> groupRuns = groups.get(groupName);
+			Assert.assertEquals(groupRuns.size(), 1);
 			if ("undefined".equals(groupName)){
-				testRunSummary(cheRuns.get(0), 1, 0, 0, 0, 1, 0);
+				testRunSummary(groupRuns.get(0), 1, 0, 0, 0, 1, 0);
 			} else {
-				testRunSummary(cheRuns.get(0), 0, 2, 1, 0, 0, 0);
+				testRunSummary(groupRuns.get(0), 0, 2, 1, 0, 0, 0);
 			}
 			
 		}
@@ -179,7 +166,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		
 		return facility;
 	}
-	
+
 	private Facility createFacilityWithTwoRuns(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
 		//12/23/14 7:40 PM = 1419363620000

@@ -39,6 +39,7 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -48,6 +49,8 @@ import com.gadgetworks.flyweight.command.NetGuid;
  */
 public class CrossBatchRunTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
+	
+	PropertyService mPropertyService = new PropertyService();
 
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
@@ -297,7 +300,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		}
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
 
@@ -308,7 +311,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		// Just some quick log output to see it
 		logWiList(wiListAfterScan);
@@ -339,7 +342,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		LOGGER.info("basicHousekeeping.  Set up CHE for 15,14");
 		// Make sure housekeeping is on
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 		facility.setUpCheContainerFromString(theChe, "15,14");
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
@@ -385,14 +388,14 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Job 3 and 4 are same container, different count. No repeate container by the parameter
 		// Job 3 and 4 are different bays on the same path. No bay change by the parameter
 		// Future proof for other kinds of housekeeps
-		HousekeepingInjector.turnOffHK();
-		HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
-		HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
+		mPropertyService.turnOffHK(facility);
+		mPropertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangePathSegmentChange);
+		mPropertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
 		facility.setUpCheContainerFromString(theChe, "15,14");
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
-		HousekeepingInjector.restoreHKDefaults(); // set it back
+		mPropertyService.restoreHKDefaults(facility); // set it back
 
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
@@ -416,15 +419,15 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("housekeepingContainerAndCount.  Set up CHE for 11,12,13");
 
 		// Future proof for other kinds of housekeeps
-		HousekeepingInjector.turnOffHK();
-		HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
-		HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
+		mPropertyService.turnOffHK(facility);
+		mPropertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangeNone);
+		mPropertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
 		facility.setUpCheContainerFromString(theChe, "11,12,13");
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
 
-		HousekeepingInjector.restoreHKDefaults(); // set it back
+		mPropertyService.restoreHKDefaults(facility); // set it back
 
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
@@ -453,7 +456,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		facility.setUpCheContainerFromString(theChe, "11,12,13");
 
 		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
@@ -490,7 +493,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// BUG! at least with ebeans. If we used 12 above instead of 14, it throws on an ebeans
 		// lazy load exception on work instruction
 
-		HousekeepingInjector.restoreHKDefaults(); // set it back
+		mPropertyService.restoreHKDefaults(facility); // set it back
 
 		this.getPersistenceService().commitTenantTransaction();
 	}

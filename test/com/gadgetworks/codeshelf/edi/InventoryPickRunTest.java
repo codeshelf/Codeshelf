@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -294,7 +293,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Che theChe = theNetwork.getChe("CHE1");
 
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		facility.setUpCheContainerFromString(theChe, "12000");
 
@@ -325,7 +324,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1831", wi5.getItemId());
 		Assert.assertEquals("1524", wi10.getItemId());
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		// Need more cases for BayDistanceTopLast.
 
@@ -374,7 +373,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Che theChe = theNetwork.getChe("CHE1");
 
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		facility.setUpCheContainerFromString(theChe, "12000");
 
@@ -405,7 +404,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1831", wi5.getItemId());
 		Assert.assertEquals("1524", wi10.getItemId());
 
-		HousekeepingInjector.restoreHKDefaults();
+		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}	

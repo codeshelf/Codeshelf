@@ -312,7 +312,10 @@ public class WorkService implements IApiService {
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");
 			String queryStr = String.format("" + 
-					"SELECT dur.order_group AS group, 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) AS picksPerHour\n" + 
+					"SELECT dur.order_group AS group,\n" +
+					"	trim(to_char(\n" + 
+					"		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n" + 
+					"		'9999999999999999999D9')) AS picksPerHour\n" + 
 					"FROM \n" + 
 					"	(\n" + 
 					"		SELECT group_and_sort_code,\n" + 
@@ -338,19 +341,10 @@ public class WorkService implements IApiService {
 	}
 	
 	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		ProductivityCheSummaryList summaryList = new ProductivityCheSummaryList();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		List<OrderHeader> headers = facility.getOrderHeaders();
-		for (OrderHeader header : headers) {
-			List<OrderDetail> details = header.getOrderDetails();
-			for (OrderDetail detail : details) {
-				List<WorkInstruction> instructions = detail.getWorkInstructions();
-				for (WorkInstruction instruction : instructions) {
-					summaryList.processStatus(header, instruction);
-				}
-			}
-		}
-		return summaryList;
+		List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
+		ProductivityCheSummaryList summary = new ProductivityCheSummaryList();
+		summary.setInstructions(instructions, facilityId);
+		return summary;
 	}
 	
 	/**

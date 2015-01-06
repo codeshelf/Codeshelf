@@ -14,9 +14,11 @@ import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.PropertyService;
 
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
+	protected PropertyService mPropertyService = new PropertyService();
 
 	private EventProducer		mEventProducer	= new EventProducer();
 

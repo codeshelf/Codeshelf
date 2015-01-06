@@ -51,14 +51,48 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 
 	// These match contents in liquidbase change .xml files
 	public final static String						BAYCHANG	= "BAYCHANG";
+	public final static String						Default_BAYCHANG	= "BayChange";
 	public final static String						RPEATPOS	= "RPEATPOS";
+	public final static String						Default_RPEATPOS	= "ContainerOnly";
 	public final static String						WORKSEQR	= "WORKSEQR";
+	public final static String						Default_WORKSEQR	= "BayDistance";
 	public final static String						LIGHTSEC	= "LIGHTSEC";
+	public final static String						Default_LIGHTSEC	= "20";
 	public final static String						LIGHTCLR	= "LIGHTCLR";
+	public final static String						Default_LIGHTCLR	= "Red";
 	public final static String						CROSSBCH	= "CROSSBCH";
+	public final static String						Default_CROSSBCH	= "false";
 	public final static String						AUTOSHRT	= "AUTOSHRT";
+	public final static String						Default_AUTOSHRT	= "true";
 
 	public DomainObjectProperty() {
+	}
+	
+/**
+ * Odd!  must return null if not a preknown one.
+ */	
+	public static String nameToDefault(final String inParameterName){
+		if (inParameterName.equals(BAYCHANG))
+			return Default_BAYCHANG;
+		if (inParameterName.equals(RPEATPOS))
+			return Default_RPEATPOS;
+		if (inParameterName.equals(WORKSEQR))
+			return Default_WORKSEQR;
+		if (inParameterName.equals(LIGHTSEC))
+			return Default_LIGHTSEC;
+		if (inParameterName.equals(BAYCHANG))
+			return Default_BAYCHANG;
+		if (inParameterName.equals(LIGHTSEC))
+			return Default_LIGHTSEC;
+		if (inParameterName.equals(LIGHTCLR))
+			return Default_LIGHTCLR;
+		if (inParameterName.equals(CROSSBCH))
+			return Default_CROSSBCH;
+		if (inParameterName.equals(AUTOSHRT))
+			return Default_AUTOSHRT;
+		
+		// Do not log an error if not pre-known
+		return null;
 	}
 
 	public DomainObjectProperty(IDomainObject object, DomainObjectPropertyDefault propertyDefault) {

@@ -3,54 +3,112 @@ package com.gadgetworks.codeshelf.service;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
 
-
 import lombok.Getter;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
-
 public class ProductivityCheSummaryList extends BaseResponse{
-	public final static TimeZone timeZone = TimeZone.getTimeZone("UTC");
-	public final static String timeFormat = "yyyy-MM-dd HH:mm:ss.SSSZ";
-	
-	//Groups->Ches->Runs
+	private final static TimeZone TZ = TimeZone.getTimeZone("UTC");
+	private final static String TF = "yyyy-MM-dd HH:mm:ss.SSSZ";
+
 	@Getter
-	@JsonIgnore
-	private HashMap<String, HashMap<UUID, HashMap<String, RunSummary>>> groups = new HashMap<>();
+	private HashMap<String, List<RunSummary>> runsByGroup = new HashMap<String, List<RunSummary>>();
 	
-	
-	/**
-	 * By group domain id
-	 */
-	public HashMap<String, List<RunSummary>> getRunsByGroup() {
-		HashMap<String, List<RunSummary>> byGroup = new HashMap<>();
-		
-		for (String groupPersistentid  : groups.keySet()) {
-			ArrayList<RunSummary> runs = new ArrayList<>();
-			for (HashMap<String, RunSummary> byTime : groups.get(groupPersistentid).values()) {
-				runs.addAll(byTime.values());
+	public void setInstructions(List<WorkInstruction> instructions, UUID facilityId) {
+		for (WorkInstruction instruction : instructions) {
+			Facility facility = instruction.getFacility(); 
+			if (facility == null || !facility.getPersistentId().equals(facilityId)) {
+				continue;
 			}
-			if (runs.isEmpty() == false) {
-				String groupDomainId = runs.get(0).groupDomainId;
-				byGroup.put(groupDomainId, runs);
-				
-			}
+			processSingleInstruction(instruction);
 		}
-		return byGroup;
+		sort();
 	}
 	
-	public class RunSummary{
+	private void processSingleInstruction(WorkInstruction instruction) {
+		OrderDetail detail = instruction.getOrderDetail();
+		OrderHeader header = detail.getParent();
+		OrderGroup group = header.getOrderGroup();
+		String groupId = group == null? "undefined" : group.getPersistentId().toString();
+		String groupDomainId = group == null? "undefined" : group.getDomainId();
+		Che che = instruction.getAssignedChe();
+		String runId = getRunId(instruction);
+		
+		List<RunSummary> runs = runsByGroup.get(groupDomainId);
+		if (runs == null) {
+			runs = new ArrayList<>();
+			runsByGroup.put(groupDomainId, runs);
+		}
+		
+		RunSummary run = getRun(runs, runId);
+		if (run == null) {
+			run = new RunSummary(runId, groupId, groupDomainId, che.getPersistentId().toString(), che.getDomainId());
+			runs.add(run);
+		}
+		
+		WorkInstructionStatusEnum status = instruction.getStatus();
+		switch (status) {
+			case INVALID:
+				run.invalid++;
+				break;
+			case NEW:
+				run.New++;
+				break;
+			case INPROGRESS:
+				run.inprogress++;
+				break;
+			case SHORT:
+				run.Short++;
+				break;
+			case COMPLETE:
+				run.complete++;
+				break;
+			case REVERT:
+				run.revert++;
+				break;
+		}
+	}
+	
+	public static RunSummary getRun(List<RunSummary> runs, String runId) {
+		for (RunSummary run : runs) {
+			if (runId.equals(run.getId())) {return run;}
+		}
+		return null;
+	}
+	
+	private String getRunId(WorkInstruction instruction) {
+		Timestamp time = instruction.getAssigned();
+		if(time == null) {
+			return "";
+		} else {
+			SimpleDateFormat df = new SimpleDateFormat(TF);
+			df.setTimeZone(TZ);
+			return df.format(time);
+		}
+	}
+	
+	private void sort(){
+		Iterator<List<RunSummary>> runsIter = runsByGroup.values().iterator();
+		while (runsIter.hasNext()) {
+			Collections.sort(runsIter.next(), Collections.reverseOrder());
+		}
+	}
+	
+	public class RunSummary implements Comparable<RunSummary>{
 		@Getter
 		private String id; //run id
 		
@@ -70,68 +128,9 @@ public class ProductivityCheSummaryList extends BaseResponse{
 			this.groupDomainId = groupDomainId;
 			this.cheDomainId = cheDomainId;
 		}
-	}
-
-	public void processStatus(OrderHeader header, WorkInstruction instruction){
-		if (header == null || instruction == null) {return;}
-		OrderGroup group = header.getOrderGroup();
-		String groupDomainId = group == null? "undefined" : group.getDomainId();
-		String groupId = group == null? "undefined" : group.getPersistentId().toString();
-		Che che = instruction.getAssignedChe();
-		UUID cheId = che.getPersistentId();
 		
-		//Get all che's for this group 
-		HashMap<UUID, HashMap<String, RunSummary>> ches = groups.get(groupId);
-		if (ches == null){
-			ches = new HashMap<>();
-			groups.put(groupId, ches);
-		}
-		
-		//Get all runs for this che
-		HashMap<String, RunSummary> cheRuns = ches.get(cheId);
-		if (cheRuns == null){
-			cheRuns = new HashMap<>();
-			ches.put(cheId, cheRuns);
-		}
-		
-		//Get the correct run
-		Timestamp time = instruction.getAssigned();
-
-		String timeStr;
-		if(time == null) {
-			timeStr = "";
-		} else {
-			SimpleDateFormat df = new SimpleDateFormat(ProductivityCheSummaryList.timeFormat);
-			df.setTimeZone(ProductivityCheSummaryList.timeZone);
-			timeStr = df.format(time);
-		}
-		
-		RunSummary summary = cheRuns.get(timeStr);
-		if (summary == null) {
-			summary = new RunSummary(timeStr, groupId, groupDomainId, cheId.toString(), che.getDomainId());
-			cheRuns.put(timeStr, summary);
-		}
-		
-		WorkInstructionStatusEnum status = instruction.getStatus();
-		switch (status) {
-			case INVALID:
-				summary.invalid++;
-				break;
-			case NEW:
-				summary.New++;
-				break;
-			case INPROGRESS:
-				summary.inprogress++;
-				break;
-			case SHORT:
-				summary.Short++;
-				break;
-			case COMPLETE:
-				summary.complete++;
-				break;
-			case REVERT:
-				summary.revert++;
-				break;
-		}
+		public int compareTo(RunSummary compareRun) {
+			return id.compareTo(compareRun.id);
+		}	
 	}
 }
