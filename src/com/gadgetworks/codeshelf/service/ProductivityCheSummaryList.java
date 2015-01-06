@@ -104,7 +104,7 @@ public class ProductivityCheSummaryList extends BaseResponse{
 	private void sort(){
 		Iterator<List<RunSummary>> runsIter = runsByGroup.values().iterator();
 		while (runsIter.hasNext()) {
-			Collections.sort(runsIter.next());
+			Collections.sort(runsIter.next(), Collections.reverseOrder());
 		}
 	}
 	
