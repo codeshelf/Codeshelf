@@ -47,9 +47,9 @@ public class FacilityResource {
 	}
 		
 	@GET
-	@Path("/chesummary1")
+	@Path("/chesummary")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getCheSummary1() {
+	public Response getCheSummary() {
 		ErrorResponse errors = new ErrorResponse();
 		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
 			return errors.buildResponse();
