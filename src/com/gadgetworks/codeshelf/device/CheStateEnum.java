@@ -42,9 +42,7 @@ public enum CheStateEnum {
 	// @EnumValue("CONTAINER_POSITION_IN_USE")
 	CONTAINER_POSITION_IN_USE(CheStateNum.CONTAINER_POSITION_IN_USE, "CONTAINER_POSITION_IN_USE"),
 	// @EnumValue("NO_CONTAINERS_SETUP")
-	NO_CONTAINERS_SETUP(CheStateNum.NO_CONTAINERS_SETUP, "NO_CONTAINERS_SETUP"),
-	// @EnumValue("CLEAR_ERROR_SCAN_INVALID")
-	CLEAR_ERROR_SCAN_INVALID(CheStateNum.CLEAR_ERROR_SCAN_INVALID, "CLEAR_ERROR_SCAN_INVALID");
+	NO_CONTAINERS_SETUP(CheStateNum.NO_CONTAINERS_SETUP, "NO_CONTAINERS_SETUP");
 
 	private int		mValue;
 	private String	mName;
@@ -109,10 +107,6 @@ public enum CheStateEnum {
 			case CheStateNum.CONTAINER_SELECTION_INVALID:
 				result = CheStateEnum.CONTAINER_SELECTION_INVALID;
 				break;
-				
-			case CheStateNum.CLEAR_ERROR_SCAN_INVALID:
-				result = CheStateEnum.CLEAR_ERROR_SCAN_INVALID;
-				break;
 
 			case CheStateNum.CONTAINER_POSITION_IN_USE:
 				result = CheStateEnum.CONTAINER_POSITION_IN_USE;
@@ -162,8 +156,6 @@ public enum CheStateEnum {
 		static final byte	CONTAINER_SELECTION_INVALID		= 14;	//Addec Dec 30 2014
 		static final byte	CONTAINER_POSITION_IN_USE		= 15;	//Added Dec 30 2014
 		static final byte	NO_CONTAINERS_SETUP			= 16;	//Added Jan 2 2015
-		
-		static final byte	CLEAR_ERROR_SCAN_INVALID	= 17;	//Added Dec 30 2014
 
 		private CheStateNum() {
 		};
