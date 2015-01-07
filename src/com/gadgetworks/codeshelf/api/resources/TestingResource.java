@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
@@ -90,6 +91,7 @@ public class TestingResource {
 				persistence.beginTenantTransaction();
 				instruction.setActualQuantity(instruction.getPlanQuantity());
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
+				instruction.setType(WorkInstructionTypeEnum.ACTUAL);
 				OrderDetail detail = instruction.getOrderDetail();
 				if (i++ % 4 == 0) {
 					instruction.setStatus(WorkInstructionStatusEnum.SHORT);
