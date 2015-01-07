@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
@@ -61,6 +62,30 @@ public class ProductivityReportingTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@Test
+	public void testGetCheSummaryAllWorkInstructionCombos() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+		List<WorkInstruction> workInstructions = createFacilityWithOneRunAllWorkInstructionCombos();
+		
+		UUID facilityId = workInstructions.get(0).getParent().getPersistentId();
+		this.getPersistenceService().commitTenantTransaction();
+		
+		this.getPersistenceService().beginTenantTransaction();
+		//Get all summaries
+		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		RunSummary summary = cheSummaries.getRunsByGroup().values().iterator().next().get(0);
+
+		//filter housekeeping
+		ArrayList<WorkInstruction> withoutHK = new ArrayList<>();
+		for (WorkInstruction workInstruction : workInstructions) {
+			if (!workInstruction.isHousekeeping()) {
+				withoutHK.add(workInstruction);
+			}
+		}
+		
+		Assert.assertEquals(withoutHK.size(), summary.getTotal());
+	}
+	
 	@Test
 	public void testGetCheSummaryOneRun() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
@@ -140,10 +165,13 @@ public class ProductivityReportingTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+
 	private void testRunSummary(RunSummary s, int invalid, int New, int inprogress, int Short, int complete, int revert){
 		Assert.assertNotNull(s);
 		Assert.assertTrue(s.getInvalid() == invalid && s.getNew() == New && s.getInprogress() == inprogress && s.getShort() == Short && s.getComplete() == complete && s.getRevert() == revert);
 	}
+	
+	
 	
 	private Facility createFacilityWithOneRun(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
@@ -165,6 +193,14 @@ public class ProductivityReportingTest extends DomainTestABC {
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.REVERT, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
 		
 		return facility;
+	}
+
+	private List<WorkInstruction>  createFacilityWithOneRunAllWorkInstructionCombos(){
+		//12/22/14 6:46 PM = 1419291960000
+		Facility facility = createDefaultFacility(getTestName());
+		WorkInstructionGenerator generator = new WorkInstructionGenerator();
+		List<WorkInstruction> generatedWIs = generator.generateCombinations(facility, new Timestamp(1419291960000l));
+		return generatedWIs;
 	}
 
 	private Facility createFacilityWithTwoRuns(String orgId){

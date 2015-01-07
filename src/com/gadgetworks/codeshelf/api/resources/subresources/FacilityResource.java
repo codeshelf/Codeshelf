@@ -58,8 +58,7 @@ public class FacilityResource {
 		try {
 			persistence.beginTenantTransaction();
 			List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
-			ProductivityCheSummaryList summary = new ProductivityCheSummaryList();
-			summary.setInstructions(instructions, mUUIDParam.getUUID());
+			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
 			return summary.buildResponse();
 		} catch (Exception e) {
 			errors.processException(e);

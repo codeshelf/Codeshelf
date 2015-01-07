@@ -77,8 +77,8 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		WorkInstruction testWi2 = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
+		WorkInstruction testWi2 = generateValidCompleteWorkInstruction(facility);
 		List<WorkInstruction> wiList = ImmutableList.of(testWi, testWi2);
 		List<String[]> table = toTable(wiList);
 
@@ -95,7 +95,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 			Assert.assertNotNull("Data Field Value was null at position: " + i, dataField);
 			if (i != headers.indexOf("lotId") &&
 				i != headers.indexOf("version-1.0")) {
-				Assert.assertNotEquals("Data Field Value was empty at position: " + i, "", dataField.trim());
+				Assert.assertNotEquals("Data Field Value was empty at position: " + i + ": " + Arrays.asList(dataRow), "", dataField.trim());
 			}
 		}
 		
@@ -115,8 +115,8 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
-		WorkInstruction testWi2 = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
+		WorkInstruction testWi2 = generateValidCompleteWorkInstruction(facility);
 		List<WorkInstruction> wiList = ImmutableList.of(testWi, testWi2);
 		List<String[]> table = toTable(wiList);
 		Iterator<WorkInstruction> workInstructions = wiList.iterator();
@@ -134,7 +134,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		testWi.setAssigned(null);
 		testWi.setCreated(null);
 		testWi.setCompleted(null);
@@ -162,7 +162,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		String expectedValue = "TESTDOMAINID";
 		
 		
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		OrderGroup orderGroup = new OrderGroup(expectedValue);
 		facility.addOrderGroup(orderGroup);
 		
@@ -187,7 +187,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		String expectedValue = "OH1";
 		
 		
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		
 		OrderGroup orderGroup = new OrderGroup(expectedValue);
 		facility.addOrderGroup(orderGroup);
@@ -211,7 +211,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		String expectedValue = "OG1";
 		
 		
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		OrderGroup orderGroup = new OrderGroup(expectedValue);
 		facility.addOrderGroup(orderGroup);
 		
@@ -230,7 +230,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		testWi.getOrderDetail().getParent().setOrderGroup(null);
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);
@@ -245,7 +245,10 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
-		WorkInstruction testWi = generateValidFullWorkInstruction(facility);
+		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		//technically can't persist null quantities
 		testWi.setPlanMaxQuantity(null);
 		testWi.setPlanMinQuantity(null);
 		testWi.setPlanQuantity(null);
@@ -256,11 +259,12 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 		assertField(dataRow, "actualQuantity", "");
 		assertField(dataRow, "planQuantity", "");
 
-		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	private WorkInstruction generateValidFullWorkInstruction(Facility facility) {
-		return wiGenerator.generateValid(facility);
+	private WorkInstruction generateValidCompleteWorkInstruction(Facility facility) {
+		WorkInstruction wi =  wiGenerator.generateValid(facility);
+		wi.setPickerId("PICKER");
+		return wi;
 	}
 	
 	private void assertHeaderRow(String [] header) {

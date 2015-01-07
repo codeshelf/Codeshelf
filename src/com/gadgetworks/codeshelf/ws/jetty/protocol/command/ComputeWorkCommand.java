@@ -88,7 +88,7 @@ public class ComputeWorkCommand extends CommandABC {
 						break;
 					case NEW:
 						//Ignore Housekeeping
-						if (!wi.amIHouseKeepingWi()) {
+						if (!wi.isHousekeeping()) {
 							count.incrementGoodCount();
 						}
 						break;
