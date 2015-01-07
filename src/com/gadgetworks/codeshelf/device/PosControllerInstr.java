@@ -30,13 +30,14 @@ public class PosControllerInstr {
 	public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
 	
 	//Commenting out bit encodings until v11
-	//public static final Byte	BITENCODED_SEGMENTS_CODE		= (byte) 240;
+	public static final Byte	BITENCODED_SEGMENTS_CODE		= (byte) 240;
 	// Bit-encoded LED display characters.
 	// https://en.wikipedia.org/wiki/Seven-segment_display
 	// MSB->LSB the segments are encoded DP, G, F, E, D, C, B, A
-	//public static final Byte	BITENCODED_LED_BLANK			= 0x00;
-	//public static final Byte	BITENCODED_LED_E				= 0x79;
-
+	public static final Byte	BITENCODED_LED_BLANK			= 0x00;
+	public static final Byte	BITENCODED_LED_DASH				= 0x40;
+	public static final Byte	BITENCODED_LED_O				= 0x5C;
+	public static final Byte	BITENCODED_LED_C				= 0x58;
 	//Display Refresh Freqs
 	public static final Byte	BLINK_FREQ						= (byte) 0x15;
 	public static final Byte	SOLID_FREQ						= (byte) 0x00;

@@ -267,4 +267,27 @@ public class PickSimulator {
 			return null;
 		}
 	}
+
+	public Byte getLastSentPositionControllerMinQty(byte position) {
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getMinQty();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getMinQty();
+		} else {
+			return null;
+		}
+
+	}
+
+	public Byte getLastSentPositionControllerMaxQty(byte position) {
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getMaxQty();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getMaxQty();
+		} else {
+			return null;
+		}
+
+	}
+
 }
