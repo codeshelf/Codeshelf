@@ -40,6 +40,9 @@ public class ProductivityCheSummaryList extends BaseResponse {
 
 	private void processSingleInstruction(WorkInstruction instruction) {
 		OrderDetail detail = instruction.getOrderDetail();
+		if (detail == null) {
+			return;
+		}
 		OrderHeader header = detail.getParent();
 		OrderGroup group = header.getOrderGroup();
 		String groupDomainId = group == null ? "undefined" : group.getDomainId();
