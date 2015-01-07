@@ -1228,7 +1228,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
 
 		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR_ERROR");
+		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
@@ -1253,7 +1253,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
 
 		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR_ERROR");
+		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == Byte.valueOf("22"));
@@ -1272,7 +1272,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
 
 		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR_ERROR");
+		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
@@ -1291,7 +1291,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
 
 		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR_ERROR");
+		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
