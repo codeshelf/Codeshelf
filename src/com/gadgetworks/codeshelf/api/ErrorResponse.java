@@ -7,6 +7,8 @@ import javassist.NotFoundException;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 
@@ -14,10 +16,13 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.gadgetworks.codeshelf.model.domain.ProductivityReportingTest;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 @JsonInclude(Include.NON_NULL)
 public class ErrorResponse extends BaseResponse{
+	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
+
 	@Getter
 	private ArrayList<String> errors;
 
@@ -38,8 +43,9 @@ public class ErrorResponse extends BaseResponse{
 		addError("Could not find " + type + " " + uuid);
 	}
 	
-	public void processException(Exception e) {
+	public void processException(Throwable e) {
 		String message = e.getMessage();
+		LOGGER.error(message);
 		if (message == null || message.isEmpty()) {
 			message = ExceptionUtils.getStackTrace(e);
 		}
