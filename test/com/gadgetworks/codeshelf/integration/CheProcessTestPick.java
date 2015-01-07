@@ -375,7 +375,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		String wiLoc = wi1.getPickInstruction(); // this is the denormalized position on the work instruction. Should have the alias, and not F1.A2.B2.T1
 		Assert.assertEquals("D402", wiLoc);
 		WorkInstruction wi2 = wiListAfterScan.get(1);
-		Assert.assertTrue(wi2.amIHouseKeepingWi());
+		Assert.assertTrue(wi2.isHousekeeping());
 
 		// New from v4. Test our work instruction summarizer
 		List<WiSetSummary> summaries = new WorkService().start().workSummary(che1.getPersistentId(), facility.getPersistentId());

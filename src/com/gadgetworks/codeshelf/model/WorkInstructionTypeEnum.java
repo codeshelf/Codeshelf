@@ -5,23 +5,27 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model;
 
+import java.util.List;
+
+import com.google.common.collect.ImmutableList;
+
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
 public enum WorkInstructionTypeEnum {
 	// @EnumValue("INVALID")
-	INVALID(WorkInstructionTypeNum.INVALID, "INVALID"),
+	INVALID(WorkInstructionTypeNum.INVALID, "INVALID", false),
 	// @EnumValue("PLAN")
-	PLAN(WorkInstructionTypeNum.PLAN, "PLAN"),
+	PLAN(WorkInstructionTypeNum.PLAN, "PLAN", false),
 	// @EnumValue("ACTUAL")
-	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL"),
+	ACTUAL(WorkInstructionTypeNum.ACTUAL, "ACTUAL", false),
 	// @EnumValue("INDICATOR")
-	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR"),
+	INDICATOR(WorkInstructionTypeNum.INDICATOR, "INDICATOR", false),
 	// @EnumValue("HK_REPEATPOS")
-	HK_REPEATPOS(WorkInstructionTypeNum.HK_REPEATPOS, "HK_REPEATPOS"),
+	HK_REPEATPOS(WorkInstructionTypeNum.HK_REPEATPOS, "HK_REPEATPOS", true),
 	// @EnumValue("HK_BAYCOMPLETE")
-	HK_BAYCOMPLETE(WorkInstructionTypeNum.HK_BAYCOMPLETE, "HK_BAYCOMPLETE");
+	HK_BAYCOMPLETE(WorkInstructionTypeNum.HK_BAYCOMPLETE, "HK_BAYCOMPLETE", true);
 	
 	// If you add a new one, please search code for filters like this
 	// 		String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :typeplan or typeEnum = :typehkbaychange or typeEnum = :typehkrepeat) and (posAlongPath >= :pos)";
@@ -29,10 +33,16 @@ public enum WorkInstructionTypeEnum {
 
 	private int		mValue;
 	private String	mName;
+	private boolean mHousekeeping;
 
-	WorkInstructionTypeEnum(final int inValue, final String inName) {
+	WorkInstructionTypeEnum(final int inValue, final String inName, boolean isHousekeeping) {
 		mValue = inValue;
 		mName = inName;
+		mHousekeeping = isHousekeeping;
+	}
+	
+	public static List<WorkInstructionTypeEnum> getHousekeepingTypeEnums() {
+		return ImmutableList.of(HK_REPEATPOS, HK_BAYCOMPLETE);
 	}
 
 	public static WorkInstructionTypeEnum getWorkInstructionTypeEnum(int inOnlineStatusID) {
@@ -76,6 +86,10 @@ public enum WorkInstructionTypeEnum {
 		return mName;
 	}
 
+	public boolean isHousekeeping() {
+		return mHousekeeping;
+	}
+
 	static final class WorkInstructionTypeNum {
 
 		static final byte	INVALID		= -1;
@@ -88,4 +102,5 @@ public enum WorkInstructionTypeEnum {
 		private WorkInstructionTypeNum() {
 		};
 	}
+
 }

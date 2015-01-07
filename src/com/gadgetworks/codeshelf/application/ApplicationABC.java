@@ -43,11 +43,11 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
-	private AdminServer mAdminServer;
+	private WebApiServer apiServer;
 
 	@Inject
-	public ApplicationABC(AdminServer inAdminServer) {
-		mAdminServer = inAdminServer;
+	public ApplicationABC(WebApiServer apiServer) {
+		this.apiServer = apiServer;
 	}
 
 	protected abstract void doStartup() throws Exception;
@@ -191,25 +191,20 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 	
-	protected void startAdminServer(ICsDeviceManager deviceManager) {
+	protected void startApiServer(ICsDeviceManager deviceManager) {
+		Integer port = Integer.getInteger("api.port");
+		if(port != null) {
+			boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
 
-		// start admin server, if enabled
-		String useAdminServer = System.getProperty("adminserver.enable");
-		
-		if ("true".equalsIgnoreCase(useAdminServer)) {
-			Integer port = Integer.getInteger("adminserver.port");
-			if(port != null) {
-				boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
-
-				LOGGER.info("Starting Admin Server on port "+port+", schema management "+(enableSchemaManagement?"enabled":"disabled"));
-				mAdminServer.startServer(port,deviceManager,this,enableSchemaManagement);
-			} else {
-				LOGGER.error("Could not start admin server, adminserver.port needs to be specified");
-			}
+			LOGGER.info("Starting Admin Server on port "+port+", schema management "+(enableSchemaManagement?"enabled":"disabled"));
+			apiServer.start(port,deviceManager,this,enableSchemaManagement,System.getProperty("webapp.content.path"));
+		} else {
+			LOGGER.error("Could not start admin server, adminserver.port needs to be specified");
 		}
-		else {
-			LOGGER.info("Admin Server not enabled");
-		}		
+	}
+	
+	protected void stopApiServer() {
+		apiServer.stop();
 	}
 	
 	protected void startTsdbReporter() {

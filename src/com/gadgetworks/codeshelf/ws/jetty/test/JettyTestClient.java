@@ -19,18 +19,10 @@ public class JettyTestClient {
     public static void main(String[] args) {
 		System.setProperty("console.appender","org.apache.log4j.ConsoleAppender");
 		
-		// init keystore and trust store
-		System.setProperty("javax.net.ssl.keyStore", "conf/localhost.jks");
-		System.setProperty("javax.net.ssl.keyStorePassword", "1qazse4");
-		System.setProperty("javax.net.ssl.trustStore", "conf/localhost.jks");
-		System.setProperty("javax.net.ssl.trustStorePassword", "1qazse4");
-		System.setProperty("javax.net.ssl.trustStoreType", "JKS");
-		// System.setProperty("javax.net.debug", "ssl");
-		
 		try {
     		// create WS client
         	MessageProcessor responseProcessor = new LogResponseProcessor();
-        	JettyWebSocketClient client = new JettyWebSocketClient(ContainerProvider.getWebSocketContainer(), URI.create("wss://localhost:8444/"),responseProcessor,null);
+        	JettyWebSocketClient client = new JettyWebSocketClient(ContainerProvider.getWebSocketContainer(), URI.create("ws://localhost:8181/ws/"),responseProcessor,null);
         	client.connect();
         	//Message that shouldn't compress
         	char[] charBuf = new char[CompressedJsonMessage.JSON_COMPRESS_MAXIMUM - 1];

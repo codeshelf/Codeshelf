@@ -2020,11 +2020,12 @@ public class Facility extends Location {
 		return uomMaster;
 	}
 
-	public ItemMaster createItemMaster(String inDomainId, UomMaster uomMaster) {
+	public ItemMaster createItemMaster(String inDomainId, String description, UomMaster uomMaster) {
 		ItemMaster itemMaster = null;
 		if (uomMaster.getParent().equals(this)) {
 			itemMaster = new ItemMaster();
 			itemMaster.setDomainId(inDomainId);
+			itemMaster.setDescription(description);
 			itemMaster.setStandardUom(uomMaster);
 			this.addItemMaster(itemMaster);
 		} else {

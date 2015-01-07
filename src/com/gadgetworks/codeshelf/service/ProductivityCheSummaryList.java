@@ -1,20 +1,17 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.UUID;
 
 import lombok.Getter;
 
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -26,8 +23,8 @@ public class ProductivityCheSummaryList extends BaseResponse {
 
 	@Getter
 	private HashMap<String, List<WiSetSummary>>	runsByGroup	= new HashMap<String, List<WiSetSummary>>();
-
-	public void setInstructions(List<WorkInstruction> instructions, UUID facilityId) {
+	
+	public ProductivityCheSummaryList(UUID facilityId, List<WorkInstruction> instructions) {
 		for (WorkInstruction instruction : instructions) {
 			Facility facility = instruction.getFacility();
 			if (facility == null || !facility.getPersistentId().equals(facilityId)) {
@@ -39,6 +36,10 @@ public class ProductivityCheSummaryList extends BaseResponse {
 	}
 
 	private void processSingleInstruction(WorkInstruction instruction) {
+		if (instruction.isHousekeeping()) {
+			return; 
+		}
+
 		OrderDetail detail = instruction.getOrderDetail();
 		if (detail == null) {
 			return;

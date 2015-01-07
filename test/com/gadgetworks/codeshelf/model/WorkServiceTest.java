@@ -164,6 +164,10 @@ public class WorkServiceTest extends DAOTestABC {
 	@Test
 	public void doesNotExportIfWICannotBeStored() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction existingWi = generateValidWorkInstruction(facility, new Timestamp(0));
+		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
+		this.getPersistenceService().commitTenantTransaction();
 
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
@@ -172,11 +176,9 @@ public class WorkServiceTest extends DAOTestABC {
 		Che.DAO = mock(ITypedDao.class);
 		when(Che.DAO.findByPersistentId(eq(cheId))).thenReturn(new Che());
 
-		Facility facility = facilityGenerator.generateValid();
 		UUID testId = UUID.randomUUID();
-		WorkInstruction existingWi = generateValidWorkInstruction(facility, new Timestamp(0));
+
 		existingWi.setPersistentId(testId);
-		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
 		wiToRecord.setPersistentId(testId);
 
 		WorkInstruction.DAO = mock(ITypedDao.class);
@@ -190,7 +192,6 @@ public class WorkServiceTest extends DAOTestABC {
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
 		workService.stop();
-		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@Test

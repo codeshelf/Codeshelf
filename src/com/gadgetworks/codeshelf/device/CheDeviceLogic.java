@@ -1039,7 +1039,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			default:
-				//Do nothing
+				//Reset ourselves
+				//Ideally we shouldn't have to clear poscons here
+				clearAllPositionControllers();
+				setState(mCheStateEnum);
 				break;
 
 		}
@@ -1116,7 +1119,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				if (mActivePickWiList.size() > 0) {
 					// short scan of housekeeping work instruction makes no sense
 					WorkInstruction wi = mActivePickWiList.get(0);
-					if (wi.amIHouseKeepingWi())
+					if (wi.isHousekeeping())
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					else
 						setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
@@ -1213,14 +1216,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// Keep in mind this odd-ball case:
 		// One short will short ahead and get some shorts and repeatPos.
 		// A later short will short ahead and look for more. It is possible that one of the earlier short ahead is complete and just before it.
-		WorkInstructionTypeEnum theType = inWi.getType();
 		WorkInstructionStatusEnum theStatus = inWi.getStatus();
 		if (theStatus != WorkInstructionStatusEnum.NEW && theStatus != WorkInstructionStatusEnum.SHORT) {
 			LOGGER.error("bad calling context 1 for unCompletedUnneededHousekeep");
 			return false;
 		}
 
-		if (theType == WorkInstructionTypeEnum.HK_REPEATPOS || theType == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+		if (inWi.isHousekeeping()) {
 			return true;
 		}
 
@@ -1300,7 +1302,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 
 		//Decrement count as short
-		if (!inWi.amIHouseKeepingWi()) {
+		if (!inWi.isHousekeeping()) {
 			//The HK check should never be false
 			String containerId = inWi.getContainerId();
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
@@ -1868,7 +1870,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mActivePickWiList.remove(inWi);
 
 		//Decrement count if this is a non-HK WI
-		if (!inWi.amIHouseKeepingWi()) {
+		if (!inWi.isHousekeeping()) {
 			String containerId = inWi.getContainerId();
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 			count.decrementGoodCountAndIncrementCompleteCount();
