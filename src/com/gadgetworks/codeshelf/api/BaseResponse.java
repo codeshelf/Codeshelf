@@ -6,8 +6,6 @@ import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-
 import lombok.Setter;
 
 public abstract class BaseResponse {

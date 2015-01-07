@@ -36,8 +36,6 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
-import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
-import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -180,13 +178,6 @@ public class CodeshelfApplicationTest {
 		Tier.DAO = new MockDao<Tier>();
 		Slot.DAO = new MockDao<Slot>();
 
-		IHttpServer httpServer = new HttpServer("./",
-			"localhost",
-			8443,
-			"conf/localhost.jks",
-			"1qazse4",
-			"1qazse4");
-
 		IConfiguration config = mock(IConfiguration.class);
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
@@ -204,18 +195,14 @@ public class CodeshelfApplicationTest {
 			PersistenceService.getInstance());
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
-		AdminServer adminServer = new AdminServer();
+		WebApiServer adminServer = new WebApiServer();
 		
-		JettyWebSocketServer jettyServer = new JettyWebSocketServer(new JVMSystemConfiguration());
-
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			config,
-			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
 			User.DAO,
 			adminServer,
-			jettyServer,
 			PersistenceService.getInstance());
 
 		final Result checkAppRunning = new Result();

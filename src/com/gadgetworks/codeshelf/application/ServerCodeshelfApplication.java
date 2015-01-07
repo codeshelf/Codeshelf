@@ -6,7 +6,6 @@
 
 package com.gadgetworks.codeshelf.application;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -22,9 +21,6 @@ import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
@@ -32,7 +28,8 @@ import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
-import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
+import com.gadgetworks.codeshelf.ws.jetty.server.ServerWatchdogThread;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -40,7 +37,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private IEdiProcessor			mEdiProcessor;
-	private IHttpServer				mHttpServer;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 
 	@Getter
@@ -50,26 +46,32 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
-	JettyWebSocketServer			webSocketServer;
-
 	private IConfiguration			configuration;
+
+	private final ServerWatchdogThread watchdog;
 
 	@Inject
 	public ServerCodeshelfApplication(final IConfiguration configuration,
-		final IHttpServer inHttpServer,
-		final IEdiProcessor inEdiProcessor,
-		final IPickDocumentGenerator inPickDocumentGenerator,
-		final ITypedDao<User> inUserDao,
-		final AdminServer inAdminServer,
-		final JettyWebSocketServer inAlternativeWebSocketServer,
-		final PersistenceService persistenceService) {
-		super(inAdminServer);
+			final IEdiProcessor inEdiProcessor,
+			final IPickDocumentGenerator inPickDocumentGenerator,
+			final ITypedDao<User> inUserDao,
+			final WebApiServer inWebApiServer,
+			final PersistenceService persistenceService) {
+			
+		super(inWebApiServer);
+		
 		this.configuration = configuration;
-		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		webSocketServer = inAlternativeWebSocketServer;
 		this.persistenceService = persistenceService;
+			
+		// create and configure watch dog
+		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
+		boolean suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive");
+		boolean killIdle = configuration.getBoolean("websocket.idle.kill");
+		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
+		this.watchdog.setKillIdle(killIdle);
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -99,9 +101,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			System.exit(1);
 		}
 
-		// Start the WebSocket server
-		webSocketServer.start();
-
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
@@ -109,9 +108,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
-		mHttpServer.startServer();
-
-		startAdminServer(null);
+		startApiServer(null);
 		startTsdbReporter();
 		registerSystemMetrics();
 
@@ -124,6 +121,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
 		MetricsService.registerHealthCheck(dbxCheck);
+
+		// start server watchdog
+		watchdog.start();        
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -131,15 +132,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 */
 	protected void doShutdown() {
 		LOGGER.info("Stopping application");
-		mHttpServer.stopServer();
+		watchdog.setExit(true);
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
-		// Stop the web socket server
-		try {
-			webSocketServer.stop();
-		} catch (IOException | InterruptedException e) {
-			LOGGER.error("Failed to stop WebSocket server", e);
-		}
+		this.stopApiServer();
 		this.persistenceService.stop();
 		LOGGER.info("Application terminated normally");
 	}
