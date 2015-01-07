@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.ApplicationABC;
 import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.application.CsSiteControllerMain;
+import com.gadgetworks.codeshelf.application.WebApiServer;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.edi.EdiTestABC;
@@ -27,7 +28,6 @@ import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
-import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.gadgetworks.flyweight.command.ColorEnum;
@@ -58,13 +58,13 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	protected static NetGuid cheGuid2 = new NetGuid("0x24");
 
 	@Getter
-	JettyWebSocketServer webSocketServer;
-
-	@Getter
 	CsSiteControllerApplication siteController;
 
 	@Getter
 	CsDeviceManager deviceManager;
+
+	@Getter
+	WebApiServer apiServer;
 
 	@Getter
 	Organization organization;
@@ -113,10 +113,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		IConfiguration configuration = websocketServerInjector.getInstance(IConfiguration.class);
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
-		System.setProperty("javax.net.ssl.keyStore", configuration.getString("keystore.path"));
-		System.setProperty("javax.net.ssl.keyStorePassword", configuration.getString("keystore.store.password"));
-		System.setProperty("javax.net.ssl.trustStore", configuration.getString("keystore.path"));
-		System.setProperty("javax.net.ssl.trustStorePassword", configuration.getString("keystore.store.password"));
 		
 		this.getPersistenceService().beginTenantTransaction();
 		// ensure facility, organization, network exist in database before booting up site controller
@@ -168,15 +164,9 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		this.che2PersistentId = che2.getPersistentId();
 
 		this.getPersistenceService().commitTenantTransaction();
-		
-		// start web socket server
-		webSocketServer = websocketServerInjector.getInstance(JettyWebSocketServer.class);
-		try {
-			webSocketServer.start();
-		} catch (Exception e) {
-			LOGGER.error("Failed to start WebSocket server", e);
-			throw new RuntimeException("Failed to start WebSocket server");
-		}
+
+		apiServer = new WebApiServer();
+		apiServer.start(8181, null, null, false, "./");
 		ThreadUtils.sleep(2000);
 
 		// start site controller
@@ -236,20 +226,15 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	@Override
 	public void doAfter() {
-		// tear down server and site controller
-		stop();
 		// roll back transaction if active
 		if (PersistenceService.getInstance().hasActiveTransaction()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");
 			PersistenceService.getInstance().rollbackTenantTransaction();
 		}
+		// tear down server and site controller
+		stop();
 		// reset
-		webSocketServer = null;
 		siteController = null;
-		System.clearProperty("javax.net.ssl.keyStore");
-		System.clearProperty("javax.net.ssl.keyStorePassword");
-		System.clearProperty("javax.net.ssl.trustStore");
-		System.clearProperty("javax.net.ssl.trustStorePassword");
 		super.doAfter();
 	}
 
@@ -262,10 +247,11 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			LOGGER.error("Failed to stop site controller",e);
 		}
 		try {
-			webSocketServer.stop();
+			apiServer.stop();
 		} catch (Exception e) {
 			LOGGER.error("Failed to stop WebSocket server", e);
 		}
+		
 		LOGGER.debug("-------------- Clean up completed");
 	}
 	
