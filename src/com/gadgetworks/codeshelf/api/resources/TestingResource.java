@@ -89,7 +89,6 @@ public class TestingResource {
 			for(WorkInstruction instruction : instructions) {
 				persistence.beginTenantTransaction();
 				instruction.setActualQuantity(instruction.getPlanQuantity());
-				//instruction.setPickerId(mUserId);
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 				OrderDetail detail = instruction.getOrderDetail();
 				if (i++ % 4 == 0) {

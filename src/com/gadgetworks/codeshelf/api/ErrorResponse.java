@@ -6,6 +6,8 @@ import javassist.NotFoundException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
+
 import lombok.Getter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -37,7 +39,11 @@ public class ErrorResponse extends BaseResponse{
 	}
 	
 	public void processException(Exception e) {
-		addError(e.getMessage());
+		String message = e.getMessage();
+		if (message == null || message.isEmpty()) {
+			message = ExceptionUtils.getStackTrace(e);
+		}
+		addError(message);
 		if (e instanceof NotFoundException) {
 			setStatus(HttpServletResponse.SC_NOT_FOUND);
 		} else {
