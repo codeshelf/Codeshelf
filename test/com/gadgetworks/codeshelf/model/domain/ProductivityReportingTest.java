@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WiFactory;
+import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList.RunSummary;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList.GroupSummary;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -73,12 +73,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		//Get summaries for the only group
-		List<List<RunSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
+		List<List<WiSetSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
 		Assert.assertEquals(groups.size(), 1);
 		//Get runs for the group
-		List<RunSummary> groupRuns = groups.get(0);
+		List<WiSetSummary> groupRuns = groups.get(0);
 		Assert.assertEquals(groupRuns.size(), 1);
-		RunSummary run = groupRuns.get(0);
+		WiSetSummary run = groupRuns.get(0);
 		//Verify retrieved run
 		testRunSummary(run, 0, 0, 2, 0, 2, 1);
 		this.getPersistenceService().commitTenantTransaction();
@@ -96,17 +96,14 @@ public class ProductivityReportingTest extends DomainTestABC {
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		//Get summaries for the only group
-		List<List<RunSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
+		List<List<WiSetSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
 		Assert.assertEquals(groups.size(), 1);
 		//Get runs for the group
-		List<RunSummary> groupRuns = groups.get(0);
+		List<WiSetSummary> groupRuns = groups.get(0);
 		Assert.assertEquals(groupRuns.size(), 2);
 		//Verify runs
-		RunSummary run1 = ProductivityCheSummaryList.getRun(groupRuns, "2014-12-22 23:46:00.000+0000");
-		RunSummary run2 = ProductivityCheSummaryList.getRun(groupRuns, "2014-12-23 19:40:20.000+0000");
-		
-		testRunSummary(run1, 1, 0, 0, 0, 1, 0);
-		testRunSummary(run2, 0, 2, 1, 0, 0, 0);
+		testRunSummary(groupRuns.get(0), 0, 2, 1, 0, 0, 0); //"2014-12-23 19:40:20.000+0000"
+		testRunSummary(groupRuns.get(1), 1, 0, 0, 0, 1, 0);	//"2014-12-22 23:46:00.000+0000"
 		this.getPersistenceService().commitTenantTransaction();
 	}
 	
@@ -123,12 +120,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Assert.assertNotNull(cheSummaries);
 		
 		//Get groups
-		HashMap<String, List<RunSummary>> groups = cheSummaries.getRunsByGroup();
+		HashMap<String, List<WiSetSummary>> groups = cheSummaries.getRunsByGroup();
 		Assert.assertEquals(groups.size(), 2);
 		Iterator<String> groupNames = groups.keySet().iterator();
 		while (groupNames.hasNext()){
 			String groupName = groupNames.next();
-			List<RunSummary> groupRuns = groups.get(groupName);
+			List<WiSetSummary> groupRuns = groups.get(groupName);
 			Assert.assertEquals(groupRuns.size(), 1);
 			if ("undefined".equals(groupName)){
 				testRunSummary(groupRuns.get(0), 1, 0, 0, 0, 1, 0);
@@ -140,9 +137,9 @@ public class ProductivityReportingTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	private void testRunSummary(RunSummary s, int invalid, int New, int inprogress, int Short, int complete, int revert){
+	private void testRunSummary(WiSetSummary s, int invalid, int New, int inprogress, int Short, int complete, int revert){
 		Assert.assertNotNull(s);
-		Assert.assertTrue(s.getInvalid() == invalid && s.getNew() == New && s.getInprogress() == inprogress && s.getShort() == Short && s.getComplete() == complete && s.getRevert() == revert);
+		Assert.assertTrue(s.getInvalidCount() == invalid && s.getNewCount() == New && s.getInprogressCount() == inprogress && s.getShortCount() == Short && s.getCompleteCount() == complete && s.getRevertCount() == revert);
 	}
 	
 	private Facility createFacilityWithOneRun(String orgId){

@@ -7,6 +7,8 @@ package com.gadgetworks.codeshelf.model;
 
 import java.sql.Timestamp;
 
+import lombok.Getter;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
@@ -14,86 +16,82 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
  * This is a structure for summary values for one set of work instructions
  * We expect the UI to ask for and present this. One of the summaries will lead to a follow on query to get that set of work instructions.
  * A set is defined by work instructions all with the same create time. (Several processes create sets of work instructions, giving all the same time.)
- * 
  */
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-public class WiSetSummary {
-	public Timestamp	mWiSetAssignedTime;
-	public int			mCompleteCount;
-	public int			mShortCount;
-	public int			mActiveCount;				// planned and in progress together
-	public String		mUnderstandableTimeString;
+public class WiSetSummary implements Comparable<WiSetSummary>{
+	@Getter
+	private String cheId, cheDomainId;
+	@Getter
+	private Timestamp assignedTime;
+	@Getter
+	public String formattedAssignedTime = "";
+	@Getter
+	private int shortCount, invalidCount, newCount, inprogressCount, completeCount, revertCount;
 
-	// publics? Just want a convenient set to serialize into an array. Change if you want.
 
-	public WiSetSummary(final Timestamp inAssignedTime) {
-		mWiSetAssignedTime = inAssignedTime;
-		mCompleteCount = 0;
-		mShortCount = 0;
-		mActiveCount = 0;
-		mUnderstandableTimeString = "";
+	public WiSetSummary(final Timestamp assignedTime) {
+		setAssignedTime(assignedTime);
+	}
+	
+	public WiSetSummary(final Timestamp assignedTime, String cheId, String cheDomainId) {
+		setAssignedTime(assignedTime);
+		this.cheId = cheId;
+		this.cheDomainId = cheDomainId;
+	}
+	
+	public int getActiveCount(){
+		return invalidCount + newCount + inprogressCount + revertCount;
 	}
 	
 	public boolean isActive() {
 		return getActiveCount() > 0;
 	}
-
-	private void incrementCompletes() {
-		mCompleteCount++;
-	}
-	private void incrementShorts() {
-		mShortCount++;
-	}
-	private void incrementActives() {
-		mActiveCount++;
-	}
-	
-	public int getCompleteCount() {
-		return mCompleteCount;
-	}
-	public int getShortCount() {
-		return mShortCount;
-	}
-	public int getActiveCount() {
-		return mActiveCount;
-	}
-	
-	public Timestamp getAssignedTime() {
-		return mWiSetAssignedTime;
-	}
-	public String getFormattedAssignedTime() {
-		return mUnderstandableTimeString;
-	}
 	
 	public void incrementStatus(final WorkInstructionStatusEnum inStatus) {
-		if (inStatus == WorkInstructionStatusEnum.SHORT)
-			incrementShorts();
-		else if (inStatus == WorkInstructionStatusEnum.COMPLETE)
-			incrementCompletes();
-		else 
-			incrementActives();
+		switch (inStatus) {
+			case INVALID:
+				invalidCount++;
+				break;
+			case NEW:
+				newCount++;
+				break;
+			case INPROGRESS:
+				inprogressCount++;
+				break;
+			case SHORT:
+				shortCount++;
+				break;
+			case COMPLETE:
+				completeCount++;
+				break;
+			case REVERT:
+				revertCount++;
+				break;
+		}
 	}
 	
 	public boolean equalCounts(final WiSetSummary inSummary) {
-		if (inSummary.mActiveCount != this.mActiveCount)
+		if (inSummary.getActiveCount() != this.getActiveCount() ||
+			inSummary.completeCount != this.completeCount ||
+			inSummary.shortCount != this.shortCount) {
 			return false;
-		if (inSummary.mCompleteCount != this.mCompleteCount)
-			return false;
-		if (inSummary.mShortCount != this.mShortCount)
-			return false;
-		else
-			return true;
+		}
+		return true;
 	}
 
-	public Timestamp getWiSetCreatedTime() {
-		return mWiSetAssignedTime;
+	private void setAssignedTime (Timestamp assignedTime) {
+		this.assignedTime = assignedTime;
+		computeUnderstandableTimeString();
 	}
-
+	
 	public void computeUnderstandableTimeString() {
-		if (mWiSetAssignedTime != null) {
-			mUnderstandableTimeString = TimeFormat.getUITime(mWiSetAssignedTime);
+		if (assignedTime != null) {
+			formattedAssignedTime = TimeFormat.getUITime(assignedTime);
 		}
 	}
-
+	
+	public int compareTo(WiSetSummary compareRun) {
+		return assignedTime.compareTo(compareRun.assignedTime);
+	}
 }

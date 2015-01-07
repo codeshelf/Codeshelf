@@ -41,32 +41,30 @@ import com.google.common.collect.ImmutableList;
 
 public class WorkService implements IApiService {
 
-	public static final long				DEFAULT_RETRY_DELAY			= 10000L;
-	public static final int					DEFAULT_CAPACITY			= Integer.MAX_VALUE;
+	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
+	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
 
-	private static final Logger				LOGGER						= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger			LOGGER						= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
 
 	@Getter
 	@Setter
-	private long									retryDelay;
+	private long						retryDelay;
 
 	@Getter
 	@Setter
-	private int										capacity;
+	private int							capacity;
 
-	private IEdiExportServiceProvider				exportServiceProvider;
+	private IEdiExportServiceProvider	exportServiceProvider;
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
 
-
-	
 	@Getter
-	private PersistenceService						persistenceService;
+	private PersistenceService			persistenceService;
 
-	private WorkServiceThread				wsThread					= null;
-	private static boolean					aWorkServiceThreadExists	= false;
+	private WorkServiceThread			wsThread					= null;
+	private static boolean				aWorkServiceThreadExists	= false;
 
 	public WorkService() {
 		init(new IEdiExportServiceProvider() {
@@ -93,7 +91,7 @@ public class WorkService implements IApiService {
 		public WorkServiceThread() {
 			super("WorkService Thread");
 		}
-		
+
 		@Override
 		public void run() {
 			WorkService.aWorkServiceThreadExists = true;
@@ -131,7 +129,7 @@ public class WorkService implements IApiService {
 
 	private void sendWorkInstructions() throws InterruptedException {
 		while (!Thread.currentThread().isInterrupted()) {
-			
+
 			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
@@ -193,8 +191,6 @@ public class WorkService implements IApiService {
 		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
 	}
 
-
-	
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.DAO.findByPersistentId(cheId);
 		if (che != null) {
@@ -303,58 +299,55 @@ public class WorkService implements IApiService {
 			LOGGER.error("Failed to update order status", e);
 		}
 	}
-	
-	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception{
+
+	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		if (facility == null) {throw new NotFoundException("Facility " + facilityId + " does not exist");}
+		if (facility == null) {
+			throw new NotFoundException("Facility " + facilityId + " does not exist");
+		}
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
 		List<Object[]> picksPerHour = null;
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");
-			String queryStr = String.format("" + 
-					"SELECT dur.order_group AS group,\n" +
-					"	trim(to_char(\n" + 
-					"		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n" + 
-					"		'9999999999999999999D9')) AS picksPerHour\n" + 
-					"FROM \n" + 
-					"	(\n" + 
-					"		SELECT group_and_sort_code,\n" + 
-					"			COALESCE(g.domainid, 'undefined') AS order_group,\n" + 
-					"			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n" + 
-					"		FROM %s.work_instruction i\n" + 
-					"			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n" + 
-					"			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n" + 
-					"			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n" + 
-					"		WHERE  i.item_id != 'Housekeeping'\n" + 
-					"	) dur\n" + 
-					"WHERE dur.group_and_sort_code != '0001'\n" + 
-					"GROUP BY dur.order_group\n" + 
-					"ORDER BY dur.order_group",
-					schema, schema, schema, schema);
+			String queryStr = String.format("" 
+					+ "SELECT dur.order_group AS group,\n" 
+					+ "		trim(to_char(\n"
+					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
+					+ "		'9999999999999999999D9')) AS picksPerHour\n" 
+					+ "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
+					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
+					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
+					+ "		FROM %s.work_instruction i\n"
+					+ "			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n"
+					+ "			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n"
+					+ "			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n"
+					+ "		WHERE  i.item_id != 'Housekeeping'\n" + "	) dur\n" + "WHERE dur.group_and_sort_code != '0001'\n"
+					+ "GROUP BY dur.order_group\n" + "ORDER BY dur.order_group", schema, schema, schema, schema);
 			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
-					.addScalar("group", StandardBasicTypes.STRING)
-					.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
+				.addScalar("group", StandardBasicTypes.STRING)
+				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
 			picksPerHour = getPicksPerHourQuery.list();
 		}
 		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
 		return productivitySummary;
 	}
-	
+
 	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
 		List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList();
 		summary.setInstructions(instructions, facilityId);
 		return summary;
 	}
-	
+
 	/**
 	 * Simple struct to keep associate export settings
 	 * @author pmonteiro
 	 *
 	 */
 	private static class WIMessage {
-		private IEdiService exportService;
-		private String messageBody;
+		private IEdiService	exportService;
+		private String		messageBody;
+
 		public WIMessage(IEdiService exportService, String messageBody) {
 			super();
 			this.exportService = exportService;
