@@ -98,7 +98,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	LOGOUT_COMMAND							= "LOGOUT";
 	private static final String	YES_COMMAND								= "YES";
 	private static final String	NO_COMMAND								= "NO";
-	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR_ERROR";
+	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR";
 
 	private static final Integer maxCountForPositionControllerDisplay	= 99;
 
