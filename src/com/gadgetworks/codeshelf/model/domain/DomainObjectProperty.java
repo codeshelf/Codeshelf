@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -148,11 +149,14 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	}
 	
 	public ColorEnum getColorValue() {
+		String colorStr = this.value;
 		if (this.value == null) {
-			return ColorEnum.valueOf(getDefaultValue());
-
+			colorStr = getDefaultValue();
 		}
-		return ColorEnum.valueOf(this.value);
+		// Property color default was set up as "Red", but the enum is "RED". Don't fail on such a silly thing.
+		colorStr = colorStr.toUpperCase(Locale.ENGLISH); // English as it will match the Enum as we have it in code.
+		return ColorEnum.valueOf(colorStr);
+		// Aside from the uppercase thing, this should never throw now as all properties are validated before being accepted into the system
 	}
 
 	// convenience function to get the property name via default/type object
