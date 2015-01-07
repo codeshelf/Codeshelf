@@ -28,7 +28,7 @@ public class ProductivityCheSummaryList extends BaseResponse{
 	@Getter
 	private HashMap<String, List<RunSummary>> runsByGroup = new HashMap<String, List<RunSummary>>();
 	
-	public void setInstructions(List<WorkInstruction> instructions, UUID facilityId) {
+	public ProductivityCheSummaryList(UUID facilityId, List<WorkInstruction> instructions) {
 		for (WorkInstruction instruction : instructions) {
 			Facility facility = instruction.getFacility(); 
 			if (facility == null || !facility.getPersistentId().equals(facilityId)) {
@@ -40,6 +40,10 @@ public class ProductivityCheSummaryList extends BaseResponse{
 	}
 	
 	private void processSingleInstruction(WorkInstruction instruction) {
+		if (instruction.isHousekeeping()) {
+			return; 
+		}
+
 		OrderDetail detail = instruction.getOrderDetail();
 		if (detail == null) {
 			return;
@@ -130,6 +134,10 @@ public class ProductivityCheSummaryList extends BaseResponse{
 			this.cheId = cheId;
 			this.groupDomainId = groupDomainId;
 			this.cheDomainId = cheDomainId;
+		}
+		
+		public int getTotal() {
+			return invalid + New + inprogress + Short + complete + revert;
 		}
 		
 		public int compareTo(RunSummary compareRun) {

@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WiSummarizer;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -38,6 +39,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class WorkService implements IApiService {
 
@@ -341,9 +343,8 @@ public class WorkService implements IApiService {
 	}
 	
 	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
-		ProductivityCheSummaryList summary = new ProductivityCheSummaryList();
-		summary.setInstructions(instructions, facilityId);
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
+		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
 	}
 	

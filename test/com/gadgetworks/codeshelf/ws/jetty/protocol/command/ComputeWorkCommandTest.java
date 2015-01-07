@@ -33,46 +33,56 @@ public class ComputeWorkCommandTest {
 		WorkInstruction newWI = mock(WorkInstruction.class);
 		when(newWI.getContainerId()).thenReturn("Container1");
 		when(newWI.getStatus()).thenReturn(WorkInstructionStatusEnum.NEW);
+		when(newWI.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(newWI);
 
 		WorkInstruction newWI2 = mock(WorkInstruction.class);
 		when(newWI2.getContainerId()).thenReturn("Container1");
 		when(newWI2.getStatus()).thenReturn(WorkInstructionStatusEnum.NEW);
+		when(newWI2.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(newWI2);
 
 		WorkInstruction ipWI = mock(WorkInstruction.class);
 		when(ipWI.getContainerId()).thenReturn("Container1");
 		when(ipWI.getStatus()).thenReturn(WorkInstructionStatusEnum.INPROGRESS);
+		when(ipWI.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(ipWI);
 
 		WorkInstruction shortWI = mock(WorkInstruction.class);
 		when(shortWI.getContainerId()).thenReturn("Container1");
 		when(shortWI.getStatus()).thenReturn(WorkInstructionStatusEnum.SHORT);
+		when(shortWI.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(shortWI);
 
 		//Cotaniner 2 has 1 complete WI
 		WorkInstruction completeWI = mock(WorkInstruction.class);
 		when(completeWI.getContainerId()).thenReturn("Container2");
 		when(completeWI.getStatus()).thenReturn(WorkInstructionStatusEnum.COMPLETE);
+		when(completeWI.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
+
 		workInstructions.add(completeWI);
 
 		//Container 3 has 1 good and one invalid WI
 		WorkInstruction goodWI3 = mock(WorkInstruction.class);
 		when(goodWI3.getContainerId()).thenReturn("Container3");
 		when(goodWI3.getStatus()).thenReturn(WorkInstructionStatusEnum.INPROGRESS);
+		when(goodWI3.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(goodWI3);
 
 		WorkInstruction invalidWI3 = mock(WorkInstruction.class);
 		when(invalidWI3.getContainerId()).thenReturn("Container3");
 		when(invalidWI3.getStatus()).thenReturn(WorkInstructionStatusEnum.INVALID);
+		when(invalidWI3.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(invalidWI3);
 
 		//Container 4 has 1 good and 1 house keeping
 		WorkInstruction goodWI4 = mock(WorkInstruction.class);
 		when(goodWI4.getContainerId()).thenReturn("Container4");
 		when(goodWI4.getStatus()).thenReturn(WorkInstructionStatusEnum.INPROGRESS);
+		when(goodWI4.getType()).thenReturn(WorkInstructionTypeEnum.ACTUAL);
 		workInstructions.add(goodWI4);
 
+		
 		WorkInstruction hkWI4 = mock(WorkInstruction.class);
 		when(hkWI4.getContainerId()).thenReturn("Container4");
 		when(hkWI4.getStatus()).thenReturn(WorkInstructionStatusEnum.NEW);
