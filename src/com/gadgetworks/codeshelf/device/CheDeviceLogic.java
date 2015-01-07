@@ -1039,7 +1039,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			default:
-				//Do nothing
+				//Reset ourselves
+				//Ideally we shouldn't have to clear poscons here
+				clearAllPositionControllers();
+				setState(mCheStateEnum);
 				break;
 
 		}
