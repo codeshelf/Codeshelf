@@ -11,6 +11,7 @@ import lombok.Getter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * This is a structure for summary values for one set of work instructions
@@ -42,6 +43,11 @@ public class WiSetSummary implements Comparable<WiSetSummary>{
 	
 	public int getActiveCount(){
 		return invalidCount + newCount + inprogressCount + revertCount;
+	}
+	
+	@JsonIgnore
+	public int getTotal() {
+		return invalidCount + newCount + inprogressCount + shortCount + completeCount + revertCount;
 	}
 	
 	public boolean isActive() {
