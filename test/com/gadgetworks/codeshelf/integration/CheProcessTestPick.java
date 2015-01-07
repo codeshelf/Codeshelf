@@ -1306,6 +1306,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
+		//Make sure CLEAR_ERROR again does nothing
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+
 		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();

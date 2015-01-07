@@ -983,8 +983,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	private void setupCommandReceived() {
-		//TODO Why not be able to redo the setup by scanning setup from any state?
-
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -1011,8 +1009,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			default:
-				// Stay in the same state - the scan made no sense.
-				invalidScanMsg(mCheStateEnum);
+				//DEV-577 Do nothing
 				break;
 
 		}
@@ -1029,15 +1026,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case NO_CONTAINERS_SETUP:
 				clearAllPositionControllers();
 				setState(CheStateEnum.CONTAINER_SELECT);
-				break;
-
-			//TODO For V11 We do not want to have "Clear Error" result in error state below. Do nothing instead.
-			case CONTAINER_POSITION:
-				processContainerPosition(COMMAND_PREFIX, CLEAR_ERROR_COMMAND);
-				break;
-
-			case CONTAINER_SELECT:
-				processContainerSelectScan(COMMAND_PREFIX, CLEAR_ERROR_COMMAND);
 				break;
 
 			default:
