@@ -688,8 +688,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				case CONTAINER_POSITION_INVALID:
 				case CONTAINER_SELECTION_INVALID:
 				case NO_CONTAINERS_SETUP:
-				case CLEAR_ERROR_SCAN_INVALID:
-					setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+					//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
 					break;
 
 				case DO_PICK:
@@ -1010,8 +1009,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-			case CLEAR_ERROR_SCAN_INVALID:
-				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				//Do nothing. Only a "Clear Error" will get you out
 				break;
 
 			case CONTAINER_POSITION:
@@ -1043,13 +1041,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 
-			case CLEAR_ERROR_SCAN_INVALID:
-				clearAllPositionControllers();
-				//In the future we may need to figure out which state we need to go back to
-				//after a clear error scan -- for now we only ever need to go to container select
-				setState(CheStateEnum.CONTAINER_SELECT);
-				break;
-
+			//TODO For V11 We do not want to have "Clear Error" result in error state below. Do nothing instead.
 			case CONTAINER_POSITION:
 				processContainerPosition(COMMAND_PREFIX, CLEAR_ERROR_COMMAND);
 				break;
@@ -1074,8 +1066,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-			case CLEAR_ERROR_SCAN_INVALID:
-				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				//Do nothing. Only a "Clear Error" will get you out
 				break;
 				
 			case CONTAINER_POSITION:
@@ -1121,8 +1112,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-			case CLEAR_ERROR_SCAN_INVALID:
-				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				//Do nothing. Only a "Clear Error" will get you out
 				break;
 
 			case CONTAINER_POSITION:
@@ -1165,8 +1155,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-			case CLEAR_ERROR_SCAN_INVALID:
-				setState(CheStateEnum.CLEAR_ERROR_SCAN_INVALID);
+				//Do nothing. Only a "Clear Error" will get you out
 				break;
 
 			case CONTAINER_POSITION:
