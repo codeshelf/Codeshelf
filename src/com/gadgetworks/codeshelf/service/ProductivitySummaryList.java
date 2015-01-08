@@ -12,6 +12,7 @@ import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
@@ -37,7 +38,7 @@ public class ProductivitySummaryList extends BaseResponse{
 	}
 	
 	private void processOrder(OrderHeader orderHeader){
-		String groupName = orderHeader.getOrderGroup() == null? "undefined" : orderHeader.getOrderGroup().getDomainId();
+		String groupName = orderHeader.getOrderGroup() == null? OrderGroup.UNDEFINED : orderHeader.getOrderGroup().getDomainId();
 		GroupSummary groupSummary = groups.get(groupName);
 		if (groupSummary == null) {
 			groupSummary = new GroupSummary();

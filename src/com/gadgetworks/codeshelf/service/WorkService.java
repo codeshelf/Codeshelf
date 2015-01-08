@@ -2,6 +2,7 @@ package com.gadgetworks.codeshelf.service;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
@@ -33,6 +34,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -338,6 +340,40 @@ public class WorkService implements IApiService {
 		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
+	}
+	
+	public static List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException{
+		//Get Facility
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		if (facility == null) {
+			throw new NotFoundException("Facility " + facilityId + " does not exist");
+		}
+		//If group name provided, confirm that such group exists
+		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
+		if (!(allGroups || undefined)) {
+			OrderGroup group = OrderGroup.DAO.findByDomainId(facility, groupNameIn);
+			if (group == null){
+				throw new NotFoundException("Group " + groupNameIn + " had not been created");
+			}
+		}
+		//Get all instructions and filter those matching the requirements
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
+		List<WorkInstruction> filtered = new ArrayList<>();
+		for (WorkInstruction instruction : instructions){
+	 		if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {
+	 			continue;
+ 			}
+			OrderDetail detail = instruction.getOrderDetail();
+			if (detail == null) {
+				continue;
+			}
+			OrderHeader header = detail.getParent();
+			String groupName = header.getOrderGroup() == null? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
+			if (allGroups || groupName.equals(groupNameIn)) {
+				filtered.add(instruction);
+			}			
+		}
+		return filtered;
 	}
 
 	/**

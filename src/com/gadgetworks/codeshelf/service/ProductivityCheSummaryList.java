@@ -46,7 +46,7 @@ public class ProductivityCheSummaryList extends BaseResponse {
 		}
 		OrderHeader header = detail.getParent();
 		OrderGroup group = header.getOrderGroup();
-		String groupDomainId = group == null ? "undefined" : group.getDomainId();
+		String groupDomainId = group == null ? OrderGroup.UNDEFINED : group.getDomainId();
 		Che che = instruction.getAssignedChe();
 
 		List<WiSetSummary> runs = runsByGroup.get(groupDomainId);

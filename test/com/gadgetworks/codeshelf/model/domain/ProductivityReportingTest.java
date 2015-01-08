@@ -42,7 +42,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Iterator<String> groupNames = groups.keySet().iterator();
 		while (groupNames.hasNext()) {
 			String groupName = groupNames.next();
-			Assert.assertTrue("undefined".equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
+			Assert.assertTrue(OrderGroup.UNDEFINED.equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
 		}
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -152,7 +152,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 			String groupName = groupNames.next();
 			List<WiSetSummary> groupRuns = groups.get(groupName);
 			Assert.assertEquals(groupRuns.size(), 1);
-			if ("undefined".equals(groupName)){
+			if (OrderGroup.UNDEFINED.equals(groupName)){
 				testRunSummary(groupRuns.get(0), 1, 0, 0, 0, 1, 0);
 			} else {
 				testRunSummary(groupRuns.get(0), 0, 2, 1, 0, 0, 0);
