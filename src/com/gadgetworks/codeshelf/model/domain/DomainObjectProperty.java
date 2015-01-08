@@ -29,16 +29,16 @@ import com.google.inject.Inject;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DomainObjectProperty extends DomainObjectABC implements IDomainObject {
 
-	private static final Logger						LOGGER		= LoggerFactory.getLogger(DomainObjectProperty.class);
+	private static final Logger						LOGGER				= LoggerFactory.getLogger(DomainObjectProperty.class);
 
 	@Inject
-	public static ITypedDao<DomainObjectProperty>	DAO			= PropertyDao.getInstance();
+	public static ITypedDao<DomainObjectProperty>	DAO					= PropertyDao.getInstance();
 
 	@Getter
 	@NonNull
 	@Column(name = "objectid", nullable = false)
 	@Type(type = "com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
-	private UUID									objectId	= null;
+	private UUID									objectId			= null;
 
 	@Getter
 	@Column(length = 120, nullable = false)
@@ -51,28 +51,28 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	DomainObjectPropertyDefault						propertyDefault;
 
 	// These match contents in liquidbase change .xml files
-	public final static String						BAYCHANG	= "BAYCHANG";
+	public final static String						BAYCHANG			= "BAYCHANG";
 	public final static String						Default_BAYCHANG	= "BayChange";
-	public final static String						RPEATPOS	= "RPEATPOS";
+	public final static String						RPEATPOS			= "RPEATPOS";
 	public final static String						Default_RPEATPOS	= "ContainerOnly";
-	public final static String						WORKSEQR	= "WORKSEQR";
+	public final static String						WORKSEQR			= "WORKSEQR";
 	public final static String						Default_WORKSEQR	= "BayDistance";
-	public final static String						LIGHTSEC	= "LIGHTSEC";
+	public final static String						LIGHTSEC			= "LIGHTSEC";
 	public final static String						Default_LIGHTSEC	= "20";
-	public final static String						LIGHTCLR	= "LIGHTCLR";
+	public final static String						LIGHTCLR			= "LIGHTCLR";
 	public final static String						Default_LIGHTCLR	= "Red";
-	public final static String						CROSSBCH	= "CROSSBCH";
+	public final static String						CROSSBCH			= "CROSSBCH";
 	public final static String						Default_CROSSBCH	= "false";
-	public final static String						AUTOSHRT	= "AUTOSHRT";
+	public final static String						AUTOSHRT			= "AUTOSHRT";
 	public final static String						Default_AUTOSHRT	= "true";
 
 	public DomainObjectProperty() {
 	}
-	
-/**
- * Odd!  must return null if not a preknown one.
- */	
-	public static String nameToDefault(final String inParameterName){
+
+	/**
+	 * Odd!  must return null if not a preknown one.
+	 */
+	public static String nameToDefault(final String inParameterName) {
 		if (inParameterName.equals(BAYCHANG))
 			return Default_BAYCHANG;
 		if (inParameterName.equals(RPEATPOS))
@@ -91,7 +91,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return Default_CROSSBCH;
 		if (inParameterName.equals(AUTOSHRT))
 			return Default_AUTOSHRT;
-		
+
 		// Do not log an error if not pre-known
 		return null;
 	}
@@ -147,16 +147,14 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		}
 		return Boolean.parseBoolean(this.value);
 	}
-	
+
 	public ColorEnum getColorValue() {
 		String colorStr = this.value;
 		if (this.value == null) {
 			colorStr = getDefaultValue();
 		}
-		// Property color default was set up as "Red", but the enum is "RED". Don't fail on such a silly thing.
-		colorStr = colorStr.toUpperCase(Locale.ENGLISH); // English as it will match the Enum as we have it in code.
 		return ColorEnum.valueOf(colorStr);
-		// Aside from the uppercase thing, this should never throw now as all properties are validated before being accepted into the system
+		// This should never throw now as all properties are validated before being accepted into the system
 	}
 
 	// convenience function to get the property name via default/type object
@@ -236,7 +234,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	}
 
 	/**
-	 * Converts things like "baychange" to "BayChange".
+	 * Converts things like "baychange" to "BayChange" or "Red" to "RED".
 	 * Return null if there is no likely match.
 	 */
 	public String toCanonicalForm(String inValue) {
@@ -330,8 +328,13 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	}
 
 	private String validate_color_not_black(String inValue) {
-		ColorEnum theColor = ColorEnum.valueOf(inValue);
-		// Let the color Enum do its validation
+		String colorStr = inValue.toUpperCase(Locale.ENGLISH); // English as it will match the Enum as we have it in code.
+		ColorEnum theColor = null;
+		try {
+			theColor = ColorEnum.valueOf(colorStr);
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 		switch (theColor) {
 			case INVALID:
 			case BLACK:
