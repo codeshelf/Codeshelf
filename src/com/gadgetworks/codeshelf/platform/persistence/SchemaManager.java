@@ -174,6 +174,7 @@ public class SchemaManager {
 
 	public void deleteOrdersWis() throws SQLException {
 		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
+		this.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
 		this.executeSQL("DELETE FROM "+schemaName+".container_use");
 		this.executeSQL("DELETE FROM "+schemaName+".work_instruction");
 		this.executeSQL("DELETE FROM "+schemaName+".container");
