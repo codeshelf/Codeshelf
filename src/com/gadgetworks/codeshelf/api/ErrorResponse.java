@@ -16,12 +16,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.gadgetworks.codeshelf.model.domain.ProductivityReportingTest;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 @JsonInclude(Include.NON_NULL)
 public class ErrorResponse extends BaseResponse{
-	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
+	private final static Logger LOGGER=LoggerFactory.getLogger(ErrorResponse.class);
 
 	@Getter
 	private ArrayList<String> errors;
