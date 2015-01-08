@@ -56,7 +56,7 @@ public class LightService implements IApiService {
 	// Originally 4 leds. The aisle file read and UI indicates 4 leds.  Was changed to 3 leds before aisle controller message splitting to allow more simultaneous lighting.
 	// Should not longer be necessary. Between v6 and v10 there was some inconsistency between 3 and 4. Now consistent.  Ideally no configuration parameter for this because if set
 	// otherwise, the UI still show 4. See DEV-411
-	private final static int				defaultLedsToLight			= 4;
+	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
 	public LightService(PropertyService propertyService) {
