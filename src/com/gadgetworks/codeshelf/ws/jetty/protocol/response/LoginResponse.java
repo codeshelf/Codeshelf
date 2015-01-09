@@ -17,6 +17,10 @@ public class LoginResponse extends ResponseABC {
 	
 	@Getter @Setter
 	CodeshelfNetwork network;
+	
+	@Getter @Setter
+	boolean autoShortValue;
+
 
 	public LoginResponse() {
 	}

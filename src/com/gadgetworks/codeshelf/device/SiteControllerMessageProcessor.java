@@ -56,6 +56,8 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				} else {
 					LOGGER.error("loginResponse has no network");
 				}
+				// DEV-582 hook up to AUTOSHRT parameter
+				deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 			}
 			if (!attached) {
 				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());

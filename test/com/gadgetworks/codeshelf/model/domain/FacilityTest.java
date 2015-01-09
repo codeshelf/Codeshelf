@@ -39,32 +39,6 @@ public class FacilityTest extends DomainTestABC {
 		Assert.assertEquals("", locationId);
 		this.getPersistenceService().commitTenantTransaction();
 	}
-
-	@Test
-	public void testHasCrossbatchOrders() {
-		this.getPersistenceService().beginTenantTransaction();
-
-		Facility facility = createDefaultFacility("FTEST3.O1");
-		OrderHeader crossbatchOrder = new OrderHeader();
-		crossbatchOrder.setDomainId("ORDER1");
-		crossbatchOrder.setUpdated(new Timestamp(0));
-		crossbatchOrder.setOrderType(OrderTypeEnum.CROSS);
-		crossbatchOrder.setActive(true);
-
-		facility.addOrderHeader(crossbatchOrder);
-
-		mOrderHeaderDao.store(crossbatchOrder);
-
-		
-		boolean hasCrossBatchOrders = facility.hasCrossBatchOrders();
-		Assert.assertTrue(hasCrossBatchOrders);
-		
-		Facility retrievedFacility=mFacilityDao.findByPersistentId(facility.getPersistentId());
-		hasCrossBatchOrders = retrievedFacility.hasCrossBatchOrders();
-		
-		Assert.assertTrue(hasCrossBatchOrders);
-		this.getPersistenceService().commitTenantTransaction();
-	}
 	
 	/**
 	 * Tests that fields that are not ebean properties are properly serialized (has annotations)
