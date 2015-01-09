@@ -1355,7 +1355,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 				clearLedControllersForWi(wi);
 
-				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+				// DEV-582 hook up to AUTOSHRT parameter
+				if (mDeviceManager.getAutoShortValue())
+					doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.

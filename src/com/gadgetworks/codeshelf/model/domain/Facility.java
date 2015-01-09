@@ -59,6 +59,7 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
@@ -1802,29 +1803,25 @@ public class Facility extends Location {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
-	 * The UI needs this answer. UI gets it at login.
+	 * The UI needs this answer. UI gets it at login. Does not live update to the UI.
 	 */
 	@JsonProperty("hasCrossBatchOrders")
 	public final boolean hasCrossBatchOrders() {
-		boolean result = false;
-		for (OrderHeader theOrder : getOrderHeaders()) {
-			if ((theOrder.getOrderType().equals(OrderTypeEnum.CROSS)) && (theOrder.getActive())) {
-				result = true;
-				break;
-			}
-		}
+		// DEV-582 ties this to the config parameter. Used to be inferred from the data
+		String theValue = PropertyService.getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
 	 * The UI needs this answer. UI gets it at login.
 	 * If true, the UI wants to believe that ALL crossbatch and outbound orders have an order group. The orders view will not show at all any orders without a group.
 	 */
 	@JsonProperty("hasMeaningfulOrderGroups")
 	public final boolean hasMeaningfulOrderGroups() {
+		// We really want to change to a config parameter, and then pass to the UI a three-value choice:
+		// Only two-level Orders view, only three-level, or both 2 and 3-level.		
 
 		List<OrderGroup> groupsList = this.getOrderGroups();
 		boolean result = groupsList.size() > 0;
@@ -1837,7 +1834,7 @@ public class Facility extends Location {
 	/**
 	 * @param inChe
 	 * @param inContainers
-	 * Testing only!  passs in as 23,46,2341a23. This yields conatiner ID 23 in slot1, container Id 46 in slot 2, etc.
+	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
 	 *
 	 */
 	public final void setUpCheContainerFromString(Che inChe, String inContainers) {
