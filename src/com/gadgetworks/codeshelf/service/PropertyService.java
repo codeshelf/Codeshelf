@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;

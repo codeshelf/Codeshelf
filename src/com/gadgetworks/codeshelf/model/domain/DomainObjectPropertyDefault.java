@@ -9,6 +9,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
@@ -50,11 +51,11 @@ public class DomainObjectPropertyDefault {
 	@Column(name="object_type",length=40, nullable=false)
 	String objectType;
 	
-	@Getter
+	@Getter @Setter
 	@Column(name="default_value",length=120, nullable=false)
 	String defaultValue;
 	
-	@Getter
+	@Getter @Setter
 	@Column(length=400, nullable=false)
 	String description;	
 }
