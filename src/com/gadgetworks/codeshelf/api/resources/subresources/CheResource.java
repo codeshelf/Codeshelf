@@ -31,7 +31,7 @@ public class CheResource {
 	@GET
 	@Path("/computeinstructions")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeWorkInstructions(@QueryParam("id") List<String> containers) {
+	public Response computeWorkInstructions(@QueryParam("containers") List<String> containers) {
 		ErrorResponse errors = new ErrorResponse();
 		if (!BaseResponse.isUUIDValid(mUUIDParam, "cheId", errors)){
 			return errors.buildResponse();

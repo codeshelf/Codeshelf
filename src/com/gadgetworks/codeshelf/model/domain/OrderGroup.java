@@ -48,7 +48,8 @@ import com.google.inject.Singleton;
 @Table(name = "order_group")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class OrderGroup extends DomainObjectTreeABC<Facility> {
-
+	public static final String UNDEFINED = "undefined";
+	
 	@Inject
 	public static ITypedDao<OrderGroup>	DAO;
 
