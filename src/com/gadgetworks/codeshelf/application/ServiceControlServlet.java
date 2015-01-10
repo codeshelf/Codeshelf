@@ -75,11 +75,11 @@ public class ServiceControlServlet extends HttpServlet {
         	}
             out.println("</br></br>");
         } else {
-            out.println("<a href=\"javascript:document.stop.submit()\">Shutdown (restart) this service</a></br></br>");
             if(schemaManager != null) {
-                out.println("<a href=\"javascript:document.dropschema.submit()\">Erase Database, then Shutdown (restart) this service</a></br></br>");
-                out.println("<a href=\"javascript:document.deleteorderswis.submit()\">Delete Orders and Work Instructions, then Shutdown (restart) this service</a></br></br>");        
+                out.println("<h3><a href=\"javascript:if(confirm('Reset Orders/WIs for demo. Are you sure?')){document.deleteorderswis.submit();}\">DEMO RESET: Delete Orders and Work Instructions, shutdown (restart)</a></h3></br></br></br></br>");        
+                out.println("<a href=\"javascript:if(confirm('WARNING - This will delete the facility setup! Are you sure?')){document.dropschema.submit();}\">Erase Database, shutdown (restart)</a></br></br></br></br></br>");
             }
+            out.println("<a href=\"javascript:if(confirm('Shutdown/Restart server?')){document.stop.submit();}\">Shutdown (restart) service</a></br></br>");
 
         }
         
