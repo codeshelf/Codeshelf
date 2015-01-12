@@ -2,25 +2,20 @@ package com.gadgetworks.codeshelf.metrics;
 
 import java.util.List;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.google.common.collect.Lists;
 
 public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 
-	private ITypedDao<Facility> mFacilityDao;
-	
-	public DropboxServiceHealthCheck(ITypedDao<Facility> facilityDao) {
+	public DropboxServiceHealthCheck() {
 		super("Dropbox service");
-		mFacilityDao = facilityDao;
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
 	protected Result check() throws Exception {
 		List<Facility> failedFacilities = Lists.newArrayList();
-		List<Facility> allFacilities = mFacilityDao.getAll();
+		List<Facility> allFacilities = Facility.DAO.getAll();
 		for (Facility facility : allFacilities) {
 			DropboxService service = facility.getDropboxService();
 			if (service != null) {

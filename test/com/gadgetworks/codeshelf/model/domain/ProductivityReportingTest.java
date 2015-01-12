@@ -17,10 +17,10 @@ import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
-import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList.RunSummary;
+import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList.GroupSummary;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {

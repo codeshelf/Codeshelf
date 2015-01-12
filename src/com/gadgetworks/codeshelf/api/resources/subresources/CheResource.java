@@ -13,8 +13,8 @@ import javax.ws.rs.core.Response;
 import lombok.Setter;
 
 import com.gadgetworks.codeshelf.api.BaseResponse;
-import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
+import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.api.ObjectResponse;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
