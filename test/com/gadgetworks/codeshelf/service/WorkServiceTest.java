@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.gadgetworks.codeshelf.service;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
@@ -35,6 +35,7 @@ import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
+import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
