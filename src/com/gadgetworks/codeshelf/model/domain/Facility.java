@@ -1127,6 +1127,9 @@ public class Facility extends Location {
 
 			// Figure out the starting path position.
 			startingPathPos = selectedBay.getPosAlongPath();
+			// subtract 1 cm. KLUDGE, but ok.  The greaterOrEqual failed in the equals case after hibernate conversion.
+			// filterParams.add(Restrictions.ge("posAlongPath", inFromStartingPosition));
+			startingPathPos -= 0.01;
 		}
 		return startingPathPos;
 	}
