@@ -6,6 +6,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.google.common.collect.Maps;
@@ -19,13 +22,23 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  * @author saba
  *
  */
-public class PacketHandlerService {
+public class RadioControllerPacketHandlerService {
+	private static final Logger										LOGGER					= LoggerFactory.getLogger(RadioControllerPacketHandlerService.class);
+
 	private final ExecutorService									executor				= Executors.newFixedThreadPool(Runtime.getRuntime()
 																								.availableProcessors(),
 																								new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																									.build());
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	queueMap				= Maps.newConcurrentMap();
 	private static final int							MAX_PACKET_QUEUE_SIZE	= 50;
+	
+	private final RadioController									radioController;
+	
+
+	public RadioControllerPacketHandlerService(RadioController radioController) {
+		super();
+		this.radioController = radioController;
+	}
 
 	public boolean handle(IPacket packet) {
 
@@ -80,8 +93,10 @@ public class PacketHandlerService {
 
 			try {
 				//Handle packet
+				radioController.receivePacket(packet);
 			} catch (Exception e) {
-				//Log Error
+				//Handle Error
+				LOGGER.error("Packet={}", packet, e);
 			} finally {
 				//The finally block ensures that we will always pop this packet off the queue, no matter if we have some uncaught exception or not (like a generic throwable)
 
