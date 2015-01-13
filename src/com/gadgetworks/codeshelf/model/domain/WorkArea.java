@@ -89,9 +89,11 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private List<User>			users		= new ArrayList<User>();
 
 	// A work area will contain a set of active users (workers).
+	/* NOT USED CURRENTLY
 	@OneToMany(mappedBy = "currentWorkArea")
 	@Getter
 	private List<Che>			activeChes	= new ArrayList<Che>();
+	*/
 
 	public WorkArea() {
 		workAreaId = "";

@@ -71,20 +71,22 @@ public class Che extends WirelessDeviceABC {
 	private CodeshelfNetwork parent;
 	 */
 
-	// The current work area.
-	@ManyToOne(optional = true)
-	@Getter
+	// The current work area. appears not to be used anywhere.
+	/*
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@Setter
 	@JoinColumn(name = "current_work_area_persistentid")
 	private WorkArea				currentWorkArea;
+	*/
 
-	// The current user.
-	@ManyToOne(optional = true)
-	@Getter
+	// The current user. appears not to be used anywhere.
+	/*
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@Setter
 	@JoinColumn(name = "current_user_persistentid")
 	private User					currentUser;
-
+	*/
+	
 	@NotNull
 	@Enumerated(value = EnumType.STRING)
 	@Getter
