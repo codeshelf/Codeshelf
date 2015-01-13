@@ -92,6 +92,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	@Getter @Setter
 	boolean radioEnabled = true;
+	
+	private boolean autoShortValue = true; // getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
 
 	private WebSocketContainer	webSocketContainer;
 
@@ -126,6 +128,14 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void start() {
 		startWebSocketClient();
 
+	}
+	public boolean getAutoShortValue(){
+		return autoShortValue;
+	}
+	
+	public void setAutoShortValue(boolean inValue) {
+		autoShortValue = inValue;
+		LOGGER.info("Site controller getting AUTOSHRT value = " + Boolean.toString(inValue));
 	}
 
 	private final void startRadio(CodeshelfNetwork network) {

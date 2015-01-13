@@ -1,6 +1,9 @@
 package com.gadgetworks.codeshelf.model.dao;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Scanner;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -61,26 +64,18 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	}
 
 	public DomainObjectPropertyDefault getPropertyDefault(IDomainObject object, String name) {
+		return getPropertyDefault(object.getClassName(), name);
+	}
+	
+	public DomainObjectPropertyDefault getPropertyDefault(String objectType, String name) {
 		Session session = PersistenceService.getInstance().getCurrentTenantSession();
 		String queryString = "from DomainObjectPropertyDefault where objectType = :objectType and name = :name";
         Query query = session.createQuery(queryString);
-        query.setParameter("objectType", object.getClassName());
+        query.setParameter("objectType", objectType);
         query.setParameter("name", name);
-        DomainObjectPropertyDefault propertyDefault = (DomainObjectPropertyDefault) query.uniqueResult();
-        
-        // kludgy: we do not want to tie the Junit test to liquidbase change logs. So, if the property default does not exist,
-        // create with correct default value. Does not need to have description.
-        if (propertyDefault == null) {
-        	String defaultStringValue = DomainObjectProperty.nameToDefault(name);
-        	if (defaultStringValue != null) {
-        	propertyDefault = new DomainObjectPropertyDefault(name, object.getClassName(), defaultStringValue, "description");
-        	// must persist. There are db constraints for the DomainObjectProperty to have a default.
-        	store(propertyDefault);
-        	}
-        	// no risk of incorrect code adding garbage new default parameters into the database because nameToDefault will have returned null
-        }
+        DomainObjectPropertyDefault propertyDefault = (DomainObjectPropertyDefault) query.uniqueResult();        
 		return propertyDefault;
-	}
+	}	
 	
 	/**
 	 * Gets the specific objects in the database for the parent domain objects. Used by higher level API call that includes default values.
@@ -164,6 +159,11 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
         if (prop != null)
         	return prop;
         DomainObjectPropertyDefault theDefault = getPropertyDefault(object, name);
+        if (theDefault==null) {
+        	LOGGER.warn("Failed to create property "+object.getClassName()+":"+name+": Default does not exist.");
+        	List<DomainObjectPropertyDefault> all = getAllDefaults();
+        	return null;
+        }
         prop = createProperty(object, theDefault);
         return prop;
 	}
@@ -172,4 +172,73 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	public Class<DomainObjectProperty> getDaoClass() {
 		return DomainObjectProperty.class;
 	}
+
+	@SuppressWarnings("unchecked")
+	public List<DomainObjectPropertyDefault> getAllDefaults() {
+		Session session = PersistenceService.getInstance().getCurrentTenantSession();
+		String queryString = "from DomainObjectPropertyDefault";
+        Query query = session.createQuery(queryString);
+        List<DomainObjectPropertyDefault> props = query.list();
+		return props;
+	}
+	
+	public void syncPropertyDefaults() {
+		LOGGER.info("Checking property defaults...");
+		PropertyDao dao = PropertyDao.getInstance();
+		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
+		
+		File file = new File(this.getClass().getClassLoader().getResource("property-defaults.csv").getFile());
+		try (Scanner scanner = new Scanner(file)) {
+			while (scanner.hasNextLine()) {
+				String line = scanner.nextLine();
+				String[] data = line.split(";");
+				if (data.length!=4) {
+					LOGGER.warn("Skipping default line does not contain four elements: "+line);
+				}
+				else {
+					String objectType = data[0];
+					String name = data[1];
+					String value = data[2];
+					String description = data[3];
+					DomainObjectPropertyDefault def = dao.getPropertyDefault(objectType, name);
+					if (def==null) {
+						// insert default
+						LOGGER.info("Adding property default "+objectType+":"+name+"="+value);
+						def = new DomainObjectPropertyDefault(name, objectType, value, description);
+						dao.store(def);
+					}
+					else {
+						// validate value and description
+						if (def.getDefaultValue().equals(value) && def.getDescription().equals(description)) {
+							// default already up-to-date
+						}
+						else {
+							// update default with new values in database
+							LOGGER.info("Updating property default "+objectType+":"+name+"="+value);
+							def.setDefaultValue(value);
+							def.setDescription(description);
+							dao.store(def);
+						}
+						// remove item from current defaults
+						for (DomainObjectPropertyDefault d : currentProperties) {
+							if (d.getName().equals(def.getName()) && d.getObjectType().equals(def.getObjectType())) {
+								currentProperties.remove(def);
+								break;
+							}
+						}
+					}
+				}
+			}
+			scanner.close();
+		} catch (IOException e) {
+			LOGGER.error("Failed to sync up property defaults",e);
+			return;
+		}
+		// delete properties that are not included in resource file
+		for(DomainObjectPropertyDefault def : currentProperties) {
+			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue());
+			dao.delete(def);
+		}
+	}
+
 }

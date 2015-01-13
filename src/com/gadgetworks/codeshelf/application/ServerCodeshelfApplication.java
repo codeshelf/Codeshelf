@@ -21,10 +21,7 @@ import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -42,8 +39,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	@Getter
 	private PersistenceService		persistenceService;
 
-	private ITypedDao<Facility>		mFacilityDao;
-
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
 	private IConfiguration			configuration;
@@ -54,7 +49,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	public ServerCodeshelfApplication(final IConfiguration configuration,
 			final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
-			final ITypedDao<User> inUserDao,
 			final WebApiServer inWebApiServer,
 			final PersistenceService persistenceService) {
 			
@@ -119,7 +113,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
 		MetricsService.registerHealthCheck(sessionCheck);
 
-		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
+		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
 		MetricsService.registerHealthCheck(dbxCheck);
 
 		// start server watchdog
