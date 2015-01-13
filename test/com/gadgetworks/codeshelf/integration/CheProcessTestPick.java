@@ -24,9 +24,11 @@ import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
+import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
+import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -54,7 +56,6 @@ import com.google.common.base.Strings;
 public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
-
 
 	static {
 		Configuration.loadConfig("test");
@@ -213,6 +214,186 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		return getFacility();
 	}
 
+	private Facility setUpZigzagSlottedFacility() {
+		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
+		// This is the zigzag/cross-batch portion of the MAT as of v10
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,116,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,\r\n" //
+				+ "Tier,T2,,5,32,20,\r\n" //
+				+ "Tier,T3,,5,32,40,\r\n" //
+				+ "Tier,T4,,5,32,60,\r\n" //
+				+ "Tier,T5,,5,32,80,\r\n" //
+				+ "Bay,B2,230,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,\r\n" //
+				+ "Tier,T2,,5,32,20,\r\n" //
+				+ "Tier,T3,,5,32,40,\r\n" //
+				+ "Tier,T4,,5,32,60,\r\n" //
+				+ "Tier,T5,,5,32,80,\r\n" //
+				+ "Aisle,A2,,,,,zigzagB1S1Side,12.85,55.45,X,120\r\n" //
+				+ "Bay,B1,116,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,\r\n" //
+				+ "Tier,T2,,5,32,20,\r\n" //
+				+ "Tier,T3,,5,32,40,\r\n" //
+				+ "Tier,T4,,5,32,60,\r\n" //
+				+ "Tier,T5,,5,32,80,\r\n" //
+				+ "Bay,B2,230,,,,,\r\n" //
+				+ "Tier,T1,,5,32,0,\r\n" //
+				+ "Tier,T2,,5,32,20,\r\n" //
+				+ "Tier,T3,,5,32,40,\r\n" //
+				+ "Tier,T4,,5,32,60,\r\n" //
+				+ "Tier,T5,,5,32,80,\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+
+		// Get the aisle
+		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
+		Assert.assertNotNull(aisle1);
+
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
+
+		String persistStr = segment0.getPersistentId().toString();
+		aisle1.associatePathSegment(persistStr);
+
+		Aisle aisle2 = Aisle.DAO.findByDomainId(getFacility(), "A2");
+		Assert.assertNotNull(aisle2);
+		aisle2.associatePathSegment(persistStr);
+
+		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+				+ "A1.B1.T1.S1,D-96\r\n" 
+				+ "A1.B1.T1.S2,D-97\r\n" 
+				+ "A1.B1.T1.S3,D-98\r\n"
+				+ "A1.B1.T1.S4,D-99\r\n"
+				+ "A1.B1.T1.S5,D-100\r\n"
+				+ "A1.B1.T2.S1,D-91\r\n"
+				+ "A1.B1.T2.S2,D-92\r\n"
+				+ "A1.B1.T2.S3,D-93\r\n"
+				+ "A1.B1.T2.S4,D-94\r\n"
+				+ "A1.B1.T2.S5,D-95\r\n"
+				+ "A1.B1.T3.S1,D-86\r\n"
+				+ "A1.B1.T3.S2,D-87\r\n"
+				+ "A1.B1.T3.S3,D-88\r\n"
+				+ "A1.B1.T3.S4,D-89\r\n"
+				+ "A1.B1.T3.S5,D-90\r\n"
+				+ "A1.B1.T4.S1,D-81\r\n"
+				+ "A1.B1.T4.S2,D-82\r\n"
+				+ "A1.B1.T4.S3,D-83\r\n"
+				+ "A1.B1.T4.S4,D-84\r\n"
+				+ "A1.B1.T4.S5,D-85\r\n"
+				+ "A1.B1.T5.S1,D-76\r\n"
+				+ "A1.B1.T5.S2,D-77\r\n"
+				+ "A1.B1.T5.S3,D-78\r\n"
+				+ "A1.B1.T5.S4,D-79\r\n"
+				+ "A1.B1.T5.S5,D-80\r\n"
+				+ "A1.B2.T1.S1,D-46\r\n"
+				+ "A1.B2.T1.S2,D-47\r\n"
+				+ "A1.B2.T1.S3,D-48\r\n"
+				+ "A1.B2.T1.S4,D-49\r\n"
+				+ "A1.B2.T1.S5,D-50\r\n"
+				+ "A1.B2.T2.S1,D-41\r\n"
+				+ "A1.B2.T2.S2,D-42\r\n"
+				+ "A1.B2.T2.S3,D-43\r\n"
+				+ "A1.B2.T2.S4,D-44\r\n"
+				+ "A1.B2.T2.S5,D-45\r\n"
+				+ "A1.B2.T3.S1,D-36\r\n"
+				+ "A1.B2.T3.S2,D-37\r\n"
+				+ "A1.B2.T3.S3,D-38\r\n"
+				+ "A1.B2.T3.S4,D-39\r\n"
+				+ "A1.B2.T3.S5,D-40\r\n"
+				+ "A1.B2.T4.S1,D-31\r\n"
+				+ "A1.B2.T4.S2,D-32\r\n"
+				+ "A1.B2.T4.S3,D-33\r\n"
+				+ "A1.B2.T4.S4,D-34\r\n"
+				+ "A1.B2.T4.S5,D-35\r\n"
+				+ "A1.B2.T5.S1,D-26\r\n"
+				+ "A1.B2.T5.S2,D-27\r\n"
+				+ "A1.B2.T5.S3,D-28\r\n"
+				+ "A1.B2.T5.S4,D-29\r\n"
+				+ "A1.B2.T5.S5,D-30\r\n"
+				+ "A2.B1.T1.S1,D-75\r\n"
+				+ "A2.B1.T1.S2,D-74\r\n"
+				+ "A2.B1.T1.S3,D-73\r\n"
+				+ "A2.B1.T1.S4,D-72\r\n"
+				+ "A2.B1.T1.S5,D-71\r\n"
+				+ "A2.B1.T2.S1,D-70\r\n"
+				+ "A2.B1.T2.S2,D-69\r\n"
+				+ "A2.B1.T2.S3,D-68\r\n"
+				+ "A2.B1.T2.S4,D-67\r\n"
+				+ "A2.B1.T2.S5,D-66\r\n"
+				+ "A2.B1.T3.S1,D-65\r\n"
+				+ "A2.B1.T3.S2,D-64\r\n"
+				+ "A2.B1.T3.S3,D-63\r\n"
+				+ "A2.B1.T3.S4,D-62\r\n"
+				+ "A2.B1.T3.S5,D-61\r\n"
+				+ "A2.B1.T4.S1,D-60\r\n"
+				+ "A2.B1.T4.S2,D-59\r\n"
+				+ "A2.B1.T4.S3,D-58\r\n"
+				+ "A2.B1.T4.S4,D-57\r\n"
+				+ "A2.B1.T4.S5,D-56\r\n"
+				+ "A2.B1.T5.S1,D-55\r\n"
+				+ "A2.B1.T5.S2,D-54\r\n"
+				+ "A2.B1.T5.S3,D-53\r\n"
+				+ "A2.B1.T5.S4,D-52\r\n"
+				+ "A2.B1.T5.S5,D-51\r\n"
+				+ "A2.B2.T1.S1,D-25\r\n"
+				+ "A2.B2.T1.S2,D-24\r\n"
+				+ "A2.B2.T1.S3,D-23\r\n"
+				+ "A2.B2.T1.S4,D-22\r\n"
+				+ "A2.B2.T1.S5,D-21\r\n"
+				/*
+				// Could fix these. Not needed in current test.
+				+ "A2.B2.T2.S1	D-20\r\n" + "A2.B2.T2.S2	D-19\r\n" + "A2.B2.T2.S3	D-18\r\n"
+				+ "A2.B2.T2.S4	D-17\r\n"
+				+ "A2.B2.T2.S5	D-16\r\n" + "A2.B2.T3.S1	D-15\r\n" + "A2.B2.T3.S2	D-14\r\n"
+				+ "A2.B2.T3.S3	D-13\r\n"
+				+ "A2.B2.T3.S4	D-12\r\n" + "A2.B2.T3.S5	D-11\r\n" + "A2.B2.T4.S1	D-10\r\n"
+				+ "A2.B2.T4.S2	D-9\r\n"
+				+ "A2.B2.T4.S3	D-8\r\n" + "A2.B2.T4.S4	D-7\r\n" + "A2.B2.T4.S5	D-6\r\n"
+				+ "A2.B2.T5.S1	D-5\r\n"
+				+ "A2.B2.T5.S2	D-4\r\n" + "A2.B2.T5.S3	D-3\r\n" + "A2.B2.T5.S4	D-2\r\n"
+				*/
+				 + "A2.B2.T5.S5	D-1\r\n";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
+		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
+
+		CodeshelfNetwork network = getNetwork();
+		Organization organization = getOrganization();
+		String organizationId = organization.getDomainId();
+
+		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
+
+		Short channel1 = 1;
+		Location aisle1x = getFacility().findSubLocationById("A1");
+		controller1.addLocation(aisle1x);
+		aisle1x.setLedChannel(channel1);
+		aisle1x.getDao().store(aisle1x);
+
+		Location aisle2x = getFacility().findSubLocationById("A2");
+		controller1.addLocation(aisle2x);
+		aisle2x.setLedChannel(channel1);
+		aisle2x.getDao().store(aisle2x);
+
+		return getFacility();
+	}
+
 	private void setUpSmallInventoryAndOrders(Facility inFacility) throws IOException {
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -259,6 +440,77 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+
+	}
+
+	private void setUpBatchOrdersForZigzag(Facility inFacility) throws IOException {
+		// Setting up containers 2,3,7,11 to match the bug
+
+		// Outbound orders
+
+		String csvString2 = "orderGroupId,orderId,itemId,description,quantity,uom\r\n" //
+				+ "5/26/14,1001dry,53a8a03ab38e3c0200000330,vitalvittles Organic Flax-Seed Oat Bread,2,loaf\r\n" //
+				+ "5/26/14,1003dry,539f2da2622fcc0200001009,sayhayfarms Organic Sungold Cherry Tomatoes,4,pint\r\n" //
+				+ "5/26/14,1006dry,5266bd1e4d5eed0200000155,firebrand Pretzel Croutons,7,bag\r\n" //
+				+ "5/26/14,1007dry,5266bd1e4d5eed0200000155,firebrand Pretzel Croutons,8,bag\r\n" //
+				+ "5/26/14,1016dry,50916c6dd136890200000311,blackjet Crack*a*Roons,17,cookies\r\n"; //
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		
+		OrderHeader order = inFacility.getOrderHeader("1001dry");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 1, detailCount);
+
+
+		// Slotting
+		String csvString3 = "orderId,locationId\r\n" //
+				+ "1001dry,D-26\r\n" 
+				+ "1001dry,D-27\r\n" 
+				+ "1001dry,D-28\r\n" 
+				+ "1001dry,D-29\r\n" 
+				+ "1001dry,D-30\r\n" 
+				+ "1001dry,D-31\r\n" 
+				+ "1001dry,D-32\r\n" 
+				+ "1001dry,D-33\r\n" 
+				+ "1001dry,D-34\r\n" 
+				+ "1001dry,D-35\r\n" 
+				+ "1003dry,D-22\r\n" 
+				+ "1006dry,D-100\r\n" 
+				+ "1016dry,D-76\r\n" 
+				+ "1007dry,D-99\r\n"; 
+
+		byte[] csvArray3 = csvString3.getBytes();
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		InputStreamReader reader3= new InputStreamReader(stream3);
+
+		boolean result = importer.importOrderLocationsFromCsvStream(reader3, inFacility, ediProcessTime);
+
+		// Batches file. Only containers 2,3,7,11
+		String csvString4 = "itemId,orderGroupId,containerId,description,quantity,uom\r\n" //
+				+ "539f2da2622fcc0200001009,5/26/14,2,sayhayfarms Organic Sungold Cherry Tomatoes,1,pint\r\n" //
+				+ "53a8a03ab38e3c0200000330,5/26/14,3,vitalvittles Organic Flax-Seed Oat Bread,1,loaf\r\n" //
+				+ "50916c6dd136890200000311,5/26/14,7,blackjet Crack*a*Roons,2,cookies\r\n" //
+				+ "5266bd1e4d5eed0200000155,5/26/14,11,firebrand Pretzel Croutons,7,bag\r\n";//
+
+		byte[] csvArray4 = csvString4.getBytes();
+
+		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray4);
+		InputStreamReader reader4 = new InputStreamReader(stream4);
+
+		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvCrossBatchImporter importer4 = createCrossBatchImporter();
+		importer4.importCrossBatchesFromCsvStream(reader4, inFacility, thirdEdiProcessTime);
 
 	}
 
@@ -517,7 +769,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
-		
+
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -538,7 +790,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
 
 		Assert.assertEquals(0, picker.countActiveJobs());
-		
+
 		//Make sure position display controllers show proper feedback
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 0);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
@@ -553,7 +805,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check that container show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
-		
+
 		picker.scanOrderId("11111");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 
@@ -586,7 +838,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction wi = picker.nextActiveWi();
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		assertWIColor(wi, che1);
-		
+
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 
@@ -605,7 +857,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) button), PosControllerInstr.SOLID_FREQ);
 
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
-		
+
 		// pick first item
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
@@ -676,7 +928,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(button, 2);
 
 		picker.simulateCommitByChangingTransaction(this.persistenceService);
-		
+
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
@@ -684,7 +936,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction userShortWi = serverWiList2.get(1);
 		WorkInstruction shortAheadWi = serverWiList2.get(2);
 		WorkInstruction immediateShortWi = null;
-		
+
 		// Hibernate bug. If you ask che1 for getCheWorkInstructions(), the list will throw during lazy load because the che reference came from a different transaction.
 		// But we had to change the transaction in order to see the completed work instructions.
 		Che che1b = Che.DAO.findByPersistentId(this.che1PersistentId);
@@ -692,7 +944,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis2);
 		int cheWiTotal2 = cheWis2.size();
-		
+
 		for (WorkInstruction cheWi : cheWis2) {
 			if (cheWi.getItemMasterId().equals("1555"))
 				immediateShortWi = cheWi;
@@ -737,8 +989,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		mPropertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), 1);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2),
-			PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 
@@ -787,7 +1038,93 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.persistenceService.commitTenantTransaction();
 	}
-	
+
+	@Test
+	public final void testRouteWrap2() throws IOException {
+		// Reproduce bug seen during MAT for v10
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpZigzagSlottedFacility();
+		setUpBatchOrdersForZigzag(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		// perform pick operation
+		this.getPersistenceService().beginTenantTransaction();
+		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
+
+		// Set up a cart for orders 12345 and 1111, which will generate work instructions
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		picker.login("Picker #1");
+
+		LOGGER.info("Case 1: Scan ");
+		// The case is to set up batch containers 2,3,7,11. Start location D-26 is ok (no wrap). Start location D-76 has a wrap.
+		picker.setupContainer("2", "4");
+		picker.setupContainer("3", "5");
+		picker.setupContainer("7", "14");
+		picker.setupContainer("11", "15");
+		// Taking more than 3 seconds for the recompute and wrap. 
+		picker.scanCommand("START");
+		
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.scanLocation("D-76");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
+		// the itemMaster field is null.
+		//Assert.assertEquals(10, picker.countRemainingJobs());
+		LOGGER.info("List the work instructions as the site controller sees them");
+		List<WorkInstruction> theWiList = picker.getAllPicksList();
+		logWiList(theWiList);
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		logWiList(serverWiList);
+
+		Assert.assertEquals(1, picker.countActiveJobs());
+		WorkInstruction wi = picker.nextActiveWi();
+
+		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
+		assertWIColor(wi, che1);
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		Assert.assertEquals("D-76", wi.getPickInstruction());
+
+		// pick first item. 7 left (3 housekeeps)
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 1000);
+		Assert.assertEquals(7, picker.countRemainingJobs());
+
+		LOGGER.info("Case 2: Pick the 2nd and 3rd jobs");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 1000);
+		Assert.assertEquals(6, picker.countRemainingJobs());
+		Assert.assertEquals("D-100", wi.getPickInstruction());
+		
+		// fourth job
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		Assert.assertEquals(5, picker.countRemainingJobs());
+		Assert.assertEquals("", wi.getPickInstruction()); // a housekeep
+
+		// fifth job
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		Assert.assertEquals("D-99", wi.getPickInstruction()); 
+
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
+
+		LOGGER.info("List the work instructions as the server now has them");
+		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
+		logWiList(serverWiList2);
+
+		this.persistenceService.commitTenantTransaction();
+	}
+
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
 		// Test cases:
@@ -797,7 +1134,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// 4. Only an immediate short for position 4.
 		// 5. There is only a case pick order for position 5. Currently will give a work instruction if the case is in inventory.
 		// set up data for pick scenario
-		
+
 		// set up data for pick scenario
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -819,8 +1156,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);this.getPersistenceService().beginTenantTransaction();
-		
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().beginTenantTransaction();
+
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
@@ -843,7 +1181,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);// Outbound order. No group. Using 5 digit order number and preassigned container number.
-		
+
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -863,7 +1201,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6),
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
-		
+
 		picker.scanCommand("START");
 
 		//Check State Make sure we do not hit REVIEW
@@ -937,7 +1275,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanLocation("D301");
 
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		
+
 		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 2 since that is the first task
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
@@ -1007,7 +1345,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
-
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
@@ -1159,7 +1496,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check Screens
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
-
 
 		mPropertyService.restoreHKDefaults(facility);
 
