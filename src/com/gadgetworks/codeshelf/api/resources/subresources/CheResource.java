@@ -15,7 +15,6 @@ import lombok.Setter;
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.api.ObjectResponse;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -55,8 +54,7 @@ public class CheResource {
 				}
 			}
 			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, validContainers);
-			ObjectResponse response = new ObjectResponse(instructions);
-			return response.buildResponse();
+			return BaseResponse.buildResponse(instructions);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

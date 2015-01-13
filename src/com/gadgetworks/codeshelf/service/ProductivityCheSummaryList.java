@@ -19,7 +19,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
-public class ProductivityCheSummaryList extends BaseResponse {
+public class ProductivityCheSummaryList {
 
 	@Getter
 	private HashMap<String, List<WiSetSummary>>	runsByGroup	= new HashMap<String, List<WiSetSummary>>();

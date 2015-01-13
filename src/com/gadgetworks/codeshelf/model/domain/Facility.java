@@ -2049,15 +2049,4 @@ public class Facility extends Location {
 	public String toString() {
 		return getDomainId();
 	}
-
-	public void initialize(){
-		try {
-			Field[] fields = getClass().getDeclaredFields();
-			for (Field field : fields) {
-				Hibernate.initialize(field.get(this));
-			}
-		} catch (Exception e) {
-			LOGGER.error("Error initializing object: " + e.getMessage());
-		}
-	}
 }
