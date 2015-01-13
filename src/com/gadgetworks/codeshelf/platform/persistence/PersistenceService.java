@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
@@ -41,6 +42,9 @@ public class PersistenceService extends Service {
 	private String	userId;
 	private String	password;
 	private String schemaName;
+	
+	@Getter
+	private SchemaManager schemaManager;
 
 	@Getter
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
@@ -58,7 +62,7 @@ public class PersistenceService extends Service {
 	private PersistenceService() {
 		setInstance();
 		//TODO inject since this is essentially the messaging mechanism
-		objectChangeBroadcaster = new ObjectChangeBroadcaster(); 
+		objectChangeBroadcaster = new ObjectChangeBroadcaster();
 		fixedTenant = new Tenant("Tenant #1",1);
 	}
 
@@ -122,11 +126,11 @@ public class PersistenceService extends Service {
 
     	// we do not attempt to manage the in-memory test db; that will be done by Hibernate
 		if(!this.connectionUrl.startsWith("jdbc:h2:mem")) {
-			SchemaManager sm = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
+			schemaManager = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
 			
-			sm.applySchemaUpdates();
+			schemaManager.applySchemaUpdates();
 			
-			boolean schemaMatches = sm.checkSchema();
+			boolean schemaMatches = schemaManager.checkSchema();
 			
 			if(!schemaMatches) {
 /*					try {
@@ -158,6 +162,14 @@ public class PersistenceService extends Service {
 	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
 	        			.applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
+	        // add to factory map
+			this.factories.put(tenant, factory);
+	        
+	        // sync up property defaults with what's defined in resource file 
+			Session session = factory.getCurrentSession();
+			Transaction t = session.beginTransaction();
+	        PropertyDao.getInstance().syncPropertyDefaults();
+	        t.commit();	        
 	        return factory;
         } catch (Exception ex) {
         	if(ex instanceof HibernateException) {
@@ -208,7 +220,6 @@ public class PersistenceService extends Service {
 		SessionFactory fac = this.factories.get(tenant);
 		if (fac==null) {
 			fac = createTenantSessionFactory(tenant);
-			this.factories.put(tenant, fac);
 		}
 		Session session = fac.getCurrentSession();
 
@@ -227,7 +238,7 @@ public class PersistenceService extends Service {
 		Session session = getCurrentTenantSession();
 		StackTraceElement st[]=this.sessionStarted.get(session);
 		Transaction tx = session.getTransaction();
-		if(!this.transactionStarted.containsKey(tx)) {
+		if (!this.transactionStarted.containsKey(tx)) {
 			this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
 		}
 		if (tx != null) {
@@ -238,7 +249,6 @@ public class PersistenceService extends Service {
 				return tx;
 			} // else we will begin new transaction
 		}
-
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
 	}
@@ -324,6 +334,5 @@ public class PersistenceService extends Service {
 	    }
 		return object;
 	}
-
 
 }

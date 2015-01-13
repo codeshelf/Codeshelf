@@ -19,6 +19,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,6 +42,7 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 
 /**
  * @author jeffw
@@ -50,49 +52,61 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger		LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
+	private static final Logger	LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
 
-	private static final String		COMMAND_PREFIX							= "X%";
-	private static final String		USER_PREFIX								= "U%";
-	private static final String		CONTAINER_PREFIX						= "C%";
-	private static final String		LOCATION_PREFIX							= "L%";
-	private static final String		ITEMID_PREFIX							= "I%";
-	private static final String		POSITION_PREFIX							= "P%";
+	private static final String	COMMAND_PREFIX							= "X%";
+	private static final String USER_PREFIX								= "U%";
+	private static final String CONTAINER_PREFIX						= "C%";
+	private static final String	LOCATION_PREFIX							= "L%";
+	private static final String	ITEMID_PREFIX							= "I%";
+	private static final String	POSITION_PREFIX							= "P%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
 	// "SCAN START LOCATION" is at the 20 limit. If you change to "SCAN STARTING LOCATION", you get very bad behavior. The class loader will not find the CheDeviceLogic. Repeating throws.	
-	private static final String		EMPTY_MSG								= cheLine("");
-	private static final String		INVALID_SCAN_MSG						= cheLine("INVALID");
-	private static final String		SCAN_USERID_MSG							= cheLine("SCAN BADGE");
-	private static final String		SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
-	private static final String		SCAN_CONTAINER_MSG						= cheLine("SCAN CONTAINER");
-	private static final String		OR_START_WORK_MSG						= cheLine("OR START WORK");
-	private static final String		SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
-	private static final String		SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
-	private static final String		PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
-	private static final String		YES_NO_MSG								= cheLine("SCAN YES OR NO");
-	private static final String		NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
-	private static final String		POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
-	private static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
-	private static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
-	private static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
-	private static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	private static final String	EMPTY_MSG								= cheLine("");
+	private static final String	INVALID_SCAN_MSG						= cheLine("INVALID");
+	private static final String	SCAN_USERID_MSG							= cheLine("SCAN BADGE");
+	private static final String	SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
+	private static final String	SCAN_CONTAINER_MSG						= cheLine("SCAN CONTAINER");
+	private static final String	OR_START_WORK_MSG						= cheLine("OR START WORK");
+	private static final String	SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
+	private static final String	SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	private static final String PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
+	private static final String	YES_NO_MSG								= cheLine("SCAN YES OR NO");
+	private static final String	NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
+	private static final String	POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
+	private static final String	FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
+	private static final String	COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
+	private static final String	GET_WORK_MSG							= cheLine("GETTING WORK");
+	private static final String	NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
+	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
+	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
+	private static final String	SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
+	private static final String	SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
+	
+	private static final String	INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
+	private static final String	INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
+	private static final String	CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
+	private static final String	CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
-	private static final String		STARTWORK_COMMAND						= "START";
-	private static final String		SETUP_COMMAND							= "SETUP";
-	private static final String		SHORT_COMMAND							= "SHORT";
-	private static final String		LOGOUT_COMMAND							= "LOGOUT";
-	//private static final String		RESUME_COMMAND			= "RESUME";
-	private static final String		YES_COMMAND								= "YES";
-	private static final String		NO_COMMAND								= "NO";
+	
+	private static final String STARTWORK_COMMAND						= "START";
+	private static final String	SETUP_COMMAND							= "SETUP";
+	private static final String	SHORT_COMMAND							= "SHORT";
+	private static final String	LOGOUT_COMMAND							= "LOGOUT";
+	private static final String	YES_COMMAND								= "YES";
+	private static final String	NO_COMMAND								= "NO";
+	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR";
 
-	private static final Integer	maxCountForPositionControllerDisplay	= 99;
+	private static final Integer maxCountForPositionControllerDisplay	= 99;
+
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
-	private CheStateEnum			mCheStateEnum;
+	private CheStateEnum						mCheStateEnum;
 
 	// The CHE's current location.
 	@Accessors(prefix = "m")
@@ -108,7 +122,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private String					mContainerInSetup;
 
 	// The CHE's container map.
-	private Map<String, String>		mContainersMap;
+	private Map<String, String>		mPositionToContainerMap;
+
+	//Map of containers to work instruction counts
+	private Map<String, WorkInstructionCount>	mContainerToWorkInstructionCountMap;
 
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
@@ -140,7 +157,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
-		mContainersMap = new HashMap<String, String>();
+		mPositionToContainerMap = new HashMap<String, String>();
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
@@ -277,8 +294,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inMaxQty
 	 */
 	private void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
+		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
+			if (PosControllerInstr.POSITION_ALL.equals(instr.getPosition())) {
+				//A POS_ALL instruction overrides all previous instructions
+				mPosToLastSetIntrMap.clear();
+			}
 			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
 		}
 
@@ -406,12 +428,190 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	public final void processWorkInstructionCounts(final Integer totalWorkInstructionCount,
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+
+		//Store counts
+		this.mContainerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
+
 		// The back-end returned the work instruction count.
-		if (totalWorkInstructionCount > 0) {
-			//TODO Use the map to determine if we need to go to location_select or review
-			setState(CheStateEnum.LOCATION_SELECT);
+		if (totalWorkInstructionCount > 0 && containerToWorkInstructionCountMap != null
+				&& !containerToWorkInstructionCountMap.isEmpty()) {
+			//Use the map to determine if we need to go to location_select or review
+
+			//Check to see if we have any unknown containerIds. We must have a count for every container
+			boolean doesNeedReview = !(mPositionToContainerMap.size() == containerToWorkInstructionCountMap.size());
+
+			if (!doesNeedReview) {
+				for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
+					if (wiCount.getGoodCount() == 0 || wiCount.hasBadCounts()) {
+						doesNeedReview = true;
+						break;
+					}
+				}
+			}
+			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
+
+			if(doesNeedReview) {
+				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
+			} else {
+				setState(CheStateEnum.LOCATION_SELECT);
+			}
+			
 		} else {
 			setState(CheStateEnum.NO_WORK);
+		}
+	}
+
+	/** Shows the count feedback on the position controller
+	 */
+	private void showCartSetupFeedback() {
+		//Generate position controller commands
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+		for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
+			String containerId = containerMapEntry.getValue();
+			byte position = Byte.valueOf(containerMapEntry.getKey());
+			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
+
+			//if wiCount is 0 then the server did have any WIs for the order.
+			//this is an "unknown" order id
+			if (wiCount == null) {
+				//TODO send a special code for this?
+				//Right now it matches "done for now" feedback
+				instructions.add(new PosControllerInstr(position,
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_LED_DASH,
+					PosControllerInstr.BITENCODED_LED_DASH,
+					PosControllerInstr.SOLID_FREQ.byteValue(),
+					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+				LOGGER.info("Position {} has unknwon container id", position);
+			} else {
+				byte count = (byte) wiCount.getGoodCount();
+				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+				if (count == 0) {
+					//0 good WI's
+					if (wiCount.hasBadCounts()) {
+						//If there any bad counts then we are "done for now" - dim, solid dashes
+						instructions.add(new PosControllerInstr(position,
+							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+							PosControllerInstr.BITENCODED_LED_DASH,
+							PosControllerInstr.BITENCODED_LED_DASH,
+							PosControllerInstr.SOLID_FREQ.byteValue(),
+							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+					} else {
+						if (wiCount.getCompleteCount() == 0) {
+							//This should not be possible (unless we only had a single HK WI, which would be a bug)
+							//We will log this for now and treat it as a completed WI
+							LOGGER.error("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
+						}
+						//Ready for packout - solid, dim oc
+						instructions.add(new PosControllerInstr(position,
+							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+							PosControllerInstr.BITENCODED_LED_C,
+							PosControllerInstr.BITENCODED_LED_O,
+							PosControllerInstr.SOLID_FREQ.byteValue(),
+							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+					}
+				} else {
+					//Non-zero good WI's means bright display
+
+					//Blink if we have any bad counts, solid otherwise
+					byte frequency = wiCount.hasBadCounts() ? PosControllerInstr.BLINK_FREQ : PosControllerInstr.SOLID_FREQ;
+
+					instructions.add(new PosControllerInstr(position,
+						count,
+						count,
+						count,
+						frequency,
+						PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+				}
+			}
+		}
+
+		//Show counts on position controllers
+		sendPositionControllerInstructions(instructions);
+	}
+
+	/** Shows the count feedback on the position controller during the cart run
+	 */
+	private void showCartRunFeedbackIfNeeded(Byte inPosition) {
+		if (inPosition == null) {
+			LOGGER.error("showCartRunFeedbackIfNeeded was supplied a null position");
+			return;
+		}
+
+		//Generate position controller commands
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+		if (PosControllerInstr.POSITION_ALL == inPosition) {
+			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
+				String containerId = containerMapEntry.getValue();
+				byte position = Byte.valueOf(containerMapEntry.getKey());
+				WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
+				PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, position);
+				if (instr != null) {
+					instructions.add(instr);
+				}
+			}
+		} else {
+			String containerId = mPositionToContainerMap.get(inPosition.toString());
+			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
+			PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, inPosition);
+			if (instr != null) {
+				instructions.add(instr);
+			}
+		}
+
+		//Show counts on position controllers
+		if (!instructions.isEmpty()) {
+			sendPositionControllerInstructions(instructions);
+		}
+	}
+	
+	/**
+	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
+	 */
+	public PosControllerInstr getCartRunFeedbackInstructionForCount(WorkInstructionCount wiCount, byte position) {
+		//if wiCount is null then the server did have any WIs for the order.
+		//this is an "unknown" order id
+		if (wiCount == null) {
+			//Unknown order id matches "done for now" - dim, solid, dashes
+			return new PosControllerInstr(position,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_LED_DASH,
+				PosControllerInstr.BITENCODED_LED_DASH,
+				PosControllerInstr.SOLID_FREQ.byteValue(),
+				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+		} else {
+			byte count = (byte) wiCount.getGoodCount();
+			LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+			if (count == 0) {
+				//0 good WI's means dim display
+				if (wiCount.hasBadCounts()) {
+					//If there any bad counts then we are "done for now" - dim, solid, dashes
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else {
+					if (wiCount.getCompleteCount() == 0) {
+						//This should not be possible (unless we only had a single HK WI, which would be a bug)
+						//We will log this for now and treat it as a completed WI
+						LOGGER.error("WorkInstructionCount has no counts {};", wiCount);
+					}
+					//Ready for packout - solid, dim, "oc"
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_C,
+						PosControllerInstr.BITENCODED_LED_O,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				}
+			} else {
+				//No feedback is count > 0
+				return null;
+			}
 		}
 	}
 
@@ -424,14 +624,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inWorkItemList
 	 */
 	public final void assignWork(final List<WorkInstruction> inWorkItemList) {
-
-		for (WorkInstruction wi : inWorkItemList) {
-			LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
-		}
-
-		if (inWorkItemList.size() == 0) {
+		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_WORK);
 		} else {
+			for (WorkInstruction wi : inWorkItemList) {
+				LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
+			}
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
@@ -456,20 +654,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
 
-		// Cannot clear position controller on SHORT. (However, we would kind of like to change them all to flash their current number.)
-		if (!scanStr.equals(SHORT_COMMAND) && (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM))
-			clearAllPositionControllers();
-
-		// A command scan is always an option at any state.
+		// Command scans actions are determined by the scan content (the command issued) then state because they are more likely to be state independent
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
 			processCommandScan(scanStr);
 		} else {
+			//Other scans are split out by state then the scan content
 			switch (mCheStateEnum) {
 				case IDLE:
 					processIdleStateScan(scanPrefixStr, scanStr);
 					break;
-
+				case NO_WORK:
+					processLocationScan(scanPrefixStr, scanStr);
+					break;
 				case LOCATION_SELECT:
+					processLocationScan(scanPrefixStr, scanStr);
+					break;
+
+				case LOCATION_SELECT_REVIEW:
 					processLocationScan(scanPrefixStr, scanStr);
 					break;
 
@@ -480,6 +681,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				case CONTAINER_POSITION:
 					// The only thing that makes sense in this state is a position assignment (or a logout covered above).
 					processContainerPosition(scanPrefixStr, scanStr);
+					break;
+
+				//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+				case CONTAINER_POSITION_IN_USE:
+				case CONTAINER_POSITION_INVALID:
+				case CONTAINER_SELECTION_INVALID:
+				case NO_CONTAINERS_SETUP:
+					//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
 					break;
 
 				case DO_PICK:
@@ -503,8 +712,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		if (connectedToServer) {
 			// Send a command to clear the position, so the controller knows we've gotten the button press.
-			clearOnePositionController(inButtonCommand.getPosNum());
-			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
+			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue(), inButtonCommand.getPosNum());
 		} else {
 			LOGGER.debug("NotConnectedToServer: Ignoring button command: " + inButtonCommand);
 		}
@@ -550,9 +758,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 */
 	private void setState(final CheStateEnum inCheState) {
-		boolean wasSameState = inCheState == mCheStateEnum;
+		CheStateEnum previousState = mCheStateEnum;
+		boolean isSameState = previousState == inCheState;
 		mCheStateEnum = inCheState;
-		LOGGER.debug("switching to state: " + inCheState + " sameState: " + wasSameState);
+		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
 		switch (inCheState) {
 			case IDLE:
@@ -568,41 +777,81 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				break;
 
 			case LOCATION_SELECT:
-				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG);
+				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+				this.showCartSetupFeedback();
+				break;
+
+			case LOCATION_SELECT_REVIEW:
+				sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
+					LOCATION_SELECT_REVIEW_MSG_LINE_2,
+					LOCATION_SELECT_REVIEW_MSG_LINE_3,
+					SHOWING_WI_COUNTS);
+				this.showCartSetupFeedback();
 				break;
 
 			case CONTAINER_SELECT:
-				if (mContainersMap.size() < 1) {
+				if (mPositionToContainerMap.size() < 1) {
 					sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
 				} else {
-					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG);
+					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 				}
+				showContainerAssainments();
 				break;
 
 			case CONTAINER_POSITION:
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
+				showContainerAssainments();
+				break;
+				
+			case CONTAINER_POSITION_INVALID:
+				invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				break;
+				
+			case CONTAINER_POSITION_IN_USE:
+				invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				break;
+
+			case CONTAINER_SELECTION_INVALID:
+				invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				break;
+
+			case NO_CONTAINERS_SETUP:
+				invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				break;
 
 			case SHORT_PICK_CONFIRM:
+				if (isSameState) {
+					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				}
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
 			case SHORT_PICK:
+				if (isSameState) {
+					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				}
 				// first try. Show normally, but based on state, the wi min count will be set to zero.
 				showActivePicks();
 				break;
 
 			case DO_PICK:
+				if (isSameState || previousState == CheStateEnum.GET_WORK) {
+					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				}
 				showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
 				// fewer direct calls to showActivePicks elsewhere.
 				break;
 
 			case PICK_COMPLETE:
+				if (isSameState) {
+					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				}
 				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 				break;
 
 			case NO_WORK:
-				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG);
+				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+				this.showCartSetupFeedback();
 				break;
 
 			default:
@@ -612,15 +861,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Stay in the same state, but make the status invalid.
+	 * Change state and display error message
 	 * Send the LED error status as well (color: red effect: error channel: 0).
 	 * 
 	 */
 	private void invalidScanMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
-
-		byte positionControllerToSendTo = PosControllerInstr.POSITION_ALL;
-		boolean sendPositionControllerInstructions = true;
 
 		switch (inCheState) {
 			case IDLE:
@@ -629,14 +875,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case LOCATION_SELECT:
 				sendDisplayCommand(SCAN_LOCATION_MSG, INVALID_SCAN_MSG);
-				break;
-
-			case CONTAINER_SELECT:
-				sendDisplayCommand(SCAN_CONTAINER_MSG, INVALID_SCAN_MSG);
-				break;
-
-			case CONTAINER_POSITION:
-				sendDisplayCommand(SELECT_POSITION_MSG, INVALID_SCAN_MSG);
 				break;
 
 			case DO_PICK:
@@ -652,48 +890,73 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			default:
 				break;
 		}
-
-		if (sendPositionControllerInstructions) {
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			PosControllerInstr instruction = new PosControllerInstr(positionControllerToSendTo,
-				PosControllerInstr.ERROR_CODE_QTY,
-				PosControllerInstr.ZERO_QTY,
-				PosControllerInstr.ZERO_QTY,
-				PosControllerInstr.MED_FREQ, // change from BLINK_FREQ
-				PosControllerInstr.MED_DUTYCYCLE); // change from BLINK_DUTYCYCLE v6
-			instructions.add(instruction);
-			sendPositionControllerInstructions(instructions);
-		}
+		sendErrorCodeToAllPosCons();
 	}
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Stay in the same state, but make the status invalid.
+	 * Send the LED error status as well (color: red effect: error channel: 0).
+	 * 
+	 */
+	private void invalidScanMsg(String lineOne, String lineTwo, String lineThree, String lineFour) {
+		sendDisplayCommand(lineOne, lineTwo, lineThree, lineFour);
+		sendErrorCodeToAllPosCons();
+	}
+
+	/**
+	 * Send Error Code to all PosCons
+	 */
+	private void sendErrorCodeToAllPosCons() {
+		List<PosControllerInstr> instructions = Lists.newArrayList(new PosControllerInstr(PosControllerInstr.POSITION_ALL,
+			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
+			PosControllerInstr.MED_DUTYCYCLE)); // change from BRIGHT_DUTYCYCLE v6
+		sendPositionControllerInstructions(instructions);
+	}
+
+	// 
+	/** Command scans are split out by command then state because they are more likely to be state independent
 	 */
 	private void processCommandScan(final String inScanStr) {
 
 		switch (inScanStr) {
+			
 			case LOGOUT_COMMAND:
+				//You can logout at any time
 				logout();
 				break;
 
 			case SETUP_COMMAND:
-				setupChe();
+				setupCommandReceived();
 				break;
 
 			case STARTWORK_COMMAND:
-				startWork();
+				startWorkCommandReceived();
 				break;
 
 			case SHORT_COMMAND:
-				shortPick();
+				//Do not clear position controllers here
+				shortPickCommandReceived();
 				break;
 
 			case YES_COMMAND:
 			case NO_COMMAND:
-				processYesOrNoCommand(inScanStr);
+				yesOrNoCommandReceived(inScanStr);
+				break;
+
+			case CLEAR_ERROR_COMMAND:
+				clearErrorCommandReceived();
 				break;
 
 			default:
+
+				//Legacy Behavior
+				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
+					clearAllPositionControllers();
+				}
 				break;
 		}
 	}
@@ -704,8 +967,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void logout() {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
+		mContainerToWorkInstructionCountMap = null;
 		mPosToLastSetIntrMap.clear();
-		mContainersMap.clear();
+		mPositionToContainerMap.clear();
 		mContainerInSetup = "";
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
@@ -715,21 +979,101 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		clearAllPositionControllers();
 	}
 
-	// --------------------------------------------------------------------------
+
 	/**
-	 * The user scanned the SETUP command to start a new batch of containers for the CHE.
+	 * Setup the CHE by clearing all the datastructures
 	 */
 	private void setupChe() {
-		LOGGER.info("Setup work");
+		clearAllPositionControllers();
+		mContainerToWorkInstructionCountMap = null;
+		mPosToLastSetIntrMap.clear();
+		mPositionToContainerMap.clear();
+		mContainerInSetup = "";
+		setState(CheStateEnum.CONTAINER_SELECT);
+	}
 
-		if (mCheStateEnum.equals(CheStateEnum.PICK_COMPLETE) || mCheStateEnum.equals(CheStateEnum.NO_WORK)) {
-			mPosToLastSetIntrMap.clear();
-			mContainersMap.clear();
-			mContainerInSetup = "";
-			setState(CheStateEnum.CONTAINER_SELECT);
-		} else {
-			// Stay in the same state - the scan made no sense.
-			invalidScanMsg(mCheStateEnum);
+	private void setupCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+			case PICK_COMPLETE:
+			case NO_WORK:
+				//Setup the CHE
+				setupChe();
+				break;
+
+			//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				//Do nothing. Only a "Clear Error" will get you out
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, SETUP_COMMAND);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, SETUP_COMMAND);
+				break;
+
+			default:
+				//DEV-577 Do nothing
+				break;
+
+		}
+	}
+
+	private void clearErrorCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+		//Clear the error
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				clearAllPositionControllers();
+				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+
+			default:
+				//Reset ourselves
+				//Ideally we shouldn't have to clear poscons here
+				clearAllPositionControllers();
+				setState(mCheStateEnum);
+				break;
+
+		}
+	}
+
+	private void startWorkCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				//Do nothing. Only a "Clear Error" will get you out
+				break;
+				
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
+				break;
+
+			//Anywhere else we can start work if there's anything setup
+			case CONTAINER_SELECT:
+			default:
+				if (mPositionToContainerMap.values().size() > 0) {
+					startWork();
+				} else {
+					setState(CheStateEnum.NO_CONTAINERS_SETUP);
+				}
+				break;
+
 		}
 	}
 
@@ -739,37 +1083,54 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * It's a psychological step that makes more sense.
 	 */
 	private void startWork() {
-		if (mContainersMap.values().size() > 0) {
-			mContainerInSetup = "";
-			if (getCheStateEnum() != CheStateEnum.DO_PICK) {
-				setState(CheStateEnum.DO_PICK);
-			}
-			List<String> containerIdList = new ArrayList<String>(mContainersMap.values());
-			mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
-
-			setState(CheStateEnum.COMPUTE_WORK);
-		} else {
-			// Stay in the same state - the scan made no sense.
-			sendDisplayCommand(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG);
-		}
+		clearAllPositionControllers();
+		mContainerInSetup = "";
+		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
+		setState(CheStateEnum.COMPUTE_WORK);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * The user scanned the SHORT_PICK command to tell us there is no product to pick.
 	 */
-	private void shortPick() {
-		if (mActivePickWiList.size() > 0) {
-			// short scan of housekeeping work instruction makes no sense
-			WorkInstruction wi = mActivePickWiList.get(0);
-			if (wi.amIHouseKeepingWi())
-				invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
-			else
-				setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
-		} else {
-			// Stay in the same state - the scan made no sense.
-			invalidScanMsg(mCheStateEnum);
+	private void shortPickCommandReceived() {
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				//Do nothing. Only a "Clear Error" will get you out
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, SHORT_COMMAND);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, SHORT_COMMAND);
+				break;
+
+			//Anywhere else we can start work if there's anything setup
+			default:
+				if (mActivePickWiList.size() > 0) {
+					// short scan of housekeeping work instruction makes no sense
+					WorkInstruction wi = mActivePickWiList.get(0);
+					if (wi.isHousekeeping())
+						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
+					else
+						setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
+				} else {
+					// Stay in the same state - the scan made no sense.
+					invalidScanMsg(mCheStateEnum);
+				}
+				break;
+
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -777,8 +1138,25 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * The user scanned YES or NO.
 	 * @param inScanStr
 	 */
-	private void processYesOrNoCommand(final String inScanStr) {
+	private void yesOrNoCommandReceived(final String inScanStr) {
+
 		switch (mCheStateEnum) {
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				//Do nothing. Only a "Clear Error" will get you out
+				break;
+
+			case CONTAINER_POSITION:
+				processContainerPosition(COMMAND_PREFIX, inScanStr);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(COMMAND_PREFIX, inScanStr);
+				break;
+
 			case SHORT_PICK_CONFIRM:
 				confirmShortPick(inScanStr);
 				break;
@@ -838,14 +1216,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// Keep in mind this odd-ball case:
 		// One short will short ahead and get some shorts and repeatPos.
 		// A later short will short ahead and look for more. It is possible that one of the earlier short ahead is complete and just before it.
-		WorkInstructionTypeEnum theType = inWi.getType();
 		WorkInstructionStatusEnum theStatus = inWi.getStatus();
 		if (theStatus != WorkInstructionStatusEnum.NEW && theStatus != WorkInstructionStatusEnum.SHORT) {
 			LOGGER.error("bad calling context 1 for unCompletedUnneededHousekeep");
 			return false;
 		}
 
-		if (theType == WorkInstructionTypeEnum.HK_REPEATPOS || theType == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+		if (inWi.isHousekeeping()) {
 			return true;
 		}
 
@@ -924,6 +1301,25 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 
+		//Decrement count as short
+		if (!inWi.isHousekeeping()) {
+			//The HK check should never be false
+			String containerId = inWi.getContainerId();
+			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
+			count.decrementGoodCountAndIncrementShortCount();
+
+			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
+			Byte position = null;
+			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
+				if (containerMapEntry.getValue().equals(containerId)) {
+					position = Byte.valueOf(containerMapEntry.getKey());
+					break;
+				}
+			}
+			this.showCartRunFeedbackIfNeeded(position);
+
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -959,7 +1355,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 				clearLedControllersForWi(wi);
 
-				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+				// DEV-582 hook up to AUTOSHRT parameter
+				if (mDeviceManager.getAutoShortValue())
+					doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 
 				if (mActivePickWiList.size() > 0) {
 					// If there's more active picks then show them.
@@ -1060,10 +1458,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if (mContainersMap.values().isEmpty()) {
+			if (mPositionToContainerMap.values().isEmpty()) {
 				LOGGER.warn(this + " assigned work but no containers assigned");
 			}
-			for (String containerId : mContainersMap.values()) {
+			for (String containerId : mPositionToContainerMap.values()) {
 				// If the WI is for this container then consider it.
 				if (wi.getContainerId().equals(containerId)) {
 					// If the WI is INPROGRESS or NEW then consider it.
@@ -1152,6 +1550,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
+				//return because setting state to DO_PICK will call this function again
+				return;
 			}
 
 			// Tell the last aisle controller this device displayed on, to remove any led commands for this.
@@ -1245,18 +1645,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
 				// Also pretty easy. Light the position controllers on this CHE
-				byte freq = PosControllerInstr.BRIGHT_FREQ;
+				byte freq = PosControllerInstr.SOLID_FREQ;
 				byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 				// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 				if (planQuantityForPositionController != minQuantityForPositionController
 						|| planQuantityForPositionController != maxQuantityForPositionController) {
-					freq = PosControllerInstr.BLINK_DUTYCYCLE;
-					brightness = PosControllerInstr.BLINK_DUTYCYCLE;
+					freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
+					brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 				}
 
 				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 				for (WorkInstruction wi : mActivePickWiList) {
-					for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+					for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 						if (mapEntry.getValue().equals(wi.getContainerId())) {
 							PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
 								planQuantityForPositionController,
@@ -1281,7 +1681,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	public byte buttonFromContainer(String inContainerId) {
 		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
-		for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
 				return Byte.valueOf(mapEntry.getKey());
 			}
@@ -1316,6 +1716,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			clearAllPositionControllers();
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -1330,6 +1731,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+			clearAllPositionControllers();
+			
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
@@ -1353,23 +1756,21 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			mContainerInSetup = inScanStr;
 
 			// Check to see if this container is already setup in a position.
-			Iterator<Entry<String, String>> setIterator = mContainersMap.entrySet().iterator();
+			Iterator<Entry<String, String>> setIterator = mPositionToContainerMap.entrySet().iterator();
 			while (setIterator.hasNext()) {
 				Entry<String, String> entry = setIterator.next();
 				if (entry.getValue().equals(mContainerInSetup)) {
 					setIterator.remove();
+					this.clearOnePositionController(Byte.valueOf(entry.getKey()));
 					break;
 				}
 			}
 			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
 			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
 			// this is a "ride along" error. Would be nice if the user could see it immediately.
-
-			showAssignedPositions();
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
-			LOGGER.info("Not a container ID: " + inScanStr);
-			invalidScanMsg(CheStateEnum.CONTAINER_SELECT);
+			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
 	}
 
@@ -1380,17 +1781,15 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void processContainerPosition(final String inScanPrefixStr, String inScanStr) {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
-			if (mContainersMap.get(inScanStr) == null) {
-				mContainersMap.put(inScanStr, mContainerInSetup);
+			if (mPositionToContainerMap.get(inScanStr) == null) {
+				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 				mContainerInSetup = "";
-				showAssignedPositions();
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
-				sendDisplayCommand(SELECT_POSITION_MSG, POSITION_IN_USE_MSG);
-				mCheStateEnum = CheStateEnum.CONTAINER_POSITION;
+				setState(CheStateEnum.CONTAINER_POSITION_IN_USE);
 			}
 		} else {
-			invalidScanMsg(CheStateEnum.CONTAINER_POSITION);
+			setState(CheStateEnum.CONTAINER_POSITION_INVALID);
 		}
 	}
 
@@ -1399,8 +1798,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Complete the active WI at the selected position.
 	 * @param inButtonNum
 	 * @param inQuantity
+	 * @param buttonPosition 
 	 */
-	private void processButtonPress(Integer inButtonNum, Integer inQuantity) {
+	private void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.
@@ -1411,6 +1811,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
+				clearOnePositionController(buttonPosition);
 				String itemId = wi.getItemId();
 				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
@@ -1450,7 +1851,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @return
 	 */
 	private String getContainerIdFromButtonNum(Integer inButtonNum) {
-		return mContainersMap.get(Integer.toString(inButtonNum));
+		return mPositionToContainerMap.get(Integer.toString(inButtonNum));
 	}
 
 	// --------------------------------------------------------------------------
@@ -1469,6 +1870,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.info("Pick completed: " + inWi);
 
 		mActivePickWiList.remove(inWi);
+
+		//Decrement count if this is a non-HK WI
+		if (!inWi.isHousekeeping()) {
+			String containerId = inWi.getContainerId();
+			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
+			count.decrementGoodCountAndIncrementCompleteCount();
+
+			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
+			Byte position = null;
+			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
+				if (containerMapEntry.getValue().equals(containerId)) {
+					position = Byte.valueOf(containerMapEntry.getKey());
+					break;
+				}
+			}
+			this.showCartRunFeedbackIfNeeded(position);
+		}
 
 		clearLedControllersForWi(inWi);
 
@@ -1541,17 +1959,37 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
-	private void showAssignedPositions() {
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		for (String pos : mContainersMap.keySet()) {
-			PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(pos),
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.POSITION_ASSIGNED_CODE,
-				PosControllerInstr.MED_FREQ,
-				PosControllerInstr.MED_DUTYCYCLE);
-			instructions.add(instruction);
+	private void showContainerAssainments() {
+		if (mPositionToContainerMap.isEmpty()) {
+			LOGGER.debug("No Container Assaigments to send");
+			return;
 		}
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
+			String containerId = entry.getValue();
+			Byte position = Byte.valueOf(entry.getKey());
+
+			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
+			//Use the last 1-2 characters of the containerId iff the container is numeric.
+			//Otherwise stick to the default character "a"
+			if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
+				if (containerId.length() == 1) {
+					value = Byte.valueOf(containerId);
+				} else {
+					value = Byte.valueOf(containerId.substring(containerId.length() - 2));
+				}
+			}
+
+			instructions.add(new PosControllerInstr(position,
+			value,
+			value,
+			value,
+				PosControllerInstr.SOLID_FREQ,
+				PosControllerInstr.MED_DUTYCYCLE));
+		}
+		LOGGER.debug("Sending Container Assaignments {}", instructions);
+
 		sendPositionControllerInstructions(instructions);
 	}
 
@@ -1571,13 +2009,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			LOGGER.error("showSpecialPositionCode: unknown quantity code in ");
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		for (Entry<String, String> mapEntry : mContainersMap.entrySet()) {
+		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
 				PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
 					codeToSend,
 					codeToSend,
 					codeToSend,
-					PosControllerInstr.MED_FREQ, // change from BRIGHT_FREQ
+					PosControllerInstr.SOLID_FREQ, // change from SOLID_FREQ
 					PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 				instructions.add(instruction);
 			}

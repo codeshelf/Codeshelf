@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -348,16 +347,19 @@ public class LocationDeleteTest extends EdiTestABC {
 		// Assume all is good.  Other tests in this class will not need to check these things.
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		facility.setUpCheContainerFromString(theChe, "11");
-		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+
+		mPropertyService.restoreHKDefaults(facility);
+
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 2, wiCountAfterScan);
 

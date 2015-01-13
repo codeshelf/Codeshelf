@@ -40,7 +40,7 @@ public class ProductivitySummary {
 			case CREATED:
 				groupSummary.created++;
 				break;
-			case RELEASE:
+			case RELEASED:
 				groupSummary.release++;
 				break;
 			case INPROGRESS:

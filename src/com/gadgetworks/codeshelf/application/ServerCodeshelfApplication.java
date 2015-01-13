@@ -6,7 +6,6 @@
 
 package com.gadgetworks.codeshelf.application;
 
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -22,17 +21,12 @@ import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
-import com.gadgetworks.codeshelf.ws.jetty.server.JettyWebSocketServer;
+import com.gadgetworks.codeshelf.ws.jetty.server.ServerWatchdogThread;
+import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -40,36 +34,38 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private IEdiProcessor			mEdiProcessor;
-	private IHttpServer				mHttpServer;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 
 	@Getter
 	private PersistenceService		persistenceService;
 
-	private ITypedDao<Facility>		mFacilityDao;
-
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
-
-	JettyWebSocketServer			webSocketServer;
 
 	private IConfiguration			configuration;
 
+	private final ServerWatchdogThread watchdog;
+
 	@Inject
 	public ServerCodeshelfApplication(final IConfiguration configuration,
-		final IHttpServer inHttpServer,
-		final IEdiProcessor inEdiProcessor,
-		final IPickDocumentGenerator inPickDocumentGenerator,
-		final ITypedDao<User> inUserDao,
-		final AdminServer inAdminServer,
-		final JettyWebSocketServer inAlternativeWebSocketServer,
-		final PersistenceService persistenceService) {
-		super(inAdminServer);
+			final IEdiProcessor inEdiProcessor,
+			final IPickDocumentGenerator inPickDocumentGenerator,
+			final WebApiServer inWebApiServer,
+			final PersistenceService persistenceService) {
+			
+		super(inWebApiServer);
+		
 		this.configuration = configuration;
-		mHttpServer = inHttpServer;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		webSocketServer = inAlternativeWebSocketServer;
 		this.persistenceService = persistenceService;
+			
+		// create and configure watch dog
+		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
+		boolean suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive");
+		boolean killIdle = configuration.getBoolean("websocket.idle.kill");
+		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
+		this.watchdog.setKillIdle(killIdle);
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -99,9 +95,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			System.exit(1);
 		}
 
-		// Start the WebSocket server
-		webSocketServer.start();
-
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
@@ -109,9 +102,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
-		mHttpServer.startServer();
-
-		startAdminServer(null);
+		startApiServer(null);
 		startTsdbReporter();
 		registerSystemMetrics();
 
@@ -122,55 +113,12 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
 		MetricsService.registerHealthCheck(sessionCheck);
 
-		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
+		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
 		MetricsService.registerHealthCheck(dbxCheck);
 
-		// configure baychange housekeeping work instructions
-		// TODO: replace with configuration via database table
-		String bayChangeWI = configuration.getString("facility.housekeeping.baychange");
-		if (bayChangeWI != null && bayChangeWI.equals("None")) {
-			LOGGER.info("BayChange housekeeping work instructions disabled");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeNone);
-		} else if (bayChangeWI != null && bayChangeWI.equals("BayChange")) {
-			LOGGER.info("BayChange housekeeping set to BayChange");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
-		} else if (bayChangeWI != null && bayChangeWI.equals("PathSegmentChange")) {
-			LOGGER.info("BayChange housekeeping set to PathSegmentChange");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangePathSegmentChange);
-		} else if (bayChangeWI != null && bayChangeWI.equals("ExceptSamePathDistance")) {
-			LOGGER.info("BayChange housekeeping set to ExceptSamePathDistance");
-			HousekeepingInjector.setBayChangeChoice(BayChangeChoice.BayChangeExceptSamePathDistance);
-		} else {
-			LOGGER.info("Using default BayChange housekeeping work instructions setting");
-		}
+		// start server watchdog
+		watchdog.start();        
 
-		// configure repeatposition housekeeping work instructions
-		// TODO: replace with configuration via database table		
-		String useRepeatPosWI = configuration.getString("facility.housekeeping.repeatposition");
-		if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerAndCount")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("None")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerOnly")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
-		} else {
-			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");
-		}
-		if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerAndCount")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerAndCount");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerAndCount);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("None")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions disabled");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		} else if (useRepeatPosWI != null && useRepeatPosWI.equals("ContainerOnly")) {
-			LOGGER.info("RepeatPosition housekeeping work instructions set to ContainerOnly");
-			HousekeepingInjector.setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
-		} else {
-			LOGGER.info("Using default RepeatPosition housekeeping work instructions setting");
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -178,15 +126,10 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 */
 	protected void doShutdown() {
 		LOGGER.info("Stopping application");
-		mHttpServer.stopServer();
+		watchdog.setExit(true);
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
-		// Stop the web socket server
-		try {
-			webSocketServer.stop();
-		} catch (IOException | InterruptedException e) {
-			LOGGER.error("Failed to stop WebSocket server", e);
-		}
+		this.stopApiServer();
 		this.persistenceService.stop();
 		LOGGER.info("Application terminated normally");
 	}
@@ -205,5 +148,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			LOGGER.error("unable to create demo organization", e);
 			throw e;
 		}
+		
 	}
 }

@@ -101,6 +101,7 @@ import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -109,7 +110,6 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
-import com.gadgetworks.codeshelf.ws.websocket.IWebSocketSslContextGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -123,7 +123,7 @@ import com.google.inject.name.Names;
  *  @author jeffw
  */
 public final class ServerMain {
-
+	
 	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
 		Configuration.loadConfig("server");
@@ -153,6 +153,7 @@ public final class ServerMain {
 		application.handleEvents();
 
 		LOGGER.info("Exiting Main()");
+		System.exit(0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -165,25 +166,8 @@ public final class ServerMain {
 			protected void configure() {
 				bind(PersistenceService.class).toInstance(PersistenceService.getInstance());
 				
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_PATH_PROPERTY))
-					.toInstance(System.getProperty("keystore.path"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_TYPE_PROPERTY))
-					.toInstance(System.getProperty("keystore.type"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_STORE_PASSWORD_PROPERTY))
-					.toInstance(System.getProperty("keystore.store.password"));
-				bind(String.class).annotatedWith(Names.named(IWebSocketSslContextGenerator.KEYSTORE_KEY_PASSWORD_PROPERTY))
-					.toInstance(System.getProperty("keystore.key.password"));
-
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_CONTENT_PATH_PROPERTY))
-					.toInstance(System.getProperty("webapp.content.path"));
-				bind(String.class).annotatedWith(Names.named(IHttpServer.WEBAPP_HOSTNAME_PROPERTY))
-					.toInstance(System.getProperty("webapp.hostname"));
-				bind(Integer.class).annotatedWith(Names.named(IHttpServer.WEBAPP_PORTNUM_PROPERTY))
-					.toInstance(Integer.valueOf(System.getProperty("webapp.portnum")));
-
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
-				bind(IHttpServer.class).to(HttpServer.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
 				bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
@@ -194,11 +178,8 @@ public final class ServerMain {
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
-
 				
-				
-				//
-				// bind(DaoProvider.class).to(PersistenceService.class).in(Singleton.class);
+				bind(PropertyService.class).toInstance(new PropertyService());
 				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);

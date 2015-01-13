@@ -33,7 +33,6 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -553,6 +552,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			LOGGER.error("cannot add Facility in addLocation");
 			return;
 		}
+
 		IDomainObject oldParent = inLocation.getParent();
 		if (oldParent == null) {
 			locations.put(inLocation.getDomainId(), inLocation);

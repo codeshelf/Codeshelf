@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+        <changeSet author="jonranstrom (generated)" id="1420736764926-2">
+            <addColumn tableName="order_detail">
+                <column name="preferred_location" type="varchar(255)"/>
+            </addColumn>
+        </changeSet>
+
+	<!-- insert domain object property defaults -->
+	<changeSet author="bhe (generated)" id="1418841291811-99">
+		<delete tableName="property_default">
+			<where>object_type='Facility' and name='LIGHTCLR'</where>
+		</delete>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="LIGHTCLR" />
+			<column name="default_value" value="RED" />
+			<column name="description"
+				value="When a user lights a location or item, what color shall it light. Valid values: Red, Green, Blue, Cyan, Orange, Magenta, White." />
+		</insert>
+       </changeSet>
+
+</databaseChangeLog>

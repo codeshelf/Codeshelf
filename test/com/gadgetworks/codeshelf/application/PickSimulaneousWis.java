@@ -19,7 +19,6 @@ import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -246,18 +245,21 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
 		facility.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
-		HousekeepingInjector.restoreHKDefaults();
 
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+
 		int wiCount = aList.size();
 		Assert.assertEquals(8, wiCount); // 8 work instructions. But 2,3,4 in same group and 7,8 in same group.
 
 		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value. 
 		// Therefore, all 8 will be in the result of starting from D402
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D402");
+
+		mPropertyService.restoreHKDefaults(facility);
+
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 8, wiCountAfterScan); // all 8 work instructions from D402 should be there.
 

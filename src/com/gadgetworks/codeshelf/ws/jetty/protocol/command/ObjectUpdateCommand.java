@@ -85,9 +85,6 @@ public class ObjectUpdateCommand extends CommandABC {
 				// (The method *must* start with "set" to ensure other methods don't get called.)
 				if (updateObject != null) {
 					// update object...
-					// ORIGNIAL CODE:
-					// ObjectMapper objectSetter = new ObjectMapper();
-					// updateObject = objectSetter.readerForUpdating(updateObject).readValue(properties);
 					Map<String, Throwable> failures = new HashMap<String, Throwable>();
 					for (Map.Entry<String, Object> property : properties.entrySet()) {
 						try {

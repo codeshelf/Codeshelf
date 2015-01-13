@@ -7,12 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Bay;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.PropertyService;
 
 public class HousekeepingInjector {
+	// For multi-tenancy, this must convert from a static usage object to having one HousekeepingInjector per facility.
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(HousekeepingInjector.class);
 
@@ -29,39 +32,56 @@ public class HousekeepingInjector {
 		RepeatPosContainerAndCount
 	}
 
-	private static RepeatPosChoice	mRepeatPosChoice	= RepeatPosChoice.RepeatPosContainerOnly;
-	private static BayChangeChoice	mBayChangeChoice	= BayChangeChoice.BayChangeBayChange;
-
 	private HousekeepingInjector() {
 
 	}
 
-	public static RepeatPosChoice getRepeatPosChoice() {
-		return mRepeatPosChoice;
+	private static Facility getMyFacility() {
+		// fix for multi-tenancy
+		List<Facility> facilityList = Facility.DAO.getAll();
+		int theSize = facilityList.size();
+		if (theSize == 0)
+			return null;
+		if (theSize > 1) {
+			LOGGER.error("fix HousekeepingInjector for multi-tenancy");
+		}
+		return facilityList.get(0);
 	}
 
-	public static void setRepeatPosChoice(RepeatPosChoice inRepeatPosChoice) {
-		HousekeepingInjector.mRepeatPosChoice = inRepeatPosChoice;
+	public static RepeatPosChoice getRepeatPosChoice(Facility inFacility) {
+		String repeatValue = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.RPEATPOS);		
+		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
+		if (repeatValue.equals("None"))
+			return RepeatPosChoice.RepeatPosNone;
+		else if (repeatValue.equals("ContainerOnly"))
+			return RepeatPosChoice.RepeatPosContainerOnly;
+		else if (repeatValue.equals("ContainerAndCount"))
+			return RepeatPosChoice.RepeatPosContainerAndCount;
+		else {
+			LOGGER.error("unexpected value in getRepeatPosChoice");
+			return RepeatPosChoice.RepeatPosNone;
+		}
 	}
 
-	public static BayChangeChoice getBayChangeChoice() {
-		return mBayChangeChoice;
+
+	public static BayChangeChoice getBayChangeChoice(Facility inFacility) {
+		String bayValue = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.BAYCHANG);
+		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
+		if (bayValue.equals("None"))
+			return BayChangeChoice.BayChangeNone;
+		else if (bayValue.equals("BayChange"))
+			return BayChangeChoice.BayChangeBayChange;
+		else if (bayValue.equals("PathSegmentChange"))
+			return BayChangeChoice.BayChangePathSegmentChange;
+		else if (bayValue.equals("BayChangeExceptAcrossAisle"))
+			return BayChangeChoice.BayChangeExceptSamePathDistance;
+		else {
+			LOGGER.error("unexpected value in getBayChangeChoice");
+			return BayChangeChoice.BayChangeNone;
+		}
 	}
 
-	public static void setBayChangeChoice(BayChangeChoice inBayChangeChoice) {
-		HousekeepingInjector.mBayChangeChoice = inBayChangeChoice;
-	}
 
-	public static void restoreHKDefaults() {
-		setRepeatPosChoice(RepeatPosChoice.RepeatPosContainerOnly);
-		setBayChangeChoice(BayChangeChoice.BayChangeBayChange);
-	}
-
-	public static void turnOffHK() {
-		setRepeatPosChoice(RepeatPosChoice.RepeatPosNone);
-		setBayChangeChoice(BayChangeChoice.BayChangeNone);
-
-	}
 
 	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
 		if (type == WorkInstructionSequencerType.BayDistance) {
@@ -93,7 +113,7 @@ public class HousekeepingInjector {
 	}
 
 	// helper function
-	@SuppressWarnings({ })
+	@SuppressWarnings({})
 	private static boolean isDifferentNotNullBay(Location inLoc1, Location inLoc2) {
 		Location bay1 = inLoc1.getParentAtLevel(Bay.class);
 		Location bay2 = inLoc2.getParentAtLevel(Bay.class);
@@ -115,7 +135,7 @@ public class HousekeepingInjector {
 	/**
 	 * Three choices of behavior
 	 */
-	@SuppressWarnings({ })
+	@SuppressWarnings({})
 	private static boolean wantBayChangeBetween(BayChangeChoice inBayChangeChoice,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi) {
@@ -194,7 +214,10 @@ public class HousekeepingInjector {
 	 * @param nextWi
 	 * @return
 	 */
-	private static List<WorkInstructionTypeEnum> wisNeedHouseKeepingBetween(WorkInstruction inPrevWi, WorkInstruction inNextWi) {
+	private static List<WorkInstructionTypeEnum> wisNeedHouseKeepingBetween(WorkInstruction inPrevWi,
+		WorkInstruction inNextWi,
+		BayChangeChoice inBayChangeChoice,
+		RepeatPosChoice inRepeatPosChoice) {
 		List<WorkInstructionTypeEnum> returnList = null;
 
 		if (inPrevWi == null)
@@ -204,9 +227,9 @@ public class HousekeepingInjector {
 			return null;
 		} else {
 			// If both repeatContainer and bayChange, this does bay change only. DEV-478
-			if (wantBayChangeBetween(getBayChangeChoice(), inPrevWi, inNextWi)) {
+			if (wantBayChangeBetween(inBayChangeChoice, inPrevWi, inNextWi)) {
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-			} else if (wantRepeatContainerBetween(getRepeatPosChoice(), inPrevWi, inNextWi)) {
+			} else if (wantRepeatContainerBetween(inRepeatPosChoice, inPrevWi, inNextWi)) {
 				returnList = addHouseKeepEnumToList(returnList, WorkInstructionTypeEnum.HK_REPEATPOS);
 			}
 		}
@@ -217,11 +240,12 @@ public class HousekeepingInjector {
 	/**
 	 * A small, public special case for DEV-477 wrapped-route that may need to add a bay change.  RepeatPos might be possible, but not so important.
 	 */
+	/*
 	public static List<WorkInstruction> addHouseKeepingIfNecessary(Facility inFacility,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi,
 		List<WorkInstruction> inWiList) {
-		
+
 		List<WorkInstruction> returnList = inWiList;
 
 		if (inPrevWi == null)
@@ -250,6 +274,7 @@ public class HousekeepingInjector {
 		}
 		return returnList;
 	}
+	*/
 
 	// --------------------------------------------------------------------------
 	/**
@@ -262,7 +287,10 @@ public class HousekeepingInjector {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		WorkInstruction lastWi = null;
 		for (WorkInstruction wi : inSortedWiList) {
-			List<WorkInstructionTypeEnum> theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi, wi);
+			List<WorkInstructionTypeEnum> theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi,
+				wi,
+				getBayChangeChoice(inFacility),
+				getRepeatPosChoice(inFacility));
 			// returns null if nothing to do. If non-null, then at lease one in the list.
 			if (theHousekeepingTypeList != null) {
 				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {

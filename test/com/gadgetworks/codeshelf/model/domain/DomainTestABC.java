@@ -366,7 +366,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		return resultFacility;
 	}
-	
+
 	protected UomMaster createUomMaster(String inUom, Facility inFacility) {
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId(inUom);
@@ -375,7 +375,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		inFacility.addUomMaster(uomMaster);
 		return uomMaster;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inContainerId
@@ -478,6 +478,8 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Creates an orderdetail using the itemMaster and its standard UOM
+	 * 
 	 * @param inOrderHeader
 	 * @param inItemMaster
 	 * @return
@@ -486,15 +488,15 @@ public abstract class DomainTestABC extends DAOTestABC {
 
 		OrderDetail result = new OrderDetail();
 		result.setDomainId(inItemMaster.getItemId());
-		result.setParent(inOrderHeader);
 		result.setItemMaster(inItemMaster);
 		result.setQuantities(5);
 		result.setUomMaster(inItemMaster.getStandardUom());
-		result.setStatus(OrderStatusEnum.CREATED);
+		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mOrderDetailDao.store(result);
+		
 		inOrderHeader.addOrderDetail(result);
+		mOrderDetailDao.store(result);
 
 		return result;
 	}

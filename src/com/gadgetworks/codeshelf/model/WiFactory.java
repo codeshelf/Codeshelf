@@ -39,6 +39,9 @@ import com.gadgetworks.flyweight.command.ColorEnum;
 public class WiFactory {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WiFactory.class);
 	
+	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
+	private static final int maxLedsToLight = 4;
+	
 	public static WorkInstruction createForLocation(Location inLocation) {
 		long seq = SequenceNumber.generate();
 		String wiDomainId = Long.toString(seq);
@@ -334,7 +337,7 @@ public class WiFactory {
 			return;
 		}
 		if (inLocation instanceof Facility) {
-			LOGGER.error("inappropriate call to  setOutboundWorkInstructionLedPatternFromInventoryItem");
+			LOGGER.error("inappropriate call to setOutboundWorkInstructionLedPatternFromInventoryItem (location is Facility)");
 			return;
 		}
 
@@ -440,14 +443,12 @@ public class WiFactory {
 		List<LedSample> ledSamples = new ArrayList<LedSample>();
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
-		// IMPORTANT. When DEV-411 resumes, change back to <=.  For now, we want only 3 LED lit at GoodEggs.
-		// Bug: DEV-519 Make it work if firstLedPosNum = lastLedPosNum, but still limit to 3.
 		int countUsed = 0;
 		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
 			countUsed++;
-			if (countUsed >= 3)
+			if (countUsed >= maxLedsToLight)
 				break;
 		}
 		ledCmdGroup.setLedSampleList(ledSamples);

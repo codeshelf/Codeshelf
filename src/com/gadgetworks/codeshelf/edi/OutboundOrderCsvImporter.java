@@ -306,7 +306,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result = new OrderGroup();
 			result.setOrderGroupId(inCsvBean.getOrderGroupId());
 			result.setDescription(OrderGroup.DEFAULT_ORDER_GROUP_DESC_PREFIX + inCsvBean.getOrderGroupId());
-			result.setStatus(OrderStatusEnum.CREATED);
+			result.setStatus(OrderStatusEnum.RELEASED);
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
 			inFacility.addOrderGroup(result);
@@ -422,7 +422,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		}
 
 		result.setOrderType(OrderTypeEnum.OUTBOUND);
-		result.setStatus(OrderStatusEnum.CREATED);
+		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipmentId(inCsvBean.getShipmentId());
 		if (inCsvBean.getWorkSequence() != null) {
@@ -574,7 +574,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result.setOrderDetailId(detailId);
 		}
 
-		result.setStatus(OrderStatusEnum.CREATED);
+		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);

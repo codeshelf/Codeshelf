@@ -6,6 +6,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Hibernate;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.proxy.HibernateProxy;
@@ -57,13 +59,13 @@ import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -103,7 +105,7 @@ public class Facility extends Location {
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
 		}
-		
+
 		@Override
 		public Facility findByDomainId(final IDomainObject parentObject, final String domainId) {
 			return super.findByDomainId(null, domainId);
@@ -175,7 +177,7 @@ public class Facility extends Location {
 	public Facility() {
 		super();
 	}
-	
+
 	@Override
 	public Facility getFacility() {
 		return this;
@@ -615,7 +617,7 @@ public class Facility extends Location {
 		}		
 		return pathId;
 	}
-	
+
 	public final Path createPath(String inDomainId) {
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
@@ -651,7 +653,7 @@ public class Facility extends Location {
 				LOGGER.error("looks like incorrect segment orders in createPath()");
 			segmentDomainId = pathDomainId + "." + pathSegment.getSegmentOrder();
 			pathSegment.setDomainId(segmentDomainId);
-			
+
 			path.addPathSegment(pathSegment);
 			PathSegment.DAO.store(pathSegment);
 		}
@@ -676,7 +678,7 @@ public class Facility extends Location {
 				location.computePosAlongPath(segment);
 			}
 		}
-		*/
+		 */
 
 		// Paul: comment this block when you uncomment the block above
 		// getting from paths.values() clearly does not work reliable after just making new path
@@ -1023,7 +1025,7 @@ public class Facility extends Location {
 		for (Che changedChe : changedChes) {
 			changedChe.getDao().pushNonPersistentUpdates(changedChe);
 		}
-		*/
+		 */
 
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 
@@ -1033,20 +1035,39 @@ public class Facility extends Location {
 		// Get all of the CROSS work instructions.
 		wiResultList.addAll(generateCrossWallInstructions(inChe, containerList, theTime));
 
-		WorkInstructionSequencerABC sequencer = getSequencer();
+		//Filter,Sort, and save actionsable WI's
+		//TODO Consider doing this in getWork?
+		this.sortAndSaveActionableWIs(wiResultList);
+		//It uses the iterater or remove items from the existing list and add it to the new one
+		//If all we care about are the counts. Why do we even sort them now?
+
+		LOGGER.info("TOTAL WIs {}", wiResultList);
+		
+		//Return original full list
+		return wiResultList;
+	}
+
+	private void sortAndSaveActionableWIs(List<WorkInstruction> allWIs) {
+		//Create a copy of the list to prevent unintended side effects from filtering
+		allWIs = Lists.newArrayList(allWIs);
+		//Now we want to filer/sort and save the work instructions that are actionable
+
+		//Filter out complete WI's
+		Iterator<WorkInstruction> iter = allWIs.iterator();
+		while (iter.hasNext()) {
+			if (iter.next().getStatus() == WorkInstructionStatusEnum.COMPLETE) {
+				iter.remove();
+			}
+		}
 
 		//This will sort and also FILTER out WI's that have no location (i.e. SHORTS)
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
-		List<WorkInstruction> sortedWIResults = sequencer.sort(this, wiResultList);
+		List<WorkInstruction> sortedWIResults = getSequencer().sort(this, allWIs);
 
-		//WI's are only added here and they are of type SHORT (for now at least)
-		List<WorkInstruction> finalWIResults = HousekeepingInjector.addHouseKeepingAndSaveSort(this, sortedWIResults);
-		
-		//Add the WI's that were removed back to the final list
-		finalWIResults.addAll(wiResultList);
 
-		return finalWIResults;
+		//Save sort
+		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
 	}
 
 	private WorkInstructionSequencerABC getSequencer() {
@@ -1086,7 +1107,8 @@ public class Facility extends Location {
 		Location cheLocation = null;
 		cheLocation = findSubLocationById(inScannedLocationId);
 		if (cheLocation == null) {
-			LOGGER.warn("unknown CHE scan location" + inScannedLocationId);
+			LOGGER.warn("Unknown CHE scan location={}; This may due to a misconfigured site or bad barcode at the facility.",
+				inScannedLocationId);
 			return null;
 		}
 
@@ -1186,14 +1208,10 @@ public class Facility extends Location {
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
 
-		final boolean doWrapIfNecessary = true; // DEV- 477 
-		if (!doWrapIfNecessary)
-			return wiResultList;
-
 		// For DEV- 477 from here
 		// If wrapping, we need to get the complete list, then add on the missing bits. AND update the group and sort code for the work instructions
 		// Let's measure how long this takes. If more than 1000 ms, log it.
-		long wrapComputeTime = System.currentTimeMillis();
+		long startTimestamp = System.currentTimeMillis();
 
 		int wiCountFromStartLocation = wiResultList.size();
 		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
@@ -1201,66 +1219,45 @@ public class Facility extends Location {
 
 		int wiCountCompleteRoute = completeRouteWiList.size();
 		Integer leftoverCount = wiCountCompleteRoute - wiCountFromStartLocation;
-		if (leftoverCount == 0) // just return what we had.  This also covers the case of wiCountCompleteRoute == 0.
-			return wiResultList;
-
-		LOGGER.info("Wrapping the CHE route. Add the starting " + leftoverCount
-				+ " jobs from start of path to the end of the CHE route.");
-		Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
-
-		// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
-		// "wrap" to the complete list.
 		List<WorkInstruction> wrappedRouteWiList = new ArrayList<WorkInstruction>();
-		if (wiCountFromStartLocation == 0) {
-			for (WorkInstruction wi : completeRouteWiList)
-				wrappedRouteWiList.add(wi);
+
+		if (leftoverCount == 0) {
+			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
+			wrappedRouteWiList = wiResultList;
 		} else {
-			// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
-			WorkInstruction lastWiFirstPart = null;
-			for (WorkInstruction wi : wiResultList) {
-				wrappedRouteWiList.add(wi);
-				lastWiFirstPart = wi;
-			}
-			WorkInstruction firstWi = wrappedRouteWiList.get(0);
-			boolean firstAdded = false;
-			for (WorkInstruction wi : completeRouteWiList) {
-				if (wi.equals(firstWi))
-					break; // stop adding from the complete list once we reach the point already in it.
-				if (!firstAdded) // We usually need to add a new baychange here
-					wrappedRouteWiList = HousekeepingInjector.addHouseKeepingIfNecessary(this,
-						lastWiFirstPart,
-						wi,
-						wrappedRouteWiList);
-				wrappedRouteWiList.add(wi);
-				firstAdded = true;
-			}
-		}
-		// It could be that our wrap point was just after a housekeeping WI. We should never have bay change or repeat pos last.
-		// We could avoid adding it to our final list above, but we also have to delete the WI.
-		int wrappedSize = wrappedRouteWiList.size();
-		if (wrappedSize > 0) {
-			WorkInstruction lastWi = wrappedRouteWiList.get(wrappedSize - 1);
-			if (lastWi.amIHouseKeepingWi()) { // for now, assume no last housekeeping is valid. That may not be always true.
-				LOGGER.info("deleting one unneeded housekeeping work instruction after wrapping a CHE route that starts in the middle.");
-				wrappedRouteWiList.remove(wrappedSize - 1);
-				try {
-					Che assignedChe = lastWi.getAssignedChe();
-					if (assignedChe != null)
-						assignedChe.removeWorkInstruction(lastWi); // necessary?
-					WorkInstruction.DAO.delete(lastWi);
-				} catch (DaoException e) {
-					LOGGER.error("failed to delete prior work SHORT instruction", e);
+			LOGGER.info("Wrapping the CHE route. Add the starting={} jobs from start of path to the end of the CHE route.",
+				leftoverCount);
+
+			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
+
+			// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
+			// "wrap" to the complete list.
+			if (wiCountFromStartLocation == 0) {
+				wrappedRouteWiList.addAll(completeRouteWiList);
+			} else {
+				// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
+				wrappedRouteWiList.addAll(wiResultList);
+
+				WorkInstruction firstWi = wrappedRouteWiList.get(0);
+				for (WorkInstruction wi : completeRouteWiList) {
+					if (wi.equals(firstWi)) {
+						break; // stop adding from the complete list once we reach the point already in it.
+					}
+					wrappedRouteWiList.add(wi);
 				}
 			}
 		}
 
-		// Now our wrappedRouteWiList is ordered correctly, but group and sort codes are wrong.
-		if (wrappedRouteWiList.size() > 0)
-			wrappedRouteWiList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wrappedRouteWiList);
+		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
+		if (wrappedRouteWiList.size() > 0) {
+			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(this, wrappedRouteWiList);
+		}
 
-		Long wrapComputeDuration = System.currentTimeMillis() - wrapComputeTime;
-		if (wrapComputeDuration > 1000)
-			LOGGER.warn("Route-wrap recompute took " + wrapComputeDuration + " ms.");
+		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
+
+		if (wrapComputeDurationMs > 1000) {
+			LOGGER.warn("Route-wrap recompute took {}", wrapComputeDurationMs);
+		}
 
 		return wrappedRouteWiList;
 	}
@@ -1402,6 +1399,13 @@ public class Facility extends Location {
 								LOGGER.error("", e);
 							}
 
+						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+							//As of DEV-561 we are adding completed WIs to the list in order to be able
+							//give feedback on complete orders (and differentiate a 100% complete order from
+							//unknown container id. The computeWork method will filter these out before sorting
+							//and saving
+							LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
+							wiResultList.addAll(orderDetail.getWorkInstructions());
 						}
 					}
 				}
@@ -1809,29 +1813,25 @@ public class Facility extends Location {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
-	 * The UI needs this answer. UI gets it at login.
+	 * The UI needs this answer. UI gets it at login. Does not live update to the UI.
 	 */
 	@JsonProperty("hasCrossBatchOrders")
 	public final boolean hasCrossBatchOrders() {
-		boolean result = false;
-		for (OrderHeader theOrder : getOrderHeaders()) {
-			if ((theOrder.getOrderType().equals(OrderTypeEnum.CROSS)) && (theOrder.getActive())) {
-				result = true;
-				break;
-			}
-		}
+		// DEV-582 ties this to the config parameter. Used to be inferred from the data
+		String theValue = PropertyService.getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This is first done via "inferred parameter"; look at the data to determine the answer. Might change to explicit parameter later.
 	 * The UI needs this answer. UI gets it at login.
 	 * If true, the UI wants to believe that ALL crossbatch and outbound orders have an order group. The orders view will not show at all any orders without a group.
 	 */
 	@JsonProperty("hasMeaningfulOrderGroups")
 	public final boolean hasMeaningfulOrderGroups() {
+		// We really want to change to a config parameter, and then pass to the UI a three-value choice:
+		// Only two-level Orders view, only three-level, or both 2 and 3-level.		
 
 		List<OrderGroup> groupsList = this.getOrderGroups();
 		boolean result = groupsList.size() > 0;
@@ -1844,7 +1844,7 @@ public class Facility extends Location {
 	/**
 	 * @param inChe
 	 * @param inContainers
-	 * Testing only!  passs in as 23,46,2341a23. This yields conatiner ID 23 in slot1, container Id 46 in slot 2, etc.
+	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
 	 *
 	 */
 	public final void setUpCheContainerFromString(Che inChe, String inContainers) {
@@ -1976,11 +1976,6 @@ public class Facility extends Location {
 		return users;
 	}
 
-	// TO come from configuration
-	public ColorEnum getDiagnosticColor() {
-		return ColorEnum.RED;
-	}
-
 	public static class Work {
 		@Getter
 		private OrderDetail		outboundOrderDetail;
@@ -2032,11 +2027,12 @@ public class Facility extends Location {
 		return uomMaster;
 	}
 
-	public ItemMaster createItemMaster(String inDomainId, UomMaster uomMaster) {
+	public ItemMaster createItemMaster(String inDomainId, String description, UomMaster uomMaster) {
 		ItemMaster itemMaster = null;
 		if (uomMaster.getParent().equals(this)) {
 			itemMaster = new ItemMaster();
 			itemMaster.setDomainId(inDomainId);
+			itemMaster.setDescription(description);
 			itemMaster.setStandardUom(uomMaster);
 			this.addItemMaster(itemMaster);
 		} else {
@@ -2058,10 +2054,20 @@ public class Facility extends Location {
 		} //else
 		return null;
 	}
-	
+
 	@Override
 	public String toString() {
 		return getDomainId();
 	}
 
+	public void initialize(){
+		try {
+			Field[] fields = getClass().getDeclaredFields();
+			for (Field field : fields) {
+				Hibernate.initialize(field.get(this));
+			}
+		} catch (Exception e) {
+			LOGGER.error("Error initializing object: " + e.getMessage());
+		}
+	}
 }

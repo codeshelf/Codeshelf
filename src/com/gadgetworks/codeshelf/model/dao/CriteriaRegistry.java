@@ -10,6 +10,10 @@ import com.google.common.collect.Maps;
 
 public class CriteriaRegistry {
 	
+	public static final String	ALL_BY_PARENT	= "allByParent";
+	public static final String	ALL_ACTIVE_BY_PARENT	= "allActiveByParent";
+
+
 	private Map<String, TypedCriteria> indexedCriteria;
 	
 
@@ -104,10 +108,10 @@ public class CriteriaRegistry {
 	}
 
 	public TypedCriteria findByName(String name, Class<?> selectClass) {
-		if (name.equals("allByParent")) {
+		if (name.equals(ALL_BY_PARENT)) {
 			String query = String.format("from %s where parent.persistentId = :parentId", selectClass.getSimpleName());
 			return new TypedCriteria(query, "parentId", UUID.class);
-		} else if (name.equals("allActiveByParent")){
+		} else if (name.equals(ALL_ACTIVE_BY_PARENT)){
 			String query = String.format("from %s where parent.persistentId = :parentId and active = true", selectClass.getSimpleName());
 			return new TypedCriteria(query, "parentId", UUID.class);
 		} else {

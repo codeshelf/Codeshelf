@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
@@ -62,6 +61,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Configuration.loadConfig("test");
 	}
 
+	@Override
 	public void doBefore() {
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -300,7 +300,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNull(item1123);
 		// This would only work if the location did not resolve, so item went to the facility.
 		// Let's find the D101 location
-		Location locationD101 = (Location) facility.findSubLocationById("D101");
+		Location locationD101 = facility.findSubLocationById("D101");
 		Assert.assertNotNull(locationD101);
 		item1123 = locationD101.getStoredItemFromMasterIdAndUom("1123", "CS");
 		Assert.assertNotNull(item1123);
@@ -308,14 +308,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item1123.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		Location locationB1T1 = (Location) facility.findSubLocationById("A1.B1.T1");
+		Location locationB1T1 = facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull(locationB1T1);
 		// test our flexibility of "CS" vs. "case"
 		Item itemBOL1 = locationB1T1.getStoredItemFromMasterIdAndUom("BOL-CS-8", "case");
 		Assert.assertNotNull(itemBOL1);
 
 		// D102 will not resolve. Let's see that item 1522 went to the facility
-		Location locationD109 = (Location) facility.findSubLocationById("D109");
+		Location locationD109 = facility.findSubLocationById("D109");
 		Assert.assertNull(locationD109);
 		Item item1522 = facility.getStoredItemFromMasterIdAndUom("1522", "EA");
 		Assert.assertNotNull(item1522);
@@ -360,9 +360,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(76, theLedRange2.getLastLedToLight());
 
 		// item1123 for EA in D403 which is the A2.B2.T1. 135 cm from left of 230 cm aisle
-		Location locationA2B2T1 = (Location) facility.findSubLocationById("A2.B2.T1");
+		Location locationA2B2T1 = facility.findSubLocationById("A2.B2.T1");
 		Assert.assertNotNull(locationA2B2T1);
-		Location locationD403 = (Location) facility.findSubLocationById("D403");
+		Location locationD403 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
 		Assert.assertEquals(locationD403, locationA2B2T1);
 		// Item item1123EA = locationA2B2T1.getStoredItemFromMasterIdAndUom("1123", "EA");
@@ -390,12 +390,12 @@ public class InventoryImporterTest extends EdiTestABC {
 
 
 		// item1123 for EA in D402 which is the A2.B1.T1. 135 cm from left of 230 cm aisle
-		Location locationA2B2T1 = (Location) facility.findSubLocationById("A2.B2.T1");
+		Location locationA2B2T1 = facility.findSubLocationById("A2.B2.T1");
 		Assert.assertNotNull(locationA2B2T1);
-		Location locationD403 = (Location) facility.findSubLocationById("D403");
+		Location locationD403 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
 		Assert.assertEquals(locationD403, locationA2B2T1);
-		Location locationD402 = (Location) facility.findSubLocationById("D402");
+		Location locationD402 = facility.findSubLocationById("D402");
 
 		// Let's check the LEDs. A2 is tierNotB1S1 side, so B2 is 1 to 80. A1 is tierB1S1 .
 		// Just check our led range on the tiers
@@ -436,9 +436,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		setupInventoryData(facility, csvString);
 
 
-		Location locationD403 = (Location) facility.findSubLocationById("D403");
+		Location locationD403 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD403);
-		Location locationD402 = (Location) facility.findSubLocationById("D402");
+		Location locationD402 = facility.findSubLocationById("D402");
 		Assert.assertNotNull(locationD403);
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
@@ -533,7 +533,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 
 		List<WorkInstruction> wiListBeginningOfPath = facility.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
@@ -543,14 +543,17 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
-		HousekeepingInjector.restoreHKDefaults();
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> wiListBeginningOfPathAfterSetup = facility.getWorkInstructions(theChe, "");
+
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
+
+		mPropertyService.restoreHKDefaults(facility);
+
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!
 		// Assert.assertEquals((Integer) 1, wiCountAfterScan); // only the one each item in 403 should be there. The item in 402 is earlier on the path.
@@ -619,10 +622,10 @@ public class InventoryImporterTest extends EdiTestABC {
 		setupInventoryData(facility, csvString);
 
 
-		Location locationD403 = (Location) facility.findSubLocationById("D403");
-		Location locationD402 = (Location) facility.findSubLocationById("D402");
-		Location locationD502 = (Location) facility.findSubLocationById("D502");
-		Location locationD503 = (Location) facility.findSubLocationById("D503");
+		Location locationD403 = facility.findSubLocationById("D403");
+		Location locationD402 = facility.findSubLocationById("D402");
+		Location locationD502 = facility.findSubLocationById("D502");
+		Location locationD503 = facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);

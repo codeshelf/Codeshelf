@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.gadgetworks.codeshelf.api.BaseResponse;
 
 // --------------------------------------------------------------------------
 /**
@@ -47,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
 @JsonIgnoreProperties({"className"})
 @ToString(doNotUseGetters = true, of = { "domainId" })
-public abstract class DomainObjectABC implements IDomainObject {
+public abstract class DomainObjectABC extends BaseResponse implements IDomainObject {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);

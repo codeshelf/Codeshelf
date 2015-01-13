@@ -22,7 +22,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 
 	
 	@Inject
-	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager,final AdminServer inAdminServer) {
+	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer) {
 		super(inAdminServer);
 		deviceManager = inDeviceManager;
 	}
@@ -42,7 +42,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	 */
 	protected void doStartup() {
 
-		startAdminServer(this.deviceManager);
+		startApiServer(this.deviceManager);
 		startTsdbReporter();
 		registerSystemMetrics();
 		

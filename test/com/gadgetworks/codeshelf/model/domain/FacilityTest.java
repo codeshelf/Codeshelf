@@ -5,21 +5,14 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.sql.Timestamp;
 import java.util.UUID;
-
-import javax.websocket.EncodeException;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
 
 /**
  * @author jeffw
@@ -42,32 +35,6 @@ public class FacilityTest extends DomainTestABC {
 		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
-		this.getPersistenceService().commitTenantTransaction();
-	}
-
-	@Test
-	public void testHasCrossbatchOrders() {
-		this.getPersistenceService().beginTenantTransaction();
-
-		Facility facility = createDefaultFacility("FTEST3.O1");
-		OrderHeader crossbatchOrder = new OrderHeader();
-		crossbatchOrder.setDomainId("ORDER1");
-		crossbatchOrder.setUpdated(new Timestamp(0));
-		crossbatchOrder.setOrderType(OrderTypeEnum.CROSS);
-		crossbatchOrder.setActive(true);
-
-		facility.addOrderHeader(crossbatchOrder);
-
-		mOrderHeaderDao.store(crossbatchOrder);
-
-		
-		boolean hasCrossBatchOrders = facility.hasCrossBatchOrders();
-		Assert.assertTrue(hasCrossBatchOrders);
-		
-		Facility retrievedFacility=mFacilityDao.findByPersistentId(facility.getPersistentId());
-		hasCrossBatchOrders = retrievedFacility.hasCrossBatchOrders();
-		
-		Assert.assertTrue(hasCrossBatchOrders);
 		this.getPersistenceService().commitTenantTransaction();
 	}
 	
@@ -109,7 +76,7 @@ public class FacilityTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 
 	}
-	
+
 	private void createAndSaveVertex(Facility facility, String name, int drawOrder, final Double inX, final Double inY){
 		Vertex v = new Vertex();
 		v.setDomainId(name);
@@ -117,24 +84,5 @@ public class FacilityTest extends DomainTestABC {
 		v.setPoint(new Point(PositionTypeEnum.GPS, inX, inY, 0d));
 		facility.addVertex(v);
 		Vertex.DAO.store(v);		
-	}
-	
-	@SuppressWarnings("unused")
-	@Test
-	public void testProductivitySummary() throws EncodeException {
-		//This method doesn't assert anything at the moment, as we are just building out productivity reporting
-		this.getPersistenceService().beginTenantTransaction();
-		WorkService ws = new WorkService();
-		Facility facility = createFacilityWithOutboundOrders("FTEST5.O1");
-		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
-		
-		this.getPersistenceService().beginTenantTransaction();
-		ProductivitySummary productivitySummary = ws.getProductivitySummary(facilityId);
-		JsonEncoder encoder = new JsonEncoder();
-		ServiceMethodResponse response = new ServiceMethodResponse();
-		response.setResults(productivitySummary);
-		String encoded = encoder.encode(response);
-		this.getPersistenceService().commitTenantTransaction();
 	}
 }

@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.WorkInstructionCount;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -71,38 +70,37 @@ public class ComputeWorkCommand extends CommandABC {
 				count = new WorkInstructionCount();
 				containerToWorkInstructCountMap.put(containerId, count);
 			}
-
-			if (wi.getStatus() == null || wi.getStatus() == WorkInstructionStatusEnum.INVALID) {
+			if (wi.getStatus() == null) {
 				//This should never happen. Log for now. We need to have a count for this because it is work instruction that will
 				//be represented in the total count
 				LOGGER.error("WorkInstruction status is null or invalid. Wi={}", wi);
 				count.incrementInvalidOrUnknownStatusCount();
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.SHORT) {
-				count.incrementImmediateShortCount();
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE) {
-				count.incrementCompleteCount();
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.NEW) {
-				//Ignore Housekeeping
-				if (!wi.amIHouseKeepingWi()) {
-					count.incrementGoodCount();
+			} else {
+				switch (wi.getStatus()) {
+					case COMPLETE:
+						count.incrementCompleteCount();
+						break;
+					case INPROGRESS:
+						count.incrementGoodCount();
+						break;
+					case INVALID:
+						count.incrementInvalidOrUnknownStatusCount();
+						break;
+					case NEW:
+						//Ignore Housekeeping
+						if (!wi.isHousekeeping()) {
+							count.incrementGoodCount();
+						}
+						break;
+					case REVERT:
+						count.incrementInvalidOrUnknownStatusCount();
+						break;
+					case SHORT:
+						count.incrementImmediateShortCount();
+						break;
 				}
-			} else if (wi.getStatus() == WorkInstructionStatusEnum.INPROGRESS) {
-				count.incrementGoodCount();
 			}
 		}
-
-		//Add "Unknown OrderID" counts for containers with no WI
-		containerIds.removeAll(containerToWorkInstructCountMap.keySet());
-		for (String containerIdWithNoWIs : containerIds) {
-			WorkInstructionCount count = containerToWorkInstructCountMap.get(containerIdWithNoWIs);
-			//This should always be null but I did it this way in case it is not in the future so it won't replace counts.
-			if (count == null) {
-				count = new WorkInstructionCount();
-				containerToWorkInstructCountMap.put(containerIdWithNoWIs, count);
-			}
-			count.incrementUnknownOrderIdCount();
-		}
-
 		return containerToWorkInstructCountMap;
 	}
 

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.filter.EventType;
 import com.gadgetworks.codeshelf.filter.Filter;
-import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
@@ -41,29 +40,16 @@ public class RegisterFilterCommand extends CommandABC {
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 
-	private CriteriaRegistry	criteriaRegistry;
-	
 	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.request = request;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
-		this.criteriaRegistry = CriteriaRegistry.getInstance();
 	}
 	
 	@Override
 	@SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		try {
-			/*
-			 
-			 filterName(TypedCriteria) + named arguments => Filter suitable for persistence and messaging 
-			 
-			 filter<T> = createFilter(name, args);
-			 criteria
-			 */
-			
-			
-			
 			String objectClassName = request.getClassName();
 			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
 				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;

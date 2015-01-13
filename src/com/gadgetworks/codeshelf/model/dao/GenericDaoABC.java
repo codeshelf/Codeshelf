@@ -177,11 +177,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public List<T> findByFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass) {
+		// create criteria using look-up table
 		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, inClass);
 		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
 		return findByCriteria(criteria, inArgs);
 	}
-
 
 	protected List<T> findByCriteria(TypedCriteria criteria, Map<String, Object> inArgs) {
 		Session session = getCurrentSession();
@@ -202,7 +202,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			}
 			catch(QueryParameterException e) {
 				throw new QueryParameterException("argument could not be found in query: " + name, criteria.getQuery(), e);
-				 
 			}
 		}		
 		List<T> results = query.list();

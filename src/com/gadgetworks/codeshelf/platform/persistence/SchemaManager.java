@@ -169,11 +169,31 @@ public class SchemaManager {
 	}        		
 
 	public void createSchemaIfNeeded() throws SQLException {
-		Connection conn = DriverManager.getConnection(url,username,password);
+		this.executeSQL("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
+	}
 
+	public void deleteOrdersWis() throws SQLException {
+		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
+		this.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
+		this.executeSQL("DELETE FROM "+schemaName+".container_use");
+		this.executeSQL("DELETE FROM "+schemaName+".work_instruction");
+		this.executeSQL("DELETE FROM "+schemaName+".container");
+		this.executeSQL("DELETE FROM "+schemaName+".order_location");
+		this.executeSQL("DELETE FROM "+schemaName+".order_detail");
+		this.executeSQL("DELETE FROM "+schemaName+".order_header");
+		this.executeSQL("DELETE FROM "+schemaName+".order_group");
+	}
+
+	public void dropSchema() throws SQLException {
+		LOGGER.warn("Deleting entire schema "+schemaName);
+		this.executeSQL("DROP SCHEMA "+schemaName+" CASCADE");
+	}
+
+	private void executeSQL(String sql) throws SQLException {
+		Connection conn = DriverManager.getConnection(url,username,password);
 		Statement stmt = conn.createStatement();
-//		ResultSet result=stmt.executeQuery("SELECT schema_name FROM information_schema.schemata WHERE schema_name = '"+schemaName+"';");
-		stmt.execute("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
+		LOGGER.trace("Executing explicit SQL: "+sql);
+		stmt.execute(sql);
 		stmt.close();
 		conn.close();
 	}

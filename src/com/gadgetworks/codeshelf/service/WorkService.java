@@ -2,16 +2,22 @@ package com.gadgetworks.codeshelf.service;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+
+import javassist.NotFoundException;
 
 import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.SQLQuery;
+import org.hibernate.Session;
+import org.hibernate.type.StandardBasicTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,47 +28,47 @@ import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WiSummarizer;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
+import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.ProductivitySummary;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 public class WorkService implements IApiService {
 
-	public static final long				DEFAULT_RETRY_DELAY			= 10000L;
-	public static final int					DEFAULT_CAPACITY			= Integer.MAX_VALUE;
+	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
+	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
 
-	private static final Logger				LOGGER						= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger			LOGGER						= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
 
 	@Getter
 	@Setter
-	private long									retryDelay;
+	private long						retryDelay;
 
 	@Getter
 	@Setter
-	private int										capacity;
+	private int							capacity;
 
-	private IEdiExportServiceProvider				exportServiceProvider;
+	private IEdiExportServiceProvider	exportServiceProvider;
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-
-
 	
 	@Getter
-	private PersistenceService						persistenceService;
+	private PersistenceService			persistenceService;
 
-	private WorkServiceThread				wsThread					= null;
-	private static boolean					aWorkServiceThreadExists	= false;
+	private WorkServiceThread			wsThread					= null;
+	private static boolean				aWorkServiceThreadExists	= false;
 
 	public WorkService() {
 		init(new IEdiExportServiceProvider() {
@@ -89,7 +95,7 @@ public class WorkService implements IApiService {
 		public WorkServiceThread() {
 			super("WorkService Thread");
 		}
-		
+
 		@Override
 		public void run() {
 			WorkService.aWorkServiceThreadExists = true;
@@ -127,7 +133,7 @@ public class WorkService implements IApiService {
 
 	private void sendWorkInstructions() throws InterruptedException {
 		while (!Thread.currentThread().isInterrupted()) {
-			
+
 			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
@@ -300,26 +306,91 @@ public class WorkService implements IApiService {
 		}
 	}
 	
-	public ProductivitySummary getProductivitySummary(UUID facilityId){
+	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		ProductivitySummary productivitySummary = new ProductivitySummary(facility);
+		if (facility == null) {
+			throw new NotFoundException("Facility " + facilityId + " does not exist");
+		}
+		Session session = PersistenceService.getInstance().getCurrentTenantSession();
+		List<Object[]> picksPerHour = null;
+		if (!skipSQL) {
+			String schema = System.getProperty("db.schemaname", "codeshelf");
+			String queryStr = String.format("" 
+					+ "SELECT dur.order_group AS group,\n" 
+					+ "		trim(to_char(\n"
+					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
+					+ "		'9999999999999999999D9')) AS picksPerHour\n" 
+					+ "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
+					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
+					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
+					+ "		FROM %s.work_instruction i\n"
+					+ "			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n"
+					+ "			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n"
+					+ "			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n"
+					+ "		WHERE  i.item_id != 'Housekeeping'\n" + "	) dur\n" + "WHERE dur.group_and_sort_code != '0001'\n"
+					+ "GROUP BY dur.order_group\n" + "ORDER BY dur.order_group", schema, schema, schema, schema);
+			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
+				.addScalar("group", StandardBasicTypes.STRING)
+				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
+			picksPerHour = getPicksPerHourQuery.list();
+		}
+		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
 		return productivitySummary;
 	}
+
+	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
+		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
+		return summary;
+	}
 	
+	public static List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException{
+		//Get Facility
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		if (facility == null) {
+			throw new NotFoundException("Facility " + facilityId + " does not exist");
+		}
+		//If group name provided, confirm that such group exists
+		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
+		if (!(allGroups || undefined)) {
+			OrderGroup group = OrderGroup.DAO.findByDomainId(facility, groupNameIn);
+			if (group == null){
+				throw new NotFoundException("Group " + groupNameIn + " had not been created");
+			}
+		}
+		//Get all instructions and filter those matching the requirements
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
+		List<WorkInstruction> filtered = new ArrayList<>();
+		for (WorkInstruction instruction : instructions){
+	 		if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {
+	 			continue;
+ 			}
+			OrderDetail detail = instruction.getOrderDetail();
+			if (detail == null) {
+				continue;
+			}
+			OrderHeader header = detail.getParent();
+			String groupName = header.getOrderGroup() == null? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
+			if (allGroups || groupName.equals(groupNameIn)) {
+				filtered.add(instruction);
+			}			
+		}
+		return filtered;
+	}
+
 	/**
 	 * Simple struct to keep associate export settings
 	 * @author pmonteiro
 	 *
 	 */
 	private static class WIMessage {
-		private IEdiService exportService;
-		private String messageBody;
+		private IEdiService	exportService;
+		private String		messageBody;
+
 		public WIMessage(IEdiService exportService, String messageBody) {
 			super();
 			this.exportService = exportService;
 			this.messageBody = messageBody;
 		}
-		
-		
 	}
 }

@@ -7,6 +7,7 @@
 package com.gadgetworks.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
+import java.sql.SQLException;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -24,22 +25,29 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public abstract class ApplicationABC implements ICodeshelfApplication {
-
+	public enum ShutdownCleanupReq {
+		NONE , 
+		DROP_SCHEMA , 
+		DELETE_ORDERS_WIS
+		};
+		
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
 
 	private boolean				mIsRunning	= true;
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
-	private AdminServer mAdminServer;
+	private WebApiServer apiServer;
 
 	@Inject
-	public ApplicationABC(AdminServer inAdminServer) {
-		mAdminServer = inAdminServer;
+	public ApplicationABC(WebApiServer apiServer) {
+		this.apiServer = apiServer;
 	}
 
 	protected abstract void doStartup() throws Exception;
@@ -83,16 +91,43 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		doInitializeApplicationData();
+		
+		LOGGER.info("------------------------------------------------------------");
+		LOGGER.info("startApplication() DONE");
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final void stopApplication() {
+	public final void stopApplication(ShutdownCleanupReq cleanup) {
 
 		LOGGER.info("Stopping application");
+		
+		SchemaManager schemaManager = PersistenceService.getInstance().getSchemaManager();
 
 		doShutdown();
+
+		try {
+			switch (cleanup) {
+				case NONE:
+					break;
+				case DROP_SCHEMA:
+					if (schemaManager != null) {
+						schemaManager.dropSchema();
+					}
+					break;
+				case DELETE_ORDERS_WIS:
+					if (schemaManager != null) {
+						schemaManager.deleteOrdersWis();
+					}
+					break;
+				default:
+					break;
+
+			}
+		} catch (SQLException e) {
+			LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+		}
 
 		mIsRunning = false;
 
@@ -127,7 +162,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 				// Only execute this hook if the application is still running at (external) shutdown.
 				// (This is to help where the shutdown is done externally and not through our own means.)
 				if (mIsRunning) {
-					stopApplication();
+					stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
 				}
 			}
 		};
@@ -156,23 +191,20 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 	
-	protected void startAdminServer(ICsDeviceManager deviceManager) {
+	protected void startApiServer(ICsDeviceManager deviceManager) {
+		Integer port = Integer.getInteger("api.port");
+		if(port != null) {
+			boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
 
-		// start admin server, if enabled
-		String useAdminServer = System.getProperty("metrics.adminserver");
-		
-		if ("true".equalsIgnoreCase(useAdminServer)) {
-			Integer port = Integer.getInteger("metrics.adminserver.port");
-			if(port != null) {
-				LOGGER.info("Starting Admin Server");
-				mAdminServer.startServer(port,deviceManager);
-			} else {
-				LOGGER.error("Could not start admin server, metrics.adminserver.port needs to be specified");
-			}
+			LOGGER.info("Starting Admin Server on port "+port+", schema management "+(enableSchemaManagement?"enabled":"disabled"));
+			apiServer.start(port,deviceManager,this,enableSchemaManagement,System.getProperty("webapp.content.path"));
+		} else {
+			LOGGER.error("Could not start admin server, adminserver.port needs to be specified");
 		}
-		else {
-			LOGGER.info("Admin Server not enabled");
-		}		
+	}
+	
+	protected void stopApiServer() {
+		apiServer.stop();
 	}
 	
 	protected void startTsdbReporter() {

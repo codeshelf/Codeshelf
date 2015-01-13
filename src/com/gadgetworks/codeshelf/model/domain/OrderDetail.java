@@ -143,6 +143,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Setter
 	@JsonProperty
 	private Timestamp						updated;
+	
+	// preferred pick location
+	@Column(nullable = true,name="preferred_location")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String							preferredLocation;
+
 
 	@OneToMany(mappedBy = "orderDetail")
 	@Getter
@@ -442,5 +450,18 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		else
 			return "-"; // Make it more distinguishable from "Y".
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For the UI. preferred location may be null, or no longer valid.
+	 */
+	public String getPreferredLocationUi() {
+		String internalString = getPreferredLocation();
+		if (internalString == null)
+			return "";
+		// TODO  check that alias exists and location is not inactive. If so, show as inactive location.
+		return internalString;
+	}
+
 
 }

@@ -50,7 +50,8 @@ import com.google.inject.Singleton;
 @Table(name = "order_group")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class OrderGroup extends DomainObjectTreeABC<Facility> {
-
+	public static final String UNDEFINED = "undefined";
+	
 	@Inject
 	public static ITypedDao<OrderGroup>	DAO;
 
@@ -188,25 +189,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	public final List<? extends IDomainObject> getChildren() {
 		return getOrderHeaders();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Release the order group to production.
-	 * You can only release an order group in the CREATED state.
-	 * @return
-	 */
-	public final Boolean release() {
-		Boolean result = false;
-
-		// We can only release order groyps that are in the new state.
-		if (getStatus().equals(OrderStatusEnum.CREATED)) {
-			result = true;
-			setStatus(OrderStatusEnum.RELEASE);
-			OrderGroup.DAO.store(this);
-		}
-
-		return result;
 	}
 
 	public static void setDao(OrderGroupDao inOrderGroupDao) {

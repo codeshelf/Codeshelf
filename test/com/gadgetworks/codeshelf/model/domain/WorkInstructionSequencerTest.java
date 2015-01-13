@@ -20,7 +20,6 @@ import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -143,12 +142,12 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		Location locationD101 = (Location) facility.findSubLocationById("D101");
-		Location locationD102 = (Location) facility.findSubLocationById("D102");
-		Location locationD103 = (Location) facility.findSubLocationById("D103");
-		Location locationD201 = (Location) facility.findSubLocationById("D201");
-		Location locationD202 = (Location) facility.findSubLocationById("D202");
-		Location locationD203 = (Location) facility.findSubLocationById("D203");
+		Location locationD101 = facility.findSubLocationById("D101");
+		Location locationD102 = facility.findSubLocationById("D102");
+		Location locationD103 = facility.findSubLocationById("D103");
+		Location locationD201 = facility.findSubLocationById("D201");
+		Location locationD202 = facility.findSubLocationById("D202");
+		Location locationD203 = facility.findSubLocationById("D203");
 
 		Item item1123LocD101 = locationD101.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123LocD101);
@@ -186,13 +185,14 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 		
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		facility.setUpCheContainerFromString(theChe, "12345");
-		HousekeepingInjector.restoreHKDefaults();
 				
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		mPropertyService.restoreHKDefaults(facility);
+
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
 		
@@ -245,12 +245,12 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
-		Location locationD101 = (Location) facility.findSubLocationById("D101");
-		Location locationD102 = (Location) facility.findSubLocationById("D102");
-		Location locationD103 = (Location) facility.findSubLocationById("D103");
-		Location locationD201 = (Location) facility.findSubLocationById("D201");
-		Location locationD202 = (Location) facility.findSubLocationById("D202");
-		Location locationD203 = (Location) facility.findSubLocationById("D203");
+		Location locationD101 = facility.findSubLocationById("D101");
+		Location locationD102 = facility.findSubLocationById("D102");
+		Location locationD103 = facility.findSubLocationById("D103");
+		Location locationD201 = facility.findSubLocationById("D201");
+		Location locationD202 = facility.findSubLocationById("D202");
+		Location locationD203 = facility.findSubLocationById("D203");
 
 		Item item1123LocD101 = locationD101.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123LocD101);
@@ -288,13 +288,14 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 		
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		HousekeepingInjector.turnOffHK();
+		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
 		facility.setUpCheContainerFromString(theChe, "12345");
-		HousekeepingInjector.restoreHKDefaults();
-				
+
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		mPropertyService.restoreHKDefaults(facility);
+
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
 		

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -65,7 +66,7 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
-	public void start(String location, int inComputeTimeOut, int inLocationTimeOut) {
+	public void startAndSkipReview(String location, int inComputeTimeOut, int inLocationTimeOut) {
 		// This is both "Start pick" and scan of starting location.
 		// Note: if no jobs at all, it will fail on waiting.
 		scanCommand("START");
@@ -73,7 +74,7 @@ public class PickSimulator {
 			// perform start without location scan, if location is undefined
 			return;
 		}
-		waitForCheState(CheStateEnum.LOCATION_SELECT, inComputeTimeOut);
+		waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, inComputeTimeOut);
 		scanLocation(location);
 		waitForCheState(CheStateEnum.DO_PICK, inLocationTimeOut);
 	}
@@ -232,24 +233,61 @@ public class PickSimulator {
 	}
 
 	public boolean hasLastSentInstruction(byte position) {
-		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position);
+		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)
+				|| cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL);
 	}
 
 	public Byte getLastSentPositionControllerDisplayValue(byte position) {
-		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
-			.get(position)
-			.getReqQty() : null;
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getReqQty();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getReqQty();
+		} else {
+			return null;
+		}
+
 	}
 
 	public Byte getLastSentPositionControllerDisplayFreq(byte position) {
-		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
-			.get(position)
-			.getFreq() : null;
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getFreq();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getFreq();
+		} else {
+			return null;
+		}
 	}
 
 	public Byte getLastSentPositionControllerDisplayDutyCycle(byte position) {
-		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position) ? cheDeviceLogic.getPosToLastSetIntrMap()
-			.get(position)
-			.getDutyCycle() : null;
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getDutyCycle();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getDutyCycle();
+		} else {
+			return null;
+		}
 	}
+
+	public Byte getLastSentPositionControllerMinQty(byte position) {
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getMinQty();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getMinQty();
+		} else {
+			return null;
+		}
+
+	}
+
+	public Byte getLastSentPositionControllerMaxQty(byte position) {
+		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getMaxQty();
+		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
+			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getMaxQty();
+		} else {
+			return null;
+		}
+
+	}
+
 }

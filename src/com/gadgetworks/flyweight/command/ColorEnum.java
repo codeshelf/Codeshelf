@@ -37,7 +37,7 @@ public enum ColorEnum {
 		mValue = inCmdValue;
 		mName = inName;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 *  @param inMotorControlCommandID

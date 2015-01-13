@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.LedRange;
@@ -318,10 +319,10 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final Boolean amIHouseKeepingWi() {
-		// if called the more obvious isHouseKeepingWi, then jackson wants to serialize it.
-		WorkInstructionTypeEnum theType = this.getType();
-		return (theType == WorkInstructionTypeEnum.HK_REPEATPOS || theType == WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+	//Not for serialization
+	@JsonIgnore
+	public final boolean isHousekeeping() {
+		return this.getType().isHousekeeping();
 	}
 
 	// Denormalized for serialized WIs at the site controller.
@@ -335,7 +336,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	private final String getItemIdIfMasterNull() {
 		// we might look at a type enumeration to set this more appropriately. See CD_0045 for list of housekeeping and other possibilities with no container.
-		if (this.amIHouseKeepingWi())
+		if (this.isHousekeeping())
 			return "Housekeeping"; // may need to localize on the UI.
 		else
 			return "";
