@@ -1122,6 +1122,72 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 	}
 
 	@Test
+	public final void testScanNewLocation() throws IOException {
+		// set up data for pick scenario
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D401,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().beginTenantTransaction();
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+
+		this.getPersistenceService().commitTenantTransaction();
+
+
+		// Start setting up cart etc
+		this.getPersistenceService().beginTenantTransaction();
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.setupOrderIdAsContainer("2", "2");
+		picker.setupOrderIdAsContainer("3", "3");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> wiListFromD301 = picker.getServerVersionAllPicksList();
+		LOGGER.info("SABA {}", wiListFromD301);
+
+		picker.scanLocation("D401");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		List<WorkInstruction> wiListFromD401 = picker.getServerVersionAllPicksList();
+		LOGGER.info("SABA {}", wiListFromD401);
+
+
+		this.persistenceService.commitTenantTransaction();
+	}
+
+	@Test
 	public final void testCartSetupFeedback() throws IOException {
 		// Test cases:
 		// 1. Two good plans for position 1.
