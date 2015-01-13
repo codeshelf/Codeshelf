@@ -80,7 +80,7 @@ public class ServiceControlServlet extends HttpServlet {
                 out.println("<a href=\"javascript:if(confirm('WARNING - This will delete the facility setup! Are you sure?')){document.dropschema.submit();}\">Erase Database, shutdown (restart)</a></br></br></br></br></br>");
             }
             out.println("<a href=\"javascript:if(confirm('Shutdown/Restart server?')){document.stop.submit();}\">Shutdown (restart) service</a></br></br>");
-
+ 
         }
         
         out.println("</body></html>");        

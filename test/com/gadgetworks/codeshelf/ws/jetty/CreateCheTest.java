@@ -21,6 +21,8 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.flyweight.command.NetGuid;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
@@ -253,4 +255,53 @@ public class CreateCheTest extends DAOTestABC {
 		
 		this.getPersistenceService().commitTenantTransaction();
 	}
+	
+	@Test
+	public void cheUpdateFromUISuccess() {
+		this.getPersistenceService().beginTenantTransaction();
+		Che che = createTestChe("0x00000002");
+		che.updateCheFromUI("Test Device", "Updated Description", "orange", "0x00000099");
+		java.util.UUID cheid = che.getPersistentId();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		che = Che.DAO.findByPersistentId(cheid);
+		Assert.assertEquals(che.getDomainId(), "Test Device");
+		Assert.assertEquals(che.getDescription(), "Updated Description");
+		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
+		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public void cheUpdateFromUIFail() {
+		this.getPersistenceService().beginTenantTransaction();
+		Che che = createTestChe("0x00000003");
+		//Update che successfully
+		che.updateCheFromUI("Test Device", "Description", "orange", "0x00000099");
+		//Fail to update name
+		che.updateCheFromUI("", "Description", "orange", "0x00000099");
+		Assert.assertEquals(che.getDomainId(), "Test Device");
+		//Fail to update description
+		che.updateCheFromUI("Test Device", null, "orange", "0x00000099");
+		Assert.assertEquals(che.getDescription(), "Description");
+		//Fail to update color
+		che.updateCheFromUI("Test Device", "Description", "yellow", "0x00000099");
+		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
+		//Fail to update controller id
+		che.updateCheFromUI("Test Device", "Description", "orange", "0x00000099x");
+		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	private Che createTestChe(String netGuid){
+		Organization organization = new Organization();
+		organization.setOrganizationId("CTEST1.O1");
+		Organization.DAO.store(organization);
+		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
+		CodeshelfNetwork network = facility.createNetwork("WITEST");
+		Che che = network.createChe(netGuid, new NetGuid(netGuid));
+		return che;
+	}
+
 }

@@ -201,7 +201,6 @@ public class CodeshelfApplicationTest {
 			config,
 			ediProcessor,
 			pickDocumentGenerator,
-			User.DAO,
 			adminServer,
 			PersistenceService.getInstance());
 

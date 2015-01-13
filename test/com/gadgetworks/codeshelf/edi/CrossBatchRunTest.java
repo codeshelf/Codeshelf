@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
@@ -50,8 +49,6 @@ import com.gadgetworks.flyweight.command.NetGuid;
 public class CrossBatchRunTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
 	
-	PropertyService mPropertyService = new PropertyService();
-
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
 		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
