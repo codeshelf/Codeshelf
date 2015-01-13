@@ -351,6 +351,8 @@ public class Facility extends Location {
 	public final void addWorkInstruction(WorkInstruction wi) {
 		Facility previousFacility = wi.getParent();
 		if (previousFacility == null) {
+			int numWi = workInstructions.size();
+			boolean trans = PersistenceService.getInstance().hasActiveTransaction();
 			workInstructions.add(wi);
 			wi.setParent(this);
 		} else if (!previousFacility.equals(this)) {

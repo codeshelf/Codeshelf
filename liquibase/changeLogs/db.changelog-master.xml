@@ -15,6 +15,6 @@
 	<include file="db.changelog-v10.8.xml" />
 	<include file="db.changelog-v10.9.xml" />
 
-	<include file="db.changelog-vHibernate.xml" />
+	<include file="db.changelog-v11.1.xml" />
 	
 </databaseChangeLog>

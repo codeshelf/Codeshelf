@@ -662,6 +662,10 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		this.getPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
+		
+		for (WorkInstruction wi : wiListAfterScan) {
+			LOGGER.info("WI LIST CONTAINS: " + wi.toString());
+		}
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 5, wiCountAfterScan);
 
