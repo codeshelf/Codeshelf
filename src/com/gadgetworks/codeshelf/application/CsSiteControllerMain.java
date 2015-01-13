@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.MetricRegistry;
 import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.device.RadioController;
+import com.gadgetworks.codeshelf.device.radio.RadioController;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;

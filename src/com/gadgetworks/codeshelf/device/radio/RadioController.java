@@ -4,7 +4,7 @@
  *  $Id: RadioController.java,v 1.17 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.codeshelf.device;
+package com.gadgetworks.codeshelf.device.radio;
 
 import java.util.ArrayList;
 import java.util.HashMap;
