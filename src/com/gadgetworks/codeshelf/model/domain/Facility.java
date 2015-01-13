@@ -89,7 +89,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends Location {
 
-	private static final String			IRONMQ_DOMAINID		= "IRONMQ";
+	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -509,8 +509,7 @@ public class Facility extends Location {
 
 	public final void addLocationAlias(LocationAlias inLocationAlias) {
 		Facility previousFacility = inLocationAlias.getParent();
-		if (previousFacility == null) {     
-
+		if (previousFacility == null) {
 
 			locationAliases.put(inLocationAlias.getDomainId(), inLocationAlias);
 			inLocationAlias.setParent(this);
@@ -606,7 +605,7 @@ public class Facility extends Location {
 				break;
 				// should throw later on database constraint disallowing duplicate
 			}
-		}		
+		}
 		return pathId;
 	}
 
@@ -614,7 +613,7 @@ public class Facility extends Location {
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
 		String pathDomainId = nextPathDomainId();
-		if (!inDomainId.isEmpty() && !pathDomainId.equals(inDomainId)){
+		if (!inDomainId.isEmpty() && !pathDomainId.equals(inDomainId)) {
 			LOGGER.warn("revise createPath() caller or API");
 		}
 		path.setDomainId(pathDomainId);
@@ -1055,7 +1054,6 @@ public class Facility extends Location {
 		//If all we care about are the counts. Why do we even sort them now?
 		List<WorkInstruction> sortedWIResults = getSequencer().sort(this, allWIs);
 
-
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
 	}
@@ -1231,13 +1229,11 @@ public class Facility extends Location {
 				// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
 				wrappedRouteWiList.addAll(wiResultList);
 
-				WorkInstruction firstWi = wrappedRouteWiList.get(0);
-				for (WorkInstruction wi : completeRouteWiList) {
-					if (wi.equals(firstWi)) {
-						break; // stop adding from the complete list once we reach the point already in it.
-					}
-					wrappedRouteWiList.add(wi);
-				}
+				//Remove what we just added from the complete list. This will keep the proper order
+				completeRouteWiList.removeAll(wiResultList);
+
+				//Add the remaining WIs back into the wrapped list IN ORDER
+				wrappedRouteWiList.addAll(completeRouteWiList);
 			}
 		}
 
@@ -1971,13 +1967,13 @@ public class Facility extends Location {
 
 	public static class Work {
 		@Getter
-		private OrderDetail		outboundOrderDetail;
+		private OrderDetail	outboundOrderDetail;
 
 		@Getter
 		private Location	firstLocationOnPath;
 
 		@Getter
-		private Container		container;
+		private Container	container;
 
 		public Work(Container container, OrderDetail outboundOrderDetail, Location firstLocationOnPath) {
 			super();
@@ -2005,8 +2001,8 @@ public class Facility extends Location {
 
 	@Override
 	public void setParent(Location inParent) {
-		if(inParent!=null) {
-			String msg="tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
+		if (inParent != null) {
+			String msg = "tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
 					+ inParent.getDomainId();
 			LOGGER.error(msg);
 			throw new UnsupportedOperationException(msg);
