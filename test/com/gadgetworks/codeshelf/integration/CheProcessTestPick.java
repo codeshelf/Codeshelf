@@ -1068,12 +1068,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanLocation("D-76");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
-		// the itemMaster field is null.
-		//Assert.assertEquals(10, picker.countRemainingJobs());
-		LOGGER.info("List the work instructions as the site controller sees them");
-		List<WorkInstruction> theWiList = picker.getAllPicksList();
-		logWiList(theWiList);
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		logWiList(serverWiList);
@@ -1085,7 +1079,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		assertWIColor(wi, che1);
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
-		Assert.assertEquals("D-76", wi.getPickInstruction());
+		Assert.assertEquals("D-76", wi.getPickInstruction()); 
+		// D-76 is interesting. Actually last tier on the path in that tier, so our code normalizes back the the bay posAlongPath.
+		// D-76 comes up first in the list compared to the other two in that bay only because it has the top tier location and we sort top down.
 
 		// pick first item. 7 left (3 housekeeps)
 		picker.pick(button, quant);
@@ -1117,10 +1113,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals("D-99", wi.getPickInstruction()); 
 
 		picker.simulateCommitByChangingTransaction(this.persistenceService);
-
-		LOGGER.info("List the work instructions as the server now has them");
-		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
-		logWiList(serverWiList2);
 
 		this.persistenceService.commitTenantTransaction();
 	}
