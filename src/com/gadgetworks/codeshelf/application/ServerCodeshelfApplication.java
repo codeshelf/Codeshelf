@@ -22,13 +22,7 @@ import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -46,8 +40,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	@Getter
 	private PersistenceService		persistenceService;
 
-	private ITypedDao<Facility>		mFacilityDao;
-
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
 	JettyWebSocketServer			webSocketServer;
@@ -59,7 +51,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		final IHttpServer inHttpServer,
 		final IEdiProcessor inEdiProcessor,
 		final IPickDocumentGenerator inPickDocumentGenerator,
-		final ITypedDao<User> inUserDao,
 		final AdminServer inAdminServer,
 		final JettyWebSocketServer inAlternativeWebSocketServer,
 		final PersistenceService persistenceService) {
@@ -122,7 +113,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
 		MetricsService.registerHealthCheck(sessionCheck);
 
-		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck(mFacilityDao);
+		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
 		MetricsService.registerHealthCheck(dbxCheck);
 	}
 

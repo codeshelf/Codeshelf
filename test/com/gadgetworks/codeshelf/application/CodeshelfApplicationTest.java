@@ -213,7 +213,6 @@ public class CodeshelfApplicationTest {
 			httpServer,
 			ediProcessor,
 			pickDocumentGenerator,
-			User.DAO,
 			adminServer,
 			jettyServer,
 			PersistenceService.getInstance());
