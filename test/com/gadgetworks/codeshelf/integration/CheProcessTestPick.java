@@ -1167,16 +1167,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker2.setupContainer("3", "5");
 		picker2.setupContainer("7", "14");
 		picker2.setupContainer("11", "15");
-		// Taking more than 3 seconds for the recompute and wrap. 
 		picker2.scanCommand("START");
 		
-		/*
-		2015-01-13 16:16:11,816  cannot add WorkInstruction 778cf424-ecde-4953-9bfc-153a7a5e29da to CHE-E2E-2 because it has not been removed from CHE-E2E-1
-com.gadgetworks.codeshelf.model.domain.Che [ERROR] "" []
-java.lang.Exception
-	at com.gadgetworks.codeshelf.model.domain.Che.addWorkInstruction(Che.java:159)
-	at com.gadgetworks.codeshelf.model.WiFactory.createWorkInstruction(WiFactory.java:267)
-		 * 
 		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker2.scanLocation("D-76");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
@@ -1186,14 +1178,12 @@ java.lang.Exception
 		logWiList(serverWiList2);
 		Assert.assertEquals(8, serverWiList2.size());
 
-
 		Assert.assertEquals(1, picker2.countActiveJobs());
 		WorkInstruction wi = picker2.nextActiveWi();
 
 		int button = picker2.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		Assert.assertEquals("D-76", wi.getPickInstruction()); 
-		*/
 
 		picker2.simulateCommitByChangingTransaction(this.persistenceService);
 
