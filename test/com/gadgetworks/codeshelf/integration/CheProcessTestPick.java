@@ -5,6 +5,9 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.integration;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,6 +33,7 @@ import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -1130,7 +1134,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
-				+ "3,D401,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
+				+ "3,D501,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -1173,15 +1177,33 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		LOGGER.info("List the work instructions as the server sees them");
-		List<WorkInstruction> wiListFromD301 = picker.getServerVersionAllPicksList();
-		LOGGER.info("SABA {}", wiListFromD301);
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		LOGGER.info("SABA {}", wiList);
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
 
-		picker.scanLocation("D401");
+		//Check each WI
+		assertEquals(wiList.get(0).getItemId(), "1");
+		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(2).getItemId(), "2");
+		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(4).getItemId(), "3");
+
+		//Scan New Location
+		picker.scanLocation("D501");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		List<WorkInstruction> wiListFromD401 = picker.getServerVersionAllPicksList();
-		LOGGER.info("SABA {}", wiListFromD401);
+		wiList = picker.getAllPicksList();
+
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
+
+		//Check each WI
+		assertEquals(wiList.get(0).getItemId(), "3");
+		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(2).getItemId(), "1");
+		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(4).getItemId(), "2");
 
 
 		this.persistenceService.commitTenantTransaction();
