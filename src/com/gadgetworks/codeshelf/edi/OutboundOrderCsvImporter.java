@@ -28,6 +28,8 @@ import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
+import com.gadgetworks.codeshelf.model.domain.Location;
+import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -572,6 +574,28 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		if (result == null) {
 			result = new OrderDetail();
 			result.setOrderDetailId(detailId);
+		}
+		
+		// set preferred location, if valid
+		String preferredLocation = inCsvBean.getLocationId();
+		if (preferredLocation != null) {
+			result.setPreferredLocation(preferredLocation);
+			// check that location is valid
+			LocationAlias locationAlias = inFacility.getLocationAlias(preferredLocation);
+			if (locationAlias==null) {
+				LOGGER.warn("location alias not found: " + inCsvBean);
+			}
+			else {
+				Location location = locationAlias.getMappedLocation();
+				if (location==null) {
+					LOGGER.warn("location not found: " + inCsvBean);
+				}
+				else {
+					if (!location.getActive()) {
+						LOGGER.warn("Preferred location is not active: " + inCsvBean);						
+					}
+				}
+			}			
 		}
 
 		result.setStatus(OrderStatusEnum.RELEASED);
