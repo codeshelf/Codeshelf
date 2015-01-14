@@ -68,7 +68,7 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Organization");
 		request.setPersistentId(organization.getPersistentId().toString());
-		request.setMethodName("createFacility");
+		request.setMethodName("createFacilityUi");
 
 		List<ArgsClass> methodArgs = new LinkedList<ArgsClass>();
 		ArgsClass ac1 = new ArgsClass("domainId", "F1", String.class.getName());

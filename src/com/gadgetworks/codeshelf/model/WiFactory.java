@@ -37,15 +37,15 @@ import com.gadgetworks.flyweight.command.ColorEnum;
  * 
  */
 public class WiFactory {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(WiFactory.class);
-	
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(WiFactory.class);
+
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
-	private static final int maxLedsToLight = 4;
-	
+	private static final int	maxLedsToLight	= 4;
+
 	public static WorkInstruction createForLocation(Location inLocation) {
 		long seq = SequenceNumber.generate();
 		String wiDomainId = Long.toString(seq);
-		
+
 		WorkInstruction resultWi = new WorkInstruction();
 		resultWi.setDomainId(wiDomainId);
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
@@ -68,9 +68,7 @@ public class WiFactory {
 		resultWi.setActualQuantity(0);
 		return resultWi;
 	}
-	
 
-	
 	/**
 	 * The API to create housekeeping work instruction
 	 */
@@ -78,9 +76,9 @@ public class WiFactory {
 		Facility inFacility,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi) {
-		
+
 		// Let's declare that inPrevWi must be there, but inNextWi might be null (if for example there is QA function after the last one done).
-		if (inPrevWi == null){
+		if (inPrevWi == null) {
 			LOGGER.error("unexpected null CHE in createHouseKeepingWi");
 			return null;
 		}
@@ -92,14 +90,13 @@ public class WiFactory {
 		}
 		Timestamp assignTime = inPrevWi.getAssigned();
 		Container ourCntr = inPrevWi.getContainer();
-		
+
 		WorkInstruction resultWi = new WorkInstruction();
 		resultWi.setOrderDetail(null);
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
 		inFacility.addWorkInstruction(resultWi);
 		setWorkInstructionLedPatternForHK(resultWi, inType, inPrevWi);
-		
 
 		long seq = SequenceNumber.generate();
 		String wiDomainId = Long.toString(seq);
@@ -123,9 +120,9 @@ public class WiFactory {
 		// The container provides our map to the position controller. That is the only way the user can acknowledge the housekeeping command.
 		resultWi.setContainer(ourCntr);
 		resultWi.setAssigned(assignTime);
-		ourChe.addWorkInstruction(resultWi); 
+		ourChe.addWorkInstruction(resultWi);
 
-		ourChe.addWorkInstruction(resultWi); 
+		ourChe.addWorkInstruction(resultWi);
 		inFacility.addWorkInstruction(resultWi);
 
 		try {
@@ -136,7 +133,7 @@ public class WiFactory {
 
 		return resultWi;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a work instruction for and order item quantity picked into a container at a location.
@@ -158,17 +155,19 @@ public class WiFactory {
 		WorkInstruction resultWi = null;
 		boolean isInventoryPickInstruction = false;
 
-		Facility facility =  inOrderDetail.getFacility();
+		Facility facility = inOrderDetail.getFacility();
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
 		Integer maxQtyToPick = inOrderDetail.getMaxQuantity();
 
+		// Important for DEV-592 note below. If there is a WI already on the order detail of type PLAN, we will recycle it.
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
 				if (!wi.getFacility().equals(inOrderDetail.getFacility())) {
 					LOGGER.error("Strange: Work instruction " + resultWi.getPersistentId() + " in OrderDetail "
-							+ inOrderDetail.getDomainId() + " does not belong to Facility " + inOrderDetail.getFacility().getDomainId() + " (continuing)");
+							+ inOrderDetail.getDomainId() + " does not belong to Facility "
+							+ inOrderDetail.getFacility().getDomainId() + " (continuing)");
 				}
 				break;
 			} else if (wi.getType().equals(WorkInstructionTypeEnum.ACTUAL)) {
@@ -181,7 +180,7 @@ public class WiFactory {
 
 		// Check if there is any left to pick.
 		if (qtyToPick > 0) {
-
+			boolean isNewWi = false;
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
 				resultWi = new WorkInstruction();
@@ -189,6 +188,7 @@ public class WiFactory {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
+				isNewWi = true;
 			}
 
 			ColorEnum cheColor = inChe.getColor();
@@ -263,9 +263,26 @@ public class WiFactory {
 			resultWi.setAssigned(inTime);
 			resultWi.setType(inType);
 
-			inOrderDetail.addWorkInstruction(resultWi); // set parent
-			inChe.addWorkInstruction(resultWi); // attach to che
-			facility.addWorkInstruction(resultWi);
+			// DEV-592 comments. Usually resultWi is newly made, but if setting up the CHE again, or another CHE, it may be the same old WI.
+			// If the same old one, already the orderDetail and facility relationship is correct. The CHE might be correct, or not if now going to a different one.
+			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
+
+			if (isNewWi) {
+				inOrderDetail.addWorkInstruction(resultWi); 
+				inChe.addWorkInstruction(resultWi);
+				facility.addWorkInstruction(resultWi);
+			} else 
+			// remove and add? Or just add? Not too elegant
+			{
+				Che oldChe = resultWi.getAssignedChe();
+				if (oldChe != null && !oldChe.equals(inChe)) {
+					oldChe.removeWorkInstruction(resultWi);
+					inChe.addWorkInstruction(resultWi); 
+				}
+				else if (oldChe == null || !oldChe.equals(inChe)){
+					inChe.addWorkInstruction(resultWi); 					
+				}
+			}
 			try {
 				WorkInstruction.DAO.store(resultWi);
 			} catch (DaoException e) {
@@ -464,7 +481,8 @@ public class WiFactory {
 	 * @param inLocationList
 	 * @param inColor
 	 */
-	private static List<LedCmdGroup> getLedCmdGroupListForLocationList(final List<OrderLocation> inLocationList, final ColorEnum inColor) {
+	private static List<LedCmdGroup> getLedCmdGroupListForLocationList(final List<OrderLocation> inLocationList,
+		final ColorEnum inColor) {
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 		for (OrderLocation orderLocation : inLocationList) {
 			Location theLocation = orderLocation.getLocation(); // this should never be null by database constraint
@@ -568,14 +586,14 @@ public class WiFactory {
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
-	
+
 	/**
 	 * The main housekeeping description
 	 */
 	private static String getDescriptionForHK(WorkInstructionTypeEnum inType) {
 		String returnStr = "";
 		switch (inType) {
-	
+
 			case HK_REPEATPOS:
 				returnStr = "Repeat Container";
 				break;
@@ -591,7 +609,7 @@ public class WiFactory {
 		}
 		return returnStr;
 	}
-	
+
 	/**
 	 * Normally this is the location. What should show for housekeeping?
 	 */
@@ -600,11 +618,13 @@ public class WiFactory {
 
 		return returnStr;
 	}
-	
+
 	/**
 	 * Set an aisle led pattern on the inTargetWi; or do nothing
 	 */
-	private static void setWorkInstructionLedPatternForHK(WorkInstruction inTargetWi, WorkInstructionTypeEnum inType, WorkInstruction inPrevWi) {
+	private static void setWorkInstructionLedPatternForHK(WorkInstruction inTargetWi,
+		WorkInstructionTypeEnum inType,
+		WorkInstruction inPrevWi) {
 		// The empty pattern is already initialized, so it is ok to do nothing and return if no aisle lighting should be done
 		if (inPrevWi == null || inTargetWi == null) {
 			LOGGER.error("setWorkInstructionLedPattern");
@@ -615,12 +635,12 @@ public class WiFactory {
 		if (ledCmdGroupList.size() > 0)
 			inTargetWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
-	
+
 	/**
 	 * ok to return null if no aisle lights. Only some kinds of housekeeps involve aisle lights.
 	 */
 	private static List<LedCmdGroup> getLedCmdGroupListForHK(WorkInstructionTypeEnum inType, Location inLocation) {
-		return Collections.<LedCmdGroup>emptyList(); // returns empty immutable list
+		return Collections.<LedCmdGroup> emptyList(); // returns empty immutable list
 	}
 
 }

@@ -11,7 +11,7 @@ public class OrganizationTest extends DomainTestABC {
 
 		Organization organization = new Organization("ORG");
 		mOrganizationDao.store(organization);
-		organization.createFacility("FACILITY NAME", "INDESCRIPTIONS", 0.0, 1.0);
+		organization.createFacilityUi("FACILITY NAME", "INDESCRIPTIONS", 0.0, 1.0);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
