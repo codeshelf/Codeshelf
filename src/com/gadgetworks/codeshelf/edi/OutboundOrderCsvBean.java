@@ -55,6 +55,11 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	protected String	shipmentId;
 	protected String	customerId;
 	protected String	workSequence;
+	// new fields for location-based pick DEV-571
+	protected String	upc;
+	protected String	operationType;
+	protected String	locationId;
+	protected String	cmFromLeft;
 
 	public final String getOrderGroupId() {
 		return strip(orderGroupId);
@@ -122,6 +127,19 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 
 	public final String getWorkSequence() {
 		return strip(workSequence);
+	}
+	// new fields for location-based pick DEV-571
+	public final String getUpc() {
+		return strip(upc);
+	}
+	public final String getOperationType() {
+		return strip(operationType);
+	}
+	public final String getLocationId() {
+		return strip(locationId);
+	}
+	public final String getCmFromLeft() {
+		return strip(cmFromLeft);
 	}
 
 }

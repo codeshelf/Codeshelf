@@ -14,7 +14,6 @@ import lombok.Setter;
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.api.ObjectResponse;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
@@ -38,8 +37,8 @@ public class FacilityResource {
 
 		try {
 			persistence.beginTenantTransaction();
-			ProductivitySummaryList result = WorkService.getProductivitySummary(mUUIDParam.getUUID(), false);
-			return result.buildResponse();
+			ProductivitySummaryList sumary = WorkService.getProductivitySummary(mUUIDParam.getUUID(), false);
+			return BaseResponse.buildResponse(sumary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
@@ -61,7 +60,7 @@ public class FacilityResource {
 			persistence.beginTenantTransaction();
 			List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
 			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
-			return summary.buildResponse();
+			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
@@ -82,8 +81,7 @@ public class FacilityResource {
 		try {
 			persistence.beginTenantTransaction();
 			List<WorkInstruction> instructions = WorkService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
-			ObjectResponse response = new ObjectResponse(instructions);
-			return response.buildResponse();
+			return BaseResponse.buildResponse(instructions);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

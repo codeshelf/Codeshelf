@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.api.resources.subresources.FacilityResource;
+import com.gadgetworks.codeshelf.api.responses.FacilityShort;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.sun.jersey.api.core.ResourceContext;
@@ -43,11 +44,8 @@ public class FacilitiesResource {
 		try {
 			persistence.beginTenantTransaction();
 			List<Facility> facilities = Facility.DAO.getAll();
-			//Initialize lazy children collections in Facilities 
-			for (Facility f : facilities){
-				f.initialize();
-			}
-			return BaseResponse.buildResponse(facilities, HttpServletResponse.SC_OK);
+			List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
+			return BaseResponse.buildResponse(facilitiesShort);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

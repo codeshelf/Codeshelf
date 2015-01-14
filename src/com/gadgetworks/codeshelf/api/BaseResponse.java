@@ -25,8 +25,8 @@ public abstract class BaseResponse {
 		return buildResponse(this, status);
 	}
 
-	public static Response buildResponse(int status) {
-		return buildResponse(null, status);
+	public static Response buildResponse(Object obj) {
+		return buildResponse(obj, 200);
 	}
 
 	public static Response buildResponse(Object obj, int status) {

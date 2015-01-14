@@ -16,7 +16,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-public class ProductivitySummaryList extends BaseResponse{
+public class ProductivitySummaryList {
 	@Getter
 	private HashMap<String, GroupSummary> groups = new HashMap<>();
 	
