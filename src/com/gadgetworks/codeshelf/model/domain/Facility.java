@@ -1315,12 +1315,13 @@ public class Facility extends Location {
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
 			deleteExistingShortWiToFacility(inOrderDetail);
+			Location wiLocation = this;
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 				WorkInstructionTypeEnum.ACTUAL,
 				inOrderDetail,
 				inContainer,
 				inChe,
-				this,
+				wiLocation,
 				inTime);
 			// above, passed this (facility) as the location of the short WI..
 
@@ -1413,15 +1414,19 @@ public class Facility extends Location {
 						if (aWi != null) {
 							wiResultList.add(aWi);
 							somethingDone = true;
-
-							// still do this for a short WI?
-							orderDetail.setStatus(OrderStatusEnum.INPROGRESS);
 							try {
+								//order detail has multiple WIs; this logic sets detail status to last generated work instruciton
+								//  The unhandled case is: clearing the order detail properly when WI is complete
+								if (aWi.getStatus().equals(WorkInstructionStatusEnum.SHORT)) {
+									orderDetail.setStatus(OrderStatusEnum.SHORT);
+									
+								} else {
+									orderDetail.setStatus(OrderStatusEnum.INPROGRESS);
+								}
 								OrderDetail.DAO.store(orderDetail);
 							} catch (DaoException e) {
 								LOGGER.error("", e);
 							}
-
 						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 							//As of DEV-561 we are adding completed WIs to the list in order to be able
 							//give feedback on complete orders (and differentiate a 100% complete order from
