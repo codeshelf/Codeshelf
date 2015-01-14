@@ -57,7 +57,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
 
-
 	static {
 		Configuration.loadConfig("test");
 	}
@@ -770,7 +769,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
-		
+
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -791,7 +790,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
 
 		Assert.assertEquals(0, picker.countActiveJobs());
-		
+
 		//Make sure position display controllers show proper feedback
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_DASH);
@@ -808,7 +807,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check that container show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
-		
+
 		picker.scanOrderId("11111");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 
@@ -841,7 +840,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction wi = picker.nextActiveWi();
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		assertWIColor(wi, che1);
-		
+
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 
@@ -860,7 +859,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) button), PosControllerInstr.SOLID_FREQ);
 
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
-		
+
 		// pick first item
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
@@ -931,7 +930,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(button, 2);
 
 		picker.simulateCommitByChangingTransaction(this.persistenceService);
-		
+
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
@@ -939,7 +938,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction userShortWi = serverWiList2.get(1);
 		WorkInstruction shortAheadWi = serverWiList2.get(2);
 		WorkInstruction immediateShortWi = null;
-		
+
 		// Hibernate bug. If you ask che1 for getCheWorkInstructions(), the list will throw during lazy load because the che reference came from a different transaction.
 		// But we had to change the transaction in order to see the completed work instructions.
 		Che che1b = Che.DAO.findByPersistentId(this.che1PersistentId);
@@ -947,7 +946,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis2);
 		int cheWiTotal2 = cheWis2.size();
-		
+
 		for (WorkInstruction cheWi : cheWis2) {
 			if (cheWi.getItemMasterId().equals("1555"))
 				immediateShortWi = cheWi;
@@ -992,8 +991,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		mPropertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), 1);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2),
-			PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 
@@ -1208,7 +1206,7 @@ java.lang.Exception
 		// 4. Only an immediate short for position 4.
 		// 5. There is only a case pick order for position 5. Currently will give a work instruction if the case is in inventory.
 		// set up data for pick scenario
-		
+
 		// set up data for pick scenario
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -1230,8 +1228,9 @@ java.lang.Exception
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);this.getPersistenceService().beginTenantTransaction();
-		
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().beginTenantTransaction();
+
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
@@ -1254,7 +1253,7 @@ java.lang.Exception
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);// Outbound order. No group. Using 5 digit order number and preassigned container number.
-		
+
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -1274,7 +1273,7 @@ java.lang.Exception
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6),
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
-		
+
 		picker.scanCommand("START");
 
 		//Check State Make sure we do not hit REVIEW
@@ -1354,7 +1353,7 @@ java.lang.Exception
 		picker.scanLocation("D301");
 
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		
+
 		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 2 since that is the first task
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
@@ -1438,7 +1437,6 @@ java.lang.Exception
 
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
-
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
@@ -1678,7 +1676,6 @@ java.lang.Exception
 		//Check Screens
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
-
 
 		mPropertyService.restoreHKDefaults(facility);
 
