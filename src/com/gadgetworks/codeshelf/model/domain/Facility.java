@@ -1915,8 +1915,12 @@ public class Facility extends Location {
 		outHeaderCounts.mInactiveCntrUsesOnActiveOrders = inactiveCntrUsesOnActiveOrders;
 		return outHeaderCounts;
 	}
-
+	
 	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId) {
+		return upsertItem(itemId, storedLocationId, cmDistanceFromLeft, quantity, inUomId, null);
+	}
+	
+	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId, String orderDetailId) {
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
 
@@ -1943,6 +1947,14 @@ public class Facility extends Location {
 			new Timestamp(System.currentTimeMillis()),
 			itemMaster,
 			uomMaster);
+		
+		if (orderDetailId != null && !orderDetailId.isEmpty()) {
+			OrderDetail detail = OrderDetail.DAO.findByPersistentId(orderDetailId);
+			if (detail != null) {
+				detail.setPreferredLocation(storedLocationId);
+				OrderDetail.DAO.store(detail);
+			}
+		}
 		return returnItem;
 	}
 
