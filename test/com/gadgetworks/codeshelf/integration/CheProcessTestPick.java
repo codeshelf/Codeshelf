@@ -1132,7 +1132,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
-				+ "3,D501,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -1172,11 +1172,27 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 
-		picker.scanLocation("D301");
+		//Start at item 2
+		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		List<WorkInstruction> wiList = picker.getAllPicksList();
-		LOGGER.info("SABA {}", wiList);
+
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
+		//Check each WI
+		assertEquals(wiList.get(0).getItemId(), "2");
+		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(2).getItemId(), "1");
+		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(4).getItemId(), "3");
+
+		//Scan at item 1
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		wiList = picker.getAllPicksList();
+
 		//Check Total WI size
 		assertTrue(wiList.size() == 5);
 
@@ -1187,22 +1203,24 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		assertEquals(wiList.get(4).getItemId(), "3");
 
-		//Scan New Location
-		picker.scanLocation("D501");
+		//Repeat the test except now we do a pick
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+
+		//Rescan location
+		//Scan at item 2
+		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		wiList = picker.getAllPicksList();
 
-		//Check Total WI size
-		assertTrue(wiList.size() == 5);
+		//Check Total WI size -- should only have 3 as we just manually did the BC HK Instruction
+		assertTrue(wiList.size() == 3);
 
 		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "3");
+		assertEquals(wiList.get(0).getItemId(), "2");
 		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "1");
-		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(4).getItemId(), "2");
-
+		assertEquals(wiList.get(2).getItemId(), "3");
 
 		this.persistenceService.commitTenantTransaction();
 	}

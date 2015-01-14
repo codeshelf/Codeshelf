@@ -6,7 +6,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +29,6 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.Hibernate;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.postgresql.util.PSQLException;
@@ -1236,7 +1234,7 @@ public class Facility extends Location {
 				wrappedRouteWiList = Lists.newArrayList(wiListFromStartLocation);
 
 				//Remove what we just added from the complete list. This will keep the proper order
-				completeRouteWiList.removeAll(wiResultList);
+				completeRouteWiList.removeAll(wiListFromStartLocation);
 
 				//Add the remaining WIs back into the wrapped list IN ORDER
 				wrappedRouteWiList.addAll(completeRouteWiList);
