@@ -6,7 +6,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.lang.reflect.Field;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +29,6 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.Hibernate;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.postgresql.util.PSQLException;
@@ -89,7 +87,7 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends Location {
 
-	private static final String			IRONMQ_DOMAINID		= "IRONMQ";
+	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -509,8 +507,7 @@ public class Facility extends Location {
 
 	public final void addLocationAlias(LocationAlias inLocationAlias) {
 		Facility previousFacility = inLocationAlias.getParent();
-		if (previousFacility == null) {     
-
+		if (previousFacility == null) {
 
 			locationAliases.put(inLocationAlias.getDomainId(), inLocationAlias);
 			inLocationAlias.setParent(this);
@@ -606,7 +603,7 @@ public class Facility extends Location {
 				break;
 				// should throw later on database constraint disallowing duplicate
 			}
-		}		
+		}
 		return pathId;
 	}
 
@@ -614,7 +611,7 @@ public class Facility extends Location {
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
 		String pathDomainId = nextPathDomainId();
-		if (!inDomainId.isEmpty() && !pathDomainId.equals(inDomainId)){
+		if (!inDomainId.isEmpty() && !pathDomainId.equals(inDomainId)) {
 			LOGGER.warn("revise createPath() caller or API");
 		}
 		path.setDomainId(pathDomainId);
@@ -1055,7 +1052,6 @@ public class Facility extends Location {
 		//If all we care about are the counts. Why do we even sort them now?
 		List<WorkInstruction> sortedWIResults = getSequencer().sort(this, allWIs);
 
-
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
 	}
@@ -1188,56 +1184,60 @@ public class Facility extends Location {
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
-
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-
-		Double startingPathPos = getStartingPathDistance(inScannedLocationId);
-		if (startingPathPos == null) // getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
-			return wiResultList;
-
-		// Get all of the PLAN WIs assigned to this CHE beyond the specified position.
-		queryAddCheInstructionsToList(inChe, startingPathPos, wiResultList);
-
-		// Make sure sorted correctly. The query just got the work instructions.
-		Collections.sort(wiResultList, new GroupAndSortCodeComparator());
-
-		// For DEV- 477 from here
-		// If wrapping, we need to get the complete list, then add on the missing bits. AND update the group and sort code for the work instructions
-		// Let's measure how long this takes. If more than 1000 ms, log it.
 		long startTimestamp = System.currentTimeMillis();
 
-		int wiCountFromStartLocation = wiResultList.size();
+		//Get current complete list of WIs
 		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
 		queryAddCheInstructionsToList(inChe, 0.0, completeRouteWiList);
+		
+		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
+		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
+		//We may want to consider not hitting the database for this. It is easiest/safest option for now.
+		for (Iterator<WorkInstruction> wiIter = completeRouteWiList.iterator(); wiIter.hasNext();) {
+			WorkInstruction wi = wiIter.next();
+			if (wi.isHousekeeping()) {
+				LOGGER.info("Removing exisiting HK WI={}", wi);
+				WorkInstruction.DAO.delete(wi);
+				wiIter.remove();
+			}
+		}
 
-		int wiCountCompleteRoute = completeRouteWiList.size();
-		Integer leftoverCount = wiCountCompleteRoute - wiCountFromStartLocation;
-		List<WorkInstruction> wrappedRouteWiList = new ArrayList<WorkInstruction>();
+		Double startingPathPos = getStartingPathDistance(inScannedLocationId);
+		if (startingPathPos == null) {
+			// getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
+			return Lists.newArrayList();
+		}
 
-		if (leftoverCount == 0) {
+		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
+		List<WorkInstruction> wiListFromStartLocation = new ArrayList<WorkInstruction>();
+		queryAddCheInstructionsToList(inChe, startingPathPos, wiListFromStartLocation);
+
+		// Make sure sorted correctly. The query just got the work instructions.
+		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
+
+
+		List<WorkInstruction> wrappedRouteWiList = null;
+		if (wiListFromStartLocation.size() == completeRouteWiList.size()) {
 			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
-			wrappedRouteWiList = wiResultList;
+			wrappedRouteWiList = wiListFromStartLocation;
 		} else {
-			LOGGER.info("Wrapping the CHE route. Add the starting={} jobs from start of path to the end of the CHE route.",
-				leftoverCount);
+			LOGGER.debug("Wrapping the CHE route. StartList={} CompleteList={}", wiListFromStartLocation, completeRouteWiList);
 
 			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
 
 			// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
 			// "wrap" to the complete list.
-			if (wiCountFromStartLocation == 0) {
-				wrappedRouteWiList.addAll(completeRouteWiList);
+			if (wiListFromStartLocation.size() == 0) {
+				wrappedRouteWiList = completeRouteWiList;
 			} else {
 				// normal wrap. Add what we got to the end of the path. Then add on what we would have got if we started from the start.
-				wrappedRouteWiList.addAll(wiResultList);
+				wrappedRouteWiList = Lists.newArrayList(wiListFromStartLocation);
 
-				WorkInstruction firstWi = wrappedRouteWiList.get(0);
-				for (WorkInstruction wi : completeRouteWiList) {
-					if (wi.equals(firstWi)) {
-						break; // stop adding from the complete list once we reach the point already in it.
-					}
-					wrappedRouteWiList.add(wi);
-				}
+				//Remove what we just added from the complete list. This will keep the proper order
+				completeRouteWiList.removeAll(wiListFromStartLocation);
+
+				//Add the remaining WIs back into the wrapped list IN ORDER
+				wrappedRouteWiList.addAll(completeRouteWiList);
 			}
 		}
 
@@ -1246,10 +1246,10 @@ public class Facility extends Location {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(this, wrappedRouteWiList);
 		}
 
+		//Log time if over 2 seconds
 		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
-
-		if (wrapComputeDurationMs > 1000) {
-			LOGGER.warn("Route-wrap recompute took {}", wrapComputeDurationMs);
+		if (wrapComputeDurationMs > 2000) {
+			LOGGER.warn("GetWork() took {}; totalWis={};", wrapComputeDurationMs, wrappedRouteWiList.size());
 		}
 
 		return wrappedRouteWiList;
@@ -1971,13 +1971,13 @@ public class Facility extends Location {
 
 	public static class Work {
 		@Getter
-		private OrderDetail		outboundOrderDetail;
+		private OrderDetail	outboundOrderDetail;
 
 		@Getter
 		private Location	firstLocationOnPath;
 
 		@Getter
-		private Container		container;
+		private Container	container;
 
 		public Work(Container container, OrderDetail outboundOrderDetail, Location firstLocationOnPath) {
 			super();
@@ -2005,8 +2005,8 @@ public class Facility extends Location {
 
 	@Override
 	public void setParent(Location inParent) {
-		if(inParent!=null) {
-			String msg="tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
+		if (inParent != null) {
+			String msg = "tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
 					+ inParent.getDomainId();
 			LOGGER.error(msg);
 			throw new UnsupportedOperationException(msg);
