@@ -160,6 +160,7 @@ public class WiFactory {
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
 		Integer maxQtyToPick = inOrderDetail.getMaxQuantity();
 
+		// Important for DEV-592 note below. If there is a WI already on the order detail of type PLAN, we will recycle it.
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
@@ -178,7 +179,7 @@ public class WiFactory {
 
 		// Check if there is any left to pick.
 		if (qtyToPick > 0) {
-
+			boolean isNewWi = false;
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
 				resultWi = new WorkInstruction();
@@ -186,6 +187,7 @@ public class WiFactory {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
+				isNewWi = true;
 			}
 
 			ColorEnum cheColor = inChe.getColor();
@@ -260,9 +262,26 @@ public class WiFactory {
 			resultWi.setAssigned(inTime);
 			resultWi.setType(inType);
 
-			inOrderDetail.addWorkInstruction(resultWi); // set parent
-			inChe.addWorkInstruction(resultWi); // attach to che
-			facility.addWorkInstruction(resultWi);
+			// DEV-592 comments. Usually resultWi is newly made, but if setting up the CHE again, or another CHE, it may be the same old WI.
+			// If the same old one, already the orderDetail and facility relationship is correct. The CHE might be correct, or not if now going to a different one.
+			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
+
+			if (isNewWi) {
+				inOrderDetail.addWorkInstruction(resultWi); 
+				inChe.addWorkInstruction(resultWi);
+				facility.addWorkInstruction(resultWi);
+			} else 
+			// remove and add? Or just add? Not too elegant
+			{
+				Che oldChe = resultWi.getAssignedChe();
+				if (oldChe != null && !oldChe.equals(inChe)) {
+					oldChe.removeWorkInstruction(resultWi);
+					inChe.addWorkInstruction(resultWi); 
+				}
+				else if (oldChe == null || !oldChe.equals(inChe)){
+					inChe.addWorkInstruction(resultWi); 					
+				}
+			}
 			try {
 				WorkInstruction.DAO.store(resultWi);
 			} catch (DaoException e) {
