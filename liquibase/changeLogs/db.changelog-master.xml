@@ -17,4 +17,5 @@
 
 	<include file="db.changelog-v11.1.xml" />
 	
+	<include file="db.changelog-v11.1.xml" />
 </databaseChangeLog>

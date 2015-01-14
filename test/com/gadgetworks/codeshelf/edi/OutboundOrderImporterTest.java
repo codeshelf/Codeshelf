@@ -116,6 +116,81 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	@Test
+	public final void testOrderImporterWithLocationsFromCsvStream() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
+		String csvString = "orderId,preassignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n1,1,1.1,,,BO-PA-16,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
+				+ "\r\n1,1,1.5,,,CP-CS-16,16 oz Clear Cup,2,CS,,pick,D34,43"
+				+ "\r\n1,1,1.3,,,DCL-CS-12,8-32OZ Round Deli Lid- Comp -Case 0f 499,5,CS,,pick,D34,84"
+				+ "\r\n1,1,1.2,,,SP-PS-6,Spoon 6in.,4,CS,,pick,D21,"
+				+ "\r\n1,1,1.4,,,ST-CS-8W,7.9in. indiv. wrapped .25in. dia.,1,CS,,pick,D28,"
+				+ "\r\n2,2,2.3,,,DC-CS-16,16 oz Clear Round Deli Container,1,EA,,pick,D34,20"
+				+ "\r\n2,2,2.1,,,CP-CS-2S,2 oz Souffle Cup,2,EA,,pick,D35,8"
+				+ "\r\n2,2,2.2,,,KL-CS-6,6x6x3 PLA Clamshell,4,CS,,pick,D15,"
+				+ "\r\n2,2,2.4,,,PLRT-SC-U9,9 Plates - Unbleached Sugar Cane Retail,3,CS,,pick,D22,"
+				+ "\r\n2,2,2.5,,,TO-SC-U85-3,Unbleached 8.5 container w/ locking hin,2,CS,,pick,D9,"
+				+ "\r\n3,3,3.2,,,BO-SC-U6,6 oz Unbleached Bowl,3,CS,,pick,D35,28"
+				+ "\r\n3,3,3.5,,,CP-CS-7,7 oz Clear Cup,3,CS,,pick,D36,32"
+				+ "\r\n3,3,3.3,,,DC-CS-16,16 oz Clear Round Deli Container,4,CS,,pick,D34,20"
+				+ "\r\n3,3,3.4,,,DCL-CS-12,8-32OZ Round Deli Lid- Comp -Case 0f 499,4,CS,,pick,D34,84"
+				+ "\r\n3,3,3.1,,,RK-PS-B,Corn Starch Spork, 190F,4,CS,,pick,D23,"
+				+ "\r\n4,4,4.2,,,CP-CS-10,10 oz Clear Cup,1,CS,,pick,D35,92"
+				+ "\r\n4,4,4.1,,,CP-CS-7,7 oz Clear Cup,2,CS,,pick,D36,32"
+				+ "\r\n4,4,4.4,,,FD-MT-RT,FLOOR DISPLAY-METAL,6,CS,,pick,D3,"
+				+ "\r\n4,4,4.3,,,NP-SC-DN,UNBLEACHED DINNER NAPKINS-CASE OF 2999,6,CS,,pick,D20,"
+				+ "\r\n4,4,4.5,,,SB-CS-24,24 oz Salad Bowls-Ingeo-Compostable,1,CS,,pick,D6,"
+				+ "\r\n5,5,5.1,,,CP-CS-16,16 oz Clear Cup,1,CS,,pick,D34,43"
+				+ "\r\n5,5,5.2,,,FO-PS-R-M,Forks - Retail -Master,3,CS,,pick,D10,"
+				+ "\r\n5,5,5.4,,,BO-SC-U6,6 oz Unbleached Bowl,1,CS,,pick,D35,28"
+				+ "\r\n5,5,5.5,,,ST-CS-8W,7.9in. indiv. wrapped .25in. dia.,4,CS,,pick,D28,"
+				+ "\r\n5,5,5.3,,,TO-SC-U9T,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,"
+				+ "\r\n6,6,6.3,,,CP-CS-2S,2 oz Souffle Cup,3,CS,,pick,D35,8"
+				+ "\r\n6,6,6.1,,,CPL-CS-12,Clear Flat Lid 10/12/16/20/24oz Cup,3,CS,,pick,D36,88"
+				+ "\r\n6,6,6.2,,,FO-PS-R-M,Forks - Retail -Master,2,CS,,pick,D10,"
+				+ "\r\n6,6,6.5,,,KL-CS-6,6x6x3 PLA Clamshell,1,EA,,pick,D15,"
+				+ "\r\n6,6,6.4,,,SL-PA-LG,100% Post Consumer Recycled Cup Sleeves,1,CS,,pick,D30,"
+				+ "\r\n7,7,7.1,,,CP-CS-10,10 oz Clear Cup,3,CS,,pick,D35,92"
+				+ "\r\n7,7,7.3,,,SL-PA-LG,100% Post Consumer Recycled Cup Sleeves,2,CS,,pick,D30,"
+				+ "\r\n7,7,7.3,,,KL-CS-6,6x6x3 PLA Clamshell,4,EA,,pick,D15,"
+				+ "\r\n7,7,7.4,,,SP-PS-6,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n7,7,7.5,,,TO-SC-U9T,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		
+		OrderHeader order = facility.getOrderHeader("1");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 5, detailCount); // 5 details for order header 1.
+		
+//		+ "\r\n1,1,1.3,,,DCL-CS-12,8-32OZ Round Deli Lid- Comp -Case 0f 499,5,CS,,pick,D34,84"
+
+		OrderDetail detail = order.getOrderDetail("999");
+		Assert.assertNull(detail); // not this. Do not find by order.
+		detail = order.getOrderDetail("1.3");
+		Assert.assertNotNull(detail); // this works, find by itemId within an order.
+		String detailDomainID = detail.getOrderDetailId(); // this calls through to domainID
+		OrderDetail detail2 = order.getOrderDetail(detailDomainID);
+		Assert.assertNotNull(detail2); // this works, find by itemId within an order.
+		Assert.assertEquals(detail2, detail);
+		Assert.assertEquals(detailDomainID, "1.3"); // This is the itemID from file above.
+		
+		String prefLoc = detail.getPreferredLocation();
+		Assert.assertNotNull("Preferred location is undefined",prefLoc);
+		Assert.assertEquals("D34", prefLoc);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	
+	@Test
 	public final void testOrderImporterWithPickStrategyFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);

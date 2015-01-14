@@ -48,7 +48,7 @@ import com.gadgetworks.codeshelf.api.BaseResponse;
 @JsonPropertyOrder({ "domainId", "fullDomainId" })
 @JsonIgnoreProperties({"className"})
 @ToString(doNotUseGetters = true, of = { "domainId" })
-public abstract class DomainObjectABC extends BaseResponse implements IDomainObject {
+public abstract class DomainObjectABC implements IDomainObject {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
