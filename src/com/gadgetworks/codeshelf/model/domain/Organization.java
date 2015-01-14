@@ -159,7 +159,8 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosY
 	 */
 	// @Transactional
-	public final Facility createFacility(final String inDomainId, final String inDescription, Double x, Double y) {
+	public final Facility createFacilityUi(final String inDomainId, final String inDescription, Double x, Double y) {
+		// Do not call overloaded functions from the UI. May not find the function.
 		Point point = new Point(PositionTypeEnum.GPS,x,y,0d);
 		return this.createFacility(inDomainId, inDescription, point);
 	}
