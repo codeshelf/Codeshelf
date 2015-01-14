@@ -5,9 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.integration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -33,7 +30,6 @@ import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -1123,107 +1119,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.persistenceService.commitTenantTransaction();
 	}
 
-	@Test
-	public final void testScanNewLocation() throws IOException {
-		// set up data for pick scenario
-		this.getPersistenceService().beginTenantTransaction();
-
-		Facility facility = setUpSimpleNoSlotFacility();
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
-				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
-				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
-				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getPersistenceService().beginTenantTransaction();
-
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-
-		this.getPersistenceService().commitTenantTransaction();
-
-
-		// Start setting up cart etc
-		this.getPersistenceService().beginTenantTransaction();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
-
-		picker.login("Picker #1");
-		picker.setupOrderIdAsContainer("1", "1");
-		picker.setupOrderIdAsContainer("2", "2");
-		picker.setupOrderIdAsContainer("3", "3");
-		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
-
-		//Start at item 2
-		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		List<WorkInstruction> wiList = picker.getAllPicksList();
-
-		//Check Total WI size
-		assertTrue(wiList.size() == 5);
-		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "2");
-		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "1");
-		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(4).getItemId(), "3");
-
-		//Scan at item 1
-		picker.scanLocation("D301");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		wiList = picker.getAllPicksList();
-
-		//Check Total WI size
-		assertTrue(wiList.size() == 5);
-
-		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "1");
-		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "2");
-		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(4).getItemId(), "3");
-
-		//Repeat the test except now we do a pick
-		picker.pick(1, 1);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-
-		//Rescan location
-		//Scan at item 2
-		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		wiList = picker.getAllPicksList();
-
-		//Check Total WI size -- should only have 3 as we just manually did the BC HK Instruction
-		assertTrue(wiList.size() == 3);
-
-		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "2");
-		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "3");
-
-		this.persistenceService.commitTenantTransaction();
-	}
 
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
