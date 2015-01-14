@@ -1120,6 +1120,84 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.persistenceService.commitTenantTransaction();
 	}
+	
+	@Test
+	public final void twoChesCrossBatch() throws IOException {
+		// Reproduce DEV-592 seen during MAT for v10
+		// This test case setup similarly to testRouteWrap2
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpZigzagSlottedFacility();
+		setUpBatchOrdersForZigzag(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		// perform pick operation
+		this.getPersistenceService().beginTenantTransaction();
+		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		picker.login("Picker #1");
+
+		LOGGER.info("Set up first CHE ");
+		// The case is to set up batch containers 2,3,7,11. Start location D-26 is ok (no wrap). Start location D-76 has a wrap.
+		picker.setupContainer("2", "4");
+		picker.setupContainer("3", "5");
+		picker.setupContainer("7", "14");
+		picker.setupContainer("11", "15");
+		// Taking more than 3 seconds for the recompute and wrap. 
+		picker.scanCommand("START");
+		
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.scanLocation("D-76");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		logWiList(serverWiList);
+		Assert.assertEquals(8, serverWiList.size());
+		
+		LOGGER.info("First CHE walks away. Never doing anything. Set up same thing on second CHE ");
+		// This is the DEV-592 bug. Our hibernate parent-childe patterns says we cannot add WI to one CHE without first removing from the other.
+		
+		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
+		picker2.login("Picker #2");
+
+		picker2.setupContainer("2", "4");
+		picker2.setupContainer("3", "5");
+		picker2.setupContainer("7", "14");
+		picker2.setupContainer("11", "15");
+		// Taking more than 3 seconds for the recompute and wrap. 
+		picker2.scanCommand("START");
+		
+		/*
+		2015-01-13 16:16:11,816  cannot add WorkInstruction 778cf424-ecde-4953-9bfc-153a7a5e29da to CHE-E2E-2 because it has not been removed from CHE-E2E-1
+com.gadgetworks.codeshelf.model.domain.Che [ERROR] "" []
+java.lang.Exception
+	at com.gadgetworks.codeshelf.model.domain.Che.addWorkInstruction(Che.java:159)
+	at com.gadgetworks.codeshelf.model.WiFactory.createWorkInstruction(WiFactory.java:267)
+		 * 
+		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker2.scanLocation("D-76");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("List the work instructions as the server sees them");
+		List<WorkInstruction> serverWiList2 = picker2.getServerVersionAllPicksList();
+		logWiList(serverWiList2);
+		Assert.assertEquals(8, serverWiList2.size());
+
+
+		Assert.assertEquals(1, picker2.countActiveJobs());
+		WorkInstruction wi = picker2.nextActiveWi();
+
+		int button = picker2.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		Assert.assertEquals("D-76", wi.getPickInstruction()); 
+		*/
+
+		picker2.simulateCommitByChangingTransaction(this.persistenceService);
+
+		this.persistenceService.commitTenantTransaction();
+	}
+
 
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
