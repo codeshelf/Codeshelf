@@ -1915,48 +1915,6 @@ public class Facility extends Location {
 		outHeaderCounts.mInactiveCntrUsesOnActiveOrders = inactiveCntrUsesOnActiveOrders;
 		return outHeaderCounts;
 	}
-	
-	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId) {
-		return upsertItem(itemId, storedLocationId, cmDistanceFromLeft, quantity, inUomId, null);
-	}
-	
-	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId, String orderDetailId) {
-		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
-		storedLocationId = Strings.nullToEmpty(storedLocationId);
-
-		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
-		UomMaster uomMaster = importer.upsertUomMaster(inUomId, this);
-
-		ItemMaster itemMaster = this.getItemMaster(itemId);
-		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
-		itemBean.setItemId(itemId);
-		itemBean.setLocationId(storedLocationId);
-		itemBean.setCmFromLeft(cmDistanceFromLeft);
-		itemBean.setQuantity(quantity);
-		itemBean.setUom(inUomId);
-		Location location = this.findSubLocationById(storedLocationId);
-		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
-			DefaultErrors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", storedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-			throw new InputValidationException(errors);
-		}
-
-		Item returnItem = importer.updateSlottedItem(false,
-			itemBean,
-			location,
-			new Timestamp(System.currentTimeMillis()),
-			itemMaster,
-			uomMaster);
-		
-		if (orderDetailId != null && !orderDetailId.isEmpty()) {
-			OrderDetail detail = OrderDetail.DAO.findByPersistentId(orderDetailId);
-			if (detail != null) {
-				detail.setPreferredLocation(storedLocationId);
-				OrderDetail.DAO.store(detail);
-			}
-		}
-		return returnItem;
-	}
 
 	private final Set<SiteController> getSiteControllers() {
 		Set<SiteController> siteControllers = new HashSet<SiteController>();

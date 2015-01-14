@@ -15,6 +15,7 @@ import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.UiUpdateService;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 
 /**
@@ -25,6 +26,7 @@ public class InventoryServiceTest extends EdiTestABC {
 
 
 	private UUID facilityId;
+	private UiUpdateService uiUpdate = new UiUpdateService();
 	
 	@Before
 	public void initTest() throws IOException {
@@ -85,12 +87,12 @@ public class InventoryServiceTest extends EdiTestABC {
 
 
 		
-		Item createdItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom);
+		Item createdItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
 		
 		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
 		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
 		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
-		Item additionalItem = facility.upsertItem(itemMaster.getItemId(), newItemLocationAlias, String.valueOf(testCmFromLeft), "15", testUom);
+		Item additionalItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, String.valueOf(testCmFromLeft), "15", testUom, null);
 
 		Assert.assertNotEquals("Should not be the same item", createdItem.getPersistentId(), additionalItem.getPersistentId());
 		Assert.assertEquals(createdItem.getUomMaster(), additionalItem.getUomMaster());
@@ -118,9 +120,9 @@ public class InventoryServiceTest extends EdiTestABC {
 		ItemMaster itemMaster = facility.getItemMaster(sku);
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
-		Item createdItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom);
+		Item createdItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
 
-		Item updatedItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft), "15", testUom);
+		Item updatedItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft), "15", testUom, null);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), updatedItem.getPersistentId());
 		Assert.assertEquals(testCmFromLeft, updatedItem.getCmFromLeft());
 
@@ -134,13 +136,13 @@ public class InventoryServiceTest extends EdiTestABC {
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
-		Item createdItem = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "1", testUomUserInput);
+		Item createdItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUomUserInput, null);
 
 		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
 		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
 		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
 		
-		Item movedItem = facility.upsertItem(itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUomUserInput);
+		Item movedItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUomUserInput, null);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), movedItem.getPersistentId());
 		Location currentLocation = movedItem.getStoredLocation(); 
 		Assert.assertEquals(newItemLocation.getNominalLocationId(), currentLocation.getNominalLocationId());
@@ -158,7 +160,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
 		try {
-			facility.upsertItem(itemMaster.getItemId(), null, "1", "1", uomMaster.getUomMasterId());
+			uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), null, "1", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -179,7 +181,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		try {
-			facility.upsertItem(itemMaster.getItemId(), "", "1", "1", uomMaster.getUomMasterId());
+			uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), "", "1", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -201,7 +203,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "A", uomMaster.getUomMasterId());
+			uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "A", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -223,7 +225,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "-1", uomMaster.getUomMasterId());
+			uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "-1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -245,7 +247,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "-1", "1", uomMaster.getUomMasterId());
+			Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "-1", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -267,7 +269,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "A", "1", uomMaster.getUomMasterId());
+			Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "A", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -286,7 +288,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
-		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId());
+		Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 
 		this.getPersistenceService().commitTenantTransaction();
@@ -301,7 +303,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
-		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId());
+		Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 
 		this.getPersistenceService().commitTenantTransaction();
@@ -319,7 +321,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "1", "");
+			Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", "", null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
@@ -338,7 +340,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
-		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH");
+		Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH", null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
 		this.getPersistenceService().commitTenantTransaction();
@@ -354,7 +356,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 
 		
-		Item item = facility.upsertItem(itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId());
+		Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
 		this.getPersistenceService().commitTenantTransaction();
@@ -370,7 +372,7 @@ public class InventoryServiceTest extends EdiTestABC {
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 
 		String locationAlias = tier.getAliases().get(0).getAlias();
-		Item item = facility.upsertItem(itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId());
+		Item item = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
 		this.getPersistenceService().commitTenantTransaction();
