@@ -12,6 +12,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -21,11 +22,14 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 public class ComputeWorkCommand extends CommandABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
-	ComputeWorkRequest request;
+	private ComputeWorkRequest request;
+
+	private WorkService	workService;
 	
-	public ComputeWorkCommand(UserSession session, ComputeWorkRequest request) {
+	public ComputeWorkCommand(UserSession session, ComputeWorkRequest request, WorkService workService) {
 		super(session);
 		this.request = request;
+		this.workService = workService;
 	}
 
 	@Override
@@ -38,7 +42,7 @@ public class ComputeWorkCommand extends CommandABC {
 			// Figure out the CHE's work area by its scanned location.
 			Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
-			List<WorkInstruction> workInstructions = facility.computeWorkInstructions(che, request.getContainerIds());
+			List<WorkInstruction> workInstructions = workService.computeWorkInstructions(che, request.getContainerIds());
 
 			//Get the counts
 			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workInstructions,

@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -29,13 +27,11 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -44,7 +40,6 @@ import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
@@ -62,7 +57,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
 	UUID facilityForVirtualSlottingId;
-
+	
 	static {
 		Configuration.loadConfig("test");
 	}
@@ -75,14 +70,14 @@ public class InventoryImporterTest extends EdiTestABC {
 					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());
-
+		
 		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
-
+		
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
-
+		
 		this.getPersistenceService().commitTenantTransaction();
 	}
-
+	
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -98,11 +93,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		// retrieve via aisle
 		Bay bay = Bay.as(aisle.findSubLocationById("B1"));
 		Assert.assertNotNull("Bay is undefined", bay);
-
-		// retrieve via facility
+		
+		// retrieve via facility		
 		bay = Bay.as(facility.findSubLocationById("A1.B1"));
 		Assert.assertNotNull("Bay is undefined", bay);
-
+		
 		Item item = bay.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		ItemMaster itemMaster = item.getParent();
@@ -134,7 +129,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
-
+		
 
 		Item item = facility.findSubLocationById("A1.B1").getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
@@ -172,7 +167,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
-
+		
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B2,111,2012-09-26 11:31:01\r\n";
@@ -215,7 +210,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-
+	
 	@SuppressWarnings({"unused" })
 	@Test
 	public final void testBayAnchors() {
@@ -529,7 +524,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 		// this.getPersistenceService().commitTenantTransaction();
-
+		
 		// Let's find our CHE
 		// this.getPersistenceService().beginTenantTransaction();
 		Assert.assertTrue(this.getPersistenceService().hasActiveTransaction());
@@ -541,25 +536,23 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 
-		List<WorkInstruction> wiListBeginningOfPath = facility.getWorkInstructions(theChe, "");
+		List<WorkInstruction> wiListBeginningOfPath = mWorkService.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
-
+		
 		// Set up a cart for order 12345, which will generate work instructions
-		facility.setUpCheContainerFromString(theChe, "12345");
-
+		mWorkService.setUpCheContainerFromString(theChe, "12345");
+		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
-		List<WorkInstruction> wiListBeginningOfPathAfterSetup = facility.getWorkInstructions(theChe, "");
-		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		List<WorkInstruction> wiListBeginningOfPathAfterSetup = mWorkService.getWorkInstructions(theChe, "");
 
+		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 		assertAutoShort(theChe, wiListBeginningOfPathAfterSetup.get(0).getAssigned()); //get any for assigned time)
 
-
-
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D403");
 
 		mPropertyService.restoreHKDefaults(facility);
 
@@ -674,14 +667,9 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\n";
 
-		byte[] csvArray2 = csvString2.getBytes();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-
+		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
@@ -693,21 +681,20 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
 		// Set up a cart for the three orders, which will generate work instructions
-		facility.setUpCheContainerFromString(theChe, "12000,12010,12345");
+		mWorkService.setUpCheContainerFromString(theChe, "12000,12010,12345");
 		//Che.DAO.store(theChe);
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		theChe = Che.DAO.findByPersistentId(theChe.getPersistentId());
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
-
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, ""); // get all in working order
+		
 		for (WorkInstruction wi : wiListAfterScan) {
 			LOGGER.info("WI LIST CONTAINS: " + wi.toString());
 		}
-		Integer wiCountAfterScan = wiListAfterScan.size();
-		Assert.assertEquals((Integer) 5, wiCountAfterScan);
-
+		int wiCountAfterScan = wiListAfterScan.size();
+		Assert.assertEquals(wiCountAfterScan, 5);
 		// The only interesting thing here is probably the group and sort code. (Lack of group code)
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		String groupSortStr1 = wi1.getGroupAndSortCode();
@@ -735,14 +722,14 @@ public class InventoryImporterTest extends EdiTestABC {
 			LOGGER.error("fix testSameProductPick"); // use a wi with an item, a proper pick
 			return;
 		}
-
+		
 		// Just a check. The wi led stream is presumably serialized correctly. Let's look at it and verify.
 		String reference1 = wi1.getLedCmdStream();
 		LOGGER.info("  wi cmd stream: " + reference1);
 		List<LedCmdGroup> wi1LedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(reference1);
 		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(wi1LedCmdGroups));
 
-
+		
 		// Now we have an item. Mimic how the code works for lightOneItem
 		Location location = theItem.getStoredLocation();
 		List<LedCmdGroup> ledCmdGroupList = WiFactory.getLedCmdGroupListForItemOrLocation(theItem, ColorEnum.RED, location);
@@ -751,10 +738,10 @@ public class InventoryImporterTest extends EdiTestABC {
 			return;
 		}
 		// Test serializer and deserializer and verify that all LED commands have a position.
-		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroupList));
-		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);
+		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroupList));		
+		String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList);		
 		LOGGER.info("item cmd stream: " + theLedCommands);
-
+	
 		List<LedCmdGroup> dsLedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(theLedCommands);
 		Assert.assertTrue(LedCmdGroupSerializer.verifyLedCmdGroupList(dsLedCmdGroups));
 
@@ -771,7 +758,7 @@ public class InventoryImporterTest extends EdiTestABC {
 			} catch (EncodeException e) {
 				LOGGER.error("testSameProductPick Json encode", e);
 			}
-
+			
 			JsonDecoder decoder = new JsonDecoder();
 			MessageABC decodedMessage = null;
 			try {
@@ -780,10 +767,10 @@ public class InventoryImporterTest extends EdiTestABC {
 				LOGGER.error("testSameProductPick Json decode", e);
 			}
 			Assert.assertTrue(decodedMessage instanceof LightLedsMessage);
-			String djsonLedCmdGroupsString = ((LightLedsMessage)decodedMessage).getLedCommands();
+			String djsonLedCmdGroupsString = ((LightLedsMessage)decodedMessage).getLedCommands();			
 			Assert.assertTrue(LightLedsMessage.verifyCommandString(djsonLedCmdGroupsString));
 		}
-
+		
 		this.getPersistenceService().commitTenantTransaction();
 	}
 

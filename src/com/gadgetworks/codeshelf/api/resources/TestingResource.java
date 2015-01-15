@@ -38,10 +38,18 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.WorkService;
+import com.google.inject.Inject;
 
 @Path("/test")
 public class TestingResource {
 	private PersistenceService persistence = PersistenceService.getInstance();
+	private WorkService workService;
+	
+	@Inject
+	public TestingResource(WorkService workService) {
+		this.workService = workService;
+	}
 	
 	@POST
 	@Path("/createorders")
@@ -79,7 +87,7 @@ public class TestingResource {
 			containers.add(order1 + "");
 			containers.add(order2 + "");
 			facility = Facility.DAO.findByPersistentId(facilityUUID.getUUID());
-			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, containers);
+			List<WorkInstruction> instructions = workService.computeWorkInstructions(che, containers);
 			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTenantTransaction();
 			System.out.println("Assigned to CHE");

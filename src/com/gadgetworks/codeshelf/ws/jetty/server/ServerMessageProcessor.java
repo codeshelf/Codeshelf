@@ -110,12 +110,12 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof ComputeWorkRequest) {
-				command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request);
+				command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 				computeWorkCounter.inc();
 				applicationRequestCounter.inc();
 			}			
 			else if (request instanceof GetWorkRequest) {
-				command = new GetWorkCommand(csSession,(GetWorkRequest) request);
+				command = new GetWorkCommand(csSession,(GetWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 				getWorkCounter.inc();
 				applicationRequestCounter.inc();
 			}

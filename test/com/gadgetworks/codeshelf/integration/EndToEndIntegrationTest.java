@@ -6,6 +6,7 @@ import lombok.Getter;
 
 import org.junit.Assert;
 import org.junit.Ignore;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.Singleton;
+import com.google.inject.servlet.GuiceFilter;
 
 @Ignore
 public abstract class EndToEndIntegrationTest extends EdiTestABC {

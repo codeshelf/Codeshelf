@@ -26,7 +26,6 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -293,17 +292,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// Orders
 		readOrdersForA1(facility);
 
-		// Now ready to run the cart
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Che theChe = theNetwork.getChe("CHE1");
-
-		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		facility.setUpCheContainerFromString(theChe, "12000");
-
-		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
-		logWiList(wiList);
+		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
+		
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 10, theSize);
 		WorkInstruction wi1 = wiList.get(0);
@@ -315,12 +308,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Check again with the Accu sequencer
 		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
-		Che theChe2 = theNetwork.getChe("CHE2");
-
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		facility.setUpCheContainerFromString(theChe2, "12000");
-		List<WorkInstruction> wiList2 = facility.getWorkInstructions(theChe2, ""); // This returns them in working order.
-		logWiList(wiList2);
+		List<WorkInstruction> wiList2 = startWorkFromBeginning(facility, "CHE2", "12000");
 		wi1 = wiList2.get(0);
 		wi5 = wiList2.get(4);
 		wi10 = wiList2.get(9);
@@ -377,13 +366,10 @@ public class InventoryPickRunTest extends EdiTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		facility.setUpCheContainerFromString(theChe, "12000");
-
-		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
-		logWiList(wiList);
+		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 10, theSize);
 		WorkInstruction wi1 = wiList.get(0);
@@ -398,8 +384,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Che theChe2 = theNetwork.getChe("CHE2");
 
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		facility.setUpCheContainerFromString(theChe2, "12000");
-		List<WorkInstruction> wiList2 = facility.getWorkInstructions(theChe2, ""); // This returns them in working order.
+		mWorkService.setUpCheContainerFromString(theChe2, "12000");
+		List<WorkInstruction> wiList2 = mWorkService.getWorkInstructions(theChe2, ""); // This returns them in working order.
 		logWiList(wiList2);
 		wi1 = wiList2.get(0);
 		wi5 = wiList2.get(4);
@@ -453,15 +439,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		LOGGER.info("3: Set up CHE for orders 10 and 11. Should get 3 jobs");
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Che theChe = theNetwork.getChe("CHE1");
 
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		facility.setUpCheContainerFromString(theChe, "10,11");
-
-		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 3, theSize);
@@ -479,14 +461,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 		
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
-		theChe = Che.DAO.reload(theChe); // getting LazyInitializationException
 
+		this.getPersistenceService().beginTenantTransaction();
+
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		facility.setUpCheContainerFromString(theChe, "10,11");
-
-		wiList = facility.getWorkInstructions(theChe, "");
+		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
@@ -503,14 +484,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");
 		LOGGER.info("And a logger.warn saying: Item not found at D-71. Substituted item at D-74");
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
-		theChe = Che.DAO.reload(theChe); // getting LazyInitializationException
 
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		facility.setUpCheContainerFromString(theChe, "10,11");
-
-		wiList = facility.getWorkInstructions(theChe, "");
+		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
