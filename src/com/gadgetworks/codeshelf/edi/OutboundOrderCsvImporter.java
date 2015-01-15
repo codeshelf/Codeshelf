@@ -357,7 +357,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				mOrderGroupDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateOptionalOrderGroup storing new orderGroup", e);
 			}
 		}
 
@@ -367,7 +367,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				result.setUpdated(inEdiProcessTime);
 				mOrderGroupDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateOptionalOrderGroup", e);
 			}
 		}
 
@@ -404,7 +404,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				mContainerDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateContainer storing Container", e);
 			}
 
 			// Now create the container use for this. ContainerUse has Container, OrderHead as potential parent.  (Che also, but not set here.)
@@ -435,7 +435,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
 				mOrderHeaderDao.store(inOrder);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateContainer storing ContainerUse", e);
 			}
 
 		}
@@ -483,7 +483,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				// Mandatory field?
 
 			} catch (IllegalArgumentException e1) {
-				LOGGER.error("", e1);
+				LOGGER.error("updateOrderHeader orderDate", e1);
 			}
 		}
 
@@ -495,7 +495,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					result.setDueDate(new Timestamp(date.getTime()));
 				// Note: on an update, cannot clear a previous set time back to null. Could do it, just haven't bothered here.
 			} catch (IllegalArgumentException e1) {
-				LOGGER.error("", e1);
+				LOGGER.error("updateOrderHeader dueDate", e1);
 			}
 		}
 
@@ -514,7 +514,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result.setUpdated(inEdiProcessTime);
 			mOrderHeaderDao.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("updateOrderHeader", e);
 		}
 
 		return result;
@@ -553,7 +553,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				result.setUpdated(inEdiProcessTime);
 				mItemMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateItemMaster", e);
 			}
 		}
 		return result;
@@ -578,7 +578,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				mUomMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateUomMaster", e);
 			}
 		}
 
