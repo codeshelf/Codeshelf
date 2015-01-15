@@ -15,11 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
-import com.gadgetworks.codeshelf.api.resources.ChesResource;
-import com.gadgetworks.codeshelf.api.resources.FacilitiesResource;
-import com.gadgetworks.codeshelf.api.resources.RootResource;
-import com.gadgetworks.codeshelf.api.resources.subresources.CheResource;
-import com.gadgetworks.codeshelf.api.resources.subresources.FacilityResource;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;

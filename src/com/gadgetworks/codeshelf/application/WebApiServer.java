@@ -40,55 +40,55 @@ public class WebApiServer {
 	private Server server;
 
 	@Inject
-	public WebApiServer() {		
+	public WebApiServer() {
 		this.server = new Server();
 	}
-	
+
 	public final void start(int port, ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement, String staticContentPath) {
-		try {	
+		try {
 			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 			connector.setPort(port);
-		    server.addConnector(connector);		
-			
+		    server.addConnector(connector);
+
 		    ContextHandlerCollection contexts = new ContextHandlerCollection();
 		    server.setHandler(contexts);
 
 			contexts.addHandler(createAdminApiHandler(deviceManager,application,enableSchemaManagement));
-			
+
 			if(deviceManager == null) {
 				// server only:
-				
+
 				// rest API
 				contexts.addHandler(this.createRestApiHandler());
-				
+
 		        // websocket API
 				ServletContextHandler wscontext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 				wscontext.setContextPath("/ws");
 				contexts.addHandler(wscontext);
 		        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
 		        wscontainer.addEndpoint(CsServerEndPoint.class);
-		        
+
 		        // embedded static content web server
 				ResourceHandler resourceHandler = new ResourceHandler();
 				resourceHandler.setDirectoriesListed(false);
 				resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html" });
-				resourceHandler.setResourceBase(staticContentPath);								
+				resourceHandler.setResourceBase(staticContentPath);
 				ContextHandler resourceContextHandler=new ContextHandler("/");
 				resourceContextHandler.setHandler(resourceHandler);
 				contexts.addHandler(resourceContextHandler);
 			}
-		    
+
 			server.start();
-		} 
+		}
 		catch (Exception e) {
 			LOGGER.error("Failed to start admin server", e);
 		}
 	}
-	
+
 	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) {
 		ServletContextHandler adminApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		adminApiContext.setContextPath("/adm");
-		
+
 		// add metrics servlet
 		MetricRegistry metricsRegistry = MetricsService.getRegistry();
 		adminApiContext.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
@@ -98,14 +98,13 @@ public class WebApiServer {
 		HealthCheckRegistry hcReg = MetricsService.getHealthCheckRegistry();
 		adminApiContext.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
 		adminApiContext.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
-		
 		// + default app service health check
 		ServiceStatusHealthCheck svcCheck = new ServiceStatusHealthCheck();
 		MetricsService.registerHealthCheck(svcCheck);
 
 		// add ping servlet
 		adminApiContext.addServlet(new ServletHolder(new PingServlet()),"/ping");
-		
+
 		// log level runtime change servlet
 		adminApiContext.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
 
@@ -114,38 +113,38 @@ public class WebApiServer {
 
 		if(deviceManager != null) {
 			// only for site controller
-			
+
 			// radio packet capture interface
 			adminApiContext.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
 		} else {
 			// only for server
-			
+
 			// user manager sql generator (temporary)
 			adminApiContext.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
 		}
-		
+
 		return adminApiContext;
 	}
-	
+
 	private Handler createRestApiHandler() {
 		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
-		restApiContext.addServlet(DefaultServlet.class, "/");
+		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs front an actual servlet so put a basic servlet in place
 
 
 		return restApiContext;
 	}
-	
+
 	public final void stop() {
-		try {		
+		try {
 			server.stop();
-		} 
+		}
 		catch (Exception e) {
 			LOGGER.error("Failed to stop admin server", e);
-		}	
+		}
 	}
 
 }
