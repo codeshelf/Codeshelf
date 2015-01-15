@@ -25,26 +25,25 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerPacketIOService {
 	private static final Logger							LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
-	private static final long							WRITE_DELAY_MS				= 20;
 
 	private final ScheduledExecutorService				scheduleExecutorService		= Executors.newScheduledThreadPool(2,
 																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																							.build());
 	private final BlockingQueue<IPacket>				packetsPendingWrite			= new ArrayBlockingQueue<>(MAX_PACKET_WRITE_QUEUE_SIZE);
-
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerPacketHandlerService	packetHandlerService;
-	private final NetworkId								networkId;
+	private final long						writeDelayMs;
+
+	private NetworkId						networkId;
 	private volatile boolean							isShutdown					= false;
 
-	public RadioControllerPacketIOService(
-		IGatewayInterface gatewayInterface,
+	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
 		RadioControllerPacketHandlerService packetHandlerService,
-		NetworkId networkId) {
+		long writeDelayMs) {
 		super();
 		this.gatewayInterface = gatewayInterface;
 		this.packetHandlerService = packetHandlerService;
-		this.networkId = networkId;
+		this.writeDelayMs = writeDelayMs;
 	}
 
 	public void start() {
@@ -52,7 +51,7 @@ public class RadioControllerPacketIOService {
 		scheduleExecutorService.submit(new PacketReader());
 
 		//We want there to be a delay between every write. PacketWriter waits for packets then sends them immediately after they are ready. It could wait for longer than writeRateMs.
-		scheduleExecutorService.scheduleWithFixedDelay(new PacketWriter(), 0, WRITE_DELAY_MS, TimeUnit.MILLISECONDS);
+		scheduleExecutorService.scheduleWithFixedDelay(new PacketWriter(), 0, writeDelayMs, TimeUnit.MILLISECONDS);
 	}
 
 	public void stop() {
@@ -137,6 +136,8 @@ public class RadioControllerPacketIOService {
 		}
 
 	}
+	
+
 
 	private final class PacketWriter implements Runnable {
 
@@ -161,5 +162,12 @@ public class RadioControllerPacketIOService {
 
 	}
 
+	public void setNetworkId(NetworkId networkId) {
+		this.networkId = networkId;
+	}
+
+	public NetworkId getNetworkId() {
+		return networkId;
+	}
 
 }

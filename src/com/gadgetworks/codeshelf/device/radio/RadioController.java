@@ -107,10 +107,10 @@ public class RadioController implements IRadioController {
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
-	private NetworkId											mNetworkId;
+
 	private List<IRadioControllerEventListener>					mEventListeners;
 	private long												mLastIntfCheckMillis;
-	private long												mLastPacketSentMillis;
+
 	@SuppressWarnings("unused")
 	private boolean												mIntfCheckPending;																// actually, this is used, suppressing bogus warning
 	private byte												mAckId;
@@ -133,6 +133,7 @@ public class RadioController implements IRadioController {
 																								"packets.sent");
 	private final RadioControllerPacketHandlerService			packetHandlerService;
 	private final RadioControllerPacketIOService				packetIOService;
+	private final RadioControllerBroadcastService				broadcastService;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -161,18 +162,18 @@ public class RadioController implements IRadioController {
 
 		mRunning = false;
 		packetHandlerService = new RadioControllerPacketHandlerService(this);
-		packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, mNetworkId);
+		packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
 	}
 
 	@Override
 	public final void setNetworkId(NetworkId inNetworkId) {
 		if (mRunning) {
-			if (!this.mNetworkId.equals(inNetworkId)) {
+			if (!packetIOService.getNetworkId().equals(inNetworkId)) {
 				LOGGER.error("Cannot change network ID, radio is already running");
 			}
 			return;
 		}
-		mNetworkId = inNetworkId;
+		packetIOService.setNetworkId(inNetworkId);
 
 	}
 
@@ -182,7 +183,7 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void startController(final byte inPreferredChannel) {
-		if (this.mNetworkId == null) {
+		if (packetIOService.getNetworkId() == null) {
 			LOGGER.error("Cannot start radio controller, must call setNetworkId() first");
 			return;
 		}
@@ -196,7 +197,7 @@ public class RadioController implements IRadioController {
 		mPreferredChannel = inPreferredChannel;
 
 		LOGGER.info("--------------------------------------------");
-		LOGGER.info("Starting radio controller on network: " + mNetworkId);
+		LOGGER.info("Starting radio controller on network: " + packetIOService.getNetworkId());
 		LOGGER.info("--------------------------------------------");
 		mControllerThread = new Thread(this, CONTROLLER_THREAD_NAME);
 		mControllerThread.start();
@@ -301,7 +302,7 @@ public class RadioController implements IRadioController {
 					// This send ( beacon ) goes to radio. The response is immediate, which will clear mIntfCheckPending.
 					// The radio broadcast goes out. All associated controllers should receive it. They reboot if they do not see one in 3.5 seconds.
 					sendCommand(netCheck, mBroadcastAddress, false);
-					mIntfCheckPending = true;
+
 					long currentTime = System.currentTimeMillis();
 					Long durationSinceLastCheck = currentTime - mLastIntfCheckMillis;
 					if (durationSinceLastCheck > TOO_LONG_DURATION_MILLIS) {
@@ -339,7 +340,7 @@ public class RadioController implements IRadioController {
 		} else {
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
-			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
+			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
 			if (gatewayInterface instanceof FTDIInterface) {
 				// Net mgmt commands only get sent to the FTDI-controlled radio network.
 				sendCommand(netSetupCmd, mBroadcastAddress, false);
@@ -539,7 +540,7 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void sendCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
-		sendCommand(inCommand, mNetworkId, inDstAddr, inAckRequested);
+		sendCommand(inCommand, packetIOService.getNetworkId(), inDstAddr, inAckRequested);
 	}
 
 	// --------------------------------------------------------------------------
@@ -668,7 +669,7 @@ public class RadioController implements IRadioController {
 		 * is to allow the controller to maintain the state info about the network
 		 * that is running.
 		 */
-		new CommandNetMgmtSetup(mNetworkId, mRadioChannel);
+		new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
 		//sendCommand(netSetupCmd, mBroadcastAddress, false);
 	}
 
@@ -690,7 +691,7 @@ public class RadioController implements IRadioController {
 				// to insert its own GUID before transmitting it to the air.
 				shouldRespond = true;
 				responseGUID = PRIVATE_GUID;
-			} else if (networkId.equals(mNetworkId)) {
+			} else if (networkId.equals(packetIOService.getNetworkId())) {
 				// For a network-specific request we respond with the GUID of the requester.
 				shouldRespond = true;
 				responseGUID = inCommand.getGUID();
@@ -743,7 +744,7 @@ public class RadioController implements IRadioController {
 	 *  @param inSrcAddr
 	 */
 	private void processNetworkIntfTestCommand(CommandNetMgmtIntfTest inCommand, NetAddress inSrcAddr) {
-		mIntfCheckPending = false;
+		//Do Nothing
 	}
 
 	// --------------------------------------------------------------------------
@@ -867,7 +868,7 @@ public class RadioController implements IRadioController {
 
 					// Create and send an assign command to the remote that just woke up.
 					CommandAssocResp assignCmd = new CommandAssocResp(uid,
-						mNetworkId,
+						packetIOService.getNetworkId(),
 						foundDevice.getAddress(),
 						foundDevice.getSleepSeconds());
 					this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
@@ -962,8 +963,8 @@ public class RadioController implements IRadioController {
 				while (mShouldRun) {
 					try {
 						if (gatewayInterface.isStarted()) {
-							IPacket packet = gatewayInterface.receivePacket(mNetworkId);
-							packetHandlerService.handle(packet);
+							//IPacket packet = gatewayInterface.receivePacket(mNetworkId);
+							//packetHandlerService.handle(packet);
 						} else {
 							try {
 								Thread.sleep(CTRL_START_DELAY_MILLIS);
