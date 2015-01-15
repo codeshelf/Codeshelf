@@ -16,6 +16,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
@@ -27,6 +28,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +93,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
 	// The parent facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility					parent;
 
 	// The order type.
@@ -119,9 +121,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private PickStrategyEnum			pickStrategy;
 
 	// The parent order group.
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="order_group_persistentid")
-	@Getter
 	@Setter
 	private OrderGroup					orderGroup;
 
@@ -165,9 +166,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Timestamp					dueDate;
 
 	// The container use for this order.
-	@OneToOne(optional = true)
+	@OneToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="container_use_persistentid")
-	@Getter
 	@Setter
 	private ContainerUse				containerUse;
 
@@ -204,6 +204,20 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		pickStrategy = PickStrategyEnum.SERIAL;
 		updated = new Timestamp(System.currentTimeMillis());
 	}
+	
+	public OrderGroup getOrderGroup() {
+		if (this.orderGroup instanceof HibernateProxy) {
+			this.orderGroup = (OrderGroup) PersistenceService.deproxify(this.orderGroup);
+		}
+		return orderGroup;
+	}
+	
+	public ContainerUse getContainerUse() {
+		if (this.containerUse instanceof HibernateProxy) {
+			this.containerUse = (ContainerUse) PersistenceService.deproxify(this.containerUse);
+		}
+		return containerUse;
+	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderHeader> getDao() {
@@ -215,6 +229,9 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
+		}
 		return parent;
 	}
 
@@ -266,7 +283,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final List<OrderDetail> getOrderDetails() {
-		return new ArrayList<OrderDetail>(orderDetails.values());
+		List<OrderDetail> listDetails = new ArrayList<OrderDetail>(orderDetails.size());
+		for(OrderDetail detail : this.orderDetails.values()) {
+			listDetails.add(PersistenceService.<OrderDetail>deproxify(detail));
+		}
+		return listDetails;
 	}
 
 	static boolean containerUseAlreadyConsistentWithHeader(ContainerUse inUse) {
@@ -381,6 +402,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		for (OrderLocation orderLocation : getOrderLocations()) {
 			if (orderLocation.getActive()) {
 				Location loc = orderLocation.getLocation();
+				loc = Location.deproxify(loc);
 				if (inIncludeInactiveLocations || loc.isActive()) // do not need null check due to database constraint
 					newActiveOrderLocations.add(orderLocation);
 			}
@@ -496,15 +518,25 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public final OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
 		OrderLocation result = null;
-
 		for (OrderLocation orderLoc : getActiveOrderLocations()) {
-			if (orderLoc.getLocation().getAssociatedPathSegment().getParent().equals(inPath)) {
+			Location location = orderLoc.getLocation();
+			if (location==null) {
+				continue;
+			}
+			PathSegment segment = location.getAssociatedPathSegment(); 
+			if (segment==null) {
+				continue;
+			}
+			Path path = segment.getParent();
+			if (path==null) {
+				continue;
+			}
+			if (path.equals(inPath)) {
 				if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
 					result = orderLoc;
 				}
 			}
 		}
-
 		return result;
 	}
 

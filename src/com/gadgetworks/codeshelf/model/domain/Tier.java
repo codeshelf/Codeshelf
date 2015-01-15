@@ -264,4 +264,20 @@ public class Tier extends Location {
 		
 		return slot;
 	}
+	
+	@Override
+	public boolean isTier() {
+		return true;
+	}
+	
+	public static Tier as(Location location) {
+		if (location==null) {
+			return null;
+		}
+		location = deproxify(location);
+		if (location instanceof Tier) {
+	    	return (Tier) location;
+	    }
+		throw new RuntimeException("Location is not a tier: "+location);
+	}	
 }

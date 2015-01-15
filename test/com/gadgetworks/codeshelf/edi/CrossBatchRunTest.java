@@ -38,7 +38,6 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -541,15 +540,14 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("Case 1: findByPersistentId() not within a transaction. Will throw, and is caught.");
 		Che che1d = null;
 		// get only works within a transaction, and findByPersistentId does a get. But it catches the exception and returns null
-		boolean unExpectedCatch = false;
+		boolean expectedCatch = false;
 		try {
 			che1d = Che.DAO.findByPersistentId(che1Uuid);
 			Assert.assertNull("findByPersistentId returned an object without a transaction?", che1d);
 		} catch (HibernateException e) {
-			unExpectedCatch = true;
+			expectedCatch = true;
 		}
-		if (unExpectedCatch)
-			Assert.fail("findByPersistentId no longer catches out of transaction throw?");
+		Assert.assertTrue(expectedCatch);
 
 		LOGGER.info("Case 2: findByPersistentId() works within a transaction. And has the expected container use");
 		this.getPersistenceService().beginTenantTransaction();

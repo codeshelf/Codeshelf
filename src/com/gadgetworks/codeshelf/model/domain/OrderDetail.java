@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
 	// The owning order header.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private OrderHeader						parent;
 
 	// The collective order status.
@@ -92,9 +93,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private OrderStatusEnum					status;
 
 	// The item master.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@JoinColumn(name="item_master_persistentid")
-	@Getter
 	@Setter
 	private ItemMaster						itemMaster;
 
@@ -129,7 +129,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	// The UoM.
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name="uom_master_persistentid")
-	@Getter
 	@Setter
 	private UomMaster						uomMaster;
 
@@ -154,7 +153,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 
 	@OneToMany(mappedBy = "orderDetail")
-	@Getter
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
@@ -163,6 +161,24 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
 		this.active = active;
+	}
+	
+	public List<WorkInstruction> getWorkInstructions() {
+		return this.workInstructions;
+	}
+	
+	public ItemMaster getItemMaster() {
+		if (this.itemMaster instanceof HibernateProxy) {
+			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
+		}
+		return itemMaster;
+	}
+	
+	public UomMaster getUomMaster() {
+		if (this.uomMaster instanceof HibernateProxy) {
+			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
+		}
+		return uomMaster;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -183,18 +199,22 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final OrderHeader getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (OrderHeader) PersistenceService.deproxify(this.parent);
+		}
 		return parent;
 	}
 
 	public final Facility getFacility() {
-		return getParent().getFacility();
+		OrderHeader parent = getParent();
+		Facility facility = parent.getFacility();
+		return facility;
 	}
 
 	public final void setParent(OrderHeader inParent) {
 		parent = inParent;
 	}
 
-	
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
 		OrderDetail previousOrderDetail = inWorkInstruction.getOrderDetail();
 		if(previousOrderDetail == null) {

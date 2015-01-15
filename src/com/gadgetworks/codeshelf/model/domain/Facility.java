@@ -21,7 +21,6 @@ import java.util.Set;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
@@ -31,6 +30,7 @@ import lombok.Setter;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.proxy.HibernateProxy;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +110,7 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers			= new HashMap<String, Container>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
@@ -242,7 +242,15 @@ public class Facility extends Location {
 	}
 
 	public final List<Path> getPaths() {
-		return new ArrayList<Path>(paths.values());
+		ArrayList<Path> arrayPaths = new ArrayList<Path>();
+		for(Path p : paths.values()) {
+			if (p instanceof HibernateProxy) {
+				arrayPaths.add(PersistenceService.<Path>deproxify(p));
+			} else {
+				arrayPaths.add(p);
+			}
+		}
+		return arrayPaths;
 	}
 
 	public final void removePath(String inPathId) {
@@ -335,6 +343,8 @@ public class Facility extends Location {
 	public final void addWorkInstruction(WorkInstruction wi) {
 		Facility previousFacility = wi.getParent();
 		if (previousFacility == null) {
+			int numWi = workInstructions.size();
+			boolean trans = PersistenceService.getInstance().hasActiveTransaction();
 			workInstructions.add(wi);
 			wi.setParent(this);
 		} else if (!previousFacility.equals(this)) {
@@ -1021,9 +1031,11 @@ public class Facility extends Location {
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		this.sortAndSaveActionableWIs(wiResultList);
+		//It uses the iterater or remove items from the existing list and add it to the new one
+		//If all we care about are the counts. Why do we even sort them now?
 
 		LOGGER.info("TOTAL WIs {}", wiResultList);
-
+		
 		//Return original full list
 		return wiResultList;
 	}

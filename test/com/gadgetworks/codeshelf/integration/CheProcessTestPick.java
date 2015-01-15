@@ -783,6 +783,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<Container> containers = facility.getContainers();
 		Assert.assertEquals(2, containers.size());
 
+
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		picker.login("Picker #1");
@@ -1223,8 +1224,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getPersistenceService().beginTenantTransaction();
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility=Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
@@ -1250,10 +1253,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
-
-		// Start setting up cart etc
+		
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
+		facility = Facility.DAO.reload(facility);
+		// Start setting up cart etc
 		List<Container> containers = facility.getContainers();
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(5, containers.size());
@@ -1268,6 +1271,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
+		this.getPersistenceService().commitTenantTransaction();
+	
+		// note no transaction active in test thread here - transactions will be opened by server during simulation
+		
 		picker.scanCommand("START");
 
 		//Check State Make sure we do not hit REVIEW
@@ -1376,8 +1383,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
+		this.getPersistenceService().beginTenantTransaction();	
 		mPropertyService.restoreHKDefaults(facility);
-
 		this.getPersistenceService().commitTenantTransaction();
 	}
 

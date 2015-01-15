@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
@@ -85,7 +86,18 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 
-		Item item = facility.findSubLocationById("A1.B1").getStoredItemFromMasterIdAndUom("3001", "each");
+		Aisle aisle = Aisle.as(facility.findSubLocationById("A1"));
+		Assert.assertNotNull("Aisle is undefined", aisle);
+
+		// retrieve via aisle
+		Bay bay = Bay.as(aisle.findSubLocationById("B1"));
+		Assert.assertNotNull("Bay is undefined", bay);
+		
+		// retrieve via facility		
+		bay = Bay.as(facility.findSubLocationById("A1.B1"));
+		Assert.assertNotNull("Bay is undefined", bay);
+		
+		Item item = bay.getStoredItemFromMasterIdAndUom("3001", "each");
 		Assert.assertNotNull(item);
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
@@ -101,8 +113,6 @@ public class InventoryImporterTest extends EdiTestABC {
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
-
-
 
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
 		Assert.assertNull(item);
@@ -512,8 +522,11 @@ public class InventoryImporterTest extends EdiTestABC {
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
-
+		// this.getPersistenceService().commitTenantTransaction();
+		
 		// Let's find our CHE
+		// this.getPersistenceService().beginTenantTransaction();
+		Assert.assertTrue(this.getPersistenceService().hasActiveTransaction());
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -527,11 +540,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Set up a cart for order 12345, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12345");
-
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> wiListBeginningOfPathAfterSetup = facility.getWorkInstructions(theChe, "");
 
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
@@ -652,10 +666,19 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
 		// Set up a cart for the three orders, which will generate work instructions
 		facility.setUpCheContainerFromString(theChe, "12000,12010,12345");
+		//Che.DAO.store(theChe);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		theChe = Che.DAO.findByPersistentId(theChe.getPersistentId());
 		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
+		
+		for (WorkInstruction wi : wiListAfterScan) {
+			LOGGER.info("WI LIST CONTAINS: " + wi.toString());
+		}
 		Integer wiCountAfterScan = wiListAfterScan.size();
-		Assert.assertEquals(wiCountAfterScan, (Integer) 5);
+		Assert.assertEquals((Integer) 5, wiCountAfterScan);
 
 		// The only interesting thing here is probably the group and sort code. (Lack of group code)
 		WorkInstruction wi1 = wiListAfterScan.get(0);

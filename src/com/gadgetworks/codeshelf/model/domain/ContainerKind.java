@@ -7,12 +7,14 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	public static final String	DEFAULT_CONTAINER_KIND	= "DEFAULT";
 
 	// The parent facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility parent;
 
 	// The container class ID.
@@ -108,6 +110,9 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
+		}
 		return parent;
 	}
 
