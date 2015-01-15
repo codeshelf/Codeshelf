@@ -283,7 +283,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final List<OrderDetail> getOrderDetails() {
-		return new ArrayList<OrderDetail>(orderDetails.values());
+		List<OrderDetail> listDetails = new ArrayList<OrderDetail>(orderDetails.size());
+		for(OrderDetail detail : this.orderDetails.values()) {
+			listDetails.add(PersistenceService.<OrderDetail>deproxify(detail));
+		}
+		return listDetails;
 	}
 
 	static boolean containerUseAlreadyConsistentWithHeader(ContainerUse inUse) {

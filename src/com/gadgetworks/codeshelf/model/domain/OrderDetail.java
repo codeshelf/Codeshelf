@@ -153,7 +153,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 
 	@OneToMany(mappedBy = "orderDetail")
-	@Getter
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
@@ -162,6 +161,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
 		this.active = active;
+	}
+	
+	public List<WorkInstruction> getWorkInstructions() {
+		return this.workInstructions;
 	}
 	
 	public ItemMaster getItemMaster() {
@@ -203,7 +206,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final Facility getFacility() {
-		return getParent().getFacility();
+		OrderHeader parent = getParent();
+		Facility facility = parent.getFacility();
+		return facility;
 	}
 
 	public final void setParent(OrderHeader inParent) {
