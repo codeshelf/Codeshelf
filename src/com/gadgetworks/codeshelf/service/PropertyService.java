@@ -118,18 +118,11 @@ public class PropertyService implements IApiService {
 
 	}
 
-
 	/**
 	 * Convenient API for application code.
 	 */
 	public static String getPropertyFromConfig(final Facility inFacility, final String inPropertyName) {
-		PropertyDao theDao = PropertyDao.getInstance();
-		if (theDao == null || inFacility == null) {
-			LOGGER.error("getPropertyFromConfig called before DAO or facility exists");
-			return null;
-		}
-
-		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
+		DomainObjectProperty theProperty = getPropertyObject(inFacility, inPropertyName);
 		if (theProperty == null) {
 			LOGGER.error("Unknown property in getPropertyFromConfig()");
 			return null;
@@ -137,6 +130,32 @@ public class PropertyService implements IApiService {
 		// the toCanonicalForm() call here ensures that small typos in the liquidbase xml get rectified to the coded canonical forms.
 		return theProperty.toCanonicalForm(theProperty.getValue());
 	}
+
+	public static boolean getBooleanPropertyFromConfig(final Facility inFacility, final String inPropertyName) {
+		DomainObjectProperty theProperty = getPropertyObject(inFacility, inPropertyName);
+		if (theProperty == null) {
+			LOGGER.error("Unknown property in getPropertyFromConfig()");
+			return false;
+		}
+		return theProperty.getBooleanValue();
+	}
+	/**
+	 * Helper to avoid cloning.
+	 */
+	public static DomainObjectProperty getPropertyObject(final Facility inFacility, final String inPropertyName) {
+		PropertyDao theDao = PropertyDao.getInstance();
+		if (theDao == null || inFacility == null) {
+			LOGGER.error("getPropertyObject called before DAO or facility exists");
+			return null;
+		}
+		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
+		if (theProperty == null) {
+			LOGGER.error("Unknown property in getPropertyObject()");
+			return null;
+		}
+		return theProperty;
+	}
+
 
 	public DomainObjectProperty getProperty(IDomainObject object, String name) {
 		PropertyDao theDao = PropertyDao.getInstance();
