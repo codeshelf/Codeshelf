@@ -1,5 +1,8 @@
 package com.gadgetworks.codeshelf.application;
 
+import java.util.EnumSet;
+
+import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
 import org.eclipse.jetty.server.Handler;
@@ -8,6 +11,8 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
@@ -25,15 +30,18 @@ import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
-import com.sun.jersey.spi.container.servlet.ServletContainer;
+import com.google.inject.Inject;
+import com.google.inject.servlet.GuiceFilter;
 
 public class WebApiServer {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WebApiServer.class);
 
-	Server server = new Server();
-	
+	private Server server;
+
+	@Inject
 	public WebApiServer() {		
+		this.server = new Server();
 	}
 	
 	public final void start(int port, ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement, String staticContentPath) {
@@ -123,14 +131,11 @@ public class WebApiServer {
 	private Handler createRestApiHandler() {
 		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		restApiContext.setContextPath("/api");
-		
-		// REST API for UI
-		ServletHolder sh = new ServletHolder(ServletContainer.class);
-		sh.setInitParameter("com.sun.jersey.config.property.resourceConfigClass", "com.sun.jersey.api.core.PackagesResourceConfig");
-        sh.setInitParameter("com.sun.jersey.config.property.packages", "com.gadgetworks.codeshelf.api.resources");
-        sh.setInitParameter("com.sun.jersey.api.json.POJOMappingFeature", "true");
-        restApiContext.addServlet(sh, "/*");
-		
+		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
+		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
+		restApiContext.addServlet(DefaultServlet.class, "/");
+
+
 		return restApiContext;
 	}
 	
