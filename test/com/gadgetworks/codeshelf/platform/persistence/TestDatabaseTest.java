@@ -76,4 +76,25 @@ public class TestDatabaseTest extends DomainTestABC {
 		
 		// NOT closing transaction at end of test, framework should automatically stop persistence service anyhow.		
 	}
+	
+	@Test
+	public void testOutOfTransactionUpdate() {
+		beginTenantTransaction();
+		Organization org=new Organization();
+		org.setDomainId("an org");
+		org.setDescription("foo");
+		Organization.DAO.store(org);					
+		commitTenantTransaction();
+		
+		beginTenantTransaction();
+		org.setDescription("bar");
+		Organization.DAO.store(org);					
+		commitTenantTransaction();		
+
+		beginTenantTransaction();
+		Organization org2 = Organization.DAO.findByDomainId(null,"an org");
+		assertNotNull(org2);
+		assertEquals("bar", org2.getDescription());
+		commitTenantTransaction();		
+	}
 }
