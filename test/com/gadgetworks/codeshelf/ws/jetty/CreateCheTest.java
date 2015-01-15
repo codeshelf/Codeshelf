@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
+import com.gadgetworks.codeshelf.service.UiUpdateService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
@@ -260,7 +261,8 @@ public class CreateCheTest extends DAOTestABC {
 	public void cheUpdateFromUISuccess() {
 		this.getPersistenceService().beginTenantTransaction();
 		Che che = createTestChe("0x00000002");
-		che.updateCheFromUI("Test Device", "Updated Description", "orange", "0x00000099");
+		UiUpdateService service = new UiUpdateService();
+		service.updateCheEdits(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -277,19 +279,21 @@ public class CreateCheTest extends DAOTestABC {
 	public void cheUpdateFromUIFail() {
 		this.getPersistenceService().beginTenantTransaction();
 		Che che = createTestChe("0x00000003");
+		UiUpdateService service = new UiUpdateService();
+		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		che.updateCheFromUI("Test Device", "Description", "orange", "0x00000099");
+		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099");
 		//Fail to update name
-		che.updateCheFromUI("", "Description", "orange", "0x00000099");
+		service.updateCheEdits(persistentId, "", "Description", "orange", "0x00000099");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		che.updateCheFromUI("Test Device", null, "orange", "0x00000099");
+		service.updateCheEdits(persistentId, "Test Device", null, "orange", "0x00000099");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		che.updateCheFromUI("Test Device", "Description", "yellow", "0x00000099");
+		service.updateCheEdits(persistentId, "Test Device", "Description", "yellow", "0x00000099");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		che.updateCheFromUI("Test Device", "Description", "orange", "0x00000099x");
+		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099x");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		this.getPersistenceService().commitTenantTransaction();
 	}

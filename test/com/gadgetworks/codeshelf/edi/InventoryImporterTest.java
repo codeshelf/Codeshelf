@@ -596,8 +596,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Test
 	public final void testSameProductPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
-		Facility facility = facilityForVirtualSlotting;
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -607,6 +606,9 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		setupInventoryData(facility, csvString);
 
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
@@ -616,6 +618,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// SKU 1123 needed for 12000
 		// SKU 1123 needed for 12010
@@ -635,6 +640,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);

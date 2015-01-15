@@ -170,32 +170,6 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 
-	public final void updateCheFromUI(String domainId, String description, String colorStr, String controllerId) {
-		try {
-			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
-			setColor(color);
-		} catch (Exception e) {}
-		if (domainId != null && !domainId.isEmpty()) {setDomainId(domainId);}
-		if (description != null){setDescription(description);}
-		changeControllerId(controllerId);
-	}
-	
-	//  Called from the UI, so really should return any persistence error.
-	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
-	private final void changeControllerId(String inNewControllerId) {
-		NetGuid currentGuid = this.getDeviceNetGuid();
-		NetGuid newGuid = null;
-		try {
-			newGuid = new NetGuid(inNewControllerId);
-			if (newGuid == null || currentGuid.equals(newGuid)) {return;}
-			this.setDeviceNetGuid(newGuid);
-			Che.DAO.store(this);
-		} catch (Exception e) {
-			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-			LOGGER.error("Failed to set controller ID", e);
-		}
-	}
-
 	// Utility functions for CHE work instructions, past runs and current
 	// the lomboc getter gives us List<WorkInstruction> aList =	getCheWorkInstructions();
 	// Work instruction has assignedChe. When work instructions are computed for a run, they all get the same assignedTime field set.

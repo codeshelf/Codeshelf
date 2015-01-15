@@ -290,18 +290,18 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Location bay1d = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay1d);
 		String bay1dDomainId = bay1d.getDomainId();
-		// Assert.assertEquals(bay1dDomainId, "B1"); // fails!
+		Assert.assertEquals(bay1dDomainId, "B1"); // works, even though facility reference is stale
 		
 		// Let's get the facility again within this transaction.
 		Facility facility2 = Facility.DAO.findByDomainId(getDefaultOrganization(), facilityDomainId);
 		Location bay1e = facility2.findLocationById("B34x");
 		Assert.assertNotNull(bay1e);
 		String bay1eDomainId = bay1e.getDomainId();
-		// Assert.assertEquals(bay1eDomainId, "B1");  // still fails!
+		Assert.assertEquals(bay1eDomainId, "B1");  // works with new reference
 
 		Location bay2d = facility.findLocationById("D139x");
 		Assert.assertNotNull(bay2d);
-		// Assert.assertEquals(bay1d.getDomainId(), "B2"); // fails!
+		Assert.assertEquals(bay2d.getDomainId(), "B2"); // fails!
 
 		this.getPersistenceService().commitTenantTransaction();		
 
