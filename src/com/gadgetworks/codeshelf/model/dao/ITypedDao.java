@@ -22,6 +22,8 @@ public interface ITypedDao<T> extends IDao {
 	T findByPersistentId(UUID inPersistentId);
 
 	T findByPersistentId(String inPersistentIdAsString);
+	
+	<P extends IDomainObject> T reload(P domainObject);
 
 	<P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId);
 

@@ -150,7 +150,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 				mappedLocation.addAlias(result);
 			} else {
 				Location oldLocation = result.getMappedLocation();
-				if (oldLocation != null && oldLocation.equals(mappedLocation)) {
+				if (oldLocation != null && !oldLocation.equals(mappedLocation)) {
 					oldLocation.removeAlias(result);
 					mappedLocation.addAlias(result);
 				} else if (oldLocation == null) {

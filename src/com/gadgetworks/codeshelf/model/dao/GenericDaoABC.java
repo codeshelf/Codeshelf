@@ -72,6 +72,14 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		UUID inPersistentId = UUID.fromString(inPersistentIdString);
 		return this.findByPersistentId(inPersistentId);
 	}
+
+	public final <P extends IDomainObject> T reload(P domainObject) {
+		if (domainObject==null) {
+			return null;
+		}
+		T reloadedDomainObject = findByPersistentId(domainObject.getPersistentId());
+		return reloadedDomainObject;
+	}
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

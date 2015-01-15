@@ -65,6 +65,10 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public final static String						Default_CROSSBCH	= "false";
 	public final static String						AUTOSHRT			= "AUTOSHRT";
 	public final static String						Default_AUTOSHRT	= "true";
+	public final static String						LOCAPICK			= "LOCAPICK";
+	public final static String						Default_LOCAPICK	= "false";
+	public final static String						EACHMULT			= "EACHMULT";
+	public final static String						Default_EACHMULT	= "false";
 
 	public DomainObjectProperty() {
 	}
@@ -91,6 +95,10 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return Default_CROSSBCH;
 		if (inParameterName.equals(AUTOSHRT))
 			return Default_AUTOSHRT;
+		if (inParameterName.equals(LOCAPICK))
+			return Default_LOCAPICK;
+		if (inParameterName.equals(EACHMULT))
+			return Default_EACHMULT;
 
 		// Do not log an error if not pre-known
 		return null;
@@ -227,6 +235,10 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return "true, false";
 		else if (myName.equals(AUTOSHRT))
 			return "true, false";
+		else if (myName.equals(LOCAPICK))
+			return "true, false";
+		else if (myName.equals(EACHMULT))
+			return "true, false";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -258,6 +270,10 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		else if (myName.equals(CROSSBCH))
 			return validate_boolean(trimmedValue);
 		else if (myName.equals(AUTOSHRT))
+			return validate_boolean(trimmedValue);
+		else if (myName.equals(LOCAPICK))
+			return validate_boolean(trimmedValue);
+		else if (myName.equals(EACHMULT))
 			return validate_boolean(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");

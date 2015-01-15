@@ -37,9 +37,6 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -61,13 +58,10 @@ import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -1926,36 +1920,6 @@ public class Facility extends Location {
 		outHeaderCounts.mInactiveDetailsOnActiveOrders = inactiveDetailsOnActiveOrders;
 		outHeaderCounts.mInactiveCntrUsesOnActiveOrders = inactiveCntrUsesOnActiveOrders;
 		return outHeaderCounts;
-	}
-
-	public Item upsertItem(String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId) {
-		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
-		storedLocationId = Strings.nullToEmpty(storedLocationId);
-
-		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
-		UomMaster uomMaster = importer.upsertUomMaster(inUomId, this);
-
-		ItemMaster itemMaster = this.getItemMaster(itemId);
-		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
-		itemBean.setItemId(itemId);
-		itemBean.setLocationId(storedLocationId);
-		itemBean.setCmFromLeft(cmDistanceFromLeft);
-		itemBean.setQuantity(quantity);
-		itemBean.setUom(inUomId);
-		Location location = this.findSubLocationById(storedLocationId);
-		if (location == null && !Strings.isNullOrEmpty(storedLocationId)) {
-			DefaultErrors errors = new DefaultErrors(Item.class);
-			errors.rejectValue("storedLocation", storedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-			throw new InputValidationException(errors);
-		}
-
-		Item returnItem = importer.updateSlottedItem(false,
-			itemBean,
-			location,
-			new Timestamp(System.currentTimeMillis()),
-			itemMaster,
-			uomMaster);
-		return returnItem;
 	}
 
 	private final Set<SiteController> getSiteControllers() {

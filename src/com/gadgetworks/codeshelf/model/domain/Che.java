@@ -24,12 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -178,32 +176,6 @@ public class Che extends WirelessDeviceABC {
 		} else {
 			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getPersistentId() + " from " + this.getDomainId()
 					+ " because it isn't found in children", new Exception());
-		}
-	}
-
-	public final void updateCheFromUI(String domainId, String description, String colorStr, String controllerId) {
-		try {
-			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
-			setColor(color);
-		} catch (Exception e) {}
-		if (domainId != null && !domainId.isEmpty()) {setDomainId(domainId);}
-		if (description != null){setDescription(description);}
-		changeControllerId(controllerId);
-	}
-	
-	//  Called from the UI, so really should return any persistence error.
-	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
-	private final void changeControllerId(String inNewControllerId) {
-		NetGuid currentGuid = this.getDeviceNetGuid();
-		NetGuid newGuid = null;
-		try {
-			newGuid = new NetGuid(inNewControllerId);
-			if (newGuid == null || currentGuid.equals(newGuid)) {return;}
-			this.setDeviceNetGuid(newGuid);
-			Che.DAO.store(this);
-		} catch (Exception e) {
-			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-			LOGGER.error("Failed to set controller ID", e);
 		}
 	}
 

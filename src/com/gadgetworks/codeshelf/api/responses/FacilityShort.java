@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
-
 import lombok.Getter;
+
+import com.gadgetworks.codeshelf.model.domain.Facility;
 
 public class FacilityShort {
 	@Getter
