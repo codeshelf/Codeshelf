@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
@@ -293,19 +294,38 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		@SuppressWarnings("unused")
 		Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 		UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
-		ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+		String itemId = inCsvBean.getItemId();
+		ItemMaster itemMaster = updateItemMaster(itemId,
 			inCsvBean.getDescription(),
 			inFacility,
 			inEdiProcessTime,
 			uomMaster);
-		@SuppressWarnings("unused")
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 
+		Item updatedOrCreatedItem = null;
 		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
 		if (getLocapickValue()) {
-			String locationValue = orderDetail.getPreferredLocation();
+			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
 			if (locationValue != null && !locationValue.isEmpty()) {
-				
+				// somewhat cloned from UiUpdateService.upsertItem(); Could refactor
+				InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+				InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
+				itemBean.setItemId(itemId);
+				itemBean.setLocationId(locationValue);
+				itemBean.setCmFromLeft(inCsvBean.getCmFromLeft());
+				itemBean.setQuantity("");
+				itemBean.setUom(uomMaster.getDomainId());
+				Location location = inFacility.findSubLocationById(locationValue);
+				// location has to be good because we did all validation before allowing it into OrderDetail.prefferedLocation field.
+				if (location == null)
+					LOGGER.error("Unexpect bad location in orderCsvBeanImport. Did not create item");
+				else 
+					updatedOrCreatedItem = importer.updateSlottedItem(false,
+					itemBean,
+					location,
+					inEdiProcessTime,
+					itemMaster,
+					uomMaster);
 			}
 
 		}
