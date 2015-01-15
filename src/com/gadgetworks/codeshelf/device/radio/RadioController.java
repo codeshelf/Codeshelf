@@ -988,7 +988,6 @@ public class RadioController implements IRadioController {
 			if (device != null) {
 				ContextLogging.setNetGuid(device.getGuid());
 			}
-
 			try {
 				if (packet.getPacketType() == IPacket.ACK_PACKET) {
 					LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
@@ -1047,22 +1046,14 @@ public class RadioController implements IRadioController {
 	 * @param inPacket
 	 */
 	private void sendPacket(IPacket inPacket) {
+		LOGGER.info("SABA Packet SEND: " + inPacket.toString());
 
-		try {
-			if (gatewayInterface.isStarted()) {
-				while ((System.currentTimeMillis() - mLastPacketSentMillis) < PACKET_SPACING_MILLIS) {
-					Thread.sleep(Math.max(0, PACKET_SPACING_MILLIS - (System.currentTimeMillis() - mLastPacketSentMillis)));
-				}
-				inPacket.setSentTimeMillis(System.currentTimeMillis());
-				inPacket.incrementSendCount();
-				mLastPacketSentMillis = System.currentTimeMillis();
-				gatewayInterface.sendPacket(inPacket);
-				this.packetsSentCounter.inc();
-			} else {
-				Thread.sleep(CTRL_START_DELAY_MILLIS);
+		if (inPacket != null) {
+			try {
+				packetIOService.queuePacketForWrite(inPacket);
+			} catch (InterruptedException e) {
+				LOGGER.error("", e);
 			}
-		} catch (InterruptedException e) {
-			LOGGER.error("Failed to send packet", e);
 		}
 	}
 

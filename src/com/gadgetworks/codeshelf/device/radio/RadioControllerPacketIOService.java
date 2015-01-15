@@ -35,6 +35,7 @@ public class RadioControllerPacketIOService {
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerPacketHandlerService	packetHandlerService;
 	private final NetworkId								networkId;
+	private volatile boolean							isShutdown					= false;
 
 	public RadioControllerPacketIOService(
 		IGatewayInterface gatewayInterface,
@@ -48,13 +49,14 @@ public class RadioControllerPacketIOService {
 
 	public void start() {
 		//We do not need any delays here. TODO is it okay to use 0?
-		scheduleExecutorService.scheduleWithFixedDelay(new PacketReader(), 0, 0, TimeUnit.MILLISECONDS);
+		scheduleExecutorService.submit(new PacketReader());
 
 		//We want there to be a delay between every write. PacketWriter waits for packets then sends them immediately after they are ready. It could wait for longer than writeRateMs.
 		scheduleExecutorService.scheduleWithFixedDelay(new PacketWriter(), 0, WRITE_DELAY_MS, TimeUnit.MILLISECONDS);
 	}
 
 	public void stop() {
+		isShutdown = true;
 		scheduleExecutorService.shutdown();
 	}
 
@@ -62,7 +64,7 @@ public class RadioControllerPacketIOService {
 	 * This method will block until there is space in the queue.
 	 */
 	public void queuePacketForWrite(IPacket packet) throws InterruptedException {
-		LOGGER.debug("Queueing packet for gateway. Dst={}; QueueSize={}; Max={}",
+		LOGGER.info("SABA Queueing packet for gateway. Dst={}; QueueSize={}; Max={}",
 			packet,
 			packetsPendingWrite.size(),
 			MAX_PACKET_WRITE_QUEUE_SIZE);
@@ -75,26 +77,30 @@ public class RadioControllerPacketIOService {
 
 		@Override
 		public void run() {
-			try {
-				if (gatewayInterface.isStarted()) {
+			while (!isShutdown) {
+				try {
+					if (gatewayInterface.isStarted()) {
 
-					//Blocks and waits for packet
-					//TODO Move gatewayInterface away from polling. This method will sleep for 1ms if we don't have enough packets to read.
-					IPacket packet = gatewayInterface.receivePacket(networkId);
+						//Blocks and waits for packet
+						//TODO Move gatewayInterface away from polling. This method will sleep for 1ms if we don't have enough packets to read.
+						IPacket packet = gatewayInterface.receivePacket(networkId);
 
-					//Hand packet off to handler service
-					boolean success = packetHandlerService.handle(packet);
+						if (packet != null) {
+							//Hand packet off to handler service
+							boolean success = packetHandlerService.handle(packet);
 
-					if (!success) {
+							if (!success) {
 
-						LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry packet. Packet={}",
-							packet);
-						//We will stop reading and try to handle this packet with an exponential backoff of up to 500ms
-						this.retryHandlePacketWithExponentialBackoff(packet);
+								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry packet. Packet={}",
+									packet);
+								//We will stop reading and try to handle this packet with an exponential backoff of up to 500ms
+								this.retryHandlePacketWithExponentialBackoff(packet);
+							}
+						}
 					}
+				} catch (Exception e) {
+					LOGGER.error("Packet Read Error. Potential packet loss has occured. ", e);
 				}
-			} catch (Exception e) {
-				LOGGER.error("Packet Read Error. Potential packet loss has occured. ", e);
 			}
 		}
 
