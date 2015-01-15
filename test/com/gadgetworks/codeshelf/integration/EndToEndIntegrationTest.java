@@ -127,7 +127,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		if (facility==null) {
 			// create organization object
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
-			facility=organization.createFacility(facilityId,"",0.0,0.0);
+			facility=organization.createFacilityUi(facilityId,"",0.0,0.0);
 			mFacilityDao.store(facility);
 			facility.createDefaultContainerKind();
 			// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.

@@ -71,20 +71,22 @@ public class Che extends WirelessDeviceABC {
 	private CodeshelfNetwork parent;
 	 */
 
-	// The current work area.
-	@ManyToOne(optional = true)
-	@Getter
+	// The current work area. appears not to be used anywhere.
+	/*
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@Setter
 	@JoinColumn(name = "current_work_area_persistentid")
 	private WorkArea				currentWorkArea;
+	*/
 
-	// The current user.
-	@ManyToOne(optional = true)
-	@Getter
+	// The current user. appears not to be used anywhere.
+	/*
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@Setter
 	@JoinColumn(name = "current_user_persistentid")
 	private User					currentUser;
-
+	*/
+	
 	@NotNull
 	@Enumerated(value = EnumType.STRING)
 	@Getter
@@ -165,32 +167,6 @@ public class Che extends WirelessDeviceABC {
 		} else {
 			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getPersistentId() + " from " + this.getDomainId()
 					+ " because it isn't found in children", new Exception());
-		}
-	}
-
-	public final void updateCheFromUI(String domainId, String description, String colorStr, String controllerId) {
-		try {
-			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
-			setColor(color);
-		} catch (Exception e) {}
-		if (domainId != null && !domainId.isEmpty()) {setDomainId(domainId);}
-		if (description != null){setDescription(description);}
-		changeControllerId(controllerId);
-	}
-	
-	//  Called from the UI, so really should return any persistence error.
-	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
-	private final void changeControllerId(String inNewControllerId) {
-		NetGuid currentGuid = this.getDeviceNetGuid();
-		NetGuid newGuid = null;
-		try {
-			newGuid = new NetGuid(inNewControllerId);
-			if (newGuid == null || currentGuid.equals(newGuid)) {return;}
-			this.setDeviceNetGuid(newGuid);
-			Che.DAO.store(this);
-		} catch (Exception e) {
-			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-			LOGGER.error("Failed to set controller ID", e);
 		}
 	}
 

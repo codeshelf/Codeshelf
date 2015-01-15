@@ -17,7 +17,6 @@ import javax.ws.rs.core.Response;
 import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.api.ObjectResponse;
 import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
@@ -105,7 +104,7 @@ public class TestingResource {
 				System.out.println("Complete Instruction");
 				persistence.commitTenantTransaction();
 			}
-			return new ObjectResponse("Test orders created.").buildResponse();
+			return BaseResponse.buildResponse("Test orders created and ran.");
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

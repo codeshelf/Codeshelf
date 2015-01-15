@@ -132,16 +132,32 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			return null;
 		}
 
+		boolean isNewAlias = false;
 		if ((result == null) && (inCsvBean.getMappedLocationId() != null) && (mappedLocation != null)) {
 			// create a new alias
 			result = new LocationAlias();
 			result.setDomainId(locationAliasId);
 			inFacility.addLocationAlias(result);
+			isNewAlias = true;
 		}
 
 		if (result != null) {
-			// If we were able to get/create an item then update it.
-			mappedLocation.addAlias(result);
+			// if brand new alias, just add to location.
+			// Found old alias? If to the same location, do not add again. But make active, etc.
+			// If to a different location, then we must first remove from the different location, then add
+			// Or if old location not resolved, still must add to new location.
+			if (isNewAlias) {
+				mappedLocation.addAlias(result);
+			} else {
+				Location oldLocation = result.getMappedLocation();
+				if (oldLocation != null && !oldLocation.equals(mappedLocation)) {
+					oldLocation.removeAlias(result);
+					mappedLocation.addAlias(result);
+				} else if (oldLocation == null) {
+					mappedLocation.addAlias(result);
+				}
+			}
+
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
 			mLocationAliasDao.store(result);
