@@ -640,14 +640,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		PathSegment result = null;
 
-		if (pathSegment == null) {
+		if (getPathSegment() == null) {
 			// Location parent = getParent();
 			Location parent = Location.deproxify(getParent());
 			if (parent != null) {
 				result = parent.getAssociatedPathSegment();
 			}
 		} else {
-			result = pathSegment;
+			result = getPathSegment();
 		}
 
 		return result;

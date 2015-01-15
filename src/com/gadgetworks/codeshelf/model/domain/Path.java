@@ -200,7 +200,9 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 */
 	public final SortedSet<PathSegment> getSegments() {
 		TreeSet<PathSegment> sorted = new TreeSet<PathSegment>(new PathSegmentComparator(travelDir));
-		sorted.addAll(segments.values());
+		for(PathSegment segment : segments.values()) {
+			sorted.add(PersistenceService.<PathSegment>deproxify(segment));
+		}
 		return sorted;
 	}
 
@@ -395,7 +397,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		// Path segments get return in direction order.
 		for (PathSegment pathSegment : getSegments()) {
-			for (Location pathLocation : pathSegment.getLocations()) {
+			List<Location> segmentLocations = pathSegment.getLocations();
+			for (Location pathLocation : segmentLocations) {
 				locations.addAll(pathLocation.<T> getActiveChildrenAtLevel(inClassWanted));
 			}
 		}

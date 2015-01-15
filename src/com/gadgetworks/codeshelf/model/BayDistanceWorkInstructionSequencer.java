@@ -38,7 +38,13 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
 		List<Location> bayList = new ArrayList<Location>();
 		for (Path path : facility.getPaths()) {
-			bayList.addAll(path.<Location> getLocationsByClass(Bay.class));
+			List<Location> baysOnPath = path.<Location> getLocationsByClass(Bay.class);
+			for(Location locBay : baysOnPath) {
+				String bayStr = locBay.getNominalLocationId();
+				bayList.add(locBay);
+			}
+			// that was for debugging. quick way:
+			// bayList.addAll(path.<Location> getLocationsByClass(Bay.class));
 		}
 		LOGGER.debug("Sequencing work instructions at "+facility.getDomainId());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();

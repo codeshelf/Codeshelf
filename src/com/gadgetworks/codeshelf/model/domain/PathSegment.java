@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -139,8 +140,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private Double				startPosAlongPath;
 
 	@OneToMany(mappedBy = "pathSegment")
-	@Getter
-	private List<Location>  locations = Lists.newArrayList();
+	private List<Location>  locations = new ArrayList<Location>();
 	
 	public PathSegment() {
 	}
@@ -170,6 +170,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		computePathDistance();
 	}
 
+	public List<Location> getLocations() {
+		for (int i = 0; i< this.locations.size(); i++) {
+			locations.set(i, PersistenceService.<Location>deproxify(locations.get(i)));
+		}
+		return this.locations;
+	}
+	
 	public final String getParentPathID() {
 		if (this.parent == null)
 			return null;
