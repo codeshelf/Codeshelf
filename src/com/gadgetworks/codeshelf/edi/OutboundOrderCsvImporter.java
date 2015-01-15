@@ -31,6 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.LocationAlias;
@@ -293,19 +294,38 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		@SuppressWarnings("unused")
 		Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 		UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
-		ItemMaster itemMaster = updateItemMaster(inCsvBean.getItemId(),
+		String itemId = inCsvBean.getItemId();
+		ItemMaster itemMaster = updateItemMaster(itemId,
 			inCsvBean.getDescription(),
 			inFacility,
 			inEdiProcessTime,
 			uomMaster);
-		@SuppressWarnings("unused")
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 
+		Item updatedOrCreatedItem = null;
 		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
 		if (getLocapickValue()) {
-			String locationValue = orderDetail.getPreferredLocation();
+			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
 			if (locationValue != null && !locationValue.isEmpty()) {
-				
+				// somewhat cloned from UiUpdateService.upsertItem(); Could refactor
+				InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+				InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
+				itemBean.setItemId(itemId);
+				itemBean.setLocationId(locationValue);
+				itemBean.setCmFromLeft(inCsvBean.getCmFromLeft());
+				itemBean.setQuantity("");
+				itemBean.setUom(uomMaster.getDomainId());
+				Location location = inFacility.findSubLocationById(locationValue);
+				// location has to be good because we did all validation before allowing it into OrderDetail.prefferedLocation field.
+				if (location == null)
+					LOGGER.error("Unexpect bad location in orderCsvBeanImport. Did not create item");
+				else 
+					updatedOrCreatedItem = importer.updateSlottedItem(false,
+					itemBean,
+					location,
+					inEdiProcessTime,
+					itemMaster,
+					uomMaster);
 			}
 
 		}
@@ -337,7 +357,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				mOrderGroupDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateOptionalOrderGroup storing new orderGroup", e);
 			}
 		}
 
@@ -347,7 +367,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				result.setUpdated(inEdiProcessTime);
 				mOrderGroupDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateOptionalOrderGroup", e);
 			}
 		}
 
@@ -384,7 +404,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				mContainerDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateContainer storing Container", e);
 			}
 
 			// Now create the container use for this. ContainerUse has Container, OrderHead as potential parent.  (Che also, but not set here.)
@@ -415,7 +435,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
 				mOrderHeaderDao.store(inOrder);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateContainer storing ContainerUse", e);
 			}
 
 		}
@@ -463,7 +483,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				// Mandatory field?
 
 			} catch (IllegalArgumentException e1) {
-				LOGGER.error("", e1);
+				LOGGER.error("updateOrderHeader orderDate", e1);
 			}
 		}
 
@@ -475,7 +495,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					result.setDueDate(new Timestamp(date.getTime()));
 				// Note: on an update, cannot clear a previous set time back to null. Could do it, just haven't bothered here.
 			} catch (IllegalArgumentException e1) {
-				LOGGER.error("", e1);
+				LOGGER.error("updateOrderHeader dueDate", e1);
 			}
 		}
 
@@ -494,7 +514,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result.setUpdated(inEdiProcessTime);
 			mOrderHeaderDao.store(result);
 		} catch (DaoException e) {
-			LOGGER.error("", e);
+			LOGGER.error("updateOrderHeader", e);
 		}
 
 		return result;
@@ -533,7 +553,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				result.setUpdated(inEdiProcessTime);
 				mItemMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateItemMaster", e);
 			}
 		}
 		return result;
@@ -558,7 +578,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				mUomMasterDao.store(result);
 			} catch (DaoException e) {
-				LOGGER.error("", e);
+				LOGGER.error("updateUomMaster", e);
 			}
 		}
 
