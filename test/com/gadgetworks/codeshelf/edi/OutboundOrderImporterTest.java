@@ -204,7 +204,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	// Bjoern: activate this test. Why are there lazyInitialization exceptions?
-	/*    @Test  */
+	@Test
 	public final void testItemCreationfromOrders() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
@@ -212,6 +212,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		LOGGER.info("1: Read a very small aisles file");
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		String csvString1 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierNotB1S1Side,12.0,37.0,X,120,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -229,6 +230,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		LOGGER.info("2: Read the locations file, setting up only a few aliases");
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
 				+ "A2, AisleB\r\n" //
@@ -242,6 +244,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		LOGGER.info("3: Read the orders file, which has some preferred locations");
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
 				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D34,43"

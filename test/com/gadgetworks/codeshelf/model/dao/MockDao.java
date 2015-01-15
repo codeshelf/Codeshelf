@@ -161,4 +161,9 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		throw new NotImplementedException();
 	}
 
+	@Override
+	public <P extends IDomainObject> T reload(P domainObject) {
+		throw new NotImplementedException();
+	}
+
 }
