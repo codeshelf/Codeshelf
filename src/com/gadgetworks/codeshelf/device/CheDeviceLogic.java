@@ -628,7 +628,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			setState(CheStateEnum.NO_WORK);
 		} else {
 			for (WorkInstruction wi : inWorkItemList) {
-				LOGGER.info("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
+				LOGGER.debug("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
 			}
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
