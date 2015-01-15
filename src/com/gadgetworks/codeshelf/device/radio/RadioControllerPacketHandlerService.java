@@ -25,10 +25,12 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerPacketHandlerService {
 	private static final Logger										LOGGER					= LoggerFactory.getLogger(RadioControllerPacketHandlerService.class);
 
-	private final ExecutorService									executor				= Executors.newFixedThreadPool(Runtime.getRuntime()
+	private final ExecutorService									executor				= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
 																								.availableProcessors(),
+																								2),
 																								new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																									.build());
+
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	queueMap				= Maps.newConcurrentMap();
 	private static final int							MAX_PACKET_QUEUE_SIZE	= 50;
 	

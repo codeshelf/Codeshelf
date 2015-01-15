@@ -132,7 +132,7 @@ public class RadioController implements IRadioController {
 	private final Counter										packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
 																								"packets.sent");
 	private final RadioControllerPacketHandlerService			packetHandlerService;
-
+	private final RadioControllerPacketIOService				packetIOService;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -161,6 +161,7 @@ public class RadioController implements IRadioController {
 
 		mRunning = false;
 		packetHandlerService = new RadioControllerPacketHandlerService(this);
+		packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, mNetworkId);
 	}
 
 	@Override
@@ -207,7 +208,8 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void stopController() {
-
+		packetIOService.stop();
+		packetHandlerService.shutdown();
 		// Stop all of the interfaces.
 		gatewayInterface.stopInterface();
 
@@ -260,7 +262,7 @@ public class RadioController implements IRadioController {
 		interfaceStarterThread.setDaemon(true);
 		interfaceStarterThread.start();
 
-		startPacketReceivers();
+		//startPacketReceivers();
 
 		// Wait until the interfaces start.
 		boolean started;
@@ -278,6 +280,7 @@ public class RadioController implements IRadioController {
 		LOGGER.info("Gateway radio interface started");
 
 		selectChannel();
+		packetIOService.start();
 
 		mLastIntfCheckMillis = System.currentTimeMillis();
 		while (mShouldRun) {
