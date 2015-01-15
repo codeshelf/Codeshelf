@@ -13,6 +13,9 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.Location;
@@ -34,6 +38,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.util.DateTimeParser;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
@@ -46,7 +51,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
+	private static final Logger		LOGGER			= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
 
 	private ITypedDao<OrderGroup>	mOrderGroupDao;
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;
@@ -56,6 +61,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	private ITypedDao<ItemMaster>	mItemMasterDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 	DateTimeParser					mDateTimeParser;
+
+	@Getter
+	@Setter
+	private Boolean					locapickValue	= null;
 
 	@Inject
 	public OutboundOrderCsvImporter(final EventProducer inProducer,
@@ -86,6 +95,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	public final BatchResult<Object> importOrdersFromCsvStream(final Reader inCsvReader,
 		final Facility inFacility,
 		Timestamp inProcessTime) {
+		// Get our LOCAPICK configuration value. It will not change during importing one file.
+		boolean locapickValue = PropertyService.getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.LOCAPICK);
+		setLocapickValue(locapickValue);
+
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
 		Set<OrderHeader> orderSet = Sets.newHashSet();
 
@@ -287,6 +300,15 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			uomMaster);
 		@SuppressWarnings("unused")
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
+
+		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
+		if (getLocapickValue()) {
+			String locationValue = orderDetail.getPreferredLocation();
+			if (locationValue != null && !locationValue.isEmpty()) {
+				
+			}
+
+		}
 
 		return order;
 	}
@@ -575,27 +597,29 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result = new OrderDetail();
 			result.setOrderDetailId(detailId);
 		}
-		
-		// set preferred location, if valid
+
+		// set preferred location, if valid.
+		// Note: we will set to blank if the value is invalid for several reasons. The idea is to only allow good data into the system.
 		String preferredLocation = inCsvBean.getLocationId();
 		if (preferredLocation != null) {
-			result.setPreferredLocation(preferredLocation);
 			// check that location is valid
 			LocationAlias locationAlias = inFacility.getLocationAlias(preferredLocation);
-			if (locationAlias==null) {
-				LOGGER.warn("location alias not found: " + inCsvBean);
-			}
-			else {
+			if (locationAlias == null) {
+				LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean);
+				preferredLocation = "";
+			} else {
 				Location location = locationAlias.getMappedLocation();
-				if (location==null) {
-					LOGGER.warn("location not found: " + inCsvBean);
-				}
-				else {
+				if (location == null) {
+					LOGGER.warn("alias found, but no location for preferredLocation: " + inCsvBean);
+					preferredLocation = "";
+				} else {
 					if (!location.getActive()) {
-						LOGGER.warn("Preferred location is not active: " + inCsvBean);						
+						LOGGER.warn("alias and inactive location found for preferredLocation: " + inCsvBean);
+						preferredLocation = "";
 					}
 				}
-			}			
+			}
+			result.setPreferredLocation(preferredLocation);
 		}
 
 		result.setStatus(OrderStatusEnum.RELEASED);
