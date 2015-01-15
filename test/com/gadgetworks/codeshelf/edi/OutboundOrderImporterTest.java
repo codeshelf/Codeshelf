@@ -203,7 +203,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	// Bjoern: activate this test. Why are there lazyInitialization exceptions?
 	@Test
 	public final void testItemCreationfromOrders() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -268,12 +267,25 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderDetail detail102 = order10.getOrderDetail("10.2");
 		Assert.assertNotNull(detail102);
 
-		String prefLoc = detail101.getPreferredLocation();
-		Assert.assertNotNull("Preferred location is undefined", prefLoc);
-		Assert.assertEquals("D35", prefLoc);
+		String prefLoc101 = detail101.getPreferredLocation();
+		Assert.assertNotNull("Preferred location is undefined", prefLoc101);
+		Assert.assertEquals("D35", prefLoc101);
+
+		String prefLoc102 = detail102.getPreferredLocation();
+		Assert.assertNotNull("Preferred location is undefined", prefLoc102);
+		Assert.assertEquals("D34", prefLoc102);
+
+		OrderHeader order11 = facility.getOrderHeader("11");
+		OrderDetail detail111 = order11.getOrderDetail("11.1");
+		String prefLoc111 = detail111.getPreferredLocation();
+		Assert.assertTrue("unresolved preferredLocation should be blank", prefLoc111.isEmpty());
+
+		OrderDetail detail112 = order11.getOrderDetail("11.2");
+		String prefLoc112 = detail112.getPreferredLocation();
+		Assert.assertEquals("D13", prefLoc112);
 
 		ItemMaster theMaster = facility.getItemMaster("SKU0001");
-		Assert.assertNotNull("ItemMaster not created", theMaster);
+		Assert.assertNotNull("ItemMaster should be created", theMaster);
 		List<Item> items = theMaster.getItems();
 		Assert.assertEquals(0, items.size()); // No inventory created
 
@@ -287,15 +299,20 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		// Read the same file again, but this time LOCAPICK is true
 		this.getPersistenceService().beginTenantTransaction();
+		
+		// getting a lazy initialization error during the read on a tier addStoredItem.
+		// Interesting that relaod the facility seems to set the tier straight.
+		facility = Facility.DAO.reload(facility);
+		
 		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader4 = new InputStreamReader(stream4);
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime2);
+		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
 
 		ItemMaster theMaster2 = facility.getItemMaster("SKU0001");
-		Assert.assertNotNull("ItemMaster not created", theMaster2);
-		List<Item> items2 = theMaster.getItems();
-		Assert.assertEquals(0, items2.size()); // Inventory should be created
+		Assert.assertNotNull("ItemMaster should be found", theMaster2);
+		List<Item> items2 = theMaster2.getItems();
+		Assert.assertEquals(1, items2.size()); // Inventory should be created since LOCAPICK is true
 
 		this.getPersistenceService().commitTenantTransaction();
 

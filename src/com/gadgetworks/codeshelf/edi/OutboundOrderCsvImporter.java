@@ -313,7 +313,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				itemBean.setItemId(itemId);
 				itemBean.setLocationId(locationValue);
 				itemBean.setCmFromLeft(inCsvBean.getCmFromLeft());
-				itemBean.setQuantity("");
+				itemBean.setQuantity("0");
 				itemBean.setUom(uomMaster.getDomainId());
 				Location location = inFacility.findSubLocationById(locationValue);
 				// location has to be good because we did all validation before allowing it into OrderDetail.prefferedLocation field.
