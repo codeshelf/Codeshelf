@@ -770,7 +770,7 @@ public class RadioController implements IRadioController {
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
 
 					//LOGGER.info("----------------------------------------------------");
-					LOGGER.info("Device associated: " + foundDevice.getGuid().getHexStringNoPrefix());
+					LOGGER.info("Device associated {}", foundDevice.getGuid().getHexStringNoPrefix());
 					if ((inCommand.getSystemStatus() & 0x02) > 0) {
 						LOGGER.info(" Status: LVD");
 					}
@@ -828,7 +828,7 @@ public class RadioController implements IRadioController {
 			ContextLogging.setNetGuid(foundDevice.getGuid());
 			try {
 				CommandAssocAck ackCmd;
-				LOGGER.info("Assoc check: " + foundDevice.toString());
+				LOGGER.info("Assoc check for {}", foundDevice);
 
 				short level = inCommand.getBatteryLevel();
 				if (foundDevice.getLastBatteryLevel() != level) {
@@ -840,19 +840,19 @@ public class RadioController implements IRadioController {
 				// If the found device isn't in the STARTED state then it's not associated with us.
 				if (foundDevice.getDeviceStateEnum() == null) {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
-					LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
+					LOGGER.info("AssocCheck - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
 				} else if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
 					networkDeviceBecameActive(foundDevice);
 				} else if (!foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED)) {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
-					LOGGER.info("AssocCheck - NOT ASSOC: state was: " + foundDevice.getDeviceStateEnum());
+					LOGGER.info("AssocCheck - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
 				}
 
 				// If the found device has the wrong GUID then we have the wrong device.
 				// (This could be two matching network IDs on the same channel.  
 				// This could be a serious flaw in the network protocol.)
 				if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
-					LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: " + foundDevice.getGuid() + " and " + uid);
+					LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: {} and {}", foundDevice.getGuid(), uid);
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
 				}
 
