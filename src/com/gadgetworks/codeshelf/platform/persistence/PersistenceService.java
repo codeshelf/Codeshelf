@@ -56,8 +56,8 @@ public class PersistenceService extends Service {
 	private Tenant fixedTenant;
 
 	// TODO: for debugging only, remove
-	private Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>();
-	private Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
+	//private Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>();
+	//private Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
 
 	private PersistenceService() {
 		setInstance();
@@ -208,8 +208,8 @@ public class PersistenceService extends Service {
 		 */
 
 		// unlink debugging stuff
-		this.sessionStarted=new HashMap<Session,StackTraceElement[]>();
-		this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
+		//this.sessionStarted=new HashMap<Session,StackTraceElement[]>();
+		//this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
 
 		this.setInitialized(false);
 		return true;
@@ -223,9 +223,9 @@ public class PersistenceService extends Service {
 		}
 		Session session = fac.getCurrentSession();
 
-		if(!this.sessionStarted.containsKey(session)) {
-			this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
-		}
+		//if(!this.sessionStarted.containsKey(session)) {
+		//	this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
+		//}
 
 		return session;
 	}
@@ -236,11 +236,11 @@ public class PersistenceService extends Service {
 
 	public final Transaction beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
-		StackTraceElement st[]=this.sessionStarted.get(session);
+		//StackTraceElement st[]=this.sessionStarted.get(session);
 		Transaction tx = session.getTransaction();
-		if (!this.transactionStarted.containsKey(tx)) {
-			this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
-		}
+		//if (!this.transactionStarted.containsKey(tx)) {
+		//	this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
+		//}
 		if (tx != null) {
 			// check for already active transaction
 			if (tx.isActive()) {
