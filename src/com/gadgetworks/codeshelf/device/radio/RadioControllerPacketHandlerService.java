@@ -44,7 +44,7 @@ public class RadioControllerPacketHandlerService {
 	}
 
 	public boolean handleInboundPacket(IPacket packet) {
-
+		LOGGER.info("INBOUND PACKET={}", packet);
 		//Get queue from queueMap in thread-safe manner. Multiple threads can call handle at the same time
 		BlockingQueue<IPacket> queue = queueMap.get(packet.getSrcAddr());
 		if (queue == null) {

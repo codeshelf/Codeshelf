@@ -900,7 +900,7 @@ public class RadioController implements IRadioController {
 						packet.setAckData(ackPacket.getAckData());
 						packet.setAckState(AckStateEnum.SUCCEEDED);
 						queue.remove(packet);
-						LOGGER.debug("Packet acked SUCCEEDED={}", packet);
+						LOGGER.info("Packet acked SUCCEEDED={}", packet);
 					}
 				}
 			}
@@ -932,6 +932,10 @@ public class RadioController implements IRadioController {
 					(byte) 0));
 
 				sendCommand(ackCmd, netId, srcAddr, false);
+				IPacket ackPacket = new Packet(ackCmd, netId, mServerAddress, srcAddr, false);
+				ackCmd.setPacket(ackPacket);
+				ackPacket.setAckId(ackId);
+				sendPacket(ackPacket);
 			}
 		} finally {
 			ContextLogging.clearNetGuid();

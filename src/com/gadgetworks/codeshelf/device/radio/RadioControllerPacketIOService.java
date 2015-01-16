@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.flyweight.command.CommandGroupEnum;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
@@ -159,6 +160,10 @@ public class RadioControllerPacketIOService {
 					//Send packet
 					gatewayInterface.sendPacket(packet);
 					packetsSentCounter.inc();
+					if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
+					LOGGER.info("OUTBOUND PACKET={}", packet);
+					}
+
 				}
 			} catch (Exception e) {
 				LOGGER.error("Packet Writer Error ", e);
