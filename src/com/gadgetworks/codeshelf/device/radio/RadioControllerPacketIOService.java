@@ -32,6 +32,7 @@ public class RadioControllerPacketIOService {
 																						"packets.sent");
 	private final ScheduledExecutorService				scheduleExecutorService		= Executors.newScheduledThreadPool(2,
 																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
+																							.setPriority(Thread.MAX_PRIORITY)
 																							.build());
 	private final BlockingQueue<IPacket>				packetsPendingWrite			= new ArrayBlockingQueue<>(MAX_PACKET_WRITE_QUEUE_SIZE);
 	private final IGatewayInterface						gatewayInterface;
