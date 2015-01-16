@@ -52,6 +52,7 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -112,7 +113,8 @@ public class RadioController implements IRadioController {
 	private byte												mRadioChannel;
 
 	private Thread												mControllerThread;
-	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor();
+	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-broadcast-thread")
+																									.build());
 
 	//The 3 variables below are only modifed in a synchronized method because their modifications must sequential and atomic
 	//since multiple threads can use this class. The maps must be thread-safe because other threads maybe read from the map
@@ -128,7 +130,6 @@ public class RadioController implements IRadioController {
 
 	private final RadioControllerPacketHandlerService			packetHandlerService;
 	private final RadioControllerPacketIOService		packetIOService;
-	private final RadioControllerBroadcastService					broadcastService;
 
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
 
@@ -157,7 +158,6 @@ public class RadioController implements IRadioController {
 		mRunning = false;
 		packetHandlerService = new RadioControllerPacketHandlerService(this);
 		packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
-		broadcastService = new RadioControllerBroadcastService(this, INTERFACE_CHECK_MILLIS);
 	}
 
 	@Override
@@ -207,7 +207,6 @@ public class RadioController implements IRadioController {
 		backgroundService.shutdown();
 		packetIOService.stop();
 		packetHandlerService.shutdown();
-		broadcastService.stop();
 
 		// Stop all of the interfaces.
 		gatewayInterface.stopInterface();
@@ -231,6 +230,10 @@ public class RadioController implements IRadioController {
 				processEvents();
 			}
 		}, 0, EVENT_SLEEP_MILLIS, TimeUnit.MILLISECONDS);
+		backgroundService.scheduleWithFixedDelay(new RadioControllerBroadcaster(this),
+			0,
+			INTERFACE_CHECK_MILLIS,
+			TimeUnit.MILLISECONDS);
 
 		// Start all of the serial interfaces.
 		// They start on a thread since this op won't complete if no dongle is attached.
@@ -261,8 +264,6 @@ public class RadioController implements IRadioController {
 
 		selectChannel();
 		packetIOService.start();
-
-		broadcastService.start();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -302,7 +303,7 @@ public class RadioController implements IRadioController {
 
 		//	 The controller should process events continuously until the application wants to quit/exit.
 		if (mShouldRun) {
-
+			long start = System.currentTimeMillis();
 			try {
 				// Check if there are any pending ACK packets that need resending.
 				// Also consider the case where there is more than one packet destined for a remote.
@@ -336,6 +337,11 @@ public class RadioController implements IRadioController {
 								ContextLogging.clearNetGuid();
 							}
 
+						}
+
+						if (System.currentTimeMillis() - start > INTERFACE_CHECK_MILLIS) {
+							LOGGER.info("processEvents is ending early to allow broadcast message");
+							break;
 						}
 					}
 				}
