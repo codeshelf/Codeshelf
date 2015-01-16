@@ -32,6 +32,7 @@ import com.gadgetworks.codeshelf.model.LotHandlingEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Joiner;
@@ -304,12 +305,14 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private Item findExistingItem(Location inLocation, UomMaster inUom) {
 		String thisUomId = inUom.getUomMasterId();
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
-		if (thisItemEach) {
+		Facility facility = inLocation.getFacility();
+		boolean eachMult =  PropertyService.getBooleanPropertyFromConfig(facility,DomainObjectProperty.EACHMULT);
+		if (thisItemEach && !eachMult) {
 			for (Item item : getItems()) {
-				if (UomNormalizer.isEach(item.getUomMasterId()))
-					return item;
+				if (UomNormalizer.isEach(item.getUomMasterId())) return item;
 			}
-		} else {
+		} 
+		else {
 			String domainId = Item.makeDomainId(this.getItemId(), inLocation, thisUomId);
 			for (Item item : getItems()) {
 				// if items follow the normal pattern, equals on domainId would be sufficient				
