@@ -1473,9 +1473,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// set up data for pick scenario
 		this.getPersistenceService().beginTenantTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
 		UUID facId = facility.getPersistentId();
+		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1492,7 +1495,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().commitTenantTransaction();
+
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1508,13 +1514,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
 		// Start setting up cart etc
 		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
+		facility = Facility.DAO.reload(facility);
 		List<Container> containers = facility.getContainers();
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(4, containers.size());
@@ -1695,6 +1704,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1711,7 +1724,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().commitTenantTransaction();
+
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1727,13 +1743,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
 		// Start setting up cart etc
-		this.getPersistenceService().beginTenantTransaction();
-
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		picker.login("Picker #1");
@@ -1751,8 +1768,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility);
-
 		this.getPersistenceService().commitTenantTransaction();
 
 	}
@@ -1762,6 +1780,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1778,7 +1800,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().commitTenantTransaction();
+
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1794,6 +1819,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		mPropertyService.turnOffHK(facility);
 		this.getPersistenceService().commitTenantTransaction();
@@ -1914,6 +1943,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
@@ -1927,7 +1960,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().commitTenantTransaction();
+
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
