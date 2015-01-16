@@ -21,7 +21,9 @@ import com.codahale.metrics.servlets.MetricsServlet;
 import com.codahale.metrics.servlets.PingServlet;
 import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.RadioServlet;
+import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
@@ -89,6 +91,10 @@ public class WebApiServer {
 		adminApiContext.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
 		adminApiContext.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
 		
+		// + default app service health check
+		ServiceStatusHealthCheck svcCheck = new ServiceStatusHealthCheck();
+		MetricsService.registerHealthCheck(svcCheck);
+
 		// add ping servlet
 		adminApiContext.addServlet(new ServletHolder(new PingServlet()),"/ping");
 		
