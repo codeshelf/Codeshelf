@@ -9,6 +9,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.gadgetworks.codeshelf.model.dao.PropertyDao;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -68,6 +70,69 @@ public class InventoryServiceTest extends EdiTestABC {
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
+	
+	@Test
+	public void testEachMultiLoc() throws IOException {	
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility=Facility.DAO.findByPersistentId(facilityId);
+
+		PropertyDao propDao = PropertyDao.getInstance();
+		DomainObjectProperty eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
+		Assert.assertNotNull(eachmultProp);
+		boolean eachMult = eachmultProp.getBooleanValue();
+		Assert.assertEquals("EACHMULT is supposed to be FALSE by default",false, eachMult);		
+		
+		String testUom = "EA";
+		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		Assert.assertNotNull(itemMaster);
+		String locationAlias = tier.getAliases().get(0).getAlias();
+		Assert.assertNotNull(locationAlias);
+		
+		Item createdItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUom, null);
+
+		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
+		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
+		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
+		
+		Item movedItem = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUom, null);
+		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), movedItem.getPersistentId());
+		Location currentLocation = movedItem.getStoredLocation(); 
+		Assert.assertEquals(newItemLocation.getNominalLocationId(), currentLocation.getNominalLocationId());
+		this.getPersistenceService().commitTenantTransaction();
+
+		// set eachmult to true and make sure only one item exists
+		this.getPersistenceService().beginTenantTransaction();
+		eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
+		eachmultProp.setValue(true);
+		propDao.store(eachmultProp);
+		itemMaster = facility.getItemMaster("10700589");
+		List<Item> items = itemMaster.getItemsOfUom(testUom);
+		Assert.assertEquals(1,items.size());
+		this.getPersistenceService().commitTenantTransaction();	
+
+		// now move the item again and ensure items are different
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		itemMaster = facility.getItemMaster("10700589");
+		Assert.assertNotNull(itemMaster);
+
+		Tier newItemLocation2 = (Tier) facility.findSubLocationById("A1.B1.T1");
+		String newItemLocationAlias2 = newItemLocation2.getAliases().get(0).getAlias();
+		locationAlias = newItemLocation2.getAliases().get(0).getAlias();
+		Assert.assertNotNull(locationAlias);
+		
+		Item movedItem2 = uiUpdate.upsertItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias2, "1", "1", testUom, null);
+		Assert.assertNotEquals("Should not have been the same item", createdItem.getPersistentId(), movedItem2.getPersistentId());
+		Location currentLocation2 = movedItem2.getStoredLocation(); 
+		Assert.assertEquals(newItemLocation2.getNominalLocationId(), currentLocation2.getNominalLocationId());
+		
+		List<Item> items2 = itemMaster.getItemsOfUom(testUom);
+		Assert.assertEquals(2,items2.size());
+		
+		this.getPersistenceService().commitTenantTransaction();	
+	}	
 	
 	/**
 	 * Given a non-each item at a location
