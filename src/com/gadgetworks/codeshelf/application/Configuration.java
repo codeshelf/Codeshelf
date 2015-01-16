@@ -243,6 +243,35 @@ public final class Configuration {
 
 	// --------------------------------------------------------------------------
 	/**
+	 *  @return
+	 */
+	public static String getVersionStringShort() {
+		String result = "???";
+	
+		Properties versionProps = new Properties();
+		try {
+			URL url = ClassLoader.getSystemClassLoader().getResource("conf/version.properties");
+			if(url == null) {
+				url = ClassLoader.getSystemClassLoader().getResource("version.properties");
+			}
+			if(url != null) {
+				BufferedInputStream inStream = new BufferedInputStream(url.openStream());
+				versionProps.load(inStream);
+				inStream.close();
+				result = versionProps.getProperty("version.major");
+				result += "." + versionProps.getProperty("version.revision");
+			}
+		} catch (FileNotFoundException e) {
+			result = "conf/version.properties not found";
+		} catch (IOException e) {
+			result = "conf/version.properties not readable";
+		}
+	
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	
 	public static Cipher getCipher(int inMode, char[] inPassword) throws Exception {
 	

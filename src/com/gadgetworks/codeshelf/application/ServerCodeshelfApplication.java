@@ -84,7 +84,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
 
-		this.getPersistenceService().start();
+		// started by injection of getInstance() 
+		// this.getPersistenceService().start();
 
 		try {
 			this.getPersistenceService().beginTenantTransaction();
