@@ -70,13 +70,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
 
 	// The owning location.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Setter
 	private ItemMaster			parent;
 
 	// The stored location.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@JoinColumn(name="stored_location_persistentid")
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "stored_location_persistentid")
 	private Location			storedLocation;
 
 	// Quantity.
@@ -87,13 +87,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private Double				quantity;
 
 	// The actual UoM.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@JoinColumn(name="uom_master_persistentid")
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "uom_master_persistentid")
 	@Setter
 	private UomMaster			uomMaster;
 
 	// Ddc position.
-	@Column(nullable = true,name="meters_from_anchor")
+	@Column(nullable = true, name = "meters_from_anchor")
 	@Getter
 	@Setter
 	private Double				metersFromAnchor;								// used to be posAlongPath. Upgrade action doUpgrade017()
@@ -124,13 +124,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// Let's not be confused if some items have unit "case" and some are "CS". Also "each" variants
 		if (inUom == null)
 			revisedUom = "?uom";
-		else revisedUom = UomNormalizer.normalizeString(inUom);
+		else
+			revisedUom = UomNormalizer.normalizeString(inUom);
 		return inItemMasterId + "-" + inLocation.getNominalLocationIdExcludeBracket() + "-" + revisedUom;
 	}
 
 	public Item() {
 	}
-	
+
 	@Override
 	public ItemMaster getParent() {
 		if (this.parent instanceof HibernateProxy) {
@@ -138,14 +139,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 		return this.parent;
 	}
-	
+
 	public Location getStoredLocation() {
 		if (this.storedLocation instanceof HibernateProxy) {
 			this.storedLocation = (Location) PersistenceService.deproxify(this.storedLocation);
 		}
 		return storedLocation;
 	}
-	
+
 	public UomMaster getUomMaster() {
 		if (this.uomMaster instanceof HibernateProxy) {
 			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
@@ -167,7 +168,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public final void setStoredLocation(final Location inStoredLocation) {
-		storedLocation = inStoredLocation; 
+		storedLocation = inStoredLocation;
 	}
 
 	// Assorted meta fields for the UI
@@ -218,7 +219,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			return "";
 		}
 	}
-	
+
 	/**
 	 * Property that uses String type
 	 * @return
@@ -227,8 +228,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		Integer positionValue = null;
 		if (Strings.isNullOrEmpty(inValueFromLeft) || inValueFromLeft.trim().length() == 0) {
 			positionValue = null;
-		}
-		else {
+		} else {
 			try {
 				positionValue = Integer.valueOf(inValueFromLeft);
 			} catch (NumberFormatException e) {
@@ -264,7 +264,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			return theMaster.getDescription();
 		}
 	}
-	
+
 	public final String getUomMasterId() {
 		// uom is not nullable, but we see null in unit test.
 		UomMaster theUom = getUomMaster();
@@ -284,7 +284,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-
 	// UI Metafield
 	public final String getItemQuantityUom() {
 
@@ -299,14 +298,15 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// for each or case, make sure we do not return the foolish looking 2.0 EA.
 		// UomNormalizer equivalents also return a 2 PK.  Other units sill may look foolish, such as
 		// 3.0 box. We would need the table of Uom to know if the units are discrete or not.
-		
+
 		//It was deemed that zero in the system is the unknown quantity in this system 
 		//   the system is not inventory tracking system so zero quantity in item does not mean you 
 		//   are out of stock
 		if (Math.abs(quant.doubleValue() - 0.0d) < 0.000001) {//zero essentially
 			quantStr = "?";
-			
-		} else if (UomNormalizer.normalizedEquals(uom, UomNormalizer.CASE) || UomNormalizer.normalizedEquals(uom, UomNormalizer.EACH)) { 
+
+		} else if (UomNormalizer.normalizedEquals(uom, UomNormalizer.CASE)
+				|| UomNormalizer.normalizedEquals(uom, UomNormalizer.EACH)) {
 			quantStr = Integer.toString((int) quant.doubleValue());
 		} else {
 			quantStr = Double.toString(quant);
@@ -319,13 +319,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public final void setCmFromLeft(Integer inCmFromLeft) {
 		if (inCmFromLeft == null) {
 			setMetersFromAnchor(null);
-		}
-		else {
+		} else {
 			Double value = 0.0;
 			Location theLocation = this.getStoredLocation();
 			if (!theLocation.isFacility()) {
 				if (inCmFromLeft < 0) {
-					throw new InputValidationException(this,  "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
+					throw new InputValidationException(this, "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 				} else if (theLocation != null && !theLocation.isFacility()) {
 					Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
 					if (theLocation.isLeftSideTowardsAnchor()) {
@@ -334,7 +333,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 						value = pickEndWidthMeters - (inCmFromLeft / 100.0);
 					}
 					if (value > pickEndWidthMeters || value < 0) {
-						throw new InputValidationException(this,  "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
+						throw new InputValidationException(this, "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
 					}
 				}
 				setMetersFromAnchor(value);
@@ -386,7 +385,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// 2 cases.
 		// - path increasing from anchor, so location's posAlongPath reflects the anchor.
 		// - path decreasing from anchor, so location's posAlongPath reflects its pickEndPos.
-		
+
 		// We need to know if the location's anchor is up or down the path.
 		// If we have a meters value, we are adding, because the location's value is its first edge along the path; the item is futher along with any offset at all.
 		if (theLocation.isPathIncreasingFromAnchor())
@@ -421,26 +420,30 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// We probably will not do it this way now that we have a good non-slotted model.
 		// getPosAlongPath at least will return the location's value.
 	}
-	
+
 	public LedRange getFirstLastLedsForItem() {
 		// to compute, we need the locations first and last led positions
 		Location theLocation = this.getStoredLocation();
 		if (theLocation instanceof Facility)
 			return LedRange.zero(); // was initialized to give values of 0,0
 
-		int firstLocLed = theLocation.getFirstLedNumAlongPath(); 
-		int lastLocLed = theLocation.getLastLedNumAlongPath(); 
-	
+		int firstLocLed = theLocation.getFirstLedNumAlongPath();
+		int lastLocLed = theLocation.getLastLedNumAlongPath();
+
 		Double metersFromAnchor = getMetersFromAnchor();
-		
+
 		Double locationWidth = theLocation.getLocationWidthMeters();
 		boolean lowerLedNearAnchor = theLocation.isLowerLedNearAnchor();
-		
-		LedRange theLedRange = LedRange.computeLedsToLight(firstLocLed, lastLocLed, lowerLedNearAnchor, locationWidth, metersFromAnchor); 
+
+		LedRange theLedRange = LedRange.computeLedsToLight(firstLocLed,
+			lastLocLed,
+			lowerLedNearAnchor,
+			locationWidth,
+			metersFromAnchor);
 		return theLedRange;
 	}
-	
-	public String getLitLedsForItem(){
+
+	public String getLitLedsForItem() {
 		LedRange theRange = getFirstLastLedsForItem();
 		return (theRange.getRangeString());
 	}
@@ -456,6 +459,12 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public boolean isLightable() {
 		Location itemLocation = getStoredLocation();
 		return (itemLocation != null && itemLocation.isLightable());
+	}
+
+	public String toLogString() {
+		// Let's return much less than the lomboc toString.
+		String toSay = "Sku:" + this.getItemMasterId() + " Uom:" + this.getUomMasterId() + " Loc:" + this.getItemLocationAlias();
+		return toSay;
 	}
 
 }

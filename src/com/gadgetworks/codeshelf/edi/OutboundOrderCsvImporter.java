@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
@@ -52,7 +53,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 
-	private static final Logger		LOGGER			= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
 
 	private ITypedDao<OrderGroup>	mOrderGroupDao;
 	private ITypedDao<OrderHeader>	mOrderHeaderDao;
@@ -65,7 +66,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 	@Getter
 	@Setter
-	private Boolean					locapickValue	= null;
+	private Boolean					locapickValue			= null;
+
+	@Getter
+	@Setter
+	private String					oldPreferredLocation	= null;													// for DEV-596
+
+	private ArrayList<Item>			mEvaluationList;
 
 	@Inject
 	public OutboundOrderCsvImporter(final EventProducer inProducer,
@@ -87,6 +94,8 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		mItemMasterDao = inItemMasterDao;
 		mUomMasterDao = inUomMaster;
 		mDateTimeParser = new DateTimeParser();
+
+		mEvaluationList = new ArrayList<Item>();
 	}
 
 	// --------------------------------------------------------------------------
@@ -99,6 +108,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		// Get our LOCAPICK configuration value. It will not change during importing one file.
 		boolean locapickValue = PropertyService.getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.LOCAPICK);
 		setLocapickValue(locapickValue);
+		mEvaluationList.clear();
 
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
 		Set<OrderHeader> orderSet = Sets.newHashSet();
@@ -134,6 +144,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		LOGGER.debug("End order import.");
 
 		cleanupArchivedOrders();
+		evaluateMovedItems();
 		return batchResult;
 	}
 
@@ -270,6 +281,22 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 	}
 
+	private void addItemToEvaluationList(Item inItem) {
+		LOGGER.info("Adding to item evaluation list: " + inItem.toLogString());
+
+		//ArrayList allow duplicates, so check ourselves
+		if (!mEvaluationList.contains(inItem))
+			mEvaluationList.add(inItem);
+	}
+
+	private void evaluateMovedItems() {
+		if (mEvaluationList.size() == 0)
+			return;
+
+		LOGGER.warn("Querying and evaluating moved items");
+
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvBean
@@ -295,11 +322,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 		UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
 		String itemId = inCsvBean.getItemId();
-		ItemMaster itemMaster = updateItemMaster(itemId,
-			inCsvBean.getDescription(),
-			inFacility,
-			inEdiProcessTime,
-			uomMaster);
+		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 
 		Item updatedOrCreatedItem = null;
@@ -308,7 +331,11 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
 			if (locationValue != null && !locationValue.isEmpty()) {
 				// somewhat cloned from UiUpdateService.upsertItem(); Could refactor
-				InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+				InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(),
+					ItemMaster.DAO,
+					Item.DAO,
+					UomMaster.DAO);
+
 				InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
 				itemBean.setItemId(itemId);
 				itemBean.setLocationId(locationValue);
@@ -318,14 +345,31 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				Location location = inFacility.findSubLocationById(locationValue);
 				// location has to be good because we did all validation before allowing it into OrderDetail.prefferedLocation field.
 				if (location == null)
-					LOGGER.error("Unexpect bad location in orderCsvBeanImport. Did not create item");
-				else 
+					LOGGER.error("Unexpected bad location in orderCsvBeanImport. Did not create item");
+				else {
+					// DEV-596 This is a very tricky question. If the item already existed, and there are no other order details that have the old preferredLocation
+					// then we would want to either move that inventory to the location, or archive the old and let the new one be made.
+					String oldStr = getOldPreferredLocation(); // is only set if the detail existed before and had a preferredLocation
+
+					boolean thisDetailHadOldDifferentPreferredLocation = (oldStr != null && !oldStr.isEmpty() && !oldStr.equals(locationValue));
+					Item oldItem = null;
+					if (thisDetailHadOldDifferentPreferredLocation) {
+						// We need to find the item at the old location. Then determine if a new item was made at the new location. If so, add the old item to a list for investigation.
+						Location oldLocation = inFacility.findSubLocationById(oldStr);
+						oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster);
+					}
+
+					// updateSlottedItem is going to make new inventory if location changed for cases, and also for each if EACHMULT is true
 					updatedOrCreatedItem = importer.updateSlottedItem(false,
-					itemBean,
-					location,
-					inEdiProcessTime,
-					itemMaster,
-					uomMaster);
+						itemBean,
+						location,
+						inEdiProcessTime,
+						itemMaster,
+						uomMaster);
+					// if we created a new item, then throw the old item on a list for evaluation
+					if (oldItem != null && !oldItem.equals(updatedOrCreatedItem))
+						addItemToEvaluationList(oldItem);
+				}
 			}
 
 		}
@@ -613,9 +657,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		}
 
 		result = inOrder.getOrderDetail(detailId);
+		// DEV-596 if existing order detail had a preferredLocation, we need remember what it was.
+		setOldPreferredLocation(null);
 		if (result == null) {
 			result = new OrderDetail();
 			result.setOrderDetailId(detailId);
+		} else {
+			setOldPreferredLocation(result.getPreferredLocation());
 		}
 
 		// set preferred location, if valid.

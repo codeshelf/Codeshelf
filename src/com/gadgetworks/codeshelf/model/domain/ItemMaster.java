@@ -75,7 +75,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
 	// The parent facility.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	private Facility						parent;
 
 	// The description.
@@ -86,7 +86,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private String							description;
 
 	// The lot handling method for this item.
-	@Column(nullable = false,name="lot_handling")
+	@Column(nullable = false, name = "lot_handling")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -94,29 +94,29 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private LotHandlingEnum					lotHandlingEnum;
 
 	// Ddc Id
-	@Column(nullable = true,name="ddc_id")
+	@Column(nullable = true, name = "ddc_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String							ddcId;
 
 	// SlotFlex Id
-	@Column(nullable = true,name="slot_flex_id")
+	@Column(nullable = true, name = "slot_flex_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String							slotFlexId;
 
 	// Ddc pack depth
-	@Column(nullable = true,name="ddc_pack_depth")
+	@Column(nullable = true, name = "ddc_pack_depth")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer							ddcPackDepth;
 
 	// The standard UoM.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
-	@JoinColumn(name="standard_uom_persistentid")
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "standard_uom_persistentid")
 	@Setter
 	private UomMaster						standardUom;
 
@@ -162,7 +162,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final Facility getParent() {
 		if (parent instanceof HibernateProxy) {
 			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}		
+		}
 		return parent;
 	}
 
@@ -276,7 +276,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 		for (Item item : getItems()) {
 			Location location = (Location) item.getStoredLocation();
-			if (location ==  null || !location.equals(inLocation))
+			if (location == null || !location.equals(inLocation))
 				continue;
 
 			// Perhaps we should logger.warn if we found matching uom item, but it is not on our path. Not doing now.
@@ -297,6 +297,34 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For location-based pick
+	 * This is used in EDI evaluation
+	*/
+	public final Item getActiveItemMatchingLocUom(final Location inLocation, final UomMaster inUomMaster) {
+
+		Item selectedItem = null;
+		if (inUomMaster == null) {
+			LOGGER.error("bad call to getItemMatchingLocUom");
+			return null;
+		}
+
+		for (Item item : getItems()) {
+			if (!item.getActive())
+				continue;
+			Location location = (Location) item.getStoredLocation();
+			if (location == null || !location.equals(inLocation))
+				continue;
+			if (item.getUomMaster().equals(inUomMaster)) {
+				selectedItem = item;
+				break;
+			}
+		}
+
+		return selectedItem;
 	}
 
 	// --------------------------------------------------------------------------
@@ -345,13 +373,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		String thisUomId = inUom.getUomMasterId();
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		Facility facility = inLocation.getFacility();
-		boolean eachMult =  PropertyService.getBooleanPropertyFromConfig(facility,DomainObjectProperty.EACHMULT);
+		boolean eachMult = PropertyService.getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
 		if (thisItemEach && !eachMult) {
 			for (Item item : getItems()) {
-				if (UomNormalizer.isEach(item.getUomMasterId())) return item;
+				if (UomNormalizer.isEach(item.getUomMasterId()))
+					return item;
 			}
-		} 
-		else {
+		} else {
 			String domainId = Item.makeDomainId(this.getItemId(), inLocation, thisUomId);
 			for (Item item : getItems()) {
 				// if items follow the normal pattern, equals on domainId would be sufficient				
