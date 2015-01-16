@@ -1347,7 +1347,7 @@ public class Facility extends Location {
 					if (preferredLoc != null) {
 						item = itemMaster.getActiveItemMatchingLocUomOnPath(preferredLoc, path, uomStr);
 						if (item == null){
-							preferredLocStr = preferredLoc.getLocationId();
+							preferredLocStr = inOrderDetail.getPreferredLocationUi();
 							triedPreferred = true;
 						}
 					}
