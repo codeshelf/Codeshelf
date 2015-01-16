@@ -7,22 +7,19 @@
 package com.gadgetworks.codeshelf.device.radio;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 import com.gadgetworks.flyweight.command.AckStateEnum;
@@ -51,6 +48,7 @@ import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -73,11 +71,9 @@ public class RadioController implements IRadioController {
 
 	private static final String									CONTROLLER_THREAD_NAME		= "Radio Controller";
 	private static final String									BACKGROUND_THREAD_NAME		= "Radio Controller Background";
-	private static final String									RECEIVER_THREAD_NAME		= "Packet Receiver";
 	private static final String									STARTER_THREAD_NAME			= "Intferface Starter";
 
 	private static final int									BACKGROUND_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
-	private static final int									RECEIVER_THREAD_PRIORITY	= Thread.MAX_PRIORITY;
 	private static final int									STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
 
 	private static final long									CTRL_START_DELAY_MILLIS		= 5;
@@ -98,24 +94,18 @@ public class RadioController implements IRadioController {
 	private static final int									ACK_QUEUE_SIZE				= 200;
 
 	private Boolean												mShouldRun					= true;
-	private Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
-	private Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
 
 	@Getter
-	private IGatewayInterface									gatewayInterface;
+	private final IGatewayInterface									gatewayInterface;
 
 	private NetAddress											mServerAddress;
 	private NetAddress											mBroadcastAddress;
 	private NetworkId											mBroadcastNetworkId;
 
 	private List<IRadioControllerEventListener>					mEventListeners;
-	private long												mLastIntfCheckMillis;
+	private long										mLastIntfCheckMillis;
 
-	@SuppressWarnings("unused")
-	private boolean												mIntfCheckPending;																// actually, this is used, suppressing bogus warning
-	private byte												mAckId;
-	private volatile Map<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
-
+	//TODO Addess thread safety here
 	private ChannelInfo[]										mChannelInfo;
 	private boolean												mChannelSelected;
 	private byte												mPreferredChannel;
@@ -123,17 +113,25 @@ public class RadioController implements IRadioController {
 
 	private Thread												mControllerThread;
 	private Thread												mBackgroundThread;
-	private Thread												mPacketProcessorThread;
 
+	//The 3 variables below are only modifed in a synchronized method because their modifications must sequential and atomic
+	//since multiple threads can use this class. The maps must be thread-safe because other threads maybe read from the map
+	//without being in the synchronized block
 	private byte												mNextAddress;
+	private final Map<NetGuid, INetworkDevice>			mDeviceGuidMap				= Maps.newConcurrentMap();
+	private final Map<NetAddress, INetworkDevice>		mDeviceNetAddrMap			= Maps.newConcurrentMap();
 
-	private boolean												mRunning;
+	//Ack Id must start from 1
+	private final AtomicInteger							mAckId						= new AtomicInteger(1);
 
-	private final Counter										packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
-																								"packets.sent");
+	private volatile boolean							mRunning;
+
 	private final RadioControllerPacketHandlerService			packetHandlerService;
-	private final RadioControllerPacketIOService				packetIOService;
-	private final RadioControllerBroadcastService				broadcastService;
+	private final RadioControllerPacketIOService		packetIOService;
+
+	//private final RadioControllerBroadcastService				broadcastService;
+
+	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -155,9 +153,6 @@ public class RadioController implements IRadioController {
 		}
 		mRadioChannel = 0;
 
-		mPendingAcksMap = new ConcurrentHashMap<NetAddress, BlockingQueue<IPacket>>();
-		mDeviceGuidMap = new HashMap<NetGuid, INetworkDevice>();
-		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
 		mNextAddress = 1;
 
 		mRunning = false;
@@ -221,7 +216,6 @@ public class RadioController implements IRadioController {
 		while (aThreadIsRunning) {
 			aThreadIsRunning = (mBackgroundThread.getState() != Thread.State.TERMINATED);
 			//			aThreadIsRunning |= (mPacketReceiverThread.getState() != Thread.State.TERMINATED);
-			aThreadIsRunning |= (mPacketProcessorThread.getState() != Thread.State.TERMINATED);
 			try {
 				Thread.sleep(1);
 			} catch (InterruptedException e) {
@@ -262,8 +256,6 @@ public class RadioController implements IRadioController {
 		interfaceStarterThread.setPriority(STARTER_THREAD_PRIORITY);
 		interfaceStarterThread.setDaemon(true);
 		interfaceStarterThread.start();
-
-		//startPacketReceivers();
 
 		// Wait until the interfaces start.
 		boolean started;
@@ -581,35 +573,17 @@ public class RadioController implements IRadioController {
 					&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
 
 				// If we're pending an ACK then assign an ACK ID.
-				mAckId++;
-				if (mAckId == 0) {
-					// To the network protocol a ACK ID of zero means we don't want a command ACK.
-					mAckId = 1;
+				int nextAckId = mAckId.getAndIncrement();
+				while (nextAckId > Byte.MAX_VALUE) {
+					mAckId.compareAndSet(nextAckId, 1);
+					nextAckId = mAckId.get();
 				}
-				packet.setAckId(mAckId);
+
+				packet.setAckId((byte) nextAckId);
 				packet.setAckState(AckStateEnum.PENDING);
-
-				// Add the command to the pending ACKs map, and increment the command ID counter.
-				BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
-				if (queue == null) {
-					queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
-					mPendingAcksMap.put(inDstAddr, queue);
-				}
-
-				// If the ACK queue is too full then pause.
-				// (Tho' in practice this starves the system - I raised ACK_QUEUE_SIZE to a crazy-high number until I can figure this out better.)
-				while (queue.size() >= ACK_QUEUE_SIZE) {
-					try {
-						Thread.sleep(1);
-					} catch (InterruptedException e) {
-						LOGGER.error("", e);
-					}
-				}
-				queue.add(packet);
-				LOGGER.debug("Queue packet:    " + packet.toString());
-			} else {
-				sendPacket(packet);
 			}
+			sendPacket(packet);
+
 
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -747,26 +721,6 @@ public class RadioController implements IRadioController {
 		//Do Nothing
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inPacket
-	 */
-	private void processAckPacket(IPacket inPacket) {
-		BlockingQueue<IPacket> queue = mPendingAcksMap.get(inPacket.getSrcAddr());
-		if (queue != null) {
-			for (IPacket packet : queue) {
-				//IPacket packet = queue.peek();
-				if (packet != null) {
-					if (packet.getAckId() == inPacket.getAckId()) {
-						packet.setAckData(inPacket.getAckData());
-						packet.setAckState(AckStateEnum.SUCCEEDED);
-						queue.remove(packet);
-						LOGGER.debug("Packet acked SUCCEEDED: " + packet.toString());
-					}
-				}
-			}
-		}
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -952,89 +906,84 @@ public class RadioController implements IRadioController {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * 	Start the packet receivers.
+	 * @param inPacket
 	 */
-	private void startPacketReceivers() {
-		// ~bhe: this should go into a separate class
-		Thread gwThread = new Thread(new Runnable() {
-			//private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
-			@Override
-			public void run() {
-				while (mShouldRun) {
-					try {
-						if (gatewayInterface.isStarted()) {
-							//IPacket packet = gatewayInterface.receivePacket(mNetworkId);
-							//packetHandlerService.handle(packet);
-						} else {
-							try {
-								Thread.sleep(CTRL_START_DELAY_MILLIS);
-							} catch (InterruptedException e) {
-								LOGGER.error("", e);
-							}
-						}
-					} catch (RuntimeException e) {
-						// We catch EVERY exception, because we don't want the thread to abruptly exit on an unchecked exception.
-						LOGGER.error("", e);
-					}
+	private void sendPacket(IPacket inPacket) {
+		LOGGER.info("SABA Packet SEND: " + inPacket.toString());
+
+		// Add the command to the pending ACKs map, and increment the command ID counter.
+		if (inPacket.getAckId() != IPacket.EMPTY_ACK_ID) {
+			BlockingQueue<IPacket> queue = mPendingAcksMap.get(inPacket.getDstAddr());
+			if (queue == null) {
+				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
+				BlockingQueue<IPacket> existingQueue = mPendingAcksMap.putIfAbsent(inPacket.getDstAddr(), queue);
+				if (existingQueue != null) {
+					queue = existingQueue;
 				}
 			}
-		}, RECEIVER_THREAD_NAME + ": " + gatewayInterface.getClass().getSimpleName());
-		gwThread.setPriority(RECEIVER_THREAD_PRIORITY);
-		gwThread.start();
+
+			// If the ACK queue is too full then pause.
+			boolean success = queue.offer(inPacket);
+			if (!success) {
+				//Given an ACK timeout of 20ms and a read frequency of 1ms. If the max queue size is over 20 (and it should be)
+				//then we can drop the earlier packets since they should be timed out anyway.
+				IPacket packetToDrop = queue.poll();
+				LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}", queue.size(), packetToDrop);
+				queue.offer(inPacket);
+			}
+			LOGGER.debug("Packet is now pending ACK: {}", inPacket);
+		}
+
+		try {
+			packetIOService.handleOutboundPacket(inPacket);
+		} catch (InterruptedException e) {
+			LOGGER.error("Failed to send packet to IO Service ", e);
+		}
+
 	}
 
-	public void receivePacket(IPacket packet) {
-		if (packet != null) {
-			INetworkDevice device = this.mDeviceNetAddrMap.get(packet.getSrcAddr());
-			if (device != null) {
-				ContextLogging.setNetGuid(device.getGuid());
-			}
-			try {
-				if (packet.getPacketType() == IPacket.ACK_PACKET) {
-					LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
-					processAckPacket(packet);
-				} else {
-					// If the inbound packet had an ACK ID then respond with an ACK ID.
-					byte ackId = packet.getAckId();
-					if (ackId != IPacket.EMPTY_ACK_ID) {
-						respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
+	private void processAckPacket(IPacket ackPacket) {
+		BlockingQueue<IPacket> queue = mPendingAcksMap.get(ackPacket.getSrcAddr());
+		if (queue != null) {
+			for (IPacket packet : queue) {
+				//IPacket packet = queue.peek();
+				if (packet != null) {
+					if (packet.getAckId() == ackPacket.getAckId()) {
+						packet.setAckData(ackPacket.getAckData());
+						packet.setAckState(AckStateEnum.SUCCEEDED);
+						queue.remove(packet);
+						LOGGER.debug("Packet acked SUCCEEDED={}", packet);
 					}
-					receiveCommand(packet.getCommand(), packet.getSrcAddr());
 				}
-				this.packetsSentCounter.inc();
-			} finally {
-				ContextLogging.clearNetGuid();
 			}
 		}
 	}
 
-	// --------------------------------------------------------------------------
 	/**
 	 * @param inAckId
 	 * @param inNetId
 	 * @param inSrcAddr
 	 */
-	private void respondToAck(final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
-		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
+	private void respondToAck(final byte ackId, final NetworkId netId, final NetAddress srcAddr) {
+
+		//Get Network Device
+		INetworkDevice device = mDeviceNetAddrMap.get(srcAddr);
 		if (device == null) {
-			LOGGER.warn("Unable to respond to ack: Device with address " + inSrcAddr + " not found");
+			LOGGER.warn("Unable to respond to ack: Device with address={}", srcAddr);
 			return;
 		}
+
 		ContextLogging.setNetGuid(device.getGuid());
 		try {
-			if (device.isAckIdNew(inAckId)) {
+			if (device.isAckIdNew(ackId)) {
 
-				LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
+				LOGGER.info("Remote ack request RECEIVED: ack={}; netId={}; srcAddr={}", ackId, netId, srcAddr);
 
-				device.setLastAckId(inAckId);
+				device.setLastAckId(ackId);
 				CommandAssocAck ackCmd = new CommandAssocAck("00000000", new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS,
 					(byte) 0));
 
-				sendCommand(ackCmd, inNetId, inSrcAddr, false);
-				IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
-				ackCmd.setPacket(ackPacket);
-				ackPacket.setAckId(inAckId);
-				sendPacket(ackPacket);
+				sendCommand(ackCmd, netId, srcAddr, false);
 			}
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -1042,19 +991,20 @@ public class RadioController implements IRadioController {
 
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inPacket
-	 */
-	private void sendPacket(IPacket inPacket) {
-		LOGGER.info("SABA Packet SEND: " + inPacket.toString());
-
-		if (inPacket != null) {
-			try {
-				packetIOService.queuePacketForWrite(inPacket);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
+	public void handleInboundPacket(IPacket packet) {
+		if (packet != null) {
+			if (packet.getPacketType() == IPacket.ACK_PACKET) {
+				LOGGER.debug("Packet remote ACK req RECEIVED={}", packet.toString());
+				processAckPacket(packet);
+			} else {
+				// If the inbound packet had an ACK ID then respond with an ACK ID.
+				byte ackId = packet.getAckId();
+				if (ackId != IPacket.EMPTY_ACK_ID) {
+					respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
+				}
+				receiveCommand(packet.getCommand(), packet.getSrcAddr());
 			}
+
 		}
 	}
 
@@ -1166,7 +1116,7 @@ public class RadioController implements IRadioController {
 	 * @see com.gadgetworks.flyweight.controller.IController#addNetworkDevice(com.gadgetworks.flyweight.controller.INetworkDevice)
 	 */
 	@Override
-	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
+	public synchronized final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
 		try {
 			// If the device has no address then assign one.
@@ -1188,7 +1138,7 @@ public class RadioController implements IRadioController {
 	 * @see com.gadgetworks.flyweight.controller.IController#removeNetworkDevice(com.gadgetworks.flyweight.controller.INetworkDevice)
 	 */
 	@Override
-	public final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
+	public synchronized final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
 		try {
 			mDeviceGuidMap.remove(inNetworkDevice.getGuid());

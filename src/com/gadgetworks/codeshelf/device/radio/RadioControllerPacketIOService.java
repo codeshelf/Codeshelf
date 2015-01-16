@@ -9,6 +9,9 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Counter;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
@@ -25,7 +28,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerPacketIOService {
 	private static final Logger							LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
-
+	private final Counter								packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
+																						"packets.sent");
 	private final ScheduledExecutorService				scheduleExecutorService		= Executors.newScheduledThreadPool(2,
 																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																							.build());
@@ -62,7 +66,7 @@ public class RadioControllerPacketIOService {
 	/**
 	 * This method will block until there is space in the queue.
 	 */
-	public void queuePacketForWrite(IPacket packet) throws InterruptedException {
+	public void handleOutboundPacket(IPacket packet) throws InterruptedException {
 		LOGGER.info("SABA Queueing packet for gateway. Dst={}; QueueSize={}; Max={}",
 			packet,
 			packetsPendingWrite.size(),
@@ -86,7 +90,7 @@ public class RadioControllerPacketIOService {
 
 						if (packet != null) {
 							//Hand packet off to handler service
-							boolean success = packetHandlerService.handle(packet);
+							boolean success = packetHandlerService.handleInboundPacket(packet);
 
 							if (!success) {
 
@@ -117,7 +121,7 @@ public class RadioControllerPacketIOService {
 				Thread.sleep(sleepTimeMs);
 
 				//Hand packet off to handler service
-				success = packetHandlerService.handle(packet);
+				success = packetHandlerService.handleInboundPacket(packet);
 
 				if (!success) {
 					LOGGER.warn("PacketHandlerService failed to accept packet again. Attempt={}/{}; SleepTimeMs={}; Packet={};",
@@ -153,7 +157,7 @@ public class RadioControllerPacketIOService {
 
 					//Send packet
 					gatewayInterface.sendPacket(packet);
-					//this.packetsSentCounter.inc();
+					packetsSentCounter.inc();
 				}
 			} catch (Exception e) {
 				LOGGER.error("Packet Writer Error ", e);

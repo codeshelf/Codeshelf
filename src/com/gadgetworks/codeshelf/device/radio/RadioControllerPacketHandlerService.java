@@ -17,7 +17,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 /**
  * The packet handler service is thread-safe and allows multiple threads to call handle. The handle method will add the packet to a queue
  * to be processed. If that queue is full, the handle method will throw an exception. Each submitted packed is processed in order by
- * the SourceAddr and in parallel across different SourceAddres. The parallelism of this service defaults to the number of available cores.
+ * the SourceAddr and in parallel across different SourceAddres. The parallelism of this service defaults to the number of available cores
  * 
  * @author saba
  *
@@ -32,17 +32,18 @@ public class RadioControllerPacketHandlerService {
 																									.build());
 
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	queueMap				= Maps.newConcurrentMap();
+
 	private static final int							MAX_PACKET_QUEUE_SIZE	= 50;
-	
+
 	private final RadioController									radioController;
-	
+
 
 	public RadioControllerPacketHandlerService(RadioController radioController) {
 		super();
 		this.radioController = radioController;
 	}
 
-	public boolean handle(IPacket packet) {
+	public boolean handleInboundPacket(IPacket packet) {
 
 		//Get queue from queueMap in thread-safe manner. Multiple threads can call handle at the same time
 		BlockingQueue<IPacket> queue = queueMap.get(packet.getSrcAddr());
@@ -71,13 +72,11 @@ public class RadioControllerPacketHandlerService {
 		}
 
 		return wasAddedToQueue;
-
 	}
 
 	public void shutdown() {
 		executor.shutdown();
 	}
-	
 
 
 	private final class PacketHandler implements Runnable {
@@ -97,7 +96,7 @@ public class RadioControllerPacketHandlerService {
 
 			try {
 				//Handle packet
-				radioController.receivePacket(packet);
+				radioController.handleInboundPacket(packet);
 			} catch (Exception e) {
 				//Handle Error
 				LOGGER.error("Packet={}", packet, e);
