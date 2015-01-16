@@ -539,6 +539,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility); // set it back
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -735,6 +736,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		
 		try {
 			this.getPersistenceService().beginTenantTransaction();
+			che1 = Che.DAO.reload(che1);
 			che1.setDescription(desc);
 			Che.DAO.store(che1);
 			Assert.assertEquals(desc, che1.getDescription());
@@ -749,6 +751,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("Case 2: modify the description field on the other CHE in separate transaction.");
 		try {
 			this.getPersistenceService().beginTenantTransaction();
+			che2 = Che.DAO.reload(che2);
 			che2.setDescription(descript2);
 			Assert.assertEquals(descript2, che2.getDescription());
 			Che.DAO.store(che2);
