@@ -99,7 +99,7 @@ public class RadioControllerPacketHandlerService {
 				radioController.handleInboundPacket(packet);
 			} catch (Exception e) {
 				//Handle Error
-				LOGGER.error("Packet={}", packet, e);
+				LOGGER.error("PacketHandler Error. Packet={}", packet, e);
 			} finally {
 				//The finally block ensures that we will always pop this packet off the queue, no matter if we have some uncaught exception or not (like a generic throwable)
 

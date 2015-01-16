@@ -12,6 +12,9 @@ import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
@@ -85,15 +88,13 @@ public class RadioController implements IRadioController {
 	private static final long									EVENT_SLEEP_MILLIS			= 50;
 	private static final long									INTERFACE_CHECK_MILLIS		= 750;
 	private static final long									TOO_LONG_DURATION_MILLIS	= 2000;
-	private static final long									CONTROLLER_SLEEP_MILLIS		= 10;
 	private static final int									MAX_CHANNEL_VALUE			= 255;
 
 	private static final long									PACKET_SPACING_MILLIS		= 20;
-	private static final int									MAX_NETWORK_TEST_NUM		= 64;
 
 	private static final int									ACK_QUEUE_SIZE				= 200;
 
-	private Boolean												mShouldRun					= true;
+	private volatile boolean										mShouldRun					= true;
 
 	@Getter
 	private final IGatewayInterface									gatewayInterface;
@@ -103,16 +104,15 @@ public class RadioController implements IRadioController {
 	private NetworkId											mBroadcastNetworkId;
 
 	private List<IRadioControllerEventListener>					mEventListeners;
-	private long										mLastIntfCheckMillis;
 
-	//TODO Addess thread safety here
+	//TODO Address thread safety here
 	private ChannelInfo[]										mChannelInfo;
 	private boolean												mChannelSelected;
 	private byte												mPreferredChannel;
 	private byte												mRadioChannel;
 
 	private Thread												mControllerThread;
-	private Thread												mBackgroundThread;
+	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor();
 
 	//The 3 variables below are only modifed in a synchronized method because their modifications must sequential and atomic
 	//since multiple threads can use this class. The maps must be thread-safe because other threads maybe read from the map
@@ -128,8 +128,7 @@ public class RadioController implements IRadioController {
 
 	private final RadioControllerPacketHandlerService			packetHandlerService;
 	private final RadioControllerPacketIOService		packetIOService;
-
-	//private final RadioControllerBroadcastService				broadcastService;
+	private final RadioControllerBroadcastService					broadcastService;
 
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
 
@@ -158,6 +157,7 @@ public class RadioController implements IRadioController {
 		mRunning = false;
 		packetHandlerService = new RadioControllerPacketHandlerService(this);
 		packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
+		broadcastService = new RadioControllerBroadcastService(this, INTERFACE_CHECK_MILLIS);
 	}
 
 	@Override
@@ -204,24 +204,17 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void stopController() {
+		backgroundService.shutdown();
 		packetIOService.stop();
 		packetHandlerService.shutdown();
+		broadcastService.stop();
+
 		// Stop all of the interfaces.
 		gatewayInterface.stopInterface();
 
 		// Signal that we want to stop.
 		mShouldRun = false;
 
-		boolean aThreadIsRunning = false;
-		while (aThreadIsRunning) {
-			aThreadIsRunning = (mBackgroundThread.getState() != Thread.State.TERMINATED);
-			//			aThreadIsRunning |= (mPacketReceiverThread.getState() != Thread.State.TERMINATED);
-			try {
-				Thread.sleep(1);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-		}
 		mRunning = false;
 	}
 
@@ -231,19 +224,13 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void run() {
-
-		byte testNum = 0;
-
 		// Kick off the background event processing.
-		mBackgroundThread = new Thread(new Runnable() {
+		backgroundService.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				processEvents();
 			}
-		}, BACKGROUND_THREAD_NAME);
-		mBackgroundThread.setPriority(BACKGROUND_THREAD_PRIORITY);
-		mBackgroundThread.setDaemon(true);
-		mBackgroundThread.start();
+		}, 0, EVENT_SLEEP_MILLIS, TimeUnit.MILLISECONDS);
 
 		// Start all of the serial interfaces.
 		// They start on a thread since this op won't complete if no dongle is attached.
@@ -275,41 +262,7 @@ public class RadioController implements IRadioController {
 		selectChannel();
 		packetIOService.start();
 
-		mLastIntfCheckMillis = System.currentTimeMillis();
-		while (mShouldRun) {
-			try {
-				if (/*(!mIntfCheckPending) && */(mLastIntfCheckMillis + INTERFACE_CHECK_MILLIS < System.currentTimeMillis())
-						&& (gatewayInterface.isStarted())) {
-
-					if (testNum == MAX_NETWORK_TEST_NUM)
-						testNum = 0;
-					//					CommandNetMgmtIntfTest netIntTestCmd = new CommandNetMgmtIntfTest(testNum++);
-					//					sendCommand(netIntTestCmd, mBroadcastAddress, false);
-					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
-						mBroadcastNetworkId,
-						PRIVATE_GUID,
-						mPreferredChannel,
-						new NetChannelValue((byte) 0),
-						new NetChannelValue((byte) 0));
-					// This send ( beacon ) goes to radio. The response is immediate, which will clear mIntfCheckPending.
-					// The radio broadcast goes out. All associated controllers should receive it. They reboot if they do not see one in 3.5 seconds.
-					sendCommand(netCheck, mBroadcastAddress, false);
-
-					long currentTime = System.currentTimeMillis();
-					Long durationSinceLastCheck = currentTime - mLastIntfCheckMillis;
-					if (durationSinceLastCheck > TOO_LONG_DURATION_MILLIS) {
-						LOGGER.warn("Duration since last beacon sent to radio: " + durationSinceLastCheck + "millis");
-					}
-					mLastIntfCheckMillis = currentTime;
-					// Wait for the next check.
-					Thread.sleep(INTERFACE_CHECK_MILLIS);
-				} else {
-					Thread.sleep(CONTROLLER_SLEEP_MILLIS);
-				}
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-		}
+		broadcastService.start();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -337,7 +290,7 @@ public class RadioController implements IRadioController {
 				// Net mgmt commands only get sent to the FTDI-controlled radio network.
 				sendCommand(netSetupCmd, mBroadcastAddress, false);
 			}
-			LOGGER.info("Radio channel " + inChannel);
+			LOGGER.info("Radio channel={}", inChannel);
 		}
 	}
 
@@ -348,7 +301,7 @@ public class RadioController implements IRadioController {
 	private void processEvents() {
 
 		//	 The controller should process events continuously until the application wants to quit/exit.
-		while (mShouldRun) {
+		if (mShouldRun) {
 
 			try {
 				// Check if there are any pending ACK packets that need resending.
@@ -374,7 +327,7 @@ public class RadioController implements IRadioController {
 										// If we've exceeded the retry time then remove the packet.
 										// We should probably mark the device lost and clear the queue.
 										packet.setAckState(AckStateEnum.NO_RESPONSE);
-										LOGGER.info("Packet acked NO_RESPONSE: " + packet.toString());
+										LOGGER.info("Packet acked NO_RESPONSE {}", packet);
 										queue.remove();
 									}
 								}
@@ -386,23 +339,11 @@ public class RadioController implements IRadioController {
 						}
 					}
 				}
-				//				}
-
-				// Sleep a little to save CPU
-				try {
-					Thread.sleep(EVENT_SLEEP_MILLIS);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
-				}
-			} catch (RuntimeException e) {
-				LOGGER.error("", e);
+			} catch (Exception e) {
+				LOGGER.error("ProcessEvents Error ", e);
 			}
 
 		}
-
-		//this.stopController();
-
-		//System.exit(0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -581,6 +522,30 @@ public class RadioController implements IRadioController {
 
 				packet.setAckId((byte) nextAckId);
 				packet.setAckState(AckStateEnum.PENDING);
+
+				// Add the command to the pending ACKs map, and increment the command ID counter.
+				BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
+				if (queue == null) {
+					queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
+					BlockingQueue<IPacket> existingQueue = mPendingAcksMap.putIfAbsent(inDstAddr, queue);
+					if (existingQueue != null) {
+						queue = existingQueue;
+					}
+				}
+
+				// If the ACK queue is too full then pause.
+				boolean success = queue.offer(packet);
+				if (!success) {
+					//Given an ACK timeout of 20ms and a read frequency of 1ms. If the max queue size is over 20 (and it should be)
+					//then we can drop the earlier packets since they should be timed out anyway.
+					IPacket packetToDrop = queue.poll();
+					LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}",
+						queue.size(),
+						packetToDrop);
+					queue.offer(packet);
+				}
+				LOGGER.debug("Packet is now pending ACK: {}", packet);
+
 			}
 			sendPacket(packet);
 
@@ -909,30 +874,7 @@ public class RadioController implements IRadioController {
 	 * @param inPacket
 	 */
 	private void sendPacket(IPacket inPacket) {
-		LOGGER.info("SABA Packet SEND: " + inPacket.toString());
-
-		// Add the command to the pending ACKs map, and increment the command ID counter.
-		if (inPacket.getAckId() != IPacket.EMPTY_ACK_ID) {
-			BlockingQueue<IPacket> queue = mPendingAcksMap.get(inPacket.getDstAddr());
-			if (queue == null) {
-				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
-				BlockingQueue<IPacket> existingQueue = mPendingAcksMap.putIfAbsent(inPacket.getDstAddr(), queue);
-				if (existingQueue != null) {
-					queue = existingQueue;
-				}
-			}
-
-			// If the ACK queue is too full then pause.
-			boolean success = queue.offer(inPacket);
-			if (!success) {
-				//Given an ACK timeout of 20ms and a read frequency of 1ms. If the max queue size is over 20 (and it should be)
-				//then we can drop the earlier packets since they should be timed out anyway.
-				IPacket packetToDrop = queue.poll();
-				LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}", queue.size(), packetToDrop);
-				queue.offer(inPacket);
-			}
-			LOGGER.debug("Packet is now pending ACK: {}", inPacket);
-		}
+		LOGGER.debug("Sending Packet {}" + inPacket);
 
 		try {
 			packetIOService.handleOutboundPacket(inPacket);

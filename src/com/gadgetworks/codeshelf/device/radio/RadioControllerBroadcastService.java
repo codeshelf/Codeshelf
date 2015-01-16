@@ -19,7 +19,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerBroadcastService {
 	private static final Logger						LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 
-	private final ScheduledExecutorService			scheduleExecutorService	= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("rdctrl-broadcast-thread")
+	private final ScheduledExecutorService	scheduleExecutorService	= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-broadcast-thread")
 		.build());
 	private final NetworkId 						broadcastNetworkId 		= new NetworkId(IPacket.BROADCAST_NETWORK_ID);
 	private final NetAddress						broadcastAddress 		= new NetAddress(IPacket.BROADCAST_ADDRESS);

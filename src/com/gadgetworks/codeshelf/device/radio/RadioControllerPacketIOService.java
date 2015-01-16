@@ -67,7 +67,7 @@ public class RadioControllerPacketIOService {
 	 * This method will block until there is space in the queue.
 	 */
 	public void handleOutboundPacket(IPacket packet) throws InterruptedException {
-		LOGGER.info("SABA Queueing packet for gateway. Dst={}; QueueSize={}; Max={}",
+		LOGGER.debug("Queueing packet for gateway. Dst={}; QueueSize={}; Max={}",
 			packet,
 			packetsPendingWrite.size(),
 			MAX_PACKET_WRITE_QUEUE_SIZE);
