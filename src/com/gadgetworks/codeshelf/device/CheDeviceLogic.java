@@ -215,21 +215,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
 		// Lots of upstream code generates display messages.
 		if (!this.isDeviceAssociated()) {
-			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
+			LOGGER.debug("skipping send display for unassociated device={}", this.getMyGuidStrForLog());
 			// This is far less logging than if the command actually goes, so might as well say what is going on.
 			return;
 		}
 
-		String displayString = "Display message for " + getMyGuidStrForLog();
-		if (!inLine1Message.isEmpty())
-			displayString += " line1: " + inLine1Message;
-		if (!inLine2Message.isEmpty())
-			displayString += " line2: " + inLine2Message;
-		if (!inLine3Message.isEmpty())
-			displayString += " line3: " + inLine3Message;
-		if (!inLine4Message.isEmpty())
-			displayString += " line4: " + inLine4Message;
-		LOGGER.info(displayString);
+		LOGGER.info("Display message for {}; line1={}; line2={}; line3={}; line4={}",
+			getMyGuidStrForLog(),
+			inLine1Message,
+			inLine2Message,
+			inLine3Message,
+			inLine4Message);
+
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			inLine1Message,
 			inLine2Message,
