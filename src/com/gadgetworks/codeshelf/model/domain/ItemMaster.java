@@ -261,6 +261,45 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * For location-based pick
+	 * This is used for cart setup for outbound orders (classic pick)
+	 * Return null if location does not match. Also null for uom mismatch or not on path.
+	*/
+	public final Item getActiveItemMatchingLocUomOnPath(final Location inLocation, final Path inPath, final String inUomStr) {
+		Item result = null;
+
+		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
+
+		Location foundLocation = null;
+		Item selectedItem = null;
+
+		for (Item item : getItems()) {
+			Location location = (Location) item.getStoredLocation();
+			if (location ==  null || !location.equals(inLocation))
+				continue;
+
+			// Perhaps we should logger.warn if we found matching uom item, but it is not on our path. Not doing now.
+			if (inPath.isLocationOnPath(location)) {
+				String itemUom = item.getUomMasterId();
+				String itemNormalizedUom = UomNormalizer.normalizeString(itemUom);
+				if (normalizedUomStr.equals(itemNormalizedUom)) {
+					foundLocation = location;
+					selectedItem = item;
+					break;
+				}
+			}
+		}
+
+		// The item is on the CHE's path, so add it.
+		if (foundLocation != null) {
+			result = selectedItem;
+		}
+
+		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Return list of inventory items of the right UOM for that SKU
 	 * @param inUomStr
 	 * @return
