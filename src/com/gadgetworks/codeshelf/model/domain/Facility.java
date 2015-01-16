@@ -1303,7 +1303,8 @@ public class Facility extends Location {
 	private WorkInstruction makeWIForOutbound(final OrderDetail inOrderDetail,
 		final Che inChe,
 		final Container inContainer,
-		final Timestamp inTime) {
+		final Timestamp inTime,
+		final boolean inMatchDetailPreferredLocation) {
 
 		WorkInstruction resultWi = null;
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -1337,7 +1338,28 @@ public class Facility extends Location {
 			for (Path path : getPaths()) {
 				boolean foundOne = false;
 				String uomStr = inOrderDetail.getUomMasterId();
-				Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+				// DEV-574  if orderDetail has a preferredLocation and LOCAPICK parameter is true, then try first to find the item at that location.
+				Item item = null;
+				boolean triedPreferred = false;
+				String preferredLocStr = null;
+				if (inMatchDetailPreferredLocation) {
+					Location preferredLoc = inOrderDetail.getPreferredLocObject(this);
+					if (preferredLoc != null) {
+						item = itemMaster.getActiveItemMatchingLocUomOnPath(preferredLoc, path, uomStr);
+						if (item == null){
+							preferredLocStr = preferredLoc.getLocationId();
+							triedPreferred = true;
+						}
+					}
+				}
+				if (item == null) {
+					item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+					if (triedPreferred)
+						if (item == null)
+							LOGGER.warn("Item not found at " + preferredLocStr + ". Did not find elsewhere on path.");
+						else
+							LOGGER.warn("Item not found at " + preferredLocStr + ". Substituted item at " + item.getItemLocationAlias());
+				}
 
 				if (item != null) {
 					resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -1374,6 +1396,8 @@ public class Facility extends Location {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		int count = 0;
 
+		boolean locapickValue = PropertyService.getBooleanPropertyFromConfig(this, DomainObjectProperty.LOCAPICK);
+
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
 		for (Container container : inContainerList) {
@@ -1385,7 +1409,7 @@ public class Facility extends Location {
 					if (orderDetail.getQuantity() > 0) {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
-						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
+						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime, locapickValue); // Could be normal WI, or a short WI
 						if (aWi != null) {
 							wiResultList.add(aWi);
 							somethingDone = true;
