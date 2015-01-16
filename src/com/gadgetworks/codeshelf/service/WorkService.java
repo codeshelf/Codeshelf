@@ -63,7 +63,7 @@ public class WorkService implements IApiService {
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-
+	
 	@Getter
 	private PersistenceService			persistenceService;
 
@@ -195,6 +195,8 @@ public class WorkService implements IApiService {
 		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
 	}
 
+
+	
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.DAO.findByPersistentId(cheId);
 		if (che != null) {
@@ -303,7 +305,7 @@ public class WorkService implements IApiService {
 			LOGGER.error("Failed to update order status", e);
 		}
 	}
-
+	
 	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {

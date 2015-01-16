@@ -15,6 +15,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.Location;
+import com.gadgetworks.codeshelf.model.domain.LocationAlias;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -264,8 +265,11 @@ public class InventoryServiceTest extends EdiTestABC {
 		Facility facility=Facility.DAO.findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
+		Assert.assertNotNull(tier);
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		List<LocationAlias> aliases = tier.getAliases();
+		Assert.assertTrue(aliases.size()>0);
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {

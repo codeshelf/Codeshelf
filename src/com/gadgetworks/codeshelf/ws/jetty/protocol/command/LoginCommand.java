@@ -61,7 +61,6 @@ public class LoginCommand extends CommandABC {
 						CodeshelfNetwork network = null;
 						if (sitecon != null) {
 							network = sitecon.getParent();
-							network.getDomainId(); // restore entity
 							response.setNetwork(network);
 
 							// send all network updates to this session for this network 

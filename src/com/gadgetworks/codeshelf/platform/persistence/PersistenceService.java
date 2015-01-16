@@ -6,6 +6,7 @@ import java.util.Map;
 
 import lombok.Getter;
 
+import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -13,6 +14,7 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,6 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.service.PropertyService;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
@@ -320,6 +320,19 @@ public class PersistenceService extends Service {
 	public void resetDatabase() {
 		SchemaExport se = new SchemaExport(this.configuration);
 		se.create(false, true);
+	}
+
+	public static <T>T deproxify(T object) {
+		if (object==null) {
+			return null;
+		} if (object instanceof HibernateProxy) {
+	        Hibernate.initialize(object);
+	        T realDomainObject = (T) ((HibernateProxy) object)
+	                  .getHibernateLazyInitializer()
+	                  .getImplementation();
+	        return (T)realDomainObject;
+	    }
+		return object;
 	}
 
 }

@@ -21,6 +21,7 @@ import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
@@ -32,6 +33,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +44,7 @@ import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
@@ -107,18 +110,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private Double						posAlongPath;
 
 	// Associated path segment (optional)
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@JoinColumn(name = "path_segment_persistentid")
-	@Getter
 	@Setter
 	private PathSegment					pathSegment;
 	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
 	// DomainObjectABC will manufacture a call to getPathSegment during DAO.store(). So do not skip the getter with complicated overrides
 
 	// The LED controller.
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@JoinColumn(name = "led_controller_persistentid")
-	@Getter
 	@Setter
 	private LedController				ledController;
 
@@ -198,6 +199,38 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Getter
 	@Setter
 	private Boolean						active;
+	
+	// The owning location.
+	@ManyToOne(optional=true,fetch=FetchType.LAZY)
+	private Location parent;
+
+	@Column(nullable = false,name="pick_face_end_pos_type")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private PositionTypeEnum	pickFaceEndPosType;
+
+	// X pos of pick face end (pick face starts at anchor pos).
+	@Column(nullable = false,name="pick_face_end_pos_x")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double				pickFaceEndPosX;
+
+	// Y pos of pick face end (pick face starts at anchor pos).
+	@Column(nullable = false,name="pick_face_end_pos_y")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double				pickFaceEndPosY;
+
+	// Z pos of pick face end (pick face starts at anchor pos).
+	@Column(nullable = false,name="pick_face_end_pos_z")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Double				pickFaceEndPosZ;
 
 	public Location() {
 		active = true;
@@ -213,10 +246,52 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
 
+	@Override
+	public Location getParent() {
+		if (parent instanceof HibernateProxy) {
+			this.parent = (Location) deproxify(this.parent);
+		}				
+		return this.parent;
+	}
+	
+	public LedController getLedController() {
+		if (ledController instanceof HibernateProxy) {
+			this.ledController = (LedController) PersistenceService.deproxify(this.ledController);
+		}
+		return ledController;
+	}
+	
+	public PathSegment getPathSegment() {
+		if (pathSegment instanceof HibernateProxy) {
+			this.pathSegment = (PathSegment) PersistenceService.deproxify(this.pathSegment);
+		}
+		return pathSegment;
+	}
+	
+	public static Location deproxify(Location location) {
+		return PersistenceService.<Location>deproxify(location);
+	}
+	
 	public boolean isFacility() {
 		return false;
 	}
 
+	public boolean isAisle() {
+		return false;
+	}
+
+	public boolean isBay() {
+		return false;
+	}
+	
+	public boolean isTier() {
+		return false;
+	}
+	
+	public boolean isSlot() {
+		return false;
+	}
+	
 	public void updateAnchorPoint(Double x, Double y, Double z) {
 		anchorPosX = x;
 		anchorPosY = y;
@@ -240,12 +315,17 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public final List<Location> getChildren() {
-		return new ArrayList<Location>(locations.values());
+		List<Location> children = new ArrayList<Location>();
+		for(Location child : locations.values()) {
+			children.add(PersistenceService.<Location>deproxify(child));
+		}
+		return children;
 	}
 
 	public final List<Location> getActiveChildren() {
 		ArrayList<Location> aList = new ArrayList<Location>();
-		for (Location loc : locations.values()) {
+		List<Location> children = getChildren();
+		for (Location loc : children) {
 			if (loc.isActive())
 				aList.add(loc);
 		}
@@ -499,7 +579,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				return alias.getMappedLocation();
 			}
 		} // else
-		return locations.get(inLocationId);
+		Location location = locations.get(inLocationId);
+		return deproxify(location);
 	}
 
 	// --------------------------------------------------------------------------
@@ -543,14 +624,15 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			Location firstPartLocation = this.findLocationById(firstPart);
 			if (firstPartLocation != null) {
 				result = firstPartLocation.findSubLocationById(secondPart);
+				result = Location.deproxify(result);
 			}
 		}
-		if (result != null)
-			if (!result.isActive())
-				LOGGER.warn("findSubLocationById succeeded with an inactive location. Is this business case intentional?");
+		if (result!=null && !result.isActive()) {
+			LOGGER.warn("findSubLocationById succeeded with an inactive location. Is this business case intentional?");
+		}
 		return result;
 	}
-
+	
 	public final PathSegment getAssociatedPathSegment() {
 		if (isFacility()) {
 			return null;
@@ -558,13 +640,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		PathSegment result = null;
 
-		if (pathSegment == null) {
-			Location parent = (Location) getParent();
+		if (getPathSegment() == null) {
+			// Location parent = getParent();
+			Location parent = Location.deproxify(getParent());
 			if (parent != null) {
 				result = parent.getAssociatedPathSegment();
 			}
 		} else {
-			result = pathSegment;
+			result = getPathSegment();
 		}
 
 		return result;
@@ -1094,7 +1177,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		// Add my inventory
 		aList.addAll(getStoredItems().values());
 		// Add my children's inventory
-		for (Location location : locations.values()) {
+		for (Location location : getChildren()) {
 			aList.addAll(location.getInventoryInWorkingOrder());
 		}
 		// Sort as we want it
@@ -1107,39 +1190,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
-
-	// The owning location.
-	@Getter
-	@ManyToOne
-	protected Location			parent;
-
-	@Column(nullable = false, name = "pick_face_end_pos_type")
-	@Enumerated(value = EnumType.STRING)
-	@Getter
-	@Setter
-	@JsonProperty
-	private PositionTypeEnum	pickFaceEndPosType;
-
-	// X pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false, name = "pick_face_end_pos_x")
-	@Getter
-	@Setter
-	@JsonProperty
-	private Double				pickFaceEndPosX;
-
-	// Y pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false, name = "pick_face_end_pos_y")
-	@Getter
-	@Setter
-	@JsonProperty
-	private Double				pickFaceEndPosY;
-
-	// Z pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false, name = "pick_face_end_pos_z")
-	@Getter
-	@Setter
-	@JsonProperty
-	private Double				pickFaceEndPosZ;
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

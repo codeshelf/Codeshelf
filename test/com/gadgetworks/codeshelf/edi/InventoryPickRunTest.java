@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -18,11 +19,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
+import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -32,6 +36,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -408,5 +413,109 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		this.getPersistenceService().commitTenantTransaction();
 	}	
+
+	@Test
+	public final void testLocationBasedPick() throws IOException {
+		// This is a very complete test of location-based pick. Do not need the integration test with site controller because
+		// Location-based pick is built via:
+		// - Creation of inventory during orders file read, then
+		// - Selection of the inventory items during computeWorkInstructions
+		// Once that is done, site controller just implements the work instructions that were made.
+		
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpSimpleNonSlottedFacility("InvLocP_01");
+		Assert.assertNotNull(facility);	
+		
+		LOGGER.info("1: Set LOCAPICK = true.  Leave EACHMULT = false");
+		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (theProperty != null) {
+			theProperty.setValue(true);
+			PropertyDao.getInstance().store(theProperty);
+		}
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("2: Read the orders file, which has some preferred locations");
+		// This facility has aliases D26 ->D33 and D71->D74
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D-27,61"
+				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D-28,43"
+				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D-21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshell,2,EA,,pick,D-71,";
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer = createOrderImporter() ;
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
+
+		LOGGER.info("3: Set up CHE for orders 10 and 11. Should get 3 jobs");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		mPropertyService.turnOffHK(facility);
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		facility.setUpCheContainerFromString(theChe, "10,11");
+
+		List<WorkInstruction> wiList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		logWiList(wiList);
+		Integer theSize = wiList.size();
+		Assert.assertEquals((Integer) 3, theSize);
+		LOGGER.info("4: Success! Three jobs from location based pick. SKU0003 did not get one made.");
+		
+		LOGGER.info("5: Let's read an inventory file creating SKU0003 in a different place.");
+		
+		String csvString2 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "SKU0003,D-33,Spoon 6in.,80,Cs,6/25/14 12:00,\r\n"; //
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer2 = createInventoryImporter();
+		importer2.importSlottedInventoryFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+		this.getPersistenceService().commitTenantTransaction();
+		
+		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		theChe = Che.DAO.reload(theChe); // getting LazyInitializationException
+
+		mPropertyService.turnOffHK(facility);
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		facility.setUpCheContainerFromString(theChe, "10,11");
+
+		wiList = facility.getWorkInstructions(theChe, "");
+		logWiList(wiList);
+		theSize = wiList.size();
+		Assert.assertEquals((Integer) 4, theSize);
+		
+		LOGGER.info("7: Let's move SKU0004 to D-74. The order preferredLocation is still D-71");
+		String csvString3 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "SKU0004,D-74,9 Three Compartment Unbleached Clamshell,,Ea,6/25/14 12:00,\r\n"; //
+
+		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer3 = createInventoryImporter();
+		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);		
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");
+		LOGGER.info("And a logger.warn saying: Item not found at D-71. Substituted item at D-74");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		theChe = Che.DAO.reload(theChe); // getting LazyInitializationException
+
+		mPropertyService.turnOffHK(facility);
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		facility.setUpCheContainerFromString(theChe, "10,11");
+
+		wiList = facility.getWorkInstructions(theChe, "");
+		logWiList(wiList);
+		theSize = wiList.size();
+		Assert.assertEquals((Integer) 4, theSize);
+		this.getPersistenceService().commitTenantTransaction();
+
+	}
 
 }

@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -14,6 +15,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +62,7 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Vertex.class);
 
 	// The owning location.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Location			parent;
 
 	@NonNull
@@ -115,6 +117,9 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 	}
 
 	public final Location getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = Location.deproxify(this.parent);
+		}
 		return parent;
 	}
 

@@ -49,11 +49,7 @@ public class Slot extends Location {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Slot.class);
-/*
-	public Slot(Tier parent, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
-		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
-	}
-	*/
+
 	public Slot() {
 		super();
 	}
@@ -74,4 +70,20 @@ public class Slot extends Location {
 	public static void setDao(SlotDao inSlotDao) {
 		Slot.DAO = inSlotDao;
 	}
+	
+	@Override
+	public boolean isSlot() {
+		return true;
+	}
+	
+	public static Slot as(Location location) {
+		if (location==null) {
+			return null;
+		}
+		location = deproxify(location);
+		if (location instanceof Slot) {
+	    	return (Slot) location;
+	    }
+		throw new RuntimeException("Location is not a slot");
+	}		
 }
