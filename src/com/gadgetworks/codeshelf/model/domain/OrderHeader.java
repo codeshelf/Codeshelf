@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PickStrategyEnum;
+import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
@@ -431,6 +432,29 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			status = inStatus;
 		}
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Reevaluate the order status based on the status of child order details
+	 */
+	public void reevaluateStatus() {
+		setStatus(OrderStatusEnum.COMPLETE);
+		for (OrderDetail detail : getOrderDetails()) {
+			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
+				setStatus(OrderStatusEnum.SHORT);
+				break;
+			} else if (!detail.getStatus().equals(OrderStatusEnum.COMPLETE)) {
+				setStatus(OrderStatusEnum.INPROGRESS);
+				break;
+			}
+		}
+		try {
+			getDao().store(this);
+		} catch (DaoException e) {
+			LOGGER.error("Failed to update order status", e);
+		}
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**

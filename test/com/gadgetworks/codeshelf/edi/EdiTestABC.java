@@ -11,15 +11,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.PropertyService;
+import com.gadgetworks.codeshelf.service.WorkService;
 
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
 	protected PropertyService mPropertyService = new PropertyService();
-
+	protected WorkService mWorkService = new WorkService().start();
+	
 	private EventProducer		mEventProducer	= new EventProducer();
 
 	protected AislesFileCsvImporter createAisleFileImporter() {
@@ -40,6 +45,7 @@ public abstract class EdiTestABC extends DomainTestABC {
 
 	protected ICsvCrossBatchImporter createCrossBatchImporter() {
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mEventProducer,
+			mWorkService,
 			mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -89,6 +95,19 @@ public abstract class EdiTestABC extends DomainTestABC {
 		for (Item item : inList)
 			LOGGER.info("SKU: " + item.getItemMasterId() + " cm: " + item.getCmFromLeft() + " posAlongPath: "
 					+ item.getPosAlongPathui() + " desc.: " + item.getItemDescription());
+	}
+
+	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
+		// Now ready to run the cart
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe(cheName);
+	
+		mWorkService.setUpCheContainerFromString(theChe, containers);
+	
+		List<WorkInstruction> wiList = mWorkService.getWorkInstructions(theChe, ""); // This returns them in working order.
+		logWiList(wiList);
+		return wiList;
+	
 	}
 
 }

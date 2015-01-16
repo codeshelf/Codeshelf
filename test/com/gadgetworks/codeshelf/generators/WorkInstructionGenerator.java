@@ -114,7 +114,7 @@ public class WorkInstructionGenerator {
 		OrderHeader.DAO.store(orderHeader);
 
 		OrderDetail detail = new OrderDetail("OD1", true);
-		detail.setStatus(OrderStatusEnum.CREATED);
+		detail.setStatus(OrderStatusEnum.RELEASED);
 		detail.setUpdated(new Timestamp(System.currentTimeMillis()));
 		detail.setQuantities(5);
 		detail.setItemMaster(itemMaster);

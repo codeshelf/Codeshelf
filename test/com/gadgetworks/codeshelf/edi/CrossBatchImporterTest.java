@@ -11,7 +11,6 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -19,7 +18,6 @@ import org.junit.Test;
 
 import com.gadgetworks.codeshelf.model.HeaderCounts;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -30,8 +28,6 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.gadgetworks.codeshelf.service.ContainerService;
-import com.gadgetworks.codeshelf.service.ContainerStatus;
 
 /**
  * @author jeffw
@@ -194,16 +190,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 		
-		ContainerService service  = new ContainerService();	
-		
-		//Each detail will have a violation 
-		List<ContainerStatus> results = service.containersWithViolations(facility);
-		Assert.assertEquals(2, results.size());
-		for (ContainerStatus status : results) {
-			Container container = status.getContainer();
-			Assert.assertEquals(1,  status.getResult().getViolations().size());
-		}
-
 		this.getPersistenceService().commitTenantTransaction();
 	}
 

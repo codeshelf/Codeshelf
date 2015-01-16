@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -26,13 +24,14 @@ import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.model.LedRange;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -41,7 +40,6 @@ import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
@@ -49,6 +47,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * @author jeffw
@@ -537,22 +536,23 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 
-		List<WorkInstruction> wiListBeginningOfPath = facility.getWorkInstructions(theChe, "");
+		List<WorkInstruction> wiListBeginningOfPath = mWorkService.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 		
 		// Set up a cart for order 12345, which will generate work instructions
-		facility.setUpCheContainerFromString(theChe, "12345");
+		mWorkService.setUpCheContainerFromString(theChe, "12345");
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
-		List<WorkInstruction> wiListBeginningOfPathAfterSetup = facility.getWorkInstructions(theChe, "");
+		List<WorkInstruction> wiListBeginningOfPathAfterSetup = mWorkService.getWorkInstructions(theChe, "");
 
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		assertAutoShort(theChe, wiListBeginningOfPathAfterSetup.get(0).getAssigned()); //get any for assigned time)
 
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D403");
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D403");
 
 		mPropertyService.restoreHKDefaults(facility);
 
@@ -604,6 +604,25 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	private void assertAutoShort(Che theChe, Timestamp assignedTimestamp) {
+		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime",
+			 ImmutableMap.<String, Object>of(
+				 "cheId", theChe.getPersistentId(),
+				 "assignedTimestamp", assignedTimestamp),
+			 WorkInstruction.class);
+		boolean foundOne = false;
+		for (WorkInstruction workInstruction : wiPlusAutoShort) {
+			if (workInstruction.getStatus().equals(WorkInstructionStatusEnum.SHORT)) {
+				UUID orderDetailPersistentId = workInstruction.getOrderDetail().getPersistentId();
+				OrderDetail persistedOrderDetail = OrderDetail.DAO.findByPersistentId(orderDetailPersistentId);
+				Assert.assertEquals(OrderStatusEnum.SHORT, persistedOrderDetail.getStatus());
+				foundOne = true;
+			}
+		}
+		Assert.assertTrue("Should have had at least one short wi", foundOne);
+
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Attempting to demonstrate when we might get several work instructions that would work simultaneously
@@ -648,14 +667,9 @@ public class InventoryImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\n";
 
-		byte[] csvArray2 = csvString2.getBytes();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-
+		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
@@ -667,21 +681,20 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
 		// Set up a cart for the three orders, which will generate work instructions
-		facility.setUpCheContainerFromString(theChe, "12000,12010,12345");
+		mWorkService.setUpCheContainerFromString(theChe, "12000,12010,12345");
 		//Che.DAO.store(theChe);
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		theChe = Che.DAO.findByPersistentId(theChe.getPersistentId());
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, ""); // get all in working order
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, ""); // get all in working order
 		
 		for (WorkInstruction wi : wiListAfterScan) {
 			LOGGER.info("WI LIST CONTAINS: " + wi.toString());
 		}
-		Integer wiCountAfterScan = wiListAfterScan.size();
-		Assert.assertEquals((Integer) 5, wiCountAfterScan);
-
+		int wiCountAfterScan = wiListAfterScan.size();
+		Assert.assertEquals(wiCountAfterScan, 5);
 		// The only interesting thing here is probably the group and sort code. (Lack of group code)
 		WorkInstruction wi1 = wiListAfterScan.get(0);
 		String groupSortStr1 = wi1.getGroupAndSortCode();

@@ -20,12 +20,21 @@ import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.WorkService;
+import com.google.inject.Inject;
 
 public class CheResource {
 	private PersistenceService persistence = PersistenceService.getInstance();
 
 	@Setter
 	private UUIDParam mUUIDParam;
+	
+	private WorkService workService;
+	
+	@Inject
+	public CheResource(WorkService workService) {
+		this.workService = workService;
+	}
 	
 	@GET
 	@Path("/computeinstructions")
@@ -53,7 +62,7 @@ public class CheResource {
 					validContainers.add(containerId);
 				}
 			}
-			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, validContainers);
+			List<WorkInstruction> instructions = workService.computeWorkInstructions(che, validContainers);
 			return BaseResponse.buildResponse(instructions);
 		} catch (Exception e) {
 			errors.processException(e);

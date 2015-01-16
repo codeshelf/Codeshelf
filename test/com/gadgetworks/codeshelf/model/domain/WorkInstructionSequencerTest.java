@@ -21,6 +21,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class WorkInstructionSequencerTest extends EdiTestABC {
@@ -178,24 +179,14 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);
 
-		// Let's find our CHE
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Assert.assertNotNull(theNetwork);
-		Che theChe = theNetwork.getChe("CHE1");
-		Assert.assertNotNull(theChe);
-		
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		facility.setUpCheContainerFromString(theChe, "12345");
-				
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
-		mPropertyService.restoreHKDefaults(facility);
-
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "12345");
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
-		
+
 		// paths is expected to be backwards from b2 to b1, see set-up method
 		for (WorkInstruction wi : aList) {
 			// System.out.println(wi.getLocationId()+": "+wi.getGroupAndSortCode());
@@ -281,24 +272,14 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);
 
-		// Let's find our CHE
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Assert.assertNotNull(theNetwork);
-		Che theChe = theNetwork.getChe("CHE1");
-		Assert.assertNotNull(theChe);
-		
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		facility.setUpCheContainerFromString(theChe, "12345");
-
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
-		mPropertyService.restoreHKDefaults(facility);
-
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "12345");
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
-		
+
 		// paths is expected to be backwards from b2 to b1, see set-up method
 		for (WorkInstruction wi : aList) {
 			System.out.println(wi.getLocationId()+": "+wi.getGroupAndSortCode());
@@ -315,7 +296,7 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 				Assert.assertTrue(wi.getGroupAndSortCode().equals("0004"));
 			}
 			else {
-				Assert.fail("Invalid WI location: "+wi.getLocation().getLocationId());
+				Assert.fail("Invalid WI location: "+ wi.getLocation().getLocationId());
 			}
 		}
 		this.getPersistenceService().commitTenantTransaction();

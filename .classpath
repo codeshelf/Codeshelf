@@ -6,6 +6,8 @@
 	<classpathentry kind="lib" path="lib/drivers/linux"/>
 	<classpathentry kind="lib" path="lib/dist/jackson-jaxrs-json-provider-2.4.4.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jackson-jaxrs-base-2.4.4.jar"/>
+	<classpathentry kind="lib" path="lib/dist/guice-servlet-3.0.jar"/>
+	<classpathentry kind="lib" path="lib/dist/jersey-guice-1.18.1.jar"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="lib" path="resources"/>

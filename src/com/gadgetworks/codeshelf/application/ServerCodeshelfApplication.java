@@ -41,8 +41,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
-	private IConfiguration			configuration;
-
 	private final ServerWatchdogThread watchdog;
 
 	@Inject
@@ -54,7 +52,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			
 		super(inWebApiServer);
 		
-		this.configuration = configuration;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		this.persistenceService = persistenceService;

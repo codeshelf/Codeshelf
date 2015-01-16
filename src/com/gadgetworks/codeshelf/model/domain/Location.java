@@ -62,8 +62,6 @@ import com.google.common.collect.Ordering;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class Location extends DomainObjectTreeABC<Location> {
 
-	static Double						BAY_ALIGNMENT_FUDGE	= 0.25;
-
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
 	public static final Double			METERS_PER_LED_POS	= 0.03125;

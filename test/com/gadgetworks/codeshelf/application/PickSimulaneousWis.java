@@ -92,7 +92,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		
+
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
@@ -134,14 +134,14 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
-		
+
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
+		organization.createDefaultSiteControllerUser(network);
 
 		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
@@ -258,20 +258,22 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
-		facility.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
+		mWorkService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		theChe = Che.DAO.reload(theChe);
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+
+		List<WorkInstruction> aList = mWorkService.getWorkInstructions(theChe, "");
+
 
 		int wiCount = aList.size();
 		Assert.assertEquals(8, wiCount); // 8 work instructions. But 2,3,4 in same group and 7,8 in same group.
 
-		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value. 
+		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value.
 		// Therefore, all 8 will be in the result of starting from D402
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D402");
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D402");
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
@@ -338,7 +340,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		Assert.assertEquals("1123", wi1Item);
 		Assert.assertEquals("12001", wi1Order);
-		
+
 		// Last items picked should be 1522. Two orders, so that is arbitrary. (Until later, when we might care to alternate somewhat to reduce confusion about orders going to same cart slot.
 		String wi7Item = wi7.getItemId();
 		String wi8Item = wi8.getItemId();

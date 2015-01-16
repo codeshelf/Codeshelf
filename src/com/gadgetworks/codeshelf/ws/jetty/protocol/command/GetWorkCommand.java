@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -15,10 +16,12 @@ import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 public class GetWorkCommand extends CommandABC {
 
 	GetWorkRequest request;
+	WorkService workService;
 	
-	public GetWorkCommand(UserSession session, GetWorkRequest request) {
+	public GetWorkCommand(UserSession session, GetWorkRequest request, WorkService workService) {
 		super(session);
 		this.request = request;
+		this.workService = workService;
 	}
 
 	@Override
@@ -32,7 +35,7 @@ public class GetWorkCommand extends CommandABC {
 			// Figure out the CHE's work area by its scanned location.
 			Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
-			List<WorkInstruction> wiList = facility.getWorkInstructions(che, locationId);
+			List<WorkInstruction> wiList = workService.getWorkInstructions(che, locationId);
 			// ~bhe: check for null/empty list + handle exception?
 			response.setWorkInstructions(wiList);
 			response.setNetworkGuid(networkGuid);
