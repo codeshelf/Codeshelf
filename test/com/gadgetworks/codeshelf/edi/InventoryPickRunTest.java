@@ -416,6 +416,12 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 	@Test
 	public final void testLocationBasedPick() throws IOException {
+		// This is a very complete test of location-based pick. Do not need the integration test with site controller because
+		// Location-based pick is built via:
+		// - Creation of inventory during orders file read, then
+		// - Selection of the inventory items during computeWorkInstructions
+		// Once that is done, site controller just implements the work instructions that were made.
+		
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvLocP_01");
 		Assert.assertNotNull(facility);	
@@ -428,7 +434,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		}
 		this.getPersistenceService().commitTenantTransaction();
 
-		LOGGER.info("1: Read the orders file, which has some preferred locations");
+		LOGGER.info("2: Read the orders file, which has some preferred locations");
 		// This facility has aliases D26 ->D33 and D71->D74
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -445,7 +451,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
 
-		LOGGER.info("2: Set up CHE for orders 10 and 11. Should get 3 jobs");
+		LOGGER.info("3: Set up CHE for orders 10 and 11. Should get 3 jobs");
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
@@ -459,9 +465,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		logWiList(wiList);
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 3, theSize);
-		LOGGER.info("3: Success! Three jobs from location based pick. SKU0003 did not get one made.");
+		LOGGER.info("4: Success! Three jobs from location based pick. SKU0003 did not get one made.");
 		
-		LOGGER.info("4: Let's read an inventory file creating SKU0003 in a different place.");
+		LOGGER.info("5: Let's read an inventory file creating SKU0003 in a different place.");
 		
 		String csvString2 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "SKU0003,D-33,Spoon 6in.,80,Cs,6/25/14 12:00,\r\n"; //
@@ -471,7 +477,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		importer2.importSlottedInventoryFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getPersistenceService().commitTenantTransaction();
 		
-		LOGGER.info("5: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
+		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		theChe = Che.DAO.reload(theChe); // getting LazyInitializationException
@@ -485,7 +491,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
 		
-		LOGGER.info("6: Let's move SKU0004 to D-74. The order preferredLocation is still D-71");
+		LOGGER.info("7: Let's move SKU0004 to D-74. The order preferredLocation is still D-71");
 		String csvString3 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "SKU0004,D-74,9 Three Compartment Unbleached Clamshell,,Ea,6/25/14 12:00,\r\n"; //
 
@@ -494,8 +500,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);		
 		this.getPersistenceService().commitTenantTransaction();
 
-		LOGGER.info("7: Set up CHE again for orders 10 and 11. Should still get 4 jobs");
-		// And a logger.warn "Item not found at D-71. Substituted item at D-74"
+		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");
+		LOGGER.info("And a logger.warn saying: Item not found at D-71. Substituted item at D-74");
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		theChe = Che.DAO.reload(theChe); // getting LazyInitializationException
