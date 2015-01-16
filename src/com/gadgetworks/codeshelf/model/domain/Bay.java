@@ -62,11 +62,7 @@ public class Bay extends Location {
 	public Bay() {
 		super();
 	}
-/*
-	public Bay(Aisle parent, String domainId, Point inAnchorPoint, Point inPickFaceEndPoint) {
-		super(parent, domainId, inAnchorPoint, inPickFaceEndPoint);
-	}
-	*/
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Bay> getDao() {
 		return DAO;
@@ -134,4 +130,21 @@ public class Bay extends Location {
 		
 		return tier;
 	}
+	
+	@Override
+	public boolean isBay() {
+		return true;
+	}
+	
+	public static Bay as(Location location) {
+		if (location==null) {
+			return null;
+		}
+		location = deproxify(location);
+		if (location instanceof Bay) {
+	    	return (Bay) location;
+	    }
+		throw new RuntimeException("Location is not a bay: "+location);
+	}
+		
 }

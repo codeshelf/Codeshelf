@@ -187,4 +187,20 @@ public class Aisle extends Location {
 
 		return bay;
 	}
+	
+	@Override
+	public boolean isAisle() {
+		return true;
+	}
+	
+	public static Aisle as(Location location) {
+		if (location==null) {
+			return null;
+		}
+		location = deproxify(location);
+		if (location instanceof Aisle) {
+	    	return (Aisle) location;
+	    }
+		throw new RuntimeException("Location is not an aisle");
+	}		
 }

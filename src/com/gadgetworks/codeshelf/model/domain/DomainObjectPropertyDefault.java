@@ -57,5 +57,26 @@ public class DomainObjectPropertyDefault {
 	
 	@Getter @Setter
 	@Column(length=400, nullable=false)
-	String description;	
+	String description;
+	
+	public int getIntValue() {
+		if (this.defaultValue == null) {
+			return Integer.parseInt(getDefaultValue());
+		}
+		return Integer.parseInt(this.defaultValue);
+	}
+
+	public double getDoubleValue() {
+		if (this.defaultValue == null) {
+			return Double.parseDouble(getDefaultValue());
+		}
+		return Double.parseDouble(this.defaultValue);
+	}
+
+	public boolean getBooleanValue() {
+		if (this.defaultValue == null) {
+			return Boolean.parseBoolean(getDefaultValue());
+		}
+		return Boolean.parseBoolean(this.defaultValue);
+	}	
 }

@@ -38,7 +38,6 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -408,7 +407,10 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		Facility facility = setUpSimpleSlottedFacility("XB05");
 		setUpGroup1OrdersAndSlotting(facility);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
@@ -420,18 +422,33 @@ public class CrossBatchRunTest extends EdiTestABC {
 		mPropertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangeNone);
 		mPropertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
 		facility.setUpCheContainerFromString(theChe, "11,12,13");
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		theChe = Che.DAO.reload(theChe);
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
 
-		mPropertyService.restoreHKDefaults(facility); // set it back
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		mPropertyService.restoreHKDefaults(facility); // set it back
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
 		Integer wiCount = aList.size();
+		for(int i=0;i<wiCount; i++) {
+			aList.set(i, WorkInstruction.DAO.reload(aList.get(i)));
+		}
 		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
 
-		WorkInstruction wi4 = aList.get(3);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		WorkInstruction wi4 = WorkInstruction.DAO.reload(aList.get(3));
 
 		String wi4Desc = wi4.getDescription();
 
@@ -446,7 +463,15 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		// This uses the cross batch setup because the container are convenient.
 		Facility facility = setUpSimpleSlottedFacility("XB06");
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		setUpGroup1OrdersAndSlotting(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -455,9 +480,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
 		mPropertyService.turnOffHK(facility);
 		facility.setUpCheContainerFromString(theChe, "11,12,13");
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
-		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+
 		int usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
 		// Just exploring: see what happens if we add the same use several times.
@@ -466,16 +494,30 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// - Look at the parent add method. It needs to call the child's set method for the parent relationship.
 		// - Then code needs to remember to do the DAO.store(child)
 		ContainerUse aUse = theChe.getUses().get(0);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		// Adding same item. Not storing
-		theChe.addContainerUse(aUse);
-		theChe.addContainerUse(aUse);
+		theChe.addContainerUse(ContainerUse.DAO.reload(aUse));
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
+		theChe.addContainerUse(ContainerUse.DAO.reload(aUse));
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
+		this.getPersistenceService().commitTenantTransaction();
 
-		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
+		aUse=aUse.getDao().reload(aUse);
 		theChe.addContainerUse(aUse);
 		aUse.getDao().store(aUse);
 		usesCount = theChe.getUses().size();
@@ -484,14 +526,20 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// not result in duplicates in the list. Probably true for most hibernate relationships. But don't try this at home.
 
 		// Now the new part for DEV-492. Show that we remove prior run uses
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		theChe = Che.DAO.reload(theChe);
 		facility.setUpCheContainerFromString(theChe, "14");
-		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
 		Assert.assertTrue(theChe.getUses().size() == 1);
 		// BUG! at least with ebeans. If we used 12 above instead of 14, it throws on an ebeans
 		// lazy load exception on work instruction
 
-		mPropertyService.restoreHKDefaults(facility); // set it back
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		mPropertyService.restoreHKDefaults(facility); // set it back
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
@@ -541,15 +589,14 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("Case 1: findByPersistentId() not within a transaction. Will throw, and is caught.");
 		Che che1d = null;
 		// get only works within a transaction, and findByPersistentId does a get. But it catches the exception and returns null
-		boolean unExpectedCatch = false;
+		boolean expectedCatch = false;
 		try {
 			che1d = Che.DAO.findByPersistentId(che1Uuid);
 			Assert.assertNull("findByPersistentId returned an object without a transaction?", che1d);
 		} catch (HibernateException e) {
-			unExpectedCatch = true;
+			expectedCatch = true;
 		}
-		if (unExpectedCatch)
-			Assert.fail("findByPersistentId no longer catches out of transaction throw?");
+		Assert.assertTrue(expectedCatch);
 
 		LOGGER.info("Case 2: findByPersistentId() works within a transaction. And has the expected container use");
 		this.getPersistenceService().beginTenantTransaction();

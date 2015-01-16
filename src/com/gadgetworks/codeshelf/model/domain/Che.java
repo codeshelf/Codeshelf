@@ -12,8 +12,6 @@ import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
@@ -26,12 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -65,11 +61,6 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(Che.class);
-
-	/*
-	@ManyToOne(optional = false)
-	private CodeshelfNetwork parent;
-	 */
 
 	// The current work area. appears not to be used anywhere.
 	/*
@@ -121,6 +112,24 @@ public class Che extends WirelessDeviceABC {
 		Che.DAO = dao;
 	}
 
+	/*
+	// appears not to be used anywhere
+	public User getCurrentUser() {
+		if (currentUser instanceof HibernateProxy) {
+			currentUser = (User) DomainObjectABC.deproxify(currentUser);
+		}
+		return currentUser;
+	}
+
+	// appears not to be used anywhere
+	public WorkArea getCurrentWorkArea() {
+		if (currentWorkArea instanceof HibernateProxy) {
+			currentWorkArea = (WorkArea) DomainObjectABC.deproxify(currentWorkArea);
+		}
+		return currentWorkArea;
+	}
+	*/
+	
 	public final String getDefaultDomainIdPrefix() {
 		return "CHE";
 	}

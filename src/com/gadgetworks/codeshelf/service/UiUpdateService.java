@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
-
 // --------------------------------------------------------------------------
 /**
  * This is a relatively unstructured collection of update methods that the UI may call.

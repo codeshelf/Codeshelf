@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +81,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
 	// The owning order header.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	private OrderHeader						parent;
 
 	// The collective order status.
@@ -92,9 +93,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private OrderStatusEnum					status;
 
 	// The item master.
-	@ManyToOne(optional = false)
-	@JoinColumn(name="item_master_persistentid")
-	@Getter
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "item_master_persistentid")
 	@Setter
 	private ItemMaster						itemMaster;
 
@@ -113,14 +113,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private Integer							quantity;
 
 	// The min quantity that we can use.  (Same as quantity in most cases.)
-	@Column(nullable = false,name="min_quantity")
+	@Column(nullable = false, name = "min_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer							minQuantity;
 
 	// The max quantity that we can use. (Same as quantity in most cases.)
-	@Column(nullable = false,name="max_quantity")
+	@Column(nullable = false, name = "max_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -128,8 +128,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	// The UoM.
 	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name="uom_master_persistentid")
-	@Getter
+	@JoinColumn(name = "uom_master_persistentid")
 	@Setter
 	private UomMaster						uomMaster;
 
@@ -144,17 +143,15 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Setter
 	@JsonProperty
 	private Timestamp						updated;
-	
+
 	// preferred pick location
-	@Column(nullable = true,name="preferred_location")
+	@Column(nullable = true, name = "preferred_location")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String							preferredLocation;
 
-
 	@OneToMany(mappedBy = "orderDetail")
-	@Getter
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
@@ -163,6 +160,24 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
 		this.active = active;
+	}
+
+	public List<WorkInstruction> getWorkInstructions() {
+		return this.workInstructions;
+	}
+
+	public ItemMaster getItemMaster() {
+		if (this.itemMaster instanceof HibernateProxy) {
+			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
+		}
+		return itemMaster;
+	}
+
+	public UomMaster getUomMaster() {
+		if (this.uomMaster instanceof HibernateProxy) {
+			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
+		}
+		return uomMaster;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -183,34 +198,40 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public final OrderHeader getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (OrderHeader) PersistenceService.deproxify(this.parent);
+		}
 		return parent;
 	}
 
 	public final Facility getFacility() {
-		return getParent().getFacility();
+		OrderHeader parent = getParent();
+		Facility facility = parent.getFacility();
+		return facility;
 	}
 
 	public final void setParent(OrderHeader inParent) {
 		parent = inParent;
 	}
 
-	
 	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
 		OrderDetail previousOrderDetail = inWorkInstruction.getOrderDetail();
-		if(previousOrderDetail == null) {
+		if (previousOrderDetail == null) {
 			workInstructions.add(inWorkInstruction);
 			inWorkInstruction.setOrderDetail(this);
-		} else if(!previousOrderDetail.equals(this)) {
-			LOGGER.error("cannot add WorkInstruction "+inWorkInstruction.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousOrderDetail.getDomainId());
-		}	
+		} else if (!previousOrderDetail.equals(this)) {
+			LOGGER.error("cannot add WorkInstruction " + inWorkInstruction.getDomainId() + " to " + this.getDomainId()
+					+ " because it has not been removed from " + previousOrderDetail.getDomainId());
+		}
 	}
 
 	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
-		if(this.workInstructions.contains(inWorkInstruction)) {
+		if (this.workInstructions.contains(inWorkInstruction)) {
 			inWorkInstruction.setParent(null);
 			workInstructions.remove(inWorkInstruction);
 		} else {
-			LOGGER.error("cannot remove WorkInstruction "+inWorkInstruction.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
+			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
 		}
 	}
 
@@ -435,7 +456,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		else
 			return "-"; // Make it more distinguishable from "Y".
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For the UI. preferred location may be null, or no longer valid.
@@ -448,5 +469,15 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return internalString;
 	}
 
+	public Location getPreferredLocObject(final Facility inFacility) {
+		String whereString = getPreferredLocation();
+		if (whereString == null || whereString.isEmpty())
+			return null;
+		Location foundLocation = inFacility.findLocationById(whereString);
+		if (foundLocation == null || !foundLocation.isActive())
+			return null;
+		else
+			return foundLocation;
+	}
 
 }

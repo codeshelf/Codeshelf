@@ -180,6 +180,7 @@ public final class ServerMain {
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
 				
 				bind(PropertyService.class).toInstance(new PropertyService());
+				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				

@@ -23,6 +23,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 
 	public static final int				PORT_NUM			= 45000;
 	public static final int				READ_WAIT_MILLIS	= 10;
+	public static final int				OPEN_WAIT_MILLIS	= 250;
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(TcpServerInterface.class);
 
@@ -75,19 +76,26 @@ public class TcpServerInterface extends SerialInterfaceABC {
 
 					Socket clientSocket = null;
 					try {
-						clientSocket = mServerSocket.accept();
-						LOGGER.info("Client opened: " + clientSocket.toString());
-						Remote remote = new Remote();
-						remote.clientSocket = clientSocket;
-						remote.inputStream = clientSocket.getInputStream();
-						remote.outputStream = clientSocket.getOutputStream();
-						//						byte[] putInCharMode = { (byte) 255, (byte) 251, (byte) 1, (byte) 255, (byte) 251, (byte) 3, (byte) 255, (byte) 252, (byte) 34 };
-						//						remote.outputStream.write(putInCharMode);
-						mRemotes.add(remote);
+						if(mServerSocket.isClosed()) {
+							// do not spin throwing a thousand SocketExceptions per second if the socket is closed
+							Thread.sleep(OPEN_WAIT_MILLIS);
+						} else {
+							clientSocket = mServerSocket.accept();
+							LOGGER.info("Client opened: " + clientSocket.toString());
+							Remote remote = new Remote();
+							remote.clientSocket = clientSocket;
+							remote.inputStream = clientSocket.getInputStream();
+							remote.outputStream = clientSocket.getOutputStream();
+							//						byte[] putInCharMode = { (byte) 255, (byte) 251, (byte) 1, (byte) 255, (byte) 251, (byte) 3, (byte) 255, (byte) 252, (byte) 34 };
+							//						remote.outputStream.write(putInCharMode);
+							mRemotes.add(remote);
+						}
 					} catch (IOException e) {
 						System.err.println("Accept failed.");
 						System.err.println(e);
 						//System.exit(1);
+					} catch (InterruptedException e) {
+						LOGGER.error("OPEN_WAIT interrupted", e);
 					}
 				}
 			}

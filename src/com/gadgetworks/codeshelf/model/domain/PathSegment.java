@@ -5,10 +5,12 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -17,6 +19,7 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +29,6 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -71,7 +73,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
 
 	// The owning path.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Path parent;
 
 	// The order of this path segment in the path (from the tail/origin).
@@ -137,8 +139,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private Double				startPosAlongPath;
 
 	@OneToMany(mappedBy = "pathSegment")
-	@Getter
-	private List<Location>  locations = Lists.newArrayList();
+	private List<Location>  locations = new ArrayList<Location>();
 	
 	public PathSegment() {
 	}
@@ -153,6 +154,9 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public final Path getParent() {
+		if (parent instanceof HibernateProxy) {
+			this.parent = (Path) PersistenceService.deproxify(this.parent);
+		}						
 		return parent;
 	}
 
@@ -165,6 +169,13 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		computePathDistance();
 	}
 
+	public List<Location> getLocations() {
+		for (int i = 0; i< this.locations.size(); i++) {
+			locations.set(i, PersistenceService.<Location>deproxify(locations.get(i)));
+		}
+		return this.locations;
+	}
+	
 	public final String getParentPathID() {
 		if (this.parent == null)
 			return null;

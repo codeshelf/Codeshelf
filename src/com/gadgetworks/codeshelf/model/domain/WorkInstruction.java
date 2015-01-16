@@ -11,6 +11,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -19,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,7 +87,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
 
 	// The parent is the facility
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility					parent;
 
 	// Type.
@@ -104,10 +106,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private WorkInstructionStatusEnum	status;
 
-	// The container. Change to nullable v5 upgrade020
-	//@Column(nullable = true)
-	@Getter
-	@ManyToOne(optional = true)
+	// The container.
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	private Container					container;
 
 	// Denormalized for serialized WIs at the site controller.
@@ -116,9 +116,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String						containerId;
 
-	// The itemMaster. Change to nullable v5 upgrade020
-	@Getter
-	@ManyToOne(optional = true)
+	// The itemMaster.
+	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@JoinColumn(name="item_master_persistentid")
 	private ItemMaster					itemMaster;
 
@@ -171,8 +170,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private Integer						actualQuantity;
 
 	// From location.
-	//@Column(nullable = false)
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	private Location					location;
 
 	// Denormalized for serialized WIs at the site controller.
@@ -190,10 +188,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private String						pickerId;
 
 	// Assigned CHE
-	//@Column(nullable = true)
-	@Getter
 	@Setter
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="assigned_che_persistentid")
 	private Che							assignedChe;
 
@@ -244,15 +240,34 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private Timestamp					completed;
 
 	// The parent order detail item.
-	//@Column(nullable = true)
-	@ManyToOne(optional = true)
+	@ManyToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="order_detail_persistentid")
 	private OrderDetail					orderDetail;
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;
 
 	public WorkInstruction() {
-
+	}
+	
+	public Container getContainer() {
+		if (this.container instanceof HibernateProxy) {
+			this.container = (Container) PersistenceService.deproxify(this.container);
+		}
+		return container;
+	}
+	
+	public ItemMaster getItemMaster() {
+		if (this.itemMaster instanceof HibernateProxy) {
+			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
+		}
+		return itemMaster;
+	}
+	
+	public Che getAssignedChe() {
+		if (this.assignedChe instanceof HibernateProxy) {
+			this.assignedChe = (Che) PersistenceService.deproxify(this.assignedChe);
+		}
+		return assignedChe;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -265,11 +280,16 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
+		}		
 		return parent;
 	}
 
 	public final OrderDetail getOrderDetail() {
-		// v5 interim
+		if (this.orderDetail instanceof HibernateProxy) {
+			this.orderDetail = (OrderDetail) PersistenceService.deproxify(this.orderDetail);
+		}		
 		return orderDetail;
 	}
 
@@ -282,7 +302,10 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Location getLocation() {
-		return (Location) location;
+		if (this.location instanceof HibernateProxy) {
+			this.location = Location.deproxify(this.location);
+		}
+		return this.location;
 	}
 
 	// Denormalized for serialized WIs at the site controller.

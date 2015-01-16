@@ -21,7 +21,6 @@ import java.util.Set;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
@@ -31,15 +30,13 @@ import lombok.Setter;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.proxy.HibernateProxy;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.HeaderCounts;
@@ -61,13 +58,10 @@ import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -116,7 +110,7 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers			= new HashMap<String, Container>();
 
-	@OneToMany(mappedBy = "parent", fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
@@ -248,7 +242,15 @@ public class Facility extends Location {
 	}
 
 	public final List<Path> getPaths() {
-		return new ArrayList<Path>(paths.values());
+		ArrayList<Path> arrayPaths = new ArrayList<Path>();
+		for(Path p : paths.values()) {
+			if (p instanceof HibernateProxy) {
+				arrayPaths.add(PersistenceService.<Path>deproxify(p));
+			} else {
+				arrayPaths.add(p);
+			}
+		}
+		return arrayPaths;
 	}
 
 	public final void removePath(String inPathId) {
@@ -341,6 +343,8 @@ public class Facility extends Location {
 	public final void addWorkInstruction(WorkInstruction wi) {
 		Facility previousFacility = wi.getParent();
 		if (previousFacility == null) {
+			int numWi = workInstructions.size();
+			boolean trans = PersistenceService.getInstance().hasActiveTransaction();
 			workInstructions.add(wi);
 			wi.setParent(this);
 		} else if (!previousFacility.equals(this)) {
@@ -1027,9 +1031,11 @@ public class Facility extends Location {
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		this.sortAndSaveActionableWIs(wiResultList);
+		//It uses the iterater or remove items from the existing list and add it to the new one
+		//If all we care about are the counts. Why do we even sort them now?
 
 		LOGGER.info("TOTAL WIs {}", wiResultList);
-
+		
 		//Return original full list
 		return wiResultList;
 	}
@@ -1297,7 +1303,8 @@ public class Facility extends Location {
 	private WorkInstruction makeWIForOutbound(final OrderDetail inOrderDetail,
 		final Che inChe,
 		final Container inContainer,
-		final Timestamp inTime) {
+		final Timestamp inTime,
+		final boolean inMatchDetailPreferredLocation) {
 
 		WorkInstruction resultWi = null;
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -1331,7 +1338,28 @@ public class Facility extends Location {
 			for (Path path : getPaths()) {
 				boolean foundOne = false;
 				String uomStr = inOrderDetail.getUomMasterId();
-				Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+				// DEV-574  if orderDetail has a preferredLocation and LOCAPICK parameter is true, then try first to find the item at that location.
+				Item item = null;
+				boolean triedPreferred = false;
+				String preferredLocStr = null;
+				if (inMatchDetailPreferredLocation) {
+					Location preferredLoc = inOrderDetail.getPreferredLocObject(this);
+					if (preferredLoc != null) {
+						item = itemMaster.getActiveItemMatchingLocUomOnPath(preferredLoc, path, uomStr);
+						if (item == null){
+							preferredLocStr = inOrderDetail.getPreferredLocationUi();
+							triedPreferred = true;
+						}
+					}
+				}
+				if (item == null) {
+					item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+					if (triedPreferred)
+						if (item == null)
+							LOGGER.warn("Item not found at " + preferredLocStr + ". Did not find elsewhere on path.");
+						else
+							LOGGER.warn("Item not found at " + preferredLocStr + ". Substituted item at " + item.getItemLocationAlias());
+				}
 
 				if (item != null) {
 					resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -1368,6 +1396,8 @@ public class Facility extends Location {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		int count = 0;
 
+		boolean locapickValue = PropertyService.getBooleanPropertyFromConfig(this, DomainObjectProperty.LOCAPICK);
+
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
 		for (Container container : inContainerList) {
@@ -1379,7 +1409,7 @@ public class Facility extends Location {
 					if (orderDetail.getQuantity() > 0) {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
-						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime); // Could be normal WI, or a short WI
+						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime, locapickValue); // Could be normal WI, or a short WI
 						if (aWi != null) {
 							wiResultList.add(aWi);
 							somethingDone = true;

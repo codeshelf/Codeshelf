@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.domain;
 
-import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -13,7 +12,6 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 
 /**
@@ -78,7 +76,7 @@ public class FacilityTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 
 	}
-	
+
 	private void createAndSaveVertex(Facility facility, String name, int drawOrder, final Double inX, final Double inY){
 		Vertex v = new Vertex();
 		v.setDomainId(name);
