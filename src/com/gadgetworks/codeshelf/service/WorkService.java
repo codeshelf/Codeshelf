@@ -46,7 +46,6 @@ import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
@@ -95,7 +94,7 @@ public class WorkService implements IApiService {
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-	
+
 	@Getter
 	private PersistenceService			persistenceService;
 
@@ -120,7 +119,7 @@ public class WorkService implements IApiService {
 			this.firstLocationOnPath = firstLocationOnPath;
 		}
 	}
-	
+
 	public WorkService() {
 		init(new IEdiExportServiceProvider() {
 			@Override
@@ -214,64 +213,6 @@ public class WorkService implements IApiService {
 		return summarizer.getSummaries();
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * For a UI simulation
-	 * @return
-	 */
-	public final void fakeCompleteWi(String wiPersistentId, String inCompleteStr) {
-		WorkInstruction wi = WorkInstruction.DAO.findByPersistentId(wiPersistentId);
-		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
-		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
-
-		// default to complete values
-		Integer actualQuant = wi.getPlanQuantity();
-		WorkInstructionStatusEnum newStatus = WorkInstructionStatusEnum.COMPLETE;
-
-		if (doComplete) {
-		} else if (doShort) {
-			actualQuant--;
-			newStatus = WorkInstructionStatusEnum.SHORT;
-		}
-		Timestamp completeTime = new Timestamp(System.currentTimeMillis());
-		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
-
-		wi.setActualQuantity(actualQuant);
-		wi.setCompleted(completeTime);
-		wi.setStarted(startTime);
-		wi.setStatus(newStatus);
-		wi.setType(WorkInstructionTypeEnum.ACTUAL);
-
-		//send in in like in came from SiteController
-		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
-	}
-	
-	// just a call through to facility, but convenient for the UI
-	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
-		final boolean doThrowInstead = false;
-		Che che = Che.DAO.findByPersistentId(cheId);
-		if (che == null)
-			return;
-		if (doThrowInstead)
-			doIntentionalPersistenceError(che);
-		else
-			setUpCheContainerFromString(che, inContainers);
-	}
-	
-	private void doIntentionalPersistenceError(Che che) {
-		// If you want to test this, change value of doThrowInstead in method below. Then from the UI, select a CHE and
-		// do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
-		// DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
-		String desc = "";
-		for (int count = 0; count < 500; count++) {
-			desc += "X";
-		}
-		// No try/catch here. The intent is to fail badly and see how the system handles it.
-		che.setDescription(desc);
-		Che.DAO.store(che);
-		LOGGER.warn("Intentional database persistence error. Setting too long description on " + che.getDomainId());
-	}
-	
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -402,9 +343,47 @@ public class WorkService implements IApiService {
 		return wiResultList;
 	}
 
+	// just a call through to facility, but convenient for the UI
+	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
+		final boolean doThrowInstead = false;
+		Che che = Che.DAO.findByPersistentId(cheId);
+		if (che == null)
+			return;
 
 
-	
+		if (doThrowInstead)
+            // If you want to test this, change value of doThrowInstead above. Then from the UI, select a CHE and
+            // do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
+            // DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
+
+			doIntentionalPersistenceError(che);
+		else
+			setUpCheContainerFromString(che, inContainers);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChe
+	 * @param inContainers
+	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
+	 *
+	 */
+	public final void setUpCheContainerFromString(Che inChe, String inContainers) {
+		if (inChe == null)
+			return;
+
+		// computeWorkInstructions wants a containerId list
+		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
+
+		if (containersIdList.size() > 0) {
+			this.computeWorkInstructions(inChe, containersIdList);
+			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
+			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
+		}
+	}
+
+
+
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.DAO.findByPersistentId(cheId);
 		if (che != null) {
@@ -421,27 +400,37 @@ public class WorkService implements IApiService {
 		}
 	}
 
-	private WorkInstruction persistWorkInstruction(WorkInstruction updatedWi) throws DaoException {
-		UUID wiId = updatedWi.getPersistentId();
-		WorkInstruction storedWi = WorkInstruction.DAO.findByPersistentId(wiId);
-		if (storedWi == null) {
-			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-		}
-		storedWi.setPickerId(updatedWi.getPickerId());
-		storedWi.setActualQuantity(updatedWi.getActualQuantity());
-		storedWi.setStatus(updatedWi.getStatus());
-		storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
-		storedWi.setStarted(updatedWi.getStarted());
-		storedWi.setCompleted(updatedWi.getCompleted());
-		WorkInstruction.DAO.store(storedWi);
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI simulation
+	 * @return
+	 */
+	public final void fakeCompleteWi(String wiPersistentId, String inCompleteStr) {
+		WorkInstruction wi = WorkInstruction.DAO.findByPersistentId(wiPersistentId);
+		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
+		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
 
-		OrderDetail orderDetail = setOrderDetailStatus(storedWi);
-		// v5 orderDetail can be null for housekeeping wis
-		if (orderDetail != null)
-			setOrderStatus(orderDetail);
-		return storedWi;
+		// default to complete values
+		Integer actualQuant = wi.getPlanQuantity();
+		WorkInstructionStatusEnum newStatus = WorkInstructionStatusEnum.COMPLETE;
+
+		if (doComplete) {
+		} else if (doShort) {
+			actualQuant--;
+			newStatus = WorkInstructionStatusEnum.SHORT;
+		}
+		Timestamp completeTime = new Timestamp(System.currentTimeMillis());
+		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
+
+		wi.setActualQuantity(actualQuant);
+		wi.setCompleted(completeTime);
+		wi.setStarted(startTime);
+		wi.setStatus(newStatus);
+		wi.setType(WorkInstructionTypeEnum.ACTUAL);
+
+		//send in in like in came from SiteController
+		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
 	}
-	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -459,7 +448,7 @@ public class WorkService implements IApiService {
 		//Get current complete list of WIs
 		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
 		queryAddCheInstructionsToList(inChe, 0.0, completeRouteWiList);
-		
+
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
 		//We may want to consider not hitting the database for this. It is easiest/safest option for now.
@@ -495,7 +484,7 @@ public class WorkService implements IApiService {
 
 			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
 
-			// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must 
+			// Add the first ones in order.  Only one missing case. If scan is a valid position, but beyond all work instruction position, then we must
 			// "wrap" to the complete list.
 			if (wiListFromStartLocation.size() == 0) {
 				wrappedRouteWiList = completeRouteWiList;
@@ -559,7 +548,7 @@ public class WorkService implements IApiService {
 	/**
 	 * toPossibleLocations will return a list, but the list may be empty
 	 */
-	private List<Location> toPossibleLocations(List<Path> paths, OrderDetail matchingOutboundOrderDetail) {
+	private List<Location> toPossibleLocations(OrderDetail matchingOutboundOrderDetail, List<Path> paths) {
 		ArrayList<Location> locations = new ArrayList<Location>();
 		for (Path path: paths) {
 			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
@@ -673,7 +662,7 @@ public class WorkService implements IApiService {
 		return wiResultList;
 	}
 
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Generate pick work instructions for a container at a specific location on a path.
@@ -695,29 +684,17 @@ public class WorkService implements IApiService {
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
 			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
-				boolean somethingDone = false;
+				boolean orderDetailChanged = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
+						// Pass facility as the default location of a short WI..
 						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime, facility, facility.getPaths()); // Could be normal WI, or a short WI
 						if (aWi != null) {
 							wiResultList.add(aWi);
-							somethingDone = true;
-							try {
-								//order detail has multiple WIs; this logic sets detail status to last generated work instruciton
-								//  The unhandled case is: clearing the order detail properly when WI is complete
-								if (aWi.getStatus().equals(WorkInstructionStatusEnum.SHORT)) {
-									orderDetail.setStatus(OrderStatusEnum.SHORT);
-									
-								} else {
-									orderDetail.setStatus(OrderStatusEnum.INPROGRESS);
-								}
-								OrderDetail.DAO.store(orderDetail);
-							} catch (DaoException e) {
-								LOGGER.error("", e);
-							}
+							orderDetailChanged |= orderDetail.reevaluateStatus();
 						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 							//As of DEV-561 we are adding completed WIs to the list in order to be able
 							//give feedback on complete orders (and differentiate a 100% complete order from
@@ -727,14 +704,10 @@ public class WorkService implements IApiService {
 							wiResultList.addAll(orderDetail.getWorkInstructions());
 						}
 					}
-				}
-				if (somethingDone) {
-					order.setStatus(OrderStatusEnum.INPROGRESS);
-					try {
-						OrderHeader.DAO.store(order);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
+					if (orderDetailChanged) {
+						order.reevaluateStatus();
 					}
+
 				}
 			}
 		}
@@ -778,14 +751,14 @@ public class WorkService implements IApiService {
 
 	public BatchResult<Work> determineWorkForContainer(Facility facility, Container container) {
 		// Iterate over all active CROSS orders on the path.
-		List<OrderHeader> allOrders = facility.getOrderHeaders();
-		List<Path> allPaths = facility.getPaths();
 		BatchResult<Work> batchResult = new BatchResult<Work>();
 		OrderHeader crossOrder = container.getCurrentOrderHeader();
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
+			List<OrderHeader> allOrders = facility.getOrderHeaders();
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(allOrders, crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
-				List<Location> firstOrderLocationPerPath = toPossibleLocations(allPaths, matchingOutboundOrderDetail);
+				List<Path> allPaths = facility.getPaths();
+				List<Location> firstOrderLocationPerPath = toPossibleLocations(matchingOutboundOrderDetail, allPaths);
 				for (Location aLocationOnPath : firstOrderLocationPerPath) {
 					Work work = new Work(container, matchingOutboundOrderDetail, aLocationOnPath);
 					batchResult.add(work);
@@ -835,7 +808,6 @@ public class WorkService implements IApiService {
 				inChe,
 				defaultLocation,
 				inTime);
-			// above, passed this (facility) as the location of the short WI..
 
 			if (resultWi != null) {
 				resultWi.setPlanQuantity(0);
@@ -894,12 +866,12 @@ public class WorkService implements IApiService {
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inWorkInstruction
-	 * @throws IOException 
-	 * @throws InterruptedException 
+	 * @throws IOException
+	 * @throws InterruptedException
 	 */
 	void exportWorkInstruction(WorkInstruction inWorkInstruction) throws IOException {
 		// jr/hibernate  tracking down an error
@@ -917,56 +889,6 @@ public class WorkService implements IApiService {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Set order detail status for the WI.
-	 * @param inWorkInstruction
-	 */
-	private OrderDetail setOrderDetailStatus(final WorkInstruction inWorkInstruction) {
-		// Find the order item for this WI and mark it.
-		OrderDetail detail = inWorkInstruction.getOrderDetail();
-		// from v5 housekeeping WI may have null orderDetail
-		if (detail == null) {
-			// No need to log anything. This is commonly called by persistWorkInstruction
-			return null;
-		}
-		Double qtyPicked = 0.0;
-		for (WorkInstruction sumWi : detail.getWorkInstructions()) {
-			qtyPicked += sumWi.getActualQuantity();
-		}
-		if (qtyPicked >= detail.getMinQuantity()) {
-			detail.setStatus(OrderStatusEnum.COMPLETE);
-		} else {
-			detail.setStatus(OrderStatusEnum.SHORT);
-		}
-		OrderDetail.DAO.store(detail);
-		return detail;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Set the order status.
-	 * @param inOrderDetail
-	 */
-	private void setOrderStatus(final OrderDetail inOrderDetail) {
-		OrderHeader order = inOrderDetail.getParent();
-		order.setStatus(OrderStatusEnum.COMPLETE);
-		for (OrderDetail detail : order.getOrderDetails()) {
-			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
-				order.setStatus(OrderStatusEnum.SHORT);
-				break;
-			} else if (!detail.getStatus().equals(OrderStatusEnum.COMPLETE)) {
-				order.setStatus(OrderStatusEnum.INPROGRESS);
-				break;
-			}
-		}
-		try {
-			OrderHeader.DAO.store(order);
-		} catch (DaoException e) {
-			LOGGER.error("Failed to update order status", e);
-		}
-	}
-	
 	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {
@@ -976,11 +898,11 @@ public class WorkService implements IApiService {
 		List<Object[]> picksPerHour = null;
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");
-			String queryStr = String.format("" 
-					+ "SELECT dur.order_group AS group,\n" 
+			String queryStr = String.format(""
+					+ "SELECT dur.order_group AS group,\n"
 					+ "		trim(to_char(\n"
 					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
-					+ "		'9999999999999999999D9')) AS picksPerHour\n" 
+					+ "		'9999999999999999999D9')) AS picksPerHour\n"
 					+ "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
 					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
 					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
@@ -1004,7 +926,7 @@ public class WorkService implements IApiService {
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
 	}
-	
+
 	public static List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException{
 		//Get Facility
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
@@ -1034,7 +956,7 @@ public class WorkService implements IApiService {
 			String groupName = header.getOrderGroup() == null? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
 			if (allGroups || groupName.equals(groupNameIn)) {
 				filtered.add(instruction);
-			}			
+			}
 		}
 		return filtered;
 	}
@@ -1054,7 +976,7 @@ public class WorkService implements IApiService {
 			this.messageBody = messageBody;
 		}
 	}
-	
+
 
 	private WorkInstructionSequencerABC getSequencer() {
 		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
@@ -1174,26 +1096,48 @@ public class WorkService implements IApiService {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inChe
-	 * @param inContainers
-	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
-	 *
-	 */
-	public final void setUpCheContainerFromString(Che inChe, String inContainers) {
-		if (inChe == null)
-			return;
 
-		// computeWorkInstructions wants a containerId list
-		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
 
-		if (containersIdList.size() > 0) {
-			this.computeWorkInstructions(inChe, containersIdList);
-			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
-			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
+
+    /**
+     * Support method to force an exception for testing
+     */
+	private void doIntentionalPersistenceError(Che che) {
+		String desc = "";
+		for (int count = 0; count < 500; count++) {
+			desc += "X";
 		}
+		// No try/catch here. The intent is to fail badly and see how the system handles it.
+		che.setDescription(desc);
+		Che.DAO.store(che);
+		LOGGER.warn("Intentional database persistence error. Setting too long description on " + che.getDomainId());
 	}
-	
-	
+
+
+	private WorkInstruction persistWorkInstruction(WorkInstruction updatedWi) throws DaoException {
+		UUID wiId = updatedWi.getPersistentId();
+		WorkInstruction storedWi = WorkInstruction.DAO.findByPersistentId(wiId);
+		if (storedWi == null) {
+			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+		}
+		storedWi.setPickerId(updatedWi.getPickerId());
+		storedWi.setActualQuantity(updatedWi.getActualQuantity());
+		storedWi.setStatus(updatedWi.getStatus());
+		storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
+		storedWi.setStarted(updatedWi.getStarted());
+		storedWi.setCompleted(updatedWi.getCompleted());
+		WorkInstruction.DAO.store(storedWi);
+
+		// Find the order detail for this WI and mark it.
+		OrderDetail orderDetail = storedWi.getOrderDetail();
+		// from v5 housekeeping WI may have null orderDetail
+		if (orderDetail != null) {
+			orderDetail.reevaluateStatus();
+			OrderHeader order = orderDetail.getParent();
+			if(order != null) {
+				order.reevaluateStatus();
+			}
+		}
+		return storedWi;
+	}
 }

@@ -360,7 +360,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	/**
 	 * Convenience method, but very tricky.  May return null. This assumes maximum one cross detail per outbound detail. Seems true for now.
 	 * The other direction needs to return a list.
-	 * 
+	 *
 	 */
 	public OrderDetail outboundDetailToMatchingCrossDetail() {
 		if (getParentOrderType() != OrderTypeEnum.OUTBOUND) {
@@ -480,4 +480,27 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return foundLocation;
 	}
 
+	/**
+	 * Revaluate the status
+	 * @return if it was changed
+	 */
+	public boolean reevaluateStatus() {
+		boolean changed = false;
+
+		Double qtyPicked = 0.0;
+		for (WorkInstruction sumWi : getWorkInstructions()) {
+			qtyPicked += sumWi.getActualQuantity();
+		}
+		if (qtyPicked >= getMinQuantity()) {
+			setStatus(OrderStatusEnum.COMPLETE);
+			changed = true;
+		} else {
+			setStatus(OrderStatusEnum.SHORT);
+			changed = true;
+		}
+		if (changed) {
+			this.getDao().store(this);
+		}
+		return changed;
+	}
 }

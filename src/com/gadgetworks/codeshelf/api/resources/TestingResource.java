@@ -98,16 +98,12 @@ public class TestingResource {
 				instruction.setActualQuantity(instruction.getPlanQuantity());
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 				instruction.setType(WorkInstructionTypeEnum.ACTUAL);
-				OrderDetail detail = instruction.getOrderDetail();
 				if (i++ % 4 == 0) {
 					instruction.setStatus(WorkInstructionStatusEnum.SHORT);
-					detail.setStatus(OrderStatusEnum.SHORT);
 				} else {
 					instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
-					detail.setStatus(OrderStatusEnum.COMPLETE);
 				}
-				OrderDetail.DAO.store(detail);
-				WorkInstruction.DAO.store(instruction);
+				workService.completeWorkInstruction(che.getPersistentId(), instruction);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
 				persistence.commitTenantTransaction();
