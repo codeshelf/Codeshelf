@@ -223,18 +223,6 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void run() {
-		// Kick off the background event processing.
-		backgroundService.scheduleWithFixedDelay(new Runnable() {
-			@Override
-			public void run() {
-				processEvents();
-			}
-		}, 0, EVENT_SLEEP_MILLIS, TimeUnit.MILLISECONDS);
-		backgroundService.scheduleWithFixedDelay(new RadioControllerBroadcaster(mBroadcastNetworkId, mBroadcastAddress, this),
-			0,
-			INTERFACE_CHECK_MILLIS,
-			TimeUnit.MILLISECONDS);
-
 		// Start all of the serial interfaces.
 		// They start on a thread since this op won't complete if no dongle is attached.
 		Thread interfaceStarterThread = new Thread(new Runnable() {
@@ -261,6 +249,18 @@ public class RadioController implements IRadioController {
 			}
 		} while (!started && mShouldRun);
 		LOGGER.info("Gateway radio interface started");
+
+		// Kick off the background event processing.
+		backgroundService.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				processEvents();
+			}
+		}, 0, EVENT_SLEEP_MILLIS, TimeUnit.MILLISECONDS);
+		backgroundService.scheduleWithFixedDelay(new RadioControllerBroadcaster(mBroadcastNetworkId, mBroadcastAddress, this),
+			0,
+			INTERFACE_CHECK_MILLIS,
+			TimeUnit.MILLISECONDS);
 
 		selectChannel();
 		packetIOService.start();
