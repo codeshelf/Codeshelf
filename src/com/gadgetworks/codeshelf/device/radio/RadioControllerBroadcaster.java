@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
 import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetAddress;
 import com.gadgetworks.flyweight.command.NetChannelValue;
 import com.gadgetworks.flyweight.command.NetworkId;
@@ -14,13 +13,16 @@ import com.gadgetworks.flyweight.controller.IRadioController;
 public class RadioControllerBroadcaster implements Runnable {
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(RadioControllerBroadcaster.class);
 
-	private static final NetworkId	broadcastNetworkId	= new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-	private static final NetAddress	broadcastAddress	= new NetAddress(IPacket.BROADCAST_ADDRESS);
+	private final NetworkId			broadcastNetworkId;
+	private final NetAddress		broadcastAddress;
 
 	private final IRadioController	radioController;
 
-	public RadioControllerBroadcaster(IRadioController radioController) {
+
+	public RadioControllerBroadcaster(NetworkId broadcastNetworkId, NetAddress broadcastAddress, IRadioController radioController) {
 		super();
+		this.broadcastNetworkId = broadcastNetworkId;
+		this.broadcastAddress = broadcastAddress;
 		this.radioController = radioController;
 	}
 

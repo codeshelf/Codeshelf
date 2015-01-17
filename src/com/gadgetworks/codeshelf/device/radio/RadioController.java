@@ -73,11 +73,9 @@ public class RadioController implements IRadioController {
 
 	private static final Logger									LOGGER						= LoggerFactory.getLogger(RadioController.class);
 
-	private static final String									CONTROLLER_THREAD_NAME		= "Radio Controller";
-	private static final String									BACKGROUND_THREAD_NAME		= "Radio Controller Background";
+	private static final String										CONTROLLER_THREAD_NAME		= "Radio Controller";
 	private static final String									STARTER_THREAD_NAME			= "Intferface Starter";
 
-	private static final int									BACKGROUND_THREAD_PRIORITY	= Thread.NORM_PRIORITY - 1;
 	private static final int									STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
 
 	private static final long									CTRL_START_DELAY_MILLIS		= 5;
@@ -100,14 +98,16 @@ public class RadioController implements IRadioController {
 	@Getter
 	private final IGatewayInterface									gatewayInterface;
 
-	private NetAddress											mServerAddress;
-	private NetAddress											mBroadcastAddress;
-	private NetworkId											mBroadcastNetworkId;
+	private final NetAddress										mServerAddress;
+	private final NetAddress										mBroadcastAddress;
+	private final NetworkId											mBroadcastNetworkId;
 
 	private List<IRadioControllerEventListener>					mEventListeners;
 
 	//TODO Address thread safety here
 	private ChannelInfo[]										mChannelInfo;
+
+	//This 3 variables are only every modified in a synchronized method
 	private boolean												mChannelSelected;
 	private byte												mPreferredChannel;
 	private byte												mRadioChannel;
@@ -177,7 +177,7 @@ public class RadioController implements IRadioController {
 	 * @see com.gadgetworks.flyweight.controller.IController#startController(byte)
 	 */
 	@Override
-	public final void startController(final byte inPreferredChannel) {
+	public synchronized final void startController(final byte inPreferredChannel) {
 		if (packetIOService.getNetworkId() == null) {
 			LOGGER.error("Cannot start radio controller, must call setNetworkId() first");
 			return;
@@ -230,7 +230,7 @@ public class RadioController implements IRadioController {
 				processEvents();
 			}
 		}, 0, EVENT_SLEEP_MILLIS, TimeUnit.MILLISECONDS);
-		backgroundService.scheduleWithFixedDelay(new RadioControllerBroadcaster(this),
+		backgroundService.scheduleWithFixedDelay(new RadioControllerBroadcaster(mBroadcastNetworkId, mBroadcastAddress, this),
 			0,
 			INTERFACE_CHECK_MILLIS,
 			TimeUnit.MILLISECONDS);
@@ -615,7 +615,6 @@ public class RadioController implements IRadioController {
 		 * that is running.
 		 */
 		new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
-		//sendCommand(netSetupCmd, mBroadcastAddress, false);
 	}
 
 	// --------------------------------------------------------------------------
