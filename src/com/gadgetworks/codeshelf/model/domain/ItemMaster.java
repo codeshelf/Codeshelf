@@ -307,7 +307,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public final Item getActiveItemMatchingLocUom(final Location inLocation, final UomMaster inUomMaster) {
 
 		Item selectedItem = null;
-		if (inUomMaster == null) {
+		if (inUomMaster == null || inLocation == null) {
 			LOGGER.error("bad call to getItemMatchingLocUom");
 			return null;
 		}
