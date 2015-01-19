@@ -7,11 +7,13 @@ package com.gadgetworks.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -101,7 +103,8 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		setLocapickValue(locapickValue);
 
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
-		Set<OrderHeader> orderSet = Sets.newHashSet();
+		ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
+		boolean undefinedGroupUpdated = false;
 
 		LOGGER.debug("Begin order import.");
 		int lineCount = 1;
@@ -114,6 +117,9 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				}
 				batchResult.add(orderBean);
 				produceRecordSuccessEvent(orderBean);
+				if (order.getOrderGroup() == null) {
+					undefinedGroupUpdated = true;
+				}
 			} catch (Exception e) {
 				LOGGER.error("unable to import order line: " + orderBean, e);
 				batchResult.addLineViolation(lineCount, orderBean, e);
@@ -124,13 +130,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			// Do nothing.
 		} else if (orderSet.size() == 1) {
 			// If we've only imported one order then don't change the status of other orders.
-			archiveCheckOneOrder(inFacility, orderSet, inProcessTime);
+			archiveCheckOneOrder(orderSet.get(0), inProcessTime);
 		} else {
 			// If we've imported more than one order then do a full archive.
-			archiveCheckAllOrders(inFacility, inProcessTime);
+			archiveCheckAllOrders(inFacility, inProcessTime, undefinedGroupUpdated);
 		}
 		archiveCheckAllContainers(inFacility, inProcessTime);
-
+		archiveEmptyGroups(inFacility.getPersistentId());
 		LOGGER.debug("End order import.");
 
 		cleanupArchivedOrders();
@@ -139,23 +145,18 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inFacility
 	 * @param inOrderIdList
 	 * @param inProcessTime
 	 */
-	private void archiveCheckOneOrder(final Facility inFacility,
-		final Collection<OrderHeader> inOrderList,
-		final Timestamp inProcessTime) {
-		for (OrderHeader order : inOrderList) {
-			for (OrderDetail orderDetail : order.getOrderDetails()) {
-				if (!Objects.equal(orderDetail.getUpdated(), inProcessTime)) {
-					LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
-					orderDetail.setActive(false);
-					//orderDetail.setQuantity(0);
-					//orderDetail.setMinQuantity(0);
-					//orderDetail.setMaxQuantity(0);
-					mOrderDetailDao.store(orderDetail);
-				}
+	private void archiveCheckOneOrder(OrderHeader order, Timestamp inProcessTime) {
+		for (OrderDetail orderDetail : order.getOrderDetails()) {
+			if (!Objects.equal(orderDetail.getUpdated(), inProcessTime)) {
+				LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
+				orderDetail.setActive(false);
+				//orderDetail.setQuantity(0);
+				//orderDetail.setMinQuantity(0);
+				//orderDetail.setMaxQuantity(0);
+				mOrderDetailDao.store(orderDetail);
 			}
 		}
 	}
@@ -165,12 +166,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveCheckAllOrders(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckAllOrders(final Facility inFacility, final Timestamp inProcessTime, final boolean undefinedGroupUpdated) {
 		LOGGER.debug("Archive unreferenced order data");
 
 		// Inactivate the *order details* that don't match the import timestamp.
 		// All orders and related items get marked with the same timestamp when imported from the same interchange.
 		// Iterate all of the order groups to see if they're still active.
+		/*
 		for (OrderGroup group : inFacility.getOrderGroups()) {
 			if (!group.getUpdated().equals(inProcessTime)) {
 				LOGGER.trace("Archive old order group: " + group.getOrderGroupId());
@@ -178,9 +180,14 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				mOrderGroupDao.store(group);
 			}
 		}
-
+		*/
 		// Iterate all of the order headers in this order group to see if they're still active.
 		for (OrderHeader order : inFacility.getOrderHeaders()) {
+			//Skip all orders from groups not updated during the current order import
+			OrderGroup group = order.getOrderGroup();
+			if (!shouldOldOrbersBeArchivedInThisGroup(group, inProcessTime, undefinedGroupUpdated)) {
+				continue;
+			}
 			try {
 				if (order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 					Boolean orderHeaderIsActive = false;
@@ -215,7 +222,35 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				throw e;
 			}
 		}
-
+	}
+	
+	/**
+	 * This method looks at an OrderGroup and determines whether any old orders in it should be archived.
+	 * If the group is "undefined" (null), check if the current order import process contained any orders without a group. If yes - it's OK to archive old orders
+	 * If it is a regular group, check if it had been updated by the import. If yes - archive non-updated orders. If no - do not modify this group.  
+	 */
+	private boolean shouldOldOrbersBeArchivedInThisGroup(OrderGroup examinedGroup, Timestamp inProcessTime, boolean undefinedGroupUpdated){
+		if (examinedGroup == null) {
+			return undefinedGroupUpdated;
+		}
+		return examinedGroup.getUpdated().equals(inProcessTime);
+	}
+	
+	private void archiveEmptyGroups(UUID inFacilityId){
+		Facility facility = Facility.DAO.findByPersistentId(inFacilityId);
+		for (OrderGroup group : facility.getOrderGroups()) {
+			boolean archiveGroup = true;
+			for (OrderHeader header : group.getOrderHeaders()) {
+				if (header.getActive()) {
+					archiveGroup = false;
+				}
+			}
+			if (archiveGroup) {
+				LOGGER.info("Archive old order group: " + group.getOrderGroupId());
+				group.setActive(false);
+				mOrderGroupDao.store(group);
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -505,7 +540,14 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			pickStrategy = PickStrategyEnum.valueOf(pickStrategyEnumId);
 		}
 		result.setPickStrategy(pickStrategy);
+		//If the imported order group is "undefined" but the header was already assigned to a group, unassign it.
+		OrderGroup oldGroup = result.getOrderGroup();
+		if (oldGroup != null) {
+			oldGroup.removeOrderHeader(result.getOrderId());
+		}
+		result.setOrderGroup(null);
 		if (inOrderGroup != null) {
+			//If the order was imported with a group, make sure it is assigned to it.
 			inOrderGroup.addOrderHeader(result);
 			result.setOrderGroup(inOrderGroup);
 		}
