@@ -1989,6 +1989,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
 			//Otherwise stick to the default character "a"
+
 			if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
 				if (containerId.length() == 1) {
 					value = Byte.valueOf(containerId);
@@ -1997,12 +1998,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 
-			instructions.add(new PosControllerInstr(position,
-				value,
-				value,
-				value,
-				PosControllerInstr.SOLID_FREQ,
-				PosControllerInstr.MED_DUTYCYCLE));
+			if (value >= 0 && value < 10) {
+				//If we are going to pass a single 0 <= digit < 10 like 9, then we must show "09" instead of just 9.
+				instructions.add(new PosControllerInstr(position,
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_DIGITS[value],
+					PosControllerInstr.BITENCODED_DIGITS[0],
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.MED_DUTYCYCLE));
+			} else {
+				instructions.add(new PosControllerInstr(position,
+					value,
+					value,
+					value,
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.MED_DUTYCYCLE));
+
+			}
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
 

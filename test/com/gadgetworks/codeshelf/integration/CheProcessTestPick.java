@@ -1307,7 +1307,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "\r\n1,USF314,COSTCO,22222,22222,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,5,5,6,Test Item 6,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,9,5,6,Test Item 6,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,a6,a6,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		byte[] csvArray2 = csvString2.getBytes();
@@ -1370,11 +1370,24 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupOrderIdAsContainer("22222", "2");
 		picker.setupOrderIdAsContainer("33333", "3"); //missing order id
 		picker.setupOrderIdAsContainer("44444", "4");
-		picker.setupOrderIdAsContainer("5", "5");
+		picker.setupOrderIdAsContainer("9", "5");
 		picker.setupOrderIdAsContainer("a6", "6");
 
-		//Make sure single digit 5 is show on posCon
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 5), Byte.valueOf("5"));
+		//Quickly check assigment feedback
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), Byte.valueOf("22"));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), Byte.valueOf("33"));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4), Byte.valueOf("44"));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6),
+			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+
+		//Pos 5 should have "09"
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 5), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 5).byteValue(),
+			PosControllerInstr.BITENCODED_DIGITS[9]);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 5).byteValue(),
+			PosControllerInstr.BITENCODED_DIGITS[0]);
 
 		picker.scanCommand("START");
 
