@@ -34,23 +34,15 @@ public class UiUpdateService implements IApiService {
 	public void UiUpdateService() {
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Throw InputValidationException to make proper response to go back to UI. Avoid other throws.
-	 */
-	public void updateItemLocation() {
-		
-	}
-	
-	public Item upsertItem(String facilityId, String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId, String orderDetailId) {
+	public Item storeItem(String facilityId, String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId, String orderDetailId) {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {
 			throw new InputValidationException("Facility {0} not found", facilityId);
 		}
 		
-		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
 
+		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, facility);
 
@@ -68,7 +60,7 @@ public class UiUpdateService implements IApiService {
 			throw new InputValidationException(errors);
 		}
 
-		Item returnItem = importer.updateSlottedItem(false,
+ 		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,
 			new Timestamp(System.currentTimeMillis()),

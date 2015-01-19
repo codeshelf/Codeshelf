@@ -289,12 +289,97 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			mEvaluationList.add(inItem);
 	}
 
+	/*
+	 * Hope it is safe. Follow our parent/child hibernate pattern.
+	 */
+	private void safelyDeleteItem(Item inItem) {
+		// for the moment, just archive it?
+		//inItem.setActive(false);
+		LOGGER.info("Deleting inventory item: " + inItem.toLogString());
+
+		// item is in the parent master list and in location item lists
+		ItemMaster itsMaster = inItem.getParent();
+		itsMaster.removeItemFromMaster(inItem);
+
+		Location itsLocation = inItem.getStoredLocation();
+		itsLocation.removeStoredItem(inItem);
+
+		Item.DAO.delete(inItem);
+	}
+
+	/**
+	 * Helper function. Pass in values from Item that are most efficient to evaluate.
+	 * Would be more direct to pass the item, but an outer loop fetches this data once for many calls.
+	 */
+	private boolean detailMatchesItemValues(OrderDetail inDetail,
+		ItemMaster inItemsMaster,
+		UomMaster inItemsUom,
+		String inItemsLocAlias) {
+		if (!inDetail.getActive())
+			return false;
+		String preferredLoc = inDetail.getPreferredLocation();
+		if (preferredLoc == null || preferredLoc.isEmpty())
+			return false;
+		if (!inDetail.getItemMaster().equals(inItemsMaster))
+			return false;
+		if (!inDetail.getUomMaster().equals(inItemsUom))
+			return false;
+		if (preferredLoc.equals(inItemsLocAlias))
+			return true;
+		return false;
+	}
+
+	/**
+	 * mEvaluationList has a list it items that used to be referenced by orderDetail, but the orderDetail update resulted in new item.
+	 * Therefore, it is list of candidate items to delete if no other orderDetail refers to it.
+	 */
 	private void evaluateMovedItems() {
 		if (mEvaluationList.size() == 0)
 			return;
 
 		LOGGER.warn("Querying and evaluating moved items");
+		Long startTimestamp = System.currentTimeMillis();
 
+		Integer evaluationSize = mEvaluationList.size(); // remember the starting size because we will remove part of the list later.
+
+		// For each moved item, determine if any active order details still need to go there.
+		// Let's do one query, however painful.
+		List<OrderDetail> detailList = OrderDetail.DAO.getAll(); // improve! we only want active, this facility, and not complete status. findByFilter()
+		/*
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
+		filterParams.add(Restrictions.in("type", wiTypes));
+		List<OrderDetail> detailList = OrderDetail.DAO.findByFilter(filterParams);
+		*/
+
+		// if an item is not referred to by any detail, then it is a candidate for archive or delete
+		ArrayList<Item> referencedItems = new ArrayList<Item>();
+
+		for (Item item : mEvaluationList) {
+			// get the itemValues we need for the comparison
+			ItemMaster itemsMaster = item.getParent();
+			UomMaster itemsUom = item.getUomMaster();
+			String itemsLocAlias = item.getItemLocationAlias();
+
+			for (OrderDetail detail : detailList) {
+				if (detailMatchesItemValues(detail, itemsMaster, itemsUom, itemsLocAlias)) {
+					referencedItems.add(item);
+					break; // break out of detail loop
+				}
+			}
+		}
+
+		mEvaluationList.removeAll(referencedItems);
+		// Now we can delete or archive the rest
+		for (Item item : mEvaluationList) {
+			safelyDeleteItem(item);
+		}
+
+		//Log time if over 1 seconds
+		Long queryDurationMs = System.currentTimeMillis() - startTimestamp;
+		if (queryDurationMs > 300) {
+			LOGGER.warn("evaluateMovedItems() took {} ms; totalItems= {};", queryDurationMs, evaluationSize);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -356,7 +441,24 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					if (thisDetailHadOldDifferentPreferredLocation) {
 						// We need to find the item at the old location. Then determine if a new item was made at the new location. If so, add the old item to a list for investigation.
 						Location oldLocation = inFacility.findSubLocationById(oldStr);
-						oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster);
+						if (oldLocation != null) {
+							// we would normally expect the old location to have an inventory item there.
+							LOGGER.info("Old location for changing orderdetail was " + oldStr);
+							oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster);
+							if (oldItem == null) {
+								/* Bjoern none of this is necessary. Just debug aid */
+
+								LOGGER.error("probable error");
+								Collection<Item> locItems = oldLocation.getStoredItems().values();
+								List<Item> masterItems = itemMaster.getItems();
+								LOGGER.error("location has " + locItems.size() + " items. Master has " + masterItems.size());
+								if (locItems.size() == 1){
+									Item fromMasterItems = masterItems.get(0);
+									LOGGER.error("fromLocItems: " + fromMasterItems.toLogString());
+								}
+								oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster); // just to step in again to see the uomMaster is not loaded						
+							}
+						}
 					}
 
 					// updateSlottedItem is going to make new inventory if location changed for cases, and also for each if EACHMULT is true

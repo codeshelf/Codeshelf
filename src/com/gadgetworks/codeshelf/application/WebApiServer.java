@@ -71,7 +71,7 @@ public class WebApiServer {
 		        // embedded static content web server
 				ResourceHandler resourceHandler = new ResourceHandler();
 				resourceHandler.setDirectoriesListed(false);
-				resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html" });
+				resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
 				resourceHandler.setResourceBase(staticContentPath);
 				ContextHandler resourceContextHandler=new ContextHandler("/");
 				resourceContextHandler.setHandler(resourceHandler);
