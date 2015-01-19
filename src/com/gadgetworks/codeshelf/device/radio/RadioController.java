@@ -247,6 +247,7 @@ public class RadioController implements IRadioController {
 				}
 				LOGGER.debug("Waiting for interface to start");
 			}
+
 		} while (!started && mShouldRun);
 		LOGGER.info("Gateway radio interface started");
 
