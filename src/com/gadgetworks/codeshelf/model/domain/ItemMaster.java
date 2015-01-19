@@ -324,11 +324,19 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 				selectedItem = item;
 				break;
 			}
-			else if (thisUomMaster.getDomainId().equals(inUomMaster.getDomainId())){
+
+			// else if (thisUomMaster.getDomainId().equals(inUomMaster.getDomainId())){
+			else if (thisUomMaster.getPersistentId().equals(inUomMaster.getPersistentId())){
 				LOGGER.error("Demonstrated hibernate lazyInitialization bug here", new Exception());
 				selectedItem = item;
+				if (thisUomMaster.equals(inUomMaster)) 
+					LOGGER.error("Now equals works!");
+				else
+					LOGGER.error("Equals still misses.");
+				
 				break;
 			}
+			
 		}
 
 		return selectedItem;
