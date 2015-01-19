@@ -85,13 +85,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
 	private static final String	SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 	private static final String	SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
-	
+
 	private static final String	INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	private static final String	INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
 	private static final String	CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	private static final String	CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
-	
+
 	private static final String STARTWORK_COMMAND						= "START";
 	private static final String	SETUP_COMMAND							= "SETUP";
 	private static final String	SHORT_COMMAND							= "SHORT";
@@ -247,27 +247,28 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inDescription
 	 */
 	private void sendDisplayWorkInstruction(WorkInstruction wi) {
-int planQty = wi.getPlanQuantity();
+		int planQty = wi.getPlanQuantity();
 
 		String[] pickInfoLines = { "", "", "" };
+
 		if ("SKU".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-			String info = null;
+			String info = wi.getItemId();
+
 			//SHOW SKU (WITH COUNTS IF >= 99)
 			if (planQty >= maxCountForPositionControllerDisplay) {
-				info = planQty + " ";
-			} else {
-				info = "SKU";
+				info = planQty + info;
 			}
 
 			//Make sure we do not exceed 40 chars
+			if (info.length() > 40) {
+				info = info.substring(0, 40);
+			}
 
 		} else {
-			//final String inPickInstructions = wi.getDescription();
-			//final String inDescription,
-			
-			String displayDescription = inDescription;
+
+			String displayDescription = wi.getDescription();
 			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + inDescription;
+				displayDescription = planQty + " " + displayDescription;
 			}
 
 			int pos = 0;
@@ -287,13 +288,13 @@ int planQty = wi.getPlanQuantity();
 		}
 
 		//Override last line if short is needed
-		if (inShortInstructionNeeded) {
+		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
 			pickInfoLines[2] = "DECREMENT POSITION";
 		}
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		// GoodEggs many locations orders hitting too long case
-		String cleanedPickInstructions = inPickInstructions;
+		String cleanedPickInstructions = wi.getPickInstruction();
 		if (cleanedPickInstructions.length() > 19) {
 			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
 		}
@@ -473,7 +474,7 @@ int planQty = wi.getPlanQuantity();
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
-			
+
 		} else {
 			setState(CheStateEnum.NO_WORK);
 		}
@@ -584,7 +585,7 @@ int planQty = wi.getPlanQuantity();
 			sendPositionControllerInstructions(instructions);
 		}
 	}
-	
+
 	/**
 	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
 	 */
@@ -820,11 +821,11 @@ int planQty = wi.getPlanQuantity();
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
 				showContainerAssainments();
 				break;
-				
+
 			case CONTAINER_POSITION_INVALID:
 				invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				break;
-				
+
 			case CONTAINER_POSITION_IN_USE:
 				invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				break;
@@ -941,7 +942,7 @@ int planQty = wi.getPlanQuantity();
 	private void processCommandScan(final String inScanStr) {
 
 		switch (inScanStr) {
-			
+
 			case LOGOUT_COMMAND:
 				//You can logout at any time
 				logout();
@@ -1077,7 +1078,7 @@ int planQty = wi.getPlanQuantity();
 			case NO_CONTAINERS_SETUP:
 				//Do nothing. Only a "Clear Error" will get you out
 				break;
-				
+
 			case CONTAINER_POSITION:
 				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
 				break;
@@ -1601,7 +1602,7 @@ int planQty = wi.getPlanQuantity();
 				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
 				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
 				INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
-				
+
 				if (ledController != null) {
 					// jr/hibernate. See null channel in testPickViaChe test. Screen
 					Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
@@ -1611,7 +1612,7 @@ int planQty = wi.getPlanQuantity();
 						continue;
 					}
 
-					
+
 
 					Short startLedNum = ledCmdGroup.getPosNum();
 					Short currLedNum = startLedNum;
@@ -1747,7 +1748,7 @@ int planQty = wi.getPlanQuantity();
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			clearAllPositionControllers();
-			
+
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
@@ -1997,9 +1998,9 @@ int planQty = wi.getPlanQuantity();
 			}
 
 			instructions.add(new PosControllerInstr(position,
-			value,
-			value,
-			value,
+				value,
+				value,
+				value,
 				PosControllerInstr.SOLID_FREQ,
 				PosControllerInstr.MED_DUTYCYCLE));
 		}
