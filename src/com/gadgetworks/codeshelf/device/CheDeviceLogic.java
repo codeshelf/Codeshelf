@@ -85,13 +85,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
 	private static final String	SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 	private static final String	SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
-	
+
 	private static final String	INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	private static final String	INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
 	private static final String	CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	private static final String	CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
-	
+
 	private static final String STARTWORK_COMMAND						= "START";
 	private static final String	SETUP_COMMAND							= "SETUP";
 	private static final String	SHORT_COMMAND							= "SHORT";
@@ -455,7 +455,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
-			
+
 		} else {
 			setState(CheStateEnum.NO_WORK);
 		}
@@ -566,7 +566,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			sendPositionControllerInstructions(instructions);
 		}
 	}
-	
+
 	/**
 	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
 	 */
@@ -802,11 +802,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
 				showContainerAssainments();
 				break;
-				
+
 			case CONTAINER_POSITION_INVALID:
 				invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				break;
-				
+
 			case CONTAINER_POSITION_IN_USE:
 				invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				break;
@@ -923,7 +923,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processCommandScan(final String inScanStr) {
 
 		switch (inScanStr) {
-			
+
 			case LOGOUT_COMMAND:
 				//You can logout at any time
 				logout();
@@ -1059,7 +1059,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			case NO_CONTAINERS_SETUP:
 				//Do nothing. Only a "Clear Error" will get you out
 				break;
-				
+
 			case CONTAINER_POSITION:
 				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
 				break;
@@ -1586,7 +1586,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
 				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
 				INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
-				
+
 				if (ledController != null) {
 					// jr/hibernate. See null channel in testPickViaChe test. Screen
 					Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
@@ -1596,7 +1596,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 						continue;
 					}
 
-					
+
 
 					Short startLedNum = ledCmdGroup.getPosNum();
 					Short currLedNum = startLedNum;
@@ -1732,7 +1732,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			clearAllPositionControllers();
-			
+
 			this.mLocationId = inScanStr;
 			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 
@@ -1973,6 +1973,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
 			//Otherwise stick to the default character "a"
+
 			if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
 				if (containerId.length() == 1) {
 					value = Byte.valueOf(containerId);
@@ -1981,12 +1982,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				}
 			}
 
-			instructions.add(new PosControllerInstr(position,
-			value,
-			value,
-			value,
-				PosControllerInstr.SOLID_FREQ,
-				PosControllerInstr.MED_DUTYCYCLE));
+			if (value >= 0 && value < 10) {
+				//If we are going to pass a single 0 <= digit < 10 like 9, then we must show "09" instead of just 9.
+				instructions.add(new PosControllerInstr(position,
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_DIGITS[value],
+					PosControllerInstr.BITENCODED_DIGITS[0],
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.MED_DUTYCYCLE));
+			} else {
+				instructions.add(new PosControllerInstr(position,
+					value,
+					value,
+					value,
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.MED_DUTYCYCLE));
+
+			}
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
 
