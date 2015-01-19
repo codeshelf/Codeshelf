@@ -38,10 +38,18 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.WorkService;
+import com.google.inject.Inject;
 
 @Path("/test")
 public class TestingResource {
 	private PersistenceService persistence = PersistenceService.getInstance();
+	private WorkService workService;
+	
+	@Inject
+	public TestingResource(WorkService workService) {
+		this.workService = workService;
+	}
 	
 	@POST
 	@Path("/createorders")
@@ -79,7 +87,7 @@ public class TestingResource {
 			containers.add(order1 + "");
 			containers.add(order2 + "");
 			facility = Facility.DAO.findByPersistentId(facilityUUID.getUUID());
-			List<WorkInstruction> instructions = facility.computeWorkInstructions(che, containers);
+			List<WorkInstruction> instructions = workService.computeWorkInstructions(che, containers);
 			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTenantTransaction();
 			System.out.println("Assigned to CHE");
@@ -90,16 +98,12 @@ public class TestingResource {
 				instruction.setActualQuantity(instruction.getPlanQuantity());
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 				instruction.setType(WorkInstructionTypeEnum.ACTUAL);
-				OrderDetail detail = instruction.getOrderDetail();
 				if (i++ % 4 == 0) {
 					instruction.setStatus(WorkInstructionStatusEnum.SHORT);
-					detail.setStatus(OrderStatusEnum.SHORT);
 				} else {
 					instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
-					detail.setStatus(OrderStatusEnum.COMPLETE);
 				}
-				OrderDetail.DAO.store(detail);
-				WorkInstruction.DAO.store(instruction);
+				workService.completeWorkInstruction(che.getPersistentId(), instruction);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
 				persistence.commitTenantTransaction();

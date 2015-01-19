@@ -55,8 +55,13 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator().generateValid();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
+		this.getPersistenceService().commitTenantTransaction(); // end of transaction for this test
 		
 		IRadioController radioController = mock(IRadioController.class);
 		
@@ -93,7 +98,6 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), wi.getPickInstruction());
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), "COMPLETE");
 
-		this.getPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -104,7 +108,13 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator().generateValid();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
 		
 		IRadioController radioController = mock(IRadioController.class);
@@ -139,7 +149,6 @@ public class CheDeviceLogicTest extends DomainTestABC {
 	
 		verifyDisplay(radioController, "NO WORK TO DO");
 		
-		this.getPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test

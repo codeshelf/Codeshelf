@@ -38,17 +38,16 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
- * 
- * 
+ *
+ *
  */
 public class CrossBatchRunTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
-	
+
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleSlottedFacility(String inOrganizationName) {
 		// Besides basic crossbatch functionality, with this facility we want to test housekeeping WIs for
@@ -162,8 +161,8 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
-		//Che che = 
+		organization.createDefaultSiteControllerUser(network);
+		//Che che =
 		network.createChe("CHE1", new NetGuid("0x00000001"));
 		network.createChe("CHE2", new NetGuid("0x00000002"));
 
@@ -299,14 +298,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
-		facility.setUpCheContainerFromString(theChe, "11");
-
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, theChe.getDomainId(), "11");
 
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 
 		mPropertyService.restoreHKDefaults(facility);
 
@@ -330,20 +327,18 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Facility facility = setUpSimpleSlottedFacility("XB03");
 
 		setUpGroup1OrdersAndSlotting(facility);
-
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Che theChe = theNetwork.getChe("CHE1");
+		this.getPersistenceService().commitTenantTransaction();
 
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
 
+		this.getPersistenceService().beginTenantTransaction();
 		LOGGER.info("basicHousekeeping.  Set up CHE for 15,14");
 		// Make sure housekeeping is on
 		mPropertyService.restoreHKDefaults(facility);
-		facility.setUpCheContainerFromString(theChe, "15,14");
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "15,14"); // This returns them in working order.
 		// Just some quick log output to see it
 		logWiList(aList);
 
@@ -375,9 +370,6 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Facility facility = setUpSimpleSlottedFacility("XB04");
 		setUpGroup1OrdersAndSlotting(facility);
 
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Che theChe = theNetwork.getChe("CHE1");
-
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
 
@@ -388,10 +380,9 @@ public class CrossBatchRunTest extends EdiTestABC {
 		mPropertyService.turnOffHK(facility);
 		mPropertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangePathSegmentChange);
 		mPropertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
-		facility.setUpCheContainerFromString(theChe, "15,14");
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "15,14");
 		mPropertyService.restoreHKDefaults(facility); // set it back
 
 		Integer wiCount = aList.size();
@@ -408,9 +399,9 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		Facility facility = setUpSimpleSlottedFacility("XB05");
 		setUpGroup1OrdersAndSlotting(facility);
-
-		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
-		Che theChe = theNetwork.getChe("CHE1");
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("housekeepingContainerAndCount.  Set up CHE for 11,12,13");
@@ -419,19 +410,29 @@ public class CrossBatchRunTest extends EdiTestABC {
 		mPropertyService.turnOffHK(facility);
 		mPropertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangeNone);
 		mPropertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
-		facility.setUpCheContainerFromString(theChe, "11,12,13");
-
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "11,12,13");
 
+		this.getPersistenceService().commitTenantTransaction();
+
+		
+		this.getPersistenceService().beginTenantTransaction();
 		mPropertyService.restoreHKDefaults(facility); // set it back
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
 		Integer wiCount = aList.size();
+		for(int i=0;i<wiCount; i++) {
+			aList.set(i, WorkInstruction.DAO.reload(aList.get(i)));
+		}
 		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
 
-		WorkInstruction wi4 = aList.get(3);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		WorkInstruction wi4 = WorkInstruction.DAO.reload(aList.get(3));
 
 		String wi4Desc = wi4.getDescription();
 
@@ -446,7 +447,15 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		// This uses the cross batch setup because the container are convenient.
 		Facility facility = setUpSimpleSlottedFacility("XB06");
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		setUpGroup1OrdersAndSlotting(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -454,10 +463,13 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
 		mPropertyService.turnOffHK(facility);
-		facility.setUpCheContainerFromString(theChe, "11,12,13");
+		mWorkService.setUpCheContainerFromString(theChe, "11,12,13");
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
-		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+
 		int usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
 		// Just exploring: see what happens if we add the same use several times.
@@ -466,16 +478,30 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// - Look at the parent add method. It needs to call the child's set method for the parent relationship.
 		// - Then code needs to remember to do the DAO.store(child)
 		ContainerUse aUse = theChe.getUses().get(0);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		// Adding same item. Not storing
-		theChe.addContainerUse(aUse);
-		theChe.addContainerUse(aUse);
+		theChe.addContainerUse(ContainerUse.DAO.reload(aUse));
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
+		theChe.addContainerUse(ContainerUse.DAO.reload(aUse));
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
+		this.getPersistenceService().commitTenantTransaction();
 
-		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
+		aUse=aUse.getDao().reload(aUse);
 		theChe.addContainerUse(aUse);
 		aUse.getDao().store(aUse);
 		usesCount = theChe.getUses().size();
@@ -484,14 +510,23 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// not result in duplicates in the list. Probably true for most hibernate relationships. But don't try this at home.
 
 		// Now the new part for DEV-492. Show that we remove prior run uses
-		facility.setUpCheContainerFromString(theChe, "14");
+        this.getPersistenceService().commitTenantTransaction();
+
+        this.getPersistenceService().beginTenantTransaction();
+        facility = Facility.DAO.reload(facility);
+        theChe = Che.DAO.reload(theChe);
+
+		mWorkService.setUpCheContainerFromString(theChe, "14");
+        this.getPersistenceService().commitTenantTransaction();
+
+        this.getPersistenceService().beginTenantTransaction();
 		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
 		Assert.assertTrue(theChe.getUses().size() == 1);
-		// BUG! at least with ebeans. If we used 12 above instead of 14, it throws on an ebeans
-		// lazy load exception on work instruction
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility); // set it back
-
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
@@ -541,15 +576,14 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("Case 1: findByPersistentId() not within a transaction. Will throw, and is caught.");
 		Che che1d = null;
 		// get only works within a transaction, and findByPersistentId does a get. But it catches the exception and returns null
-		boolean unExpectedCatch = false;
+		boolean expectedCatch = false;
 		try {
 			che1d = Che.DAO.findByPersistentId(che1Uuid);
 			Assert.assertNull("findByPersistentId returned an object without a transaction?", che1d);
 		} catch (HibernateException e) {
-			unExpectedCatch = true;
+			expectedCatch = true;
 		}
-		if (unExpectedCatch)
-			Assert.fail("findByPersistentId no longer catches out of transaction throw?");
+		Assert.assertTrue(expectedCatch);
 
 		LOGGER.info("Case 2: findByPersistentId() works within a transaction. And has the expected container use");
 		this.getPersistenceService().beginTenantTransaction();
@@ -625,7 +659,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		Assert.assertEquals(che2c, che2b);
 
 		LOGGER.info("Case 7: get the NonUniqueObjectException if we store an object that was not changed?.");
-		// Javadoc: This exception is thrown when an operation would break session-scoped identity. 
+		// Javadoc: This exception is thrown when an operation would break session-scoped identity.
 		// This occurs if the user tries to associate two different instances of the same Java class with a particular identifier, in the scope of a single Session.
 		boolean expectedCaught = false;
 		try {
@@ -641,12 +675,12 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 		LOGGER.info("Case 7b: do not get the NonUniqueObjectException for store of changed object.");
 		this.getPersistenceService().beginTenantTransaction();
-	
+
 		// Uncomment these two lines uncommented will cause the store(use2); line to throw because
 		// This pulls new reference for the use into memory for that persistentId, and then we try to store the old reference.
 		// Che che2d = Che.DAO.findByPersistentId(che2Uuid);
 		// int use2dCount = che2d.getUses().size();
-		
+
 		boolean unExpectedCaught = false;
 		try {
 			// Same as above, but a real change. Should this throw?
@@ -665,7 +699,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 	@Test
 	public final void intentionalPSQLError()  throws IOException {
 		// We found out the hard way that a longer string in a VAR(255) column blows up inelegantly.
-	
+
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSimpleSlottedFacility("XB06");
 		setUpGroup1OrdersAndSlotting(facility);
@@ -679,20 +713,21 @@ public class CrossBatchRunTest extends EdiTestABC {
 		UUID che1Uuid = che1.getPersistentId();
 		UUID che2Uuid = che2.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
-		
+
 		LOGGER.info("Case 1: set up a too-long field. Using CHE description field. Commit the transaction. Should throw the error.");
 		String desc = "";
 		for (int count = 0; count < 500; count++ ) {
 			desc += "X";
 		}
-		
+
 		try {
 			this.getPersistenceService().beginTenantTransaction();
+			che1 = Che.DAO.reload(che1);
 			che1.setDescription(desc);
 			Che.DAO.store(che1);
 			Assert.assertEquals(desc, che1.getDescription());
 			this.getPersistenceService().commitTenantTransaction();
-			Assert.fail("Should have thrown exception related to column width");  
+			Assert.fail("Should have thrown exception related to column width");
 		} catch (DataException e) {
 			this.getPersistenceService().rollbackTenantTransaction();
 			LOGGER.debug("Exception OK  during test");
@@ -702,6 +737,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		LOGGER.info("Case 2: modify the description field on the other CHE in separate transaction.");
 		try {
 			this.getPersistenceService().beginTenantTransaction();
+			che2 = Che.DAO.reload(che2);
 			che2.setDescription(descript2);
 			Assert.assertEquals(descript2, che2.getDescription());
 			Che.DAO.store(che2);
@@ -710,25 +746,25 @@ public class CrossBatchRunTest extends EdiTestABC {
 			this.getPersistenceService().rollbackTenantTransaction();
 			throw e;
 		}
-		
+
 		LOGGER.info("Case 3: get che2 in yet another transaction and check the description.");
 		try {
 			this.getPersistenceService().beginTenantTransaction();
 			Che che2b = Che.DAO.findByPersistentId(che2Uuid);
-			
+
 			Assert.assertEquals(descript2, che2b.getDescription());
-				
+
 			this.getPersistenceService().commitTenantTransaction();
 		} catch(DataException e) {
 			this.getPersistenceService().rollbackTenantTransaction();
 			throw e;
 		}
-		
+
 		LOGGER.info("Case 4: get che1 in yet another transaction and check the description.");
 		try {
 			this.getPersistenceService().beginTenantTransaction();
 			Che che1b = Che.DAO.findByPersistentId(che1Uuid);
-			
+
 			Assert.assertEquals(che1DefaultDescription, che1b.getDescription());
 			this.getPersistenceService().commitTenantTransaction();
 		} catch(DataException e) {

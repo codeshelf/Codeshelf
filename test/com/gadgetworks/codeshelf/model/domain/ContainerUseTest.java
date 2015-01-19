@@ -158,7 +158,7 @@ public class ContainerUseTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertNull(header0.getContainerUse());
 
-
+		
 		LOGGER.info("Case 4: Try to add a container use to header that has one already. Should refuse.");
 		this.getPersistenceService().beginTenantTransaction();
 		header1.addHeadersContainerUse(cntrUse0);

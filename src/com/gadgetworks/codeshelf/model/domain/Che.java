@@ -12,8 +12,6 @@ import java.util.List;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
@@ -26,12 +24,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -65,11 +61,6 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(Che.class);
-
-	/*
-	@ManyToOne(optional = false)
-	private CodeshelfNetwork parent;
-	 */
 
 	// The current work area. appears not to be used anywhere.
 	/*
@@ -121,6 +112,24 @@ public class Che extends WirelessDeviceABC {
 		Che.DAO = dao;
 	}
 
+	/*
+	// appears not to be used anywhere
+	public User getCurrentUser() {
+		if (currentUser instanceof HibernateProxy) {
+			currentUser = (User) DomainObjectABC.deproxify(currentUser);
+		}
+		return currentUser;
+	}
+
+	// appears not to be used anywhere
+	public WorkArea getCurrentWorkArea() {
+		if (currentWorkArea instanceof HibernateProxy) {
+			currentWorkArea = (WorkArea) DomainObjectABC.deproxify(currentWorkArea);
+		}
+		return currentWorkArea;
+	}
+	*/
+	
 	public final String getDefaultDomainIdPrefix() {
 		return "CHE";
 	}
@@ -194,35 +203,6 @@ public class Che extends WirelessDeviceABC {
 			return latestAssignedWi.getAssigned();
 
 		return null;
-	}
-
-	private void doIntentionalPersistenceError() {
-		// If you want to test this, change value of doThrowInstead in method below. Then from the UI, select a CHE and
-		// do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
-		// DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
-		String desc = "";
-		for (int count = 0; count < 500; count++) {
-			desc += "X";
-		}
-		// No try/catch here. The intent is to fail badly and see how the system handles it.
-		this.setDescription(desc);
-		Che.DAO.store(this);
-		LOGGER.warn("Intentional database persistence error. Setting too long description on " + this.getDomainId());
-	}
-
-	// just a call through to facility, but convenient for the UI
-	public final void fakeSetupUpContainersOnChe(String inContainers) {
-		final boolean doThrowInstead = false;
-		CodeshelfNetwork network = this.getParent();
-		if (network == null)
-			return;
-		Facility facility = network.getParent();
-		if (facility == null)
-			return;
-		if (doThrowInstead)
-			doIntentionalPersistenceError();
-		else
-			facility.setUpCheContainerFromString(this, inContainers);
 	}
 
 	// --------------------------------------------------------------------------

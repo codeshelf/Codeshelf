@@ -65,6 +65,10 @@ public class LightServiceTest extends EdiTestABC {
 			createLocationAliasImporter(),
 			createOrderImporter());
 		Facility facility = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Aisle aisle = (Aisle) facility.getChildren().get(0);
 		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
 		int itemsPerTier = 5;
@@ -72,11 +76,14 @@ public class LightServiceTest extends EdiTestABC {
 		
 		InventoryGenerator inventoryGenerator = new InventoryGenerator((InventoryCsvImporter) createInventoryImporter());
 		inventoryGenerator.setupVirtuallySlottedInventory(aisle, itemsPerTier);
+		this.getPersistenceService().commitTenantTransaction();
 
-		aisle = aisle.getDao().findByPersistentId(aisle.getPersistentId());
+		this.getPersistenceService().beginTenantTransaction();
 
+		aisle = Aisle.DAO.reload(aisle);
 		List<Item> items = aisle.getInventoryInWorkingOrder();
 		Assert.assertNotEquals(0,  items.size());
+		this.getPersistenceService().commitTenantTransaction();
 		
 		SessionManager sessionManager = mock(SessionManager.class);
 		PropertyService mockProp = mock(PropertyService.class);
@@ -89,6 +96,11 @@ public class LightServiceTest extends EdiTestABC {
 		});
 		
 		LightService lightService = new LightService(mockProp, sessionManager, Executors.newSingleThreadScheduledExecutor());
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		aisle = Aisle.DAO.reload(aisle);
+		items = aisle.getInventoryInWorkingOrder();
 		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
@@ -110,6 +122,10 @@ public class LightServiceTest extends EdiTestABC {
 	public final void checkTierChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
@@ -130,6 +146,10 @@ public class LightServiceTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*whole bay*/);
@@ -153,6 +173,10 @@ public class LightServiceTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
 		Tier b2t1 = (Tier)facility.findSubLocationById("A1.B2.T1");
@@ -178,6 +202,10 @@ public class LightServiceTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
 		
@@ -204,6 +232,10 @@ public class LightServiceTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);

@@ -6,11 +6,11 @@ import javassist.NotFoundException;
 
 import javax.servlet.http.HttpServletResponse;
 
+import lombok.Getter;
+
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Getter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;

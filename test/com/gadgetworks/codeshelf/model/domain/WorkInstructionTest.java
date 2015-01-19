@@ -194,40 +194,6 @@ public class WorkInstructionTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	// @Test
-	// edi/CrossBatchRunTest.java is a much better test.  This is failing now (after WI schema change for v5) for not finding the facility persistentId in the locations table in H2.
-	public final void crossBatchOrderGroupTest() {
-		Facility facility = createFacilityWithOutboundOrders("WITEST2");
-
-		List<String> containerIdList = new ArrayList<String>();
-		containerIdList.add("C4");
-		containerIdList.add("C5");
-		containerIdList.add("C6");
-		containerIdList.add("C7");
-
-		CodeshelfNetwork network = facility.getNetwork("WITEST");
-		Che che = network.getChe("WITEST");
-
-		facility.computeWorkInstructions(che, containerIdList);
-
-		OrderHeader out1Group1 = facility.getOrderHeader("OUT1GROUP1");
-		Assert.assertNotNull(out1Group1);
-		Assert.assertTrue(wiExistsForOrder(out1Group1));
-		
-		OrderHeader out2Group1 = facility.getOrderHeader("OUT2GROUP1");
-		Assert.assertNotNull(out2Group1);
-		Assert.assertTrue(wiExistsForOrder(out2Group1));
-
-		OrderHeader out3Group2 = facility.getOrderHeader("OUT3GROUP2");
-		Assert.assertNotNull(out3Group2);
-		Assert.assertFalse(wiExistsForOrder(out3Group2));
-
-		OrderHeader out4NoGroup = facility.getOrderHeader("OUT4NOGROUP");
-		Assert.assertNotNull(out4NoGroup);
-		Assert.assertTrue(wiExistsForOrder(out4NoGroup));
-
-	}
-	
 	@Test
 	public void filterTest() {
 		this.getPersistenceService().beginTenantTransaction();

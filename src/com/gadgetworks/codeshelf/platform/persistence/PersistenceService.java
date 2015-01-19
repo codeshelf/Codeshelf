@@ -6,6 +6,7 @@ import java.util.Map;
 
 import lombok.Getter;
 
+import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -13,6 +14,7 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.proxy.HibernateProxy;
 import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +26,6 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.service.PropertyService;
-import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
@@ -56,8 +56,8 @@ public class PersistenceService extends Service {
 	private Tenant fixedTenant;
 
 	// TODO: for debugging only, remove
-	private Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>();
-	private Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
+	//private Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>();
+	//private Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
 
 	private PersistenceService() {
 		setInstance();
@@ -208,8 +208,8 @@ public class PersistenceService extends Service {
 		 */
 
 		// unlink debugging stuff
-		this.sessionStarted=new HashMap<Session,StackTraceElement[]>();
-		this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
+		//this.sessionStarted=new HashMap<Session,StackTraceElement[]>();
+		//this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
 
 		this.setInitialized(false);
 		return true;
@@ -223,9 +223,9 @@ public class PersistenceService extends Service {
 		}
 		Session session = fac.getCurrentSession();
 
-		if(!this.sessionStarted.containsKey(session)) {
-			this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
-		}
+		//if(!this.sessionStarted.containsKey(session)) {
+		//	this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
+		//}
 
 		return session;
 	}
@@ -236,11 +236,11 @@ public class PersistenceService extends Service {
 
 	public final Transaction beginTenantTransaction() {
 		Session session = getCurrentTenantSession();
-		StackTraceElement st[]=this.sessionStarted.get(session);
+		//StackTraceElement st[]=this.sessionStarted.get(session);
 		Transaction tx = session.getTransaction();
-		if (!this.transactionStarted.containsKey(tx)) {
-			this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
-		}
+		//if (!this.transactionStarted.containsKey(tx)) {
+		//	this.transactionStarted.put(tx,Thread.currentThread().getStackTrace());
+		//}
 		if (tx != null) {
 			// check for already active transaction
 			if (tx.isActive()) {
@@ -320,6 +320,19 @@ public class PersistenceService extends Service {
 	public void resetDatabase() {
 		SchemaExport se = new SchemaExport(this.configuration);
 		se.create(false, true);
+	}
+
+	public static <T>T deproxify(T object) {
+		if (object==null) {
+			return null;
+		} if (object instanceof HibernateProxy) {
+	        Hibernate.initialize(object);
+	        T realDomainObject = (T) ((HibernateProxy) object)
+	                  .getHibernateLazyInitializer()
+	                  .getImplementation();
+	        return (T)realDomainObject;
+	    }
+		return object;
 	}
 
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -17,6 +18,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +63,8 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(WorkArea.class);
 
 	// The parent facility.
-	@OneToOne(optional = false)
-	private Path				parent;
+	@OneToOne(optional = false, fetch=FetchType.LAZY)
+	private Path parent;
 
 	// The work area ID.
 	@Column(nullable = false,name="work_area_id")
@@ -94,7 +96,7 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@Getter
 	private List<Che>			activeChes	= new ArrayList<Che>();
 	*/
-
+	
 	public WorkArea() {
 		workAreaId = "";
 	}
@@ -109,6 +111,9 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	}
 
 	public final Path getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Path) PersistenceService.deproxify(this.parent);
+		}		
 		return parent;
 	}
 

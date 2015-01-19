@@ -92,7 +92,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		
+
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
@@ -134,14 +134,14 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
-		
+
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
+		organization.createDefaultSiteControllerUser(network);
 
 		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
@@ -183,8 +183,11 @@ public class PickSimulaneousWis extends EdiTestABC {
 	@Test
 	public final void testPick() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility("PK01");
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
 		/*  From CD_0043  applied to each pick in aisle A1
 		Order 1, with two order details: A and B.
@@ -210,13 +213,18 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().commitTenantTransaction();
 
-
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -237,7 +245,10 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
@@ -247,25 +258,35 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
-		facility.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
+		mWorkService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
+		this.getPersistenceService().commitTenantTransaction();
 
-		List<WorkInstruction> aList = facility.getWorkInstructions(theChe, "");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		theChe = Che.DAO.reload(theChe);
+
+		List<WorkInstruction> aList = mWorkService.getWorkInstructions(theChe, "");
+
 
 		int wiCount = aList.size();
 		Assert.assertEquals(8, wiCount); // 8 work instructions. But 2,3,4 in same group and 7,8 in same group.
 
-		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value. 
+		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value.
 		// Therefore, all 8 will be in the result of starting from D402
-		List<WorkInstruction> wiListAfterScan = facility.getWorkInstructions(theChe, "D402");
+		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D402");
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
 		mPropertyService.restoreHKDefaults(facility);
+		this.getPersistenceService().commitTenantTransaction();
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 8, wiCountAfterScan); // all 8 work instructions from D402 should be there.
 
 		// Check the order of the work instructions. What we are really doing is seeing if the the 2nd, 3rd, and 4th WI have group component in the group and sort.
 		// Answer: no. Not now anyway. So no simultaneous dispatch.
-		WorkInstruction wi1 = wiListAfterScan.get(0);
+		this.getPersistenceService().beginTenantTransaction();
+		WorkInstruction wi1 = WorkInstruction.DAO.reload(wiListAfterScan.get(0));
 		Assert.assertNotNull(wi1);
 		String wi1Order = wi1.getOrderId();
 		String wi1Item = wi1.getItemId();
@@ -273,7 +294,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertEquals("0001", groupSortStr1);
 		Double wi1Pos = wi1.getPosAlongPath();
 
-		WorkInstruction wi2 = wiListAfterScan.get(1);
+		WorkInstruction wi2 = WorkInstruction.DAO.reload(wiListAfterScan.get(1));
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
@@ -281,13 +302,13 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		Assert.assertTrue(wi2Pos > wi1Pos);
 
-		WorkInstruction wi3 = wiListAfterScan.get(2);
+		WorkInstruction wi3 = WorkInstruction.DAO.reload(wiListAfterScan.get(2));
 		Assert.assertNotNull(wi3);
 		String groupSortStr3 = wi3.getGroupAndSortCode();
 		Assert.assertEquals("0003", groupSortStr3);
 		Double wi3Pos = wi3.getPosAlongPath();
 
-		WorkInstruction wi4 = wiListAfterScan.get(3);
+		WorkInstruction wi4 = WorkInstruction.DAO.reload(wiListAfterScan.get(3));
 		Assert.assertNotNull(wi4);
 		String groupSortStr4 = wi4.getGroupAndSortCode();
 		Assert.assertEquals("0004", groupSortStr4);
@@ -295,23 +316,23 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// 2, 3 and 4 for same item, so should be equal.
 		Assert.assertEquals(wi2Pos, wi4Pos);
 
-		WorkInstruction wi5 = wiListAfterScan.get(4);
+		WorkInstruction wi5 = WorkInstruction.DAO.reload(wiListAfterScan.get(4));
 		Assert.assertNotNull(wi5);
 		String groupSortStr5 = wi5.getGroupAndSortCode();
 		Double wi5Pos = wi5.getPosAlongPath();
 
-		WorkInstruction wi6 = wiListAfterScan.get(5);
+		WorkInstruction wi6 = WorkInstruction.DAO.reload(wiListAfterScan.get(5));
 		Assert.assertNotNull(wi6);
 		String groupSortStr6 = wi6.getGroupAndSortCode();
 		Double wi6Pos = wi6.getPosAlongPath();
 
-		WorkInstruction wi7 = wiListAfterScan.get(6);
+		WorkInstruction wi7 = WorkInstruction.DAO.reload(wiListAfterScan.get(6));
 		Assert.assertNotNull(wi7);
 		String groupSortStr7 = wi7.getGroupAndSortCode();
 		Assert.assertEquals("0007", groupSortStr7);
 		Double wi7Pos = wi7.getPosAlongPath();
 
-		WorkInstruction wi8 = wiListAfterScan.get(7);
+		WorkInstruction wi8 = WorkInstruction.DAO.reload(wiListAfterScan.get(7));
 		Assert.assertNotNull(wi8);
 		String groupSortStr8 = wi8.getGroupAndSortCode();
 		Assert.assertEquals("0008", groupSortStr8);
@@ -319,7 +340,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		Assert.assertEquals("1123", wi1Item);
 		Assert.assertEquals("12001", wi1Order);
-		
+
 		// Last items picked should be 1522. Two orders, so that is arbitrary. (Until later, when we might care to alternate somewhat to reduce confusion about orders going to same cart slot.
 		String wi7Item = wi7.getItemId();
 		String wi8Item = wi8.getItemId();

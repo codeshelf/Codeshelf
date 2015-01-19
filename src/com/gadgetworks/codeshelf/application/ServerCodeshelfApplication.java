@@ -41,8 +41,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
-	private IConfiguration			configuration;
-
 	private final ServerWatchdogThread watchdog;
 
 	@Inject
@@ -54,7 +52,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			
 		super(inWebApiServer);
 		
-		this.configuration = configuration;
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		this.persistenceService = persistenceService;
@@ -84,7 +81,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
 
-		this.getPersistenceService().start();
+		// started by injection of getInstance() 
+		// this.getPersistenceService().start();
 
 		try {
 			this.getPersistenceService().beginTenantTransaction();

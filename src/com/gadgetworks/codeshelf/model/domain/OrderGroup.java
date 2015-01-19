@@ -15,6 +15,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
@@ -23,6 +24,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,7 +72,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
 
 	// The parent facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility					parent;
 
 	// The collective order status.
@@ -135,6 +137,9 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
+		}		
 		return parent;
 	}
 

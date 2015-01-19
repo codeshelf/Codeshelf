@@ -31,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.gadgetworks.codeshelf.api.BaseResponse;
 
 // --------------------------------------------------------------------------
 /**
@@ -147,5 +146,15 @@ public abstract class DomainObjectABC implements IDomainObject {
 			addDeclaredAndInheritedFields(superClass, inFields);
 		}
 	}
+
+	/*
+	public static <T extends IDomainObject> T as(T domainObject) {
+		if (domainObject==null) {
+			return null;
+		}
+		domainObject = (T) deproxify(domainObject);
+	    return domainObject;
+	}
+	*/		
 
 }

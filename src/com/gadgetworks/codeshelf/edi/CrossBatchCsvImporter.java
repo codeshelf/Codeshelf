@@ -28,12 +28,13 @@ import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.ContainerKind;
 import com.gadgetworks.codeshelf.model.domain.ContainerUse;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Facility.Work;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.service.WorkService.Work;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -57,8 +58,11 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	private ITypedDao<ContainerUse>	mContainerUseDao;
 	private ITypedDao<UomMaster>	mUomMasterDao;
 
+	private WorkService	mWorkService;
+
 	@Inject
 	public CrossBatchCsvImporter(final EventProducer inProducer,
+		final WorkService inWorkService,
 		final ITypedDao<OrderGroup> inOrderGroupDao,
 		final ITypedDao<OrderHeader> inOrderHeaderDao,
 		final ITypedDao<OrderDetail> inOrderDetailDao,
@@ -73,6 +77,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		mContainerDao = inContainerDao;
 		mContainerUseDao = inContainerUseDao;
 		mUomMasterDao = inUomMasterDao;
+		mWorkService = inWorkService;
 	}
 
 	// --------------------------------------------------------------------------
@@ -91,7 +96,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			try {
 				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
-				BatchResult<Work> workResults = inFacility.determineWorkForContainer(container);
+				BatchResult<Work> workResults = mWorkService.determineWorkForContainer(inFacility, container);
 				//				produceRecordSuccessEvent(crossBatchBean);
 				importedContainerIds.add(container.getContainerId());
 				importedRecords++;

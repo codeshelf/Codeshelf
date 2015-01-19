@@ -205,121 +205,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	@Test
-	public final void testItemCreationfromOrders() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
-		this.getPersistenceService().commitTenantTransaction();
-
-		LOGGER.info("1: Read a very small aisles file");
-		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
-		String csvString1 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A1,,,,,tierNotB1S1Side,12.0,37.0,X,120,\r\n" //
-				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Tier,T1,,1,1,0,,\r\n" //
-				+ "Bay,B2,115,,,,,\r\n" //
-				+ "Tier,T1,,1,1,0,,\r\n"//
-				+ "Aisle,A2,,,,,tierNotB1S1Side,12.0,43.0,X,120,\r\n"
-				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Tier,T1,,1,1,0,,\r\n"; //
-
-		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer1 = createAisleFileImporter();
-		importer1.importAislesFileFromCsvStream(new StringReader(csvString1), facility, ediProcessTime1);	
-		this.getPersistenceService().commitTenantTransaction();
-
-		LOGGER.info("2: Read the locations file, setting up only a few aliases");
-		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
-				+ "A1, AisleA\r\n" //
-				+ "A2, AisleB\r\n" //
-				+ "A1.B1, D34\r\n" //
-				+ "A1.B2, D35\r\n" //
-				+ "A2.B1, D13\r\n"; //
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-		this.getPersistenceService().commitTenantTransaction();
-
-		LOGGER.info("3: Read the orders file, which has some preferred locations");
-		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
-		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
-				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
-				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D34,43"
-				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
-				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
-		OrderHeader order10 = facility.getOrderHeader("10");
-		Assert.assertNotNull(order10);
-		Integer detailCount = order10.getOrderDetails().size();
-		Assert.assertEquals((Integer) 2, detailCount);
-
-		OrderDetail detail101 = order10.getOrderDetail("10.1");
-		Assert.assertNotNull(detail101);
-		OrderDetail detail102 = order10.getOrderDetail("10.2");
-		Assert.assertNotNull(detail102);
-
-		String prefLoc101 = detail101.getPreferredLocation();
-		Assert.assertNotNull("Preferred location is undefined", prefLoc101);
-		Assert.assertEquals("D35", prefLoc101);
-
-		String prefLoc102 = detail102.getPreferredLocation();
-		Assert.assertNotNull("Preferred location is undefined", prefLoc102);
-		Assert.assertEquals("D34", prefLoc102);
-
-		OrderHeader order11 = facility.getOrderHeader("11");
-		OrderDetail detail111 = order11.getOrderDetail("11.1");
-		String prefLoc111 = detail111.getPreferredLocation();
-		Assert.assertTrue("unresolved preferredLocation should be blank", prefLoc111.isEmpty());
-
-		OrderDetail detail112 = order11.getOrderDetail("11.2");
-		String prefLoc112 = detail112.getPreferredLocation();
-		Assert.assertEquals("D13", prefLoc112);
-
-		ItemMaster theMaster = facility.getItemMaster("SKU0001");
-		Assert.assertNotNull("ItemMaster should be created", theMaster);
-		List<Item> items = theMaster.getItems();
-		Assert.assertEquals(0, items.size()); // No inventory created
-
-		// Now set up for next case. 
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
-		this.getPersistenceService().commitTenantTransaction();
-
-		// Read the same file again, but this time LOCAPICK is true
-		this.getPersistenceService().beginTenantTransaction();
-		
-		// getting a lazy initialization error during the read on a tier addStoredItem.
-		// Interesting that relaod the facility seems to set the tier straight.
-		facility = Facility.DAO.reload(facility);
-		
-		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader4 = new InputStreamReader(stream4);
-		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
-
-		ItemMaster theMaster2 = facility.getItemMaster("SKU0001");
-		Assert.assertNotNull("ItemMaster should be found", theMaster2);
-		List<Item> items2 = theMaster2.getItems();
-		Assert.assertEquals(1, items2.size()); // Inventory should be created since LOCAPICK is true
-
-		this.getPersistenceService().commitTenantTransaction();
-
-	}
-
-	@Test
 	public final void testOrderImporterWithPickStrategyFromCsvStream() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
@@ -1090,7 +975,233 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	}
 
-	// ARCHIVE TESTS?
+	@Test
+	public final void testItemCreationfromOrders() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("1: Read a very small aisles and locations file. Aliases exist only for D34, D35, D13");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		loadSmallAislesAndLocations(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("3: Read the orders file, which has some preferred locations");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
+				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D34,43"
+				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+
+		OrderHeader order10 = facility.getOrderHeader("10");
+		Assert.assertNotNull(order10);
+		Integer detailCount = order10.getOrderDetails().size();
+		Assert.assertEquals((Integer) 2, detailCount);
+
+		OrderDetail detail101 = order10.getOrderDetail("10.1");
+		Assert.assertNotNull(detail101);
+		OrderDetail detail102 = order10.getOrderDetail("10.2");
+		Assert.assertNotNull(detail102);
+
+		String prefLoc101 = detail101.getPreferredLocation();
+		Assert.assertNotNull("Preferred location is undefined", prefLoc101);
+		Assert.assertEquals("D35", prefLoc101);
+
+		String prefLoc102 = detail102.getPreferredLocation();
+		Assert.assertNotNull("Preferred location is undefined", prefLoc102);
+		Assert.assertEquals("D34", prefLoc102);
+
+		OrderHeader order11 = facility.getOrderHeader("11");
+		OrderDetail detail111 = order11.getOrderDetail("11.1");
+		String prefLoc111 = detail111.getPreferredLocation();
+		Assert.assertTrue("unresolved preferredLocation should be blank", prefLoc111.isEmpty());
+
+		OrderDetail detail112 = order11.getOrderDetail("11.2");
+		String prefLoc112 = detail112.getPreferredLocation();
+		Assert.assertEquals("D13", prefLoc112);
+
+		ItemMaster theMaster = facility.getItemMaster("SKU0001");
+		Assert.assertNotNull("ItemMaster should be created", theMaster);
+		List<Item> items = theMaster.getItems();
+		Assert.assertEquals(0, items.size()); // No inventory created
+
+		// Now set up for next case. 
+		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (theProperty != null) {
+			theProperty.setValue(true);
+			PropertyDao.getInstance().store(theProperty);
+		}
+		this.getPersistenceService().commitTenantTransaction();
+
+		// Read the same file again, but this time LOCAPICK is true
+		this.getPersistenceService().beginTenantTransaction();
+
+		// getting a lazy initialization error during the read on a tier addStoredItem.
+		// Interesting that relaod the facility seems to set the tier straight.
+		facility = Facility.DAO.reload(facility);
+
+		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader4 = new InputStreamReader(stream4);
+		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
+
+		ItemMaster theMaster2 = facility.getItemMaster("SKU0001");
+		Assert.assertNotNull("ItemMaster should be found", theMaster2);
+		List<Item> items2 = theMaster2.getItems();
+		Assert.assertEquals(1, items2.size()); // Inventory should be created since LOCAPICK is true
+
+		this.getPersistenceService().commitTenantTransaction();
+
+	}
+
+	@Test
+	public final void itemCreationChoicesfromOrders() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("1: Read a very small aisles and locations file");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		loadSmallAislesAndLocations(facility);
+
+		LOGGER.info("2: Set LOCAPICK = true");
+		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (theProperty != null) {
+			theProperty.setValue(true);
+			PropertyDao.getInstance().store(theProperty);
+		}
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("3: Read the orders file, which has some preferred locations");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		String csvString1 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
+				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
+
+		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(new StringReader(csvString1), facility, ediProcessTime1);
+
+		LOGGER.info("4: Check that we got item locations for SKU0001, and SKU0004, but not SKU0003 which had unknown alias location");
+		ItemMaster master1 = facility.getItemMaster("SKU0001");
+		Assert.assertNotNull(master1);
+		List<Item> items1 = master1.getItems();
+		Assert.assertEquals(1, items1.size()); // Inventory should be created since LOCAPICK is true
+
+		ItemMaster master3 = facility.getItemMaster("SKU0003");
+		List<Item> items3 = master3.getItems();
+		Assert.assertEquals(0, items3.size());
+
+		ItemMaster master4 = facility.getItemMaster("SKU0004");
+		List<Item> items4 = master4.getItems();
+		Assert.assertEquals(1, items4.size());
+		
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("5: Read a revised orders file. This is testing two things");
+		LOGGER.info("   Change preferredLocation for a case order detail. Should create new inventory for SKU0001, but delete old.");
+		LOGGER.info("   Change preferredLocation for an each order detail. Should move and not create new inventory for SKU0004");
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		// Checking precondition, and remembering the persistentId of the items.
+		master1 = facility.getItemMaster("SKU0001");
+		List<Item> itemsList1a = master1.getItemsOfUom("CS");
+		Assert.assertEquals(1, itemsList1a.size());
+		Assert.assertEquals(1, master1.getItems().size());	
+		Item items1a = itemsList1a.get(0);
+		UUID persist1a = items1a.getPersistentId();
+		master4 = facility.getItemMaster("SKU0004");
+		List<Item> itemsList4a = master4.getItemsOfUom("EA");
+		Assert.assertEquals(1, itemsList4a.size());
+		Item items4a = itemsList4a.get(0);
+		UUID persist4a = items4a.getPersistentId();
+
+		// Now import again, but SKU0001 and SKU0004 orders both got different locations
+		String csvString2 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"
+				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+
+		LOGGER.info("6: Check that we got new item locations for SKU0001, and moved the old one for SKU0004, ");
+		master1 = facility.getItemMaster("SKU0001");
+		items1 = master1.getItems();
+		
+		Assert.assertEquals(1, items1.size()); // Should have created new, and deleted the old
+		Item items1b = items1.get(0);
+		UUID persist1b = items1b.getPersistentId();
+
+		master4 = facility.getItemMaster("SKU0004");
+		items4 = master4.getItems();
+		Assert.assertEquals(1, items4.size());
+		Item items4b = items4.get(0);
+		UUID persist4b = items4b.getPersistentId();
+		
+		Assert.assertNotEquals(persist1a, persist1b); // made new. Deleted old. So different persistent Id
+		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.
+		/* Search for this comment in  OutboundOrderCsvImporter.java     Bjoern none of this is necessary. Just debug aid */
+		
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("7: Move the 10.1 SKU0001 order at D34. But add another SKU0001 order at D34. SKU0001 hould have two itemLocations after that.");
+		// Just for thoroughness, changed the cm Offset of the D34 item. Does not matter.
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		
+		String csvString3 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,70"
+				+ "\r\n12,12,12.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,50"
+				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
+
+		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
+
+		master1 = facility.getItemMaster("SKU0001");
+		items1 = master1.getItems();
+		Assert.assertEquals(2, items1.size());
+
+		this.getPersistenceService().commitTenantTransaction();
+
+		LOGGER.info("8: Showing the limits of current implementation. Next day, orders for the same SKUs in different locations. Does not clean up old inventory.");
+		// Just for thoroughness, changed the cm Offset of the D34 item. Does not matter.
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		
+		String csvString4 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,50"
+				+ "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
+
+		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
+
+		master1 = facility.getItemMaster("SKU0001");
+		items1 = master1.getItems();
+		Assert.assertEquals(3, items1.size());
+
+		this.getPersistenceService().commitTenantTransaction();
+		
+		// Not shown. But now if we moved the 14.1 SKU0001, that one would delete, after the make of the new CS itemLocation, but the old two would remain.
+		// At some point we will need an archive mechanism.
+
+	}
+
+	// ORDER ARCHIVE TESTS?
 	// The code in OutboundOrderCsvImporter.java does a lot of archiving as it reads a file.
 	// By code review, the behavior is this for reading outbound orders file
 
@@ -1265,6 +1376,31 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		Facility facility = organization.getFacility(facilityId);
 		return facility;
+	}
+
+	private void loadSmallAislesAndLocations(Facility inFacility) {
+		String csvString1 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A1,,,,,tierNotB1S1Side,12.0,37.0,X,120,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,1,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,1,1,0,,\r\n"//
+				+ "Aisle,A2,,,,,tierNotB1S1Side,12.0,43.0,X,120,\r\n" + "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,1,0,,\r\n"; //
+
+		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer1 = createAisleFileImporter();
+		importer1.importAislesFileFromCsvStream(new StringReader(csvString1), inFacility, ediProcessTime1);
+
+		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+				+ "A1, AisleA\r\n" //
+				+ "A2, AisleB\r\n" //
+				+ "A1.B1, D34\r\n" //
+				+ "A1.B2, D35\r\n" //
+				+ "A2.B1, D13\r\n"; //
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
+		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), inFacility, ediProcessTime2);
 	}
 
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.gadgetworks.codeshelf.service;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;
@@ -35,6 +35,9 @@ import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
+import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
@@ -70,16 +73,37 @@ public class WorkServiceTest extends DAOTestABC {
 	private FacilityGenerator facilityGenerator = new FacilityGenerator();
 
 	@Test
+	public void shortedWorkInstructionShortsOrderDetail() {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
+		UUID detailId = wiToRecord.getOrderDetail().getPersistentId();
+		UUID cheId = wiToRecord.getAssignedChe().getPersistentId();
+		this.getPersistenceService().commitTenantTransaction();
+		
+		
+		wiToRecord.setStatus(WorkInstructionStatusEnum.SHORT);
+
+		this.getPersistenceService().beginTenantTransaction();
+		OrderDetail priorOrderDetail = OrderDetail.DAO.findByPersistentId(detailId);
+		Assert.assertNotEquals(OrderStatusEnum.SHORT, priorOrderDetail.getStatus());
+
+		WorkService workService = new WorkService().start();
+		workService.completeWorkInstruction(cheId,	wiToRecord);
+		this.getPersistenceService().commitTenantTransaction();
+		
+		this.getPersistenceService().beginTenantTransaction();
+		OrderDetail updatedOrderDetail = OrderDetail.DAO.findByPersistentId(detailId);
+		Assert.assertEquals(OrderStatusEnum.SHORT, updatedOrderDetail.getStatus());
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
 	public void workSummaryRequest() {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = facilityGenerator.generateValid();
-		UUID cheId = null;
-		for(CodeshelfNetwork network : facility.getNetworks()) {
-			for(Che che: network.getChes().values()) {
-				cheId = che.getPersistentId();
-			}
-		}
+		UUID cheId = firstChe(facility);
 		
 		ServiceMethodRequest request = new ServiceMethodRequest();
 		request.setClassName("WorkService"); //the ux would use strings
@@ -94,6 +118,8 @@ public class WorkServiceTest extends DAOTestABC {
 		Assert.assertTrue(responseABC.isSuccess());
 	}
 	
+	
+
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
@@ -111,12 +137,7 @@ public class WorkServiceTest extends DAOTestABC {
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
 		WorkService workService = new WorkService().start();
-		UUID cheId = null;
-		for(CodeshelfNetwork network : facility.getNetworks()) {
-			for(Che che: network.getChes().values()) {
-				cheId = che.getPersistentId();
-			}
-		}
+		UUID cheId = firstChe(facility);
 		List<WiSetSummary> workSummaries  = workService.workSummary(cheId, facility.getPersistentId());
 
 		//since each timestamp is unique they will each get summarized into their own summary object
@@ -134,7 +155,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 	@SuppressWarnings("unchecked")
 	@Test
-	public void exceptionIfWICannotBeFound() throws IOException {
+	public void completeWorkInstructionExceptionIfNotFound() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		UUID cheId = UUID.randomUUID();
@@ -451,5 +472,15 @@ public class WorkServiceTest extends DAOTestABC {
 	private Timestamp nextUniquePastTimestamp() {
 		return new Timestamp(System.currentTimeMillis() - Math.abs(RandomUtils.nextLong()));
 	}
-
+	
+	private UUID firstChe(Facility facility) {
+		UUID cheId = null;
+		for(CodeshelfNetwork network : facility.getNetworks()) {
+			for(Che che: network.getChes().values()) {
+				cheId = che.getPersistentId();
+				break;
+			}
+		}
+		return cheId;
+	}
 }

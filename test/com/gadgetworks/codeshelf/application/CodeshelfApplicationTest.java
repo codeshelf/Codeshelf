@@ -14,6 +14,7 @@ import java.util.Set;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
 import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
@@ -44,6 +45,7 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scope;
 import com.google.inject.TypeLiteral;
+import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.spi.TypeConverterBinding;
 
 /**

@@ -14,6 +14,7 @@ import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
 import com.gadgetworks.codeshelf.edi.CrossBatchCsvImporter;
 import com.gadgetworks.codeshelf.edi.EdiProcessor;
@@ -114,9 +115,15 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import com.google.inject.servlet.GuiceFilter;
+import com.google.inject.servlet.ServletModule;
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
+import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
 
 // --------------------------------------------------------------------------
 /**
@@ -165,6 +172,7 @@ public final class ServerMain {
 			@Override
 			protected void configure() {
 				bind(PersistenceService.class).toInstance(PersistenceService.getInstance());
+				bind(GuiceFilter.class);
 				
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
@@ -180,6 +188,7 @@ public final class ServerMain {
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
 				
 				bind(PropertyService.class).toInstance(new PropertyService());
+				
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				
@@ -344,8 +353,29 @@ public final class ServerMain {
 				return workService;
 				
 			}
-		});
+		}, createGuiceServletModule());
 
 		return injector;
+	}
+	
+	private static ServletModule createGuiceServletModule() {
+		return new ServletModule() {
+		    @Override
+		    protected void configureServlets() {
+		        // bind resource classes here
+		    	ResourceConfig rc = new PackagesResourceConfig( "com.gadgetworks.codeshelf.api.resources" );
+		    	for ( Class<?> resource : rc.getClasses() ) {
+		    		bind( resource );	
+		    	}
+		    	
+		        // hook JerseyContainer into Guice Servlet
+		        bind(GuiceContainer.class);
+
+		        // hook Jackson into Jersey as the POJO <-> JSON mapper
+		        bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+
+		        serve("/*").with(GuiceContainer.class);
+		    }
+		};
 	}
 }

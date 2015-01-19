@@ -129,13 +129,14 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		startWebSocketClient();
 
 	}
+	@Override
 	public boolean getAutoShortValue(){
 		return autoShortValue;
 	}
 	
 	public void setAutoShortValue(boolean inValue) {
 		autoShortValue = inValue;
-		LOGGER.info("Site controller getting AUTOSHRT value = " + Boolean.toString(inValue));
+		LOGGER.info("Site controller setting AUTOSHRT value = {}", inValue);
 	}
 
 	private final void startRadio(CodeshelfNetwork network) {
@@ -249,7 +250,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	 */
 	@Override
 	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
-		LOGGER.debug("Compute work: Che: " + inCheId + " Container: " + inContainerIdList.toString());
+		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, inContainerIdList);
 		String cheId = inPersistentId.toString();
 		LinkedList<String> containerIds = new LinkedList<String>();
 		for (String containerId : inContainerIdList) {
@@ -265,7 +266,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	 */
 	@Override
 	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
-		LOGGER.debug("Get work: Che: " + inCheId + " Loc: " + inLocationId);
+		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
 		GetWorkRequest req  = new GetWorkRequest(cheId,inLocationId);
 		client.sendMessage(req);
@@ -277,7 +278,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	 */
 	@Override
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
-		LOGGER.debug("Complete: Che: " + inCheId + " WI: " + inWorkInstruction.toString());
+		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId,inWorkInstruction);
 		client.sendMessage(req);
 	}
@@ -343,18 +344,19 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else {
-				LOGGER.error("Don't know how to create new network device of type "+deviceType);
+				LOGGER.error("Don't know how to create new network device of type={}", deviceType);
 				suppressMapUpdate = true;
 			}
 
 			if(!suppressMapUpdate) {
 				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(deviceGuid);
 				if (oldNetworkDevice != null) {
-					LOGGER.warn("Creating " + deviceType + " " + deviceGuid
-							+ " but a NetworkDevice already existed with that NetGuid (removing)");
+					LOGGER.warn("Creating device={}; guid={}; but a NetworkDevice already existed with that NetGuid (removing)",
+						deviceType,
+						deviceGuid);
 					radioController.removeNetworkDevice(oldNetworkDevice);
 				} else {
-					LOGGER.info("Creating " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
+					LOGGER.info("Creating deviceType={}; persistentId={}; guid={}", deviceType, persistentId, netDevice.getGuid());
 				}
 				radioController.addNetworkDevice(netDevice);
 			}
@@ -364,12 +366,18 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				// changing NetGuid (deprecated/bad!)
 				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(netDevice.getGuid());
 				if (oldNetworkDevice != null) {
-					LOGGER.warn("Changing NetGuid of " + deviceType + " " + persistentId + " from " + netDevice.getGuid() + " to "
-							+ deviceGuid);
+					LOGGER.warn("Changing NetGuid of deviceType={}; persistentId={}; from guid={} to guid={}",
+						deviceType,
+						persistentId,
+						netDevice.getGuid(),
+						deviceGuid);
 					radioController.removeNetworkDevice(oldNetworkDevice);
 				} else {
-					LOGGER.error("Changing NetGuid of " + deviceType + " " + persistentId + " from " + netDevice.getGuid() + " to "
-							+ deviceGuid + " but couldn't find original NetworkDevice");
+					LOGGER.error("Changing NetGuid of deviceType={}; persistentId={}; from guid={} to guid={} but couldn't find original network device",
+						deviceType,
+						persistentId,
+						netDevice.getGuid(),
+						deviceGuid);
 				}
 				// can't really change the NetGuid so we will create new device
 				if (deviceType.equals(DEVICETYPE_CHE)) {
@@ -377,7 +385,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else {
-					LOGGER.error("Cannot update existing network device of unrecognized type "+deviceType);
+					LOGGER.error("Cannot update existing network device of unrecognized type={}", deviceType);
 					suppressMapUpdate = true;
 				}
 				if(!suppressMapUpdate) {
@@ -385,7 +393,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				}
 			} else {
 				// if not changing netGuid, there is nothing to change
-				LOGGER.debug("No update to " + deviceType + " " + persistentId + " / " + deviceGuid);
+				LOGGER.debug("No update to. deviceType={}; persistentId={}; guid={};", deviceType, persistentId, deviceGuid);
 				suppressMapUpdate = true;
 			}
 		}
@@ -426,7 +434,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		} else {
 			deviceType = netDevice.getClass().getSimpleName();
 			radioController.removeNetworkDevice(netDevice);
-			LOGGER.info("Removed " + deviceType + " " + persistentId + " / " + netDevice.getGuid());
+			LOGGER.info("Removed deviceType={}; persistentId={}; guid={}", deviceType, persistentId, netDevice.getGuid());
 		}
 	}
 
@@ -441,7 +449,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
-				LOGGER.error("Unable to handle network update for che: " + che, e);
+				LOGGER.error("Unable to handle network update for che={}", che, e);
 			}
 		}
 		for (LedController ledController : network.getLedControllers().values()) {
@@ -452,7 +460,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
-				LOGGER.error("Unable to handle network update for ledController: " + ledController, e);
+				LOGGER.error("Unable to handle network update for ledController={}", ledController, e);
 			}
 		}
 
@@ -469,7 +477,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			doDeleteNetDevice(deleteUUID, netGuid);
 		}
 		this.lastNetworkUpdate = System.currentTimeMillis();
-		LOGGER.debug("Network updated: "+updateDevices.size()+" active devices, "+ deleteDevices.size()+" removed");
+		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
 	}
 
 	public void processComputeWorkResponse(String networkGuid,
@@ -481,7 +489,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		}
 		else {
-			LOGGER.warn("Unable to assign work count to CHE "+cheId+": CHE not found");
+			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", cheId);
 		}
 	}
 
@@ -492,7 +500,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			cheDevice.assignWork(workInstructions);
 		}
 		else {
-			LOGGER.warn("Unable to assign work to CHE "+cheId+": CHE not found");
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
 
@@ -523,8 +531,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		try {
 			this.pcapBuffer.put(pcap);
 		} catch (IOException e) {
-			LOGGER.error("Unexpected problem putting packet of size "+packet.length+" in ring buffer", e);
+			LOGGER.error("Unexpected problem putting packet of size={} in ring buffer", packet.length, e);
 		}
 	}
+	
+	
 
 }

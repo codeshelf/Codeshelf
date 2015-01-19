@@ -11,6 +11,7 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -18,6 +19,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,12 +62,11 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Container.class);
 
-	// The container kind.
-	@ManyToOne(optional = false)
-	@Getter
+	// The container kind. appears to be not used.
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Setter
 	@JsonProperty
-	private ContainerKind		kind;
+	private ContainerKind kind;
 
 	@Column(nullable = false)
 	@Getter
@@ -80,7 +81,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	private Timestamp			updated;
 
 	// The parent facility.
-	@ManyToOne(optional = false)
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
@@ -116,6 +117,9 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	}
 
 	public final Facility getParent() {
+		if (this.parent instanceof HibernateProxy) {
+			this.parent = (Facility) PersistenceService.deproxify(this.parent);
+		}
 		return parent;
 	}
 
@@ -227,6 +231,13 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public static void setDao(ContainerDao inContainerDao) {
 		Container.DAO = inContainerDao;
+	}
+	
+	public ContainerKind getKind() {
+		if (this.kind instanceof HibernateProxy) {
+			this.kind = (ContainerKind) PersistenceService.deproxify(this.kind);
+		}
+		return kind;
 	}
 
 }

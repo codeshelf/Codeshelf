@@ -3,7 +3,6 @@ package com.gadgetworks.codeshelf.generators;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
@@ -115,7 +114,7 @@ public class WorkInstructionGenerator {
 		OrderHeader.DAO.store(orderHeader);
 
 		OrderDetail detail = new OrderDetail("OD1", true);
-		detail.setStatus(OrderStatusEnum.CREATED);
+		detail.setStatus(OrderStatusEnum.RELEASED);
 		detail.setUpdated(new Timestamp(System.currentTimeMillis()));
 		detail.setQuantities(5);
 		detail.setItemMaster(itemMaster);
