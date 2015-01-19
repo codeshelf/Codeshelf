@@ -318,7 +318,14 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 			Location location = (Location) item.getStoredLocation();
 			if (location == null || !location.equals(inLocation))
 				continue;
-			if (item.getUomMaster().equals(inUomMaster)) {
+			UomMaster thisUomMaster = item.getUomMaster();
+			// bjoern: this equals() failing if inUomMaster in lazyInitialization state
+			if (thisUomMaster.equals(inUomMaster)) {
+				selectedItem = item;
+				break;
+			}
+			else if (thisUomMaster.getDomainId().equals(inUomMaster.getDomainId())){
+				LOGGER.error("Demonstrated hibernate lazyInitialization bug here", new Exception());
 				selectedItem = item;
 				break;
 			}

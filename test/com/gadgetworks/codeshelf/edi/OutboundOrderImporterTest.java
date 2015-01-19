@@ -1145,7 +1145,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		master1 = facility.getItemMaster("SKU0001");
 		items1 = master1.getItems();
 		
-		/* Bjoern: uncomment this block
 		Assert.assertEquals(1, items1.size()); // Should have created new, and deleted the old
 		Item items1b = items1.get(0);
 		UUID persist1b = items1b.getPersistentId();
@@ -1158,7 +1157,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		Assert.assertNotEquals(persist1a, persist1b); // made new. Deleted old. So different persistent Id
 		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.
-		*/
 		/* Search for this comment in  OutboundOrderCsvImporter.java     Bjoern none of this is necessary. Just debug aid */
 		
 		this.getPersistenceService().commitTenantTransaction();

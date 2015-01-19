@@ -452,6 +452,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 								Collection<Item> locItems = oldLocation.getStoredItems().values();
 								List<Item> masterItems = itemMaster.getItems();
 								LOGGER.error("location has " + locItems.size() + " items. Master has " + masterItems.size());
+								if (locItems.size() == 1){
+									Item fromMasterItems = masterItems.get(0);
+									LOGGER.error("fromLocItems: " + fromMasterItems.toLogString());
+								}
 								oldItem = itemMaster.getActiveItemMatchingLocUom(oldLocation, uomMaster); // just to step in again to see the uomMaster is not loaded						
 							}
 						}
