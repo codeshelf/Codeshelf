@@ -246,41 +246,59 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	private void sendDisplayWorkInstruction(final String inPickInstructions,
-		final String inDescription,
-		final Integer inPlanQuantity,
-		boolean inShortInstructionNeeded) {
-		String displayDescription = inDescription;
-		if (inPlanQuantity > maxCountForPositionControllerDisplay - 1) {
-			String countStr = inPlanQuantity.toString();
-			displayDescription = countStr + " " + inDescription;
-		}
+	private void sendDisplayWorkInstruction(WorkInstruction wi) {
+int planQty = wi.getPlanQuantity();
 
-		String[] descriptionLine = { "", "", "" };
-		int pos = 0;
-		for (int line = 0; line < 3; line++) {
+		String[] pickInfoLines = { "", "", "" };
+		if ("SKU".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+			String info = null;
+			//SHOW SKU (WITH COUNTS IF >= 99)
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				info = planQty + " ";
+			} else {
+				info = "SKU";
+			}
+
+			//Make sure we do not exceed 40 chars
+
+		} else {
+			//final String inPickInstructions = wi.getDescription();
+			//final String inDescription,
+			
+			String displayDescription = inDescription;
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				displayDescription = planQty + " " + inDescription;
+			}
+
+			int pos = 0;
+			for (int line = 0; line < 3; line++) {
+				if (pos < displayDescription.length()) {
+					int toGet = Math.min(20, displayDescription.length() - pos);
+					pickInfoLines[line] = displayDescription.substring(pos, pos + toGet);
+					pos += toGet;
+				}
+			}
+
+			// Check if there is more description to add to the last line.
 			if (pos < displayDescription.length()) {
 				int toGet = Math.min(20, displayDescription.length() - pos);
-				descriptionLine[line] = displayDescription.substring(pos, pos + toGet);
-				pos += toGet;
+				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
 			}
 		}
 
-		// Check if there is more description to add to the last line.
-		if (pos < displayDescription.length()) {
-			int toGet = Math.min(20, displayDescription.length() - pos);
-			descriptionLine[2] += displayDescription.substring(pos, pos + toGet);
+		//Override last line if short is needed
+		if (inShortInstructionNeeded) {
+			pickInfoLines[2] = "DECREMENT POSITION";
 		}
-
-		if (inShortInstructionNeeded)
-			descriptionLine[2] = "DECREMENT POSITION";
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		// GoodEggs many locations orders hitting too long case
 		String cleanedPickInstructions = inPickInstructions;
-		if (cleanedPickInstructions.length() > 19)
+		if (cleanedPickInstructions.length() > 19) {
 			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
-		sendDisplayCommand(cleanedPickInstructions, descriptionLine[0], descriptionLine[1], descriptionLine[2]);
+		}
+
+		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1558,10 +1576,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			ledControllerClearLeds();
 
 			// This part is easy. Just display on the CHE controller
-			if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
-				sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity(), true);
-			else
-				sendDisplayWorkInstruction(firstWi.getPickInstruction(), firstWi.getDescription(), firstWi.getPlanQuantity(), false);
+			sendDisplayWorkInstruction(firstWi);
 
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			// List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
