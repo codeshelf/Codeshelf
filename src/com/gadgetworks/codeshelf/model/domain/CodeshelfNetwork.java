@@ -110,6 +110,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	// The owning facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility					parent;
 	
 	@Getter
@@ -159,34 +161,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return "NET";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	/*
-	public final List<? extends IDomainObject> getChildren() {
-		return getDevices();
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addDevice(WirelessDeviceABC inWirelessDevice) {
-		devices.add(inWirelessDevice);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeDevice(WirelessDeviceABC inWirelessDevice) {
-		devices.remove(inWirelessDevice);
-	}
-	*/
-
-	public final void addChe(Che inChe) {
+	public void addChe(Che inChe) {
 		CodeshelfNetwork previousNetwork = inChe.getParent();
 		if(previousNetwork == null) {
 			ches.put(inChe.getDomainId(), inChe);
@@ -196,11 +171,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}	
 	}
 
-	public final Che getChe(String inCheId) {
+	public Che getChe(String inCheId) {
 		return ches.get(inCheId);
 	}
 
-	public final void removeChe(String inCheId) {
+	public void removeChe(String inCheId) {
 		Che che = this.getChe(inCheId);
 		if(che != null) {
 			che.setParent(null);
@@ -210,7 +185,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final void addSiteController(SiteController inSiteController) {
+	public void addSiteController(SiteController inSiteController) {
 		CodeshelfNetwork previousNetwork = inSiteController.getParent();
 		if(previousNetwork == null) {
 			siteControllers.put(inSiteController.getDomainId(), inSiteController);
@@ -220,11 +195,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}	
 	}
 
-	public final SiteController getSiteController(String inSiteControllerId) {
+	public SiteController getSiteController(String inSiteControllerId) {
 		return siteControllers.get(inSiteControllerId);
 	}
 
-	public final void removeSiteController(String inSiteControllerId) {
+	public void removeSiteController(String inSiteControllerId) {
 		SiteController siteController = this.getSiteController(inSiteControllerId);
 		if(siteController != null) {
 			siteController.setParent(null);
@@ -234,7 +209,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final void addLedController(LedController inLedController) {
+	public void addLedController(LedController inLedController) {
 		CodeshelfNetwork previousNetwork = inLedController.getParent();
 		if(previousNetwork == null) {
 			ledControllers.put(inLedController.getDomainId(), inLedController);
@@ -244,11 +219,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}	
 	}
 
-	public final LedController getLedController(String inLedControllerId) {
+	public LedController getLedController(String inLedControllerId) {
 		return ledControllers.get(inLedControllerId);
 	}
 
-	public final void removeLedController(String inLedControllerId) {
+	public void removeLedController(String inLedControllerId) {
 		LedController ledController = this.getLedController(inLedControllerId);
 		if(ledController != null) {
 			ledController.setParent(null);
@@ -261,7 +236,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final Che createChe(String inDomainId, NetGuid inGuid) {
+	public Che createChe(String inDomainId, NetGuid inGuid) {
 		// If the CHE doesn't already exist then create it.
 		Che che = Che.DAO.findByDomainId(this, inGuid.getHexStringNoPrefix());
 		if (che == null) {
@@ -284,7 +259,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 * @param inCodeshelfNetwork
 	 * @param inGUID
 	 */
-	public final LedController findOrCreateLedController(String inDomainId, NetGuid inGuid) {
+	public LedController findOrCreateLedController(String inDomainId, NetGuid inGuid) {
 
 		LedController result = LedController.DAO.findByDomainId(this, inDomainId);
 		if (result == null) {

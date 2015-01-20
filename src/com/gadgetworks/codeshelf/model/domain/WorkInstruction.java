@@ -88,6 +88,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// The parent is the facility
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility					parent;
 
 	// Type.
@@ -108,6 +110,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// The container.
 	@ManyToOne(optional = true, fetch=FetchType.LAZY)
+	@Getter
 	private Container					container;
 
 	// Denormalized for serialized WIs at the site controller.
@@ -119,6 +122,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// The itemMaster.
 	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@JoinColumn(name="item_master_persistentid")
+	@Getter
 	private ItemMaster					itemMaster;
 
 	// Denormalized for serialized WIs at the site controller.
@@ -171,6 +175,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// From location.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Getter
 	private Location					location;
 
 	// Denormalized for serialized WIs at the site controller.
@@ -191,6 +196,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@ManyToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="assigned_che_persistentid")
+	@Getter
 	private Che							assignedChe;
 
 	// LED command/processing stream.
@@ -242,6 +248,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// The parent order detail item.
 	@ManyToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="order_detail_persistentid")
+	@Getter
+	@Setter
 	private OrderDetail					orderDetail;
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;
@@ -249,27 +257,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public WorkInstruction() {
 	}
 	
-	public Container getContainer() {
-		if (this.container instanceof HibernateProxy) {
-			this.container = (Container) PersistenceService.deproxify(this.container);
-		}
-		return container;
-	}
-	
-	public ItemMaster getItemMaster() {
-		if (this.itemMaster instanceof HibernateProxy) {
-			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
-		}
-		return itemMaster;
-	}
-	
-	public Che getAssignedChe() {
-		if (this.assignedChe instanceof HibernateProxy) {
-			this.assignedChe = (Che) PersistenceService.deproxify(this.assignedChe);
-		}
-		return assignedChe;
-	}
-
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
 		return DAO;
@@ -279,37 +266,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return "WI";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}		
-		return parent;
-	}
-
-	public final OrderDetail getOrderDetail() {
-		if (this.orderDetail instanceof HibernateProxy) {
-			this.orderDetail = (OrderDetail) PersistenceService.deproxify(this.orderDetail);
-		}		
-		return orderDetail;
-	}
-
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	public final void setOrderDetail(OrderDetail inDetail) {
-		orderDetail = inDetail;
-	}
-
-	public final Location getLocation() {
-		if (this.location instanceof HibernateProxy) {
-			this.location = Location.deproxify(this.location);
-		}
-		return this.location;
-	}
-
 	// Denormalized for serialized WIs at the site controller.
-	public final void setContainer(Container inContainer) {
+	public void setContainer(Container inContainer) {
 		container = inContainer;
 		if (container != null)
 			containerId = inContainer.getContainerId();
@@ -321,12 +279,12 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	//Not for serialization
 	@JsonIgnore
-	public final boolean isHousekeeping() {
+	public boolean isHousekeeping() {
 		return this.getType().isHousekeeping();
 	}
 
 	// Denormalized for serialized WIs at the site controller.
-	public final void setItemMaster(ItemMaster inItemMaster) {
+	public void setItemMaster(ItemMaster inItemMaster) {
 		itemMaster = inItemMaster;
 		if (itemMaster != null)
 			itemId = inItemMaster.getItemId();
@@ -343,7 +301,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	}
 
 	// Denormalized for serialized WIs at the site controller.
-	public final void setLocation(Location inLocation) {
+	public void setLocation(Location inLocation) {
 		location = inLocation;
 		// This string is user-readable format set by application logic.
 		// locationId = inLocation.getLocationId();
@@ -355,7 +313,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * @param inCheckLocation
 	 * @return
 	 */
-	public final boolean isContainedByLocation(final Location inCheckLocation) {
+	public boolean isContainedByLocation(final Location inCheckLocation) {
 		boolean result = false;
 
 		if (inCheckLocation == null) {
@@ -379,7 +337,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getUomMasterId() {
+	public String getUomMasterId() {
 		OrderDetail detail = getOrderDetail();
 		if (detail != null)
 			return detail.getUomMasterId();
@@ -392,7 +350,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getOrderDetailId() {
+	public String getOrderDetailId() {
 		OrderDetail detail = this.getOrderDetail();
 		if (detail == null)
 			return "";
@@ -405,7 +363,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getOrderId() {
+	public String getOrderId() {
 		OrderDetail detail = this.getOrderDetail();
 		if (detail == null)
 			return "";
@@ -420,7 +378,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getPickInstructionUi() {
+	public String getPickInstructionUi() {
 		String theStr = getPickInstruction();
 		if (theStr != null) {
 			Location loc = this.getLocation();
@@ -437,7 +395,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getAssignedCheName() {
+	public String getAssignedCheName() {
 		Che theChe = getAssignedChe();
 		if (theChe != null)
 			return theChe.getDomainId();
@@ -451,7 +409,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getWiPosAlongPath() {
+	public String getWiPosAlongPath() {
 		// This needs work for Accu non-slotted inventory.
 		//
 		Double wiPosValue = getPosAlongPath();
@@ -466,7 +424,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getCompleteTimeForUi() {
+	public String getCompleteTimeForUi() {
 
 		Timestamp completeTime = this.getCompleted();
 		if (completeTime == null)
@@ -481,7 +439,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getAssignTimeForUi() {
+	public String getAssignTimeForUi() {
 
 		Timestamp assignTime = this.getAssigned();
 		if (assignTime == null)
@@ -496,7 +454,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * For a UI meta field
 	 * @return
 	 */
-	public final String getNominalLocationId() {
+	public String getNominalLocationId() {
 
 		Location theLoc = this.getLocation();
 		if (theLoc != null)

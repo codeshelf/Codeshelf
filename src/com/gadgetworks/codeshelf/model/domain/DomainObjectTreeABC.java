@@ -47,7 +47,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	 */
 	@SuppressWarnings("rawtypes")
 	@JsonIgnore
-	public final String getParentFullDomainId() {
+	public String getParentFullDomainId() {
 		String result = "";
 
 		IDomainObject theParent = getParent();
@@ -66,7 +66,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
 	 */
 	@JsonIgnore
-	public final UUID getParentPersistentId() {
+	public UUID getParentPersistentId() {
 		UUID result = null;
 		IDomainObject domainObject = getParent();
 		if (domainObject != null) {

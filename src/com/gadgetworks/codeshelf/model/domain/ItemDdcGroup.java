@@ -60,6 +60,8 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
 	// The parent location.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Getter 
+	@Setter
 	private Location			parent;
 
 	// The start position of this DDC group along the pick path.
@@ -89,26 +91,15 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 		return "DDC";
 	}
 
-	public final Location getParent() {
-		if (parent instanceof HibernateProxy) {
-			this.parent = (Location) PersistenceService.deproxify(this.parent);
-		}		
-		return parent;
-	}
-	
-	public final void setDdcGroupId(final String inDdcGroupId) {
+	public void setDdcGroupId(final String inDdcGroupId) {
 		setDomainId(inDdcGroupId);
 	}
 	
-	public final String getDdcGroupId() {
+	public String getDdcGroupId() {
 		return getDomainId();
 	}
 
-	public final void setParent(Location inParent) {
-		parent = inParent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent().getFacility();
 	}
 

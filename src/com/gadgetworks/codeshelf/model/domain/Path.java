@@ -78,6 +78,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Getter
 	@Setter
 	private Facility					parent;
 
@@ -97,6 +98,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	// The work area that goes with this path.
 	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
 	@OneToOne(mappedBy = "parent",fetch=FetchType.LAZY)
+	@Getter
 	private WorkArea					workArea;
 
 	// The computed path length.
@@ -113,21 +115,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		travelDir = TravelDirectionEnum.FORWARD;
 	}
 
-	@Override
-	public Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return this.parent;
-	}
-	
-	public WorkArea getWorkArea() {
-		if (this.workArea instanceof HibernateProxy) {
-			this.workArea = (WorkArea) PersistenceService.deproxify(this.workArea);
-		}
-		return workArea;
-	}
-	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Path> getDao() {
 		return Path.DAO;
@@ -137,11 +124,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		return DOMAIN_PREFIX;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
+	public List<? extends IDomainObject> getChildren() {
 		return new ArrayList<PathSegment>(getSegments());
 	}
 
-	public final void addPathSegment(PathSegment inPathSegment) {
+	public void addPathSegment(PathSegment inPathSegment) {
 		Path previousPath = inPathSegment.getParent();
 		if(previousPath == null) {
 			segments.put(inPathSegment.getSegmentOrder(), inPathSegment);
@@ -151,11 +138,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		}	
 	}
 
-	public final PathSegment getPathSegment(Integer inOrder) {
+	public PathSegment getPathSegment(Integer inOrder) {
 		return segments.get(inOrder);
 	}
 
-	public final void removePathSegment(Integer inOrder) {
+	public void removePathSegment(Integer inOrder) {
 		PathSegment pathSegment = this.getPathSegment(inOrder);
 		if(pathSegment != null) {
 			pathSegment.setParent(null);
@@ -198,10 +185,10 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Get the path segments sorted in order of the path's travel direction.
 	 * @return
 	 */
-	public final SortedSet<PathSegment> getSegments() {
+	public SortedSet<PathSegment> getSegments() {
 		TreeSet<PathSegment> sorted = new TreeSet<PathSegment>(new PathSegmentComparator(travelDir));
 		for(PathSegment segment : segments.values()) {
-			sorted.add(PersistenceService.<PathSegment>deproxify(segment));
+			sorted.add(segment);
 		}
 		return sorted;
 	}
@@ -230,7 +217,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	/**
 	 *  Create the default work area for this path.
 	 */
-	public final void createDefaultWorkArea() {
+	public void createDefaultWorkArea() {
 		WorkArea tempWorkArea = this.getWorkArea();
 		if (tempWorkArea == null) {
 			tempWorkArea = new WorkArea();
@@ -268,7 +255,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inHead
 	 * @param inTail
 	 */
-	public final PathSegment createPathSegment(final Integer inSegmentOrder,
+	public PathSegment createPathSegment(final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
 
@@ -299,7 +286,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Is the passed in location on this path?  Important: deleted location is not on path
 	 * @return
 	 */
-	public final Boolean isLocationOnPath(final Location inLocation) {
+	public Boolean isLocationOnPath(final Location inLocation) {
 		boolean result = false;
 
 		// There's some weirdness around Ebean CQuery.request.graphContext.beanMap
@@ -349,7 +336,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Sort the WIs based on their distance from the path work origin (based on travel direction).
 	 * @param inWiList
 	 */
-	public final void sortWisByDistance(final List<WorkInstruction> inOutWiList) {
+	public void sortWisByDistance(final List<WorkInstruction> inOutWiList) {
 		Collections.sort(inOutWiList, new WiComparable());
 	}
 
@@ -390,7 +377,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inPath
 	 * @return
 	 */
-	public final <T extends Location> List<T> getLocationsByClass(final Class<? extends Location> inClassWanted) {
+	public <T extends Location> List<T> getLocationsByClass(final Class<? extends Location> inClassWanted) {
 
 		// First make a list of all the bays on the CHE's path.
 		List<T> locations = new ArrayList<T>();
@@ -416,7 +403,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inClassWanted
 	 * @return
 	 */
-	public final <T extends Location> List<T> getLocationsByClassAtOrPastLocation(final Location inAtOrPastLocation,
+	public <T extends Location> List<T> getLocationsByClassAtOrPastLocation(final Location inAtOrPastLocation,
 		final Class<? extends Location> inClassWanted) {
 
 		if (inAtOrPastLocation.getPosAlongPath() == null) {
@@ -445,7 +432,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inOrderDetail
 	 * @return
 	 */
-	public final boolean isOrderOnPath(final OrderHeader inOrderHeader) {
+	public boolean isOrderOnPath(final OrderHeader inOrderHeader) {
 		boolean result = false;
 
 		for (OrderLocation outOrderLoc : inOrderHeader.getActiveOrderLocations()) {
@@ -459,7 +446,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	// For a UI field
-	public final int getAssociatedLocationCount() {
+	public int getAssociatedLocationCount() {
 		int returnInt = 0;
 		for (PathSegment segment : this.getSegments()) {
 			returnInt += segment.getAssociatedLocationCount();
@@ -472,7 +459,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Delete the path and its segments. Called from the UI
 	 * @return
 	 */
-	public final void deleteThisPath() {
+	public void deleteThisPath() {
 
 		for (PathSegment segment : this.getSegments()) {
 
@@ -513,7 +500,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 
 	@Override
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 

@@ -158,6 +158,10 @@ public class Facility extends Location {
 	public boolean isFacility() {
 		return true;
 	}
+	
+	public List<Path> getPaths() {
+		return new ArrayList<Path>(this.paths.values());
+	}
 
 	public final static void setDao(ITypedDao<Facility> dao) {
 		Facility.DAO = dao;
@@ -175,15 +179,15 @@ public class Facility extends Location {
 	}
 
 	@Override
-	public final String getFullDomainId() {
+	public String getFullDomainId() {
 		return getDomainId();
 	}
 
-	public final void setFacilityId(String inFacilityId) {
+	public void setFacilityId(String inFacilityId) {
 		setDomainId(inFacilityId);
 	}
 
-	public final void addAisle(Aisle inAisle) {
+	public void addAisle(Aisle inAisle) {
 		Location previousFacility = inAisle.getParent();
 		if (previousFacility == null) {
 			this.addLocation(inAisle);
@@ -194,7 +198,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void removeAisle(Aisle inAisle) {
+	public void removeAisle(Aisle inAisle) {
 		String domainId = inAisle.getDomainId();
 		if (this.getLocations().get(domainId) != null) {
 			inAisle.setParent(null);
@@ -205,7 +209,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addPath(Path inPath) {
+	public void addPath(Path inPath) {
 		Facility facility = inPath.getParent();
 		if (facility != null && !facility.equals(this)) {
 			LOGGER.error("cannot add Path " + inPath.getDomainId() + " to " + this.getDomainId()
@@ -216,23 +220,11 @@ public class Facility extends Location {
 		inPath.setParent(this);
 	}
 
-	public final Path getPath(String inPathId) {
+	public Path getPath(String inPathId) {
 		return paths.get(inPathId);
 	}
 
-	public final List<Path> getPaths() {
-		ArrayList<Path> arrayPaths = new ArrayList<Path>();
-		for(Path p : paths.values()) {
-			if (p instanceof HibernateProxy) {
-				arrayPaths.add(PersistenceService.<Path>deproxify(p));
-			} else {
-				arrayPaths.add(p);
-			}
-		}
-		return arrayPaths;
-	}
-
-	public final void removePath(String inPathId) {
+	public void removePath(String inPathId) {
 		Path path = this.getPath(inPathId);
 		if (path != null) {
 			path.setParent(null);
@@ -242,7 +234,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addContainer(Container inContainer) {
+	public void addContainer(Container inContainer) {
 		Facility previousFacility = inContainer.getParent();
 		if (previousFacility == null) {
 			containers.put(inContainer.getDomainId(), inContainer);
@@ -253,15 +245,15 @@ public class Facility extends Location {
 		}
 	}
 
-	public final Container getContainer(String inContainerId) {
+	public Container getContainer(String inContainerId) {
 		return containers.get(inContainerId);
 	}
 
-	public final List<Container> getContainers() {
+	public List<Container> getContainers() {
 		return new ArrayList<Container>(containers.values());
 	}
 
-	public final void removeContainer(String inContainerId) {
+	public void removeContainer(String inContainerId) {
 		Container container = this.getContainer(inContainerId);
 		if (container != null) {
 			container.setParent(null);
@@ -272,7 +264,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addContainerKind(ContainerKind inContainerKind) {
+	public void addContainerKind(ContainerKind inContainerKind) {
 		Facility previousFacility = inContainerKind.getParent();
 		if (previousFacility == null) {
 			containerKinds.put(inContainerKind.getDomainId(), inContainerKind);
@@ -283,11 +275,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final ContainerKind getContainerKind(String inContainerKindId) {
+	public ContainerKind getContainerKind(String inContainerKindId) {
 		return containerKinds.get(inContainerKindId);
 	}
 
-	public final void removeContainerKind(String inContainerKindId) {
+	public void removeContainerKind(String inContainerKindId) {
 		ContainerKind containerKind = this.getContainerKind(inContainerKindId);
 		if (containerKind != null) {
 			containerKind.setParent(null);
@@ -298,7 +290,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addEdiService(IEdiService inEdiService) {
+	public void addEdiService(IEdiService inEdiService) {
 		Facility previousFacility = inEdiService.getParent();
 		if (previousFacility == null) {
 			ediServices.add(inEdiService);
@@ -309,7 +301,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void removeEdiService(IEdiService inEdiService) {
+	public void removeEdiService(IEdiService inEdiService) {
 		if (this.ediServices.contains(inEdiService)) {
 			inEdiService.setParent(null);
 			ediServices.remove(inEdiService);
@@ -319,7 +311,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addWorkInstruction(WorkInstruction wi) {
+	public void addWorkInstruction(WorkInstruction wi) {
 		Facility previousFacility = wi.getParent();
 		if (previousFacility == null) {
 			int numWi = workInstructions.size();
@@ -332,7 +324,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void removeWorkInstruction(WorkInstruction wi) {
+	public void removeWorkInstruction(WorkInstruction wi) {
 		if (this.workInstructions.contains(wi)) {
 			wi.setParent(null);
 			workInstructions.remove(wi);
@@ -342,7 +334,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addItemMaster(ItemMaster inItemMaster) {
+	public void addItemMaster(ItemMaster inItemMaster) {
 		Facility previousFacility = inItemMaster.getParent();
 		if (previousFacility == null) {
 			itemMasters.put(inItemMaster.getDomainId(), inItemMaster);
@@ -353,11 +345,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final ItemMaster getItemMaster(String inItemMasterId) {
+	public ItemMaster getItemMaster(String inItemMasterId) {
 		return itemMasters.get(inItemMasterId);
 	}
 
-	public final void removeItemMaster(String inItemMasterId) {
+	public void removeItemMaster(String inItemMasterId) {
 		ItemMaster itemMaster = this.getItemMaster(inItemMasterId);
 		if (itemMaster != null) {
 			itemMaster.setParent(null);
@@ -368,11 +360,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final List<ItemMaster> getItemMasters() {
+	public  List<ItemMaster> getItemMasters() {
 		return new ArrayList<ItemMaster>(itemMasters.values());
 	}
 
-	public final void addOrderGroup(OrderGroup inOrderGroup) {
+	public void addOrderGroup(OrderGroup inOrderGroup) {
 		Facility previousFacility = inOrderGroup.getParent();
 		if (previousFacility == null) {
 			orderGroups.put(inOrderGroup.getDomainId(), inOrderGroup);
@@ -383,11 +375,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final OrderGroup getOrderGroup(String inOrderGroupId) {
+	public OrderGroup getOrderGroup(String inOrderGroupId) {
 		return orderGroups.get(inOrderGroupId);
 	}
 
-	public final void removeOrderGroup(String inOrderGroupId) {
+	public void removeOrderGroup(String inOrderGroupId) {
 		OrderGroup orderGroup = this.getOrderGroup(inOrderGroupId);
 		if (orderGroup != null) {
 			orderGroup.setParent(null);
@@ -398,11 +390,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final List<OrderGroup> getOrderGroups() {
+	public List<OrderGroup> getOrderGroups() {
 		return new ArrayList<OrderGroup>(orderGroups.values());
 	}
 
-	public final void addOrderHeader(OrderHeader inOrderHeader) {
+	public void addOrderHeader(OrderHeader inOrderHeader) {
 		Facility previousFacility = inOrderHeader.getParent();
 		if (previousFacility != null && !previousFacility.equals(this)) {
 			LOGGER.error("cannot add OrderHeader " + inOrderHeader.getDomainId() + " to " + this.getDomainId()
@@ -413,11 +405,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final OrderHeader getOrderHeader(String inOrderHeaderId) {
+	public OrderHeader getOrderHeader(String inOrderHeaderId) {
 		return orderHeaders.get(inOrderHeaderId);
 	}
 
-	public final void removeOrderHeader(String inOrderHeaderId) {
+	public void removeOrderHeader(String inOrderHeaderId) {
 		OrderHeader orderHeader = this.getOrderHeader(inOrderHeaderId);
 		if (orderHeader != null) {
 			orderHeader.setParent(null);
@@ -428,11 +420,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final List<OrderHeader> getOrderHeaders() {
+	public List<OrderHeader> getOrderHeaders() {
 		return new ArrayList<OrderHeader>(orderHeaders.values());
 	}
 
-	public final void addUomMaster(UomMaster inUomMaster) {
+	public void addUomMaster(UomMaster inUomMaster) {
 		Facility previousFacility = inUomMaster.getParent();
 		if (previousFacility == null) {
 			uomMasters.put(inUomMaster.getDomainId(), inUomMaster);
@@ -443,11 +435,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final UomMaster getUomMaster(String inUomMasterId) {
+	public UomMaster getUomMaster(String inUomMasterId) {
 		return uomMasters.get(inUomMasterId);
 	}
 
-	public final void removeUomMaster(String inUomMasterId) {
+	public void removeUomMaster(String inUomMasterId) {
 		UomMaster uomMaster = this.getUomMaster(inUomMasterId);
 		if (uomMaster != null) {
 			uomMaster.setParent(null);
@@ -458,7 +450,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public final void addNetwork(CodeshelfNetwork inNetwork) {
+	public void addNetwork(CodeshelfNetwork inNetwork) {
 		Facility previousFacility = inNetwork.getParent();
 		if (previousFacility == null) {
 			networks.put(inNetwork.getDomainId(), inNetwork);
@@ -469,11 +461,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final CodeshelfNetwork getNetwork(String inNetworkId) {
+	public CodeshelfNetwork getNetwork(String inNetworkId) {
 		return networks.get(inNetworkId);
 	}
 
-	public final void removeNetwork(String inNetworkId) {
+	public void removeNetwork(String inNetworkId) {
 		CodeshelfNetwork network = this.getNetwork(inNetworkId);
 		if (network != null) {
 			network.setParent(null);
@@ -484,11 +476,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final List<CodeshelfNetwork> getNetworks() {
+	public List<CodeshelfNetwork> getNetworks() {
 		return new ArrayList<CodeshelfNetwork>(networks.values());
 	}
 
-	public final void addLocationAlias(LocationAlias inLocationAlias) {
+	public void addLocationAlias(LocationAlias inLocationAlias) {
 		Facility previousFacility = inLocationAlias.getParent();
 		if (previousFacility == null) {
 
@@ -500,11 +492,11 @@ public class Facility extends Location {
 		}
 	}
 
-	public final LocationAlias getLocationAlias(String inLocationAliasId) {
+	public LocationAlias getLocationAlias(String inLocationAliasId) {
 		return locationAliases.get(inLocationAliasId);
 	}
 
-	public final void removeLocationAlias(LocationAlias inLocationAlias) {
+	public void removeLocationAlias(LocationAlias inLocationAlias) {
 		String locationAliasId = inLocationAlias.getDomainId();
 		LocationAlias locationAlias = this.getLocationAlias(locationAliasId);
 		if (locationAlias != null) {
@@ -516,24 +508,24 @@ public class Facility extends Location {
 		}
 	}
 
-	public final List<LocationAlias> getLocationAliases() {
+	public List<LocationAlias> getLocationAliases() {
 		return new ArrayList<LocationAlias>(locationAliases.values());
 	}
 
 	@Override
-	public final Point getAbsoluteAnchorPoint() {
+	public Point getAbsoluteAnchorPoint() {
 		return Point.getZeroPoint();
 	}
 
-	public final Double getAbsolutePosX() {
+	public Double getAbsolutePosX() {
 		return 0.0;
 	}
 
-	public final Double getAbsolutePosY() {
+	public Double getAbsolutePosY() {
 		return 0.0;
 	}
 
-	public final Double getAbsolutePosZ() {
+	public Double getAbsolutePosZ() {
 		return 0.0;
 	}
 
@@ -590,7 +582,7 @@ public class Facility extends Location {
 		return pathId;
 	}
 
-	public final Path createPath(String inDomainId) {
+	public Path createPath(String inDomainId) {
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
 		String pathDomainId = nextPathDomainId();
@@ -611,7 +603,7 @@ public class Facility extends Location {
 	 * Create a path
 	 *
 	 */
-	public final Path createPath(String inDomainId, PathSegment[] inPathSegments) {
+	public Path createPath(String inDomainId, PathSegment[] inPathSegments) {
 		Path path = createPath(inDomainId);
 		// Started above by keeping the API, but not respecting the suggested domainId. See what domainId we actually got
 		String pathDomainId = path.getDomainId();
@@ -636,7 +628,7 @@ public class Facility extends Location {
 	/**
 	 * A sample routine to show the distance of locations along a path.
 	 */
-	public final void recomputeLocationPathDistances(Path inPath) {
+	public void recomputeLocationPathDistances(Path inPath) {
 		// This used to do all paths. Now as advertised only the passed in path
 
 		// Paul: uncomment this block, then run AisleTest.java
@@ -675,7 +667,7 @@ public class Facility extends Location {
 	 * @param inPosY
 	 * @param inDrawOrder
 	 */
-	public final void createVertex(final String inDomainId,
+	public void createVertex(final String inDomainId,
 		final String inPosTypeByStr,
 		final Double inPosX,
 		final Double inPosY,
@@ -695,7 +687,7 @@ public class Facility extends Location {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public final void createOrUpdateVertices(Location inLocation, Point inDimMeters) {
+	public void createOrUpdateVertices(Location inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
@@ -761,7 +753,7 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final void createDefaultContainerKind() {
+	public void createDefaultContainerKind() {
 		//ContainerKind containerKind = 
 		createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
@@ -769,7 +761,7 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final ContainerKind createContainerKind(String inDomainId,
+	public ContainerKind createContainerKind(String inDomainId,
 		Double inLengthMeters,
 		Double inWidthMeters,
 		Double inHeightMeters) {
@@ -796,7 +788,7 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public final IEdiService getEdiExportService() {
+	public IEdiService getEdiExportService() {
 		return IronMqService.DAO.findByDomainId(this, IRONMQ_DOMAINID);
 	}
 
@@ -804,7 +796,7 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public final IronMqService createIronMqService() throws PSQLException {
+	public IronMqService createIronMqService() throws PSQLException {
 		// we saw the PSQL exception in staging test when the record could not be added
 		IronMqService result = null;
 
@@ -827,7 +819,7 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public final DropboxService getDropboxService() {
+	public DropboxService getDropboxService() {
 		DropboxService result = null;
 
 		for (IEdiService ediService : getEdiServices()) {
@@ -843,7 +835,7 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public final DropboxService createDropboxService() {
+	public DropboxService createDropboxService() {
 
 		DropboxService result = null;
 
@@ -865,7 +857,7 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final CodeshelfNetwork createNetwork(final String inNetworkName) {
+	public CodeshelfNetwork createNetwork(final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
 
@@ -915,7 +907,7 @@ public class Facility extends Location {
 	 * After a change in DDC items we call this routine to recompute the path-relative positions of the items.
 	 *
 	 */
-	public final void recomputeDdcPositions() {
+	public void recomputeDdcPositions() {
 
 		LOGGER.debug("Begin DDC position recompute");
 
@@ -1085,7 +1077,7 @@ public class Facility extends Location {
 	/**
 	 * Used in aisle file read to decide if we should automatically make more controllers
 	 */
-	public final int countLedControllers() {
+	public int countLedControllers() {
 		int result = 0;
 
 		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
@@ -1102,7 +1094,7 @@ public class Facility extends Location {
 	 * The UI needs this answer. UI gets it at login. Does not live update to the UI.
 	 */
 	@JsonProperty("hasCrossBatchOrders")
-	public final boolean hasCrossBatchOrders() {
+	public boolean hasCrossBatchOrders() {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
 		String theValue = PropertyService.getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
@@ -1115,7 +1107,7 @@ public class Facility extends Location {
 	 * If true, the UI wants to believe that ALL crossbatch and outbound orders have an order group. The orders view will not show at all any orders without a group.
 	 */
 	@JsonProperty("hasMeaningfulOrderGroups")
-	public final boolean hasMeaningfulOrderGroups() {
+	public boolean hasMeaningfulOrderGroups() {
 		// We really want to change to a config parameter, and then pass to the UI a three-value choice:
 		// Only two-level Orders view, only three-level, or both 2 and 3-level.		
 
@@ -1130,7 +1122,7 @@ public class Facility extends Location {
 	/**
 	 * @param outHeaderCounts
 	 */
-	public final HeaderCounts countCrossOrders() {
+	public HeaderCounts countCrossOrders() {
 		return countOrders(OrderTypeEnum.CROSS);
 	}
 
@@ -1138,7 +1130,7 @@ public class Facility extends Location {
 	/**
 	 * @param outHeaderCounts
 	 */
-	public final HeaderCounts countOutboundOrders() {
+	public HeaderCounts countOutboundOrders() {
 
 		return countOrders(OrderTypeEnum.OUTBOUND);
 	}
@@ -1188,7 +1180,7 @@ public class Facility extends Location {
 		return outHeaderCounts;
 	}
 
-	private final Set<SiteController> getSiteControllers() {
+	private Set<SiteController> getSiteControllers() {
 		Set<SiteController> siteControllers = new HashSet<SiteController>();
 
 		for (CodeshelfNetwork network : this.getNetworks()) {
@@ -1197,7 +1189,7 @@ public class Facility extends Location {
 		return siteControllers;
 	}
 
-	public final Set<User> getSiteControllerUsers() {
+	public Set<User> getSiteControllerUsers() {
 		Set<User> users = new HashSet<User>();
 
 		for (SiteController sitecon : this.getSiteControllers()) {

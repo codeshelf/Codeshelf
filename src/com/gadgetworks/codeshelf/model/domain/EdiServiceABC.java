@@ -78,6 +78,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	
 	// The owning Facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility					parent;
 
 	// The provider.
@@ -111,22 +113,11 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	public EdiServiceABC() {
 
 	}
-
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
 	
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-
-	}
 
 	public final String getDefaultDomainIdPrefix() {
 		return "EDI";
@@ -135,7 +126,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@JsonProperty
 	public abstract boolean getHasCredentials();
 	
-	public final void addEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
+	public void addEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
 		EdiServiceABC previousEdiService = inEdiDocumentLocator.getParent();
 		if(previousEdiService == null) {
 			documentLocators.add(inEdiDocumentLocator);
@@ -145,7 +136,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 		}	
 	}
 
-	public final void removeEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
+	public void removeEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
 		if(this.documentLocators.contains(inEdiDocumentLocator)) {
 			inEdiDocumentLocator.setParent(null);
 			documentLocators.remove(inEdiDocumentLocator);

@@ -64,6 +64,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	// The container kind. appears to be not used.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
 	@Setter
 	@JsonProperty
 	private ContainerKind kind;
@@ -82,6 +83,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
 	private Facility			parent;
 
 	// For a network this is a list of all of the users that belong in the set.
@@ -108,34 +110,27 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		return "P";
 	}
 
-	public final String getContainerId() {
+	public String getContainerId() {
 		return getDomainId();
 	}
 
-	public final void setContainerId(String inContainerId) {
+	public void setContainerId(String inContainerId) {
 		setDomainId(inContainerId);
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final void setParent(Facility inParent) {
+	public void setParent(Facility inParent) {
 		parent = inParent;
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
+	public List<? extends IDomainObject> getChildren() {
 		return getUses();
 	}
 
-	public final void addContainerUse(ContainerUse inContainerUse) {
+	public void addContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
 			LOGGER.error("null input to Container.addContainerUse");
 			return;
@@ -150,7 +145,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final void removeContainerUse(ContainerUse inContainerUse) {
+	public void removeContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
 			LOGGER.error("null input to Container.rermoveContainerUse");
 			return;
@@ -170,7 +165,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	 * @param inOrderHeader
 	 * @return
 	 */
-	public final ContainerUse getContainerUse(final OrderHeader inOrderHeader) {
+	public ContainerUse getContainerUse(final OrderHeader inOrderHeader) {
 		ContainerUse result = null;
 
 		for (ContainerUse use : getUses()) {
@@ -191,7 +186,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	 * Return the currently working container use for this container.
 	 * @return
 	 */
-	public final OrderHeader getCurrentOrderHeader() {
+	public OrderHeader getCurrentOrderHeader() {
 		OrderHeader result = null;
 
 		ContainerUse containerUse = getCurrentContainerUse();
@@ -206,7 +201,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	 * Return the currently working container use for this container.
 	 * @return
 	 */
-	public final ContainerUse getCurrentContainerUse() {
+	public ContainerUse getCurrentContainerUse() {
 		ContainerUse result = null;
 
 		// Find the container use with the latest timestamp - that's the active one.
@@ -223,7 +218,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	}
 
 	// Instead of lomboc annotation, which can lead to infinite loop if fields are not restricted
-	public final String toString() {
+	public String toString() {
 		// What we would want to see if logged as toString?
 		String returnString = getDomainId();
 		return returnString;
@@ -231,13 +226,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public static void setDao(ContainerDao inContainerDao) {
 		Container.DAO = inContainerDao;
-	}
-	
-	public ContainerKind getKind() {
-		if (this.kind instanceof HibernateProxy) {
-			this.kind = (ContainerKind) PersistenceService.deproxify(this.kind);
-		}
-		return kind;
 	}
 
 }

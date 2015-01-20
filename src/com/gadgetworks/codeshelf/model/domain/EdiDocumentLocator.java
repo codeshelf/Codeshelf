@@ -65,6 +65,8 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	// The owning EdiService.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private EdiServiceABC			parent;
 
 	// Document Path
@@ -120,23 +122,12 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 		return DAO;
 	}
 
-	public final EdiServiceABC getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (EdiServiceABC) PersistenceService.deproxify(this.parent);
-		}
-		return this.parent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent().getFacility();
 	}
 
-	public final void setParent(EdiServiceABC inParent) {
-		parent = inParent;
-	}
-
-	public final String getParentEdiServiceID() {
-		return parent.getDomainId();
+	public String getParentEdiServiceID() {
+		return getParent().getDomainId();
 	}
 
 	public static void setDao(ITypedDao<EdiDocumentLocator> inEdiDocumentLocatorDao) {

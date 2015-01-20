@@ -33,6 +33,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,6 +111,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	// Associated path segment (optional)
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@JoinColumn(name = "path_segment_persistentid")
+	@Getter
 	@Setter
 	private PathSegment					pathSegment;
 	// The getter is renamed getAssociatedPathSegment, which still looks up the parent chain until it finds a pathSegment.
@@ -118,6 +120,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	// The LED controller.
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@JoinColumn(name = "led_controller_persistentid")
+	@Getter
 	@Setter
 	private LedController				ledController;
 
@@ -200,6 +203,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	
 	// The owning location.
 	@ManyToOne(optional=true,fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Location parent;
 
 	@Column(nullable = false,name="pick_face_end_pos_type")
@@ -244,32 +249,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
 
-	@Override
-	public Location getParent() {
-		if (parent instanceof HibernateProxy) {
-			this.parent = (Location) deproxify(this.parent);
-		}				
-		return this.parent;
-	}
-	
-	public LedController getLedController() {
-		if (ledController instanceof HibernateProxy) {
-			this.ledController = (LedController) PersistenceService.deproxify(this.ledController);
-		}
-		return ledController;
-	}
-	
-	public PathSegment getPathSegment() {
-		if (pathSegment instanceof HibernateProxy) {
-			this.pathSegment = (PathSegment) PersistenceService.deproxify(this.pathSegment);
-		}
-		return pathSegment;
-	}
-	
-	public static Location deproxify(Location location) {
-		return PersistenceService.<Location>deproxify(location);
-	}
-	
 	public boolean isFacility() {
 		return false;
 	}
@@ -301,26 +280,22 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return new Point(anchorPosType, anchorPosX, anchorPosY, anchorPosZ);
 	}
 
-	public final void setAnchorPoint(final Point inAnchorPoint) {
+	public void setAnchorPoint(final Point inAnchorPoint) {
 		anchorPosType = inAnchorPoint.getPosType();
 		anchorPosX = inAnchorPoint.getX();
 		anchorPosY = inAnchorPoint.getY();
 		anchorPosZ = inAnchorPoint.getZ();
 	}
 
-	public final void setAnchorPosTypeByStr(final String inPosType) {
+	public void setAnchorPosTypeByStr(final String inPosType) {
 		anchorPosType = PositionTypeEnum.valueOf(inPosType);
 	}
 
-	public final List<Location> getChildren() {
-		List<Location> children = new ArrayList<Location>();
-		for(Location child : locations.values()) {
-			children.add(PersistenceService.<Location>deproxify(child));
-		}
-		return children;
+	public List<Location> getChildren() {
+		return new ArrayList<Location>(getLocations().values());
 	}
 
-	public final List<Location> getActiveChildren() {
+	public List<Location> getActiveChildren() {
 		ArrayList<Location> aList = new ArrayList<Location>();
 		List<Location> children = getChildren();
 		for (Location loc : children) {
@@ -366,7 +341,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends Location> List<T> getActiveChildrenAtLevel(Class<? extends Location> inClassWanted) {
+	public <T extends Location> List<T> getActiveChildrenAtLevel(Class<? extends Location> inClassWanted) {
 		List<T> result = new ArrayList<T>();
 		if (!this.isActive()) {
 			LOGGER.error("getActiveChildrenAtLevel called for inactive location");
@@ -375,9 +350,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		// Loop through all of the active children.
 		for (Location child : getActiveChildren()) {
-			if (child.getClass().equals(inClassWanted)) {
+			if (Hibernate.getClass(child).equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
-				result.add((T) child);
+				// Hibernate: troublesome to cast without first deproxifying
+				result.add(PersistenceService.<T>deproxify((T) child));
 			} else {
 				// If the child is not the kind we want the recurse.
 				result.addAll((List<T>) child.getActiveChildrenAtLevel(inClassWanted));
@@ -386,7 +362,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		// If this class is also in the class we want then add it.
 		// While it's not technically its own child, we are looking for this type.
-		if (getClass().equals(inClassWanted)) {
+		if (Hibernate.getClass(this).equals(inClassWanted)) {
 			result.add((T) this);
 		}
 		return result;
@@ -396,19 +372,19 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationIdToParentLevel(java.lang.Class)
 	 */
-	public final String getLocationIdToParentLevel(Class<? extends Location> inClassWanted) {
+	public String getLocationIdToParentLevel(Class<? extends Location> inClassWanted) {
 		String result;
 
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
 		if (this.isFacility())
 			return "";
-		else if (this.getClass().equals(inClassWanted)) {
+		else if (Hibernate.getClass(this).equals(inClassWanted)) {
 			return getLocationId();
 		}
 
 		Location checkParent = getParent();
-		if (checkParent.getClass().equals(inClassWanted)) {
+		if (Hibernate.getClass(checkParent).equals(inClassWanted)) {
 			// This is the parent we want.
 			result = checkParent.getLocationId() + "." + getLocationId();
 		} else {
@@ -429,7 +405,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * This is private helper for getNominalLocationId()
 	 *
 	 */
-	public final String getNominalLocationIdExcludeBracket() {
+	public String getNominalLocationIdExcludeBracket() {
 		// It seems reasonable in the code to ask for getLocationIdToParentLevel(Aisle.class) when the class of the object is unknown, and might even be the facility.
 		// Let's not NPE.
 		if (isFacility()) {
@@ -457,7 +433,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* Returns something like A2.B1.T3.S5. Or if the location is inactive, <A2.B1.T3.S5>
 	 *
 	 */
-	public final String getNominalLocationId() {
+	public String getNominalLocationId() {
 		String result = getNominalLocationIdExcludeBracket();
 		if (!this.isActive())
 			result = "<" + result + ">";
@@ -477,7 +453,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public final <T extends Location> T getParentAtLevel(Class<? extends Location> inClassWanted) {
+	public <T extends Location> T getParentAtLevel(Class<? extends Location> inClassWanted) {
 
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
 		if (this.getClass().equals(inClassWanted))
@@ -487,9 +463,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		Location checkParent = getParent();
 		if (checkParent != null) {
-			if (checkParent.getClass().equals(inClassWanted)) {
-				// This is the parent we want. (We can cast safely since we checked the class.)
-				result = (T) checkParent;
+			if (Hibernate.getClass(checkParent).equals(inClassWanted)) {
+				// Hibernate: casting doesn't work right if the parent is a proxy object!
+				//result = (T) checkParent;
+				result = PersistenceService.<T>deproxify((T) checkParent);
 			} else {
 				if (checkParent.isFacility()) {
 					result = null;
@@ -529,7 +506,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationId()
 	 */
-	public final String getLocationId() {
+	public String getLocationId() {
 		return getDomainId();
 	}
 
@@ -537,7 +514,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setLocationId(java.lang.String)
 	 */
-	public final void setLocationId(final String inLocationId) {
+	public void setLocationId(final String inLocationId) {
 		setDomainId(inLocationId);
 	}
 
@@ -545,7 +522,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
 	 */
-	public final void addLocation(Location inLocation) {
+	public void addLocation(Location inLocation) {
 		if (inLocation.isFacility()) {
 			LOGGER.error("cannot add Facility in addLocation");
 			return;
@@ -569,7 +546,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * bay bay.findLocationById("T3") would find the tier.
 	 * This may return null
 	 */
-	public final Location findLocationById(String inLocationId) {
+	public Location findLocationById(String inLocationId) {
 		if (this.getClass().equals(Facility.class)) {
 			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
@@ -577,15 +554,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				return alias.getMappedLocation();
 			}
 		} // else
-		Location location = locations.get(inLocationId);
-		return deproxify(location);
+		
+		// Hibernate: This result is going to get cast, so deproxify here to avoid problems.
+		return PersistenceService.<Location>deproxify(locations.get(inLocationId));
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
-	public final void removeLocation(String inLocationId) {
+	public void removeLocation(String inLocationId) {
 		Location location = locations.get(inLocationId);
 		if (location != null) {
 			location.setParent(null);
@@ -608,7 +586,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @param inLocationId
 	 * @return
 	 */
-	public final Location findSubLocationById(final String inLocationId) {
+	public Location findSubLocationById(final String inLocationId) {
 		Location result = null;
 
 		Integer firstDotPos = inLocationId.indexOf(".");
@@ -622,7 +600,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			Location firstPartLocation = this.findLocationById(firstPart);
 			if (firstPartLocation != null) {
 				result = firstPartLocation.findSubLocationById(secondPart);
-				result = Location.deproxify(result);
 			}
 		}
 		if (result!=null && !result.isActive()) {
@@ -631,7 +608,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 	
-	public final PathSegment getAssociatedPathSegment() {
+	public PathSegment getAssociatedPathSegment() {
 		if (isFacility()) {
 			return null;
 		}
@@ -640,7 +617,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		if (getPathSegment() == null) {
 			// Location parent = getParent();
-			Location parent = Location.deproxify(getParent());
+			Location parent = getParent();
 			if (parent != null) {
 				result = parent.getAssociatedPathSegment();
 			}
@@ -651,7 +628,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 
-	public final String getPathSegId() {
+	public String getPathSegId() {
 		// to support list view meta-field pathSegId
 		PathSegment aPathSegment = getAssociatedPathSegment();
 
@@ -664,7 +641,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/**
 	 * This gets the associated channel. Or if indirect via getEffectiveController, then parenthesis around it.
 	 */
-	public final String getLedChannelUi() {
+	public String getLedChannelUi() {
 		Short theValue = getLedChannel();
 		if (theValue != null) {
 			return theValue.toString();
@@ -679,7 +656,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/**
 	 * This directly get the associated controller only
 	 */
-	public final String getLedControllerId() {
+	public String getLedControllerId() {
 		// to support list view meta-field ledControllerId
 		LedController aLedController = getLedController();
 
@@ -692,7 +669,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/**
 	 * This gets the associated controller. Or if indirect via getEffectiveController, then parenthesis around it.
 	 */
-	public final String getLedControllerIdUi() {
+	public String getLedControllerIdUi() {
 		LedController aLedController = getLedController();
 		if (aLedController != null) {
 			return aLedController.getDomainId();
@@ -704,7 +681,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return "";
 	}
 
-	public final String getVerticesUi() {
+	public String getVerticesUi() {
 		// A UI meta field. Mostly for developers as we refine our graphic ui
 		List<Vertex> vList = getVerticesInOrder();
 		String returnStr = "";
@@ -720,7 +697,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return returnStr;
 	}
 
-	public final String getPrimaryAliasId() {
+	public String getPrimaryAliasId() {
 		// to support list view meta-field
 		LocationAlias theAlias = getPrimaryAlias();
 		if (theAlias != null) {
@@ -732,7 +709,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return "";
 	}
 
-	public final void addVertex(Vertex inVertex) {
+	public void addVertex(Vertex inVertex) {
 		Location previousLocation = inVertex.getParent();
 		if (previousLocation == null) {
 			vertices.add(inVertex);
@@ -743,7 +720,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public final void removeVertex(Vertex inVertex) {
+	public void removeVertex(Vertex inVertex) {
 		if (this.vertices.contains(inVertex)) {
 			inVertex.setParent(null);
 			vertices.remove(inVertex);
@@ -753,7 +730,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public final void removeAllVertices() {
+	public void removeAllVertices() {
 		LOGGER.info("removeNonAnchorVertices");
 		if (vertices == null || vertices.isEmpty()) {
 			return;
@@ -765,7 +742,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		vertices.clear();
 	}
 
-	public final void addAlias(LocationAlias inAlias) {
+	public void addAlias(LocationAlias inAlias) {
 		Location previousLocation = inAlias.getMappedLocation();
 		if (previousLocation == null) {
 			aliases.add(inAlias);
@@ -776,7 +753,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public final void removeAlias(LocationAlias inAlias) {
+	public void removeAlias(LocationAlias inAlias) {
 		if (this.aliases.contains(inAlias)) {
 			inAlias.setMappedLocation(null);
 			aliases.remove(inAlias);
@@ -786,7 +763,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public final LocationAlias getPrimaryAlias() {
+	public LocationAlias getPrimaryAlias() {
 		LocationAlias result = null;
 
 		for (LocationAlias alias : aliases) {
@@ -799,7 +776,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 
-	public final void addStoredItem(Item inItem) {
+	public void addStoredItem(Item inItem) {
 		Location previousLocation = inItem.getStoredLocation();
 
 		// If it's already in another location then remove it from that location.
@@ -822,7 +799,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	}
 
-	public final Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
+	public Item getStoredItemFromMasterIdAndUom(final String inItemMasterId, final String inUom) {
 		String domainId = Item.makeDomainId(inItemMasterId, this, inUom);
 		// why not just ask the item for its domainId?
 
@@ -830,7 +807,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return returnItem;
 	}
 
-	public final Item getStoredItemFromLocationAndMasterIdAndUom(final String inLocationName,
+	public Item getStoredItemFromLocationAndMasterIdAndUom(final String inLocationName,
 		final String inItemMasterId,
 		final String inUom) {
 		Item returnItem = null;
@@ -840,11 +817,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return returnItem;
 	}
 
-	public final Item getStoredItem(final String inItemDomainId) {
+	public Item getStoredItem(final String inItemDomainId) {
 		return storedItems.get(inItemDomainId);
 	}
 
-	public final void removeStoredItem(Item inItem) {
+	public void removeStoredItem(Item inItem) {
 		String itemDomainId = inItem.getDomainId();
 		Item storedItem = storedItems.get(itemDomainId);
 		if (storedItem != null) {
@@ -874,7 +851,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public final void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
+	public void addItemDdcGroup(ItemDdcGroup inItemDdcGroup) {
 		Location previousLocation = inItemDdcGroup.getParent();
 		if (previousLocation == null) {
 			itemDdcGroups.put(inItemDdcGroup.getDdcGroupId(), inItemDdcGroup);
@@ -886,11 +863,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	}
 
-	public final ItemDdcGroup getItemDdcGroup(final String inItemDdcGroupId) {
+	public ItemDdcGroup getItemDdcGroup(final String inItemDdcGroupId) {
 		return itemDdcGroups.get(inItemDdcGroupId);
 	}
 
-	public final void removeItemDdcGroup(final String inItemDdcGroupId) {
+	public void removeItemDdcGroup(final String inItemDdcGroupId) {
 		ItemDdcGroup itemDdcGroup = itemDdcGroups.get(inItemDdcGroupId);
 		if (itemDdcGroup != null) {
 			itemDdcGroup.setParent(null);
@@ -901,11 +878,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public final List<ItemDdcGroup> getDdcGroups() {
+	public List<ItemDdcGroup> getDdcGroups() {
 		return new ArrayList<ItemDdcGroup>(itemDdcGroups.values());
 	}
 
-	public final Short getFirstLedPosForItemId(final String inItemId) {
+	public Short getFirstLedPosForItemId(final String inItemId) {
 		Short result = 0;
 
 		Item item = this.getStoredItem(inItemId);
@@ -921,7 +898,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 
-	public final Short getLastLedPosForItemId(final String inItemId) {
+	public Short getLastLedPosForItemId(final String inItemId) {
 		Short result = 0;
 
 		Item item = this.getStoredItem(inItemId);
@@ -1025,7 +1002,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	};
 
-	public final List<Vertex> getVerticesInOrder() {
+	public List<Vertex> getVerticesInOrder() {
 
 		List<Vertex> result = getVertices();
 		Collections.sort(result, new VertexOrderComparator());
@@ -1033,7 +1010,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 
-	public final LedController getEffectiveLedController() {
+	public LedController getEffectiveLedController() {
 		if (isFacility()) {
 			return null;
 		}
@@ -1050,7 +1027,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return theController;
 	}
 
-	public final Short getEffectiveLedChannel() {
+	public Short getEffectiveLedChannel() {
 		if (isFacility()) {
 			return null;
 		}
@@ -1078,9 +1055,9 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return cmdPathsSet;
 	}
 
-	public final Boolean isLeftSideTowardsAnchor() {
+	public Boolean isLeftSideTowardsAnchor() {
 		// As you face the pickface, is the left toward the anchor (where the B1/S1 side is)
-		Aisle theAisle = this.getParentAtLevel(Aisle.class);
+		Aisle theAisle = this.<Aisle>getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return false;
 		} else {
@@ -1090,7 +1067,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	@JsonIgnore
-	public final Boolean isPathIncreasingFromAnchor() {
+	public Boolean isPathIncreasingFromAnchor() {
 		Aisle theAisle = this.getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return true; // as good a default as any
@@ -1101,7 +1078,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	@JsonIgnore
-	public final Boolean isLowerLedNearAnchor() {
+	public Boolean isLowerLedNearAnchor() {
 		// This answer may not be meaningful for some locations, such as for a bay with zigzag led pattern.
 		Boolean answer = getLowerLedNearAnchor();
 		return (answer == null || answer);
@@ -1110,7 +1087,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		// Not siblings with the same parent, but same level tier for adjacent bay. Note that zigzags are tricky.
 	}
 
-	public final Boolean isActive() {
+	public Boolean isActive() {
 		return getActive();
 	}
 
@@ -1225,7 +1202,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
 	 */
-	public final void computePosAlongPath(final PathSegment inPathSegment) {
+	public void computePosAlongPath(final PathSegment inPathSegment) {
 		if (inPathSegment == null) {
 			LOGGER.error("null pathSegment in computePosAlongPath");
 			return;
@@ -1262,7 +1239,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/**
 	 * Clears controller and channel back to null state, as if they had never been set after initialization
 	 */
-	public final void clearControllerChannel() {
+	public void clearControllerChannel() {
 		if (getLedController() != null || getLedChannel() != null) {
 			try {
 				LedController currentController = this.getLedController();
@@ -1280,7 +1257,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * Both Aisle and Tier have setControllerChannel functions that call through to this.
 	 * Side effect adds a little complexity. If setting to a valid controller, make sure there is a channel (default 1) even if user never set it.
 	 */
-	protected final void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+	protected void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 
 		// Initially, log
 		LOGGER.debug("On " + this + ", set LED controller to " + inControllerPersistentIDStr);

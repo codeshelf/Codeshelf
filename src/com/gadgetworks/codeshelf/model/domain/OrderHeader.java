@@ -95,6 +95,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility					parent;
 
 	// The order type.
@@ -124,6 +126,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// The parent order group.
 	@ManyToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="order_group_persistentid")
+	@Getter
 	@Setter
 	private OrderGroup					orderGroup;
 
@@ -169,6 +172,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	// The container use for this order.
 	@OneToOne(optional = true,fetch=FetchType.LAZY)
 	@JoinColumn(name="container_use_persistentid")
+	@Getter
 	@Setter
 	private ContainerUse				containerUse;
 
@@ -206,20 +210,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		updated = new Timestamp(System.currentTimeMillis());
 	}
 	
-	public OrderGroup getOrderGroup() {
-		if (this.orderGroup instanceof HibernateProxy) {
-			this.orderGroup = (OrderGroup) PersistenceService.deproxify(this.orderGroup);
-		}
-		return orderGroup;
-	}
-	
-	public ContainerUse getContainerUse() {
-		if (this.containerUse instanceof HibernateProxy) {
-			this.containerUse = (ContainerUse) PersistenceService.deproxify(this.containerUse);
-		}
-		return containerUse;
-	}
-
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderHeader> getDao() {
 		return DAO;
@@ -229,35 +219,23 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return "P";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	@Override
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final String getOrderId() {
+	public String getOrderId() {
 		return getDomainId();
 	}
 
-	public final void setOrderId(String inOrderId) {
+	public void setOrderId(String inOrderId) {
 		setDomainId(inOrderId);
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
+	public List<? extends IDomainObject> getChildren() {
 		return getOrderDetails();
 	}
 
-	public final void addOrderDetail(OrderDetail inOrderDetail) {
+	public void addOrderDetail(OrderDetail inOrderDetail) {
 		OrderHeader previousOrderHeader = inOrderDetail.getParent();
 		if (previousOrderHeader == null) {
 			orderDetails.put(inOrderDetail.getDomainId(), inOrderDetail);
@@ -268,11 +246,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final OrderDetail getOrderDetail(String inOrderDetailId) {
+	public OrderDetail getOrderDetail(String inOrderDetailId) {
 		return orderDetails.get(inOrderDetailId);
 	}
 
-	public final void removeOrderDetail(String inOrderDetailId) {
+	public void removeOrderDetail(String inOrderDetailId) {
 		OrderDetail orderDetail = this.getOrderDetail(inOrderDetailId);
 		if (orderDetail != null) {
 			orderDetail.setParent(null);
@@ -283,11 +261,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final List<OrderDetail> getOrderDetails() {
-		List<OrderDetail> listDetails = new ArrayList<OrderDetail>(orderDetails.size());
-		for(OrderDetail detail : this.orderDetails.values()) {
-			listDetails.add(PersistenceService.<OrderDetail>deproxify(detail));
-		}
+	public List<OrderDetail> getOrderDetails() {
+		List<OrderDetail> listDetails = new ArrayList<OrderDetail>(this.orderDetails.values());
 		return listDetails;
 	}
 
@@ -312,7 +287,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	
-	public final void addHeadersContainerUse(ContainerUse inContainerUse) {
+	public void addHeadersContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
 			LOGGER.error("null input to OrderHeader.addHeadersContainerUse");
 			return;
@@ -336,7 +311,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 				
 	}
 
-	public final void removeHeadersContainerUse(ContainerUse inContainerUse) {
+	public void removeHeadersContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
 			LOGGER.error("null input to OrderHeader.removeHeadersContainerUse");
 			return;
@@ -352,7 +327,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final OrderLocation addOrderLocation(Location inLocation) {
+	public OrderLocation addOrderLocation(Location inLocation) {
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
 		OrderLocation.DAO.store(result);
@@ -368,7 +343,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return result;
 	}
 
-	public final void addOrderLocation(OrderLocation inOrderLocation) {
+	public void addOrderLocation(OrderLocation inOrderLocation) {
 		OrderHeader previousOrderHeader = inOrderLocation.getParent();
 		if (previousOrderHeader == null || previousOrderHeader == this) {
 			orderLocations.put(inOrderLocation.getDomainId(), inOrderLocation);
@@ -379,11 +354,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final OrderLocation getOrderLocation(String inOrderLocationId) {
+	public OrderLocation getOrderLocation(String inOrderLocationId) {
 		return orderLocations.get(inOrderLocationId);
 	}
 
-	public final void removeOrderLocation(OrderLocation inOrderLocation) {
+	public void removeOrderLocation(OrderLocation inOrderLocation) {
 		if (inOrderLocation == null) {
 			LOGGER.error("null input to removeOrderLocation");
 			return;
@@ -403,7 +378,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		for (OrderLocation orderLocation : getOrderLocations()) {
 			if (orderLocation.getActive()) {
 				Location loc = orderLocation.getLocation();
-				loc = Location.deproxify(loc);
 				if (inIncludeInactiveLocations || loc.isActive()) // do not need null check due to database constraint
 					newActiveOrderLocations.add(orderLocation);
 			}
@@ -411,22 +385,22 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return newActiveOrderLocations;
 	}
 
-	public final List<OrderLocation> getActiveOrderLocations() {
+	public List<OrderLocation> getActiveOrderLocations() {
 		// New from v8. If the location was deleted, do not return with getActiveOrderLocations even if the orderLocation flag is active. (It will archive eventually.)
 		return getOrderHeaderOrderLocations(false);
 	}
 
-	public final List<OrderLocation> getActiveOrderLocationsIncludeInactiveLocations() {
+	public List<OrderLocation> getActiveOrderLocationsIncludeInactiveLocations() {
 		// new function from v8. Only called by the UI function
 		return getOrderHeaderOrderLocations(true);
 	}
 
-	public final List<OrderLocation> getOrderLocations() {
+	public List<OrderLocation> getOrderLocations() {
 		return new ArrayList<OrderLocation>(orderLocations.values());
 	}
 
 	// Set the status from the websocket by a string.
-	public final void setStatusStr(final String inStatusString) {
+	public void setStatusStr(final String inStatusString) {
 		OrderStatusEnum inStatus = OrderStatusEnum.valueOf(inStatusString);
 		if (inStatus != null) {
 			status = inStatus;
@@ -461,7 +435,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * Return the order group persistent ID as a property.
 	 * @return
 	 */
-	public final UUID getOrderGroupPersistentId() {
+	public UUID getOrderGroupPersistentId() {
 		UUID result = null;
 		if (orderGroup != null) {
 			result = orderGroup.getPersistentId();
@@ -473,7 +447,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final String getContainerId() {
+	public String getContainerId() {
 		String result = "";
 
 		if (containerUse != null) {
@@ -487,7 +461,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final String getReadableDueDate() {
+	public String getReadableDueDate() {
 		if (getDueDate() != null) {
 			return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getDueDate()).toUpperCase();
 		} else {
@@ -499,7 +473,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	/**
 	 * @return
 	 */
-	public final String getReadableOrderDate() {
+	public String getReadableOrderDate() {
 		if (getOrderDate() != null) {
 			return new java.text.SimpleDateFormat("ddMMMyy HH:mm").format(getOrderDate()).toUpperCase();
 		} else {
@@ -512,7 +486,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * Order Head does not have a description field. This is for UI meta field that simply shows "Order Header" to help orient the user in the orders view.
 	 * @return
 	 */
-	public final String getDescription() {
+	public String getDescription() {
 		return "--- Order Header ---";
 		// localization issue
 	}
@@ -522,7 +496,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * Order Head does not have a description field. This is for UI meta field that simply shows "Order Header" to help orient the user in the orders view.
 	 * @return
 	 */
-	public final Integer getActiveDetailCount() {
+	public Integer getActiveDetailCount() {
 		Integer result = 0;
 		for (OrderDetail orderDetail : getOrderDetails()) {
 			if (orderDetail.getActive()) {
@@ -540,7 +514,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * @param inPath
 	 * @return
 	 */
-	public final OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
+	public OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
 		OrderLocation result = null;
 		for (OrderLocation orderLoc : getActiveOrderLocations()) {
 			Location location = orderLoc.getLocation();
@@ -571,7 +545,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * Jeff really wants that list in the order the user thinks about, which he says may not be the path order.
 	 * Note: this is called ONLY by the UI.  We want to include locations with deleted locations for UI purpose.
 	 */
-	public final String getOrderLocationAliasIds() {
+	public String getOrderLocationAliasIds() {
 		String result = "";
 
 		List<OrderLocation> oLocations = getActiveOrderLocationsIncludeInactiveLocations();

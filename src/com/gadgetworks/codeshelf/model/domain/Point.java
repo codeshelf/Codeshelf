@@ -87,7 +87,7 @@ public class Point {
 		return new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 	}
 
-	public final Point add(final Point inAddPoint) {
+	public Point add(final Point inAddPoint) {
 		if (inAddPoint.getPosType().equals(posType)) {
 			return add(inAddPoint.getX(), inAddPoint.getY(), inAddPoint.getZ());
 		}
@@ -99,25 +99,25 @@ public class Point {
 	/**
 	 * BigDecimal style, immutable add
 	 */
-	public final Point add(double inX, double inY) {
+	public Point add(double inX, double inY) {
 		return add(inX, inY, 0);
 	}
 	
-	public final Point add(double inX, double inY, double inZ) {
+	public Point add(double inX, double inY, double inZ) {
 		return new Point(posType, x+inX, y+inY, z+inZ);
 	}
 
 	// These are legacy from the front-end GUI.
 	// We need to change the GUI to send a Point object to create a location.
-	public final void setAnchorPosX(Double inAnchorPosX) {
+	public void setAnchorPosX(Double inAnchorPosX) {
 		x = inAnchorPosX;
 	}
 
-	public final void setAnchorPosY(Double inAnchorPosY) {
+	public void setAnchorPosY(Double inAnchorPosY) {
 		y = inAnchorPosY;
 	}
 
-	public final void setAnchorPosZ(Double inAnchorPosZ) {
+	public void setAnchorPosZ(Double inAnchorPosZ) {
 		z = inAnchorPosZ;
 	}
 
