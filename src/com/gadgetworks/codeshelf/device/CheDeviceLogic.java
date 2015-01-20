@@ -101,8 +101,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	private static final Integer maxCountForPositionControllerDisplay	= 99;
 
-	private final String						containerSetupMsg;
-
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
@@ -161,14 +159,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
-
-		String containerType = mDeviceManager.getContainerTypeValue();
-		if (StringUtils.isEmpty(containerType)) {
-			LOGGER.error("Container Type is empty");
-			containerSetupMsg = cheLine("SCAN ORDER");
-		} else {
-			containerSetupMsg = cheLine("SCAN " + mDeviceManager.getContainerTypeValue().toUpperCase());
-		}
 	}
 
 	@Override
@@ -857,9 +847,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case CONTAINER_SELECT:
 				if (mPositionToContainerMap.size() < 1) {
-					sendDisplayCommand(containerSetupMsg, EMPTY_MSG);
+					sendDisplayCommand(getContainerSetupMsg(), EMPTY_MSG);
 				} else {
-					sendDisplayCommand(containerSetupMsg, OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
+					sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 				}
 				showContainerAssainments();
 				break;
@@ -922,6 +912,19 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			default:
 				break;
+		}
+	}
+
+	/**
+	 * Use the configuration system to return custom setup MSG. Defaults to "SCAN ORDER"
+	 */
+	private String getContainerSetupMsg() {
+		String containerType = mDeviceManager.getContainerTypeValue();
+		if (StringUtils.isEmpty(containerType)) {
+			LOGGER.error("Container Type is empty");
+			return cheLine("SCAN ORDER");
+		} else {
+			return cheLine("SCAN " + mDeviceManager.getContainerTypeValue().toUpperCase());
 		}
 	}
 
