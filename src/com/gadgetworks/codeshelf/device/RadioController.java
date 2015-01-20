@@ -160,6 +160,7 @@ public class RadioController implements IRadioController {
 		mRunning = false;
 	}
 
+	@Override
 	public final void setNetworkId(NetworkId inNetworkId) {
 		if (mRunning) {
 			if (!this.mNetworkId.equals(inNetworkId)) {
@@ -175,6 +176,7 @@ public class RadioController implements IRadioController {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IController#startController(byte)
 	 */
+	@Override
 	public final void startController(final byte inPreferredChannel) {
 		if (this.mNetworkId == null) {
 			LOGGER.error("Cannot start radio controller, must call setNetworkId() first");
@@ -200,6 +202,7 @@ public class RadioController implements IRadioController {
 	/**
 	 *	
 	 */
+	@Override
 	public final void stopController() {
 
 		// Stop all of the interfaces.
@@ -226,12 +229,14 @@ public class RadioController implements IRadioController {
 	 * (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public final void run() {
 
 		byte testNum = 0;
 
 		// Kick off the background event processing.
 		mBackgroundThread = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				processEvents();
 			}
@@ -243,6 +248,7 @@ public class RadioController implements IRadioController {
 		// Start all of the serial interfaces.
 		// They start on a thread since this op won't complete if no dongle is attached.
 		Thread interfaceStarterThread = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				gatewayInterface.startInterface();
 			}
@@ -311,6 +317,7 @@ public class RadioController implements IRadioController {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IController#getChannel()
 	 */
+	@Override
 	public final byte getRadioChannel() {
 		return mRadioChannel;
 	}
@@ -319,6 +326,7 @@ public class RadioController implements IRadioController {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IController#setChannel(byte)
 	 */
+	@Override
 	public final void setRadioChannel(byte inChannel) {
 		if ((inChannel < 0) || (inChannel > MAX_CHANNELS)) {
 			LOGGER.error("Could not set channel - out of range!");
@@ -490,6 +498,7 @@ public class RadioController implements IRadioController {
 	 *  @param inCommand   The command just received.
 	 *  @param inSrcAddr   The address is was received from.
 	 */
+	@Override
 	public final void receiveCommand(final ICommand inCommand, final NetAddress inSrcAddr) {
 
 		if (inCommand != null) {
@@ -522,6 +531,7 @@ public class RadioController implements IRadioController {
 	/* (non-Javadoc)
 	 * 
 	 */
+	@Override
 	public final void sendCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
 		sendCommand(inCommand, mNetworkId, inDstAddr, inAckRequested);
 	}
@@ -534,6 +544,7 @@ public class RadioController implements IRadioController {
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com.gadgetworks.flyweight.command.ICommand, com.gadgetworks.flyweight.command.NetworkId, com.gadgetworks.flyweight.command.NetAddress, boolean)
 	 */
+	@Override
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
 		INetworkDevice device = this.mDeviceNetAddrMap.get(inDstAddr);
 		if (device != null) {
@@ -603,6 +614,7 @@ public class RadioController implements IRadioController {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.IController#addControllerListener(com.gadgetworks.controller.IControllerListener)
 	 */
+	@Override
 	public final void addControllerEventListener(final IRadioControllerEventListener inControllerEventListener) {
 		mEventListeners.add(inControllerEventListener);
 	}
@@ -939,12 +951,16 @@ public class RadioController implements IRadioController {
 		// ~bhe: this should go into a separate class
 		Thread gwThread = new Thread(new Runnable() {
 			//private final Counter packetsSentCounter = MetricsService.addCounter(MetricsGroup.Radio,"packets.sent");
+			@Override
 			public void run() {
 				while (mShouldRun) {
 					try {
 						if (gatewayInterface.isStarted()) {
 							IPacket packet = gatewayInterface.receivePacket(mNetworkId);
-							receivePacket(packet);
+							if (packet != null) {
+								//Packets can be null if they are intended for other networkIds
+								receivePacket(packet);
+							}
 						} else {
 							try {
 								Thread.sleep(CTRL_START_DELAY_MILLIS);
@@ -964,9 +980,6 @@ public class RadioController implements IRadioController {
 	}
 
 	private void receivePacket(IPacket packet) {
-		if (packet == null) {
-			LOGGER.error("null packet in receivePacket", new Exception());
-		}
 		NetAddress packetSourceAddress = packet.getSrcAddr();
 		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
 		if (device != null) {
@@ -1207,10 +1220,12 @@ public class RadioController implements IRadioController {
 		return this.mRunning;
 	}
 
+	@Override
 	public NetGuid getNetGuidFromNetAddress(byte networkAddr) {
 		return getNetGuidFromNetAddress(new NetAddress(networkAddr));
 	}
 
+	@Override
 	public NetGuid getNetGuidFromNetAddress(NetAddress netAddress) {
 		INetworkDevice device = this.mDeviceNetAddrMap.get(netAddress);
 		if (device != null) {
