@@ -161,7 +161,7 @@ public class IronMqService extends EdiServiceABC {
 		setProviderCredentials(json);
 	}
 
-	public final void storeCredentials(String projectId,  String token) {
+	public void storeCredentials(String projectId,  String token) {
 		setCredentials(projectId, token);
 		if(getHasCredentials()) {
 			try {
@@ -186,7 +186,7 @@ public class IronMqService extends EdiServiceABC {
 		IronMqService.DAO.store(this); //This is the DAO the UI is listening to
 	}
 
-	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
+	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
@@ -196,7 +196,7 @@ public class IronMqService extends EdiServiceABC {
 		return false;
 	}
 
-	public final void sendWorkInstructionsToHost(final String exportMessage) throws IOException, IllegalStateException {
+	public void sendWorkInstructionsToHost(final String exportMessage) throws IOException, IllegalStateException {
 		Optional<Queue> queue = getWorkInstructionQueue();
 		if (queue.isPresent()) {
 			LOGGER.debug("attempting send exportMessage: " + exportMessage);

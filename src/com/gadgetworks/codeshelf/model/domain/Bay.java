@@ -72,7 +72,7 @@ public class Bay extends Location {
 		return "B";
 	}
 	
-	public final String getBaySortName() {
+	public String getBaySortName() {
 		// to support list view meta-field tierSortName
 		String bayName = this.getDomainId();
 		String aisleName = "";
@@ -84,7 +84,7 @@ public class Bay extends Location {
 		return (aisleName + "-" + bayName);
 	}
 
-	public final String getBayIdForComparable() {
+	public String getBayIdForComparable() {
 		return getCompString(getDomainId());
 	}
 	
@@ -140,7 +140,6 @@ public class Bay extends Location {
 		if (location==null) {
 			return null;
 		}
-		location = deproxify(location);
 		if (location instanceof Bay) {
 	    	return (Bay) location;
 	    }

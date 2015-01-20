@@ -71,12 +71,14 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	// The owning location.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@Getter
 	@Setter
 	private ItemMaster			parent;
 
 	// The stored location.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stored_location_persistentid")
+	@Getter
 	private Location			storedLocation;
 
 	// Quantity.
@@ -89,6 +91,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	// The actual UoM.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "uom_master_persistentid")
+	@Getter
 	@Setter
 	private UomMaster			uomMaster;
 
@@ -132,28 +135,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public Item() {
 	}
 
-	@Override
-	public ItemMaster getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (ItemMaster) PersistenceService.deproxify(this.parent);
-		}
-		return this.parent;
-	}
-
-	public Location getStoredLocation() {
-		if (this.storedLocation instanceof HibernateProxy) {
-			this.storedLocation = (Location) PersistenceService.deproxify(this.storedLocation);
-		}
-		return storedLocation;
-	}
-
-	public UomMaster getUomMaster() {
-		if (this.uomMaster instanceof HibernateProxy) {
-			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
-		}
-		return uomMaster;
-	}
-
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Item> getDao() {
 		return DAO;
@@ -163,16 +144,16 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return "IT";
 	}
 
-	public final String getItemId() {
+	public String getItemId() {
 		return parent.getItemId();
 	}
 
-	public final void setStoredLocation(final Location inStoredLocation) {
+	public void setStoredLocation(final Location inStoredLocation) {
 		storedLocation = inStoredLocation;
 	}
 
 	// Assorted meta fields for the UI
-	public final String getNominalLocationId() {
+	public String getNominalLocationId() {
 		Location theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
@@ -181,7 +162,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	public final String getItemLocationAlias() {
+	public String getItemLocationAlias() {
 		Location theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
@@ -202,7 +183,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		setStoredLocation(loc);
 	}
 
-	public final String getItemMasterId() {
+	public String getItemMasterId() {
 		ItemMaster master = getParent();
 		return master.getDomainId();
 	}
@@ -211,7 +192,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	 * Property that uses String type
 	 * @return
 	 */
-	public final String getCmFromLeftui() {
+	public String getCmFromLeftui() {
 		Integer value = getCmFromLeft();
 		if (value != 0)
 			return value.toString();
@@ -224,7 +205,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	 * Property that uses String type
 	 * @return
 	 */
-	public final void setCmFromLeftui(String inValueFromLeft) {
+	public void setCmFromLeftui(String inValueFromLeft) {
 		Integer positionValue = null;
 		if (Strings.isNullOrEmpty(inValueFromLeft) || inValueFromLeft.trim().length() == 0) {
 			positionValue = null;
@@ -238,11 +219,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		setCmFromLeft(positionValue);
 	}
 
-	public final String getPosAlongPathui() {
+	public String getPosAlongPathui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getPosAlongPath());
 	}
 
-	public final String getItemTier() {
+	public String getItemTier() {
 		// The intended purpose is allow user to filter by aisle, then sort by tier and getPosAlongPathui
 		//  Should allow easy verification of inventory, working across a tier.
 		String result = "";
@@ -256,7 +237,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return result;
 	}
 
-	public final String getItemDescription() {
+	public String getItemDescription() {
 		ItemMaster theMaster = this.getParent();
 		if (theMaster == null)
 			return "";
@@ -265,7 +246,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	public final String getUomMasterId() {
+	public String getUomMasterId() {
 		// uom is not nullable, but we see null in unit test.
 		UomMaster theUom = getUomMaster();
 		if (theUom != null)
@@ -285,7 +266,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	// UI Metafield
-	public final String getItemQuantityUom() {
+	public String getItemQuantityUom() {
 
 		Double quant = this.getQuantity();
 		UomMaster theUom = this.getUomMaster();
@@ -316,7 +297,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	// Public setter/getter/validate functions for our cmFromLeft feature
-	public final void setCmFromLeft(Integer inCmFromLeft) {
+	public void setCmFromLeft(Integer inCmFromLeft) {
 		if (inCmFromLeft == null) {
 			setMetersFromAnchor(null);
 		} else {
@@ -452,7 +433,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		Item.DAO = inItemDao;
 	}
 
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent().getFacility();
 	}
 

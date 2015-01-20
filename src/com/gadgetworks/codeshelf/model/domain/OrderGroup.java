@@ -73,6 +73,8 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility					parent;
 
 	// The collective order status.
@@ -136,30 +138,19 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		return "P";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}		
-		return parent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	public final String getOrderGroupId() {
+	public String getOrderGroupId() {
 		return getDomainId();
 	}
 
-	public final void setOrderGroupId(String inOrderGroupId) {
+	public void setOrderGroupId(String inOrderGroupId) {
 		setDomainId(inOrderGroupId);
 	}
 
-	public final void addOrderHeader(OrderHeader inOrderHeader) {
+	public void addOrderHeader(OrderHeader inOrderHeader) {
 		OrderGroup previousOrderGroup = inOrderHeader.getOrderGroup();
 		if(previousOrderGroup == null) {
 			orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
@@ -169,11 +160,11 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		}	
 	}
 
-	public final OrderHeader getOrderHeader(String inOrderid) {
+	public OrderHeader getOrderHeader(String inOrderid) {
 		return orderHeaders.get(inOrderid);
 	}
 
-	public final void removeOrderHeader(String inOrderId) {
+	public void removeOrderHeader(String inOrderId) {
 		OrderHeader orderHeader = this.getOrderHeader(inOrderId);
 		if(orderHeader != null) {
 			orderHeader.setOrderGroup(null);
@@ -183,11 +174,11 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final List<OrderHeader> getOrderHeaders() {
+	public List<OrderHeader> getOrderHeaders() {
 		return new ArrayList<OrderHeader>(orderHeaders.values());
 	}
 
-	public final List<? extends IDomainObject> getChildren() {
+	public List<? extends IDomainObject> getChildren() {
 		return getOrderHeaders();
 	}
 

@@ -69,7 +69,7 @@ public class Aisle extends Location {
 	/**
 	 * this is for callMethod from the UI.  The main complexity is that this aisle may have been set to different path segment earlier. If so, that should be removed first.
 	 */
-	public final void associatePathSegment(String inPathSegPersistentID) {
+	public void associatePathSegment(String inPathSegPersistentID) {
 		/* In all cases, the result should be aisle has its pathseg field set, the pathseg should have this aisle in its list.  AND this aisle should not be in other path seg lists.
 		 * 1a) Simple. No path association yet. Normal add. 
 		 * 1b) Simple error. No path association yet. Throws. Covered in test updateNonexistantPathSegment()
@@ -86,7 +86,7 @@ public class Aisle extends Location {
 		associatePathSegment(newPathSegment);
 	}
 
-	public final void associatePathSegment(PathSegment inPathSegment) {
+	public void associatePathSegment(PathSegment inPathSegment) {
 
 		if (inPathSegment == null) {
 			throw new DaoException("null call to associatePathSegment");
@@ -117,7 +117,7 @@ public class Aisle extends Location {
 	 * This fixes the possible perceived bug of set tier controller. Oops, this is zigzag aisle. Set aisle controller correctly. Some tiers never set.
 	 * This makes the getEffectiveXXX() calls work, searching upward until they find the aisle value
 	 */
-	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+	public void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 
 		List<Tier> aList = getActiveChildrenAtLevel(Tier.class);
@@ -128,7 +128,7 @@ public class Aisle extends Location {
 
 	// As you face the pick face, is the left toward the anchor point? If so, any cm offset adds to an anchor point. 
 	// If not, any cm offset subtracts from a pick face end	
-	public final Boolean isLeftSideAsYouFaceByB1S1() {
+	public Boolean isLeftSideAsYouFaceByB1S1() {
 		// JR in progress for DEV-310
 		// The answer depends on the aisle's relationship to its pathSegment
 		Boolean returnValue = true;
@@ -159,7 +159,7 @@ public class Aisle extends Location {
 		return returnValue;
 	}
 
-	public final Boolean associatedPathSegmentIncreasesFromAnchor() {
+	public Boolean associatedPathSegmentIncreasesFromAnchor() {
 		PathSegment mySegment = getPathSegment();
 		Boolean pathSegIncreaseFromAisleAnchor = true;
 		if (mySegment != null) {
@@ -197,7 +197,6 @@ public class Aisle extends Location {
 		if (location==null) {
 			return null;
 		}
-		location = deproxify(location);
 		if (location instanceof Aisle) {
 	    	return (Aisle) location;
 	    }

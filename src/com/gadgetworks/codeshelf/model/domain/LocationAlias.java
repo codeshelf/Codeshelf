@@ -67,6 +67,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@JoinColumn(name="mapped_location_persistentid")
 	@JsonProperty
+	@Getter
+	@Setter
 	private Location			mappedLocation;
 
 	@Column(nullable = false)
@@ -83,6 +85,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	// The owning facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility			parent;
 
 	public LocationAlias() {
@@ -104,38 +108,16 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		return "MAP";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}		
-		return parent;
-	}
-	
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	public final void setLocationAlias(String inLocationAlias) {
+	public void setLocationAlias(String inLocationAlias) {
 		setDomainId(inLocationAlias);
 	}
 
-	public final String getAlias() {
+	public String getAlias() {
 		return getDomainId();
-	}
-
-	public final Location getMappedLocation() {
-		if (this.mappedLocation instanceof HibernateProxy) {
-			this.mappedLocation = Location.deproxify(this.mappedLocation);
-		}
-		return mappedLocation;
-	}
-
-	public final void setMappedLocation(final Location inMappedLocation) {
-		mappedLocation = inMappedLocation;
 	}
 
 	public static void setDao(LocationAliasDao inLocationAliasDao) {

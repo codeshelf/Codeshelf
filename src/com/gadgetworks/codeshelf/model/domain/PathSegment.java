@@ -74,6 +74,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	// The owning path.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Getter
 	private Path parent;
 
 	// The order of this path segment in the path (from the tail/origin).
@@ -139,6 +140,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private Double				startPosAlongPath;
 
 	@OneToMany(mappedBy = "pathSegment")
+	@Getter
 	private List<Location>  locations = new ArrayList<Location>();
 	
 	public PathSegment() {
@@ -153,58 +155,44 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		return DOMAIN_PREFIX;
 	}
 
-	public final Path getParent() {
-		if (parent instanceof HibernateProxy) {
-			this.parent = (Path) PersistenceService.deproxify(this.parent);
-		}						
-		return parent;
-	}
-
-	public final Facility getFacility() {
-		return getParent().getFacility();
-	}
-
-	public final void setParent(Path inParent) {
+	public void setParent(Path inParent) {
 		parent = inParent;
 		computePathDistance();
 	}
-
-	public List<Location> getLocations() {
-		for (int i = 0; i< this.locations.size(); i++) {
-			locations.set(i, PersistenceService.<Location>deproxify(locations.get(i)));
-		}
-		return this.locations;
-	}
 	
-	public final String getParentPathID() {
+	public Facility getFacility() {
+		return getParent().getFacility();
+	}
+
+	public String getParentPathID() {
 		if (this.parent == null)
 			return null;
 		return parent.getDomainId();
 	}
 
-	public final void setStartPoint(final Point inPoint) {
+	public void setStartPoint(final Point inPoint) {
 		posType = inPoint.getPosType();
 		startPosX = inPoint.getX();
 		startPosY = inPoint.getY();
 		startPosZ = inPoint.getZ();
 	}
 
-	public final void setEndPoint(final Point inPoint) {
+	public void setEndPoint(final Point inPoint) {
 		posType = inPoint.getPosType();
 		endPosX = inPoint.getX();
 		endPosY = inPoint.getY();
 		endPosZ = inPoint.getZ();
 	}
 
-	public final Point getStartPoint() {
+	public Point getStartPoint() {
 		return new Point(posType, startPosX, startPosY, startPosZ);
 	}
 
-	public final Point getEndPoint() {
+	public Point getEndPoint() {
 		return new Point(posType, endPosX, endPosY, endPosZ);
 	}
 
-	public final Double getLength() {
+	public Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
 	
@@ -230,7 +218,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	
 	// For a UI field
-	public final int getAssociatedLocationCount() {
+	public int getAssociatedLocationCount() {
 		return getLocations().size();
 	}
 
@@ -240,7 +228,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	 * The first time we get this value we have to compute it.
 	 * @return
 	 */
-	public final void computePathDistance() {
+	public void computePathDistance() {
 		Double distance = 0.0;
 		Path path = getParent();
 		for (PathSegment segment : path.getSegments()) {

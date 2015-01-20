@@ -64,6 +64,8 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 
 	// The parent facility.
 	@OneToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Path parent;
 
 	// The work area ID.
@@ -90,13 +92,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@Getter
 	private List<User>			users		= new ArrayList<User>();
 
-	// A work area will contain a set of active users (workers).
-	/* NOT USED CURRENTLY
-	@OneToMany(mappedBy = "currentWorkArea")
-	@Getter
-	private List<Che>			activeChes	= new ArrayList<Che>();
-	*/
-	
 	public WorkArea() {
 		workAreaId = "";
 	}
@@ -110,32 +105,21 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 		return "P";
 	}
 
-	public final Path getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Path) PersistenceService.deproxify(this.parent);
-		}		
-		return parent;
-	}
-
-	public final void setParent(Path inParent) {
-		parent = inParent;
-	}
-
-	public final void addLocation(Location inSubLocation) {
+	public void addLocation(Location inSubLocation) {
 		locations.add(inSubLocation);
 	}
 
-	public final void removeLocation(Location inLocation) {
+	public void removeLocation(Location inLocation) {
 		locations.remove(inLocation);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void addUser(User inUser) {
+	public void addUser(User inUser) {
 		users.add(inUser);
 	}
 
 	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public final void removeUser(User inUser) {
+	public void removeUser(User inUser) {
 		users.remove(inUser);
 	}
 

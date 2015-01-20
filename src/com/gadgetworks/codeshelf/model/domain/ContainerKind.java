@@ -62,6 +62,8 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility parent;
 
 	// The container class ID.
@@ -109,19 +111,9 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 		return "P";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final Facility getFacility() {
-		return getParent();
-	}
-
-	public final void setParent(Facility inParent) {
-		parent = inParent;
+	@Override
+	public Facility getFacility() {
+		return getParent().getFacility();
 	}
 
 }

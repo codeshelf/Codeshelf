@@ -57,7 +57,7 @@ public class NetworkChangeListener implements ObjectEventListener {
 		if(network != null) {
 			// if the object changed within this network, generate a new network status response
 			if(network.equals(this.network)) {
-				return new NetworkStatusMessage(network);
+				return new NetworkStatusMessage(PersistenceService.<CodeshelfNetwork>deproxify(network));
 			}
 		}
 		return null;

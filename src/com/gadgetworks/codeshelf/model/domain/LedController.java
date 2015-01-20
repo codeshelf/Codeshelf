@@ -75,7 +75,7 @@ public class LedController extends WirelessDeviceABC {
 		return "LED";
 	}
 
-	public final void addLocation(Location inSubLocation) {
+	public void addLocation(Location inSubLocation) {
 		LedController previousLedController = inSubLocation.getLedController();
 		if(previousLedController == null) {
 			locations.add(inSubLocation);
@@ -85,7 +85,7 @@ public class LedController extends WirelessDeviceABC {
 		}	
 	}
 
-	public final void removeLocation(Location inSubLocation) {
+	public void removeLocation(Location inSubLocation) {
 		if(locations.contains(inSubLocation)) {
 			inSubLocation.setLedController(null);
 			locations.remove(inSubLocation);
@@ -97,7 +97,7 @@ public class LedController extends WirelessDeviceABC {
 	//  Called from the UI, so really should return any persistence error.
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 	// Therefore, see  and consider declone from Che::changeControllerId()
-	public final void changeLedControllerId(String inNewControllerId) {
+	public void changeLedControllerId(String inNewControllerId) {
 		NetGuid currentGuid = this.getDeviceNetGuid();
 		NetGuid newGuid = null;
 		try {

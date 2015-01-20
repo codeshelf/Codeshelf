@@ -12,6 +12,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
@@ -52,7 +53,7 @@ public class LoginCommand extends CommandABC {
 					session.authenticated(user);
 					ContextLogging.setSession(session);
 					try {
-						Organization org = user.getParent();
+						Organization org = PersistenceService.<Organization>deproxify(user.getParent());
 						LOGGER.info("User " + userId + " of " + org.getDomainId() + " authenticated on session "
 								+ session.getSessionId());
 
@@ -60,7 +61,7 @@ public class LoginCommand extends CommandABC {
 						SiteController sitecon = SiteController.DAO.findByDomainId(null, userId);
 						CodeshelfNetwork network = null;
 						if (sitecon != null) {
-							network = sitecon.getParent();
+							network = PersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());
 							response.setNetwork(network);
 
 							// send all network updates to this session for this network 

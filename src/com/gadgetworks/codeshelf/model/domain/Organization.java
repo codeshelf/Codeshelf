@@ -96,7 +96,7 @@ public class Organization extends DomainObjectABC {
 	}
 
 	
-	public final void addUser(User inUser) {
+	public void addUser(User inUser) {
 		Organization previousOrganization = inUser.getParent();
 		if(previousOrganization == null) {
 			users.put(inUser.getDomainId(), inUser);
@@ -106,11 +106,11 @@ public class Organization extends DomainObjectABC {
 		}	
 	}
 
-	public final User getUser(String inUserId) {
+	public User getUser(String inUserId) {
 		return users.get(inUserId);
 	}
 
-	public final void removeUser(String inUserId) {
+	public void removeUser(String inUserId) {
 		User user= this.getUser(inUserId);
 		if(user != null) {
 			user.setParent(null);
@@ -129,7 +129,7 @@ public class Organization extends DomainObjectABC {
 		return "O";
 	}
 
-	public final void setOrganizationId(String inOrganizationId) {
+	public void setOrganizationId(String inOrganizationId) {
 		setDomainId(inOrganizationId);
 	}
 
@@ -138,7 +138,7 @@ public class Organization extends DomainObjectABC {
 	 * @param inFacilityDomainId
 	 * @return
 	 */
-	public final Facility getFacility(final String inFacilityDomainId) {
+	public Facility getFacility(final String inFacilityDomainId) {
 		return Facility.DAO.findByDomainId(null, inFacilityDomainId);
 	}
 
@@ -146,7 +146,7 @@ public class Organization extends DomainObjectABC {
 	/**
 	 * @return
 	 */
-	public final List<Facility> getFacilities() {
+	public List<Facility> getFacilities() {
 		return Facility.DAO.getAll();
 	}
 
@@ -159,7 +159,7 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosY
 	 */
 	// @Transactional
-	public final Facility createFacilityUi(final String inDomainId, final String inDescription, Double x, Double y) {
+	public Facility createFacilityUi(final String inDomainId, final String inDescription, Double x, Double y) {
 		// Do not call overloaded functions from the UI. May not find the function.
 		Point point = new Point(PositionTypeEnum.GPS,x,y,0d);
 		return this.createFacility(inDomainId, inDescription, point);
@@ -174,7 +174,7 @@ public class Organization extends DomainObjectABC {
 	 * @param inAnchorPosY
 	 */
 	// @Transactional
-	public final Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+	public Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
 		facility.setDomainId(inDomainId);
@@ -225,7 +225,7 @@ public class Organization extends DomainObjectABC {
 	 * @return
 	 */
 	// @Transactional
-	public final User createUser(final String inUsername, final String inPassword, UserType type) {
+	public User createUser(final String inUsername, final String inPassword, UserType type) {
 		User result = null;
 
 		if(User.DAO.findByDomainId(null,inUsername) == null) {
