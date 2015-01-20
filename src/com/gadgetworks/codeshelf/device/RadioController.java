@@ -964,28 +964,34 @@ public class RadioController implements IRadioController {
 	}
 
 	private void receivePacket(IPacket packet) {
-		if (packet != null) {
-			INetworkDevice device = this.mDeviceNetAddrMap.get(packet.getSrcAddr());
-			if (device != null) {
-				ContextLogging.setNetGuid(device.getGuid());
-			}
+		if (packet == null) {
+			LOGGER.error("null packet in receivePacket", new Exception());
+		}
+		NetAddress packetSourceAddress = packet.getSrcAddr();
+		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
+		if (device != null) {
+			ContextLogging.setNetGuid(device.getGuid());
+		}
 
-			try {
-				if (packet.getPacketType() == IPacket.ACK_PACKET) {
-					LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
-					processAckPacket(packet);
-				} else {
-					// If the inbound packet had an ACK ID then respond with an ACK ID.
-					byte ackId = packet.getAckId();
-					if (ackId != IPacket.EMPTY_ACK_ID) {
-						respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
-					}
-					receiveCommand(packet.getCommand(), packet.getSrcAddr());
+		try {
+			if (packet.getPacketType() == IPacket.ACK_PACKET) {
+				LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
+				processAckPacket(packet);
+			} else {
+				// If the inbound packet had an ACK ID then respond with an ACK ID.
+				byte ackId = packet.getAckId();
+				if (ackId != IPacket.EMPTY_ACK_ID) {
+					if (packetSourceAddress.isZeroAddress())
+						LOGGER.debug("avoiding ack attempt on source address 0"); // DEV-598 reduces this in the logs
+						// But is there an error somewhere? should the packetsSentCounter.inc()? It did before.
+					else
+						respondToAck(ackId, packet.getNetworkId(), packetSourceAddress);
 				}
-				this.packetsSentCounter.inc();
-			} finally {
-				ContextLogging.clearNetGuid();
+				receiveCommand(packet.getCommand(), packetSourceAddress);
 			}
+			this.packetsSentCounter.inc();
+		} finally {
+			ContextLogging.clearNetGuid();
 		}
 	}
 
