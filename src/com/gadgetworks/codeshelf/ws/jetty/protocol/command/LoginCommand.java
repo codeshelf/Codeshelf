@@ -81,6 +81,9 @@ public class LoginCommand extends CommandABC {
 							Facility facility = network.getParent();
 							String valueStr = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
 							response.setAutoShortValue(Boolean.parseBoolean(valueStr));
+
+							String pickInfo = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
+							response.setPickInfoValue(pickInfo);
 						} else {
 							response.setAutoShortValue(false); // not read by client. No need to look it up.
 						}

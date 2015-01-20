@@ -21,6 +21,10 @@ public class LoginResponse extends ResponseABC {
 	@Getter @Setter
 	boolean autoShortValue;
 
+	@Getter
+	@Setter
+	String					pickInfoValue;
+
 
 	public LoginResponse() {
 	}

@@ -252,19 +252,31 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String[] pickInfoLines = { "", "", "" };
 
 		if ("SKU".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+			//First line is SKU, 2nd line is QTY if >= 99
 			String info = wi.getItemId();
-
-			//SHOW SKU (WITH COUNTS IF >= 99)
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				info = planQty + info;
-			}
 
 			//Make sure we do not exceed 40 chars
 			if (info.length() > 40) {
+				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
 				info = info.substring(0, 40);
 			}
 
-		} else {
+			pickInfoLines[0] = info;
+
+			String quantity = "";
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				quantity = "QTY " + planQty;
+			}
+
+			//Make sure we do not exceed 40 chars
+			if (quantity.length() > 40) {
+				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
+				quantity = quantity.substring(0, 40);
+			}
+
+			pickInfoLines[1] = quantity;
+
+		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
 
 			String displayDescription = wi.getDescription();
 			if (planQty >= maxCountForPositionControllerDisplay) {
@@ -285,6 +297,31 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				int toGet = Math.min(20, displayDescription.length() - pos);
 				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
 			}
+		} else {
+			//DEFAULT TO SKU
+			//First line is SKU, 2nd line is QTY if >= 99
+			String info = wi.getItemId();
+
+			//Make sure we do not exceed 40 chars
+			if (info.length() > 40) {
+				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
+				info = info.substring(0, 40);
+			}
+
+			pickInfoLines[0] = info;
+
+			String quantity = "";
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				quantity = "QTY " + planQty;
+			}
+
+			//Make sure we do not exceed 40 chars
+			if (quantity.length() > 40) {
+				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
+				quantity = quantity.substring(0, 40);
+			}
+
+			pickInfoLines[1] = quantity;
 		}
 
 		//Override last line if short is needed

@@ -69,6 +69,8 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public final static String						Default_LOCAPICK	= "false";
 	public final static String						EACHMULT			= "EACHMULT";
 	public final static String						Default_EACHMULT	= "false";
+	public final static String						PICKINFO			= "PICKINFO";
+	public final static String						Default_PICKINFO	= "SKU";
 
 	public DomainObjectProperty() {
 	}
@@ -99,6 +101,9 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return Default_LOCAPICK;
 		if (inParameterName.equals(EACHMULT))
 			return Default_EACHMULT;
+		if (inParameterName.equals(PICKINFO)) {
+			return Default_PICKINFO;
+		}
 
 		// Do not log an error if not pre-known
 		return null;
@@ -239,6 +244,8 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return "true, false";
 		else if (myName.equals(EACHMULT))
 			return "true, false";
+		else if (myName.equals(PICKINFO))
+			return "SKU, Description, Both";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -275,10 +282,11 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return validate_boolean(trimmedValue);
 		else if (myName.equals(EACHMULT))
 			return validate_boolean(trimmedValue);
+		else if (myName.equals(PICKINFO))
+			return validate_pickinfo(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
 		}
-
 		return null;
 	}
 
@@ -299,6 +307,22 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return pathStr;
 		else
 			return null;
+	}
+
+	private String validate_pickinfo(String inValue) {
+		// valid values are "SKU, Description, Both"
+		final String sku = "SKU";
+		final String desc = "Description";
+		final String both = "Both";
+
+		if (sku.equalsIgnoreCase(inValue)) {
+			return sku;
+		} else if (desc.equalsIgnoreCase(inValue)) {
+			return desc;
+		} else if (both.equalsIgnoreCase(inValue)) {
+			return both;
+		}
+		return null;
 	}
 
 	private String validate_rpeatpos(String inValue) {

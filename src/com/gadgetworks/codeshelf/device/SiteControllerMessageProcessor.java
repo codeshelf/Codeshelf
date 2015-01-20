@@ -58,6 +58,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				}
 				// DEV-582 hook up to AUTOSHRT parameter
 				deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
+				deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
 			}
 			if (!attached) {
 				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
