@@ -60,7 +60,12 @@ public class ConnectionManagerThread extends Thread {
 					long timeSinceLastSent = System.currentTimeMillis() - client.getLastMessageSent();
 					if (!deviceManager.isSuppressKeepAlive()) {
 						if (timeSinceLastSent>keepAliveInterval) {
-							LOGGER.info("Sending keep alive from the site controller");
+							// DEV-598 ideally, might log once every 10 or saying each keepalive had been sent.
+							// For now, just suppress the normal.
+							if (timeSinceLastSent> 2 * keepAliveInterval) 
+								LOGGER.warn("Late: sending keep alive from the site controller " + timeSinceLastSent + " ms after last send.");
+							else
+								LOGGER.debug("Sending keep alive from the site controller");
 							client.sendMessage(new KeepAlive());
 						}
 					}
