@@ -66,4 +66,6 @@ public interface ICsDeviceManager {
 	boolean getAutoShortValue();
 
 	String getPickInfoValue();
+
+	String getContainerTypeValue();
 }

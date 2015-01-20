@@ -99,6 +99,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Setter
 	private String										pickInfoValue		= "SKU";
 
+	@Getter
+	@Setter
+	private String										containerTypeValue	= "Order";
+
 	private WebSocketContainer	webSocketContainer;
 
 	@Inject

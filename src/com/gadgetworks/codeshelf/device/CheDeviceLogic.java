@@ -68,7 +68,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private static final String	INVALID_SCAN_MSG						= cheLine("INVALID");
 	private static final String	SCAN_USERID_MSG							= cheLine("SCAN BADGE");
 	private static final String	SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
-	private static final String	SCAN_CONTAINER_MSG						= cheLine("SCAN CONTAINER");
 	private static final String	OR_START_WORK_MSG						= cheLine("OR START WORK");
 	private static final String	SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	private static final String	SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
@@ -102,6 +101,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	private static final Integer maxCountForPositionControllerDisplay	= 99;
 
+	private final String						containerSetupMsg;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -161,6 +161,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
+
+		String containerType = mDeviceManager.getContainerTypeValue();
+		if (StringUtils.isEmpty(containerType)) {
+			LOGGER.error("Container Type is empty");
+			containerSetupMsg = cheLine("SCAN ORDER");
+		} else {
+			containerSetupMsg = cheLine("SCAN " + mDeviceManager.getContainerTypeValue().toUpperCase());
+		}
 	}
 
 	@Override
@@ -849,9 +857,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			case CONTAINER_SELECT:
 				if (mPositionToContainerMap.size() < 1) {
-					sendDisplayCommand(SCAN_CONTAINER_MSG, EMPTY_MSG);
+					sendDisplayCommand(containerSetupMsg, EMPTY_MSG);
 				} else {
-					sendDisplayCommand(SCAN_CONTAINER_MSG, OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
+					sendDisplayCommand(containerSetupMsg, OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 				}
 				showContainerAssainments();
 				break;

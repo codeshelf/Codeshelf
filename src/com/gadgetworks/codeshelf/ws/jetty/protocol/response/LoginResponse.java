@@ -25,6 +25,10 @@ public class LoginResponse extends ResponseABC {
 	@Setter
 	String					pickInfoValue;
 
+	@Getter
+	@Setter
+	String					containerTypeValue;
+
 
 	public LoginResponse() {
 	}
