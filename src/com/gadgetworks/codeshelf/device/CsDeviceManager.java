@@ -94,6 +94,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	boolean radioEnabled = true;
 	
 	private boolean autoShortValue = true; // getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
+	
+	@Getter
+	@Setter
+	private String										pickInfoValue		= "SKU";
 
 	private WebSocketContainer	webSocketContainer;
 
