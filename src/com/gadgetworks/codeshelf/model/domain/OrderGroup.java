@@ -115,7 +115,7 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	// List of all orders belonging to this group. Some orders have no group.
 	@OneToMany(mappedBy = "orderGroup")
-	@MapKey(name = "persistentId")
+	@MapKey(name = "domainId")
 	private Map<String, OrderHeader>	orderHeaders					= new HashMap<String, OrderHeader>();
 
 	public OrderGroup() {
