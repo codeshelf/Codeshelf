@@ -251,8 +251,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		String[] pickInfoLines = { "", "", "" };
 
-		if ("SKU".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-			//First line is SKU, 2nd line is QTY if >= 99
+		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+			//First line is SKU, 2nd line is desc + qty if >= 99
 			String info = wi.getItemId();
 
 			//Make sure we do not exceed 40 chars
@@ -263,18 +263,20 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			pickInfoLines[0] = info;
 
-			String quantity = "";
+			String displayDescription = wi.getDescription();
 			if (planQty >= maxCountForPositionControllerDisplay) {
-				quantity = "QTY " + planQty;
+				displayDescription = planQty + " " + displayDescription;
 			}
 
-			//Make sure we do not exceed 40 chars
-			if (quantity.length() > 40) {
-				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
-				quantity = quantity.substring(0, 40);
+			//Add description
+			int charPos = 0;
+			for (int line = 1; line < 3; line++) {
+				if (charPos < displayDescription.length()) {
+					int toGet = Math.min(20, displayDescription.length() - charPos);
+					pickInfoLines[line] = displayDescription.substring(charPos, charPos + toGet);
+					charPos += toGet;
+				}
 			}
-
-			pickInfoLines[1] = quantity;
 
 		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
 
