@@ -170,8 +170,8 @@ public class ContainerUseTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		header1d = OrderHeader.DAO.findByPersistentId(header1Uuid);
 		cntrUse1d = ContainerUse.DAO.findByPersistentId(cntrUse1Uuid);
-		this.getPersistenceService().commitTenantTransaction();
 		Assert.assertEquals(cntrUse1d, header1d.getContainerUse());
+		this.getPersistenceService().commitTenantTransaction();
 	
 		LOGGER.info("Case 5: Normal add. Should work as the this is how the data was setup in the first place.");
 		this.getPersistenceService().beginTenantTransaction();

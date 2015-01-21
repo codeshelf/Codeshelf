@@ -63,6 +63,8 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 
 	// The owning location.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Location			parent;
 
 	@NonNull
@@ -116,26 +118,14 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 		return "V";
 	}
 
-	public final Location getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = Location.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final void setParent(Location inParent) {
-		parent = inParent;
-	}
-
-
-	public final void updatePoint(Double x, Double y, Double z) {
+	public void updatePoint(Double x, Double y, Double z) {
 		posX = x;
 		posY = y;
 		posZ = z;
 		getDao().store(this);
 	}
 	
-	public final void setPoint(final Point inPoint) {
+	public void setPoint(final Point inPoint) {
 		posType = inPoint.getPosType();
 		posX = inPoint.getX();
 		posY = inPoint.getY();

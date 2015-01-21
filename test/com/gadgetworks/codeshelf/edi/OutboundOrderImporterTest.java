@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -1152,9 +1153,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		UUID persist4b = items4b.getPersistentId();
 		
 		Assert.assertNotEquals(persist1a, persist1b); // made new. Deleted old. So different persistent Id
-		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.
-		/* Search for this comment in  OutboundOrderCsvImporter.java     Bjoern none of this is necessary. Just debug aid */
-		
+		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.		
 		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("7: Move the 10.1 SKU0001 order at D34. But add another SKU0001 order at D34. SKU0001 hould have two itemLocations after that.");
@@ -1178,12 +1177,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("8: Showing the limits of current implementation. Next day, orders for the same SKUs in different locations. Does not clean up old inventory.");
-		// Just for thoroughness, changed the cm Offset of the D34 item. Does not matter.
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		
 		String csvString4 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
-				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,50"
+				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,"
 				+ "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
 
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
@@ -1219,7 +1217,263 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	// archiveCheckOneOrder() If only one order was in the file (even if two or more details for the same order header) then do the archive checking only for this order.
 	// That is, inactivate older details for this order. Do not do anything with containerUse.
+	
+	/**
+	 * This test verifies that when importing orders for an existing group, all orders previously in that group get archived unless they've been updated
+	 */
+	@Test
+	public final void testArchiveOneGroup() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		
+		
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
+				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
+				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
+		importCsvString(facility, firstCsvString);
 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
+				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
+		importCsvString(facility, secondCsvString);
+		
+		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
+		groupExpectations.put("Group1", true);
+		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
+		headerExpectations.put("1", false);
+		headerExpectations.put("2", false);
+		headerExpectations.put("3", true);
+		headerExpectations.put("4", true);
+		assertArchiveStatuses(groupExpectations, headerExpectations);
+
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	/**
+	 * Same as testAcriveTestOneGroup, but without specifying a group
+	 */
+	@Test
+	public final void testArchiveNoGroup() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		
+		
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom" + 
+				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" + 
+				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
+				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
+		importCsvString(facility, firstCsvString);
+
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom" + 
+				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" + 
+				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
+		importCsvString(facility, secondCsvString);
+		
+		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
+		groupExpectations.put("Group1", true);
+		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
+		headerExpectations.put("1", false);
+		headerExpectations.put("2", false);
+		headerExpectations.put("3", true);
+		headerExpectations.put("4", true);
+		assertArchiveStatuses(groupExpectations, headerExpectations);
+
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	/**
+	 * This is a test for my modification of the Archiving behavior.
+	 * Currently, importing orders will archive all older orders, even in other groups.
+	 * In the new behavior, only old orders from the newly imported groups will be archived
+	 */
+	@Test
+	public final void testArchiveTwoGroups() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		
+		
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
+				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
+				"\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
+		importCsvString(facility, firstCsvString);
+
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +  
+				"\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2" +
+				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
+		importCsvString(facility, secondCsvString);
+		
+		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
+		groupExpectations.put("Group1", true);
+		groupExpectations.put("Group2", true);
+		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
+		headerExpectations.put("1", true);
+		headerExpectations.put("2", true);
+		headerExpectations.put("3", false);
+		headerExpectations.put("4", true);
+		headerExpectations.put("5", true);
+		assertArchiveStatuses(groupExpectations, headerExpectations);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void testArchiveAbandonedGroup() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		
+		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
+				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
+		importCsvString(facility, firstCsvString);
+		
+		OrderHeader header1a = facility.getOrderHeader("1");
+		OrderGroup group1a = header1a.getOrderGroup();
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" + 
+				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
+		importCsvString(facility, secondCsvString);
+		
+		OrderHeader header1b = facility.getOrderHeader("1");
+		OrderGroup group1b = header1b.getOrderGroup();
+		OrderGroup group2 = facility.getOrderGroup("Group2");
+		// Is it the same header?
+		Assert.assertEquals(header1a, header1b);
+		// did it change owner?
+		Assert.assertNotEquals(group1a, group1b);
+		Assert.assertEquals(group1b, group2); // just proving what we expect
+
+		LOGGER.info("3: We expect to find that Group1 is inactive. Group2 is active with its orders.");
+		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
+		groupExpectations.put("Group1", false);
+		groupExpectations.put("Group2", true);
+		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
+		headerExpectations.put("1", true);
+		headerExpectations.put("2", true);
+		headerExpectations.put("99", true); // just showing  the limit of the test function. Order 99 does not exist. No error reported.
+		assertArchiveStatuses(groupExpectations, headerExpectations);
+		
+		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void demonstrateArchiveQuirk() throws IOException {
+		/* This simulates doing some of the work in the morning wave, then completing some of the orders in the afternoon wave.
+		 * The corresponding real test would be to drop orders file similar to the first. Set up the cart for the orders. Run, shorting the jobs that are not completed, 
+		 * (or don't set up the cart at all for orders that have no lines that need to be completed.)
+		 * and completing work instructions for the ones that are completed.
+		 * Then drop the second orders file.
+		 */
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		
+		LOGGER.info("1: Read orders for for group 1, as if it is morning wave");
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,1.1,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
+				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group1" + 
+				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
+				"\r\n3,3,3.1,12/03/14 12:00,12/31/14 12:00,Item9,,100,a,Group1";
+		importCsvString(facility, firstCsvString);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		OrderHeader header1a = facility.getOrderHeader("1");
+		OrderDetail detail1_1a = header1a.getOrderDetail("Item15");
+		Assert.assertNotNull(detail1_1a); // Notice: orderDetail name is thrown away! Using the SKU name
+		
+		OrderDetail detail1_2a = header1a.getOrderDetail("Item16");
+		Assert.assertNotNull(detail1_2a);
+		OrderHeader header2a = facility.getOrderHeader("2");
+		Assert.assertNotNull(header2a);
+		OrderHeader header3a = facility.getOrderHeader("3");
+		OrderDetail detail3_1a = header3a.getOrderDetail("Item9");
+		
+		LOGGER.info("2: Partially complete order 1. Fully complete order 3. Leave order 2 uncompleted.");
+		detail1_1a.setStatus(OrderStatusEnum.COMPLETE);
+		detail3_1a.setStatus(OrderStatusEnum.COMPLETE);
+		header3a.setStatus(OrderStatusEnum.COMPLETE);
+
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2" + 
+				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
+		importCsvString(facility, secondCsvString);
+		
+		OrderGroup orderGroup1b = facility.getOrderGroup("Group1");
+		OrderGroup orderGroup2b = facility.getOrderGroup("Group2");
+		OrderHeader header1b = facility.getOrderHeader("1");
+		OrderDetail detail1_1b = header1b.getOrderDetail("Item15");
+		Assert.assertNotNull(detail1_1b);
+		OrderDetail detail1_2b = header1b.getOrderDetail("Item16");
+		Assert.assertNotNull(detail1_2b);
+		OrderHeader header2b = facility.getOrderHeader("2");
+		Assert.assertNotNull(header2b);
+		OrderHeader header3b = facility.getOrderHeader("3");
+		OrderDetail detail3_1b = header3b.getOrderDetail("Item9");
+		Assert.assertNotNull(detail3_1b);
+
+		LOGGER.info("3: Let's see what archived, and see if anything seems wrong.");
+		LOGGER.info("   Group 1 still active.");
+		Assert.assertTrue(orderGroup1b.getActive());
+		Assert.assertTrue(orderGroup2b.getActive());
+		LOGGER.info("   Order1  and 2 still active.");
+		Assert.assertTrue(header1b.getActive());
+		Assert.assertTrue(header2b.getActive());
+				
+		LOGGER.info("   Quirk: Order3 still active even though it is fully completed and was not represented in last file drop.");
+		// Not sure we should "fix". Just understand. Order3 is still completed.
+		Assert.assertTrue(header3b.getActive());
+		OrderGroup header1Owner = header1b.getOrderGroup();
+		Assert.assertEquals(orderGroup2b, header1Owner);
+		LOGGER.info("   Quirk: Order1 changed owner to group2. Correct obviously for uncomplete 1.2 detail, but misleading for the 1.1 detail");
+		// Productivity reporting may have to look out for this. Or write a separate record at the time of detail completion, recording
+		// the order group at the time of completion.
+		LOGGER.info("   As expected, completed order 3 remains on group 1.");
+		Assert.assertEquals(orderGroup1b, header3b.getOrderGroup());
+			
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+
+	/**
+	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
+	 * Then assumes that all are represented in the groupExpectations and headerExpectations and complains if one is found not in expectations. You cannot chain imports and only check the results for
+	 * some of the headers and groups. This can only be used for extremely small tests. It would be generally useful if it iterated through the expectations,
+	 * then found the groups and headers in the facility to check.
+	 */
+	private void assertArchiveStatuses(HashMap<String, Boolean> groupExpectations, HashMap<String, Boolean> headerExpectations) {
+		List<OrderGroup> groups = OrderGroup.DAO.getAll();
+		for (OrderGroup group : groups) {
+			assertArchiveStatusesHelper(groupExpectations, group.getDomainId(), group.getActive(), "group");
+		}
+		List<OrderHeader> headers = OrderHeader.DAO.getAll();
+		for (OrderHeader header : headers) {
+			assertArchiveStatusesHelper(headerExpectations, header.getDomainId(), header.getActive(), "order header");
+		}		
+	}
+	
+	private void assertArchiveStatusesHelper(HashMap<String, Boolean> expectations, String domainId, Boolean active, String examinedLevel) {
+		System.out.println(examinedLevel + " " + domainId + " " + active);
+		Boolean expected = expectations.get(domainId);
+		Assert.assertNotNull("Encountered an unexpected " + examinedLevel + " " + domainId, expected);
+		String message = String.format("Expected %s '%s' to be %s; instead was %s.", examinedLevel, domainId, expected?"active":"inactive", active?"active":"inactive");
+		Assert.assertEquals(message, expected, active);
+	}
 	//******************** private helpers ***********************
 
 	private Facility getTestFacility(String orgId, String facilityId) {

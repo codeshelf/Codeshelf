@@ -126,32 +126,32 @@ public class Tier extends Location {
 		return theTierIds;
 	}
 
-	public final String getBaySortName() {
+	public String getBaySortName() {
 		// to support list view meta-field baySortName. Note: cannot sort by this string if more than 9 bays or 9 aisles.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.bayName + "-" + theTierIds.tierName);
 	}
 
-	public final String getTierSortName() {
+	public String getTierSortName() {
 		// to support list view meta-field tierSortName. Note: cannot sort by this string if more than 9 bays or 9 aisles.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
 
 
-	public final String getAisleTierBayForComparable() {
+	public String getAisleTierBayForComparable() {
 		// this is for a sort comparable.
 		TierIds theTierIds = getTierIds();
 		return (getCompString(theTierIds.aisleName) + "-" + getCompString(theTierIds.tierName) + "-" + getCompString(theTierIds.bayName));
 	}
 
-	public final String getAisleBayForComparable() {
+	public String getAisleBayForComparable() {
 		// this is for a sort comparable.
 		TierIds theTierIds = getTierIds();
 		return (getCompString(theTierIds.aisleName) + "-" + getCompString(theTierIds.bayName));
 	}
 
-	public final String getBayName() {
+	public String getBayName() {
 		// this is not for a sort comparable. Used in AislefilesCsvImporter, but could be used for meta field.
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
@@ -177,7 +177,7 @@ public class Tier extends Location {
 		}
 	};
 
-	public final String getSlotAliasRange() {
+	public String getSlotAliasRange() {
 		// for a meta field. If none of the slots have aliases yet, then blank
 		// if some but not all, then "xxx" (cap X will give a compiler warning)
 		// if all, then the first "->" the last.
@@ -222,7 +222,7 @@ public class Tier extends Location {
 		return resultStr;
 	}
 
-	public final void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
+	public void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// this is for callMethod from the UI
 		// This, or all of this tier in aisle
 		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
@@ -274,7 +274,6 @@ public class Tier extends Location {
 		if (location==null) {
 			return null;
 		}
-		location = deproxify(location);
 		if (location instanceof Tier) {
 	    	return (Tier) location;
 	    }

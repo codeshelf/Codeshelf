@@ -40,6 +40,7 @@ import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
@@ -532,21 +533,28 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
+		this.getPersistenceService().commitTenantTransaction();
 
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		List<WorkInstruction> wiListBeginningOfPath = mWorkService.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
-		
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		theChe = Che.DAO.reload(theChe);
 		// Set up a cart for order 12345, which will generate work instructions
 		mWorkService.setUpCheContainerFromString(theChe, "12345");
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
-		this.getPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> wiListBeginningOfPathAfterSetup = mWorkService.getWorkInstructions(theChe, "");
 
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
@@ -582,7 +590,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(wiDetail);
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
-		Assert.assertEquals(facility, wiOrderHeader.getParent());
+		Assert.assertEquals(facility, PersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
 
 		// New from v4. Test our work instruction summarizer
 		List<WiSetSummary> summaries = new WorkService().start().workSummary(theChe.getPersistentId(),

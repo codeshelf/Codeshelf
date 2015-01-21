@@ -22,6 +22,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.atteo.classindex.IndexSubclasses;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -101,19 +102,21 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 */
 	@JsonProperty
 	public final String getClassName() {
-		return this.getClass().getSimpleName();
+		return Hibernate.getClass(this).getSimpleName();
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	public final boolean equals(Object inObject) {
+	public boolean equals(Object inObject) {
 		boolean result = false;
 
 		if (inObject instanceof DomainObjectABC) {
-			return (Objects.equals(this.getClass(), inObject.getClass())
-					&& Objects.equals(this.persistentId, ((DomainObjectABC) inObject).persistentId));
+			Class thisClass = Hibernate.getClass(this);
+			Class inObjectClass = Hibernate.getClass(inObject);
+			return (thisClass.equals(inObjectClass)
+					&& Objects.equals(this.persistentId, ((DomainObjectABC) inObject).getPersistentId()));
 		} else {
 			result = super.equals(inObject);
 		}
@@ -124,7 +127,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	 * (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
-	public final int hashCode() {
+	public int hashCode() {
 		if (persistentId != null) {
 			return persistentId.hashCode();
 		} else {
@@ -147,14 +150,5 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 	}
 
-	/*
-	public static <T extends IDomainObject> T as(T domainObject) {
-		if (domainObject==null) {
-			return null;
-		}
-		domainObject = (T) deproxify(domainObject);
-	    return domainObject;
-	}
-	*/		
 
 }

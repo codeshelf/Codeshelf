@@ -62,9 +62,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		T result = null;
 		Session session = getCurrentSession();
 		result = (T) session.get(getDaoClass(), inPersistentId);
-		if (result!=null && result instanceof HibernateProxy) {
-			result = PersistenceService.<T>deproxify(result);
-		}
 		return result;
 	}
 

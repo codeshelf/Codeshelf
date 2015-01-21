@@ -16,6 +16,7 @@ import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 
 import org.hibernate.proxy.HibernateProxy;
@@ -47,27 +48,13 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 
 	public static final int						MAC_ADDR_BYTES		= 8;
 	public static final int						PUBLIC_KEY_BYTES	= 8;
-/*
-	@SuppressWarnings("unused")
-	@Inject
-	private static ITypedDao<WirelessDeviceABC>	DAO;
 
-	@Singleton
-	public static class WirelessDeviceDao extends GenericDaoABC<WirelessDeviceABC> implements ITypedDao<WirelessDeviceABC> {
-		@Inject
-		public WirelessDeviceDao(final PersistenceService persistenceService) {
-			super(persistenceService);
-		}
-		
-		public final Class<WirelessDeviceABC> getDaoClass() {
-			return WirelessDeviceABC.class;
-		}
-	}
-*/
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
 
-	// The owning network.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	// The owning network. 
+	@ManyToOne(optional = false, fetch=FetchType.EAGER)
+	@Getter
+	@Setter
 	protected CodeshelfNetwork		parent;
 
 	@Column(nullable = false,name="device_guid")
@@ -116,47 +103,36 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		lastBatteryLevel = 0;
 	}
 
-	public final CodeshelfNetwork getParent() {
-		if (parent instanceof HibernateProxy) {
-			this.parent = (CodeshelfNetwork) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final void setParent(CodeshelfNetwork inParent) {
-		parent = inParent;
-	}
-
-	public final NetGuid getDeviceNetGuid() {
+	public NetGuid getDeviceNetGuid() {
 		return new NetGuid(deviceGuid);
 	}
 
-	public final void setDeviceNetGuid(NetGuid inGuid) {
+	public void setDeviceNetGuid(NetGuid inGuid) {
 		deviceGuid = inGuid.getParamValueAsByteArray();
 	}
 
 	@JsonIgnore
-	public final String getDeviceGuidStr() {
+	public String getDeviceGuidStr() {
 		return new NetGuid(deviceGuid).toString();
 	}
 
-	public final void setDeviceGuidStr(String inGuidStr) {
+	public void setDeviceGuidStr(String inGuidStr) {
 		deviceGuid = new NetGuid(inGuidStr).getParamValueAsByteArray();
 	}
 
-	public final void setNetAddress(NetAddress inNetworkAddress) {
+	public void setNetAddress(NetAddress inNetworkAddress) {
 		networkAddress = (byte) inNetworkAddress.getValue();
 	}
 
-	public final NetAddress getNetAddress() {
+	public NetAddress getNetAddress() {
 		return new NetAddress(networkAddress);
 	}
 
-	public final boolean doesMatch(NetGuid inGuid) {
+	public boolean doesMatch(NetGuid inGuid) {
 		return Arrays.equals(deviceGuid, inGuid.getParamValueAsByteArray());
 	}
 
-	public final long getLastContactTime() {
+	public long getLastContactTime() {
 		long result = 0;
 		Long longVal = lastContactTime;
 		if (longVal != null) {
@@ -165,7 +141,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		return result;
 	}
 
-	public final NetworkDeviceStateEnum getNetworkDeviceState() {
+	public NetworkDeviceStateEnum getNetworkDeviceState() {
 		NetworkDeviceStateEnum result = networkDeviceStatus;
 		if (result == null) {
 			result = NetworkDeviceStateEnum.getNetworkDeviceStateEnum(0); //INVALID;
@@ -173,7 +149,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		return result;
 	}
 
-	public final void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
+	public void setNetworkDeviceState(NetworkDeviceStateEnum inState) {
 		ContextLogging.setNetGuid(this.getDeviceNetGuid());
 		LOGGER.debug(Arrays.toString(deviceGuid) + " state changed: " + networkDeviceStatus + "->" + inState);
 		ContextLogging.clearNetGuid();
@@ -194,22 +170,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		// See above note.
 	}
 
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDesc(java.lang.String)
-	public final void setDesc(String inDeviceDescription) {
-		//		mDeviceDesc = inDeviceDescription;
-	}
-	 */
-
-	/* --------------------------------------------------------------------------
-	 * (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.controller.INetworkDevice#setDeviceType(short)
-	public final void setDeviceType(short inDeviceType) {
-		//		mDeviceType = inDeviceType;
-	}
-	 */
-	
 	public Facility getFacility() {
 		return this.getParent().getParent();
 	}

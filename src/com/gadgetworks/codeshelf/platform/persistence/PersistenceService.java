@@ -334,5 +334,4 @@ public class PersistenceService extends Service {
 	    }
 		return object;
 	}
-
 }

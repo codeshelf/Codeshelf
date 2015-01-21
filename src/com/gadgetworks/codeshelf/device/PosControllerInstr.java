@@ -38,6 +38,11 @@ public class PosControllerInstr {
 	public static final Byte	BITENCODED_LED_DASH				= 0x40;
 	public static final Byte	BITENCODED_LED_O				= 0x5C;
 	public static final Byte	BITENCODED_LED_C				= 0x58;
+
+	//Any array mapping digits to their BITENCODED_LED bytes. Digit 9 is at the end of the array.
+	public static final byte[]	BITENCODED_DIGITS				= new byte[] { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07,
+			0x7F, 0x6F											};
+
 	//Display Refresh Freqs
 	public static final Byte	BLINK_FREQ						= (byte) 0x15;
 	public static final Byte	SOLID_FREQ						= (byte) 0x00;

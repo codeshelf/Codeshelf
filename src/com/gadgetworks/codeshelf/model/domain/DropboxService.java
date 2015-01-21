@@ -135,7 +135,7 @@ public class DropboxService extends EdiServiceABC {
 		return !Strings.isNullOrEmpty(getProviderCredentials());
 	}
 
-	public final boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
+	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
@@ -433,7 +433,7 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public final String startLink() {
+	public String startLink() {
 
 		try {
 			setServiceState(EdiServiceStateEnum.LINKING);
@@ -455,7 +455,7 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inAuthSession
 	 * @param inAuthInfo
 	 */
-	public final boolean finishLink(final String inDbxCode) {
+	public boolean finishLink(final String inDbxCode) {
 
 		boolean result = false;
 

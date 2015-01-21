@@ -66,6 +66,8 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	// The container used.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Container			parent;
 
 	// Use date.
@@ -78,12 +80,14 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	// The order where we used this container.
 	@OneToOne(optional = true, fetch=FetchType.LAZY)
 	@JoinColumn(name="order_header_persistentid")
+	@Getter
 	@Setter
 	private OrderHeader			orderHeader;
 
 	// The che where we're using this container.
 	@ManyToOne(optional = true, fetch=FetchType.LAZY)
 	@JoinColumn(name="current_che_persistentid")
+	@Getter
 	@Setter
 	private Che					currentChe;
 
@@ -101,13 +105,6 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	public ContainerUse() {
 	}
-	
-	public Che getCurrentChe() {
-		if (this.currentChe instanceof HibernateProxy) {
-			this.currentChe = (Che) PersistenceService.deproxify(this.currentChe);
-		}
-		return currentChe;
-	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ContainerUse> getDao() {
@@ -118,30 +115,12 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		return "USE";
 	}
 
-	public final Container getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Container) PersistenceService.deproxify(this.parent);
-		}		
-		return this.parent;
-	}
-	
-	public OrderHeader getOrderHeader() {
-		if (this.orderHeader instanceof HibernateProxy) {
-			this.orderHeader = (OrderHeader) PersistenceService.deproxify(this.orderHeader);
-		}		
-		return orderHeader;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent().getFacility();
 	}
 
-	public final void setParent(Container inParent) {
-		parent = inParent;
-	}
-	
 	// used to have a lomboc annotation, but that had an infinite loop potential with CHE toString.
-	public final String toString() {
+	public String toString() {
 		// What we would want to see if logged as toString?  parent containerID for sure. Order header. Che?
 		String returnString = getParent().getDomainId();
 		OrderHeader theHeader = getOrderHeader();
@@ -157,7 +136,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	}
 
 	// UI meta-field support
-	public final String getContainerName() {
+	public String getContainerName() {
 		Container theContainer = getParent();
 		if (theContainer == null)
 			return "";
@@ -166,7 +145,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		}
 	}
 
-	public final String getCheName() {
+	public String getCheName() {
 		Che theChe = getCurrentChe();
 		if (theChe == null)
 			return "";
@@ -175,7 +154,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		}
 	}
 
-	public final String getOrderName() {
+	public String getOrderName() {
 		OrderHeader theOrder = getOrderHeader();
 		if (theOrder == null)
 			return "";
@@ -187,7 +166,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	// Initially for the GoodEggs case, or general cross wall. 
 	// Not sure if this approach could work for outbound orders. Important. 
 	// GoodEggs puts only one item per container. These meta fields assume that.
-	private final ItemMaster getRelevantItem() {
+	private ItemMaster getRelevantItem() {
 		OrderDetail detail = null;
 		ItemMaster theItem = null;
 		OrderHeader header = this.getOrderHeader();
@@ -204,7 +183,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		return theItem;
 	}
 
-	public final String getItemInCntrDescription() {
+	public String getItemInCntrDescription() {
 		ItemMaster  master = getRelevantItem();
 		if (master != null)
 			return master.getDescription();
@@ -212,7 +191,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		return "";
 	}
 
-	public final String getItemInCntrSku() {
+	public String getItemInCntrSku() {
 		ItemMaster  master = getRelevantItem();
 		if (master != null)
 			return master.getItemId();
@@ -221,7 +200,7 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	}
 
 
-	public final String getItemInCntrPersistentId() {
+	public String getItemInCntrPersistentId() {
 		ItemMaster  master = getRelevantItem();
 		if (master != null)
 			return master.getPersistentId().toString();

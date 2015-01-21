@@ -82,6 +82,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	// The owning order header.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@Getter
+	@Setter
 	private OrderHeader						parent;
 
 	// The collective order status.
@@ -95,6 +97,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	// The item master.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "item_master_persistentid")
+	@Getter
 	@Setter
 	private ItemMaster						itemMaster;
 
@@ -129,6 +132,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	// The UoM.
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "uom_master_persistentid")
+	@Getter
 	@Setter
 	private UomMaster						uomMaster;
 
@@ -152,6 +156,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private String							preferredLocation;
 
 	@OneToMany(mappedBy = "orderDetail")
+	@Getter
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
@@ -160,24 +165,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
 		this.active = active;
-	}
-
-	public List<WorkInstruction> getWorkInstructions() {
-		return this.workInstructions;
-	}
-
-	public ItemMaster getItemMaster() {
-		if (this.itemMaster instanceof HibernateProxy) {
-			this.itemMaster = (ItemMaster) PersistenceService.deproxify(this.itemMaster);
-		}
-		return itemMaster;
-	}
-
-	public UomMaster getUomMaster() {
-		if (this.uomMaster instanceof HibernateProxy) {
-			this.uomMaster = (UomMaster) PersistenceService.deproxify(this.uomMaster);
-		}
-		return uomMaster;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -189,32 +176,21 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return "PS";
 	}
 
-	public final String getOrderDetailId() {
+	public String getOrderDetailId() {
 		return getDomainId();
 	}
 
-	public final void setOrderDetailId(String inOrderDetailId) {
+	public void setOrderDetailId(String inOrderDetailId) {
 		setDomainId(inOrderDetailId);
 	}
 
-	public final OrderHeader getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (OrderHeader) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		OrderHeader parent = getParent();
 		Facility facility = parent.getFacility();
 		return facility;
 	}
 
-	public final void setParent(OrderHeader inParent) {
-		parent = inParent;
-	}
-
-	public final void addWorkInstruction(WorkInstruction inWorkInstruction) {
+	public void addWorkInstruction(WorkInstruction inWorkInstruction) {
 		OrderDetail previousOrderDetail = inWorkInstruction.getOrderDetail();
 		if (previousOrderDetail == null) {
 			workInstructions.add(inWorkInstruction);
@@ -225,7 +201,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	public final void removeWorkInstruction(WorkInstruction inWorkInstruction) {
+	public void removeWorkInstruction(WorkInstruction inWorkInstruction) {
 		if (this.workInstructions.contains(inWorkInstruction)) {
 			inWorkInstruction.setParent(null);
 			workInstructions.remove(inWorkInstruction);
@@ -235,11 +211,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	public final String getParentOrderID() {
+	public String getParentOrderID() {
 		return parent.getDomainId();
 	}
 
-	public final String getUomMasterId() {
+	public String getUomMasterId() {
 		UomMaster uomMaster = getUomMaster();
 		if (uomMaster != null) {
 			return uomMaster.getDomainId();
@@ -249,7 +225,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	public final String getItemMasterId() {
+	public String getItemMasterId() {
 		ItemMaster itemMaster = getItemMaster();
 		if (itemMaster != null) {
 			return itemMaster.getDomainId();
@@ -259,14 +235,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	public final String getOrderId() {
+	public String getOrderId() {
 		return parent.getOrderId();
 	}
 
 	/**
 	 * Convenience function to set all quantities at once
 	 */
-	public final void setQuantities(Integer quantity) {
+	public void setQuantities(Integer quantity) {
 		this.quantity = quantity;
 		setMinQuantity(quantity);
 		setMaxQuantity(quantity);
@@ -277,7 +253,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * Meta fields. These appropriate for pick (outbound) order details and/or cross--batch order details
 	 * @return
 	 */
-	public final String getWiLocation() {
+	public String getWiLocation() {
 		String returnStr = "";
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (returnStr.isEmpty())
@@ -295,7 +271,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return returnStr;
 	}
 
-	public final String getWiChe() {
+	public String getWiChe() {
 		String returnStr = "";
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (returnStr.isEmpty())
@@ -307,7 +283,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return returnStr;
 	}
 
-	public final String getItemLocations() {
+	public String getItemLocations() {
 		//If cross batch return empty
 		if (getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
 			return "";

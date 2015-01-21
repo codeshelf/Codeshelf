@@ -9,7 +9,6 @@ package com.gadgetworks.flyweight.command;
 import com.gadgetworks.flyweight.bitfields.NBitInteger;
 import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
 
-
 @SuppressWarnings("serial")
 public final class NetAddress extends NBitInteger {
 
@@ -20,7 +19,7 @@ public final class NetAddress extends NBitInteger {
 	public NetAddress() {
 		super(IPacket.ADDRESS_BITS);
 	}
-	
+
 	/** 
 	 *  --------------------------------------------------------------------------
 	 *  Create an n-bit integer that represents a network address.
@@ -31,8 +30,12 @@ public final class NetAddress extends NBitInteger {
 	public NetAddress(final byte inNewValue) {
 		super(IPacket.ADDRESS_BITS, inNewValue);
 	}
-	
+
 	public String toString() {
 		return Integer.toHexString(getValue());
+	}
+
+	public boolean isZeroAddress() {
+		return (Integer.compare(0, getValue()) == 0);
 	}
 }

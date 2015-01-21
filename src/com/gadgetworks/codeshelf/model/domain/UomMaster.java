@@ -10,6 +10,9 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +58,8 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility			parent;
 
 	public UomMaster() {
@@ -75,26 +80,15 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		return "UOM";
 	}
 
-	public final Facility getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	public final String getUomMasterId() {
+	public String getUomMasterId() {
 		return getDomainId();
 	}
 
-	public final void setUomMasterId(String inUomMasterId) {
+	public void setUomMasterId(String inUomMasterId) {
 		setDomainId(inUomMasterId);
 	}
 

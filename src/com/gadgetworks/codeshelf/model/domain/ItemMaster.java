@@ -76,6 +76,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@Getter
+	@Setter
 	private Facility						parent;
 
 	// The description.
@@ -117,6 +119,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	// The standard UoM.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "standard_uom_persistentid")
+	@Getter
 	@Setter
 	private UomMaster						standardUom;
 
@@ -143,13 +146,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		updated = new Timestamp(System.currentTimeMillis());
 	}
 
-	public UomMaster getStandardUom() {
-		if (standardUom instanceof HibernateProxy) {
-			this.standardUom = (UomMaster) PersistenceService.deproxify(this.standardUom);
-		}
-		return standardUom;
-	}
-
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
 		return DAO;
@@ -159,29 +155,18 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return "IM";
 	}
 
-	public final Facility getParent() {
-		if (parent instanceof HibernateProxy) {
-			this.parent = (Facility) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final Facility getFacility() {
+	public Facility getFacility() {
 		return getParent();
 	}
 
-	public final void setParent(Facility inParent) {
-		parent = inParent;
-	}
-
-	public final List<? extends IDomainObject> getChildren() {
+	public List<? extends IDomainObject> getChildren() {
 		return getItems();
 	}
 
 	/**
 	 * Item's domainId changes as the item moves. Don't use hashmap by domainId.
 	 */
-	public final void addItemToMaster(Item inItem) {
+	public void addItemToMaster(Item inItem) {
 		ItemMaster previousItemMaster = inItem.getParent();
 		if (previousItemMaster == null) {
 			items.add(inItem);
@@ -197,7 +182,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/**
 	 * Careful with removeItem(). Item's domainId changes as the item moves.
 	 */
-	public final void removeItemFromMaster(Item inItem) {
+	public void removeItemFromMaster(Item inItem) {
 		if (items.contains(inItem)) {
 			inItem.setParent(null);
 			items.remove(inItem);
@@ -207,11 +192,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public final void setItemId(final String inItemId) {
+	public void setItemId(final String inItemId) {
 		setDomainId(inItemId);
 	}
 
-	public final String getItemId() {
+	public String getItemId() {
 		return getDomainId();
 	}
 
@@ -228,7 +213,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * @param inUomStr
 	 * @return
 	 */
-	public final Item getFirstActiveItemMatchingUomOnPath(final Path inPath, final String inUomStr) {
+	public Item getFirstActiveItemMatchingUomOnPath(final Path inPath, final String inUomStr) {
 		Item result = null;
 
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
@@ -266,7 +251,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * This is used for cart setup for outbound orders (classic pick)
 	 * Return null if location does not match. Also null for uom mismatch or not on path.
 	*/
-	public final Item getActiveItemMatchingLocUomOnPath(final Location inLocation, final Path inPath, final String inUomStr) {
+	public Item getActiveItemMatchingLocUomOnPath(final Location inLocation, final Path inPath, final String inUomStr) {
 		Item result = null;
 
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
@@ -304,7 +289,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * For location-based pick
 	 * This is used in EDI evaluation
 	*/
-	public final Item getActiveItemMatchingLocUom(final Location inLocation, final UomMaster inUomMaster) {
+	public Item getActiveItemMatchingLocUom(final Location inLocation, final UomMaster inUomMaster) {
 
 		Item selectedItem = null;
 		if (inUomMaster == null || inLocation == null) {
@@ -319,24 +304,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 			if (location == null || !location.equals(inLocation))
 				continue;
 			UomMaster thisUomMaster = item.getUomMaster();
-			// bjoern: this equals() failing if inUomMaster in lazyInitialization state
 			if (thisUomMaster.equals(inUomMaster)) {
 				selectedItem = item;
 				break;
-			}
-
-			// else if (thisUomMaster.getDomainId().equals(inUomMaster.getDomainId())){
-			else if (thisUomMaster.getPersistentId().equals(inUomMaster.getPersistentId())){
-				LOGGER.error("Demonstrated hibernate lazyInitialization bug here", new Exception());
-				selectedItem = item;
-				if (thisUomMaster.equals(inUomMaster)) 
-					LOGGER.error("Now equals works!");
-				else
-					LOGGER.error("Equals still misses.");
-				
-				break;
-			}
-			
+			}			
 		}
 
 		return selectedItem;
@@ -348,7 +319,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * @param inUomStr
 	 * @return
 	 */
-	public final List<Item> getItemsOfUom(final String inUomStr) {
+	public List<Item> getItemsOfUom(final String inUomStr) {
 		String normalizedUomStr = UomNormalizer.normalizeString(inUomStr);
 		List<Item> theReturnList = new ArrayList<Item>();
 		for (Item item : getItems()) {
@@ -362,7 +333,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	// --------------------------------------------------------------------------
 	// metafields
-	public final String getItemLocations() {
+	public String getItemLocations() {
 		List<String> itemLocationIds = new ArrayList<String>();
 		List<Item> items = getItems();
 		//filter by uom and join the aliases together
@@ -430,7 +401,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/*
 	 * Huge side effect for each items. If found, and location is different, update the location. Caller must persist the change.
 	 */
-	public final Item findOrCreateItem(Location inLocation, UomMaster uom) {
+	public Item findOrCreateItem(Location inLocation, UomMaster uom) {
 		Item item = findExistingItem(inLocation, uom);
 		if (item == null)
 			item = createStoredItem(inLocation, uom);

@@ -81,6 +81,8 @@ public class User extends DomainObjectTreeABC<Organization> {
 
 	// The owning organization.
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private Organization		parent;
 
 	// The hash salt.
@@ -143,19 +145,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 		return "U";
 	}
 
-	public final Organization getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (Organization) PersistenceService.deproxify(this.parent);
-		}
-		return parent;
-	}
-
-	public final void setParent(Organization inParent) {
-		parent = inParent;
-	}
-
-
-	public final void setPassword(final String inPassword) {
+	public void setPassword(final String inPassword) {
 		try {
 			// Hash the password
 			byte[] salt = generateSalt();
@@ -189,7 +179,7 @@ public class User extends DomainObjectTreeABC<Organization> {
 	 * @param   inGoodHash    the hash of the valid password
 	 * @return              true if the password is correct, false if not
 	 */
-	public final boolean isPasswordValid(final String inPassword) {
+	public boolean isPasswordValid(final String inPassword) {
 		boolean result = false;
 
 		try {

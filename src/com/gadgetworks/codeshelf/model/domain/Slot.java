@@ -63,7 +63,7 @@ public class Slot extends Location {
 		return "T";
 	}
 	
-	public final String getSlotIdForComparable() {
+	public String getSlotIdForComparable() {
 		return getCompString(getDomainId());
 	}
 
@@ -80,7 +80,6 @@ public class Slot extends Location {
 		if (location==null) {
 			return null;
 		}
-		location = deproxify(location);
 		if (location instanceof Slot) {
 	    	return (Slot) location;
 	    }

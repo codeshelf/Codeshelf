@@ -65,6 +65,8 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	@ManyToOne(optional = false,fetch=FetchType.LAZY)
 	@JsonProperty
+	@Getter
+	@Setter
 	private Location			location;
 
 	@Column(nullable = false)
@@ -81,6 +83,8 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	// The owning facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter
+	@Setter
 	private OrderHeader			parent;
 
 	// --------------------------------------------------------------------------
@@ -107,30 +111,8 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		return "MAP";
 	}
 
-	public final OrderHeader getParent() {
-		if (this.parent instanceof HibernateProxy) {
-			this.parent = (OrderHeader) PersistenceService.deproxify(this.parent);
-		}		
-		return parent;
-	}
-
 	public final Facility getFacility() {
 		return getParent().getFacility();
-	}
-
-	public final void setParent(OrderHeader inParent) {
-		parent = inParent;
-	}
-
-	public final Location getLocation() {
-		if (this.location instanceof HibernateProxy) {
-			this.location = Location.deproxify(this.location);
-		}		
-		return location;
-	}
-
-	public final void setLocation(final Location inLocation) {
-		location = inLocation;
 	}
 
 	public static void setDao(OrderLocationDao inOrderLocationDao) {
