@@ -47,7 +47,6 @@ import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

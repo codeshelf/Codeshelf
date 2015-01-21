@@ -64,4 +64,8 @@ public interface ICsDeviceManager {
 	PcapRingBuffer getPcapBuffer();
 	
 	boolean getAutoShortValue();
+
+	String getPickInfoValue();
+
+	String getContainerTypeValue();
 }

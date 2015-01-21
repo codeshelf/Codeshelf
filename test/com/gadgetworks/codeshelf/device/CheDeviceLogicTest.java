@@ -225,7 +225,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 
 		//In reverse order
 		CommandControlDisplayMessage scanContainer = reverseOrder.remove(0);
-		Assert.assertEquals("Last message was: " + scanContainer, "SCAN CONTAINER", scanContainer.getLine1MessageStr());
+		Assert.assertEquals("Last message was: " + scanContainer, "SCAN ORDER", scanContainer.getLine1MessageStr());
 
 		//skip position controller clear
 		reverseOrder.remove(0);

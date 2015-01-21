@@ -1334,7 +1334,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
-		Facility.DAO.reload(facility);
+		facility = Facility.DAO.reload(facility);
 
 		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
@@ -1386,7 +1386,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
-		Facility.DAO.reload(facility);
+		facility = Facility.DAO.reload(facility);
 
 		OrderHeader header1a = facility.getOrderHeader("1");
 		OrderDetail detail1_1a = header1a.getOrderDetail("1.1");
@@ -1406,7 +1406,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();
-		Facility.DAO.reload(facility);
+		facility = Facility.DAO.reload(facility);
 
 		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 

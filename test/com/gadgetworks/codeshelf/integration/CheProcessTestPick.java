@@ -33,6 +33,7 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
+import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
@@ -634,6 +635,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
 		List<WorkInstruction> aList = mWorkService.getWorkInstructions(che1, "");
+		int wiCount = aList.size();
+		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
+		
+		for (WorkInstruction workInstruction : aList) {
+			Assert.assertEquals(OrderStatusEnum.INPROGRESS, workInstruction.getOrderDetail().getStatus());
+		}
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
@@ -641,8 +648,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		mPropertyService.restoreHKDefaults(facility); // set it back
 		this.getPersistenceService().commitTenantTransaction();
 
-		int wiCount = aList.size();
-		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
