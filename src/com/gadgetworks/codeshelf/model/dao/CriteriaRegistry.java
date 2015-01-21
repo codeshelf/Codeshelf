@@ -28,6 +28,14 @@ public class CriteriaRegistry {
 		indexedCriteria.put("workInstructionBySku",
 			new TypedCriteria("from WorkInstruction where itemMaster.domainId = :sku", "sku", String.class));
 	
+		indexedCriteria.put("workInstructionsByDetail",
+			new TypedCriteria("from WorkInstruction where orderDetail.persistentId = :orderDetail", 
+				"orderDetail", UUID.class));
+	
+		indexedCriteria.put("workInstructionsByHeader",
+			new TypedCriteria("from WorkInstruction where orderDetail.parent.persistentId = :orderHeader", 
+				"orderHeader", UUID.class));
+	
 		indexedCriteria.put("workInstructionsByFacility",
 			new TypedCriteria("from WorkInstruction where parent.persistentId = :facilityId and status != 'COMPLETE'",
 				"facilityId", UUID.class));

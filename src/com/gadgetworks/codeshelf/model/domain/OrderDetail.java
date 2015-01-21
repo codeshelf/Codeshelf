@@ -446,6 +446,13 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return internalString;
 	}
 
+	public String getGroupUi() {
+		OrderGroup theGroup = parent.getOrderGroup();
+		if (theGroup == null)
+			return "";
+		return theGroup.getDomainId();
+	}
+
 	public Location getPreferredLocObject(final Facility inFacility) {
 		String whereString = getPreferredLocation();
 		if (whereString == null || whereString.isEmpty())
