@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.flyweight.command.CommandGroupEnum;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
@@ -27,7 +26,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  *
  */
 public class RadioControllerPacketIOService {
-	private static final Logger							LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
+	private static final Logger							LOGGER						= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
 	private final Counter								packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
 																						"packets.sent");
@@ -38,9 +37,9 @@ public class RadioControllerPacketIOService {
 	private final BlockingQueue<IPacket>				packetsPendingWrite			= new ArrayBlockingQueue<>(MAX_PACKET_WRITE_QUEUE_SIZE);
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerPacketHandlerService	packetHandlerService;
-	private final long						writeDelayMs;
+	private final long									writeDelayMs;
 
-	private NetworkId						networkId;
+	private NetworkId									networkId;
 	private volatile boolean							isShutdown					= false;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
@@ -69,10 +68,7 @@ public class RadioControllerPacketIOService {
 	 * This method will block until there is space in the queue.
 	 */
 	public void handleOutboundPacket(IPacket packet) throws InterruptedException {
-		LOGGER.debug("Queueing packet for gateway. Dst={}; QueueSize={}; Max={}",
-			packet,
-			packetsPendingWrite.size(),
-			MAX_PACKET_WRITE_QUEUE_SIZE);
+		//LOGGER.debug("Queueing packet for gateway. Dst={}; QueueSize={}; Max={}", packet, packetsPendingWrite.size(), MAX_PACKET_WRITE_QUEUE_SIZE);
 
 		//Block and wait for space in queue
 		packetsPendingWrite.put(packet);
@@ -142,8 +138,6 @@ public class RadioControllerPacketIOService {
 		}
 
 	}
-	
-
 
 	private final class PacketWriter implements Runnable {
 
@@ -160,9 +154,9 @@ public class RadioControllerPacketIOService {
 					//Send packet
 					gatewayInterface.sendPacket(packet);
 					packetsSentCounter.inc();
-					if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-					LOGGER.info("OUTBOUND PACKET={}", packet);
-					}
+					//					if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
+					//						LOGGER.info("OUTBOUND PACKET={}", packet);
+					//					}
 
 				}
 			} catch (Exception e) {

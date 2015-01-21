@@ -33,10 +33,9 @@ public class RadioControllerPacketHandlerService {
 
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	queueMap				= Maps.newConcurrentMap();
 
-	private static final int							MAX_PACKET_QUEUE_SIZE	= 50;
+	private static final int										MAX_PACKET_QUEUE_SIZE	= 50;
 
 	private final RadioController									radioController;
-
 
 	public RadioControllerPacketHandlerService(RadioController radioController) {
 		super();
@@ -44,7 +43,7 @@ public class RadioControllerPacketHandlerService {
 	}
 
 	public boolean handleInboundPacket(IPacket packet) {
-		LOGGER.info("INBOUND PACKET={}", packet);
+		//LOGGER.info("INBOUND PACKET={}", packet);
 		//Get queue from queueMap in thread-safe manner. Multiple threads can call handle at the same time
 		BlockingQueue<IPacket> queue = queueMap.get(packet.getSrcAddr());
 		if (queue == null) {
@@ -77,7 +76,6 @@ public class RadioControllerPacketHandlerService {
 	public void shutdown() {
 		executor.shutdown();
 	}
-
 
 	private final class PacketHandler implements Runnable {
 		private final BlockingQueue<IPacket>	queue;

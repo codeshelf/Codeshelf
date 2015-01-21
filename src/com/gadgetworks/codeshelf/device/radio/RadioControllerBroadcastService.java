@@ -64,4 +64,12 @@ public class RadioControllerBroadcastService {
 
 	}
 
+	public NetworkId getBroadcastNetworkId() {
+		return broadcastNetworkId;
+	}
+
+	public NetAddress getBroadcastAddress() {
+		return broadcastAddress;
+	}
+
 }

@@ -6,12 +6,12 @@
 
 package com.gadgetworks.codeshelf.device.radio;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -61,75 +61,74 @@ import com.google.inject.Inject;
  */
 
 public class RadioController implements IRadioController {
+	private static final Logger										LOGGER						= LoggerFactory.getLogger(RadioController.class);
 
-	// Right now, the devices are not sending back their network ID.
-	public static final String									PRIVATE_GUID				= "00000000";
-	public static final String									VIRTUAL_GUID				= "%%%%%%%%";
+	public static final String										PRIVATE_GUID				= "00000000";
+	public static final String										VIRTUAL_GUID				= "%%%%%%%%";
 
-	// Artificially limit us to channels 0-3 to make testing faster.
-	public static final byte									MAX_CHANNELS				= 16;
-	public static final byte									NO_PREFERRED_CHANNEL		= (byte) 255;
-	public static final String									NO_PREFERRED_CHANNEL_TEXT	= "None";
-
-	private static final Logger									LOGGER						= LoggerFactory.getLogger(RadioController.class);
+	public static final byte										MAX_CHANNELS				= 16;
+	public static final byte										NO_PREFERRED_CHANNEL		= (byte) 255;
+	public static final String										NO_PREFERRED_CHANNEL_TEXT	= "None";
 
 	private static final String										CONTROLLER_THREAD_NAME		= "Radio Controller";
-	private static final String									STARTER_THREAD_NAME			= "Intferface Starter";
+	private static final String										STARTER_THREAD_NAME			= "Intferface Starter";
 
-	private static final int									STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
+	private static final int										STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
 
-	private static final long									CTRL_START_DELAY_MILLIS		= 5;
-	private static final long									NETCHECK_DELAY_MILLIS		= 250;
+	private static final long										CTRL_START_DELAY_MILLIS		= 5;
+	private static final long										NETCHECK_DELAY_MILLIS		= 250;
 
-	private static final long									ACK_TIMEOUT_MILLIS			= 20;
-	private static final int									ACK_SEND_RETRY_COUNT		= 20;
-	private static final long									MAX_PACKET_AGE_MILLIS		= 20000;
-	private static final long									EVENT_SLEEP_MILLIS			= 50;
-	private static final long									INTERFACE_CHECK_MILLIS		= 750;
-	private static final long									TOO_LONG_DURATION_MILLIS	= 2000;
-	private static final int									MAX_CHANNEL_VALUE			= 255;
+	private static final long										ACK_TIMEOUT_MILLIS			= 20;
+	private static final int										ACK_SEND_RETRY_COUNT		= 20;
+	private static final long										MAX_PACKET_AGE_MILLIS		= 20000;
+	private static final long										BACKGROUND_SERVICE_DELAY_MS	= 50;
+	private static final long										BROADCAST_RATE_MILLIS		= 750;
 
-	private static final long									PACKET_SPACING_MILLIS		= 20;
-
-	private static final int									ACK_QUEUE_SIZE				= 200;
-
-	private volatile boolean										mShouldRun					= true;
+	private static final int										MAX_CHANNEL_VALUE			= 255;
+	private static final long										PACKET_SPACING_MILLIS		= 20;
+	private static final int										ACK_QUEUE_SIZE				= 200;
 
 	@Getter
 	private final IGatewayInterface									gatewayInterface;
 
-	private final NetAddress										mServerAddress;
-	private final NetAddress										mBroadcastAddress;
-	private final NetworkId											mBroadcastNetworkId;
+	private volatile boolean										mShouldRun					= true;
 
-	private List<IRadioControllerEventListener>					mEventListeners;
+	private final NetAddress										mServerAddress				= new NetAddress(IPacket.GATEWAY_ADDRESS);
 
-	//TODO Address thread safety here
-	private ChannelInfo[]										mChannelInfo;
+	//We iterate over this list often, but write almost never. It needs to be thread-safe so we chose to make writes slow and reads lock-free.
+	private final List<IRadioControllerEventListener>				mEventListeners				= new CopyOnWriteArrayList<>();
+
+	//This does not need to be synchronized because it is only ever used by a single thread in the packet handler service
+	//processNetworkCheckCommand only accesses this array for the broadcast network address.
+	private final ChannelInfo[]										mChannelInfo				= new ChannelInfo[MAX_CHANNELS];
 
 	//This 3 variables are only every modified in a synchronized method
-	private boolean												mChannelSelected;
-	private byte												mPreferredChannel;
-	private byte												mRadioChannel;
+	private boolean													mChannelSelected			= false;
+	private byte													mPreferredChannel;
+	private byte													mRadioChannel				= 0;
 
-	private Thread												mControllerThread;
-	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-broadcast-thread")
+	private Thread													mControllerThread;
+
+	//Background service executor
+	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
 																									.build());
 
 	//The 3 variables below are only modifed in a synchronized method because their modifications must sequential and atomic
 	//since multiple threads can use this class. The maps must be thread-safe because other threads maybe read from the map
 	//without being in the synchronized block
-	private byte												mNextAddress;
-	private final Map<NetGuid, INetworkDevice>			mDeviceGuidMap				= Maps.newConcurrentMap();
-	private final Map<NetAddress, INetworkDevice>		mDeviceNetAddrMap			= Maps.newConcurrentMap();
+	private byte													mNextAddress				= 1;
+	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap				= Maps.newConcurrentMap();
+	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap			= Maps.newConcurrentMap();
 
 	//Ack Id must start from 1
-	private final AtomicInteger							mAckId						= new AtomicInteger(1);
+	private final AtomicInteger										mAckId						= new AtomicInteger(1);
 
-	private volatile boolean							mRunning;
+	private volatile boolean										mRunning					= false;
 
-	private final RadioControllerPacketHandlerService			packetHandlerService;
-	private final RadioControllerPacketIOService		packetIOService;
+	//Services
+	private final RadioControllerPacketHandlerService				packetHandlerService;
+	private final RadioControllerPacketIOService					packetIOService;
+	private final RadioControllerBroadcastService					broadcastService;
 
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
 
@@ -139,25 +138,17 @@ public class RadioController implements IRadioController {
 	 */
 	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
-		gatewayInterface = inGatewayInterface;
-		mServerAddress = new NetAddress(IPacket.GATEWAY_ADDRESS);
-		mBroadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
-		mBroadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-		mEventListeners = new ArrayList<IRadioControllerEventListener>();
+		this.gatewayInterface = inGatewayInterface;
 
-		mChannelSelected = false;
-		mChannelInfo = new ChannelInfo[MAX_CHANNELS];
 		for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
 			mChannelInfo[channel] = new ChannelInfo();
 			mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
 		}
-		mRadioChannel = 0;
 
-		mNextAddress = 1;
-
-		mRunning = false;
-		packetHandlerService = new RadioControllerPacketHandlerService(this);
-		packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
+		//Create Services
+		this.packetHandlerService = new RadioControllerPacketHandlerService(this);
+		this.packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
+		this.broadcastService = new RadioControllerBroadcastService(this, BROADCAST_RATE_MILLIS);
 	}
 
 	@Override
@@ -192,7 +183,7 @@ public class RadioController implements IRadioController {
 		mPreferredChannel = inPreferredChannel;
 
 		LOGGER.info("--------------------------------------------");
-		LOGGER.info("Starting radio controller on network: " + packetIOService.getNetworkId());
+		LOGGER.info("Starting radio controller on network {}", packetIOService.getNetworkId());
 		LOGGER.info("--------------------------------------------");
 		mControllerThread = new Thread(this, CONTROLLER_THREAD_NAME);
 		mControllerThread.start();
@@ -241,7 +232,7 @@ public class RadioController implements IRadioController {
 			started = gatewayInterface.isStarted();
 			if (!started) {
 				try {
-					Thread.sleep(INTERFACE_CHECK_MILLIS);
+					Thread.sleep(10);
 				} catch (InterruptedException e) {
 					LOGGER.error("", e);
 				}
@@ -251,20 +242,20 @@ public class RadioController implements IRadioController {
 		} while (!started && mShouldRun);
 		LOGGER.info("Gateway radio interface started");
 
-		// Kick off the background event processing.
+		selectChannel();
+
+		//Start IO Service
+		packetIOService.start();
+
+		// Kick off the background event processing
 		backgroundService.scheduleWithFixedDelay(new Runnable() {
 			@Override
 			public void run() {
 				processEvents();
 			}
-		}, 0, EVENT_SLEEP_MILLIS, TimeUnit.MILLISECONDS);
-		backgroundService.scheduleWithFixedDelay(new RadioControllerBroadcaster(mBroadcastNetworkId, mBroadcastAddress, this),
-			0,
-			INTERFACE_CHECK_MILLIS,
-			TimeUnit.MILLISECONDS);
+		}, 0, BACKGROUND_SERVICE_DELAY_MS, TimeUnit.MILLISECONDS);
 
-		selectChannel();
-		packetIOService.start();
+		broadcastService.start();
 	}
 
 	/* --------------------------------------------------------------------------
@@ -290,7 +281,7 @@ public class RadioController implements IRadioController {
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
 			if (gatewayInterface instanceof FTDIInterface) {
 				// Net mgmt commands only get sent to the FTDI-controlled radio network.
-				sendCommand(netSetupCmd, mBroadcastAddress, false);
+				sendCommand(netSetupCmd, broadcastService.getBroadcastAddress(), false);
 			}
 			LOGGER.info("Radio channel={}", inChannel);
 		}
@@ -304,7 +295,6 @@ public class RadioController implements IRadioController {
 
 		//	 The controller should process events continuously until the application wants to quit/exit.
 		if (mShouldRun) {
-			long start = System.currentTimeMillis();
 			try {
 				// Check if there are any pending ACK packets that need resending.
 				// Also consider the case where there is more than one packet destined for a remote.
@@ -329,20 +319,14 @@ public class RadioController implements IRadioController {
 										// If we've exceeded the retry time then remove the packet.
 										// We should probably mark the device lost and clear the queue.
 										packet.setAckState(AckStateEnum.NO_RESPONSE);
-										LOGGER.info("Packet acked NO_RESPONSE {}", packet);
 										queue.remove();
+										LOGGER.info("Packet acked NO_RESPONSE {}. QueueSize={}", packet, queue.size());
 									}
 								}
 
 							} finally {
 								ContextLogging.clearNetGuid();
 							}
-
-						}
-
-						if (System.currentTimeMillis() - start > INTERFACE_CHECK_MILLIS) {
-							LOGGER.info("processEvents is ending early to allow broadcast message");
-							break;
 						}
 					}
 				}
@@ -395,12 +379,12 @@ public class RadioController implements IRadioController {
 					}
 
 					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
-						mBroadcastNetworkId,
+						broadcastService.getBroadcastNetworkId(),
 						PRIVATE_GUID,
 						channel,
 						new NetChannelValue((byte) 0),
 						new NetChannelValue((byte) 0));
-					sendCommand(netCheck, mBroadcastAddress, false);
+					sendCommand(netCheck, broadcastService.getBroadcastAddress(), false);
 
 					// Wait NETCHECK delay millis before sending the next net-check.
 					try {
@@ -556,7 +540,6 @@ public class RadioController implements IRadioController {
 			}
 			sendPacket(packet);
 
-
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -651,7 +634,7 @@ public class RadioController implements IRadioController {
 					inCommand.getChannel(),
 					new NetChannelValue((byte) 0),
 					new NetChannelValue((byte) 0));
-				this.sendCommand(netCheck, mBroadcastAddress, false);
+				this.sendCommand(netCheck, broadcastService.getBroadcastAddress(), false);
 			}
 		} else {
 			// This is a net-check response.
@@ -691,7 +674,6 @@ public class RadioController implements IRadioController {
 	private void processNetworkIntfTestCommand(CommandNetMgmtIntfTest inCommand, NetAddress inSrcAddr) {
 		//Do Nothing
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -796,7 +778,10 @@ public class RadioController implements IRadioController {
 						packetIOService.getNetworkId(),
 						foundDevice.getAddress(),
 						foundDevice.getSleepSeconds());
-					this.sendCommand(assignCmd, mBroadcastNetworkId, mBroadcastAddress, false);
+					this.sendCommand(assignCmd,
+						broadcastService.getBroadcastNetworkId(),
+						broadcastService.getBroadcastAddress(),
+						false);
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 				} finally {
 					ContextLogging.clearNetGuid();
