@@ -81,7 +81,11 @@ public class RadioController implements IRadioController {
 	private static final long										ACK_TIMEOUT_MILLIS			= 20;
 	private static final int										ACK_SEND_RETRY_COUNT		= 20;
 	private static final long										MAX_PACKET_AGE_MILLIS		= 20000;
-	private static final long										BACKGROUND_SERVICE_DELAY_MS	= 50;
+
+	//The background service delay is reduced to the packet read rate of 1ms to minimize the amount of time a packet is
+	//queued before before being sent
+	private static final long										BACKGROUND_SERVICE_DELAY_MS	= 1;
+
 	private static final long										BROADCAST_RATE_MILLIS		= 750;
 
 	private static final int										MAX_CHANNEL_VALUE			= 255;
@@ -526,19 +530,19 @@ public class RadioController implements IRadioController {
 
 				// If the ACK queue is too full then pause.
 				boolean success = queue.offer(packet);
-				if (!success) {
+				while (!success) {
 					//Given an ACK timeout of 20ms and a read frequency of 1ms. If the max queue size is over 20 (and it should be)
 					//then we can drop the earlier packets since they should be timed out anyway.
 					IPacket packetToDrop = queue.poll();
 					LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}",
 						queue.size(),
 						packetToDrop);
-					queue.offer(packet);
+					success = queue.offer(packet);
 				}
 				LOGGER.debug("Packet is now pending ACK: {}", packet);
-
+			} else {
+				sendPacket(packet);
 			}
-			sendPacket(packet);
 
 		} finally {
 			ContextLogging.clearNetGuid();
