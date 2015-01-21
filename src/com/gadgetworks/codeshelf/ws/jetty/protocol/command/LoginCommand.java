@@ -86,7 +86,7 @@ public class LoginCommand extends CommandABC {
 							String pickInfo = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
 							response.setPickInfoValue(pickInfo);
 
-							String containerType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.CONTANRTYP);
+							String containerType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
 							response.setContainerTypeValue(containerType);
 						} else {
 							response.setAutoShortValue(false); // not read by client. No need to look it up.

@@ -184,10 +184,12 @@ public class WiFactory {
 			// If there is no planned WI then create one.
 			if (resultWi == null) {
 				resultWi = new WorkInstruction();
-				resultWi.setOrderDetail(inOrderDetail);
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
+				inOrderDetail.addWorkInstruction(resultWi); 
+				inChe.addWorkInstruction(resultWi);
+				facility.addWorkInstruction(resultWi);
 				isNewWi = true;
 			}
 
@@ -267,13 +269,8 @@ public class WiFactory {
 			// If the same old one, already the orderDetail and facility relationship is correct. The CHE might be correct, or not if now going to a different one.
 			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
 
-			if (isNewWi) {
-				inOrderDetail.addWorkInstruction(resultWi); 
-				inChe.addWorkInstruction(resultWi);
-				facility.addWorkInstruction(resultWi);
-			} else 
+			if (!isNewWi) {
 			// remove and add? Or just add? Not too elegant
-			{
 				Che oldChe = resultWi.getAssignedChe();
 				if (oldChe != null && !oldChe.equals(inChe)) {
 					oldChe.removeWorkInstruction(resultWi);
