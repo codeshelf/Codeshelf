@@ -113,13 +113,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderDetail detail931 = order931.getOrderDetail("931");
 		Assert.assertNull(detail931); // not this. Do not find by order.
-		detail931 = order931.getOrderDetail("10706962");
+		detail931 = order931.getOrderDetail("10706962-each");
 		Assert.assertNotNull(detail931); // this works, find by itemId within an order.
 		String detail931DomainID = detail931.getOrderDetailId(); // this calls through to domainID
 		OrderDetail detail931b = order931.getOrderDetail(detail931DomainID);
 		Assert.assertNotNull(detail931b); // this works, find by itemId within an order.
 		Assert.assertEquals(detail931b, detail931);
-		Assert.assertEquals(detail931DomainID, "10706962"); // This is the itemID from file above.
+		Assert.assertEquals(detail931DomainID, "10706962-each"); // This is the itemID from file above.
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -321,11 +321,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 
 		// Also find order detail item 1. Used to not because there is no due date, but now that field is nullable in the schema.
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 
 		// But should find order detail item 2
-		orderDetail = order.getOrderDetail("10706952");
+		orderDetail = order.getOrderDetail("10706952-each");
 		Assert.assertNotNull(orderDetail);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -345,11 +345,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -374,11 +374,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
@@ -411,7 +411,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
 		for (OrderDetail detail : order.getOrderDetails()) {
-			if (detail.getOrderDetailId().equals("10722222")) {
+			if (detail.getOrderDetailId().equals("10722222-each")) {
 				Assert.assertEquals(false, detail.getActive());
 				//Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());
 			} else {
@@ -504,7 +504,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(Integer.valueOf(0), orderDetail.getMinQuantity());
 		Assert.assertEquals(Integer.valueOf(5), orderDetail.getMaxQuantity());
@@ -541,7 +541,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
@@ -563,27 +563,27 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order2 = facility.getOrderHeader("222");
 		// normal case with min and max supplied
-		OrderDetail orderDetail700001 = order2.getOrderDetail("10700001");
+		OrderDetail orderDetail700001 = order2.getOrderDetail("10700001-each");
 		Assert.assertEquals((Integer) 1, orderDetail700001.getMinQuantity());
 		Assert.assertEquals((Integer) 3, orderDetail700001.getMaxQuantity());
 
 		// Edi had min > quantity. Set the min to reasonable value
-		OrderDetail orderDetail700002 = order2.getOrderDetail("10700002");
+		OrderDetail orderDetail700002 = order2.getOrderDetail("10700002-each");
 		Assert.assertEquals((Integer) 2, orderDetail700002.getMinQuantity());
 		Assert.assertEquals((Integer) 3, orderDetail700002.getMaxQuantity());
 
 		// Edi had max > quantity. Set the max to reasonable value
-		OrderDetail orderDetail700003 = order2.getOrderDetail("10700003");
+		OrderDetail orderDetail700003 = order2.getOrderDetail("10700003-each");
 		Assert.assertEquals((Integer) 2, orderDetail700003.getMinQuantity());
 		Assert.assertEquals((Integer) 3, orderDetail700003.getMaxQuantity());
 
 		// Edi declared the min/max columns, but not supplied. Min and max should equal quantity.
-		OrderDetail orderDetail700004 = order2.getOrderDetail("10700004");
+		OrderDetail orderDetail700004 = order2.getOrderDetail("10700004-each");
 		Assert.assertEquals((Integer) 4, orderDetail700004.getMinQuantity());
 		Assert.assertEquals((Integer) 4, orderDetail700004.getMaxQuantity());
 
 		// Edi populated the min/max fields with blank. Min and max should equal quantity.
-		OrderDetail orderDetail700005 = order2.getOrderDetail("10700005");
+		OrderDetail orderDetail700005 = order2.getOrderDetail("10700005-each");
 		Assert.assertEquals((Integer) 5, orderDetail700005.getMinQuantity());
 		Assert.assertEquals((Integer) 5, orderDetail700005.getMaxQuantity());
 
@@ -617,7 +617,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
@@ -668,7 +668,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// try what worked in the absence of the order detail ID
 		orderDetail = order.getOrderDetail("456"); // order ID
 		Assert.assertNull(orderDetail);
-		orderDetail = order.getOrderDetail("10706962"); // item ID
+		orderDetail = order.getOrderDetail("10706962-each"); // item ID
 		Assert.assertNull(orderDetail);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -678,7 +678,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 
 		// This is a very odd test. Above had one set of headers, and this a different set. Could happen for different customers maybe, but here same customer and same orders.
-		// So, what happens to the details? The answer is the old details all are inactivated for each represented order ID, and new details made.
+		// So, what happens to the details? The answer is the old details all updated with the new ids. In this case, the new IDs are the "item-uom" pairs
 		String secondCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -697,24 +697,27 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		// Find inactive 123.1 and new active 10700589
+		//Refresh facility
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(this.facilityId);
+		
+		//123.1 should no longer exist. Instead, there should be 10700589-each 
 		order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("123.1");
-		Assert.assertNotNull(orderDetail);
-		Assert.assertEquals(false, orderDetail.getActive());
-		orderDetail = order.getOrderDetail("10700589");
+		Assert.assertNull(orderDetail);
+		orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 
 		// Find inactive 456.1 and new active 10711111 and 10722222
 		order = facility.getOrderHeader("456");
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("456.1");
+		Assert.assertNull(orderDetail);
+		orderDetail = order.getOrderDetail("10711111-each");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertEquals(false, orderDetail.getActive());
-		orderDetail = order.getOrderDetail("10711111");
-		Assert.assertNotNull(orderDetail);
-		orderDetail = order.getOrderDetail("10722222");
+		orderDetail = order.getOrderDetail("10722222-each");
 		Assert.assertNotNull(orderDetail);
 
 		// And what about order 789, missing altogether in second file? Answer is the header went inactive, along with its 2 details and 1 cntrUse
@@ -775,10 +778,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String nonSequentialOrders = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
-				+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
-				+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
-				+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
-				+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
+				+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3(a),Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
+				+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T(a),9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
+				+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3(b),Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
+				+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T(b),9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
 
 		importCsvString(facility, nonSequentialOrders);
 

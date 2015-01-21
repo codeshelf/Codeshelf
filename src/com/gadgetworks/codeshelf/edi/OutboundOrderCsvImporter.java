@@ -779,7 +779,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		//If we have an order detail ID then use that.
 		String detailId = inCsvBean.getOrderDetailId();
 		if (detailId == null || "".equals(detailId)) {
-			// Else use the item ID + uom.
+			// Else use the itemId + uom.
 			detailId = genItemUomKey(inItemMaster, inUomMaster);
 		}
 
@@ -884,7 +884,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	
 	private String genItemUomKey(ItemMaster item, UomMaster uom) {
 		if (item == null) {return null;}
-		return item.getDomainId() + (uom==null?"":"-"+uom.getDomainId());
+		return item.getDomainId() + ((uom==null || uom.getDomainId().isEmpty())?"":"-"+uom.getDomainId());
 	}
 
 	@Override
