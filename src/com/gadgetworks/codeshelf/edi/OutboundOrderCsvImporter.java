@@ -178,19 +178,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	 */
 	private void archiveCheckAllOrders(final Facility inFacility, final Timestamp inProcessTime, final boolean undefinedGroupUpdated) {
 		LOGGER.debug("Archive unreferenced order data");
-
-		// Inactivate the *order details* that don't match the import timestamp.
-		// All orders and related items get marked with the same timestamp when imported from the same interchange.
-		// Iterate all of the order groups to see if they're still active.
-		/*
-		for (OrderGroup group : inFacility.getOrderGroups()) {
-			if (!group.getUpdated().equals(inProcessTime)) {
-				LOGGER.trace("Archive old order group: " + group.getOrderGroupId());
-				group.setActive(false);
-				mOrderGroupDao.store(group);
-			}
-		}
-		*/
+		
 		// Iterate all of the order headers in this order group to see if they're still active.
 		for (OrderHeader order : inFacility.getOrderHeaders()) {
 			//Skip all orders from groups not updated during the current order import
@@ -256,7 +244,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				}
 			}
 			if (archiveGroup) {
-				LOGGER.info("Archive old order group: " + group.getOrderGroupId());
 				group.setActive(false);
 				mOrderGroupDao.store(group);
 			}
@@ -790,24 +777,23 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final ItemMaster inItemMaster) {
 		OrderDetail result = null;
 
-		String detailId = "";
-		if (inCsvBean.getOrderDetailId() != null) {
-			// If we have an order detail ID then use that.
-			detailId = inCsvBean.getOrderDetailId();
-		} else {
-			// Else use the item ID.
-			detailId = inItemMaster.getItemId();
+		//If we have an order detail ID then use that.
+		String detailId = inCsvBean.getOrderDetailId();
+		if (detailId == null || "".equals(detailId)) {
+			// Else use the item ID + uom.
+			detailId = genItemUomKey(inItemMaster, inUomMaster);
 		}
 
-		result = inOrder.getOrderDetail(detailId);
+		//result = inOrder.getOrderDetail(detailId);
+		result = findOrder(inOrder, detailId, inItemMaster, inUomMaster);
 		// DEV-596 if existing order detail had a preferredLocation, we need remember what it was.
 		setOldPreferredLocation(null);
 		if (result == null) {
 			result = new OrderDetail();
-			result.setOrderDetailId(detailId);
 		} else {
 			setOldPreferredLocation(result.getPreferredLocation());
 		}
+		result.setOrderDetailId(detailId);
 
 		// set preferred location, if valid.
 		// Note: we will set to blank if the value is invalid for several reasons. The idea is to only allow good data into the system.
@@ -878,6 +864,28 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		}
 		mOrderDetailDao.store(result);
 		return result;
+	}
+	
+	private OrderDetail findOrder(OrderHeader header, String domainId, ItemMaster item, UomMaster uom) {
+		OrderDetail domainMatch = header.getOrderDetail(domainId);
+		if (item == null) {
+			return domainMatch;
+		}
+		List<OrderDetail> details = header.getOrderDetails();
+		String examinedKey;
+		for (OrderDetail detail : details) {
+			examinedKey = genItemUomKey(detail.getItemMaster(), detail.getUomMaster());
+			if (genItemUomKey(item, uom).equals(examinedKey) && detail.getActive()){
+				return detail;
+			}
+		}
+	
+		return domainMatch;
+	}
+	
+	private String genItemUomKey(ItemMaster item, UomMaster uom) {
+		if (item == null) {return null;}
+		return item.getDomainId() + (uom==null?"":"-"+uom.getDomainId());
 	}
 
 	@Override

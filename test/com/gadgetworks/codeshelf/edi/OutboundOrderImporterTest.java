@@ -1227,13 +1227,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
 		importCsvString(facility, firstCsvString);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, secondCsvString);
@@ -1259,13 +1259,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
 		importCsvString(facility, firstCsvString);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom" + 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" + 
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" + 
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
 		importCsvString(facility, secondCsvString);
@@ -1293,13 +1293,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
 		importCsvString(facility, firstCsvString);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +  
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +  
 				"\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2" +
 				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
 		importCsvString(facility, secondCsvString);
@@ -1324,7 +1324,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, firstCsvString);
@@ -1337,7 +1337,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility.DAO.reload(facility);
 
 		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
@@ -1377,7 +1377,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		LOGGER.info("1: Read orders for for group 1, as if it is morning wave");
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,1.1,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group1" + 
 				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
@@ -1389,15 +1389,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility.DAO.reload(facility);
 
 		OrderHeader header1a = facility.getOrderHeader("1");
-		OrderDetail detail1_1a = header1a.getOrderDetail("Item15");
-		Assert.assertNotNull(detail1_1a); // Notice: orderDetail name is thrown away! Using the SKU name
+		OrderDetail detail1_1a = header1a.getOrderDetail("1.1");
+		Assert.assertNotNull(detail1_1a);
 		
-		OrderDetail detail1_2a = header1a.getOrderDetail("Item16");
+		OrderDetail detail1_2a = header1a.getOrderDetail("1.2");
 		Assert.assertNotNull(detail1_2a);
 		OrderHeader header2a = facility.getOrderHeader("2");
 		Assert.assertNotNull(header2a);
 		OrderHeader header3a = facility.getOrderHeader("3");
-		OrderDetail detail3_1a = header3a.getOrderDetail("Item9");
+		OrderDetail detail3_1a = header3a.getOrderDetail("3.1");
 		
 		LOGGER.info("2: Partially complete order 1. Fully complete order 3. Leave order 2 uncompleted.");
 		detail1_1a.setStatus(OrderStatusEnum.COMPLETE);
@@ -1409,7 +1409,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility.DAO.reload(facility);
 
 		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2" + 
 				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
@@ -1417,14 +1417,14 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderGroup orderGroup1b = facility.getOrderGroup("Group1");
 		OrderGroup orderGroup2b = facility.getOrderGroup("Group2");
 		OrderHeader header1b = facility.getOrderHeader("1");
-		OrderDetail detail1_1b = header1b.getOrderDetail("Item15");
+		OrderDetail detail1_1b = header1b.getOrderDetail("1.1");
 		Assert.assertNotNull(detail1_1b);
-		OrderDetail detail1_2b = header1b.getOrderDetail("Item16");
+		OrderDetail detail1_2b = header1b.getOrderDetail("1.2");
 		Assert.assertNotNull(detail1_2b);
 		OrderHeader header2b = facility.getOrderHeader("2");
 		Assert.assertNotNull(header2b);
 		OrderHeader header3b = facility.getOrderHeader("3");
-		OrderDetail detail3_1b = header3b.getOrderDetail("Item9");
+		OrderDetail detail3_1b = header3b.getOrderDetail("3.1");
 		Assert.assertNotNull(detail3_1b);
 
 		LOGGER.info("3: Let's see what archived, and see if anything seems wrong.");
