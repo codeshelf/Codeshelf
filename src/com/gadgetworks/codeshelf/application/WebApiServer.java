@@ -130,12 +130,43 @@ public class WebApiServer {
 		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
+		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
-		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs front an actual servlet so put a basic servlet in place
-
+		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
+		//restApiContext.setSecurityHandler(createRestApiSecurityHandler());
 
 		return restApiContext;
 	}
+	
+	/*
+	private SecurityHandler createRestApiSecurityHandler() {
+		ConstraintSecurityHandler security = new ConstraintSecurityHandler();
+
+		
+        Constraint constraint = new Constraint();
+        constraint.setName("auth");
+        constraint.setAuthenticate( true );
+        constraint.setRoles(new String[]{"user", "admin"});
+ 
+        // Binds a url pattern with the previously created constraint. The roles for this constraing mapping are
+        // mined from the Constraint itself although methods exist to declare and bind roles separately as well.
+        ConstraintMapping mapping = new ConstraintMapping();
+        mapping.setPathSpec( "/*" );
+        mapping.setConstraint( constraint );
+ 
+        // First you see the constraint mapping being applied to the handler as a singleton list,
+        // however you can passing in as many security constraint mappings as you like so long as they follow the
+        // mapping requirements of the servlet api. Next we set a BasicAuthenticator instance which is the object
+        // that actually checks the credentials followed by the LoginService which is the store of known users, etc.
+        security.setConstraintMappings(Collections.singletonList(mapping));
+		
+		HashLoginService loginService = new HashLoginService();
+		loginService.update("a@example.com", new Password("testme"), new String[]{"user"});
+		security.setLoginService(loginService);
+
+		security.setAuthenticator(new BasicAuthenticator());
+		return security;
+	}*/
 
 	public final void stop() {
 		try {
