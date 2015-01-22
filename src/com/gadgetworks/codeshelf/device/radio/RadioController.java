@@ -134,7 +134,8 @@ public class RadioController implements IRadioController {
 	private final RadioControllerPacketIOService					packetIOService;
 	private final RadioControllerBroadcastService					broadcastService;
 
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingWritesMap			= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, IPacket>				mPendingAcksMap				= Maps.newConcurrentMap();
 
 	// --------------------------------------------------------------------------
 	/**
