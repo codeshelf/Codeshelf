@@ -69,7 +69,9 @@ public class WebApiServer {
 
 			contexts.addHandler(createAdminApiHandler(deviceManager,application,enableSchemaManagement));
 
-			if(deviceManager == null) {
+			// bhe: would be preferable to define process roles and work off them, instead of guessing 
+			// what kind of role it is.  it could be tied to the application object.
+			if (deviceManager == null) {
 				// server only:
 
 				// rest API
@@ -81,9 +83,6 @@ public class WebApiServer {
 				contexts.addHandler(wscontext);
 		        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
 		        wscontainer.addEndpoint(CsServerEndPoint.class);
-
-				// admin JSP handler
-				contexts.addHandler(this.createAdminJspHandler());
 
 		        // embedded static content web server
 				ResourceHandler resourceHandler = new ResourceHandler();
@@ -101,37 +100,7 @@ public class WebApiServer {
 			LOGGER.error("Failed to start admin server", e);
 		}
 	}
-	
-	private Handler createAdminJspHandler() throws FileNotFoundException, URISyntaxException {
-		// com.gadgetworks.codeshelf.platform.performance.web
-		final String WEBROOT_INDEX = "/com/gadgetworks/codeshelf/web/";
-        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
-        if (indexUri == null) {
-            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
-        }
-        URI baseUri = indexUri.toURI();
 
-        WebAppContext context = new WebAppContext();
-        context.setContextPath("/web");
-        // context.setAttribute("javax.servlet.context.tempdir", scratchDir);
-        //context.setAttribute("org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
-        //  ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/.*taglibs.*\\.jar$");
-        context.setResourceBase(baseUri.toASCIIString());
-        context.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
-        context.addBean(new ServletContainerInitializersStarter(context), true);
-        context.setClassLoader(getUrlClassLoader());
-
-        context.addServlet(jspServletHolder(), "*.jsp");
-        context.addServlet(defaultServletHolder(baseUri), "/");
-        return context;
-	}
-	
-	private ServletHolder defaultServletHolder(URI baseUri) {
-        ServletHolder holderDefault = new ServletHolder("default", DefaultServlet.class);
-        holderDefault.setInitParameter("resourceBase", baseUri.toASCIIString());
-        return holderDefault;
-    }	
-	
 	private List<ContainerInitializer> jspInitializers() {
     	JettyJasperInitializer sci = new JettyJasperInitializer();
         ContainerInitializer initializer = new ContainerInitializer(sci, null);
@@ -152,52 +121,62 @@ public class WebApiServer {
         return holderJsp;
     }
     
-    private ClassLoader getUrlClassLoader() {
-        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
-        return jspClassLoader;
-    } 
-
-	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) {
-		ServletContextHandler adminApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) throws FileNotFoundException, URISyntaxException {
+		ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		
-		adminApiContext.setContextPath("/adm");
+		contextHandler.setContextPath("/adm");
 		
 		// add metrics servlet
 		MetricRegistry metricsRegistry = MetricsService.getRegistry();
-		adminApiContext.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
-		adminApiContext.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
+		contextHandler.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
+		contextHandler.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
 
 		// add health check servlet
 		HealthCheckRegistry hcReg = MetricsService.getHealthCheckRegistry();
-		adminApiContext.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
-		adminApiContext.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
+		contextHandler.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
+		contextHandler.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
 		// + default app service health check
 		ServiceStatusHealthCheck svcCheck = new ServiceStatusHealthCheck();
 		MetricsService.registerHealthCheck(svcCheck);
 
 		// add ping servlet
-		adminApiContext.addServlet(new ServletHolder(new PingServlet()),"/ping");
+		contextHandler.addServlet(new ServletHolder(new PingServlet()),"/ping");
 
 		// log level runtime change servlet
-		adminApiContext.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
+		contextHandler.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
 		
 		// service control (stop service etc)
-		adminApiContext.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
+		contextHandler.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
 
-		if(deviceManager != null) {
+		if (deviceManager != null) {
 			// only for site controller
 
 			// radio packet capture interface
-			adminApiContext.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
-		} else {
+			contextHandler.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
+		} 
+		else {
 			// only for server
 
 			// user manager sql generator (temporary)
-			adminApiContext.addServlet(new ServletHolder(new UsersServlet()),"/users");
+			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
-		}
+			// admin JSP handler
+			final String WEBROOT_INDEX = "/com/gadgetworks/codeshelf/web/";
+	        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
+	        if (indexUri == null) {
+	            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
+	        }
+	        URI baseUri = indexUri.toURI();
+	        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
+	        
+	        contextHandler.setResourceBase(baseUri.toASCIIString());
+	        contextHandler.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
+	        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
+	        contextHandler.setClassLoader(jspClassLoader);
+	        contextHandler.addServlet(jspServletHolder(), "*.jsp");
+		}		
 
-		return adminApiContext;
+		return contextHandler;
 	}
 
 	private Handler createRestApiHandler() {

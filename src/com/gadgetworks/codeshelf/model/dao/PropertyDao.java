@@ -236,9 +236,26 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		}
 		// delete properties that are not included in resource file
 		for(DomainObjectPropertyDefault def : currentProperties) {
-			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue());
+			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue()+" and its instances.");
 			dao.delete(def);
+			// dao.deleteProperties(def.getObjectType(),def.getName());		
 		}
 	}
+	
+	/*
+	private void deleteProperties(String objectType, String name) {
+		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
+        Query query = session.createQuery(queryString);
+        query.setParameter("objectId", object.getPersistentId());
+        query.setParameter("objectType", object.getClassName());
+        query.setParameter("name", name); 
+		
+		
+		Query q = createQuery("delete from DomainObjectProperty where id in (:idList) ");
+        query.setParameter("objectType", object.getClassName());
+        query.setParameter("name", name); 
+		q.executeUpdate();
+	}
+	*/
 
 }
