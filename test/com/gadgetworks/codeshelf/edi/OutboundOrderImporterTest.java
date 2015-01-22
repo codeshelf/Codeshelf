@@ -113,13 +113,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderDetail detail931 = order931.getOrderDetail("931");
 		Assert.assertNull(detail931); // not this. Do not find by order.
-		detail931 = order931.getOrderDetail("10706962");
+		detail931 = order931.getOrderDetail("10706962-each");
 		Assert.assertNotNull(detail931); // this works, find by itemId within an order.
 		String detail931DomainID = detail931.getOrderDetailId(); // this calls through to domainID
 		OrderDetail detail931b = order931.getOrderDetail(detail931DomainID);
 		Assert.assertNotNull(detail931b); // this works, find by itemId within an order.
 		Assert.assertEquals(detail931b, detail931);
-		Assert.assertEquals(detail931DomainID, "10706962"); // This is the itemID from file above.
+		Assert.assertEquals(detail931DomainID, "10706962-each"); // This is the itemID from file above.
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -321,11 +321,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 
 		// Also find order detail item 1. Used to not because there is no due date, but now that field is nullable in the schema.
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 
 		// But should find order detail item 2
-		orderDetail = order.getOrderDetail("10706952");
+		orderDetail = order.getOrderDetail("10706952-each");
 		Assert.assertNotNull(orderDetail);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -345,11 +345,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -374,11 +374,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
@@ -411,7 +411,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
 		for (OrderDetail detail : order.getOrderDetails()) {
-			if (detail.getOrderDetailId().equals("10722222")) {
+			if (detail.getOrderDetailId().equals("10722222-each")) {
 				Assert.assertEquals(false, detail.getActive());
 				//Assert.assertEquals(Integer.valueOf(0), detail.getQuantity());
 			} else {
@@ -504,7 +504,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(Integer.valueOf(0), orderDetail.getMinQuantity());
 		Assert.assertEquals(Integer.valueOf(5), orderDetail.getMaxQuantity());
@@ -541,7 +541,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
@@ -563,27 +563,27 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order2 = facility.getOrderHeader("222");
 		// normal case with min and max supplied
-		OrderDetail orderDetail700001 = order2.getOrderDetail("10700001");
+		OrderDetail orderDetail700001 = order2.getOrderDetail("10700001-each");
 		Assert.assertEquals((Integer) 1, orderDetail700001.getMinQuantity());
 		Assert.assertEquals((Integer) 3, orderDetail700001.getMaxQuantity());
 
 		// Edi had min > quantity. Set the min to reasonable value
-		OrderDetail orderDetail700002 = order2.getOrderDetail("10700002");
+		OrderDetail orderDetail700002 = order2.getOrderDetail("10700002-each");
 		Assert.assertEquals((Integer) 2, orderDetail700002.getMinQuantity());
 		Assert.assertEquals((Integer) 3, orderDetail700002.getMaxQuantity());
 
 		// Edi had max > quantity. Set the max to reasonable value
-		OrderDetail orderDetail700003 = order2.getOrderDetail("10700003");
+		OrderDetail orderDetail700003 = order2.getOrderDetail("10700003-each");
 		Assert.assertEquals((Integer) 2, orderDetail700003.getMinQuantity());
 		Assert.assertEquals((Integer) 3, orderDetail700003.getMaxQuantity());
 
 		// Edi declared the min/max columns, but not supplied. Min and max should equal quantity.
-		OrderDetail orderDetail700004 = order2.getOrderDetail("10700004");
+		OrderDetail orderDetail700004 = order2.getOrderDetail("10700004-each");
 		Assert.assertEquals((Integer) 4, orderDetail700004.getMinQuantity());
 		Assert.assertEquals((Integer) 4, orderDetail700004.getMaxQuantity());
 
 		// Edi populated the min/max fields with blank. Min and max should equal quantity.
-		OrderDetail orderDetail700005 = order2.getOrderDetail("10700005");
+		OrderDetail orderDetail700005 = order2.getOrderDetail("10700005-each");
 		Assert.assertEquals((Integer) 5, orderDetail700005.getMinQuantity());
 		Assert.assertEquals((Integer) 5, orderDetail700005.getMaxQuantity());
 
@@ -617,7 +617,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
-		OrderDetail orderDetail = order.getOrderDetail("10700589");
+		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
@@ -668,7 +668,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		// try what worked in the absence of the order detail ID
 		orderDetail = order.getOrderDetail("456"); // order ID
 		Assert.assertNull(orderDetail);
-		orderDetail = order.getOrderDetail("10706962"); // item ID
+		orderDetail = order.getOrderDetail("10706962-each"); // item ID
 		Assert.assertNull(orderDetail);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -678,7 +678,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 
 		// This is a very odd test. Above had one set of headers, and this a different set. Could happen for different customers maybe, but here same customer and same orders.
-		// So, what happens to the details? The answer is the old details all are inactivated for each represented order ID, and new details made.
+		// So, what happens to the details? The answer is the old details all updated with the new ids. In this case, the new IDs are the "item-uom" pairs
 		String secondCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -697,24 +697,27 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		// Find inactive 123.1 and new active 10700589
+		//Refresh facility
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.findByPersistentId(this.facilityId);
+		
+		//123.1 should no longer exist. Instead, there should be 10700589-each 
 		order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("123.1");
-		Assert.assertNotNull(orderDetail);
-		Assert.assertEquals(false, orderDetail.getActive());
-		orderDetail = order.getOrderDetail("10700589");
+		Assert.assertNull(orderDetail);
+		orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
 
 		// Find inactive 456.1 and new active 10711111 and 10722222
 		order = facility.getOrderHeader("456");
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("456.1");
+		Assert.assertNull(orderDetail);
+		orderDetail = order.getOrderDetail("10711111-each");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertEquals(false, orderDetail.getActive());
-		orderDetail = order.getOrderDetail("10711111");
-		Assert.assertNotNull(orderDetail);
-		orderDetail = order.getOrderDetail("10722222");
+		orderDetail = order.getOrderDetail("10722222-each");
 		Assert.assertNotNull(orderDetail);
 
 		// And what about order 789, missing altogether in second file? Answer is the header went inactive, along with its 2 details and 1 cntrUse
@@ -775,10 +778,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String nonSequentialOrders = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
-				+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
-				+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
-				+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3,Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
-				+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T,9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
+				+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3(a),Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
+				+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T(a),9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
+				+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3(b),Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
+				+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T(b),9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
 
 		importCsvString(facility, nonSequentialOrders);
 
@@ -1153,9 +1156,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		UUID persist4b = items4b.getPersistentId();
 		
 		Assert.assertNotEquals(persist1a, persist1b); // made new. Deleted old. So different persistent Id
-		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.
-		/* Search for this comment in  OutboundOrderCsvImporter.java     Bjoern none of this is necessary. Just debug aid */
-		
+		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.		
 		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("7: Move the 10.1 SKU0001 order at D34. But add another SKU0001 order at D34. SKU0001 hould have two itemLocations after that.");
@@ -1179,12 +1180,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("8: Showing the limits of current implementation. Next day, orders for the same SKUs in different locations. Does not clean up old inventory.");
-		// Just for thoroughness, changed the cm Offset of the D34 item. Does not matter.
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		
 		String csvString4 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
-				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,50"
+				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,"
 				+ "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
 
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
@@ -1225,18 +1225,18 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 * This test verifies that when importing orders for an existing group, all orders previously in that group get archived unless they've been updated
 	 */
 	@Test
-	public final void testAcriveOneGroup() throws IOException {
+	public final void testArchiveOneGroup() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
 		importCsvString(facility, firstCsvString);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, secondCsvString);
@@ -1257,18 +1257,18 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 * Same as testAcriveTestOneGroup, but without specifying a group
 	 */
 	@Test
-	public final void testAcriveNoGroup() throws IOException {
+	public final void testArchiveNoGroup() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
 		importCsvString(facility, firstCsvString);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom" + 
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" + 
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" + 
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
 		importCsvString(facility, secondCsvString);
@@ -1291,18 +1291,18 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 * In the new behavior, only old orders from the newly imported groups will be archived
 	 */
 	@Test
-	public final void testAcriveTwoGroups() throws IOException {
+	public final void testArchiveTwoGroups() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
 		importCsvString(facility, firstCsvString);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +  
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +  
 				"\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2" +
 				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
 		importCsvString(facility, secondCsvString);
@@ -1322,32 +1322,143 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 	
 	@Test
-	public final void testAcriveAbandonedGroup() throws IOException {
+	public final void testArchiveAbandonedGroup() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, firstCsvString);
+		
+		OrderHeader header1a = facility.getOrderHeader("1");
+		OrderGroup group1a = header1a.getOrderGroup();
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
 
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetail,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" + 
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
 		
+		OrderHeader header1b = facility.getOrderHeader("1");
+		OrderGroup group1b = header1b.getOrderGroup();
+		OrderGroup group2 = facility.getOrderGroup("Group2");
+		// Is it the same header?
+		Assert.assertEquals(header1a, header1b);
+		// did it change owner?
+		Assert.assertNotEquals(group1a, group1b);
+		Assert.assertEquals(group1b, group2); // just proving what we expect
+
+		LOGGER.info("3: We expect to find that Group1 is inactive. Group2 is active with its orders.");
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", false);
 		groupExpectations.put("Group2", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
 		headerExpectations.put("1", true);
 		headerExpectations.put("2", true);
+		headerExpectations.put("99", true); // just showing  the limit of the test function. Order 99 does not exist. No error reported.
 		assertArchiveStatuses(groupExpectations, headerExpectations);
 		
+		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void demonstrateArchiveQuirk() throws IOException {
+		/* This simulates doing some of the work in the morning wave, then completing some of the orders in the afternoon wave.
+		 * The corresponding real test would be to drop orders file similar to the first. Set up the cart for the orders. Run, shorting the jobs that are not completed, 
+		 * (or don't set up the cart at all for orders that have no lines that need to be completed.)
+		 * and completing work instructions for the ones that are completed.
+		 * Then drop the second orders file.
+		 */
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		
+		LOGGER.info("1: Read orders for for group 1, as if it is morning wave");
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,1.1,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" + 
+				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group1" + 
+				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
+				"\r\n3,3,3.1,12/03/14 12:00,12/31/14 12:00,Item9,,100,a,Group1";
+		importCsvString(facility, firstCsvString);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		OrderHeader header1a = facility.getOrderHeader("1");
+		OrderDetail detail1_1a = header1a.getOrderDetail("1.1");
+		Assert.assertNotNull(detail1_1a);
+		
+		OrderDetail detail1_2a = header1a.getOrderDetail("1.2");
+		Assert.assertNotNull(detail1_2a);
+		OrderHeader header2a = facility.getOrderHeader("2");
+		Assert.assertNotNull(header2a);
+		OrderHeader header3a = facility.getOrderHeader("3");
+		OrderDetail detail3_1a = header3a.getOrderDetail("3.1");
+		
+		LOGGER.info("2: Partially complete order 1. Fully complete order 3. Leave order 2 uncompleted.");
+		detail1_1a.setStatus(OrderStatusEnum.COMPLETE);
+		detail3_1a.setStatus(OrderStatusEnum.COMPLETE);
+		header3a.setStatus(OrderStatusEnum.COMPLETE);
+
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2" + 
+				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
+		importCsvString(facility, secondCsvString);
+		
+		OrderGroup orderGroup1b = facility.getOrderGroup("Group1");
+		OrderGroup orderGroup2b = facility.getOrderGroup("Group2");
+		OrderHeader header1b = facility.getOrderHeader("1");
+		OrderDetail detail1_1b = header1b.getOrderDetail("1.1");
+		Assert.assertNotNull(detail1_1b);
+		OrderDetail detail1_2b = header1b.getOrderDetail("1.2");
+		Assert.assertNotNull(detail1_2b);
+		OrderHeader header2b = facility.getOrderHeader("2");
+		Assert.assertNotNull(header2b);
+		OrderHeader header3b = facility.getOrderHeader("3");
+		OrderDetail detail3_1b = header3b.getOrderDetail("3.1");
+		Assert.assertNotNull(detail3_1b);
+
+		LOGGER.info("3: Let's see what archived, and see if anything seems wrong.");
+		LOGGER.info("   Group 1 still active.");
+		Assert.assertTrue(orderGroup1b.getActive());
+		Assert.assertTrue(orderGroup2b.getActive());
+		LOGGER.info("   Order1  and 2 still active.");
+		Assert.assertTrue(header1b.getActive());
+		Assert.assertTrue(header2b.getActive());
+				
+		LOGGER.info("   Quirk: Order3 still active even though it is fully completed and was not represented in last file drop.");
+		// Not sure we should "fix". Just understand. Order3 is still completed.
+		Assert.assertTrue(header3b.getActive());
+		OrderGroup header1Owner = header1b.getOrderGroup();
+		Assert.assertEquals(orderGroup2b, header1Owner);
+		LOGGER.info("   Quirk: Order1 changed owner to group2. Correct obviously for uncomplete 1.2 detail, but misleading for the 1.1 detail");
+		// Productivity reporting may have to look out for this. Or write a separate record at the time of detail completion, recording
+		// the order group at the time of completion.
+		LOGGER.info("   As expected, completed order 3 remains on group 1.");
+		Assert.assertEquals(orderGroup1b, header3b.getOrderGroup());
+			
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	
+
+	/**
+	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
+	 * Then assumes that all are represented in the groupExpectations and headerExpectations and complains if one is found not in expectations. You cannot chain imports and only check the results for
+	 * some of the headers and groups. This can only be used for extremely small tests. It would be generally useful if it iterated through the expectations,
+	 * then found the groups and headers in the facility to check.
+	 */
 	private void assertArchiveStatuses(HashMap<String, Boolean> groupExpectations, HashMap<String, Boolean> headerExpectations) {
 		List<OrderGroup> groups = OrderGroup.DAO.getAll();
 		for (OrderGroup group : groups) {

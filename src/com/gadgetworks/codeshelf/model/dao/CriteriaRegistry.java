@@ -28,6 +28,14 @@ public class CriteriaRegistry {
 		indexedCriteria.put("workInstructionBySku",
 			new TypedCriteria("from WorkInstruction where itemMaster.domainId = :sku", "sku", String.class));
 	
+		indexedCriteria.put("workInstructionsByDetail",
+			new TypedCriteria("from WorkInstruction where orderDetail.persistentId = :orderDetail", 
+				"orderDetail", UUID.class));
+	
+		indexedCriteria.put("workInstructionsByHeader",
+			new TypedCriteria("from WorkInstruction where orderDetail.parent.persistentId = :orderHeader", 
+				"orderHeader", UUID.class));
+	
 		indexedCriteria.put("workInstructionsByFacility",
 			new TypedCriteria("from WorkInstruction where parent.persistentId = :facilityId and status != 'COMPLETE'",
 				"facilityId", UUID.class));
@@ -87,21 +95,21 @@ public class CriteriaRegistry {
 				"aisleId", UUID.class));
 		
 		indexedCriteria.put("orderDetailsByFacility",
-			new TypedCriteria("from OrderDetail where parent.parent.persistentId = :facilityId and status <> 'COMPLETE'",
+			new TypedCriteria("from OrderDetail where parent.parent.persistentId = :facilityId and active = true",
 				"facilityId", UUID.class));
 
 		indexedCriteria.put("orderDetailsByHeader",
-			new TypedCriteria("from OrderDetail where parent.persistentId = :theId and status <> 'COMPLETE'",
+			new TypedCriteria("from OrderDetail where parent.persistentId = :theId and active = true",
 				"theId", UUID.class)); //the UI dynamically sets the "parent" with theId
 
 		
 		indexedCriteria.put("orderHeadersByFacilityAndType",
-			new TypedCriteria("from OrderHeader where status <> 'COMPLETE' and active = true and parent.persistentId = :facilityId and orderType = :orderType",
+			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and orderType = :orderType",
 				"facilityId", UUID.class,
 				"orderType", OrderTypeEnum.class));
 		
 		indexedCriteria.put("orderHeadersByGroupAndType",
-			new TypedCriteria("from OrderHeader where status <> 'COMPLETE' and active = true and orderGroup.persistentId = :theId and orderType = :orderType",
+			new TypedCriteria("from OrderHeader where active = true and orderGroup.persistentId = :theId and orderType = :orderType",
 				"theId", UUID.class, //the UI dynamically sets the "parent" with theId
 				"orderType", OrderTypeEnum.class));
 		

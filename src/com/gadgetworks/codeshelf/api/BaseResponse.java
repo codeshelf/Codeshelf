@@ -30,7 +30,7 @@ public abstract class BaseResponse {
 	}
 
 	public static Response buildResponse(Object obj, int status) {
-		ResponseBuilder builder = Response.status(status).header("Access-Control-Allow-Origin", "*");
+		ResponseBuilder builder = Response.status(status);
 		if (obj != null) { builder = builder.entity(obj);}
 		return builder.build();
 	}

@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class WorkInstructionSequencerTest extends EdiTestABC {

@@ -24,7 +24,6 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -304,24 +303,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 			if (location == null || !location.equals(inLocation))
 				continue;
 			UomMaster thisUomMaster = item.getUomMaster();
-			// bjoern: this equals() failing if inUomMaster in lazyInitialization state
 			if (thisUomMaster.equals(inUomMaster)) {
 				selectedItem = item;
 				break;
-			}
-
-			// else if (thisUomMaster.getDomainId().equals(inUomMaster.getDomainId())){
-			else if (thisUomMaster.getPersistentId().equals(inUomMaster.getPersistentId())){
-				LOGGER.error("Demonstrated hibernate lazyInitialization bug here", new Exception());
-				selectedItem = item;
-				if (thisUomMaster.equals(inUomMaster)) 
-					LOGGER.error("Now equals works!");
-				else
-					LOGGER.error("Equals still misses.");
-				
-				break;
-			}
-			
+			}			
 		}
 
 		return selectedItem;

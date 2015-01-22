@@ -94,6 +94,14 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	boolean radioEnabled = true;
 	
 	private boolean autoShortValue = true; // getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
+	
+	@Getter
+	@Setter
+	private String										pickInfoValue		= "SKU";
+
+	@Getter
+	@Setter
+	private String										containerTypeValue	= "Order";
 
 	private WebSocketContainer	webSocketContainer;
 
@@ -110,8 +118,8 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		username = configuration.getString("username");
-		password = configuration.getString("networkCredential");
+		username = configuration.getString("websocket.username");
+		password = configuration.getString("websocket.password");
 
 		if(configuration.getBoolean("pcapbuffer.enable", false)) {
 			// set up ring buffer

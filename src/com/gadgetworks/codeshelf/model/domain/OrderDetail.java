@@ -26,7 +26,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -160,10 +159,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	public OrderDetail() {
+		this(null, true);
 	}
 
 	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
+		this.status = OrderStatusEnum.CREATED;
 		this.active = active;
 	}
 
@@ -445,6 +446,13 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return internalString;
 	}
 
+	public String getGroupUi() {
+		OrderGroup theGroup = parent.getOrderGroup();
+		if (theGroup == null)
+			return "";
+		return theGroup.getDomainId();
+	}
+
 	public Location getPreferredLocObject(final Facility inFacility) {
 		String whereString = getPreferredLocation();
 		if (whereString == null || whereString.isEmpty())
@@ -461,22 +469,40 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * @return if it was changed
 	 */
 	public boolean reevaluateStatus() {
-		boolean changed = false;
-
-		Double qtyPicked = 0.0;
+		if(getWorkInstructions().isEmpty()) {
+			return false;
+		}
+		
+		
+		OrderStatusEnum priorStatus = getStatus();
+		
+		int qtyPicked = 0;
+		boolean anyToPick = false;
 		for (WorkInstruction sumWi : getWorkInstructions()) {
-			qtyPicked += sumWi.getActualQuantity();
+			WorkInstructionStatusEnum status = sumWi.getStatus();
+			if (status.equals(WorkInstructionStatusEnum.COMPLETE)
+				|| status.equals(WorkInstructionStatusEnum.SHORT)) {
+				
+				qtyPicked += sumWi.getActualQuantity();
+			} else if (status.equals(WorkInstructionStatusEnum.INPROGRESS)
+					  || status.equals(WorkInstructionStatusEnum.NEW)) {
+			
+				anyToPick |= true;
+			}
 		}
 		if (qtyPicked >= getMinQuantity()) {
 			setStatus(OrderStatusEnum.COMPLETE);
-			changed = true;
+		} else if (anyToPick){
+			setStatus(OrderStatusEnum.INPROGRESS);
 		} else {
 			setStatus(OrderStatusEnum.SHORT);
-			changed = true;
 		}
-		if (changed) {
+		if (!priorStatus.equals(getStatus())) {
+			LOGGER.info("Changed status of order detai, was: " + priorStatus + ", now: " + this);
 			this.getDao().store(this);
+			return true;
+		} else {
+			return false;
 		}
-		return changed;
 	}
 }
