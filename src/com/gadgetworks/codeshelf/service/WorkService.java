@@ -101,7 +101,6 @@ public class WorkService implements IApiService {
 	private WorkServiceThread			wsThread					= null;
 	private static boolean				aWorkServiceThreadExists	= false;
 
-
 	public static class Work {
 		@Getter
 		private OrderDetail	outboundOrderDetail;
@@ -289,13 +288,14 @@ public class WorkService implements IApiService {
 						previousChe.removeContainerUse(thisUse);
 						inChe.addContainerUse(thisUse);
 					}
+
+					try {
+						ContainerUse.DAO.store(thisUse);
+					} catch (DaoException e) {
+						LOGGER.error("", e);
+					}
 				}
 
-				try {
-					ContainerUse.DAO.store(thisUse);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
 			}
 		}
 
@@ -350,11 +350,10 @@ public class WorkService implements IApiService {
 		if (che == null)
 			return;
 
-
 		if (doThrowInstead)
-            // If you want to test this, change value of doThrowInstead above. Then from the UI, select a CHE and
-            // do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
-            // DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
+			// If you want to test this, change value of doThrowInstead above. Then from the UI, select a CHE and
+			// do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
+			// DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
 
 			doIntentionalPersistenceError(che);
 		else
@@ -381,8 +380,6 @@ public class WorkService implements IApiService {
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 		}
 	}
-
-
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.DAO.findByPersistentId(cheId);
@@ -474,7 +471,6 @@ public class WorkService implements IApiService {
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
 
-
 		List<WorkInstruction> wrappedRouteWiList = null;
 		if (wiListFromStartLocation.size() == completeRouteWiList.size()) {
 			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
@@ -550,7 +546,7 @@ public class WorkService implements IApiService {
 	 */
 	private List<Location> toPossibleLocations(OrderDetail matchingOutboundOrderDetail, List<Path> paths) {
 		ArrayList<Location> locations = new ArrayList<Location>();
-		for (Path path: paths) {
+		for (Path path : paths) {
 			OrderLocation firstOutOrderLoc = matchingOutboundOrderDetail.getParent().getFirstOrderLocationOnPath(path);
 			if (firstOutOrderLoc != null)
 				locations.add(firstOutOrderLoc.getLocation());
@@ -558,7 +554,8 @@ public class WorkService implements IApiService {
 		return locations;
 	}
 
-	private List<OrderDetail> toAllMatchingOutboundOrderDetails(List<OrderHeader>  allFacilityOrderHeaders, OrderHeader crossbatchOrder) {
+	private List<OrderDetail> toAllMatchingOutboundOrderDetails(List<OrderHeader> allFacilityOrderHeaders,
+		OrderHeader crossbatchOrder) {
 		List<OrderDetail> allMatchingOrderDetails = Lists.newArrayList();
 		for (OrderDetail crossOrderDetail : crossbatchOrder.getOrderDetails()) {
 			if (crossOrderDetail.getActive()) {
@@ -569,7 +566,8 @@ public class WorkService implements IApiService {
 		return allMatchingOrderDetails;
 	}
 
-	private List<OrderDetail> toMatchingOutboundOrderDetail(List<OrderHeader> allFacilityOrderHeaders, OrderDetail crossbatchOrderDetail) {
+	private List<OrderDetail> toMatchingOutboundOrderDetail(List<OrderHeader> allFacilityOrderHeaders,
+		OrderDetail crossbatchOrderDetail) {
 		Preconditions.checkNotNull(crossbatchOrderDetail);
 		Preconditions.checkArgument(crossbatchOrderDetail.getActive());
 		Preconditions.checkArgument(crossbatchOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS));
@@ -662,7 +660,6 @@ public class WorkService implements IApiService {
 		return wiResultList;
 	}
 
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Generate pick work instructions for a container at a specific location on a path.
@@ -691,7 +688,12 @@ public class WorkService implements IApiService {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
 						// Pass facility as the default location of a short WI..
-						WorkInstruction aWi = makeWIForOutbound(orderDetail, inChe, container, inTime, facility, facility.getPaths()); // Could be normal WI, or a short WI
+						WorkInstruction aWi = makeWIForOutbound(orderDetail,
+							inChe,
+							container,
+							inTime,
+							facility,
+							facility.getPaths()); // Could be normal WI, or a short WI
 						if (aWi != null) {
 							wiResultList.add(aWi);
 							orderDetailChanged |= orderDetail.reevaluateStatus();
@@ -700,8 +702,13 @@ public class WorkService implements IApiService {
 							//give feedback on complete orders (and differentiate a 100% complete order from
 							//unknown container id. The computeWork method will filter these out before sorting
 							//and saving
-							LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
-							wiResultList.addAll(orderDetail.getWorkInstructions());
+							for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
+								//As of DEV-603 we are only adding completed WIs to the list
+								if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+									LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
+									wiResultList.add(wi);
+								}
+							}
 						}
 					}
 					if (orderDetailChanged) {
@@ -723,7 +730,8 @@ public class WorkService implements IApiService {
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Facility facility, final Che inChe,
+	private List<WorkInstruction> generateCrossWallInstructions(final Facility facility,
+		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
@@ -777,6 +785,7 @@ public class WorkService implements IApiService {
 		}
 		return batchResult;
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 *Utility function for outbound order WI generation
@@ -898,12 +907,9 @@ public class WorkService implements IApiService {
 		List<Object[]> picksPerHour = null;
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");
-			String queryStr = String.format(""
-					+ "SELECT dur.order_group AS group,\n"
-					+ "		trim(to_char(\n"
+			String queryStr = String.format("" + "SELECT dur.order_group AS group,\n" + "		trim(to_char(\n"
 					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
-					+ "		'9999999999999999999D9')) AS picksPerHour\n"
-					+ "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
+					+ "		'9999999999999999999D9')) AS picksPerHour\n" + "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
 					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
 					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
 					+ "		FROM %s.work_instruction i\n"
@@ -922,12 +928,14 @@ public class WorkService implements IApiService {
 	}
 
 	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
+			ImmutableMap.<String, Object> of("parentId", facilityId),
+			WorkInstruction.class);
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
 	}
 
-	public static List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException{
+	public static List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
 		//Get Facility
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {
@@ -937,23 +945,25 @@ public class WorkService implements IApiService {
 		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
 		if (!(allGroups || undefined)) {
 			OrderGroup group = OrderGroup.DAO.findByDomainId(facility, groupNameIn);
-			if (group == null){
+			if (group == null) {
 				throw new NotFoundException("Group " + groupNameIn + " had not been created");
 			}
 		}
 		//Get all instructions and filter those matching the requirements
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT, ImmutableMap.<String, Object>of("parentId", facilityId), WorkInstruction.class);
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
+			ImmutableMap.<String, Object> of("parentId", facilityId),
+			WorkInstruction.class);
 		List<WorkInstruction> filtered = new ArrayList<>();
-		for (WorkInstruction instruction : instructions){
-	 		if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {
-	 			continue;
- 			}
+		for (WorkInstruction instruction : instructions) {
+			if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {
+				continue;
+			}
 			OrderDetail detail = instruction.getOrderDetail();
 			if (detail == null) {
 				continue;
 			}
 			OrderHeader header = detail.getParent();
-			String groupName = header.getOrderGroup() == null? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
+			String groupName = header.getOrderGroup() == null ? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
 			if (allGroups || groupName.equals(groupNameIn)) {
 				filtered.add(instruction);
 			}
@@ -976,7 +986,6 @@ public class WorkService implements IApiService {
 			this.messageBody = messageBody;
 		}
 	}
-
 
 	private WorkInstructionSequencerABC getSequencer() {
 		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
@@ -1096,12 +1105,9 @@ public class WorkService implements IApiService {
 		}
 	}
 
-
-
-
-    /**
-     * Support method to force an exception for testing
-     */
+	/**
+	 * Support method to force an exception for testing
+	 */
 	private void doIntentionalPersistenceError(Che che) {
 		String desc = "";
 		for (int count = 0; count < 500; count++) {
@@ -1112,7 +1118,6 @@ public class WorkService implements IApiService {
 		Che.DAO.store(che);
 		LOGGER.warn("Intentional database persistence error. Setting too long description on " + che.getDomainId());
 	}
-
 
 	private WorkInstruction persistWorkInstruction(WorkInstruction updatedWi) throws DaoException {
 		UUID wiId = updatedWi.getPersistentId();
@@ -1134,7 +1139,7 @@ public class WorkService implements IApiService {
 		if (orderDetail != null) {
 			orderDetail.reevaluateStatus();
 			OrderHeader order = orderDetail.getParent();
-			if(order != null) {
+			if (order != null) {
 				order.reevaluateStatus();
 			}
 		}

@@ -1334,10 +1334,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		OrderHeader header1a = facility.getOrderHeader("1");
 		OrderGroup group1a = header1a.getOrderGroup();
-		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
 
 		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
@@ -1367,7 +1363,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
 		this.getPersistenceService().commitTenantTransaction();
 	}
-	
+		
 	@Test
 	public final void demonstrateArchiveQuirk() throws IOException {
 		/* This simulates doing some of the work in the morning wave, then completing some of the orders in the afternoon wave.
@@ -1406,10 +1402,6 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		detail1_1a.setStatus(OrderStatusEnum.COMPLETE);
 		detail3_1a.setStatus(OrderStatusEnum.COMPLETE);
 		header3a.setStatus(OrderStatusEnum.COMPLETE);
-
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
-		facility = Facility.DAO.reload(facility);
 
 		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
@@ -1452,6 +1444,74 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@Test
+	public final void testOrderDetailIdNormal() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		//Test that if orderDetailId is provided, it becomes detail's id. If not, then use the item-uom combination.
+		//Also confirm that detail ids can be reused across orders
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" + 
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1" + 
+				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1" +
+				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1" +
+				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1";
+		importCsvString(facility, firstCsvString);
+
+		OrderHeader h1 = facility.getOrderHeader("1");
+		OrderDetail d1_1 = h1.getOrderDetail("101");
+		assertActiveOrderDetail(d1_1);
+		OrderDetail d1_2 = h1.getOrderDetail("Item2-each");
+		assertActiveOrderDetail(d1_2);
+		OrderHeader h2 = facility.getOrderHeader("2");
+		OrderDetail d2_1 = h2.getOrderDetail("101");
+		assertActiveOrderDetail(d2_1);
+		OrderDetail d2_2 = h2.getOrderDetail("Item2-each");
+		assertActiveOrderDetail(d2_2);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	@Test
+	public final void testOrderDetailIdDuplicates() throws IOException {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
+				//Repeating orderDetailId - leave last one
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1" + 
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item2,,10,each,Group1" +
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item3,,11,each,Group1" +
+				//Repeating item-uom - leave last one. In this case, also loose orderDetailId.
+				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item4,,9,each,Group1" + 
+				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1" +
+				//Same item, but different uom - OK
+				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item4,,10,cs,Group1" +
+				//Other order - OK
+				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1" +
+				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1";
+		importCsvString(facility, firstCsvString);
+				
+		OrderHeader h1 = facility.getOrderHeader("1");
+		
+		OrderDetail d1_1 = h1.getOrderDetail("101");
+		assertActiveOrderDetail(d1_1);
+		Assert.assertEquals("Incorrect item saved", "Item3", d1_1.getItemMaster().getDomainId());
+		Assert.assertTrue("Incorrect quantity saved", d1_1.getQuantity() == 11);
+		
+		OrderDetail d1_2 = h1.getOrderDetail("Item4-each");
+		assertActiveOrderDetail(d1_2);
+		
+		OrderDetail d1_3 = h1.getOrderDetail("Item4-cs");
+		assertActiveOrderDetail(d1_2);
+		
+		OrderHeader h2 = facility.getOrderHeader("2");
+		
+		OrderDetail d2_1 = h2.getOrderDetail("101");
+		assertActiveOrderDetail(d2_1);
+		OrderDetail d2_2 = h2.getOrderDetail("Item4-each");
+		assertActiveOrderDetail(d2_2);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
 
 	/**
 	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
@@ -1530,5 +1590,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			return importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 		}
+	}
+	
+	private void assertActiveOrderDetail(OrderDetail detail){
+		Assert.assertNotNull(detail);
+		Assert.assertTrue("Expected an active Order Detail. Got inactive instead", detail.getActive());
 	}
 }

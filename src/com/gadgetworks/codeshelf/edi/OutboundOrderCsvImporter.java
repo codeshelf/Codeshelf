@@ -787,9 +787,11 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result = findOrder(inOrder, detailId, inItemMaster, inUomMaster);
 		// DEV-596 if existing order detail had a preferredLocation, we need remember what it was.
 		setOldPreferredLocation(null);
+		String oldDetailId = null;
 		if (result == null) {
 			result = new OrderDetail();
 		} else {
+			oldDetailId = result.getDomainId();
 			setOldPreferredLocation(result.getPreferredLocation());
 		}
 		result.setOrderDetailId(detailId);
@@ -858,9 +860,11 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 
-		if (result.getParent() == null) {
-			inOrder.addOrderDetail(result);
+		//The order detail's id might have changed. Make sure the order header has it under the new id 
+		if (result.getParent() != null) {
+			inOrder.removeOrderDetail(oldDetailId);
 		}
+		inOrder.addOrderDetail(result);
 		mOrderDetailDao.store(result);
 		return result;
 	}
