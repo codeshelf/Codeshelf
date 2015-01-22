@@ -1,10 +1,22 @@
 package com.gadgetworks.codeshelf.application;
 
+import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
+import org.apache.tomcat.SimpleInstanceManager;
+import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.jsp.JettyJspServlet;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
@@ -14,7 +26,10 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletContextHandler.Context;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.webapp.WebAppClassLoader;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +83,9 @@ public class WebApiServer {
 		        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
 		        wscontainer.addEndpoint(CsServerEndPoint.class);
 
+				// admin JSP handler
+				contexts.addHandler(this.createAdminJspHandler());
+
 		        // embedded static content web server
 				ResourceHandler resourceHandler = new ResourceHandler();
 				resourceHandler.setDirectoriesListed(false);
@@ -75,7 +93,7 @@ public class WebApiServer {
 				resourceHandler.setResourceBase(staticContentPath);
 				ContextHandler resourceContextHandler=new ContextHandler("/");
 				resourceContextHandler.setHandler(resourceHandler);
-				contexts.addHandler(resourceContextHandler);
+				contexts.addHandler(resourceContextHandler);				
 			}
 
 			server.start();
@@ -84,11 +102,67 @@ public class WebApiServer {
 			LOGGER.error("Failed to start admin server", e);
 		}
 	}
+	
+	private Handler createAdminJspHandler() throws FileNotFoundException, URISyntaxException {
+		// com.gadgetworks.codeshelf.platform.performance.web
+		final String WEBROOT_INDEX = "/com/gadgetworks/codeshelf/web/";
+        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
+        if (indexUri == null) {
+            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
+        }
+        URI baseUri = indexUri.toURI();
+
+        WebAppContext context = new WebAppContext();
+        context.setContextPath("/web");
+        // context.setAttribute("javax.servlet.context.tempdir", scratchDir);
+        //context.setAttribute("org.eclipse.jetty.server.webapp.ContainerIncludeJarPattern",
+        //  ".*/[^/]*servlet-api-[^/]*\\.jar$|.*/javax.servlet.jsp.jstl-.*\\.jar$|.*/.*taglibs.*\\.jar$");
+        context.setResourceBase(baseUri.toASCIIString());
+        context.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
+        context.addBean(new ServletContainerInitializersStarter(context), true);
+        context.setClassLoader(getUrlClassLoader());
+
+        context.addServlet(jspServletHolder(), "*.jsp");
+        context.addServlet(defaultServletHolder(baseUri), "/");
+        return context;
+	}
+	
+	private ServletHolder defaultServletHolder(URI baseUri) {
+        ServletHolder holderDefault = new ServletHolder("default", DefaultServlet.class);
+        holderDefault.setInitParameter("resourceBase", baseUri.toASCIIString());
+        return holderDefault;
+    }	
+	
+	private List<ContainerInitializer> jspInitializers() {
+    	JettyJasperInitializer sci = new JettyJasperInitializer();
+        ContainerInitializer initializer = new ContainerInitializer(sci, null);
+        List<ContainerInitializer> initializers = new ArrayList<ContainerInitializer>();
+        initializers.add(initializer);
+        return initializers;
+	}
+	
+    private ServletHolder jspServletHolder() {
+        ServletHolder holderJsp = new ServletHolder("jsp", JettyJspServlet.class);
+        holderJsp.setInitOrder(0);
+        holderJsp.setInitParameter("logVerbosityLevel", "DEBUG");
+        holderJsp.setInitParameter("fork", "false");
+        holderJsp.setInitParameter("xpoweredBy", "false");
+        holderJsp.setInitParameter("compilerTargetVM", "1.7");
+        holderJsp.setInitParameter("compilerSourceVM", "1.7");
+        holderJsp.setInitParameter("keepgenerated", "true");
+        return holderJsp;
+    }
+    
+    private ClassLoader getUrlClassLoader() {
+        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
+        return jspClassLoader;
+    } 
 
 	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) {
 		ServletContextHandler adminApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		
 		adminApiContext.setContextPath("/adm");
-
+		
 		// add metrics servlet
 		MetricRegistry metricsRegistry = MetricsService.getRegistry();
 		adminApiContext.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
@@ -107,7 +181,7 @@ public class WebApiServer {
 
 		// log level runtime change servlet
 		adminApiContext.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
-
+		
 		// service control (stop service etc)
 		adminApiContext.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
 
