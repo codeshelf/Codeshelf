@@ -161,6 +161,7 @@ public class WebApiServer {
 			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
 			// admin JSP handler
+			/*
 			final String WEBROOT_INDEX = "/com/gadgetworks/codeshelf/web/";
 	        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
 	        if (indexUri == null) {
@@ -174,6 +175,7 @@ public class WebApiServer {
 	        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
 	        contextHandler.setClassLoader(jspClassLoader);
 	        contextHandler.addServlet(jspServletHolder(), "*.jsp");
+	        */
 		}		
 
 		return contextHandler;
