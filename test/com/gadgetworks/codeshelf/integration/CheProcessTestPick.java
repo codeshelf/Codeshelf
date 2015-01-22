@@ -1409,7 +1409,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
 
-		//Case 6: Already complete so display dim, solid 0
+		//Case 6: Already complete so display dim, solid oc
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 6), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 6), PosControllerInstr.BITENCODED_LED_O);
@@ -1487,10 +1487,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.buttonPress(1, 1);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		this.getPersistenceService().commitTenantTransaction();
 
 		//SETUP AGAIN
-		this.getPersistenceService().beginTenantTransaction();
 		picker.logout();
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
@@ -1498,9 +1496,25 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		this.getPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		//Make sure we have a bright 1 on the poscon
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+
+		//COMPLETE FIRST ITEM
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		//SETUP AGAIN
+		picker.logout();
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
 		mPropertyService.restoreHKDefaults(facility);
 		this.getPersistenceService().commitTenantTransaction();
 	}
