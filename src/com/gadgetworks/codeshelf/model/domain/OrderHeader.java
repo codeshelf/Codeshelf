@@ -28,7 +28,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -560,7 +559,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 				result = theLoc.getPrimaryAliasId();
 		}
 		if (numLocations > 1) {
-			// add delimmiter and next one on
+			// add delimiter and next one on
 			for (int n = 1; n < numLocations; n++) {
 				OrderLocation nextLocation = oLocations.get(n);
 				if (nextLocation != null) {
@@ -572,6 +571,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 
 		return result;
+	}
+
+	public String getGroupUi() {
+		OrderGroup theGroup = getOrderGroup();
+		if (theGroup == null)
+			return "";
+		return theGroup.getDomainId();
 	}
 
 	public static void setDao(OrderHeaderDao inOrderHeaderDao) {

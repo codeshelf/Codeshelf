@@ -26,7 +26,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -445,6 +444,13 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return "";
 		// TODO  check that alias exists and location is not inactive. If so, show as inactive location.
 		return internalString;
+	}
+
+	public String getGroupUi() {
+		OrderGroup theGroup = parent.getOrderGroup();
+		if (theGroup == null)
+			return "";
+		return theGroup.getDomainId();
 	}
 
 	public Location getPreferredLocObject(final Facility inFacility) {

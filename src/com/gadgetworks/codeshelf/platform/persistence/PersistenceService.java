@@ -90,7 +90,7 @@ public class PersistenceService extends Service {
 
 	private final void configure() {
 		// fetch database config from properties file
-		this.hibernateConfigurationFile="hibernate." + System.getProperty("db.hibernateconfig") + ".xml";
+		this.hibernateConfigurationFile=System.getProperty("db.hibernateconfig");
 		if (this.hibernateConfigurationFile==null) {
 			LOGGER.error("hibernateConfigurationFile is not defined.");
 			System.exit(-1);
@@ -112,20 +112,19 @@ public class PersistenceService extends Service {
 		this.password = System.getProperty("db.password");
 
     	configuration = new Configuration().configure(this.hibernateConfigurationFile);
-    	// String connectionUrl = "jdbc:postgresql://"+shard.getHost()+":"+shard.getPort()+"/shard"+shard.getShardId();
     	configuration.setProperty("hibernate.connection.url", this.connectionUrl);
-    	//configuration.setProperty("hibernate.connection.username", tenant.getName());
-    	//configuration.setProperty("hibernate.connection.password", tenant.getDbPassword());
     	configuration.setProperty("hibernate.connection.username", this.userId);
     	configuration.setProperty("hibernate.connection.password", this.password);
 
     	if(this.schemaName != null) {
 	    	configuration.setProperty("hibernate.default_schema", this.schemaName);
     	}
+    	
     	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
 
-    	// we do not attempt to manage the in-memory test db; that will be done by Hibernate
+    	// we do not attempt to manage schema of the in-memory test db; that will be done by Hibernate
 		if(!this.connectionUrl.startsWith("jdbc:h2:mem")) {
+			// this only runs for postgres database
 			schemaManager = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
 			
 			schemaManager.applySchemaUpdates();
@@ -133,15 +132,7 @@ public class PersistenceService extends Service {
 			boolean schemaMatches = schemaManager.checkSchema();
 			
 			if(!schemaMatches) {
-/*					try {
-						this.createNewSchema();
-					} catch (SQLException e) {
-						LOGGER.error("SQL exception generating schema",e);
-						throw new RuntimeException("Cannot start, failed to initialize schema");
-					}
-				} else*/ {
-					throw new RuntimeException("Cannot start, schema does not match");
-				}
+				throw new RuntimeException("Cannot start, schema does not match");
 			}
 		}
 	}
