@@ -2,9 +2,8 @@ package com.gadgetworks.codeshelf.device.radio;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
+import com.gadgetworks.flyweight.command.CommandGroupEnum;
 import com.gadgetworks.flyweight.command.IPacket;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.IGatewayInterface;
@@ -30,14 +30,13 @@ public class RadioControllerPacketIOService {
 	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
 	private final Counter								packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
 																						"packets.sent");
-	private final ScheduledExecutorService				scheduleExecutorService		= Executors.newScheduledThreadPool(2,
+	private final ExecutorService						executorService				= Executors.newFixedThreadPool(2,
 																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																							.setPriority(Thread.MAX_PRIORITY)
 																							.build());
 	private final BlockingQueue<IPacket>				packetsPendingWrite			= new ArrayBlockingQueue<>(MAX_PACKET_WRITE_QUEUE_SIZE);
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerPacketHandlerService	packetHandlerService;
-	private final long									writeDelayMs;
 
 	private NetworkId									networkId;
 	private volatile boolean							isShutdown					= false;
@@ -48,20 +47,16 @@ public class RadioControllerPacketIOService {
 		super();
 		this.gatewayInterface = gatewayInterface;
 		this.packetHandlerService = packetHandlerService;
-		this.writeDelayMs = writeDelayMs;
 	}
 
 	public void start() {
-		//We do not need any delays here. TODO is it okay to use 0?
-		scheduleExecutorService.submit(new PacketReader());
-
-		//We want there to be a delay between every write. PacketWriter waits for packets then sends them immediately after they are ready. It could wait for longer than writeRateMs.
-		scheduleExecutorService.scheduleWithFixedDelay(new PacketWriter(), 0, writeDelayMs, TimeUnit.MILLISECONDS);
+		executorService.submit(new PacketReader());
+		executorService.submit(new PacketWriter());
 	}
 
 	public void stop() {
 		isShutdown = true;
-		scheduleExecutorService.shutdown();
+		executorService.shutdown();
 	}
 
 	/**
@@ -89,7 +84,7 @@ public class RadioControllerPacketIOService {
 						if (packet != null) {
 							//Hand packet off to handler service
 							boolean success = packetHandlerService.handleInboundPacket(packet);
-
+							LOGGER.info("INBOUND PACKET={}; didGetHandled={}", packet, success);
 							if (!success) {
 
 								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry packet. Packet={}",
@@ -143,24 +138,26 @@ public class RadioControllerPacketIOService {
 
 		@Override
 		public void run() {
-			try {
-				if (gatewayInterface.isStarted()) {
+			while (!isShutdown) {
+				try {
+					if (gatewayInterface.isStarted()) {
 
-					//Non-busy block and wait for packet to send. 
-					IPacket packet = packetsPendingWrite.take();
-					packet.setSentTimeMillis(System.currentTimeMillis());
-					packet.incrementSendCount();
+						//Non-busy block and wait for packet to send. 
+						IPacket packet = packetsPendingWrite.take();
+						packet.setSentTimeMillis(System.currentTimeMillis());
+						packet.incrementSendCount();
 
-					//Send packet
-					gatewayInterface.sendPacket(packet);
-					packetsSentCounter.inc();
-					//					if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-					//						LOGGER.info("OUTBOUND PACKET={}", packet);
-					//					}
+						//Send packet
+						gatewayInterface.sendPacket(packet);
+						packetsSentCounter.inc();
+						if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
+							LOGGER.info("OUTBOUND PACKET={}", packet);
+						}
 
+					}
+				} catch (Exception e) {
+					LOGGER.error("Packet Writer Error ", e);
 				}
-			} catch (Exception e) {
-				LOGGER.error("Packet Writer Error ", e);
 			}
 		}
 

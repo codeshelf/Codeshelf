@@ -886,9 +886,9 @@ public class RadioController implements IRadioController {
 				//IPacket packet = queue.peek();
 				if (packet != null) {
 					if (packet.getAckId() == ackPacket.getAckId()) {
+						queue.remove(packet);
 						packet.setAckData(ackPacket.getAckData());
 						packet.setAckState(AckStateEnum.SUCCEEDED);
-						queue.remove(packet);
 						LOGGER.info("Packet acked SUCCEEDED={}", packet);
 					}
 				}
