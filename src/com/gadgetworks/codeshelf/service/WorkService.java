@@ -702,8 +702,13 @@ public class WorkService implements IApiService {
 							//give feedback on complete orders (and differentiate a 100% complete order from
 							//unknown container id. The computeWork method will filter these out before sorting
 							//and saving
-							LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
-							wiResultList.addAll(orderDetail.getWorkInstructions());
+							for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
+								//As of DEV-603 we are only adding completed WIs to the list
+								if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+									LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
+									wiResultList.add(wi);
+								}
+							}
 						}
 					}
 					if (orderDetailChanged) {
