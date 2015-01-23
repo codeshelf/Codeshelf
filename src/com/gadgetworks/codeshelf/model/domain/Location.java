@@ -1165,14 +1165,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return getParent().getFacility();
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.SubLocationABC#setParent(P)
-	 */
-	public void setParent(Location inParent) {
-		parent = inParent;
-	}
-
 	public Point getAbsolutePickFaceEndPoint() {
 		Point base = getAbsoluteAnchorPoint();
 		return base.add(getPickFaceEndPosX(), getPickFaceEndPosY(), getPickFaceEndPosZ());

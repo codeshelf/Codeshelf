@@ -44,6 +44,7 @@
 	<property name="target.enhanced.classes" location="${target.build}/enhanced-classes" />
 	<property name="target.resources" location="${target.build}/resources" />
 	<property name="target.lib" location="${target.build}/lib" />
+	<property name="target.web" location="${target.build}/web" />
 	<property name="target.native.dir" location="${target.lib}/native" />
 	<property name="target.docs" location="${target.build}/docs" />
 	<property name="target.docsapi" location="${target.docs}/api" />
@@ -53,6 +54,7 @@
 	<property name="bin" location="${target.build}/bin" />
 	<property name="conf.dir" location="${basedir}/conf" />
 	<property name="liquibase.dir" location="${basedir}/liquibase/changeLogs" />
+	<property name="web.dir" location="${basedir}/web" />
 	<property name="resources.dir" location="${basedir}/resources" />
 
 	<property name="javac.compile.using.version" value="1.7" />
@@ -155,6 +157,11 @@
 				<include name="hibernate.test.xml" />
 			</fileset>
 			<fileset dir="${liquibase.dir}">
+				<include name="*.*" />
+			</fileset>
+		</copy>
+		<copy todir="${target.web}">
+			<fileset dir="${web.dir}">
 				<include name="*.*" />
 			</fileset>
 		</copy>
@@ -282,6 +289,7 @@
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
 			<zipfileset dir="${target.enhanced.classes}" />
 			<zipfileset dir="${target.resources}/"/>
+			<zipfileset dir="${target.web}/" prefix="web/"/>
 			<zipfileset dir="${target.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
 			</zipfileset>

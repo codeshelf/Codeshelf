@@ -161,8 +161,7 @@ public class WebApiServer {
 			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
 			// admin JSP handler
-			/*
-			final String WEBROOT_INDEX = "/com/gadgetworks/codeshelf/web/";
+			final String WEBROOT_INDEX = "/web/";
 	        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
 	        if (indexUri == null) {
 	            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
@@ -175,7 +174,6 @@ public class WebApiServer {
 	        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
 	        contextHandler.setClassLoader(jspClassLoader);
 	        contextHandler.addServlet(jspServletHolder(), "*.jsp");
-	        */
 		}		
 
 		return contextHandler;
