@@ -2,6 +2,7 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 import java.util.Scanner;
@@ -187,17 +188,15 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		LOGGER.info("Checking property defaults...");
 		PropertyDao dao = PropertyDao.getInstance();
 		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
-		File file = null;
-		URL res = this.getClass().getResource("property-defaults.csv");
-		if (res==null) {
-			res = this.getClass().getClassLoader().getResource("property-defaults.csv");
+		InputStream is = this.getClass().getResourceAsStream("property-defaults.csv");
+		if (is==null) {
+			is = this.getClass().getClassLoader().getResourceAsStream("property-defaults.csv");
 		}
-		if (res==null) {
+		if (is==null) {
 			LOGGER.error("Failed to load property defaults");
 			return;
 		}
-		file = new File(res.getFile());
-		try (Scanner scanner = new Scanner(file)) {
+		try (Scanner scanner = new Scanner(is)) {
 			while (scanner.hasNextLine()) {
 				String line = scanner.nextLine();
 				String[] data = line.split(";");
@@ -239,7 +238,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 				}
 			}
 			scanner.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.error("Failed to sync up property defaults",e);
 			return;
 		}
@@ -247,24 +246,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		for(DomainObjectPropertyDefault def : currentProperties) {
 			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue()+" and its instances.");
 			dao.delete(def);
-			// dao.deleteProperties(def.getObjectType(),def.getName());		
 		}
 	}
-	
-	/*
-	private void deleteProperties(String objectType, String name) {
-		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
-        Query query = session.createQuery(queryString);
-        query.setParameter("objectId", object.getPersistentId());
-        query.setParameter("objectType", object.getClassName());
-        query.setParameter("name", name); 
-		
-		
-		Query q = createQuery("delete from DomainObjectProperty where id in (:idList) ");
-        query.setParameter("objectType", object.getClassName());
-        query.setParameter("name", name); 
-		q.executeUpdate();
-	}
-	*/
 
 }
