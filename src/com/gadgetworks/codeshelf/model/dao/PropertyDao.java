@@ -2,6 +2,7 @@ package com.gadgetworks.codeshelf.model.dao;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.List;
 import java.util.Scanner;
 
@@ -186,8 +187,16 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		LOGGER.info("Checking property defaults...");
 		PropertyDao dao = PropertyDao.getInstance();
 		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
-		
-		File file = new File(this.getClass().getClassLoader().getResource("property-defaults.csv").getFile());
+		File file = null;
+		URL res = this.getClass().getResource("property-defaults.csv");
+		if (res==null) {
+			res = this.getClass().getClassLoader().getResource("property-defaults.csv");
+		}
+		if (res==null) {
+			LOGGER.error("Failed to load property defaults");
+			return;
+		}
+		file = new File(res.getFile());
 		try (Scanner scanner = new Scanner(file)) {
 			while (scanner.hasNextLine()) {
 				String line = scanner.nextLine();
