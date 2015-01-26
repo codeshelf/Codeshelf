@@ -2,8 +2,8 @@ package com.gadgetworks.codeshelf.device.radio;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class RadioControllerPacketIOService {
 	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
 	private final Counter								packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
 																						"packets.sent");
-	private final ExecutorService						executorService				= Executors.newFixedThreadPool(2,
+	private final ScheduledExecutorService				executorService				= Executors.newScheduledThreadPool(2,
 																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																							.setPriority(Thread.MAX_PRIORITY)
 																							.build());
@@ -51,7 +51,7 @@ public class RadioControllerPacketIOService {
 
 	public void start() {
 		executorService.submit(new PacketReader());
-		executorService.submit(new PacketWriter());
+		//executorService.scheduleWithFixedDelay(new PacketWriter(), 0, 20, TimeUnit.MILLISECONDS);
 	}
 
 	public void stop() {
@@ -62,11 +62,15 @@ public class RadioControllerPacketIOService {
 	/**
 	 * This method will block until there is space in the queue.
 	 */
-	public void handleOutboundPacket(IPacket packet) throws InterruptedException {
-		//LOGGER.debug("Queueing packet for gateway. Dst={}; QueueSize={}; Max={}", packet, packetsPendingWrite.size(), MAX_PACKET_WRITE_QUEUE_SIZE);
-
-		//Block and wait for space in queue
-		packetsPendingWrite.put(packet);
+	public synchronized void handleOutboundPacket(IPacket packet) {
+		//Send packet
+		packet.setSentTimeMillis(System.currentTimeMillis());
+		packet.incrementSendCount();
+		gatewayInterface.sendPacket(packet);
+		packetsSentCounter.inc();
+		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
+			LOGGER.info("OUTBOUND PACKET={}", packet);
+		}
 	}
 
 	private final class PacketReader implements Runnable {
@@ -138,26 +142,24 @@ public class RadioControllerPacketIOService {
 
 		@Override
 		public void run() {
-			while (!isShutdown) {
-				try {
-					if (gatewayInterface.isStarted()) {
+			try {
+				if (gatewayInterface.isStarted()) {
 
-						//Non-busy block and wait for packet to send. 
-						IPacket packet = packetsPendingWrite.take();
-						packet.setSentTimeMillis(System.currentTimeMillis());
-						packet.incrementSendCount();
+					//Non-busy block and wait for packet to send. 
+					IPacket packet = packetsPendingWrite.take();
+					packet.setSentTimeMillis(System.currentTimeMillis());
+					packet.incrementSendCount();
 
-						//Send packet
-						gatewayInterface.sendPacket(packet);
-						packetsSentCounter.inc();
-						if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-							LOGGER.info("OUTBOUND PACKET={}", packet);
-						}
-
+					//Send packet
+					gatewayInterface.sendPacket(packet);
+					packetsSentCounter.inc();
+					if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
+						LOGGER.info("OUTBOUND PACKET={}", packet);
 					}
-				} catch (Exception e) {
-					LOGGER.error("Packet Writer Error ", e);
+
 				}
+			} catch (Exception e) {
+				LOGGER.error("Packet Writer Error ", e);
 			}
 		}
 

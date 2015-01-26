@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import lombok.Getter;
 
@@ -134,8 +135,8 @@ public class RadioController implements IRadioController {
 	private final RadioControllerPacketIOService					packetIOService;
 	private final RadioControllerBroadcastService					broadcastService;
 
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingWritesMap			= Maps.newConcurrentMap();
-	private final ConcurrentMap<NetAddress, IPacket>				mPendingAcksMap				= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, AtomicLong>				mLastIOTimestampMsMap		= Maps.newConcurrentMap();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -281,6 +282,7 @@ public class RadioController implements IRadioController {
 		if ((inChannel < 0) || (inChannel > MAX_CHANNELS)) {
 			LOGGER.error("Could not set channel - out of range!");
 		} else {
+			LOGGER.info("Trying to set radio channel={}", inChannel);
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
@@ -865,21 +867,6 @@ public class RadioController implements IRadioController {
 		// The controller doesn't need to process these sub-commands.
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inPacket
-	 */
-	private void sendPacket(IPacket inPacket) {
-		LOGGER.debug("Sending Packet {}" + inPacket);
-
-		try {
-			packetIOService.handleOutboundPacket(inPacket);
-		} catch (InterruptedException e) {
-			LOGGER.error("Failed to send packet to IO Service ", e);
-		}
-
-	}
-
 	private void processAckPacket(IPacket ackPacket) {
 		BlockingQueue<IPacket> queue = mPendingAcksMap.get(ackPacket.getSrcAddr());
 		if (queue != null) {
@@ -914,6 +901,7 @@ public class RadioController implements IRadioController {
 		ContextLogging.setNetGuid(device.getGuid());
 		try {
 			if (device.isAckIdNew(ackId)) {
+				device.setLastAckId(ackId);
 
 				LOGGER.info("Remote ack request RECEIVED: ack={}; netId={}; srcAddr={}", ackId, netId, srcAddr);
 
@@ -933,20 +921,79 @@ public class RadioController implements IRadioController {
 
 	}
 
-	public void handleInboundPacket(IPacket packet) {
-		if (packet != null) {
-			if (packet.getPacketType() == IPacket.ACK_PACKET) {
-				LOGGER.debug("Packet remote ACK req RECEIVED={}", packet.toString());
-				processAckPacket(packet);
-			} else {
-				// If the inbound packet had an ACK ID then respond with an ACK ID.
-				byte ackId = packet.getAckId();
-				if (ackId != IPacket.EMPTY_ACK_ID) {
-					respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
-				}
-				receiveCommand(packet.getCommand(), packet.getSrcAddr());
-			}
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inPacket
+	 */
+	private void sendPacket(IPacket inPacket) {
+		//Update the last IO Timestamp -- this a best effort attempt. Again the Map is not 100% gaurunteed to prevent incorrectly spaced IO.
+		//We may read a packet then send something immediately afterwards before updating the timestamp.
+		//To prevent that we would need to lock this map during a read, but that will require gateway changes that are TODO
+		//Also the reason we have to lock the whole map is because the broadcaster will need to send something to everyone
+		AtomicLong lastIOTimestamp = getLastIOTimestamp(inPacket.getDstAddr());
 
+		synchronized (lastIOTimestamp) {
+			long differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
+			if (differenceMs >= 20) {
+				//A read io could have happened here right after the check -- we don't protect against this case
+				packetIOService.handleOutboundPacket(inPacket);
+			} else {
+				//We loop as a best effort against reads
+				while (differenceMs < 20) {
+					try {
+						Thread.sleep(Math.max(0, differenceMs));
+					} catch (InterruptedException e) {
+						LOGGER.error("SendPckt ", e);
+					}
+					differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
+				}
+				//Again...a read io could have happened here right after the check -- we don't protect against this case
+				packetIOService.handleOutboundPacket(inPacket);
+			}
+			this.updateTimestampIfLarger(lastIOTimestamp, System.currentTimeMillis());
+		}
+	}
+
+	/**
+	 * Updates the timestamp in the atomic long iff the new value is greater than the present value
+	 */
+	private void updateTimestampIfLarger(AtomicLong timestmapMsToUpdate, long newTimestampMs) {
+		long currentValue = timestmapMsToUpdate.get();
+		while (newTimestampMs > currentValue && !timestmapMsToUpdate.compareAndSet(currentValue, newTimestampMs)) {
+			currentValue = timestmapMsToUpdate.get();
+		}
+	}
+
+	private AtomicLong getLastIOTimestamp(NetAddress remoteAddr) {
+		AtomicLong lastIOTimestmapMs = mLastIOTimestampMsMap.get(remoteAddr);
+		if (lastIOTimestmapMs == null) {
+			//Initialize as current timestamp
+			lastIOTimestmapMs = new AtomicLong(System.currentTimeMillis());
+			AtomicLong currentValue = mLastIOTimestampMsMap.putIfAbsent(remoteAddr, lastIOTimestmapMs);
+			if (currentValue != null) {
+				lastIOTimestmapMs = currentValue;
+			}
+		}
+		return lastIOTimestmapMs;
+	}
+
+	public void handleInboundPacket(IPacket packet) {
+		//Update the last IO Timestamp -- this a best effort attempt. Again the Map is not 100% gaurunteed to prevent incorrectly spaced IO.
+		//We may read a packet then send something immediately afterwards before updating the timestamp.
+		//To prevent that we would need to lock this map during a read, but that will require gateway changes that are TODO
+		AtomicLong lastIOTimestmapMs = getLastIOTimestamp(packet.getSrcAddr());
+		updateTimestampIfLarger(lastIOTimestmapMs, System.currentTimeMillis());
+
+		if (packet.getPacketType() == IPacket.ACK_PACKET) {
+			LOGGER.debug("Packet remote ACK req RECEIVED={}", packet.toString());
+			processAckPacket(packet);
+		} else {
+			// If the inbound packet had an ACK ID then respond with an ACK ID.
+			byte ackId = packet.getAckId();
+			if (ackId != IPacket.EMPTY_ACK_ID) {
+				respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
+			}
+			receiveCommand(packet.getCommand(), packet.getSrcAddr());
 		}
 	}
 
