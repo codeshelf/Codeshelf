@@ -1,53 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project name="Codeshelf" default="build.all" basedir="..">
+<project name="Codeshelf" default="build.all" basedir=".">
 
 	<description>
 		Codeshelf build script.
-    </description>
+        </description>
 
-	<taskdef resource="net/sf/antcontrib/antcontrib.properties">
-		<classpath>
-			<pathelement location="${basedir}/build/lib/ant-contrib.jar" />
-		</classpath>
-	</taskdef>
-
-	<!-- Optional add this file to override any of the properties below -->
-	<property file="${basedir}/build/build.properties" />
 	<property file="${basedir}/conf/version.properties" />
 
-	<!-- Setup the full version property correctly -->
-	<if>
-		<equals arg1="${version.date}" arg2="none" />
-		<then>
-			<property name="version" value="${version.major}.${version.revision}" />
-			<property name="version.filename" value="${version.major}_${version.revision}" />
-		</then>
-		<else>
-			<property name="version" value="${version.major}.${version.revision} (${version.branch}-${version.commit} ${version.date})" />
-			<property name="version.filename" value="${version.major}_${version.revision}_${version.commit}" />
-		</else>
-	</if>
-
-	<description>CodeShelf Build</description>
+	<description>Codeshelf Build</description>
 	<!--set global properties for this build-->
 	<property name="src" location="${basedir}/src" />
 	<property name="libs.dir" location="${basedir}/lib" />
 	<property name="libs.dist.dir" location="${basedir}/lib/dist" />
 	<property name="libs.native.dir" location="${basedir}/lib/native" />
 	<property name="libs.test.dir" location="${libs.dir}/junit" />
-	<property name="keystore" location="${basedir}/build/keystore" />
 	<property name="target" location="${basedir}/target" />
 	<property name="target.build" location="${target}/build" />
 	<property name="target.compiled.classes" location="${target.build}/compiled-classes" />
-	<property name="target.classes" location="${target.compiled.classes}" />
-	<property name="target.enhanced.classes" location="${target.build}/enhanced-classes" />
 	<property name="target.resources" location="${target.build}/resources" />
 	<property name="target.lib" location="${target.build}/lib" />
 	<property name="target.web" location="${target.build}/web" />
 	<property name="target.native.dir" location="${target.lib}/native" />
 	<property name="target.docs" location="${target.build}/docs" />
-	<property name="target.docsapi" location="${target.docs}/api" />
 	<property name="target.test" location="${target}/test" />
 	<property name="target.report" location="${target}/report" />
 	<property name="test.dir" location="${basedir}/test" />
@@ -121,7 +96,6 @@
 		<!--creates the build directory-->
 		<mkdir dir="${target}" />
 		<mkdir dir="${target.compiled.classes}" />
-		<mkdir dir="${target.enhanced.classes}" />
 		<mkdir dir="${target.build}" />
 		<mkdir dir="${target.resources}" />
 		<mkdir dir="${target.lib}" />
@@ -132,13 +106,6 @@
 
 	<!-- resources =================================================================================== -->
 	<target name="resources">
-		<!--copy todir="${target.resources}">
-			<fileset dir="${resources.dir}">
-				<exclude name="*.bat" />
-				<exclude name="settings.xml" />
-				<include name="*.*" />
-			</fileset>
-		</copy-->
 		<copy todir="${target.resources}">
 			<fileset dir="${conf.dir}">
 				<include name="common.config.properties" />
@@ -165,16 +132,6 @@
 				<include name="*.*" />
 			</fileset>
 		</copy>
-		<!--copy todir="${target.resources}/images">
-			<fileset dir="${resources.dir}/images">
-				<include name="*.*" />
-			</fileset>
-		</copy-->
-		<!--copy todir="${target.resources}/sounds">
-			<fileset dir="${resources.dir}/sounds">
-				<include name="*.*" />
-			</fileset>
-		</copy-->
 	</target>
 
 	<!-- build =================================================================================== -->
@@ -190,12 +147,6 @@
 				<include name="*/**.*" />
 			</fileset>
 		</copy>
-		<!--copy todir="${target.lib}">
-			<fileset dir="${basedir}/build/lib">
-				<include name="i4jruntime.jar" />
-			</fileset>
-		</copy-->
-
 		<echo message="${toString:compile-libs}" />
 
 		<!--Compiles the java code from ${src} directory into ${target.compiled.classes} directory-->
@@ -208,13 +159,6 @@
 			<exclude name="org/**/*.java" />
 		</javac>
 
-		<!-- Put the FlyweightController classes into the compiled classes folder, so that we can enhance them. -->
-		<!--unjar dest="${target.compiled.classes}">
-			<patternset>
-				<include name="com/gadgetworks/**/*.class" />
-			</patternset>
-		</unjar-->
-
 		<!-- Put the main application classes in one JAR. -->
 		<jar duplicate="fail" jarfile="${target.lib}/codeshelf-unobfs.jar">
 			<!-- codeshelf classes (exclude any org.xxx classes) -->
@@ -222,35 +166,6 @@
 				<exclude name="org/**/*.class" />
 			</fileset>
 		</jar>
-	</target>
-
-	<!-- sign-jars-dist =================================================================================== -->
-	<target name="sign-jars-dist">
-		<echo level="info">Signing JARS...</echo>
-		<!--<signjar jar="${target.lib}/base.jar" keystore="${keystore}" alias="myself" storepass="password" />-->
-		<signjar keystore="${keystore}" alias="myself" storepass="password">
-			<fileset dir="${libs.dist.dir}">
-				<include name="**/*.jar" />
-			</fileset>
-		</signjar>
-	</target>
-
-	<!-- javadocs =================================================================================== -->
-	<target name="release.javadocs" depends="javadocs" description="creates javadocs version for developer source builds">
-	</target>
-
-	<!-- javadocs =================================================================================== -->
-	<target name="javadocs" depends="init">
-		<mkdir dir="${target.docsapi}" />
-		<javadoc destdir="${target.docsapi}" author="true" version="true" use="true" windowtitle="API for Agent">
-			<classpath>
-				<path refid="agent.dependencies" />
-			</classpath>
-			<fileset dir="${src}" defaultexcludes="yes">
-				<exclude name="**/*.properties" />
-				<exclude name="**/*.html" />
-			</fileset>
-		</javadoc>
 	</target>
 
 	<!-- Jar builder =================================================================================== -->
@@ -287,10 +202,9 @@
 
 		<!-- Create the final application JAR file. -->
 		<jar duplicate="fail" jarfile="${appjar.build.dir}/${codeshelf.app.jar.name}">
-			<zipfileset dir="${target.enhanced.classes}" />
 			<zipfileset dir="${target.resources}/"/>
 			<zipfileset dir="${target.web}/" prefix="web/"/>
-			<zipfileset dir="${target.classes}/">
+			<zipfileset dir="${target.compiled.classes}/">
 				<exclude name="com.gadgetworks.codeshelf.model.domain/**.*" />
 			</zipfileset>
 
@@ -326,38 +240,6 @@
 		<antcall target="jar.sitecontroller" />
 	</target>
 
-	<target name="deploy-production" depends="prep.jar, jar.server">
-		<!--input message="SCP password:" addproperty="scp.password">
-			<!- -handler classname="org.apache.tools.ant.input.SecureInputHandler" /- ->
-		</input-->
-
-		<echo>App dir: ${appjar.build.dir}</echo>
-
-		<!-- Stop the codeshelf service. -->
-		<!--sshexec host="login.codeshelf.io"
-			username="codeshelf"
-			keyfile="${user.home}/.ssh/codeshelf"
-			command="/sbin/stop codeshelf"/-->
-
-		<scp todir="codeshelf@test.codeshelf.com:/opt/codeshelf/engine" verbose="true" keyfile="${user.home}/.ssh/codeshelf">
-			<fileset dir="${appjar.build.dir}">
-				<include name="**" />
-				<include name="**/*" />
-				<exclude name="*sitecontroller*.jar" />
-				<modified>
-					<param name="cache.cachefile" value="${basedir}/build/engine.scp.cache" />
-				</modified>
-			</fileset>
-		</scp>
-
-		<!-- Start the codeshelf service. -->
-		<!--sshexec host="login.codeshelf.io"
-			username="codeshelf"
-			keyfile="${user.home}/.ssh/codeshelf"
-			command="/sbin/stop codeshelf"/-->
-
-	</target>
-
         <!--Compiles the JUnit tests ${test.dir} directory into ${target.test} directory-->
 	<target name="compile.junit">
 		<mkdir dir="${target.test}" />
@@ -376,13 +258,12 @@
 			</copy>
 	</target>
 
-
 	<target name="junit" depends="build.all, compile.junit">
 		<mkdir dir="${target.report}" />
 		<junit printsummary="on" fork="true" haltonfailure="no" failureproperty="test.failed">
 			<classpath>
 				<pathelement location="${target.resources}" />
-				<pathelement location="${target.classes}" />
+				<pathelement location="${target.compiled.classes}" />
 				<pathelement location="${target.test}" />
 				<pathelement location="${target.lib}" />
 				<path refid="compile-libs" />
