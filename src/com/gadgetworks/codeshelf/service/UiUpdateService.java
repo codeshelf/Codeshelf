@@ -91,14 +91,18 @@ public class UiUpdateService implements IApiService {
 			LOGGER.error("Could not find che {0}", cheId);
 			return;
 		}
+		ProcessMode processMode = ProcessMode.getMode(processModeStr);
+		if (processMode == null) {
+			LOGGER.error("Provide a valid processMode [SETUP_ORDERS,LINE_SCAN]");
+			return;
+		}
 		try {
 			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
 			che.setColor(color);
 		} catch (Exception e) {}
 		if (domainId != null && !domainId.isEmpty()) {che.setDomainId(domainId);}
 		if (description != null){che.setDescription(description);}
-		ProcessMode processMode = ProcessMode.getMode(processModeStr);
-		che.setProcessMode((processMode == null)?ProcessMode.LINE_SCAN:processMode);
+		che.setProcessMode(processMode);
 		try {
 			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 			NetGuid currentGuid = che.getDeviceNetGuid();
