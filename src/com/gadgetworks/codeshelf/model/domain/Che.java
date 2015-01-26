@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -68,7 +69,14 @@ public class Che extends WirelessDeviceABC {
 	@Setter
 	@JsonProperty
 	private ColorEnum				color;
-
+	
+	@Column(name="processmode")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private ProcessMode				processMode;
+	
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
 	private List<ContainerUse>		uses				= new ArrayList<ContainerUse>();
@@ -189,6 +197,19 @@ public class Che extends WirelessDeviceABC {
 			}
 		}
 		return returnStr;
+	}
+	
+	public enum ProcessMode {
+		SETUP_ORDERS, LINE_SCAN;
+		
+		public static ProcessMode getMode(String str) {
+			if ("setup_orders".equalsIgnoreCase(str)){
+				return SETUP_ORDERS;
+			} else if ("line_scan".equalsIgnoreCase(str)){
+				return LINE_SCAN;
+			}
+			return null;
+		}
 	}
 
 }
