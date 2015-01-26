@@ -262,7 +262,7 @@ public class CreateCheTest extends DAOTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Che che = createTestChe("0x00000002");
 		UiUpdateService service = new UiUpdateService();
-		service.updateCheEdits(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099");
+		service.updateCheEdits(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -282,18 +282,18 @@ public class CreateCheTest extends DAOTestABC {
 		UiUpdateService service = new UiUpdateService();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099");
+		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		//Fail to update name
-		service.updateCheEdits(persistentId, "", "Description", "orange", "0x00000099");
+		service.updateCheEdits(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		service.updateCheEdits(persistentId, "Test Device", null, "orange", "0x00000099");
+		service.updateCheEdits(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		service.updateCheEdits(persistentId, "Test Device", "Description", "yellow", "0x00000099");
+		service.updateCheEdits(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099x");
+		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		this.getPersistenceService().commitTenantTransaction();
 	}
