@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -25,6 +26,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +50,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "users") // user can be reserved word in sql
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class User extends DomainObjectTreeABC<Organization> {
 

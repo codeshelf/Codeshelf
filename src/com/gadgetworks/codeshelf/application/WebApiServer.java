@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.application;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,9 +13,9 @@ import java.util.List;
 import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
-import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.jndi.local.localContextRoot;
 import org.eclipse.jetty.jsp.JettyJspServlet;
 import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Handler;
@@ -26,9 +27,7 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler.Context;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.webapp.WebAppClassLoader;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.slf4j.Logger;
@@ -149,31 +148,41 @@ public class WebApiServer {
 		contextHandler.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
 
 		if (deviceManager != null) {
+			//////////////////////////
 			// only for site controller
+			//////////////////////////
 
 			// radio packet capture interface
 			contextHandler.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
 		} 
 		else {
+			//////////////////////////
 			// only for server
-
+			//////////////////////////
+			
 			// user manager sql generator (temporary)
 			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
 			// admin JSP handler
-			final String WEBROOT_INDEX = "/web/";
-	        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
-	        if (indexUri == null) {
-	            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
-	        }
-	        URI baseUri = indexUri.toURI();
-	        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
-	        
-	        contextHandler.setResourceBase(baseUri.toASCIIString());
-	        contextHandler.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
-	        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
-	        contextHandler.setClassLoader(jspClassLoader);
-	        contextHandler.addServlet(jspServletHolder(), "*.jsp");
+			try {
+				final String WEBROOT_INDEX = "/web/";
+		        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
+		        if (indexUri == null) {
+		            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
+		        }
+		        URI baseUri = indexUri.toURI();
+		        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
+		        File tempDir = new File(System.getProperty("java.io.tmpdir"));	        
+		        contextHandler.setResourceBase(baseUri.toASCIIString());
+		        contextHandler.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
+		        contextHandler.setAttribute("javax.servlet.context.tempdir", tempDir);
+		        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
+		        contextHandler.setClassLoader(jspClassLoader);
+		        contextHandler.addServlet(jspServletHolder(), "*.jsp");
+			}
+			catch (Exception e) {
+				LOGGER.error("Failed to start admin JSP servlet",e);
+			}
 		}		
 
 		return contextHandler;

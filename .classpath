@@ -93,7 +93,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="lib/dist/c3p0-0.9.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/dist/ehcache-core-2.4.3.jar"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-c3p0-4.3.7.Final.jar"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-core-4.3.7.Final.jar" sourcepath="APIs/hibernate-orm-4.3.6.Final.zip"/>
 	<classpathentry kind="lib" path="lib/dist/hibernate-ehcache-4.3.7.Final.jar"/>
@@ -158,5 +157,6 @@
 	<classpathentry kind="lib" path="lib/dist/jettison-1.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/jsr311-api-1.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/dist/asm-3.1.jar"/>
+	<classpathentry kind="lib" path="lib/dist/ehcache-core-2.6.9.jar"/>
 	<classpathentry kind="output" path="eclipse-bin"/>
 </classpath>
