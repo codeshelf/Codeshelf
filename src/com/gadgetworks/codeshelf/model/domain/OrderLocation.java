@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,6 +18,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "order_location")
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "location", "parent", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {

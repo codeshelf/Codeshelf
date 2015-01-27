@@ -20,8 +20,11 @@
   		<property name="hibernate.c3p0.max_statements">100</property>
   		<property name="hibernate.c3p0.idle_test_period">3000</property>        
 
-        <!-- Disable the second-level cache for now  -->
-        <property name="cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
+        <!-- configure second-level cache for now  -->
+        <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+        <property name="hibernate.cache.use_second_level_cache">true</property>
+        <property name="hibernate.cache.use_query_cache">true</property>
+        <property name="net.sf.ehcache.configurationResourceName">ehcache.xml</property>
         
         <!-- Echo all executed SQL to stdout -->
         <property name="show_sql">false</property>
