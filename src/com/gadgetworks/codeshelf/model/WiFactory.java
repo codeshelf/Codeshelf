@@ -55,7 +55,7 @@ public class WiFactory {
 
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
-		if (inLocation instanceof Facility)
+		if (inLocation.isFacility())
 			resultWi.setPosAlongPath(0.0);
 		else {
 			resultWi.setPosAlongPath(inLocation.getPosAlongPath());
@@ -247,7 +247,7 @@ public class WiFactory {
 					resultWi.setPickInstruction(resultWi.getLocationId());
 				}
 			}
-			if (inLocation instanceof Facility)
+			if (inLocation.isFacility())
 				resultWi.setPosAlongPath(0.0);
 			else {
 				if (isInventoryPickInstruction) {
@@ -350,7 +350,7 @@ public class WiFactory {
 			LOGGER.error("unexpected null condition in setOutboundWorkInstructionLedPatternFromInventoryItem");
 			return;
 		}
-		if (inLocation instanceof Facility) {
+		if (inLocation.isFacility()) {
 			LOGGER.error("inappropriate call to setOutboundWorkInstructionLedPatternFromInventoryItem (location is Facility)");
 			return;
 		}

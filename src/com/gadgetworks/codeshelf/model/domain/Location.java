@@ -460,7 +460,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public <T extends Location> T getParentAtLevel(Class<? extends Location> inClassWanted) {
 
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
-		if (this.getClass().equals(inClassWanted))
+		if (Hibernate.getClass(this).equals(inClassWanted))
 			return (T) this; // (We can cast safely since we checked the class.)
 
 		T result = null;
@@ -1124,7 +1124,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				lastLocLed));
 		}
 		// following cast not safe if the stored location is facility
-		if (this instanceof Facility)
+		if (this.isFacility())
 			return LedRange.zero(); // was initialized to give values of 0,0
 
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
