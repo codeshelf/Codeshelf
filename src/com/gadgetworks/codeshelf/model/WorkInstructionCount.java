@@ -95,7 +95,7 @@ public class WorkInstructionCount {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (this.getClass().equals(obj.getClass()))
 			return false;
 		WorkInstructionCount other = (WorkInstructionCount) obj;
 		if (completeCount != other.completeCount)
