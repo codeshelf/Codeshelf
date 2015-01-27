@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
@@ -327,7 +328,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			result = true;
 		} else {
 			// The check location is parent of the WI location, so it contains it.
-			Location parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
+			Location parentLoc = location.getParentAtLevel(Hibernate.getClass(inCheckLocation));
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;
 			}
@@ -481,7 +482,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return returnStr;
 
 		Location theLocation = theWLocationABC;
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return returnStr;
 
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
@@ -504,7 +505,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return null; // should not happen
 
 		Location theLocation = theWLocationABC;
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return null;
 
 		return theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());

@@ -140,7 +140,7 @@ public class Bay extends Location {
 		if (location==null) {
 			return null;
 		}
-		if (location instanceof Bay) {
+		if (location.isBay()) {
 	    	return (Bay) location;
 	    }
 		throw new RuntimeException("Location is not a bay: "+location);

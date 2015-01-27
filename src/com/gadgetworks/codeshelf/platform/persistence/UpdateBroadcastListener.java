@@ -3,6 +3,7 @@ package com.gadgetworks.codeshelf.platform.persistence;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.hibernate.event.spi.PostCommitUpdateEventListener;
 import org.hibernate.event.spi.PostUpdateEvent;
 import org.hibernate.persister.entity.EntityPersister;
@@ -49,7 +50,7 @@ public class UpdateBroadcastListener implements PostCommitUpdateEventListener {
 					}
 				}
 				if (changedProperties.size()>0) {
-					this.objectChangeBroadcaster.broadcastUpdate(domainObject.getClass(), domainObject.getPersistentId(), changedProperties);
+					this.objectChangeBroadcaster.broadcastUpdate(Hibernate.getClass(domainObject), domainObject.getPersistentId(), changedProperties);
 				}
 			}
 		}

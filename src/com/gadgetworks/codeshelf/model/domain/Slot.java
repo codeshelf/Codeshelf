@@ -80,7 +80,7 @@ public class Slot extends Location {
 		if (location==null) {
 			return null;
 		}
-		if (location instanceof Slot) {
+		if (location.isSlot()) {
 	    	return (Slot) location;
 	    }
 		throw new RuntimeException("Location is not a slot");

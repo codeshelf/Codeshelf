@@ -1,13 +1,12 @@
 package com.gadgetworks.codeshelf.model.domain;
 
-import static org.mockito.Mockito.any;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
-import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.Assert;
 import org.mockito.Mockito;
 
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;

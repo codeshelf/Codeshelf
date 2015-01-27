@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedSample;
 import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
@@ -153,13 +152,13 @@ public class LightService implements IApiService {
 	Future<Void> lightChildLocations(final Facility facility, final Location theLocation, ColorEnum color) {
 
 		List<Set<LightLedsMessage>> ledMessages = Lists.newArrayList();
-		if (theLocation instanceof Bay) { //light whole bay at once, consistent across controller configurations
+		if (theLocation.isBay()) { //light whole bay at once, consistent across controller configurations
 			ledMessages.add(lightAllAtOnce(facility, defaultLedsToLight, color, theLocation.getChildrenInWorkingOrder()));
 		} else {
 			List<Location> children = theLocation.getChildrenInWorkingOrder();
 			for (Location child : children) {
 				try {
-					if (child instanceof Bay) {
+					if (child.isBay()) {
 						//when the child we are lighting is a bay, light all of the tiers at once
 						// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
 						ledMessages.add(lightAllAtOnce(facility, defaultLedsToLight, color, child.getChildrenInWorkingOrder()));
@@ -290,7 +289,7 @@ public class LightService implements IApiService {
 
 	private Location checkLocation(Facility facility, final String inLocationNominalId) {
 		Location theLocation = facility.findSubLocationById(inLocationNominalId);
-		checkArgument(theLocation != null && !(theLocation instanceof Facility),
+		checkArgument(theLocation != null && !(theLocation.isFacility()),
 			"Location nominalId unknown: %s",
 			inLocationNominalId);
 		return theLocation;
@@ -362,7 +361,7 @@ public class LightService implements IApiService {
 
 			
 			LocationABC theLocation = facility.findSubLocationById(inLocationNominalId);
-			if (theLocation == null || theLocation instanceof Facility) {
+			if (theLocation == null || theLocation.isFacility()) {
 				LOGGER.error("lightAllControllers called with unknown location");
 				return;
 			}
