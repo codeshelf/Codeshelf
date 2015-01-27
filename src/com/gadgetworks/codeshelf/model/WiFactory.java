@@ -407,7 +407,8 @@ public class WiFactory {
 		// if the location does not have controller associated, we would NPE below. Might as well check now.
 		LedController theLedController = inLocation.getEffectiveLedController();
 		if (theLedController == null) {
-			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for the item location ");
+			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for location " + inLocation.getPrimaryAliasId());
+			// Note that is aisles are created with 0 LEDs, then this error is not hit. This denotes an intent to light, but probably forgot to assign controller.
 			return;
 		}
 
