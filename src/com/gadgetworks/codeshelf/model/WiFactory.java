@@ -612,7 +612,6 @@ public class WiFactory {
 	 */
 	private static String getPickInstructionForHK(WorkInstructionTypeEnum inType) {
 		String returnStr = "";
-
 		return returnStr;
 	}
 

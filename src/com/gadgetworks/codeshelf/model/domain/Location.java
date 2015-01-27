@@ -1113,27 +1113,31 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public LedRange getFirstLastLedsForLocation() {
-		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
-		// to compute, we need the locations first and last led positions
-		Short firstLocLed = getFirstLedNumAlongPath();
-		Short lastLocLed = getLastLedNumAlongPath();
-		if (firstLocLed == null || lastLocLed == null) {
-			throw new UnsupportedOperationException(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
-				this,
-				firstLocLed,
-				lastLocLed));
-		}
-		// following cast not safe if the stored location is facility
-		if (this.isFacility())
-			return LedRange.zero(); // was initialized to give values of 0,0
+        // we will want a different function here isLocationPossiblyLightable()
+		// besides facility, new AgnosticLocation type would return false.
+        if (this.isFacility()) {
+            return LedRange.zero(); // was initialized to give values of 0,0
+        }
+        
+        // This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
+        // to compute, we need the locations first and last led positions
+        Short firstLocLed = getFirstLedNumAlongPath();
+        Short lastLocLed = getLastLedNumAlongPath();
+        if (firstLocLed == null || lastLocLed == null) {
+            LOGGER.warn(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
+                this,
+                firstLocLed,
+                lastLocLed));
+            return LedRange.zero();
+        }
 
-		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
+        boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
-		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+        LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
 
-		return theLedRange;
-	}
-
+        return theLedRange;
+    }
+	
 	private class InventoryPositionComparator implements Comparator<Item> {
 		// We want this to sort from low to high
 		public int compare(Item item1, Item item2) {

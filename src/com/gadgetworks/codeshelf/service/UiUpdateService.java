@@ -15,6 +15,7 @@ import com.gadgetworks.codeshelf.event.EventProducer;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.ItemMaster;
@@ -123,10 +124,13 @@ public class UiUpdateService implements IApiService {
 		Che.DAO.store(che);
 	}
 	
-	public ProcessMode getDefaultProcessMode(String facilityId){
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		//Shouldn't happen
-		if (facility == null) {return ProcessMode.SETUP_ORDERS;}
+	public ProcessMode getDefaultProcessMode(String cheId){
+		Che che = Che.DAO.findByPersistentId(cheId);
+		if (che == null) {
+			LOGGER.error("Could not find Che " + cheId);
+			return ProcessMode.SETUP_ORDERS;
+		}
+		Facility facility = che.getFacility();
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
 		List<Aisle> aisled = Aisle.DAO.findByFilter(filterParams);
