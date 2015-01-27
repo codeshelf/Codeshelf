@@ -1255,7 +1255,7 @@ public class Facility extends Location {
 		Location location = this.getLocations().get(domainId);
 
 		if (location != null) {
-			if (location.getClass().equals(Aisle.class)) {
+			if (location.isAisle()) {
 				return (Aisle) location;
 			} else {
 				LOGGER.error("child location " + domainId + " of Facility was not an Aisle, found " + location.getClassName());

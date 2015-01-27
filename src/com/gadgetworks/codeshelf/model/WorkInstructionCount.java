@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.model;
 
+import org.hibernate.Hibernate;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -95,7 +97,7 @@ public class WorkInstructionCount {
 			return true;
 		if (obj == null)
 			return false;
-		if (getClass() != obj.getClass())
+		if (!Hibernate.getClass(this).equals(Hibernate.getClass(obj)))
 			return false;
 		WorkInstructionCount other = (WorkInstructionCount) obj;
 		if (completeCount != other.completeCount)

@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import org.hibernate.Hibernate;
 import org.hibernate.event.spi.PostCommitDeleteEventListener;
 import org.hibernate.event.spi.PostDeleteEvent;
 import org.hibernate.persister.entity.EntityPersister;
@@ -28,7 +29,7 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 		Object entity = event.getEntity();
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			this.objectChangeBroadcaster.broadcastDelete(domainObject.getClass(), domainObject.getPersistentId());
+			this.objectChangeBroadcaster.broadcastDelete(Hibernate.getClass(domainObject), domainObject.getPersistentId());
 		}
 	}
 

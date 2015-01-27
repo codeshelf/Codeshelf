@@ -18,6 +18,7 @@ import java.util.UUID;
 import javax.persistence.Column;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.hibernate.Hibernate;
 import org.hibernate.criterion.Criterion;
 
 import com.eaio.uuid.UUIDGen;
@@ -98,7 +99,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		// Walk through all of the fields to see if any of them are null but should not be.
 		try {
 			Collection<Field> fields = new ArrayList<Field>();
-			addDeclaredAndInheritedFields(inDomainObject.getClass(), fields);
+			addDeclaredAndInheritedFields(Hibernate.getClass(inDomainObject), fields);
 			for (Field field : fields) {
 				for (Annotation annotation : field.getAnnotations()) {
 					if (annotation.annotationType().equals(Column.class)) {

@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -322,7 +323,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			result = true;
 		} else {
 			// The check location is parent of the WI location, so it contains it.
-			Location parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
+			Location parentLoc = location.getParentAtLevel(Hibernate.getClass(inCheckLocation));
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;
 			}
