@@ -36,6 +36,7 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation"/>
 
         <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectProperty"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault"/>

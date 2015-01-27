@@ -384,11 +384,8 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertFalse(locationA1B1T1.getActive());
 		Location locationA1B1T1S1 = facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertFalse(locationA1B1T1S1.getActive());
-		// check the new getActiveChildren
-		// facility is "stale". Will hibernate fix this?
-		// Assert.assertTrue(facility.getActiveChildren().size() == 1);
-		Assert.assertTrue(facility.getChildren().size() == 2);
-		Assert.assertTrue(locationA1B1.getActiveChildren().size() == 0);
+		Assert.assertEquals(3, facility.getChildren().size()); //includes "UnspecifiedLocation"
+		Assert.assertEquals(0, locationA1B1.getActiveChildren().size());
 
 		LOGGER.info("Read back the aisles file. Should make A1 and its children active again");
 		readStandardAisleFile(facility);

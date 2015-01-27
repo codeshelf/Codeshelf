@@ -87,6 +87,8 @@ import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 //import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
+import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation;
+import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation.UnspecifiedLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -311,15 +313,13 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<Slot>>() {
 				}).to(SlotDao.class);
 
-				/*
-				requestStaticInjection(SubLocationABC.class);
-				bind(new TypeLiteral<ITypedDao<SubLocationABC>>() {
-				}).to(SubLocationDao.class);
-				*/
-
 				requestStaticInjection(Tier.class);
 				bind(new TypeLiteral<ITypedDao<Tier>>() {
 				}).to(TierDao.class);
+				
+				requestStaticInjection(UnspecifiedLocation.class);
+				bind(new TypeLiteral<ITypedDao<UnspecifiedLocation>>() {
+				}).to(UnspecifiedLocationDao.class);
 
 				requestStaticInjection(UomMaster.class);
 				bind(new TypeLiteral<ITypedDao<UomMaster>>() {
@@ -332,11 +332,7 @@ public final class ServerMain {
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
-/*
-				requestStaticInjection(WirelessDeviceABC.class);
-				bind(new TypeLiteral<ITypedDao<WirelessDeviceABC>>() {
-				}).to(WirelessDeviceDao.class);
-*/
+
 				requestStaticInjection(WorkArea.class);
 				bind(new TypeLiteral<ITypedDao<WorkArea>>() {
 				}).to(WorkAreaDao.class);

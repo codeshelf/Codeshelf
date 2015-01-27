@@ -61,6 +61,8 @@ import com.google.inject.Singleton;
 public class Facility extends Location {
 
 	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
+	private static final String 		UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
+
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -84,6 +86,7 @@ public class Facility extends Location {
 	}
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
+
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
@@ -134,7 +137,7 @@ public class Facility extends Location {
 	@Getter
 	@Setter
 	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
-
+	
 	// TODO: replace with configuration via database table
 	static {
 		String sequencerConfig = System.getProperty("facility.sequencer");
@@ -750,6 +753,13 @@ public class Facility extends Location {
 		}
 	}
 
+	private Location createUnspecifiedLocation(String domainId) {
+		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
+		this.addLocation(location);
+		UnspecifiedLocation.DAO.store(location);
+		return location;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -1267,5 +1277,14 @@ public class Facility extends Location {
 	@Override
 	public String toString() {
 		return getDomainId();
+	}
+
+	synchronized
+	public Location getUnspecifiedLocation() {
+		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
+		if (unspecifiedLocation == null) {
+			unspecifiedLocation = createUnspecifiedLocation(UNSPECIFIED_LOCATION_DOMAINID);
+		}
+		return unspecifiedLocation;
 	}
 }
