@@ -546,14 +546,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * This may return null
 	 */
 	public Location findLocationById(String inLocationId) {
-		if (this.getClass().equals(Facility.class)) {
+		if (Hibernate.getClass(this).equals(Facility.class)) {
 			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
 			if ((alias != null) && (alias.getActive())) {
 				return alias.getMappedLocation();
 			}
-		} // else
-		
+		}
 		// Hibernate: This result is going to get cast, so deproxify here to avoid problems.
 		return PersistenceService.<Location>deproxify(locations.get(inLocationId));
 	}
