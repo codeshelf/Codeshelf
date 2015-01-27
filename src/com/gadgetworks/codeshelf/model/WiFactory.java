@@ -30,11 +30,12 @@ import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.SequenceNumber;
 import com.gadgetworks.flyweight.command.ColorEnum;
+import com.google.common.base.Strings;
 
 /**
  * This generates work instructions
  * First the new housekeeping work instructions. Then normal and shorts also.
- * 
+ *
  */
 public class WiFactory {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(WiFactory.class);
@@ -50,7 +51,7 @@ public class WiFactory {
 		resultWi.setDomainId(wiDomainId);
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
-		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short, 
+		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short,
 		// but short denotes completion as short, even if it was short from the start and there was never a chance to complete or short.
 
 		resultWi.setLocation(inLocation);
@@ -102,7 +103,7 @@ public class WiFactory {
 		String wiDomainId = Long.toString(seq);
 		resultWi.setDomainId(wiDomainId);
 		resultWi.setType(inType);
-		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short, 
+		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short,
 		// but short denotes completion as short, even if it was short from the start and there was never a chance to complete or short.
 
 		resultWi.setLocation(inFacility);
@@ -151,15 +152,91 @@ public class WiFactory {
 		Container inContainer,
 		Che inChe,
 		Location inLocation,
-		final Timestamp inTime) {
-		WorkInstruction resultWi = null;
-		boolean isInventoryPickInstruction = false;
+		final Timestamp inTime) throws DaoException {
 
+
+		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
+		if (resultWi == null) { //no more work to do
+			return null;
+		}
+
+		resultWi.setContainer(inContainer);
+		resultWi.setLocation(inLocation);
+		resultWi.setLocationId(inLocation.getFullDomainId());
+		LocationAlias locAlias = inLocation.getPrimaryAlias();
+		if (locAlias != null) {
+			resultWi.setPickInstruction(locAlias.getAlias());
+		} else {
+			resultWi.setPickInstruction(resultWi.getLocationId());
+		}
+
+		boolean isInventoryPickInstruction = false;
+		ColorEnum cheColor = inChe.getColor();
+
+		// Set the LED lighting pattern for this WI.
+		if (inStatus == WorkInstructionStatusEnum.SHORT) {
+			// But not if it is a short WI (made to the facility location)
+		} else {
+			if (inOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
+
+				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away).
+				setCrossWorkInstructionLedPattern(resultWi,
+					inOrderDetail.getItemMasterId(),
+					inLocation,
+					inOrderDetail.getUomMasterId(),
+					cheColor);
+			} else {
+				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
+				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
+				OrderHeader passedInDetailParent = inOrderDetail.getParent();
+
+				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
+				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
+				// getOrderLocations or getActiveOrderLocations? Let's assume if any orderlocations at all for this order header, then crossbatch
+				if (passedInDetailParent.getOrderLocations().size() == 0) {
+					isInventoryPickInstruction = true;
+					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
+						inLocation,
+						inOrderDetail.getItemMasterId(),
+						inOrderDetail.getUomMasterId(),
+						cheColor);
+				} else {
+					// The cross batch situation. We want the leds for the order location(s)
+					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
+				}
+			}
+		}
+
+		if (inLocation.isFacility())
+			resultWi.setPosAlongPath(0.0);
+		else {
+			if (isInventoryPickInstruction) {
+				// do nothing as it was set with the leds
+			} else {
+				resultWi.setPosAlongPath(inLocation.getPosAlongPath());
+			}
+		}
+
+		WorkInstruction.DAO.store(resultWi);
+		return resultWi;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Create a work instruction for and orderdetail with no location or container
+	 * @return
+	 */
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+		WorkInstructionTypeEnum inType,
+		OrderDetail inOrderDetail,
+		Che inChe,
+		final Timestamp inTime) throws DaoException {
 		Facility facility = inOrderDetail.getFacility();
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
 		Integer maxQtyToPick = inOrderDetail.getMaxQuantity();
 
+		WorkInstruction resultWi = null;
 		// Important for DEV-592 note below. If there is a WI already on the order detail of type PLAN, we will recycle it.
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
@@ -187,43 +264,12 @@ public class WiFactory {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
-				inOrderDetail.addWorkInstruction(resultWi); 
+				inOrderDetail.addWorkInstruction(resultWi);
 				inChe.addWorkInstruction(resultWi);
 				facility.addWorkInstruction(resultWi);
 				isNewWi = true;
 			}
 
-			ColorEnum cheColor = inChe.getColor();
-			// Set the LED lighting pattern for this WI.
-			if (inStatus == WorkInstructionStatusEnum.SHORT) {
-				// But not if it is a short WI (made to the facility location)
-			} else if (inOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
-				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away).
-				setCrossWorkInstructionLedPattern(resultWi,
-					inOrderDetail.getItemMasterId(),
-					inLocation,
-					inOrderDetail.getUomMasterId(),
-					cheColor);
-			} else {
-				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
-				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
-				OrderHeader passedInDetailParent = inOrderDetail.getParent();
-
-				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
-				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
-				// getOrderLocations or getActiveOrderLocations? Let's assume if any orderlocations at all for this order header, then crossbatch
-				if (passedInDetailParent.getOrderLocations().size() == 0) {
-					isInventoryPickInstruction = true;
-					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
-						inLocation,
-						inOrderDetail.getItemMasterId(),
-						inOrderDetail.getUomMasterId(),
-						cheColor);
-				} else {
-					// The cross batch situation. We want the leds for the order location(s)
-					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
-				}
-			}
 
 			// Update the WI
 			long seq = SequenceNumber.generate();
@@ -232,32 +278,10 @@ public class WiFactory {
 			resultWi.setType(inType);
 			resultWi.setStatus(inStatus);
 
-			resultWi.setLocation(inLocation);
-			resultWi.setLocationId(inLocation.getFullDomainId());
 			resultWi.setItemMaster(inOrderDetail.getItemMaster());
 			String cookedDesc = WorkInstruction.cookDescription(inOrderDetail.getItemMaster().getDescription());
 			resultWi.setDescription(cookedDesc);
-			if (inOrderDetail.getItemMaster().getDdcId() != null) {
-				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
-			} else {
-				LocationAlias locAlias = resultWi.getLocation().getPrimaryAlias();
-				if (locAlias != null) {
-					resultWi.setPickInstruction(locAlias.getAlias());
-				} else {
-					resultWi.setPickInstruction(resultWi.getLocationId());
-				}
-			}
-			if (inLocation.isFacility())
-				resultWi.setPosAlongPath(0.0);
-			else {
-				if (isInventoryPickInstruction) {
-					// do nothing as it was set with the leds
-				} else {
-					resultWi.setPosAlongPath(inLocation.getPosAlongPath());
-				}
-			}
 
-			resultWi.setContainer(inContainer);
 			resultWi.setPlanQuantity(qtyToPick);
 			resultWi.setPlanMinQuantity(minQtyToPick);
 			resultWi.setPlanMaxQuantity(maxQtyToPick);
@@ -274,20 +298,30 @@ public class WiFactory {
 				Che oldChe = resultWi.getAssignedChe();
 				if (oldChe != null && !oldChe.equals(inChe)) {
 					oldChe.removeWorkInstruction(resultWi);
-					inChe.addWorkInstruction(resultWi); 
+					inChe.addWorkInstruction(resultWi);
 				}
 				else if (oldChe == null || !oldChe.equals(inChe)){
-					inChe.addWorkInstruction(resultWi); 					
+					inChe.addWorkInstruction(resultWi);
 				}
+
+
 			}
-			try {
-				WorkInstruction.DAO.store(resultWi);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
+
+			resultWi.setLocation(inOrderDetail.getFacility().getUnspecifiedLocation());
+			String preferredLocation = inOrderDetail.getPreferredLocation();
+			resultWi.setLocationId(Strings.nullToEmpty(preferredLocation));
+			resultWi.setContainer(null);
+			if (inOrderDetail.getItemMaster().getDdcId() != null) {
+				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+			} else {
+				resultWi.setPickInstruction(resultWi.getLocationId());
 			}
+
+			WorkInstruction.DAO.store(resultWi);
 		}
 		return resultWi;
 	}
+
 
 	// --------------------------------------------------------------------------
 	/**
@@ -420,6 +454,7 @@ public class WiFactory {
 	 * @param inItem
 	 * @param inColor
 	 */
+	//public for sake of a test
 	public static List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,
 		final ColorEnum inColor,
 		final Location inLocation) {

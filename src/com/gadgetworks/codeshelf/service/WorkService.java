@@ -7,10 +7,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -21,6 +19,7 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
@@ -101,6 +100,7 @@ public class WorkService implements IApiService {
 	private WorkServiceThread			wsThread					= null;
 	private static boolean				aWorkServiceThreadExists	= false;
 
+	@ToString
 	public static class Work {
 		@Getter
 		private OrderDetail	outboundOrderDetail;
@@ -212,6 +212,41 @@ public class WorkService implements IApiService {
 		return summarizer.getSummaries();
 	}
 
+
+    /**
+     * Computes work instruction for the given OrderDetail that is scanning by line item instead of container.
+     */
+	public final List<WorkInstruction> computeWorkInstructionsForOrderDetail(final Che inChe, final OrderDetail inOrderDetail) {
+		clearChe(inChe);
+		Timestamp theTime = now();
+
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		// Pass facility as the default location of a short WI..
+		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+			WorkInstructionTypeEnum.PLAN,
+			inOrderDetail,
+			inChe,
+			theTime); // Could be normal WI, or a short WI
+		if (aWi != null) {
+			wiResultList.add(aWi);
+			inOrderDetail.reevaluateStatus();
+		} else if (inOrderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+			//As of DEV-561 we are adding completed WIs to the list in order to be able
+			//give feedback on complete orders (and differentiate a 100% complete order from
+			//unknown container id. The computeWork method will filter these out before sorting
+			//and saving
+			for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
+				//As of DEV-603 we are only adding completed WIs to the list
+				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+					LOGGER.info("Adding already complete WIs to list; orderDetail={}", inOrderDetail);
+					wiResultList.add(wi);
+				}
+			}
+		}
+
+		return wiResultList;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -225,45 +260,11 @@ public class WorkService implements IApiService {
 	 * @return
 	 */
 	public final List<WorkInstruction> computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
-		Facility facility = inChe.getFacility();
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		//manually track changed ches here to trigger an update broadcast
-		Set<Che> changedChes = new HashSet<Che>();
-		changedChes.add(inChe);
+		clearChe(inChe);
 		
-		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
-
-		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
-		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
-		wiTypes.add(WorkInstructionTypeEnum.PLAN);
-		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
-
-		// Delete any planned WIs for this CHE.
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
-		filterParams.add(Restrictions.in("type", wiTypes));
-		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
-		for (WorkInstruction wi : wis) {
-			try {
-
-				Che assignedChe = wi.getAssignedChe();
-				if (assignedChe != null) {
-					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
-					changedChes.add(assignedChe);
-				}
-				OrderDetail owningDetail = wi.getOrderDetail();
-				// detail is optional from v5
-				if (owningDetail != null)
-					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-
-				WorkInstruction.DAO.delete(wi);
-			} catch (DaoException e) {
-				LOGGER.error("failed to delete prior work instruction for CHE", e);
-			}
-		}
-
+		Facility facility = inChe.getFacility();
 		// DEV-492 identify previous container uses
 		ArrayList<ContainerUse> priorCntrUses = new ArrayList<ContainerUse>();
 		priorCntrUses.addAll(inChe.getUses());
@@ -282,7 +283,7 @@ public class WorkService implements IApiService {
 					newCntrUses.add(thisUse); // DEV-492 bit
 					Che previousChe = thisUse.getCurrentChe();
 					if (previousChe != null) {
-						changedChes.add(previousChe);
+			//			changedChes.add(previousChe);
 					}
 					if (previousChe == null) {
 						inChe.addContainerUse(thisUse);
@@ -319,15 +320,7 @@ public class WorkService implements IApiService {
 			}
 		}
 
-		/*
-		Che.DAO.clearAllCaches();
-
-		for (Che changedChe : changedChes) {
-			changedChe.getDao().pushNonPersistentUpdates(changedChe);
-		}
-		 */
-
-		Timestamp theTime = new Timestamp(System.currentTimeMillis());
+		Timestamp theTime = now();
 
 		// Get all of the OUTBOUND work instructions.
 		wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
@@ -343,6 +336,45 @@ public class WorkService implements IApiService {
 
 		//Return original full list
 		return wiResultList;
+	}
+
+	private Timestamp now() {
+		Timestamp theTime = new Timestamp(System.currentTimeMillis());
+		return theTime;
+	}
+
+	private void clearChe(final Che inChe) {
+
+		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
+
+		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
+		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
+		wiTypes.add(WorkInstructionTypeEnum.PLAN);
+		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
+
+		// Delete any planned WIs for this CHE.
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
+		filterParams.add(Restrictions.in("type", wiTypes));
+		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		for (WorkInstruction wi : wis) {
+			try {
+
+				Che assignedChe = wi.getAssignedChe();
+				if (assignedChe != null) {
+					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+				}
+				OrderDetail owningDetail = wi.getOrderDetail();
+				// detail is optional from v5
+				if (owningDetail != null)
+					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
+
+				WorkInstruction.DAO.delete(wi);
+			} catch (DaoException e) {
+				LOGGER.error("failed to delete prior work instruction for CHE", e);
+			}
+		}
 	}
 
 	// just a call through to facility, but convenient for the UI
@@ -418,7 +450,7 @@ public class WorkService implements IApiService {
 			actualQuant--;
 			newStatus = WorkInstructionStatusEnum.SHORT;
 		}
-		Timestamp completeTime = new Timestamp(System.currentTimeMillis());
+		Timestamp completeTime = now();
 		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
 
 		wi.setActualQuantity(actualQuant);
@@ -689,28 +721,34 @@ public class WorkService implements IApiService {
 					if (orderDetail.getQuantity() > 0) {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
-						// Pass facility as the default location of a short WI..
-						WorkInstruction aWi = makeWIForOutbound(orderDetail,
-							inChe,
-							container,
-							inTime,
-							facility,
-							facility.getPaths()); // Could be normal WI, or a short WI
-						if (aWi != null) {
-							wiResultList.add(aWi);
-							orderDetailChanged |= orderDetail.reevaluateStatus();
-						} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
-							//As of DEV-561 we are adding completed WIs to the list in order to be able
-							//give feedback on complete orders (and differentiate a 100% complete order from
-							//unknown container id. The computeWork method will filter these out before sorting
-							//and saving
-							for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
-								//As of DEV-603 we are only adding completed WIs to the list
-								if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
-									LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
-									wiResultList.add(wi);
+						Location defaultLocation = facility;
+						try {
+							// Pass facility as the default location of a short WI..
+							WorkInstruction aWi = makeWIForOutbound(orderDetail,
+								inChe,
+								container,
+								inTime,
+								defaultLocation,
+								facility.getPaths()); // Could be normal WI, or a short WI
+							if (aWi != null) {
+								wiResultList.add(aWi);
+								orderDetailChanged |= orderDetail.reevaluateStatus();
+							} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+								//As of DEV-561 we are adding completed WIs to the list in order to be able
+								//give feedback on complete orders (and differentiate a 100% complete order from
+								//unknown container id. The computeWork method will filter these out before sorting
+								//and saving
+								for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
+									//As of DEV-603 we are only adding completed WIs to the list
+									if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+										LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
+										wiResultList.add(wi);
+									}
 								}
 							}
+						}
+						catch(DaoException e) {
+							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}, location: {} ", inChe, orderDetail, container, defaultLocation, e);
 						}
 					}
 					if (orderDetailChanged) {
@@ -741,18 +779,22 @@ public class WorkService implements IApiService {
 		for (Container container : inContainerList) {
 			BatchResult<Work> result = determineWorkForContainer(facility, container);
 			for (Work work : result.getResult()) {
-				WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-					WorkInstructionTypeEnum.PLAN,
-					work.getOutboundOrderDetail(),
-					work.getContainer(),
-					inChe,
-					work.getFirstLocationOnPath(),
-					inTime);
+				try {
+					WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+						WorkInstructionTypeEnum.PLAN,
+						work.getOutboundOrderDetail(),
+						work.getContainer(),
+						inChe,
+						work.getFirstLocationOnPath(),
+						inTime);
 
-				// If we created a WI then add it to the list.
-				if (wi != null) {
-					setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
-					wiList.add(wi);
+					// If we created a WI then add it to the list.
+					if (wi != null) {
+						setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
+						wiList.add(wi);
+					}
+				} catch(DaoException e) {
+					LOGGER.error("Unable to create work instruction for: {}", work, e);
 				}
 			}
 		}
@@ -801,7 +843,7 @@ public class WorkService implements IApiService {
 		final Container inContainer,
 		final Timestamp inTime,
 		final Location defaultLocation,
-		final List<Path> paths) {
+		final List<Path> paths) throws DaoException {
 
 		WorkInstruction resultWi = null;
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -824,11 +866,7 @@ public class WorkService implements IApiService {
 				resultWi.setPlanQuantity(0);
 				resultWi.setPlanMinQuantity(0);
 				resultWi.setPlanMaxQuantity(0);
-				try {
-					WorkInstruction.DAO.store(resultWi);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-				}
+				WorkInstruction.DAO.store(resultWi);
 			}
 		} else {
 			for (Path path : paths) {
