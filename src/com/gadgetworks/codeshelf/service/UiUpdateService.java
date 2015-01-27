@@ -1,13 +1,18 @@
 package com.gadgetworks.codeshelf.service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
 import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
 import com.gadgetworks.codeshelf.event.EventProducer;
+import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
@@ -91,14 +96,18 @@ public class UiUpdateService implements IApiService {
 			LOGGER.error("Could not find che {0}", cheId);
 			return;
 		}
+		ProcessMode processMode = ProcessMode.getMode(processModeStr);
+		if (processMode == null) {
+			LOGGER.error("Provide a valid processMode [SETUP_ORDERS,LINE_SCAN]");
+			return;
+		}
 		try {
 			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
 			che.setColor(color);
 		} catch (Exception e) {}
 		if (domainId != null && !domainId.isEmpty()) {che.setDomainId(domainId);}
 		if (description != null){che.setDescription(description);}
-		ProcessMode processMode = ProcessMode.getMode(processModeStr);
-		che.setProcessMode((processMode == null)?ProcessMode.LINE_SCAN:processMode);
+		che.setProcessMode(processMode);
 		try {
 			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 			NetGuid currentGuid = che.getDeviceNetGuid();
@@ -112,5 +121,15 @@ public class UiUpdateService implements IApiService {
 		}
 
 		Che.DAO.store(che);
+	}
+	
+	public ProcessMode getDefaultProcessMode(String facilityId){
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		//Shouldn't happen
+		if (facility == null) {return ProcessMode.SETUP_ORDERS;}
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", facility));
+		List<Aisle> aisled = Aisle.DAO.findByFilter(filterParams);
+		return (aisled.isEmpty())? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
 	}
 }
