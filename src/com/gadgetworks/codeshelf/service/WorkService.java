@@ -519,7 +519,7 @@ public class WorkService implements IApiService {
 		List<WorkInstruction> wis = inOrderDetail.getWorkInstructions();
 		for (WorkInstruction wi : wis) {
 			if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
-				if (wi.getLocation().equals(this)) { // planned to the facility
+				if (wi.getLocation().isFacility()) { // planned to the facility
 					aList.add(wi);
 				}
 		}
