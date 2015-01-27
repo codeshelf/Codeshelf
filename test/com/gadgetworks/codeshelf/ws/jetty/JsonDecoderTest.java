@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import javax.websocket.DecodeException;
 
+import org.hibernate.Hibernate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -89,7 +90,7 @@ public class JsonDecoderTest  {
 		try {
 			Object object = mapper.readValue(jsonString, Object.class);
 			System.out.println(object);
-			Assert.assertTrue(object instanceof Point);
+			Assert.assertTrue(Hibernate.getClass(object).equals(Point.class));
 		}
 		catch (Exception e) {
 			e.printStackTrace();

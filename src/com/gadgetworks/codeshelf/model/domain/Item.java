@@ -404,7 +404,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public LedRange getFirstLastLedsForItem() {
 		// to compute, we need the locations first and last led positions
 		Location theLocation = this.getStoredLocation();
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return LedRange.zero(); // was initialized to give values of 0,0
 
 		int firstLocLed = theLocation.getFirstLedNumAlongPath();

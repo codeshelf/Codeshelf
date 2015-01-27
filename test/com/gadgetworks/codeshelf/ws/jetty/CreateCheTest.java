@@ -2,6 +2,7 @@ package com.gadgetworks.codeshelf.ws.jetty;
 
 import java.util.HashMap;
 
+import org.hibernate.Hibernate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -80,7 +81,7 @@ public class CreateCheTest extends DAOTestABC {
 		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
 		
 		Object result = updateResponse.getResults();
-		Assert.assertTrue(result instanceof Che);
+		Assert.assertTrue(Hibernate.getClass(result).equals(Che.class));
 		
 		Che changedChe = (Che) result;
 		Assert.assertEquals(description2, changedChe.getDescription());

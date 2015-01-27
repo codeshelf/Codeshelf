@@ -476,7 +476,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return returnStr;
 
 		Location theLocation = theWLocationABC;
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return returnStr;
 
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
@@ -499,7 +499,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return null; // should not happen
 
 		Location theLocation = theWLocationABC;
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return null;
 
 		return theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());

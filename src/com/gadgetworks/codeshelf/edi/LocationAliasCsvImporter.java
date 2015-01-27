@@ -123,7 +123,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 		Location mappedLocation = inFacility.findSubLocationById(mappedLocationId);
 
 		// Check for deleted location
-		if (mappedLocation == null || mappedLocation instanceof Facility) {
+		if (mappedLocation == null || mappedLocation.isFacility()) {
 			produceRecordViolationEvent(inCsvBean, "mappedLocationId", mappedLocationId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			return null;
 		}

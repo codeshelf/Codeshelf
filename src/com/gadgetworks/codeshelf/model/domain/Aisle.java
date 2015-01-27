@@ -197,7 +197,7 @@ public class Aisle extends Location {
 		if (location==null) {
 			return null;
 		}
-		if (location instanceof Aisle) {
+		if (location.isAisle()) {
 	    	return (Aisle) location;
 	    }
 		throw new RuntimeException("Location is not an aisle");

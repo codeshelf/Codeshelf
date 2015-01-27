@@ -1107,6 +1107,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public LedRange getFirstLastLedsForLocation() {
+		// following cast not safe if the stored location is facility
+		if (this.isFacility())
+			return LedRange.zero(); // was initialized to give values of 0,0
+
 		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
 		// to compute, we need the locations first and last led positions
 		Short firstLocLed = getFirstLedNumAlongPath();
@@ -1117,10 +1121,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				firstLocLed,
 				lastLocLed));
 		}
-		// following cast not safe if the stored location is facility
-		if (this instanceof Facility)
-			return LedRange.zero(); // was initialized to give values of 0,0
-
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
 		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);

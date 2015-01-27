@@ -274,7 +274,7 @@ public class Tier extends Location {
 		if (location==null) {
 			return null;
 		}
-		if (location instanceof Tier) {
+		if (location.isTier()) {
 	    	return (Tier) location;
 	    }
 		throw new RuntimeException("Location is not a tier: "+location);
