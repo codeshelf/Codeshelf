@@ -231,6 +231,8 @@ public class WorkService implements IApiService {
 		//manually track changed ches here to trigger an update broadcast
 		Set<Che> changedChes = new HashSet<Che>();
 		changedChes.add(inChe);
+		
+		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
 
 		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
 		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
@@ -519,7 +521,7 @@ public class WorkService implements IApiService {
 		List<WorkInstruction> wis = inOrderDetail.getWorkInstructions();
 		for (WorkInstruction wi : wis) {
 			if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
-				if (wi.getLocation().equals(this)) { // planned to the facility
+				if (wi.getLocation().isFacility()) { // planned to the facility DEV-609
 					aList.add(wi);
 				}
 		}
