@@ -24,6 +24,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Hibernate;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -822,7 +823,7 @@ public class Facility extends Location {
 		DropboxService result = null;
 
 		for (IEdiService ediService : getEdiServices()) {
-			if (ediService instanceof DropboxService) {
+			if (Hibernate.getClass(ediService).equals(DropboxService.class)) {
 				result = (DropboxService) ediService;
 				break;
 			}
@@ -1254,7 +1255,7 @@ public class Facility extends Location {
 		Location location = this.getLocations().get(domainId);
 
 		if (location != null) {
-			if (location.getClass().equals(Aisle.class)) {
+			if (location.isAisle()) {
 				return (Aisle) location;
 			} else {
 				LOGGER.error("child location " + domainId + " of Facility was not an Aisle, found " + location.getClassName());

@@ -11,6 +11,8 @@ import java.util.Map;
  * 
  * Backed by 3 HashMaps. Keys and values both must properly implement hashCode and equals or this will not work!
  * 
+ * Does not work on Hibernate proxy objects.
+ * 
  * @author ivan
  *
  */

@@ -460,7 +460,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public <T extends Location> T getParentAtLevel(Class<? extends Location> inClassWanted) {
 
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
-		if (this.getClass().equals(inClassWanted))
+		if (Hibernate.getClass(this).equals(inClassWanted))
 			return (T) this; // (We can cast safely since we checked the class.)
 
 		T result = null;

@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import org.hibernate.Hibernate;
 import org.hibernate.event.spi.PostCommitInsertEventListener;
 import org.hibernate.event.spi.PostInsertEvent;
 import org.hibernate.persister.entity.EntityPersister;
@@ -24,7 +25,7 @@ public class InsertBroadcastListener implements PostCommitInsertEventListener {
 		Object entity = event.getEntity();
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			this.objectChangeBroadcaster.broadcastAdd(domainObject.getClass(), domainObject.getPersistentId());
+			this.objectChangeBroadcaster.broadcastAdd(Hibernate.getClass(domainObject), domainObject.getPersistentId());
 		}
 	}
 

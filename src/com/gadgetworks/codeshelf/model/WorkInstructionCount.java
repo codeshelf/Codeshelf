@@ -3,6 +3,8 @@ package com.gadgetworks.codeshelf.model;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Hibernate;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -95,7 +97,7 @@ public class WorkInstructionCount {
 			return true;
 		if (obj == null)
 			return false;
-		if (this.getClass().equals(obj.getClass()))
+		if (Hibernate.getClass(this) != Hibernate.getClass(obj))
 			return false;
 		WorkInstructionCount other = (WorkInstructionCount) obj;
 		if (completeCount != other.completeCount)
