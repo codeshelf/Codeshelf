@@ -360,6 +360,10 @@ public class CsDeviceManager implements
 			// new device
 			if (deviceType.equals(DEVICETYPE_CHE)) {
 				netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
+				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
+				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else {
@@ -401,6 +405,10 @@ public class CsDeviceManager implements
 				// can't really change the NetGuid so we will create new device
 				if (deviceType.equals(DEVICETYPE_CHE)) {
 					netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
+					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
+					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else {
