@@ -52,54 +52,53 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger	LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
+	private static final Logger					LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
 
-	private static final String	COMMAND_PREFIX							= "X%";
-	private static final String USER_PREFIX								= "U%";
-	private static final String CONTAINER_PREFIX						= "C%";
-	private static final String	LOCATION_PREFIX							= "L%";
-	private static final String	ITEMID_PREFIX							= "I%";
-	private static final String	POSITION_PREFIX							= "P%";
+	private static final String					COMMAND_PREFIX							= "X%";
+	private static final String					USER_PREFIX								= "U%";
+	private static final String					CONTAINER_PREFIX						= "C%";
+	private static final String					LOCATION_PREFIX							= "L%";
+	private static final String					ITEMID_PREFIX							= "I%";
+	private static final String					POSITION_PREFIX							= "P%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
 	// "SCAN START LOCATION" is at the 20 limit. If you change to "SCAN STARTING LOCATION", you get very bad behavior. The class loader will not find the CheDeviceLogic. Repeating throws.	
-	private static final String	EMPTY_MSG								= cheLine("");
-	private static final String	INVALID_SCAN_MSG						= cheLine("INVALID");
-	private static final String	SCAN_USERID_MSG							= cheLine("SCAN BADGE");
-	private static final String	SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
-	private static final String	OR_START_WORK_MSG						= cheLine("OR START WORK");
-	private static final String	SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
-	private static final String	SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
-	private static final String PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
-	private static final String	YES_NO_MSG								= cheLine("SCAN YES OR NO");
-	private static final String	NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
-	private static final String	POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
-	private static final String	FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
-	private static final String	COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
-	private static final String	GET_WORK_MSG							= cheLine("GETTING WORK");
-	private static final String	NO_WORK_MSG								= cheLine("NO WORK TO DO");
-	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
-	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
-	private static final String	LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
-	private static final String	SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
-	private static final String	SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
+	private static final String					EMPTY_MSG								= cheLine("");
+	private static final String					INVALID_SCAN_MSG						= cheLine("INVALID");
+	private static final String					SCAN_USERID_MSG							= cheLine("SCAN BADGE");
+	private static final String					SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
+	private static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
+	private static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
+	private static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	private static final String					PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
+	private static final String					YES_NO_MSG								= cheLine("SCAN YES OR NO");
+	private static final String					NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
+	private static final String					POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
+	private static final String					FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
+	private static final String					COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
+	private static final String					GET_WORK_MSG							= cheLine("GETTING WORK");
+	private static final String					NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	private static final String					LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
+	private static final String					LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
+	private static final String					LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
+	private static final String					SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
+	private static final String					SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
 
-	private static final String	INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
-	private static final String	INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
-	private static final String	CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
-	private static final String	CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
+	private static final String					INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
+	private static final String					INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
+	private static final String					CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
+	private static final String					CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
-
-	private static final String STARTWORK_COMMAND						= "START";
-	private static final String	SETUP_COMMAND							= "SETUP";
-	private static final String	SHORT_COMMAND							= "SHORT";
-	private static final String	LOGOUT_COMMAND							= "LOGOUT";
-	private static final String	YES_COMMAND								= "YES";
-	private static final String	NO_COMMAND								= "NO";
+	private static final String					STARTWORK_COMMAND						= "START";
+	private static final String					SETUP_COMMAND							= "SETUP";
+	private static final String					SHORT_COMMAND							= "SHORT";
+	private static final String					LOGOUT_COMMAND							= "LOGOUT";
+	private static final String					YES_COMMAND								= "YES";
+	private static final String					NO_COMMAND								= "NO";
 	private static final String					CLEAR_ERROR_COMMAND						= "CLEAR";
 
-	private static final Integer maxCountForPositionControllerDisplay	= 99;
+	private static final Integer				maxCountForPositionControllerDisplay	= 99;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -109,18 +108,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// The CHE's current location.
 	@Accessors(prefix = "m")
 	@Getter
-	private String					mLocationId;
+	private String								mLocationId;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
-	private String					mUserId;
+	private String								mUserId;
 
 	// The CHE's container map.
-	private String					mContainerInSetup;
+	private String								mContainerInSetup;
 
 	// The CHE's container map.
-	private Map<String, String>		mPositionToContainerMap;
+	private Map<String, String>					mPositionToContainerMap;
 
 	//Map of containers to work instruction counts
 	private Map<String, WorkInstructionCount>	mContainerToWorkInstructionCountMap;
@@ -128,25 +127,25 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
 	@Getter
-	private List<WorkInstruction>	mAllPicksWiList;
+	private List<WorkInstruction>				mAllPicksWiList;
 
 	//Container Position to last SetInstruction Map
 	@Accessors(prefix = "m")
 	@Getter
-	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
+	private Map<Byte, PosControllerInstr>		mPosToLastSetIntrMap;
 
 	// The active pick WIs.
 	@Accessors(prefix = "m")
 	@Getter
-	private List<WorkInstruction>	mActivePickWiList;
+	private List<WorkInstruction>				mActivePickWiList;
 
-	private NetGuid					mLastLedControllerGuid;
-	private boolean					mMultipleLastLedControllerGuids;															// Could have a list, but this will be quite rare.
+	private NetGuid								mLastLedControllerGuid;
+	private boolean								mMultipleLastLedControllerGuids;															// Could have a list, but this will be quite rare.
 
-	private WorkInstruction			mShortPickWi;
-	private Integer					mShortPickQty;
+	private WorkInstruction						mShortPickWi;
+	private Integer								mShortPickQty;
 
-	private boolean					connectedToServer						= true;
+	private boolean								connectedToServer						= true;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -506,7 +505,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			}
 			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
 
-			if(doesNeedReview) {
+			if (doesNeedReview) {
 				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
@@ -978,9 +977,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void sendErrorCodeToAllPosCons() {
 		List<PosControllerInstr> instructions = Lists.newArrayList(new PosControllerInstr(PosControllerInstr.POSITION_ALL,
-			PosControllerInstr.ERROR_CODE_QTY,
-			PosControllerInstr.ERROR_CODE_QTY,
-			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+			PosControllerInstr.BITENCODED_LED_E,
+			PosControllerInstr.BITENCODED_LED_BLANK,
 			PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
 			PosControllerInstr.MED_DUTYCYCLE)); // change from BRIGHT_DUTYCYCLE v6
 		sendPositionControllerInstructions(instructions);
@@ -1047,7 +1046,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		forceClearAllLedsForThisCheDevice();
 		clearAllPositionControllers();
 	}
-
 
 	/**
 	 * Setup the CHE by clearing all the datastructures
@@ -1657,12 +1655,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 					// jr/hibernate. See null channel in testPickViaChe test. Screen
 					Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
 					if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
-						String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: " + firstWi.getContainerId();
+						String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: "
+								+ firstWi.getContainerId();
 						LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
 						continue;
 					}
-
-
 
 					Short startLedNum = ledCmdGroup.getPosNum();
 					Short currLedNum = startLedNum;
@@ -2083,8 +2080,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			codeUnderstood = true;
 
 		if (!codeUnderstood) {
-			codeToSend = PosControllerInstr.ERROR_CODE_QTY;
-			LOGGER.error("showSpecialPositionCode: unknown quantity code in ");
+			LOGGER.error("showSpecialPositionCode: unknown quantity code={}; containerId={}", inSpecialQuantityCode, inContainerId);
+			return;
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
