@@ -68,8 +68,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAlias.class);
 
 	// Attachment credential.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@JoinColumn(name="mapped_location_persistentid")
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "mapped_location_persistentid")
 	@JsonProperty
 	@Getter
 	@Setter
@@ -88,7 +88,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private Timestamp			updated;
 
 	// The owning facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private Facility			parent;
@@ -126,6 +126,15 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	public static void setDao(LocationAliasDao inLocationAliasDao) {
 		LocationAlias.DAO = inLocationAliasDao;
+	}
+
+	public String getNominalLocationId() {
+		Location theLocation = getMappedLocation();
+		if (theLocation != null)
+			return theLocation.getNominalLocationId();
+			// if the location is inactive, has brackets around it.
+		else
+			return "";
 	}
 
 }
