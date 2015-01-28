@@ -321,7 +321,7 @@ public class RadioController implements IRadioController {
 								if (System.currentTimeMillis() > (packet.getSentTimeMillis() + (ACK_TIMEOUT_MILLIS * packet.getSendCount()))) {
 									if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
 											&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
-										//sendCommand(command, packet.getNetworkType(), packet.getDstAddr());
+
 										sendPacket(packet);
 									} else {
 										// If we've exceeded the retry time then remove the packet.
@@ -941,25 +941,24 @@ public class RadioController implements IRadioController {
 		//Also the reason we have to lock the whole map is because the broadcaster will need to send something to everyone
 		AtomicLong lastIOTimestamp = getLastIOTimestamp(inPacket.getDstAddr());
 
+		//Lock so that only one thread can write per DstAddr (this blocks the bg processing thread from writing at the same time)
 		synchronized (lastIOTimestamp) {
 			long differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
-			if (differenceMs >= 20) {
-				//A read io could have happened here right after the check -- we don't protect against this case
-				packetIOService.handleOutboundPacket(inPacket);
-			} else {
-				//We loop as a best effort against reads
-				while (differenceMs < 20) {
-					try {
-						Thread.sleep(Math.max(0, differenceMs));
-					} catch (InterruptedException e) {
-						LOGGER.error("SendPckt ", e);
-					}
-					differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
+			//We loop as a best effort against reads
+			LOGGER.info("differnce={}", differenceMs);
+			while (differenceMs < 20) {
+				try {
+					Thread.sleep(Math.max(0, differenceMs));
+				} catch (InterruptedException e) {
+					LOGGER.error("SendPckt ", e);
 				}
-				//Again...a read io could have happened here right after the check -- we don't protect against this case
-				packetIOService.handleOutboundPacket(inPacket);
+				differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
 			}
-			this.updateTimestampIfLarger(lastIOTimestamp, System.currentTimeMillis());
+
+			//A read io could have happened here right after the check -- we don't protect against this case
+			packetIOService.handleOutboundPacket(inPacket);
+
+			this.updateTimestampIfLarger(lastIOTimestamp, inPacket.getSentTimeMillis());
 		}
 	}
 
