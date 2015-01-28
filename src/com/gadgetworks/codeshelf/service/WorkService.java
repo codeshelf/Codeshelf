@@ -65,6 +65,7 @@ import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.gadgetworks.codeshelf.validation.MethodArgumentException;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -216,7 +217,30 @@ public class WorkService implements IApiService {
     /**
      * Computes work instruction for the given OrderDetail that is scanning by line item instead of container.
      */
-	public final List<WorkInstruction> computeWorkInstructionsForOrderDetail(final Che inChe, final OrderDetail inOrderDetail) {
+	
+	/**
+	 * Provides the list of actual work instruction for the scanned orderdetail
+	 * @param inChe
+	 * @param inScannedOrderDetailId
+	 * @return
+	 */
+	public List<WorkInstruction> getWorkInstructionsForOrderDetail(final Che inChe, final String inScannedOrderDetailId) {
+		if (inChe == null) {
+			throw new MethodArgumentException(0, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
+		}
+		if (inScannedOrderDetailId == null) {
+			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
+		}
+
+		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilter(ImmutableList.<Criterion>of(
+			Restrictions.eq("domainId", inScannedOrderDetailId),
+			Restrictions.eq("parent.parent", inChe.getFacility())
+		));
+		if (orderDetails.isEmpty()) {
+			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+		}
+		
+		OrderDetail orderDetail = orderDetails.get(0);
 		clearChe(inChe);
 		Timestamp theTime = now();
 
@@ -224,21 +248,21 @@ public class WorkService implements IApiService {
 		// Pass facility as the default location of a short WI..
 		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 			WorkInstructionTypeEnum.PLAN,
-			inOrderDetail,
+			orderDetail,
 			inChe,
 			theTime); // Could be normal WI, or a short WI
 		if (aWi != null) {
 			wiResultList.add(aWi);
-			inOrderDetail.reevaluateStatus();
-		} else if (inOrderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+			orderDetail.reevaluateStatus();
+		} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 			//As of DEV-561 we are adding completed WIs to the list in order to be able
 			//give feedback on complete orders (and differentiate a 100% complete order from
 			//unknown container id. The computeWork method will filter these out before sorting
 			//and saving
-			for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
+			for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
 				//As of DEV-603 we are only adding completed WIs to the list
 				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
-					LOGGER.info("Adding already complete WIs to list; orderDetail={}", inOrderDetail);
+					LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
 					wiResultList.add(wi);
 				}
 			}
