@@ -45,7 +45,7 @@ public class CriteriaRegistry {
 				"facilityId", UUID.class));
 		
 		indexedCriteria.put("locationAliasesByFacility",
-			new TypedCriteria("from location_alias where parent.persistentId = :facilityId and active = true",
+			new TypedCriteria("from LocationAlias where parent.persistentId = :facilityId and active = true",
 				"facilityId", UUID.class));
 
 		indexedCriteria.put("pathSegmentsByFacility",
