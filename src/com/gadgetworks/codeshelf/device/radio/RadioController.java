@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.device.radio;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -834,6 +835,15 @@ public class RadioController implements IRadioController {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
 					LOGGER.info("AssocCheck - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
 				} else if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
+
+					Queue<IPacket> pendingAcks = mPendingAcksMap.get(inSrcAddr);
+					if (pendingAcks != null && !pendingAcks.isEmpty()) {
+						LOGGER.info("Clearing pending acks queue for newly associated device={} size={}",
+							foundDevice,
+							pendingAcks.size());
+						pendingAcks.clear();
+					}
+
 					networkDeviceBecameActive(foundDevice);
 				} else if (!foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED)) {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
@@ -909,7 +919,6 @@ public class RadioController implements IRadioController {
 				CommandAssocAck ackCmd = new CommandAssocAck("00000000", new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS,
 					(byte) 0));
 
-				sendCommand(ackCmd, netId, srcAddr, false);
 				IPacket ackPacket = new Packet(ackCmd, netId, mServerAddress, srcAddr, false);
 				ackCmd.setPacket(ackPacket);
 				ackPacket.setAckId(ackId);
