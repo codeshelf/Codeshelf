@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.PcapRecord;
@@ -36,6 +37,7 @@ import com.gadgetworks.codeshelf.util.TwoKeyMap;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -278,6 +280,15 @@ public class CsDeviceManager implements
 		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds);
 		client.sendMessage(req);
 	}
+	
+	@Override
+	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final String orderDetailId) {
+		LOGGER.debug("Compute work: Che={}; DetailId={}", inCheId, orderDetailId);
+		String cheId = inPersistentId.toString();
+		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId,orderDetailId);
+		client.sendMessage(req);
+	}
+
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
