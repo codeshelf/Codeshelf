@@ -2116,7 +2116,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue(position) == PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayFreq(position) == PosControllerInstr.SOLID_FREQ);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayDutyCycle(position) == PosControllerInstr.MED_DUTYCYCLE);
-		Assert.assertTrue(picker.getLastSentPositionControllerMaxQty(position) == PosControllerInstr.BITENCODED_LED_E);
+		Assert.assertTrue(picker.getLastSentPositionControllerMaxQty(position) == PosControllerInstr.BITENCODED_LED_BLANK);
 		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
 	}
