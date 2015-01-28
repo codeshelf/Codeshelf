@@ -44,6 +44,10 @@ public class CriteriaRegistry {
 			new TypedCriteria("from Che where parent.parent.persistentId = :facilityId",
 				"facilityId", UUID.class));
 		
+		indexedCriteria.put("locationAliasesByFacility",
+			new TypedCriteria("from location_alias where parent.persistentId = :facilityId and active = true",
+				"facilityId", UUID.class));
+
 		indexedCriteria.put("pathSegmentsByFacility",
 			new TypedCriteria("from PathSegment where parent.parent.persistentId = :facilityId",
 				"facilityId", UUID.class));
