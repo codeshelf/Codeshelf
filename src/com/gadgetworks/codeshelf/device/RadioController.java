@@ -996,7 +996,7 @@ public class RadioController implements IRadioController {
 				if (ackId != IPacket.EMPTY_ACK_ID) {
 					if (packetSourceAddress.isZeroAddress())
 						LOGGER.debug("avoiding ack attempt on source address 0"); // DEV-598 reduces this in the logs
-						// But is there an error somewhere? should the packetsSentCounter.inc()? It did before.
+					// But is there an error somewhere? should the packetsSentCounter.inc()? It did before.
 					else
 						respondToAck(ackId, packet.getNetworkId(), packetSourceAddress);
 				}
@@ -1030,7 +1030,7 @@ public class RadioController implements IRadioController {
 				CommandAssocAck ackCmd = new CommandAssocAck("00000000", new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS,
 					(byte) 0));
 
-				sendCommand(ackCmd, inNetId, inSrcAddr, false);
+				//sendCommand(ackCmd, inNetId, inSrcAddr, false);
 				IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
 				ackCmd.setPacket(ackPacket);
 				ackPacket.setAckId(inAckId);

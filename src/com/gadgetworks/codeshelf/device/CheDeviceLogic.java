@@ -978,9 +978,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	private void sendErrorCodeToAllPosCons() {
 		List<PosControllerInstr> instructions = Lists.newArrayList(new PosControllerInstr(PosControllerInstr.POSITION_ALL,
-			PosControllerInstr.ERROR_CODE_QTY,
-			PosControllerInstr.ERROR_CODE_QTY,
-			PosControllerInstr.ERROR_CODE_QTY,
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+			PosControllerInstr.BITENCODED_LED_E,
+			PosControllerInstr.BITENCODED_LED_BLANK,
 			PosControllerInstr.SOLID_FREQ, // change from BLINK_FREQ
 			PosControllerInstr.MED_DUTYCYCLE)); // change from BRIGHT_DUTYCYCLE v6
 		sendPositionControllerInstructions(instructions);
@@ -1047,7 +1047,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		forceClearAllLedsForThisCheDevice();
 		clearAllPositionControllers();
 	}
-
 
 	/**
 	 * Setup the CHE by clearing all the datastructures
@@ -2083,8 +2082,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			codeUnderstood = true;
 
 		if (!codeUnderstood) {
-			codeToSend = PosControllerInstr.ERROR_CODE_QTY;
-			LOGGER.error("showSpecialPositionCode: unknown quantity code in ");
+			LOGGER.error("showSpecialPositionCode: unknown quantity code={}; containerId={}", inSpecialQuantityCode, inContainerId);
+			return;
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {

@@ -24,11 +24,10 @@ public class PosControllerInstr {
 	public static final Byte	ZERO_QTY						= (byte) 0;
 
 	//Status Codes
-	public static final Byte	ERROR_CODE_QTY					= (byte) 255;
 	public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;	// sort of fake quantities for now
 	public static final Byte	DEFAULT_POSITION_ASSIGNED_CODE	= (byte) 253;
 	public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
-	
+
 	//Commenting out bit encodings until v11
 	public static final Byte	BITENCODED_SEGMENTS_CODE		= (byte) 240;
 	// Bit-encoded LED display characters.
@@ -38,6 +37,7 @@ public class PosControllerInstr {
 	public static final Byte	BITENCODED_LED_DASH				= 0x40;
 	public static final Byte	BITENCODED_LED_O				= 0x5C;
 	public static final Byte	BITENCODED_LED_C				= 0x58;
+	public static final Byte	BITENCODED_LED_E				= 0x79;
 
 	//Any array mapping digits to their BITENCODED_LED bytes. Digit 9 is at the end of the array.
 	public static final byte[]	BITENCODED_DIGITS				= new byte[] { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07,
