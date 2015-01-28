@@ -70,6 +70,8 @@ import com.gadgetworks.codeshelf.model.domain.Slot.SlotDao;
 //import com.gadgetworks.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Tier.TierDao;
+import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation;
+import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation.UnspecifiedLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
 import com.gadgetworks.codeshelf.model.domain.User;
@@ -121,6 +123,7 @@ public abstract class DAOTestABC {
 	protected ContainerUseDao		mContainerUseDao;
 	protected ItemMasterDao			mItemMasterDao;
 	protected ItemDao				mItemDao;
+	protected UnspecifiedLocationDao mUnspecifiedLocationDao;
 	protected UomMasterDao			mUomMasterDao;
 	protected IronMqServiceDao		mIronMqServiceDao;
 	protected LedControllerDao		mLedControllerDao;
@@ -226,6 +229,9 @@ public abstract class DAOTestABC {
 		mUomMasterDao = new UomMasterDao(persistenceService);
 		UomMaster.DAO = mUomMasterDao;
 
+		mUnspecifiedLocationDao = new UnspecifiedLocationDao(persistenceService);
+		UnspecifiedLocation.DAO = mUnspecifiedLocationDao;
+		
 		mLedControllerDao = new LedControllerDao(persistenceService);
 		LedController.DAO = mLedControllerDao;
 

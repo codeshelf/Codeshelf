@@ -8,10 +8,10 @@ package com.gadgetworks.codeshelf.model.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -25,6 +25,8 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +53,8 @@ import com.google.inject.Singleton;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "edi_service")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
-@DiscriminatorValue("ABC")
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 

@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
+import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
@@ -135,7 +136,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		String nName = "N-" + inOrganizationName;
 		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
+		organization.createDefaultSiteControllerUser(network);
 
 		//Che che = 
 		network.createChe("CHE1", new NetGuid("0x00000001"));
@@ -198,7 +199,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// A1.B2.T2 is D-28		
 		// In D-28, left to right are SKUs 1522,1525,1523,1524
-		
+
 		// A1.B1.T1 is D-27.  
 		// In D-27, left to right are SKUs  1831, 1830
 
@@ -223,20 +224,20 @@ public class InventoryPickRunTest extends EdiTestABC {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
-	
+
 	private void readInventoryWithTop(Facility inFacility) throws IOException {
 		// A1.B1.T2 is D-26.  
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
 
 		// A1.B2.T2 is D-28		
 		// In D-28, left to right are SKUs 1522,1525
-		
+
 		// A1.B1.T3 is D-71		
 		// In D-71, left to right are SKUs 1523
 
 		// A1.B2.T3 is D-72		
 		// In D-72, left to right are SKUs 1524
-		
+
 		// A1.B1.T1 is D-27.  
 		// In D-27, left to right are SKUs  1831, 1830
 
@@ -260,7 +261,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
-	}	
+	}
 
 	@SuppressWarnings("unused")
 	@Test
@@ -296,7 +297,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
-		
+
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 10, theSize);
 		WorkInstruction wi1 = wiList.get(0);
@@ -324,20 +325,20 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
-	
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSequenceAlongTierWithTop() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_02");
-		Assert.assertNotNull(facility);		
+		Assert.assertNotNull(facility);
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
 		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27"); // just using alias a little.
 		Assert.assertNotNull(tierA1B1T1.getLedController());
 		Tier tierA1B2T1 = (Tier) facility.findSubLocationById("A1.B2.T1");
 		Assert.assertNotNull(tierA1B1T1.getLedController());
-		
+
 		// Check the path direction	
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
@@ -354,7 +355,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Orders
 		readOrdersForA1(facility);
-		
+
 		// Just check a UI field. Basically looking for NPE
 		OrderHeader order = facility.getOrderHeader("12000");
 		Assert.assertNotNull(order);
@@ -398,7 +399,67 @@ public class InventoryPickRunTest extends EdiTestABC {
 		mPropertyService.restoreHKDefaults(facility);
 
 		this.getPersistenceService().commitTenantTransaction();
-	}	
+	}
+
+	@Test
+	public final void testimmediateShorts() throws IOException {
+		// generation of immediateShort
+		// cleanup of immediate short
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_03");
+		Assert.assertNotNull(facility);
+
+		// Inventory
+		readInventoryWithTop(facility);
+
+		// Orders
+		readOrdersForA1(facility);
+
+		// Delete two of the items, which will cause immediate short upon cart setup
+		ItemMaster master1123 = facility.getItemMaster("1123");
+		ItemMaster master1124 = facility.getItemMaster("1124");
+		Item item1123 = master1123.getItemsOfUom("EA").get(0);
+		Item item1124 = master1124.getItemsOfUom("EA").get(0);
+		Assert.assertNotNull(item1123);
+		Assert.assertNotNull(item1124);
+		Item.DAO.delete(item1123);
+		Item.DAO.delete(item1124);
+
+		// Interesting and important. If this commit is not done here, the cart setup will still find undeleted items 1123 and 1124.
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		//
+
+		// Now ready to run the cart
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe("CHE1");
+
+		mPropertyService.turnOffHK(facility);
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		LOGGER.info("Set up CHE for order 12000.");
+		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
+		Integer theSize = wiList.size();
+		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
+		// Let's find and count the immediate shorts
+		List<WorkInstruction> cheWiList = theChe.getCheWorkInstructions();
+		theSize = cheWiList.size();
+		Assert.assertEquals((Integer) 10, theSize); // Infer 2 shorts in there
+
+		// Set up the CHE again. DEV-609. This should delete the previous 2 immediate shorts, then make 2 new ones
+		wiList = startWorkFromBeginning(facility, "CHE1", "12000");
+		theSize = wiList.size();
+		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
+		// Let's find and count the immediate shorts
+		cheWiList = theChe.getCheWorkInstructions();
+		theSize = cheWiList.size();
+		Assert.assertEquals((Integer) 10, theSize); // Before DEV-609, this had 12
+		
+		mPropertyService.restoreHKDefaults(facility);
+
+		this.getPersistenceService().commitTenantTransaction();
+	}
 
 	@Test
 	public final void testLocationBasedPick() throws IOException {
@@ -407,11 +468,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// - Creation of inventory during orders file read, then
 		// - Selection of the inventory items during computeWorkInstructions
 		// Once that is done, site controller just implements the work instructions that were made.
-		
+
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvLocP_01");
-		Assert.assertNotNull(facility);	
-		
+		Assert.assertNotNull(facility);
+
 		LOGGER.info("1: Set LOCAPICK = true.  Leave EACHMULT = false");
 		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
@@ -431,9 +492,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshell,2,EA,,pick,D-71,";
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer = createOrderImporter() ;
+		ICsvOrderImporter importer = createOrderImporter();
 		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		
+
 		this.getPersistenceService().commitTenantTransaction();
 		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
 
@@ -448,9 +509,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 3, theSize);
 		LOGGER.info("4: Success! Three jobs from location based pick. SKU0003 did not get one made.");
-		
+
 		LOGGER.info("5: Let's read an inventory file creating SKU0003 in a different place.");
-		
+
 		String csvString2 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "SKU0003,D-33,Spoon 6in.,80,Cs,6/25/14 12:00,\r\n"; //
 
@@ -458,7 +519,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		ICsvInventoryImporter importer2 = createInventoryImporter();
 		importer2.importSlottedInventoryFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getPersistenceService().commitTenantTransaction();
-		
+
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
 		this.getPersistenceService().beginTenantTransaction();
 
@@ -471,14 +532,14 @@ public class InventoryPickRunTest extends EdiTestABC {
 		logWiList(wiList);
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
-		
+
 		LOGGER.info("7: Let's move SKU0004 to D-74. The order preferredLocation is still D-71");
 		String csvString3 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "SKU0004,D-74,9 Three Compartment Unbleached Clamshell,,Ea,6/25/14 12:00,\r\n"; //
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer3 = createInventoryImporter();
-		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);		
+		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
 		this.getPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");

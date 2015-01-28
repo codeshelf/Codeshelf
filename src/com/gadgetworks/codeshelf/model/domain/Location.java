@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
@@ -34,6 +35,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,6 +62,8 @@ import com.google.common.collect.Ordering;
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class Location extends DomainObjectTreeABC<Location> {
 
@@ -455,7 +460,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public <T extends Location> T getParentAtLevel(Class<? extends Location> inClassWanted) {
 
 		// if you call aisle.getParentAtLevel(Aisle.class), return itself. This is moderately common.
-		if (this.getClass().equals(inClassWanted))
+		if (Hibernate.getClass(this).equals(inClassWanted))
 			return (T) this; // (We can cast safely since we checked the class.)
 
 		T result = null;
@@ -546,7 +551,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * This may return null
 	 */
 	public Location findLocationById(String inLocationId) {
-		if (this.getClass().equals(Facility.class)) {
+		if (Hibernate.getClass(this).equals(Facility.class)) {
 			Facility facility = (Facility) this;
 			LocationAlias alias = facility.getLocationAlias(inLocationId);
 			if ((alias != null) && (alias.getActive())) {
@@ -1108,27 +1113,31 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public LedRange getFirstLastLedsForLocation() {
-		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
-		// to compute, we need the locations first and last led positions
-		Short firstLocLed = getFirstLedNumAlongPath();
-		Short lastLocLed = getLastLedNumAlongPath();
-		if (firstLocLed == null || lastLocLed == null) {
-			throw new UnsupportedOperationException(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
-				this,
-				firstLocLed,
-				lastLocLed));
-		}
-		// following cast not safe if the stored location is facility
-		if (this instanceof Facility)
-			return LedRange.zero(); // was initialized to give values of 0,0
+        // we will want a different function here isLocationPossiblyLightable()
+		// besides facility, new AgnosticLocation type would return false.
+        if (this.isFacility()) {
+            return LedRange.zero(); // was initialized to give values of 0,0
+        }
+        
+        // This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
+        // to compute, we need the locations first and last led positions
+        Short firstLocLed = getFirstLedNumAlongPath();
+        Short lastLocLed = getLastLedNumAlongPath();
+        if (firstLocLed == null || lastLocLed == null) {
+            LOGGER.warn(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
+                this,
+                firstLocLed,
+                lastLocLed));
+            return LedRange.zero();
+        }
 
-		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
+        boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
-		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+        LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
 
-		return theLedRange;
-	}
-
+        return theLedRange;
+    }
+	
 	private class InventoryPositionComparator implements Comparator<Item> {
 		// We want this to sort from low to high
 		public int compare(Item item1, Item item2) {

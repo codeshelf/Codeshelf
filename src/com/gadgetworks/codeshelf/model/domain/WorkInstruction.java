@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -20,6 +21,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Hibernate;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +66,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "work_instruction")
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })
@@ -322,7 +328,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			result = true;
 		} else {
 			// The check location is parent of the WI location, so it contains it.
-			Location parentLoc = location.getParentAtLevel(inCheckLocation.getClass());
+			Location parentLoc = location.getParentAtLevel(Hibernate.getClass(inCheckLocation));
 			if ((parentLoc != null) && (parentLoc.equals(inCheckLocation))) {
 				result = true;
 			}
@@ -476,7 +482,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return returnStr;
 
 		Location theLocation = theWLocationABC;
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return returnStr;
 
 		Item wiItem = theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());
@@ -499,7 +505,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return null; // should not happen
 
 		Location theLocation = theWLocationABC;
-		if (theLocation instanceof Facility)
+		if (theLocation.isFacility())
 			return null;
 
 		return theLocation.getStoredItemFromMasterIdAndUom(getItemId(), getUomMasterId());

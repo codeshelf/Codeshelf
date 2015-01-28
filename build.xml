@@ -119,6 +119,7 @@
 				
 				<include name="hibernate.tenant.xml" />
 				<include name="hibernate.test.xml" />
+				<include name="ehcache.xml" />
 			</fileset>
 			<fileset dir="${liquibase.dir}">
 				<include name="*.*" />
