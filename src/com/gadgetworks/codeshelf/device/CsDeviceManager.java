@@ -54,76 +54,87 @@ import com.google.inject.Inject;
  * @author jeffw
  *
  */
-public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventListener, WebSocketEventListener, PacketCaptureListener {
+public class CsDeviceManager implements
+	ICsDeviceManager,
+	IRadioControllerEventListener,
+	WebSocketEventListener,
+	PacketCaptureListener {
 
-	private static final Logger				LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
+	private static final Logger							LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	private static final String							DEVICETYPE_CHE			= "CHE";
-	private static final String							DEVICETYPE_LED			= "LED Controller";
+	private static final String							DEVICETYPE_CHE				= "CHE";
+	private static final String							DEVICETYPE_LED				= "LED Controller";
+	private static final String							DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
+	private static final String							DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 
-	private TwoKeyMap<UUID, NetGuid, INetworkDevice> mDeviceMap;
+	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
 	@Getter
-	private IRadioController				radioController;
+	private IRadioController							radioController;
 
 	@Getter
-	private PcapRingBuffer					pcapBuffer;
+	private PcapRingBuffer								pcapBuffer;
 
-	private	String							username;
-	private String							password;
+	private String										username;
+	private String										password;
 
 	/* Device Manager owns websocket configuration too */
 	@Getter
-	private URI							mUri;
-
-	@Getter @Setter
-	boolean suppressKeepAlive = false;
-
-	@Getter @Setter
-	boolean idleKill = false;
-
-	@Getter
-	private JettyWebSocketClient client;
-
-	private ConnectionManagerThread connectionManagerThread;
-
-	@Getter
-	private long	lastNetworkUpdate=0;
-
-	private boolean isAttachedToServer = false;
-
-	@Getter @Setter
-	boolean radioEnabled = true;
-	
-	private boolean autoShortValue = true; // getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
-	
-	@Getter
-	@Setter
-	private String										pickInfoValue		= "SKU";
+	private URI											mUri;
 
 	@Getter
 	@Setter
-	private String										containerTypeValue	= "Order";
+	boolean												suppressKeepAlive			= false;
 
-	private WebSocketContainer	webSocketContainer;
+	@Getter
+	@Setter
+	boolean												idleKill					= false;
+
+	@Getter
+	private JettyWebSocketClient						client;
+
+	private ConnectionManagerThread						connectionManagerThread;
+
+	@Getter
+	private long										lastNetworkUpdate			= 0;
+
+	private boolean										isAttachedToServer			= false;
+
+	@Getter
+	@Setter
+	boolean												radioEnabled				= true;
+
+	private boolean										autoShortValue				= true;											// getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
+
+	@Getter
+	@Setter
+	private String										pickInfoValue				= "SKU";
+
+	@Getter
+	@Setter
+	private String										containerTypeValue			= "Order";
+
+	private WebSocketContainer							webSocketContainer;
 
 	@Inject
-	public CsDeviceManager(final IRadioController inRadioController, final IConfiguration configuration, final WebSocketContainer inWebSocketContainer) {
+	public CsDeviceManager(final IRadioController inRadioController,
+		final IConfiguration configuration,
+		final WebSocketContainer inWebSocketContainer) {
 		// fetch properties from config file
-		radioEnabled = configuration.getBoolean("radio.enabled",true);
+		radioEnabled = configuration.getBoolean("radio.enabled", true);
 		mUri = URI.create(configuration.getString("websocket.uri"));
 		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
 		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
 		this.webSocketContainer = inWebSocketContainer;
-		
+
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		username = configuration.getString("websocket.username");
 		password = configuration.getString("websocket.password");
 
-		if(configuration.getBoolean("pcapbuffer.enable", false)) {
+		if (configuration.getBoolean("pcapbuffer.enable", false)) {
 			// set up ring buffer
 			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
 			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);
@@ -139,11 +150,12 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		startWebSocketClient();
 
 	}
+
 	@Override
-	public boolean getAutoShortValue(){
+	public boolean getAutoShortValue() {
 		return autoShortValue;
 	}
-	
+
 	public void setAutoShortValue(boolean inValue) {
 		autoShortValue = inValue;
 		LOGGER.info("Site controller setting AUTOSHRT value = {}", inValue);
@@ -168,7 +180,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public final List<AisleDeviceLogic> getAisleControllers() {
 		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
-		for (INetworkDevice theDevice :mDeviceMap.values()) {
+		for (INetworkDevice theDevice : mDeviceMap.values()) {
 			if (theDevice instanceof AisleDeviceLogic)
 				aList.add((AisleDeviceLogic) theDevice);
 		}
@@ -178,7 +190,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public final List<CheDeviceLogic> getCheControllers() {
 		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();
-		for (INetworkDevice theDevice :mDeviceMap.values()) {
+		for (INetworkDevice theDevice : mDeviceMap.values()) {
 			if (theDevice instanceof CheDeviceLogic)
 				aList.add((CheDeviceLogic) theDevice);
 		}
@@ -186,12 +198,12 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public final void startWebSocketClient() {
-    	// create response processor and register it with WS client
+		// create response processor and register it with WS client
 		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
-    	client = new JettyWebSocketClient(webSocketContainer, mUri,responseProcessor,this);
-    	responseProcessor.setWebClient(client);
-    	connectionManagerThread = new ConnectionManagerThread(this);
-    	connectionManagerThread.start();
+		client = new JettyWebSocketClient(webSocketContainer, mUri, responseProcessor, this);
+		responseProcessor.setWebClient(client);
+		connectionManagerThread = new ConnectionManagerThread(this);
+		connectionManagerThread.start();
 	}
 
 	@Override
@@ -243,11 +255,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 	@Override
 	public void deviceActive(INetworkDevice inNetworkDevice) {
-		if(inNetworkDevice instanceof CheDeviceLogic ) {
+		if (inNetworkDevice instanceof CheDeviceLogic) {
 			if (isAttachedToServer) {
 				((CheDeviceLogic) inNetworkDevice).connectedToServer();
-			}
-			else {
+			} else {
 				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
 		}
@@ -266,7 +277,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		for (String containerId : inContainerIdList) {
 			containerIds.add(containerId);
 		}
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId,containerIds);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds);
 		client.sendMessage(req);
 	}
 	
@@ -287,7 +298,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		GetWorkRequest req  = new GetWorkRequest(cheId,inLocationId);
+		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId);
 		client.sendMessage(req);
 	}
 
@@ -298,7 +309,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	@Override
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
-		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId,inWorkInstruction);
+		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId, inWorkInstruction);
 		client.sendMessage(req);
 	}
 
@@ -325,7 +336,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 
 		isAttachedToServer = true;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
-			if(networkDevice instanceof CheDeviceLogic ) {
+			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).connectedToServer();
 			}
 		}
@@ -335,7 +346,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		LOGGER.info("Unattached from server");
 		isAttachedToServer = false;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
-			if(networkDevice instanceof CheDeviceLogic ) {
+			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
 			}
 		}
@@ -360,6 +371,10 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			// new device
 			if (deviceType.equals(DEVICETYPE_CHE)) {
 				netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
+				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
+				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else {
@@ -367,7 +382,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				suppressMapUpdate = true;
 			}
 
-			if(!suppressMapUpdate) {
+			if (!suppressMapUpdate) {
 				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(deviceGuid);
 				if (oldNetworkDevice != null) {
 					LOGGER.warn("Creating device={}; guid={}; but a NetworkDevice already existed with that NetGuid (removing)",
@@ -401,13 +416,17 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 				// can't really change the NetGuid so we will create new device
 				if (deviceType.equals(DEVICETYPE_CHE)) {
 					netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
+					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
+					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else {
 					LOGGER.error("Cannot update existing network device of unrecognized type={}", deviceType);
 					suppressMapUpdate = true;
 				}
-				if(!suppressMapUpdate) {
+				if (!suppressMapUpdate) {
 					radioController.addNetworkDevice(netDevice);
 				}
 			} else {
@@ -418,7 +437,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 
 		// update device map will also remove any mismatches (e.g. other entries with same guid/persistentId - see TwoKeyMap)
-		if(!suppressMapUpdate) {
+		if (!suppressMapUpdate) {
 			mDeviceMap.put(persistentId, deviceGuid, netDevice);
 		}
 	}
@@ -458,13 +477,33 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 	}
 
 	public void updateNetwork(CodeshelfNetwork network) {
-		Set<UUID> updateDevices=new HashSet<UUID>();
+		Set<UUID> updateDevices = new HashSet<UUID>();
 		// update network devices
 		for (Che che : network.getChes().values()) {
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
-				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE);
+				
+				/*
+				Che.ProcessMode theMode = che.getProcessMode();
+				if (theMode == null)
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
+				else {
+					switch (theMode) {
+						case LINE_SCAN:
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_LINESCAN);
+							break;
+						case SETUP_ORDERS:
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
+							break;
+						default:
+							LOGGER.error("unimplemented case in updateNetwork");
+							continue;
+					}
+				}
+				*/
+				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE); // comment this in favor of block above
+				
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
@@ -484,7 +523,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		}
 
 		// now process deletions
-		Set<UUID> deleteDevices=new HashSet<UUID>();
+		Set<UUID> deleteDevices = new HashSet<UUID>();
 		for (UUID existingDevice : mDeviceMap.keys1()) {
 			if (!updateDevices.contains(existingDevice)) {
 				deleteDevices.add(existingDevice);
@@ -506,8 +545,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
-		}
-		else {
+		} else {
 			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", cheId);
 		}
 	}
@@ -517,8 +555,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
 			cheDevice.assignWork(workInstructions);
-		}
-		else {
+		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
@@ -531,8 +568,7 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 		INetworkDevice aDevice = getDeviceByGuid(inGuid);
 		if (aDevice != null && aDevice instanceof AisleDeviceLogic) {
 			((AisleDeviceLogic) aDevice).lightExtraLeds(inSeconds, inCommands);
-		}
-		else {
+		} else {
 			// By design, the LightLedsMessage broadcast to all site controllers for this facility. If this site controller does not have the mentioned device, it is an error today
 			// but may not be later when we have our multi-controller implementation.
 			LOGGER.debug("unknown GUID in lightSomeLeds");
@@ -553,7 +589,5 @@ public class CsDeviceManager implements ICsDeviceManager, IRadioControllerEventL
 			LOGGER.error("Unexpected problem putting packet of size={} in ring buffer", packet.length, e);
 		}
 	}
-	
-	
 
 }
