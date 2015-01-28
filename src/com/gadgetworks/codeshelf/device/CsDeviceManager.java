@@ -472,7 +472,27 @@ public class CsDeviceManager implements
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
-				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE);
+				
+				/*
+				Che.ProcessMode theMode = che.getProcessMode();
+				if (theMode == null)
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
+				else {
+					switch (theMode) {
+						case LINE_SCAN:
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_LINESCAN);
+							break;
+						case SETUP_ORDERS:
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
+							break;
+						default:
+							LOGGER.error("unimplemented case in updateNetwork");
+							continue;
+					}
+				}
+				*/
+				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE); // comment this in favor of block above
+				
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
