@@ -9,7 +9,7 @@ eclipse {
 		downloadSources false
 	}
 }
-
+tasks.eclipse.dependsOn(cleanEclipseClasspath)
 
 repositories {
 	mavenCentral()
