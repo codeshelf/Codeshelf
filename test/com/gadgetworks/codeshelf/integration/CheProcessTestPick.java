@@ -929,13 +929,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		LOGGER.info("Case 5: Inappropriate location scan, then normal button press works");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
+		Assert.assertNotEquals(0, button);
 		quant = wi.getPlanQuantity();
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
 
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		Byte ctrlDispValue = picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue();
-		Byte planValue = wi.getPlanQuantity().byteValue();
+		Byte ctrlDispValueObj = picker.getLastSentPositionControllerDisplayValue((byte) button);
+		Assert.assertNotNull(ctrlDispValueObj);
+		int ctrlDispValue = ctrlDispValueObj.byteValue();
+		int planValue = wi.getPlanQuantity().byteValue();
 		Assert.assertEquals(ctrlDispValue, planValue);
 		//Make sure we have the right position and quantities and itemId
 		Assert.assertEquals(quant, 1);

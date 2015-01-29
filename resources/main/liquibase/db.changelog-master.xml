@@ -4,18 +4,18 @@
 	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
-	<include file="db.changelog-v10-initial.xml" />
-	<include file="db.changelog-v10.1.xml" />
-	<include file="db.changelog-v10.2.xml" />
-	<include file="db.changelog-v10.3.xml" />
-	<include file="db.changelog-v10.4.xml" />
-	<include file="db.changelog-v10.5.xml" />
-	<include file="db.changelog-v10.6.xml" />
-	<include file="db.changelog-v10.7.xml" />
-	<include file="db.changelog-v10.8.xml" />
-	<include file="db.changelog-v10.9.xml" />
+	<include file="db.changelog-v10-initial.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.1.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.2.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.3.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.4.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.5.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.6.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.7.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.8.xml" relativeToChangelogFile="true" />
+	<include file="db.changelog-v10.9.xml" relativeToChangelogFile="true" />
 
-	<include file="db.changelog-v11.1.xml" />
+	<include file="db.changelog-v11.1.xml" relativeToChangelogFile="true" />
 
-	<include file="db.changelog-v12.1.xml" />
+	<include file="db.changelog-v12.1.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
