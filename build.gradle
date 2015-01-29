@@ -6,7 +6,7 @@ task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
 eclipse {
 	classpath {
 		defaultOutputDir file('eclipse-bin')
-		downloadSources false
+//		downloadSources false
 	}
 }
 tasks.eclipse.dependsOn(cleanEclipseClasspath)
