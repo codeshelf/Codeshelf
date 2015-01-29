@@ -981,6 +981,13 @@ public class RadioController implements IRadioController {
 
 	private void receivePacket(IPacket packet) {
 		NetAddress packetSourceAddress = packet.getSrcAddr();
+
+		if (packetSourceAddress == mServerAddress) {
+			//Ignore packet from ourselves or other servers
+			LOGGER.debug("Ignoring packet from serverAddress={}", packetSourceAddress);
+			return;
+		}
+
 		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
@@ -992,15 +999,26 @@ public class RadioController implements IRadioController {
 				processAckPacket(packet);
 			} else {
 				// If the inbound packet had an ACK ID then respond with an ACK ID.
-				byte ackId = packet.getAckId();
-				if (ackId != IPacket.EMPTY_ACK_ID) {
-					if (packetSourceAddress.isZeroAddress())
-						LOGGER.debug("avoiding ack attempt on source address 0"); // DEV-598 reduces this in the logs
-					// But is there an error somewhere? should the packetsSentCounter.inc()? It did before.
-					else
-						respondToAck(ackId, packet.getNetworkId(), packetSourceAddress);
+				boolean shouldActOnCommand = true;
+				if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
+					if (device == null) {
+						LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
+						return;
+					} else {
+						//Only act on the command if the ACK is new (i.e. > last ack id)
+						shouldActOnCommand = device.isAckIdNew(packet.getAckId());
+
+						//Always respond to an ACK
+						respondToAck(device, packet.getAckId(), packet.getNetworkId(), packetSourceAddress);
+					}
 				}
-				receiveCommand(packet.getCommand(), packetSourceAddress);
+
+				if (shouldActOnCommand) {
+					receiveCommand(packet.getCommand(), packetSourceAddress);
+				} else {
+					LOGGER.warn("We ACKed but did not process a packet that was already acked befinAckIdore; packet={}", packet);
+
+				}
 			}
 			this.packetsSentCounter.inc();
 		} finally {
@@ -1014,28 +1032,21 @@ public class RadioController implements IRadioController {
 	 * @param inNetId
 	 * @param inSrcAddr
 	 */
-	private void respondToAck(final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
-		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
-		if (device == null) {
-			LOGGER.warn("Unable to respond to ack: Device with address " + inSrcAddr + " not found");
-			return;
-		}
+	private void respondToAck(INetworkDevice device, final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
 		ContextLogging.setNetGuid(device.getGuid());
 		try {
-			if (device.isAckIdNew(inAckId)) {
 
-				LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
+			LOGGER.info("Remote ack request RECEIVED: ack: " + inAckId + " net: " + inNetId + " src: " + inSrcAddr);
 
-				device.setLastAckId(inAckId);
-				CommandAssocAck ackCmd = new CommandAssocAck("00000000", new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS,
-					(byte) 0));
+			device.setLastAckId(inAckId);
+			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
-				//sendCommand(ackCmd, inNetId, inSrcAddr, false);
-				IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
-				ackCmd.setPacket(ackPacket);
-				ackPacket.setAckId(inAckId);
-				sendPacket(ackPacket);
-			}
+			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
+			ackCmd.setPacket(ackPacket);
+			ackPacket.setAckId(inAckId);
+			sendPacket(ackPacket);
+
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -1058,6 +1069,7 @@ public class RadioController implements IRadioController {
 				mLastPacketSentMillis = System.currentTimeMillis();
 				gatewayInterface.sendPacket(inPacket);
 				this.packetsSentCounter.inc();
+
 			} else {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
 			}

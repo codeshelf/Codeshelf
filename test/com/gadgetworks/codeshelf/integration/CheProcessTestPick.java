@@ -1904,9 +1904,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 1000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -1929,9 +1929,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, 3000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -1948,9 +1948,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_IN_USE, 3000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -1967,18 +1967,18 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure scanning something random doesn;t change the state
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
 
 		//Make sure we still got an error codes
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -2113,6 +2113,15 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ColorEnum wiColor = cmdGroups.get(0).getLedSampleList().get(0).getColor();
 		ColorEnum cheColor = che.getColor();
 		Assert.assertEquals(cheColor, wiColor);
+
+	}
+
+	private void assertPositionHasErrorCode(PickSimulator picker, byte position) {
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue(position) == PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayFreq(position) == PosControllerInstr.SOLID_FREQ);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayDutyCycle(position) == PosControllerInstr.MED_DUTYCYCLE);
+		Assert.assertTrue(picker.getLastSentPositionControllerMaxQty(position) == PosControllerInstr.BITENCODED_LED_BLANK);
+		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
 	}
 

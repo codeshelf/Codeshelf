@@ -1043,6 +1043,19 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Determine if this is a clone attempt, and return the aisle to clone from
+	 */
+	private Aisle getAisleToClone(String inCloneInstruction){
+		// Does this take the form of "Clone(A51)"?
+		String cloneInstruction = inCloneInstruction.toUpperCase();
+		
+		
+
+		return null;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
 	 * @param inCsvBean
 	 * @param inEdiProcessTime
 	 */
@@ -1115,6 +1128,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				mLastReadTier = null;
 				mBayCountThisAisle = 0;
 				mTierCountThisBay = 0;
+				
+				// DEV-618 Are we cloning another aisle? Instructions in the lengthCm field
+				Aisle aisleToCloneFrom = getAisleToClone(lengthCm);
+				if (aisleToCloneFrom != null) {
+					
+				}
 			}
 		}
 

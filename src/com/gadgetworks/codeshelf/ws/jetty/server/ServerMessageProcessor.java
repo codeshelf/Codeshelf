@@ -14,6 +14,7 @@ import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CompleteWorkInstructionCommand;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ComputeDetailWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CreatePathCommand;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.EchoCommand;
@@ -30,6 +31,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
@@ -111,6 +113,11 @@ public class ServerMessageProcessor extends MessageProcessor {
 			}
 			else if (request instanceof ComputeWorkRequest) {
 				command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+				computeWorkCounter.inc();
+				applicationRequestCounter.inc();
+			}
+			else if (request instanceof ComputeDetailWorkRequest) {
+				command = new ComputeDetailWorkCommand(csSession,(ComputeDetailWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 				computeWorkCounter.inc();
 				applicationRequestCounter.inc();
 			}			
