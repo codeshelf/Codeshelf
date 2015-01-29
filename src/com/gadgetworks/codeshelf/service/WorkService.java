@@ -962,6 +962,7 @@ public class WorkService implements IApiService {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {
@@ -985,6 +986,7 @@ public class WorkService implements IApiService {
 			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
 				.addScalar("group", StandardBasicTypes.STRING)
 				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
+			getPicksPerHourQuery.setCacheable(true);
 			picksPerHour = getPicksPerHourQuery.list();
 		}
 		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);

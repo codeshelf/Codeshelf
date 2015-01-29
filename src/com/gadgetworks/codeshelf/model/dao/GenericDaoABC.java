@@ -244,6 +244,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public List<T> getAll() {
 		Session session = getCurrentSession();
         Criteria criteria = session.createCriteria(getDaoClass());
+        criteria.setCacheable(true);
 		List<T> results = criteria.list();
 		return results;
 	}
