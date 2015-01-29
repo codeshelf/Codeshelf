@@ -257,6 +257,7 @@ public class Organization extends DomainObjectABC {
 
 	@Override
 	public Facility getFacility() {
+		LOGGER.warn("Organization.getFacility is not supported");
 		return null;
 	}
 
