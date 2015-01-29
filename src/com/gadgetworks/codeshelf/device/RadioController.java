@@ -981,6 +981,13 @@ public class RadioController implements IRadioController {
 
 	private void receivePacket(IPacket packet) {
 		NetAddress packetSourceAddress = packet.getSrcAddr();
+
+		if (packetSourceAddress == mServerAddress) {
+			//Ignore packet from ourselves or other servers
+			LOGGER.debug("Ignoring packet from serverAddress={}", packetSourceAddress);
+			return;
+		}
+
 		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
@@ -993,9 +1000,9 @@ public class RadioController implements IRadioController {
 			} else {
 				// If the inbound packet had an ACK ID then respond with an ACK ID.
 				boolean shouldActOnCommand = true;
-				if (packet.getAckId() != IPacket.EMPTY_ACK_ID && packetSourceAddress != mServerAddress) {
+				if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
 					if (device == null) {
-						LOGGER.warn("Unable to respond to ack: Device with address {} not found", packetSourceAddress);
+						LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
 						shouldActOnCommand = false;
 					} else {
 						//Only act on the command if the ACK is new (i.e. > last ack id)
