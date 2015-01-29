@@ -1046,11 +1046,23 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * Determine if this is a clone attempt, and return the aisle to clone from
 	 */
 	private Aisle getAisleToClone(String inCloneInstruction){
-		// Does this take the form of "Clone(A51)"?
+		// Does this take the form of "Clone(A51)"?  DEV-618
+		if (inCloneInstruction == null || inCloneInstruction.isEmpty())
+			return null;
+		
+		// something in the field
 		String cloneInstruction = inCloneInstruction.toUpperCase();
+		String subPart = cloneInstruction.substring(0, 6);
+		if (subPart.equals("CLONE(")){
+			int totLength = cloneInstruction.length();
+			if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")){
+				String aisleName =  cloneInstruction.substring(6, totLength - 1);
+				// find the aisle to clone
+				return Aisle.DAO.findByDomainId(mFacility, aisleName);
+			}
+		}
 		
-		
-
+		LOGGER.warn("Could not interpret " + inCloneInstruction + ". Nothing done.");
 		return null;
 	}
 	
@@ -1132,7 +1144,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				// DEV-618 Are we cloning another aisle? Instructions in the lengthCm field
 				Aisle aisleToCloneFrom = getAisleToClone(lengthCm);
 				if (aisleToCloneFrom != null) {
-					
+					LOGGER.info("Cloning an aisle as specified");
 				}
 			}
 		}
