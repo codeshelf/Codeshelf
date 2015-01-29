@@ -13,6 +13,7 @@ public enum ErrorCode {
 	FIELD_NUMBER_ABOVE_MAX("error.field.number.max", "{0} with value {1} was above maximum"), 
 	FIELD_WRONG_TYPE ("error.field.conversion", "{0} with value {1} could not be converted"),
 	FIELD_REFERENCE_NOT_FOUND("error.field.reference.notfound", "{0} with value {1} was not found"), //value was used for a lookup and could not find the reference
+	FIELD_REFERENCE_NOT_UNIQUE("error.field.reference.notunique", "{0} with value {1} is not unique"),
 	FIELD_REFERENCE_INACTIVE ("error.field.reference.inactive", "{0} with value {1} was not active"), //value was found but was inactive 
 	FIELD_INVALID ("error.field.invalid", "{0} invalid. {1}"); // does not match approved values. May not be allowed into the database.
 	

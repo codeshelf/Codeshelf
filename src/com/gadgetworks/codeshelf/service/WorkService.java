@@ -231,13 +231,18 @@ public class WorkService implements IApiService {
 		if (inScannedOrderDetailId == null) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
-
+		List<OrderDetail> orderDetails  = findDetailsByDomainBruteForce(inChe.getFacility(), inScannedOrderDetailId);
+		/*
 		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilter(ImmutableList.<Criterion>of(
 			Restrictions.eq("domainId", inScannedOrderDetailId),
 			Restrictions.eq("parent.parent", inChe.getFacility())
 		));
+		*/
 		if (orderDetails.isEmpty()) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+		}
+		if (orderDetails.size() > 1) {
+			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
 		}
 		
 		OrderDetail orderDetail = orderDetails.get(0);
@@ -269,6 +274,25 @@ public class WorkService implements IApiService {
 		}
 
 		return wiResultList;
+	}
+	
+	private List<OrderDetail> findDetailsByDomainBruteForce(Facility facility, String domainId) {
+		List<OrderDetail> found = new ArrayList<OrderDetail>();
+		if (facility == null || domainId == null){
+			LOGGER.error("Provide Facility and Detail Domain Id to seach for Order Detail");
+			return found;
+		}
+		List<OrderHeader> headers = facility.getOrderHeaders();
+		List<OrderDetail> details = null;
+		for (OrderHeader header : headers) {
+			details = header.getOrderDetails();
+			for (OrderDetail detail : details) {
+				if (domainId.equalsIgnoreCase(detail.getDomainId())){
+					found.add(detail);
+				}
+			}
+		}
+		return found;
 	}
 
 	// --------------------------------------------------------------------------
