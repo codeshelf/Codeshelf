@@ -934,8 +934,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
 
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), wi.getPlanQuantity()
-			.byteValue());
+		Byte ctrlDispValue = picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue();
+		Byte planValue = wi.getPlanQuantity().byteValue();
+		Assert.assertEquals(ctrlDispValue, planValue);
 		//Make sure we have the right position and quantities and itemId
 		Assert.assertEquals(quant, 1);
 		Assert.assertEquals(button, 2);

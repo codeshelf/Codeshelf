@@ -16,17 +16,14 @@ repositories {
 	maven { url "http://iron-io.github.io/maven/repository" }
 }
 
-buildDir = 'target'
-
-
 sourceSets {
 	main {
 		java { srcDir 'src' }
-		resources { srcDir 'resources' }
+		resources { srcDir 'resources/main' }
 	}
 	test {
 		java { srcDir 'test' }
-		resources { srcDir 'resources' }
+		resources { srcDir 'resources/test' }
 	}
 }
 
@@ -97,6 +94,7 @@ configurations.all {
 	resolutionStrategy {
 //		force 'junit:junit:4.12'
 //		failOnVersionConflict()
+//		enableNightmarishlyComplexManualDependencyResolutionHell()
 	}
 }
 
@@ -107,3 +105,4 @@ compileJava {
 	//enable incremental compilation
 	//options.incremental = true
 }
+

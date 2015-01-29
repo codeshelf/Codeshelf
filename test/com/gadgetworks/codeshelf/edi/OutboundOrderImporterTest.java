@@ -1585,10 +1585,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	private BatchResult<?> importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
-		try (InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
+		InputStream stream = this.getClass().getResourceAsStream(csvResource);
+		try {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			return importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		} finally {
+			if(stream != null) {
+				stream.close();
+			}
 		}
 	}
 	

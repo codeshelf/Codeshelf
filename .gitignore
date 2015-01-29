@@ -1,4 +1,7 @@
 /eclipse-bin
+/build
+/target
+/lib
 activemq-data
 trace.db
 logs
@@ -10,9 +13,7 @@ nbbuild
 example-src
 compare-file-2.txt
 $jarplug.work
-eclipse-bin
 resources.jar
-target
 compare-file-1.txt
 *.log
 /autofetch*.csv
