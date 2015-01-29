@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -231,13 +232,13 @@ public class WorkService implements IApiService {
 		if (inScannedOrderDetailId == null) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
-		List<OrderDetail> orderDetails  = findDetailsByDomainBruteForce(inChe.getFacility(), inScannedOrderDetailId);
-		/*
-		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilter(ImmutableList.<Criterion>of(
-			Restrictions.eq("domainId", inScannedOrderDetailId),
-			Restrictions.eq("parent.parent", inChe.getFacility())
-		));
-		*/
+
+		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
+			"facilityId", inChe.getFacility().getPersistentId(),
+			"domainId", inScannedOrderDetailId
+		);
+		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
+
 		if (orderDetails.isEmpty()) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
@@ -274,25 +275,6 @@ public class WorkService implements IApiService {
 		}
 
 		return wiResultList;
-	}
-	
-	private List<OrderDetail> findDetailsByDomainBruteForce(Facility facility, String domainId) {
-		List<OrderDetail> found = new ArrayList<OrderDetail>();
-		if (facility == null || domainId == null){
-			LOGGER.error("Provide Facility and Detail Domain Id to seach for Order Detail");
-			return found;
-		}
-		List<OrderHeader> headers = facility.getOrderHeaders();
-		List<OrderDetail> details = null;
-		for (OrderHeader header : headers) {
-			details = header.getOrderDetails();
-			for (OrderDetail detail : details) {
-				if (domainId.equalsIgnoreCase(detail.getDomainId())){
-					found.add(detail);
-				}
-			}
-		}
-		return found;
 	}
 
 	// --------------------------------------------------------------------------
@@ -986,6 +968,7 @@ public class WorkService implements IApiService {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {
@@ -1009,6 +992,7 @@ public class WorkService implements IApiService {
 			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
 				.addScalar("group", StandardBasicTypes.STRING)
 				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
+			getPicksPerHourQuery.setCacheable(true);
 			picksPerHour = getPicksPerHourQuery.list();
 		}
 		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);

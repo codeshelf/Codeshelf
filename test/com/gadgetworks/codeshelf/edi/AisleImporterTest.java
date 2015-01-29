@@ -1521,6 +1521,71 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public final void testCloneAisle() {
+		// For DEV-618
+		this.getPersistenceService().beginTenantTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Organization organization = new Organization();
+		organization.setDomainId("O-CLONE5X");
+		mOrganizationDao.store(organization);
+
+		organization.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = organization.getFacility("F-CLONE5X");
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get A51
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+
+		// See the A51 and A52 have some of the same locations, and same Led numbers
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Slot slotS1 = Slot.DAO.findByDomainId(tierA51B1T1, "S1");
+		Assert.assertNotNull(slotS1);
+		Slot slotS4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
+		Assert.assertNotNull(slotS4);
+		Short led51Value = slotS4.getFirstLedNumAlongPath();
+
+		Bay bayA52B1 = Bay.DAO.findByDomainId(aisle52, "B1");
+		Assert.assertNull(bayA52B1); // change to notNull with DEV-618
+		
+		/*
+		// curious. Tier.DAO.findByDomainId(null, "T1"); will find the A51 T1
+		Tier tierA52B1T1 = Tier.DAO.findByDomainId(bayA52B1, "T1");
+		Assert.assertNotNull(tierA52B1T1);
+		Slot slot52S1 = Slot.DAO.findByDomainId(tierA52B1T1, "S1");
+		Assert.assertNotNull(slot52S1);
+		Slot slot52S4 = Slot.DAO.findByDomainId(tierA52B1T1, "S4");
+		Assert.assertNotNull(slot52S4);
+		Short led52Value = slot52S4.getFirstLedNumAlongPath();
+		Assert.assertEquals(led51Value, led52Value);
+		*/
+
+		this.getPersistenceService().commitTenantTransaction();
+
+	}
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPath() {
