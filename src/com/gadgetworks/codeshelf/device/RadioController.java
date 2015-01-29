@@ -1003,7 +1003,7 @@ public class RadioController implements IRadioController {
 				if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
 					if (device == null) {
 						LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
-						shouldActOnCommand = false;
+						return;
 					} else {
 						//Only act on the command if the ACK is new (i.e. > last ack id)
 						shouldActOnCommand = device.isAckIdNew(packet.getAckId());
@@ -1015,6 +1015,9 @@ public class RadioController implements IRadioController {
 
 				if (shouldActOnCommand) {
 					receiveCommand(packet.getCommand(), packetSourceAddress);
+				} else {
+					LOGGER.warn("We ACKed but did not process a packet that was already acked befinAckIdore; packet={}", packet);
+
 				}
 			}
 			this.packetsSentCounter.inc();
@@ -1066,6 +1069,7 @@ public class RadioController implements IRadioController {
 				mLastPacketSentMillis = System.currentTimeMillis();
 				gatewayInterface.sendPacket(inPacket);
 				this.packetsSentCounter.inc();
+
 			} else {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);
 			}
