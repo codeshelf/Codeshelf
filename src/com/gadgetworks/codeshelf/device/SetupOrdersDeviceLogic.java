@@ -7,11 +7,11 @@ package com.gadgetworks.codeshelf.device;
 
 	import java.util.UUID;
 
-	import org.slf4j.Logger;
-	import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-	import com.gadgetworks.flyweight.command.NetGuid;
-	import com.gadgetworks.flyweight.controller.IRadioController;
+import com.gadgetworks.flyweight.command.NetGuid;
+import com.gadgetworks.flyweight.controller.IRadioController;
 
 	/**
 	 * @author jonranstrom

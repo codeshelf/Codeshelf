@@ -42,7 +42,7 @@ public final class Configuration {
 			System.getProperty("app.log.dir") + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
 
 		// Currently, when PropertyConfigurator.configure(URL) is called, the log4j system will initialize itself
-		// searching for the DEFAULT configuration file always at "conf/log4j.properties" no matter what URL
+		// searching for the DEFAULT configuration file always at "log4j.properties" no matter what URL
 		// we pass in. Then, it will initialize from our URL.
 		//
 		// This does not seem to be documented behavior, but it happens nonetheless. So here we do
@@ -143,13 +143,12 @@ public final class Configuration {
 		String userName = System.getProperty("user.name");
 		String osName = System.getProperty("os.name");
 				
-		propertiesLoaded |= tryMergeProperties(properties,"conf/"+propertiesFileName,true); // base config (as resource)
 		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName,true); // base config (as resource)
-		//propertiesLoaded |= tryLoadConfig("conf/"+baseConfigFileName,false); // base common config (as file in dev environment)
+		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName,true); // base config (as resource)
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName,false); // production standard config 
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName+"."+osName,false); // os-specific
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName+"."+userName,false); // instance customized
-		propertiesLoaded |= tryMergeProperties(properties,"conf/"+propertiesFileName+"."+userName,false); // developer customized
+		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName+"."+userName,false); // developer customized
 		
 		return (propertiesLoaded?properties:null);
 	}
@@ -205,39 +204,42 @@ public final class Configuration {
 		return result;
 	}
 
+	private static Properties getVersionProperties() {
+		Properties versionProps = new Properties();
+		String errorMsg = null;
+		try {
+			URL url = ClassLoader.getSystemClassLoader().getResource("version.properties");
+			
+			if(url != null) {
+				BufferedInputStream inStream = new BufferedInputStream(url.openStream());
+				versionProps.load(inStream);
+				inStream.close();
+			}
+		} catch (FileNotFoundException e) {
+			errorMsg = "version.properties not found";
+		} catch (IOException e) {
+			errorMsg = "version.properties not readable";
+		}
+		if(errorMsg != null) {
+			throw new RuntimeException(errorMsg);
+		}
+		return versionProps;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return
 	 */
 	public static String getVersionString() {
-		String result = "???";
-	
-		Properties versionProps = new Properties();
-		try {
-			URL url = ClassLoader.getSystemClassLoader().getResource("conf/version.properties");
-			if(url == null) {
-				url = ClassLoader.getSystemClassLoader().getResource("version.properties");
-			}
-			if(url != null) {
-				BufferedInputStream inStream = new BufferedInputStream(url.openStream());
-				versionProps.load(inStream);
-				inStream.close();
-				result = versionProps.getProperty("version.major");
-				//result += "." + versionProps.getProperty("version.minor");
-				result += "." + versionProps.getProperty("version.revision");
-				//result += "." + versionProps.getProperty("version.status");
-				String date = versionProps.getProperty("version.date");
-				if (!date.equals("none")) {
-					result += " (" + versionProps.getProperty("version.branch") + "-" + versionProps.getProperty("version.commit")
-							+ " " + date + ")";
-				}
-			}
-		} catch (FileNotFoundException e) {
-			result = "conf/version.properties not found";
-		} catch (IOException e) {
-			result = "conf/version.properties not readable";
+		Properties versionProps = getVersionProperties();
+		String result;
+		result = versionProps.getProperty("version.major");
+		result += "." + versionProps.getProperty("version.revision");
+		String date = versionProps.getProperty("version.date");
+		if (!date.equals("none")) {
+			result += " (" + versionProps.getProperty("version.branch") + "-" + versionProps.getProperty("version.commit")
+					+ " " + date + ")";
 		}
-	
 		return result;
 	}
 
@@ -246,27 +248,10 @@ public final class Configuration {
 	 *  @return
 	 */
 	public static String getVersionStringShort() {
-		String result = "???";
-	
-		Properties versionProps = new Properties();
-		try {
-			URL url = ClassLoader.getSystemClassLoader().getResource("conf/version.properties");
-			if(url == null) {
-				url = ClassLoader.getSystemClassLoader().getResource("version.properties");
-			}
-			if(url != null) {
-				BufferedInputStream inStream = new BufferedInputStream(url.openStream());
-				versionProps.load(inStream);
-				inStream.close();
-				result = versionProps.getProperty("version.major");
-				result += "." + versionProps.getProperty("version.revision");
-			}
-		} catch (FileNotFoundException e) {
-			result = "conf/version.properties not found";
-		} catch (IOException e) {
-			result = "conf/version.properties not readable";
-		}
-	
+		Properties versionProps = getVersionProperties();
+		String result;
+		result = versionProps.getProperty("version.major");
+		result += "." + versionProps.getProperty("version.revision");
 		return result;
 	}
 
