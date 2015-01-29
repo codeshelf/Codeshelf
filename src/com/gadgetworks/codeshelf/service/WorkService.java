@@ -232,10 +232,10 @@ public class WorkService implements IApiService {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
 
-		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilter(ImmutableList.<Criterion>of(
-			Restrictions.eq("domainId", inScannedOrderDetailId),
-			Restrictions.eq("parent.parent", inChe.getFacility())
-		));
+		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId",
+			ImmutableMap.<String,Object>of("facilityId", inChe.getFacility().getPersistentId(),
+							"domainId", inScannedOrderDetailId),
+			OrderDetail.class);
 		if (orderDetails.isEmpty()) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}

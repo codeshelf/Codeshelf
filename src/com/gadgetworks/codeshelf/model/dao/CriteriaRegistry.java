@@ -19,6 +19,12 @@ public class CriteriaRegistry {
 
 	private CriteriaRegistry() {
 		indexedCriteria = Maps.newHashMap();
+
+		indexedCriteria.put("orderDetailByFacilityAndDomainId", 
+			new TypedCriteria("from OrderDetail where parent.parent.persistentId = :facilityId and domainId = :domainId", 
+					"facilityId", UUID.class,
+					"domainId", String.class));
+
 		
 		indexedCriteria.put("workInstructionByCheAndAssignedTime", 
 			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId and assigned = :assignedTimestamp", 
