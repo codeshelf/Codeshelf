@@ -72,7 +72,7 @@ public class LineScanTest extends EdiTestABC {
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
 		importCsvString(facility, csvString);
 		try {
-			List<WorkInstruction> instructions = mService.getWorkInstructionsForOrderDetail(che, "10.1");
+			mService.getWorkInstructionsForOrderDetail(che, "10.1");
 		} catch (MethodArgumentException e) {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
 		}
@@ -104,6 +104,25 @@ public class LineScanTest extends EdiTestABC {
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
 		this.getPersistenceService().commitTenantTransaction();
 	}
+	
+	@Test
+	public void testGetWorkInstructionBadDetailId() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Che che = Che.DAO.getAll().get(0);
+		
+		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"
+				+ "\r\n11,11,10.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
+		importCsvString(facility, csvString);
+		try {
+			mService.getWorkInstructionsForOrderDetail(che, "xxx");
+		} catch (MethodArgumentException e) {
+			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+		}
+	}
+
 	
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
