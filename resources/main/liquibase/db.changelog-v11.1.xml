@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="default (generated)" id="1421175189943-5">
+		<dropForeignKeyConstraint baseTableName="che"
+			constraintName="FK_ob672g7w1eftnxbeptalg5bbi" />
+	</changeSet>
+	<changeSet author="default (generated)" id="1421175189943-6">
+		<dropForeignKeyConstraint baseTableName="che"
+			constraintName="FK_thg69oiavm56sd1bxjvo0qbhj" />
+	</changeSet>
+	<changeSet author="default (generated)" id="1421175189943-7">
+		<dropColumn columnName="current_user_persistentid"
+			tableName="che" />
+	</changeSet>
+	<changeSet author="default (generated)" id="1421175189943-8">
+		<dropColumn columnName="current_work_area_persistentid"
+			tableName="che" />
+	</changeSet>
+</databaseChangeLog>

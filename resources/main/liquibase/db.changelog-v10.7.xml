@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+
+	<changeSet author="bhe (generated)" id="1418932902026-7">
+		<createTable tableName="property">
+			<column name="persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+			<column name="objectid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+			<column name="value" type="VARCHAR(120)">
+				<constraints nullable="false" />
+			</column>
+			<column name="version" type="INT8">
+				<constraints nullable="false" />
+			</column>
+			<column name="property_default_persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="bhe (generated)" id="1418932902026-8">
+		<createTable tableName="property_default">
+			<column name="persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+			<column name="default_value" type="VARCHAR(120)">
+				<constraints nullable="false" />
+			</column>
+			<column name="description" type="VARCHAR(400)">
+				<constraints nullable="false" />
+			</column>
+			<column name="name" type="VARCHAR(40)">
+				<constraints nullable="false" />
+			</column>
+			<column name="object_type" type="VARCHAR(40)">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="bhe (generated)" id="1418932902026-9">
+		<addPrimaryKey columnNames="persistentid"
+			constraintName="propertyPK" tableName="property" />
+	</changeSet>
+	<changeSet author="bhe (generated)" id="1418932902026-10">
+		<addPrimaryKey columnNames="persistentid"
+			constraintName="property_defaPK" tableName="property_default" />
+	</changeSet>
+	<changeSet author="bhe (generated)" id="1418932902026-11">
+		<addForeignKeyConstraint baseColumnNames="property_default_persistentid"
+			baseTableName="property" constraintName="FK_qu6khdgpwqh39yjrpx6yxdiph"
+			deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid"
+			referencedTableName="property_default" />
+	</changeSet>
+	<changeSet author="bhe (generated)" id="1418932902026-12">
+		<dropTable tableName="configuration" />
+	</changeSet>
+
+	<!-- insert domain object property defaults -->
+	<changeSet author="bhe (generated)" id="1418841291811-13">
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="BAYCHANG" />
+			<column name="default_value" value="Baychange" />
+			<column name="description"
+				value="Determine under what conditions the CHE should get a bay change housekeeping work instruction. Valid values: None, Baychange, BaychangeExceptAcrossAisle, PathSegmentChange." />
+		</insert>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="RPEATPOS" />
+			<column name="default_value" value="ContainerOnly" />
+			<column name="description"
+				value="Determine under what conditions the CHE should get a repeat position housekeeping work instruction. Valid values: None, ContainerOnly, ContainerAndCount." />
+		</insert>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="WORKSEQR" />
+			<column name="default_value" value="BayDistance" />
+			<column name="description"
+				value="When a CHE is set up and work instructions created, what sort algorithm should be used. Valid values: BayDistance." />
+		</insert>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="LIGHTSEC" />
+			<column name="default_value" value="20" />
+			<column name="description"
+				value="When a user lights a location or item, how many seconds shall it remain lit." />
+		</insert>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="LIGHTCLR" />
+			<column name="default_value" value="Red" />
+			<column name="description"
+				value="When a user lights a location or item, what color shall it light. Valid values: Red, Green, Blue, Cyan, Orange, Magenta, White." />
+		</insert>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="CROSSBCH" />
+			<column name="default_value" value="false" />
+			<column name="description"
+				value="Are cross-batch orders expected in the system?  If off, hides some unneeded UI elements." />
+		</insert>
+		<insert tableName="property_default">
+			<column name="persistentid"
+				valueComputed="uuid_in(md5(random()::text||now()::text)::cstring)" />
+			<column name="object_type" value="Facility" />
+			<column name="name" value="AUTOSHRT" />
+			<column name="default_value" value="true" />
+			<column name="description"
+				value="On CHE setup, if there is no product known by the system, shall the system immediately short and not present those work instructions. Some sites may like this off, making the worker locate and update the item location immediately." />
+		</insert>
+	</changeSet>
+
+</databaseChangeLog>
