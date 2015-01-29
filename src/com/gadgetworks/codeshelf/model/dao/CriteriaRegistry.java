@@ -94,6 +94,10 @@ public class CriteriaRegistry {
 			new TypedCriteria("from Tier where parent.parent.parent.persistentId = :facilityId and active = true",
 				"facilityId", UUID.class));
 		
+		indexedCriteria.put("slotsByFacility",
+			new TypedCriteria("from Slot where parent.parent.parent.parent.persistentId = :facilityId and active = true",
+				"facilityId", UUID.class));
+
 		indexedCriteria.put("tiersByAisle",
 			new TypedCriteria("from Tier where parent.parent.persistentId = :aisleId and active = true",
 				"aisleId", UUID.class));
