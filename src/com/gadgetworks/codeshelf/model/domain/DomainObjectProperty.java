@@ -53,9 +53,9 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	@Setter
 	@ManyToOne(fetch = FetchType.EAGER, optional = false)
 	@JoinColumn(name = "property_default_persistentid")
-	DomainObjectPropertyDefault						propertyDefault;
+	DomainObjectPropertyDefault	propertyDefault;
 
-	// These match contents in liquidbase change .xml files
+	// These match contents in property-defaults.csv
 	public final static String						BAYCHANG			= "BAYCHANG";
 	public final static String						Default_BAYCHANG	= "BayChange";
 	public final static String						RPEATPOS			= "RPEATPOS";
