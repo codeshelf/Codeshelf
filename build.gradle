@@ -29,6 +29,7 @@ sourceSets {
 task serverJar (type: Jar) {
 	destinationDir = file('build/dist')
 	baseName = 'server.codeshelf'
+	from(sourceSets.main.output)
 	manifest {
 		attributes 'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain'
 	}
