@@ -805,13 +805,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The large set creates the initial sets of orders
-		BatchResult<?> result = importOrdersResource(foundFacility, "./resource/superset.orders.csv");
+		BatchResult<?> result = importOrdersResource(foundFacility, "largeset/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The subset triggers all but one of the details to be active = false
-		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
+		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		//Simulate a cache trim between the uploads
@@ -820,7 +820,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
-		result = importOrdersResource(foundFacility, "./resource/subset.orders.csv");
+		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
@@ -1585,10 +1585,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	}
 
 	private BatchResult<?> importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {
-		try (InputStream stream = this.getClass().getResourceAsStream(csvResource);) {
+		InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(csvResource);
+		try {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			return importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		} finally {
+			if(stream != null) {
+				stream.close();
+			}
 		}
 	}
 	

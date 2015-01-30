@@ -90,7 +90,7 @@ public class PersistenceService extends Service {
 
 	private final void configure() {
 		// fetch database config from properties file
-		this.hibernateConfigurationFile=System.getProperty("db.hibernateconfig");
+		this.hibernateConfigurationFile = "hibernate/"+System.getProperty("db.hibernateconfig");
 		if (this.hibernateConfigurationFile==null) {
 			LOGGER.error("hibernateConfigurationFile is not defined.");
 			System.exit(-1);

@@ -890,9 +890,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(6, picker.countRemainingJobs());
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
 
 		LOGGER.info("Case 3: A happy-day short, with one short-ahead");
 		wi = picker.nextActiveWi();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		wi = WorkInstruction.DAO.reload(wi);
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 
@@ -929,13 +936,17 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		LOGGER.info("Case 5: Inappropriate location scan, then normal button press works");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
+		Assert.assertNotEquals(0, button);
 		quant = wi.getPlanQuantity();
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
 
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), wi.getPlanQuantity()
-			.byteValue());
+		Byte ctrlDispValueObj = picker.getLastSentPositionControllerDisplayValue((byte) button);
+		Assert.assertNotNull(ctrlDispValueObj);
+		int ctrlDispValue = ctrlDispValueObj.byteValue();
+		int planValue = wi.getPlanQuantity().byteValue();
+		Assert.assertEquals(ctrlDispValue, planValue);
 		//Make sure we have the right position and quantities and itemId
 		Assert.assertEquals(quant, 1);
 		Assert.assertEquals(button, 2);
@@ -1300,7 +1311,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check State Make sure we do not hit REVIEW
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 
-		//Case 1: 1 good pick no flashing
+
+		LOGGER.info("Case 1: 1 good pick no flashing");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
@@ -1317,7 +1329,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.logout();
 		picker.login("Picker #1");
 
-		//Continue setting up containers with bad counts
+		
+		LOGGER.info("Continue setting up containers with bad counts");
 		picker.setupOrderIdAsContainer("a1111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
 		picker.setupOrderIdAsContainer("33333", "3"); //missing order id
@@ -1341,10 +1354,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 5).byteValue(),
 			PosControllerInstr.BITENCODED_DIGITS[0]);
 
+		LOGGER.info("Starting pick");
+
 		picker.scanCommand("START");
 
 		//Check State
+		this.getPersistenceService().beginTenantTransaction(); // hmm
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 3000);
+		this.getPersistenceService().commitTenantTransaction(); 
 
 		//Check Screens
 		//Case 1: 2 good picks - solid , bright
