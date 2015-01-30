@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SchemaManager {
-	private static final String MASTER_CHANGELOG_FILENAME= "db.changelog-master.xml";
+	private static final String MASTER_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	private static final Logger LOGGER	= LoggerFactory.getLogger(SchemaManager.class);
 
 	private String url;
@@ -99,7 +99,7 @@ public class SchemaManager {
 		Database hibernateDatabase;
 		try {
 			hibernateDatabase = CommandLineUtils.createDatabaseObject(ClassLoader.getSystemClassLoader(),
-				"hibernate:classic:hibernate.tenant.xml", 
+				"hibernate:classic:hibernate/tenant.xml", 
 				null, null, null, 
 				null, null,
 				false, false,

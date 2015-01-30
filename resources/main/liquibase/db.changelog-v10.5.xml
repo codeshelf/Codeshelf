@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	logicalFilePath="db.changelog-v10.5.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="bhe (generated)" id="1418344664946-3">
+		<createTable tableName="configuration">
+			<column name="persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+			<column name="description" type="VARCHAR(120)" />
+			<column name="name" type="VARCHAR(50)">
+				<constraints nullable="false" />
+			</column>
+			<column name="objectid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+			<column name="objectType" type="VARCHAR(20)">
+				<constraints nullable="false" />
+			</column>
+			<column name="value" type="VARCHAR(200)">
+				<constraints nullable="false" />
+			</column>
+			<column name="version" type="INT8">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="bhe (generated)" id="1418344664946-4">
+		<addPrimaryKey columnNames="persistentid"
+			constraintName="configurationPK" tableName="configuration" />
+	</changeSet>
+</databaseChangeLog>

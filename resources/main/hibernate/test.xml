@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+ 
+<hibernate-configuration>
+    <session-factory>
+
+        <!-- In-memory H2 database -->
+ 		<property name="connection.driver_class">org.h2.Driver</property>
+        <property name="dialect">org.hibernate.dialect.H2Dialect</property>
+        <property name="hbm2ddl.auto">create-drop</property>
+
+        <!-- JDBC connection pool -->
+		<property name="hibernate.c3p0.min_size">5</property>
+  		<property name="hibernate.c3p0.max_size">50</property>
+  		<property name="hibernate.c3p0.timeout">120</property>
+  		<property name="hibernate.c3p0.max_statements">100</property>
+  		<property name="hibernate.c3p0.idle_test_period">300</property>
+  		<property name="hibernate.c3p0.testConnectionOnCheckin">true</property>
+  		
+        <!-- Enable Hibernate's automatic session context management -->
+        <property name="current_session_context_class">thread</property>
+
+        <!-- configure second-level cache -->
+        <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+        <property name="hibernate.cache.use_second_level_cache">true</property>
+        <property name="hibernate.cache.use_query_cache">true</property>
+        <property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
+                
+        <!-- Disable join fetching -->
+        <property name="cmax_fetch_depth">0</property>
+        
+        <!-- output sql to console for debugging 
+        <property name="show_sql">true</property>
+        <property name="format_sql">true</property>
+        <property name="use_sql_comments">true</property>
+        -->
+        
+		<!-- Map these classes (by annotation) -->
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Location"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Facility"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Bay"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation"/>
+        
+
+        <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectProperty"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault"/>
+        
+        <mapping class="com.gadgetworks.codeshelf.model.domain.EdiServiceABC"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.DropboxService"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.IronMqService"/>
+
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Organization"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Che"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.LedController"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.SiteController"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.PathSegment"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Path"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.LocationAlias"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Item"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.ItemMaster"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.UomMaster"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.ItemDdcGroup"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Vertex"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.User"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.Container"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerKind"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerUse"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.OrderGroup"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.OrderHeader"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.OrderDetail"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.OrderLocation"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.WorkInstruction"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.WorkArea"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.EdiDocumentLocator"/>
+
+    </session-factory>
+</hibernate-configuration>

@@ -18,6 +18,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PropertyDao.class);
 	
+	private static final String PROPERTY_DEFAULTS_FILENAME = "property-defaults.csv";
+	
 	private static PropertyDao theInstance = null;
 	
 	private PropertyDao(PersistenceService instance) {
@@ -185,9 +187,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		LOGGER.info("Checking property defaults...");
 		PropertyDao dao = PropertyDao.getInstance();
 		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
-		InputStream is = this.getClass().getResourceAsStream("property-defaults.csv");
+		InputStream is = this.getClass().getResourceAsStream(PROPERTY_DEFAULTS_FILENAME);
 		if (is==null) {
-			is = this.getClass().getClassLoader().getResourceAsStream("property-defaults.csv");
+			is = this.getClass().getClassLoader().getResourceAsStream(PROPERTY_DEFAULTS_FILENAME);
 		}
 		if (is==null) {
 			LOGGER.error("Failed to load property defaults");
