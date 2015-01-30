@@ -1,15 +1,14 @@
 apply plugin: 'java'
+
 apply plugin: 'eclipse'
-
-task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
-
+tasks.eclipse.dependsOn(cleanEclipseClasspath)
 eclipse {
 	classpath {
 		defaultOutputDir file('eclipse-bin')
-//		downloadSources false
 	}
 }
-tasks.eclipse.dependsOn(cleanEclipseClasspath)
+
+task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
 
 repositories {
 	mavenCentral()
@@ -28,6 +27,7 @@ sourceSets {
 }
 
 task serverJar (type: Jar) {
+	destinationDir = file('build/dist')
 	baseName = 'server.codeshelf'
 	manifest {
 		attributes 'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain'
@@ -35,6 +35,7 @@ task serverJar (type: Jar) {
 }
 
 task siteControllerJar (type: Jar) {
+	destinationDir = file('build/dist')
 	baseName = 'sitecontroller.codeshelf'
 	from(sourceSets.main.output)
 	manifest {
@@ -42,8 +43,13 @@ task siteControllerJar (type: Jar) {
 	}
 }
 
-artifacts {
-	archives serverJar,siteControllerJar
+task copyRuntimeDeps(type: Copy) {
+	into 'build/dist/lib'
+	from configurations.runtime
+}
+
+task dist {
+	dependsOn serverJar, siteControllerJar, copyRuntimeDeps
 }
 
 dependencies {
@@ -54,8 +60,7 @@ dependencies {
 			'net.sf.ehcache:ehcache-core:2.6.9',
 			'com.mchange:c3p0:0.9.5'
 			
-	compile 'org.slf4j:slf4j-log4j12:1.7.7',
-			'org.projectlombok:lombok:1.14.8',
+	compile	'org.slf4j:slf4j-log4j12:1.7.7',
 			'com.google.inject:guice:3.0',
 			'com.google.inject.extensions:guice-servlet:3.0',
 			'com.google.guava:guava:16.0',
@@ -97,10 +102,12 @@ dependencies {
 			'com.dropbox.core:dropbox-core-sdk:1.7.6',
 			
 			'com.eaio.uuid:uuid:3.2',
+			'org.projectlombok:lombok:1.14.8',
 			
 			// manually update
 			files('lib/dist/classindex-3.3.jar'), // needs to be in fixed location for eclipse annotation processing
 			files('lib/dist/JD2XX.jar') // our library for interacting with FTDI USB-Serial interface
+
 
 	testCompile group: 'junit', name: 'junit', version: '4.+'
 	testCompile 'org.mockito:mockito-core:1.9.5',
