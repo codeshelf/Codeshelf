@@ -805,13 +805,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The large set creates the initial sets of orders
-		BatchResult<?> result = importOrdersResource(foundFacility, "superset.orders.csv");
+		BatchResult<?> result = importOrdersResource(foundFacility, "largeset/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//The subset triggers all but one of the details to be active = false
-		result = importOrdersResource(foundFacility, "subset.orders.csv");
+		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
 		//Simulate a cache trim between the uploads
@@ -820,7 +820,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
 
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
-		result = importOrdersResource(foundFacility, "subset.orders.csv");
+		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
