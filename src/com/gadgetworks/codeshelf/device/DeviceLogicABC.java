@@ -96,27 +96,27 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	 */
 	@Override
 	public boolean isAckIdNew(byte inAckId) {
-		boolean result = false;
+		int unsignedAckId = inAckId & 0xFF;
+		int unsignedLastAckId = mLastAckId & 0xFF;
 
-		if (((short) inAckId) > ((short) mLastAckId)) {
-			result = true;
-		} else if (((short) inAckId) == 1) {
-			result = true;
-		} else {
-			// A place to leave a breakpoint.
-			result = false;
+		if (unsignedAckId > unsignedLastAckId) {
+			return true;
+		} else if (unsignedLastAckId > 254 && inAckId < 3) {
+			//Overflow case. If ACK last ACK is 256 and inAckID is 0, this IS a new device ID but it won't be greater than the last ACK ID.
+			//We give a few ids of buffer in case packets are lost around the overflow.
+			return true;
 		}
 
-		return result;
+		return false;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* Is device fully associated? Only so if mDeviseStateEnum = STARTED.
 	 * See RadioController.networkDeviceBecameActive()
 	 */
+	@Override
 	public final boolean isDeviceAssociated() {
 		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
 	}
-
 
 }

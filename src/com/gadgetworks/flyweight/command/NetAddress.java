@@ -31,11 +31,9 @@ public final class NetAddress extends NBitInteger {
 		super(IPacket.ADDRESS_BITS, inNewValue);
 	}
 
+	@Override
 	public String toString() {
 		return Integer.toHexString(getValue());
 	}
 
-	public boolean isZeroAddress() {
-		return (Integer.compare(0, getValue()) == 0);
-	}
 }
