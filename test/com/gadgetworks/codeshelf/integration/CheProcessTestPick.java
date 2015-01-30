@@ -1402,8 +1402,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Scan location to make sure position controller does not show counts anymore
 		picker.scanLocation("D301");
-
+		
+		this.getPersistenceService().beginTenantTransaction(); // hmm
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		this.getPersistenceService().commitTenantTransaction(); 
 
 		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 2 since that is the first task
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
