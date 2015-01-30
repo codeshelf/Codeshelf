@@ -890,9 +890,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(6, picker.countRemainingJobs());
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
 
 		LOGGER.info("Case 3: A happy-day short, with one short-ahead");
 		wi = picker.nextActiveWi();
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		wi = WorkInstruction.DAO.reload(wi);
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 
