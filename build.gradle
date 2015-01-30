@@ -48,8 +48,13 @@ task copyRuntimeDeps(type: Copy) {
 	from configurations.runtime
 }
 
+task copyNativeLibraries(type: Copy) {
+	into 'build/dist/lib/native'
+	from 'lib/native/'
+}
+
 task dist {
-	dependsOn serverJar, siteControllerJar, copyRuntimeDeps
+	dependsOn serverJar, siteControllerJar, copyRuntimeDeps, copyNativeLibraries
 }
 
 dependencies {
