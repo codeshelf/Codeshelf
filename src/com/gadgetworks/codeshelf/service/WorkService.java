@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -232,12 +233,17 @@ public class WorkService implements IApiService {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
 
-		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId",
-			ImmutableMap.<String,Object>of("facilityId", inChe.getFacility().getPersistentId(),
-							"domainId", inScannedOrderDetailId),
-			OrderDetail.class);
+		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
+			"facilityId", inChe.getFacility().getPersistentId(),
+			"domainId", inScannedOrderDetailId
+		);
+		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
+
 		if (orderDetails.isEmpty()) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+		}
+		if (orderDetails.size() > 1) {
+			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
 		}
 		
 		OrderDetail orderDetail = orderDetails.get(0);
