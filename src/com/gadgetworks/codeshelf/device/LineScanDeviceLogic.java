@@ -33,9 +33,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	}
 
-	public String getDeviceType() {
-		return CsDeviceManager.DEVICETYPE_CHE_LINESCAN; 
-	}
 
 
 }

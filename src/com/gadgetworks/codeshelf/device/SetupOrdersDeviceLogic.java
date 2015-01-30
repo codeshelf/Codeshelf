@@ -68,10 +68,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	}
 
-	public String getDeviceType() {
-		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 */

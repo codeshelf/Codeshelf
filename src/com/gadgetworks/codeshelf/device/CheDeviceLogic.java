@@ -143,11 +143,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		return 180;
 	}
 
-	public String getDeviceType() {
-		LOGGER.error("getDeviceType(): Should have specific instance of this abstract type");
-		return CsDeviceManager.DEVICETYPE_CHE; 
-	}
-
 	// The last-aisle-controller-for-this-CHE package.
 	private void setLastLedControllerGuid(NetGuid inAisleControllerGuid) {
 		if (mLastLedControllerGuid == null)

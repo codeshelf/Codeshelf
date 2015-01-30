@@ -61,10 +61,10 @@ public class CsDeviceManager implements
 
 	private static final Logger							LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	static final String							DEVICETYPE_CHE				= "CHE";
-	static final String							DEVICETYPE_LED				= "LED Controller";
-	static final String							DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
-	static final String							DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
+	private static final String							DEVICETYPE_CHE				= "CHE";
+	private static final String							DEVICETYPE_LED				= "LED Controller";
+	private static final String							DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
+	private static final String							DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
@@ -357,22 +357,6 @@ public class CsDeviceManager implements
 		LOGGER.info("Disconnected from server");
 	}
 
-private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGuid, String newDeviceType) {
-	if (existingDevice == null) {
-		LOGGER.error(" error in needNewDevice");
-		return false;
-	}		
-	if (!existingDevice.getGuid().equals(newDeviceGuid)){
-		return true;
-	}
-	String oldDeviceType = existingDevice.getDeviceType();
-	if (!oldDeviceType.equals(newDeviceType)){
-		String oldDeviceType2 = existingDevice.getDeviceType();
-		return true;
-	}
-	return false;
-}
-
 	private void doCreateUpdateNetDevice(UUID persistentId, NetGuid deviceGuid, String deviceType) {
 		Preconditions.checkNotNull(persistentId, "persistentId of device cannot be null");
 		Preconditions.checkNotNull(deviceGuid, "deviceGuid of device cannot be null");
@@ -411,20 +395,20 @@ private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGu
 			}
 		} else {
 			// update existing device
-			if (needNewDevice(netDevice, deviceGuid, deviceType)) {
-			// if (!netDevice.getGuid().equals(deviceGuid)) {
+			if (!netDevice.getGuid().equals(deviceGuid)) {
 				// changing NetGuid (deprecated/bad!)
 				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(netDevice.getGuid());
 				if (oldNetworkDevice != null) {
-					LOGGER.warn("Deleting and remaking prior deviceType={} prior guid={}; new deviceType={} new guid={};",
-						oldNetworkDevice.getDeviceType(),
-						oldNetworkDevice.getGuid(),
+					LOGGER.warn("Changing NetGuid of deviceType={}; persistentId={}; from guid={} to guid={}",
 						deviceType,
+						persistentId,
+						netDevice.getGuid(),
 						deviceGuid);
 					radioController.removeNetworkDevice(oldNetworkDevice);
 				} else {
-					LOGGER.error("Changing NetGuid of deviceType={}; from guid={} to guid={} but couldn't find original network device",
+					LOGGER.error("Changing NetGuid of deviceType={}; persistentId={}; from guid={} to guid={} but couldn't find original network device",
 						deviceType,
+						persistentId,
 						netDevice.getGuid(),
 						deviceGuid);
 				}
@@ -446,7 +430,7 @@ private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGu
 				}
 			} else {
 				// if not changing netGuid, there is nothing to change
-				LOGGER.debug("No update to. deviceType={}; guid={};", deviceType, deviceGuid);
+				LOGGER.debug("No update to. deviceType={}; persistentId={}; guid={};", deviceType, persistentId, deviceGuid);
 				suppressMapUpdate = true;
 			}
 		}

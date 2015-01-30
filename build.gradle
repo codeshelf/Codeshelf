@@ -26,6 +26,38 @@ sourceSets {
 	}
 }
 
+task serverJar (type: Jar) {
+	destinationDir = file('build/dist')
+	baseName = 'server.codeshelf'
+	from(sourceSets.main.output)
+	manifest {
+		attributes 'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain'
+	}
+}
+
+task siteControllerJar (type: Jar) {
+	destinationDir = file('build/dist')
+	baseName = 'sitecontroller.codeshelf'
+	from(sourceSets.main.output)
+	manifest {
+		attributes 'Main-Class': 'com.gadgetworks.codeshelf.application.CsSiteControllerMain'
+	}
+}
+
+task copyRuntimeDeps(type: Copy) {
+	into 'build/dist/lib'
+	from configurations.runtime
+}
+
+task copyNativeLibraries(type: Copy) {
+	into 'build/dist/lib/native'
+	from 'lib/native/'
+}
+
+task dist {
+	dependsOn serverJar, siteControllerJar, copyRuntimeDeps, copyNativeLibraries
+}
+
 dependencies {
 	runtime 'javax.inject:javax.inject:1',
 			'org.slf4j:jul-to-slf4j:1.6.4',
@@ -112,45 +144,3 @@ test {
 	//slow everything down in case you don't have time to get coffee
 	//forkEvery = 1
 }
-
-task serverJar (type: Jar) {
-	destinationDir = file('build/dist')
-	baseName = 'server.codeshelf'
-	from(sourceSets.main.output)
-
-	manifest {
-		attributes (
-			'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain',
-			'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
-		)
-	}
-}
-
-task siteControllerJar (type: Jar) {
-	destinationDir = file('build/dist')
-	baseName = 'sitecontroller.codeshelf'
-	from(sourceSets.main.output)
-	manifest {
-		attributes (
-			'Main-Class': 'com.gadgetworks.codeshelf.application.CsSiteControllerMain',
-			'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
-		)
-		
-	}
-}
-
-task copyRuntimeDeps(type: Copy) {
-	into 'build/dist/lib'
-	from configurations.runtime
-}
-
-task copyNativeLibraries(type: Copy) {
-	into 'build/dist/lib/native'
-	from 'lib/native/'
-}
-
-task dist {
-	dependsOn serverJar, siteControllerJar, copyRuntimeDeps, copyNativeLibraries
-}
-
-

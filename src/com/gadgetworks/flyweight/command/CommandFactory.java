@@ -10,7 +10,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.radio.RadioController;
+import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 
 // --------------------------------------------------------------------------

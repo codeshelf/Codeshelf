@@ -99,7 +99,7 @@ public class SchemaManager {
 		Database hibernateDatabase;
 		try {
 			hibernateDatabase = CommandLineUtils.createDatabaseObject(ClassLoader.getSystemClassLoader(),
-				"hibernate:classic:hibernate/hibernate.tenant.xml", 
+				"hibernate:classic:hibernate/tenant.xml", 
 				null, null, null, 
 				null, null,
 				false, false,

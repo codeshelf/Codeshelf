@@ -70,11 +70,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		return 0;
 	}
 
-	@Override
-	public String getDeviceType(){
-		return CsDeviceManager.DEVICETYPE_LED;
-	}
-
 	public void startDevice() {
 		LOGGER.info("Start aisle controller (after association " + getMyGuidStr());
 		//		short position = 1;

@@ -4,11 +4,11 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,102 +16,81 @@ import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.MethodArgumentException;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class LineScanTest extends EdiTestABC {
-	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	private WorkService mService = new WorkService().start();
 	private ICsvOrderImporter importer;
-	private ServerMessageProcessor	processor;
+
+	private UUID				facilityId;
 
 	@Before
-	public void initTest() throws IOException {
+	public void initTest() {
 		this.getPersistenceService().beginTenantTransaction();
 		importer = createOrderImporter();
-		Facility facility = createFacility(); 
-		ServiceFactory serviceFactory = new ServiceFactory(mService, null, null, null);
-		//processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
-		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get());
+		facilityId = createFacility().getPersistentId();
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	@Test
+	public void testGetWorkInstruction() throws Exception {
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Che che = Che.DAO.getAll().get(0);
 		
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
-				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10"
-				+ "\r\n11,11,10.1,SKU0005,Mars Bars,20,EA,,pick,D36,10";
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
 		importCsvString(facility, csvString);
 
-		this.getPersistenceService().commitTenantTransaction();
-	}
+		OrderHeader header = facility.getOrderHeaders().get(0);
+		OrderDetail detail = header.getOrderDetails().get(0);
 
-	@Test
-	public void testGetWorkInstructionDirect() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
-		Che che = Che.DAO.getAll().get(0);
-
-		List<WorkInstruction> instructions = mService.getWorkInstructionsForOrderDetail(che, "11.1");
+		List<WorkInstruction> instructions = mService.getWorkInstructionsForOrderDetail(che, detail.getDomainId());
 		WorkInstruction instruction = instructions.get(0);
-		Assert.assertEquals(instruction.getDescription(), "Spoon 6in.");
-		Assert.assertEquals(instruction.getItemId(), "SKU0003");
+		Assert.assertEquals(instruction.getDescription(), detail.getDescription());
+		Assert.assertEquals(instruction.getItemId(), detail.getItemMasterId());
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
 		this.getPersistenceService().commitTenantTransaction();
 	}
-	
-	@Test
-	public void testGetWorkInstruction() {
-		this.getPersistenceService().beginTenantTransaction();
-		Che che = Che.DAO.getAll().get(0);
-		
-		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
-		Assert.assertTrue(response instanceof GetWorkResponse);
-		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
-		
-		List<WorkInstruction> instructions = ((GetWorkResponse)response).getWorkInstructions();
-		WorkInstruction instruction = instructions.get(0);
-		Assert.assertEquals(instruction.getDescription(), "Spoon 6in.");
-		Assert.assertEquals(instruction.getItemId(), "SKU0003");
-		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
-		
-		this.getPersistenceService().commitTenantTransaction();
-	}
-
 	
 	@Test
 	public void testGetWorkInstructionDuplicate() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		Che che = Che.DAO.getAll().get(0);
+		
+		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"
+				+ "\r\n11,11,10.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
+		importCsvString(facility, csvString);
 		try {
-			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "10.1");
-			processor.handleRequest(Mockito.mock(UserSession.class), request);
-			Assert.fail("Failed to trigger the expected NonUnique exception");
+			List<WorkInstruction> instructions = mService.getWorkInstructionsForOrderDetail(che, "10.1");
 		} catch (MethodArgumentException e) {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
-		} finally {
-			this.getPersistenceService().commitTenantTransaction();
 		}
 	}
 
 	@Test
 	public void testGetWorkInstructionCompletedInstruction() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		Che che = Che.DAO.getAll().get(0);
+		
+		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
+				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"
+				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
+				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
+		importCsvString(facility, csvString);
 
-		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		GetWorkResponse response = (GetWorkResponse)processor.handleRequest(Mockito.mock(UserSession.class), request);
-		List<WorkInstruction> instructions = response.getWorkInstructions();
+		List<WorkInstruction> instructions = mService.getWorkInstructionsForOrderDetail(che, "11.1");
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
@@ -123,21 +102,6 @@ public class LineScanTest extends EdiTestABC {
 
 		instructions = mService.getWorkInstructionsForOrderDetail(che, "11.1");
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
-		this.getPersistenceService().commitTenantTransaction();
-	}
-	
-	@Test
-	public void testGetWorkInstructionBadDetailId() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
-		Che che = Che.DAO.getAll().get(0);
-		
-		try {
-			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "xxx");
-			processor.handleRequest(Mockito.mock(UserSession.class), request);
-			Assert.fail("Failed to trigger the expected NotFound exception");
-		} catch (MethodArgumentException e) {
-			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-		}
 		this.getPersistenceService().commitTenantTransaction();
 	}
 	
