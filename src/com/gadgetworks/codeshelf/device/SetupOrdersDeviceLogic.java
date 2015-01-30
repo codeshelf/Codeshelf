@@ -757,66 +757,53 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/* 
 	 */
 	@Override
-	public void scanCommandReceived(String inCommandStr) {
-		if (!connectedToServer) {
-			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
-			return;
+	public void processNonCommandScan(String inScanPrefixStr, String inContent) {
+		// Non-command scans are split out by state then the scan content
+		switch (mCheStateEnum) {
+			case IDLE:
+				processIdleStateScan(inScanPrefixStr, inContent);
+				break;
+			case NO_WORK:
+				processLocationScan(inScanPrefixStr, inContent);
+				break;
+			case LOCATION_SELECT:
+				processLocationScan(inScanPrefixStr, inContent);
+				break;
+
+			case LOCATION_SELECT_REVIEW:
+				processLocationScan(inScanPrefixStr, inContent);
+				break;
+
+			case CONTAINER_SELECT:
+				processContainerSelectScan(inScanPrefixStr, inContent);
+				break;
+
+			case CONTAINER_POSITION:
+				// The only thing that makes sense in this state is a position assignment (or a logout covered above).
+				processContainerPosition(inScanPrefixStr, inContent);
+				break;
+
+			//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			case CONTAINER_POSITION_IN_USE:
+			case CONTAINER_POSITION_INVALID:
+			case CONTAINER_SELECTION_INVALID:
+			case NO_CONTAINERS_SETUP:
+				//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
+				break;
+
+			case DO_PICK:
+				// At any time during the pick we can change locations.
+				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
+					processLocationScan(inScanPrefixStr, inContent);
+				}
+				break;
+
+			default:
+				break;
 		}
-
-		LOGGER.info(this + " received scan command: " + inCommandStr);
-
-		String scanPrefixStr = getScanPrefix(inCommandStr);
-		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
-
-		// Command scans actions are determined by the scan content (the command issued) then state because they are more likely to be state independent
-		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
-			processCommandScan(scanStr);
-		} else {
-			//Other scans are split out by state then the scan content
-			switch (mCheStateEnum) {
-				case IDLE:
-					processIdleStateScan(scanPrefixStr, scanStr);
-					break;
-				case NO_WORK:
-					processLocationScan(scanPrefixStr, scanStr);
-					break;
-				case LOCATION_SELECT:
-					processLocationScan(scanPrefixStr, scanStr);
-					break;
-
-				case LOCATION_SELECT_REVIEW:
-					processLocationScan(scanPrefixStr, scanStr);
-					break;
-
-				case CONTAINER_SELECT:
-					processContainerSelectScan(scanPrefixStr, scanStr);
-					break;
-
-				case CONTAINER_POSITION:
-					// The only thing that makes sense in this state is a position assignment (or a logout covered above).
-					processContainerPosition(scanPrefixStr, scanStr);
-					break;
-
-				//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
-				case CONTAINER_POSITION_IN_USE:
-				case CONTAINER_POSITION_INVALID:
-				case CONTAINER_SELECTION_INVALID:
-				case NO_CONTAINERS_SETUP:
-					//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
-					break;
-
-				case DO_PICK:
-					// At any time during the pick we can change locations.
-					if (scanPrefixStr.equals(LOCATION_PREFIX)) {
-						processLocationScan(scanPrefixStr, scanStr);
-					}
-					break;
-
-				default:
-					break;
-			}
-		}
+		
 	}
+
 
 	/**
 	 * Use the configuration system to return custom setup MSG. Defaults to "SCAN ORDER"

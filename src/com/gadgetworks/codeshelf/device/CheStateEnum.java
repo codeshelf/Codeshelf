@@ -42,7 +42,11 @@ public enum CheStateEnum {
 	// @EnumValue("CONTAINER_POSITION_IN_USE")
 	CONTAINER_POSITION_IN_USE(CheStateNum.CONTAINER_POSITION_IN_USE, "CONTAINER_POSITION_IN_USE"),
 	// @EnumValue("NO_CONTAINERS_SETUP")
-	NO_CONTAINERS_SETUP(CheStateNum.NO_CONTAINERS_SETUP, "NO_CONTAINERS_SETUP");
+	NO_CONTAINERS_SETUP(CheStateNum.NO_CONTAINERS_SETUP, "NO_CONTAINERS_SETUP"),
+
+	// new states only used in Line_Scan mode. Many are used in both line_scan and Setup_Orders, so keeping all together.
+	// @EnumValue("READY")
+	READY(CheStateNum.READY, "READY");
 
 	private int		mValue;
 	private String	mName;
@@ -135,27 +139,30 @@ public enum CheStateEnum {
 
 	final static class CheStateNum {
 
-		static final byte	INVALID							= -1;
-		static final byte	IDLE							= 0;
-		static final byte	COMPUTE_WORK					= 1;
-		static final byte	GET_WORK						= 2;
-		static final byte	LOCATION_SELECT					= 3;
-		static final byte	CONTAINER_SELECT				= 4;
-		static final byte	CONTAINER_POSITION				= 5;
-		static final byte	DO_PICK							= 6;
-		static final byte	SHORT_PICK						= 7;
-		static final byte	PICK_COMPLETE					= 8;
-		static final byte	NO_WORK							= 9;
-		static final byte	SHORT_PICK_CONFIRM				= 10;	//Added Oct. 2014
-		static final byte	LOCATION_SELECT_REVIEW			= 11;	//Added Dec 12 2014
+		static final byte	INVALID						= -1;
+		static final byte	IDLE						= 0;
+		static final byte	COMPUTE_WORK				= 1;
+		static final byte	GET_WORK					= 2;
+		static final byte	LOCATION_SELECT				= 3;
+		static final byte	CONTAINER_SELECT			= 4;
+		static final byte	CONTAINER_POSITION			= 5;
+		static final byte	DO_PICK						= 6;
+		static final byte	SHORT_PICK					= 7;
+		static final byte	PICK_COMPLETE				= 8;
+		static final byte	NO_WORK						= 9;
+		static final byte	SHORT_PICK_CONFIRM			= 10;	//Added Oct. 2014
+		static final byte	LOCATION_SELECT_REVIEW		= 11;	//Added Dec 12 2014
 
 		//Error States
 
 		//Container Setup Error States
-		static final byte	CONTAINER_POSITION_INVALID		= 12;	//Added Dec 29 2014
-		static final byte	CONTAINER_SELECTION_INVALID		= 14;	//Addec Dec 30 2014
-		static final byte	CONTAINER_POSITION_IN_USE		= 15;	//Added Dec 30 2014
+		static final byte	CONTAINER_POSITION_INVALID	= 12;	//Added Dec 29 2014
+		static final byte	CONTAINER_SELECTION_INVALID	= 14;	//Addec Dec 30 2014
+		static final byte	CONTAINER_POSITION_IN_USE	= 15;	//Added Dec 30 2014
 		static final byte	NO_CONTAINERS_SETUP			= 16;	//Added Jan 2 2015
+
+		// new states only used in Line_Scan mode. Many are used in both line_scan and Setup_Orders, so keeping all together.
+		static final byte	READY						= 17;	
 
 		private CheStateNum() {
 		};
