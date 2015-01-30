@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
+import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -18,6 +19,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +43,8 @@ import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "location_alias")
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
@@ -63,8 +68,8 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAlias.class);
 
 	// Attachment credential.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@JoinColumn(name="mapped_location_persistentid")
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = "mapped_location_persistentid")
 	@JsonProperty
 	@Getter
 	@Setter
@@ -83,7 +88,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	private Timestamp			updated;
 
 	// The owning facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private Facility			parent;
@@ -121,6 +126,15 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	public static void setDao(LocationAliasDao inLocationAliasDao) {
 		LocationAlias.DAO = inLocationAliasDao;
+	}
+
+	public String getNominalLocationId() {
+		Location theLocation = getMappedLocation();
+		if (theLocation != null)
+			return theLocation.getNominalLocationId();
+			// if the location is inactive, has brackets around it.
+		else
+			return "";
 	}
 
 }

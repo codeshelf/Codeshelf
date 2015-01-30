@@ -19,6 +19,12 @@ public class CriteriaRegistry {
 
 	private CriteriaRegistry() {
 		indexedCriteria = Maps.newHashMap();
+
+		indexedCriteria.put("orderDetailByFacilityAndDomainId", 
+			new TypedCriteria("from OrderDetail where parent.parent.persistentId = :facilityId and domainId = :domainId", 
+					"facilityId", UUID.class,
+					"domainId", String.class));
+
 		
 		indexedCriteria.put("workInstructionByCheAndAssignedTime", 
 			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId and assigned = :assignedTimestamp", 
@@ -44,6 +50,10 @@ public class CriteriaRegistry {
 			new TypedCriteria("from Che where parent.parent.persistentId = :facilityId",
 				"facilityId", UUID.class));
 		
+		indexedCriteria.put("locationAliasesByFacility",
+			new TypedCriteria("from LocationAlias where parent.persistentId = :facilityId and active = true",
+				"facilityId", UUID.class));
+
 		indexedCriteria.put("pathSegmentsByFacility",
 			new TypedCriteria("from PathSegment where parent.parent.persistentId = :facilityId",
 				"facilityId", UUID.class));
@@ -90,6 +100,10 @@ public class CriteriaRegistry {
 			new TypedCriteria("from Tier where parent.parent.parent.persistentId = :facilityId and active = true",
 				"facilityId", UUID.class));
 		
+		indexedCriteria.put("slotsByFacility",
+			new TypedCriteria("from Slot where parent.parent.parent.parent.persistentId = :facilityId and active = true",
+				"facilityId", UUID.class));
+
 		indexedCriteria.put("tiersByAisle",
 			new TypedCriteria("from Tier where parent.parent.persistentId = :aisleId and active = true",
 				"aisleId", UUID.class));

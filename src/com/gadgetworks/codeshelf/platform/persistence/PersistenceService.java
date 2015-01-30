@@ -153,6 +153,7 @@ public class PersistenceService extends Service {
 	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
 	        			.applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
+
 	        // add to factory map
 			this.factories.put(tenant, factory);
 	        
@@ -160,7 +161,11 @@ public class PersistenceService extends Service {
 			Session session = factory.getCurrentSession();
 			Transaction t = session.beginTransaction();
 	        PropertyDao.getInstance().syncPropertyDefaults();
-	        t.commit();	        
+	        t.commit();
+	        
+	        // enable statistics
+	        factory.getStatistics().setStatisticsEnabled(true);
+	        
 	        return factory;
         } catch (Exception ex) {
         	if(ex instanceof HibernateException) {
@@ -219,6 +224,12 @@ public class PersistenceService extends Service {
 		//}
 
 		return session;
+	}
+
+	public SessionFactory getCurrentTenantSessionFactory() {
+		Tenant tenant = getCurrentTenant();
+		SessionFactory fac = this.factories.get(tenant);
+		return fac;
 	}
 
 	private Tenant getCurrentTenant() {

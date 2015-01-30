@@ -1,10 +1,22 @@
 package com.gadgetworks.codeshelf.application;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
+import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
+import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.jsp.JettyJspServlet;
+import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.NetworkTrafficServerConnector;
 import org.eclipse.jetty.server.Server;
@@ -15,6 +27,7 @@ import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +67,9 @@ public class WebApiServer {
 
 			contexts.addHandler(createAdminApiHandler(deviceManager,application,enableSchemaManagement));
 
-			if(deviceManager == null) {
+			// bhe: would be preferable to define process roles and work off them, instead of guessing 
+			// what kind of role it is.  it could be tied to the application object.
+			if (deviceManager == null) {
 				// server only:
 
 				// rest API
@@ -74,7 +89,7 @@ public class WebApiServer {
 				resourceHandler.setResourceBase(staticContentPath);
 				ContextHandler resourceContextHandler=new ContextHandler("/");
 				resourceContextHandler.setHandler(resourceHandler);
-				contexts.addHandler(resourceContextHandler);
+				contexts.addHandler(resourceContextHandler);				
 			}
 
 			server.start();
@@ -84,46 +99,92 @@ public class WebApiServer {
 		}
 	}
 
-	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) {
-		ServletContextHandler adminApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		adminApiContext.setContextPath("/adm");
-
+	private List<ContainerInitializer> jspInitializers() {
+    	JettyJasperInitializer sci = new JettyJasperInitializer();
+        ContainerInitializer initializer = new ContainerInitializer(sci, null);
+        List<ContainerInitializer> initializers = new ArrayList<ContainerInitializer>();
+        initializers.add(initializer);
+        return initializers;
+	}
+	
+    private ServletHolder jspServletHolder() {
+        ServletHolder holderJsp = new ServletHolder("jsp", JettyJspServlet.class);
+        holderJsp.setInitOrder(0);
+        holderJsp.setInitParameter("logVerbosityLevel", "DEBUG");
+        holderJsp.setInitParameter("fork", "false");
+        holderJsp.setInitParameter("xpoweredBy", "false");
+        holderJsp.setInitParameter("compilerTargetVM", "1.7");
+        holderJsp.setInitParameter("compilerSourceVM", "1.7");
+        holderJsp.setInitParameter("keepgenerated", "true");
+        return holderJsp;
+    }
+    
+	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) throws FileNotFoundException, URISyntaxException {
+		ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		
+		contextHandler.setContextPath("/adm");
+		
 		// add metrics servlet
 		MetricRegistry metricsRegistry = MetricsService.getRegistry();
-		adminApiContext.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
-		adminApiContext.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
+		contextHandler.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
+		contextHandler.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
 
 		// add health check servlet
 		HealthCheckRegistry hcReg = MetricsService.getHealthCheckRegistry();
-		adminApiContext.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
-		adminApiContext.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
+		contextHandler.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
+		contextHandler.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
 		// + default app service health check
 		ServiceStatusHealthCheck svcCheck = new ServiceStatusHealthCheck();
 		MetricsService.registerHealthCheck(svcCheck);
 
 		// add ping servlet
-		adminApiContext.addServlet(new ServletHolder(new PingServlet()),"/ping");
+		contextHandler.addServlet(new ServletHolder(new PingServlet()),"/ping");
 
 		// log level runtime change servlet
-		adminApiContext.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
-
+		contextHandler.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
+		
 		// service control (stop service etc)
-		adminApiContext.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
+		contextHandler.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
 
-		if(deviceManager != null) {
+		if (deviceManager != null) {
+			//////////////////////////
 			// only for site controller
+			//////////////////////////
 
 			// radio packet capture interface
-			adminApiContext.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
-		} else {
+			contextHandler.addServlet(new ServletHolder(new RadioServlet(deviceManager)),"/radio");
+		} 
+		else {
+			//////////////////////////
 			// only for server
-
+			//////////////////////////
+			
 			// user manager sql generator (temporary)
-			adminApiContext.addServlet(new ServletHolder(new UsersServlet()),"/users");
+			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
-		}
+			// admin JSP handler
+			try {
+				final String WEBROOT_INDEX = "/web/";
+		        URL indexUri = this.getClass().getResource(WEBROOT_INDEX);
+		        if (indexUri == null) {
+		            throw new FileNotFoundException("Unable to find resource " + WEBROOT_INDEX);
+		        }
+		        URI baseUri = indexUri.toURI();
+		        ClassLoader jspClassLoader = new URLClassLoader(new URL[0], this.getClass().getClassLoader());
+		        File tempDir = new File(System.getProperty("java.io.tmpdir"));	        
+		        contextHandler.setResourceBase(baseUri.toASCIIString());
+		        contextHandler.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
+		        contextHandler.setAttribute("javax.servlet.context.tempdir", tempDir);
+		        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
+		        contextHandler.setClassLoader(jspClassLoader);
+		        contextHandler.addServlet(jspServletHolder(), "*.jsp");
+			}
+			catch (Exception e) {
+				LOGGER.error("Failed to start admin JSP servlet",e);
+			}
+		}		
 
-		return adminApiContext;
+		return contextHandler;
 	}
 
 	private Handler createRestApiHandler() {

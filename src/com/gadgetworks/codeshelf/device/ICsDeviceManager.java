@@ -8,6 +8,7 @@ package com.gadgetworks.codeshelf.device;
 import java.util.List;
 import java.util.UUID;
 
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
@@ -35,6 +36,8 @@ public interface ICsDeviceManager {
 	 * @param inContainerIdList	The containers on the CHE when it requested the work.
 	 */
 	void computeCheWork(String inCheId, UUID inPersistentId, List<String> inContainerIdList);
+	
+	void computeCheWork(String inCheId, UUID inPersistentId, String orderDetailId);
 
 	// --------------------------------------------------------------------------
 	/**

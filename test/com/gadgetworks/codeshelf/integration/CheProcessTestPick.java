@@ -276,86 +276,45 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		aisle2.associatePathSegment(persistStr);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
-				+ "A1.B1.T1.S1,D-96\r\n"
-				+ "A1.B1.T1.S2,D-97\r\n"
-				+ "A1.B1.T1.S3,D-98\r\n"
+				+ "A1.B1.T1.S1,D-96\r\n" + "A1.B1.T1.S2,D-97\r\n" + "A1.B1.T1.S3,D-98\r\n"
 				+ "A1.B1.T1.S4,D-99\r\n"
-				+ "A1.B1.T1.S5,D-100\r\n"
-				+ "A1.B1.T2.S1,D-91\r\n"
-				+ "A1.B1.T2.S2,D-92\r\n"
+				+ "A1.B1.T1.S5,D-100\r\n" + "A1.B1.T2.S1,D-91\r\n" + "A1.B1.T2.S2,D-92\r\n"
 				+ "A1.B1.T2.S3,D-93\r\n"
-				+ "A1.B1.T2.S4,D-94\r\n"
-				+ "A1.B1.T2.S5,D-95\r\n"
-				+ "A1.B1.T3.S1,D-86\r\n"
+				+ "A1.B1.T2.S4,D-94\r\n" + "A1.B1.T2.S5,D-95\r\n" + "A1.B1.T3.S1,D-86\r\n"
 				+ "A1.B1.T3.S2,D-87\r\n"
-				+ "A1.B1.T3.S3,D-88\r\n"
-				+ "A1.B1.T3.S4,D-89\r\n"
-				+ "A1.B1.T3.S5,D-90\r\n"
+				+ "A1.B1.T3.S3,D-88\r\n" + "A1.B1.T3.S4,D-89\r\n" + "A1.B1.T3.S5,D-90\r\n"
 				+ "A1.B1.T4.S1,D-81\r\n"
-				+ "A1.B1.T4.S2,D-82\r\n"
-				+ "A1.B1.T4.S3,D-83\r\n"
-				+ "A1.B1.T4.S4,D-84\r\n"
+				+ "A1.B1.T4.S2,D-82\r\n" + "A1.B1.T4.S3,D-83\r\n" + "A1.B1.T4.S4,D-84\r\n"
 				+ "A1.B1.T4.S5,D-85\r\n"
-				+ "A1.B1.T5.S1,D-76\r\n"
-				+ "A1.B1.T5.S2,D-77\r\n"
-				+ "A1.B1.T5.S3,D-78\r\n"
+				+ "A1.B1.T5.S1,D-76\r\n" + "A1.B1.T5.S2,D-77\r\n" + "A1.B1.T5.S3,D-78\r\n"
 				+ "A1.B1.T5.S4,D-79\r\n"
-				+ "A1.B1.T5.S5,D-80\r\n"
-				+ "A1.B2.T1.S1,D-46\r\n"
-				+ "A1.B2.T1.S2,D-47\r\n"
+				+ "A1.B1.T5.S5,D-80\r\n" + "A1.B2.T1.S1,D-46\r\n" + "A1.B2.T1.S2,D-47\r\n"
 				+ "A1.B2.T1.S3,D-48\r\n"
-				+ "A1.B2.T1.S4,D-49\r\n"
-				+ "A1.B2.T1.S5,D-50\r\n"
-				+ "A1.B2.T2.S1,D-41\r\n"
+				+ "A1.B2.T1.S4,D-49\r\n" + "A1.B2.T1.S5,D-50\r\n" + "A1.B2.T2.S1,D-41\r\n"
 				+ "A1.B2.T2.S2,D-42\r\n"
-				+ "A1.B2.T2.S3,D-43\r\n"
-				+ "A1.B2.T2.S4,D-44\r\n"
-				+ "A1.B2.T2.S5,D-45\r\n"
+				+ "A1.B2.T2.S3,D-43\r\n" + "A1.B2.T2.S4,D-44\r\n" + "A1.B2.T2.S5,D-45\r\n"
 				+ "A1.B2.T3.S1,D-36\r\n"
-				+ "A1.B2.T3.S2,D-37\r\n"
-				+ "A1.B2.T3.S3,D-38\r\n"
-				+ "A1.B2.T3.S4,D-39\r\n"
+				+ "A1.B2.T3.S2,D-37\r\n" + "A1.B2.T3.S3,D-38\r\n" + "A1.B2.T3.S4,D-39\r\n"
 				+ "A1.B2.T3.S5,D-40\r\n"
-				+ "A1.B2.T4.S1,D-31\r\n"
-				+ "A1.B2.T4.S2,D-32\r\n"
-				+ "A1.B2.T4.S3,D-33\r\n"
+				+ "A1.B2.T4.S1,D-31\r\n" + "A1.B2.T4.S2,D-32\r\n" + "A1.B2.T4.S3,D-33\r\n"
 				+ "A1.B2.T4.S4,D-34\r\n"
-				+ "A1.B2.T4.S5,D-35\r\n"
-				+ "A1.B2.T5.S1,D-26\r\n"
-				+ "A1.B2.T5.S2,D-27\r\n"
+				+ "A1.B2.T4.S5,D-35\r\n" + "A1.B2.T5.S1,D-26\r\n" + "A1.B2.T5.S2,D-27\r\n"
 				+ "A1.B2.T5.S3,D-28\r\n"
-				+ "A1.B2.T5.S4,D-29\r\n"
-				+ "A1.B2.T5.S5,D-30\r\n"
-				+ "A2.B1.T1.S1,D-75\r\n"
+				+ "A1.B2.T5.S4,D-29\r\n" + "A1.B2.T5.S5,D-30\r\n" + "A2.B1.T1.S1,D-75\r\n"
 				+ "A2.B1.T1.S2,D-74\r\n"
-				+ "A2.B1.T1.S3,D-73\r\n"
-				+ "A2.B1.T1.S4,D-72\r\n"
-				+ "A2.B1.T1.S5,D-71\r\n"
+				+ "A2.B1.T1.S3,D-73\r\n" + "A2.B1.T1.S4,D-72\r\n" + "A2.B1.T1.S5,D-71\r\n"
 				+ "A2.B1.T2.S1,D-70\r\n"
-				+ "A2.B1.T2.S2,D-69\r\n"
-				+ "A2.B1.T2.S3,D-68\r\n"
-				+ "A2.B1.T2.S4,D-67\r\n"
+				+ "A2.B1.T2.S2,D-69\r\n" + "A2.B1.T2.S3,D-68\r\n" + "A2.B1.T2.S4,D-67\r\n"
 				+ "A2.B1.T2.S5,D-66\r\n"
-				+ "A2.B1.T3.S1,D-65\r\n"
-				+ "A2.B1.T3.S2,D-64\r\n"
-				+ "A2.B1.T3.S3,D-63\r\n"
+				+ "A2.B1.T3.S1,D-65\r\n" + "A2.B1.T3.S2,D-64\r\n" + "A2.B1.T3.S3,D-63\r\n"
 				+ "A2.B1.T3.S4,D-62\r\n"
-				+ "A2.B1.T3.S5,D-61\r\n"
-				+ "A2.B1.T4.S1,D-60\r\n"
-				+ "A2.B1.T4.S2,D-59\r\n"
+				+ "A2.B1.T3.S5,D-61\r\n" + "A2.B1.T4.S1,D-60\r\n" + "A2.B1.T4.S2,D-59\r\n"
 				+ "A2.B1.T4.S3,D-58\r\n"
-				+ "A2.B1.T4.S4,D-57\r\n"
-				+ "A2.B1.T4.S5,D-56\r\n"
-				+ "A2.B1.T5.S1,D-55\r\n"
+				+ "A2.B1.T4.S4,D-57\r\n" + "A2.B1.T4.S5,D-56\r\n" + "A2.B1.T5.S1,D-55\r\n"
 				+ "A2.B1.T5.S2,D-54\r\n"
-				+ "A2.B1.T5.S3,D-53\r\n"
-				+ "A2.B1.T5.S4,D-52\r\n"
-				+ "A2.B1.T5.S5,D-51\r\n"
+				+ "A2.B1.T5.S3,D-53\r\n" + "A2.B1.T5.S4,D-52\r\n" + "A2.B1.T5.S5,D-51\r\n"
 				+ "A2.B2.T1.S1,D-25\r\n"
-				+ "A2.B2.T1.S2,D-24\r\n"
-				+ "A2.B2.T1.S3,D-23\r\n"
-				+ "A2.B2.T1.S4,D-22\r\n"
-				+ "A2.B2.T1.S5,D-21\r\n"
+				+ "A2.B2.T1.S2,D-24\r\n" + "A2.B2.T1.S3,D-23\r\n" + "A2.B2.T1.S4,D-22\r\n" + "A2.B2.T1.S5,D-21\r\n"
 				/*
 				// Could fix these. Not needed in current test.
 				+ "A2.B2.T2.S1	D-20\r\n" + "A2.B2.T2.S2	D-19\r\n" + "A2.B2.T2.S3	D-18\r\n"
@@ -368,7 +327,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "A2.B2.T5.S1	D-5\r\n"
 				+ "A2.B2.T5.S2	D-4\r\n" + "A2.B2.T5.S3	D-3\r\n" + "A2.B2.T5.S4	D-2\r\n"
 				*/
-				 + "A2.B2.T5.S5	D-1\r\n";
+				+ "A2.B2.T5.S5	D-1\r\n";
 
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -475,30 +434,20 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 1, detailCount);
 
-
 		// Slotting
 		String csvString3 = "orderId,locationId\r\n" //
-				+ "1001dry,D-26\r\n"
-				+ "1001dry,D-27\r\n"
-				+ "1001dry,D-28\r\n"
-				+ "1001dry,D-29\r\n"
+				+ "1001dry,D-26\r\n" + "1001dry,D-27\r\n" + "1001dry,D-28\r\n" + "1001dry,D-29\r\n"
 				+ "1001dry,D-30\r\n"
-				+ "1001dry,D-31\r\n"
-				+ "1001dry,D-32\r\n"
-				+ "1001dry,D-33\r\n"
-				+ "1001dry,D-34\r\n"
+				+ "1001dry,D-31\r\n" + "1001dry,D-32\r\n" + "1001dry,D-33\r\n" + "1001dry,D-34\r\n"
 				+ "1001dry,D-35\r\n"
-				+ "1003dry,D-22\r\n"
-				+ "1006dry,D-100\r\n"
-				+ "1016dry,D-76\r\n"
-				+ "1007dry,D-99\r\n";
+				+ "1003dry,D-22\r\n" + "1006dry,D-100\r\n" + "1016dry,D-76\r\n" + "1007dry,D-99\r\n";
 
 		byte[] csvArray3 = csvString3.getBytes();
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = createOrderLocationImporter();
 		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3= new InputStreamReader(stream3);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
 
 		boolean result = importer.importOrderLocationsFromCsvStream(reader3, inFacility, ediProcessTime);
 
@@ -637,7 +586,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<WorkInstruction> aList = mWorkService.getWorkInstructions(che1, "");
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
-		
+
 		for (WorkInstruction workInstruction : aList) {
 			Assert.assertEquals(OrderStatusEnum.INPROGRESS, workInstruction.getOrderDetail().getStatus());
 		}
@@ -647,7 +596,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility); // set it back
 		this.getPersistenceService().commitTenantTransaction();
-
 
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -1068,7 +1016,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.startAndSkipReview("D301", 5000, 3000);
 		mPropertyService.restoreHKDefaults(facility);
 
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte)1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte) 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
@@ -1264,7 +1212,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.persistenceService.commitTenantTransaction();
 	}
 
-
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
 		// Test cases:
@@ -1300,7 +1247,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
-		facility=Facility.DAO.reload(facility);
+		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
@@ -1462,7 +1409,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
 
-		//Case 6: Already complete so display dim, solid 0
+		//Case 6: Already complete so display dim, solid oc
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 6), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 6), PosControllerInstr.BITENCODED_LED_O);
@@ -1470,6 +1417,104 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
 		this.getPersistenceService().beginTenantTransaction();
+		mPropertyService.restoreHKDefaults(facility);
+		this.getPersistenceService().commitTenantTransaction();
+	}
+
+	//DEV-603 test case
+	@Test
+	public final void testCartSetupFeedbackWithPreviouslyShortedWI() throws IOException {
+
+		// set up data for pick scenario
+		this.getPersistenceService().beginTenantTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Order 1 has two items in stock (Item 1 and Item 2)
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,1,1,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+
+		mPropertyService.turnOffHK(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		//SETUP
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		//SHORT FIRST ITEM
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker.buttonPress(1, 1);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		//SETUP AGAIN
+		picker.logout();
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		//Make sure we have a bright 1 on the poscon
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+
+		//COMPLETE FIRST ITEM
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		//SETUP AGAIN
+		picker.logout();
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
 		mPropertyService.restoreHKDefaults(facility);
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -1855,9 +1900,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 1000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -1880,9 +1925,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, 3000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -1899,9 +1944,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_IN_USE, 3000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -1918,18 +1963,18 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
 
 		//Make sure we got an error
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure scanning something random doesn;t change the state
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
 
 		//Make sure we still got an error codes
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == PosControllerInstr.ERROR_CODE_QTY);
-		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == PosControllerInstr.ERROR_CODE_QTY);
+		assertPositionHasErrorCode(picker, (byte) 1);
+		assertPositionHasErrorCode(picker, (byte) 2);
+		assertPositionHasErrorCode(picker, (byte) 3);
 
 		//Make sure CLEAR_ERROR gets us out
 		picker.scanCommand("CLEAR");
@@ -2064,6 +2109,15 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ColorEnum wiColor = cmdGroups.get(0).getLedSampleList().get(0).getColor();
 		ColorEnum cheColor = che.getColor();
 		Assert.assertEquals(cheColor, wiColor);
+
+	}
+
+	private void assertPositionHasErrorCode(PickSimulator picker, byte position) {
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue(position) == PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayFreq(position) == PosControllerInstr.SOLID_FREQ);
+		Assert.assertTrue(picker.getLastSentPositionControllerDisplayDutyCycle(position) == PosControllerInstr.MED_DUTYCYCLE);
+		Assert.assertTrue(picker.getLastSentPositionControllerMaxQty(position) == PosControllerInstr.BITENCODED_LED_BLANK);
+		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
 	}
 

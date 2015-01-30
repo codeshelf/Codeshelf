@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
 public class WorkInstructionCSVExporter {
 
-	private static final SimpleDateFormat TIMESTAMP_FORMATTER = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private final SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	private static final String CURRENT_VERSION = "1.0";
 	
 	private static final Integer	FACILITYID_POS			= 0;
@@ -126,7 +126,9 @@ public class WorkInstructionCSVExporter {
 		if (time == null) {
 			return "";
 		} else {
-			return TIMESTAMP_FORMATTER.format(time);
+			synchronized(timestampFormatter) {
+				return timestampFormatter.format(time);
+			}
 		}
 	}
 }

@@ -221,4 +221,80 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		}
 		commitTenantTransaction();
 	}
+
+	@Test
+	public void testPropertyCascadeDelete() {
+		PropertyDao cfgServ = PropertyDao.getInstance();
+
+		beginTenantTransaction();
+		Organization org=new Organization();
+		org.setDomainId("testOrg");
+		Organization.DAO.store(org);
+		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(org);
+		assertNotNull(types);
+		assertEquals(0, types.size());
+		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(org,"test-prop");
+		assertNull(type);
+		assertEquals(0, types.size());
+		commitTenantTransaction();
+
+		// create three property types in the database
+		beginTenantTransaction();
+		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("Some-Property-1",org.getClassName(),"Default-Value","Default-Description");
+		cfgServ.store(type1);
+		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("Some-Property-2",org.getClassName(),"Default-Value","Default-Description");
+		cfgServ.store(type2);
+		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("Some-Property-3",org.getClassName(),"Default-Value","Default-Description");
+		cfgServ.store(type3);
+		commitTenantTransaction();
+		
+		// check defaults
+		beginTenantTransaction();
+		types = cfgServ.getPropertyDefaults(org);
+		assertNotNull(types);
+		assertEquals(3,types.size());
+
+		// get raw config properties. should be empty set.
+		List<DomainObjectProperty> configs = cfgServ.getProperties(org);
+		assertNotNull(configs);
+		assertEquals(0,configs.size());
+
+		// now get properties with default values. should be three.
+		configs = cfgServ.getPropertiesWithDefaults(org);
+		assertNotNull(configs);
+		assertEquals(3,configs.size());
+		for (DomainObjectProperty c : configs) {
+			assertEquals("Default-Value", c.getValue());				
+		}
+		
+		// add a property with a different value
+		DomainObjectProperty config = new DomainObjectProperty(org, type2);
+		config.setValue("Modified description");
+		cfgServ.store(config);
+		commitTenantTransaction();
+
+		// should be one explicit property
+		beginTenantTransaction();
+		configs = cfgServ.getProperties(org);
+		assertNotNull(configs);
+		assertEquals(1,configs.size());
+		type2 = cfgServ.getPropertyDefault(org, "Some-Property-2");
+		List<DomainObjectProperty> props = type2.getProperties();
+		assertEquals(1,props.size());
+		commitTenantTransaction();
+
+		// delete default
+		beginTenantTransaction();
+		cfgServ.delete(type2);
+		commitTenantTransaction();
+		
+		// make sure default and instance are deleted
+		beginTenantTransaction();
+		DomainObjectPropertyDefault deletedDefault = cfgServ.getPropertyDefault(org,type2.getName());
+		assertNull(deletedDefault);
+		DomainObjectProperty deletedProp = cfgServ.getProperty(org, "Some-Property-2");
+		assertNull(deletedProp);
+		commitTenantTransaction();
+	}
+
 }

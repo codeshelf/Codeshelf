@@ -1,7 +1,6 @@
 package com.gadgetworks.codeshelf.model.dao;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Scanner;
 
@@ -186,9 +185,15 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		LOGGER.info("Checking property defaults...");
 		PropertyDao dao = PropertyDao.getInstance();
 		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
-		
-		File file = new File(this.getClass().getClassLoader().getResource("property-defaults.csv").getFile());
-		try (Scanner scanner = new Scanner(file)) {
+		InputStream is = this.getClass().getResourceAsStream("property-defaults.csv");
+		if (is==null) {
+			is = this.getClass().getClassLoader().getResourceAsStream("property-defaults.csv");
+		}
+		if (is==null) {
+			LOGGER.error("Failed to load property defaults");
+			return;
+		}
+		try (Scanner scanner = new Scanner(is)) {
 			while (scanner.hasNextLine()) {
 				String line = scanner.nextLine();
 				String[] data = line.split(";");
@@ -230,13 +235,13 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 				}
 			}
 			scanner.close();
-		} catch (IOException e) {
+		} catch (Exception e) {
 			LOGGER.error("Failed to sync up property defaults",e);
 			return;
 		}
 		// delete properties that are not included in resource file
 		for(DomainObjectPropertyDefault def : currentProperties) {
-			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue());
+			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue()+" and its instances.");
 			dao.delete(def);
 		}
 	}

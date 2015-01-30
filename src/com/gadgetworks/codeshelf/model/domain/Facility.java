@@ -24,6 +24,7 @@ import javax.persistence.Transient;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Hibernate;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,6 +61,8 @@ import com.google.inject.Singleton;
 public class Facility extends Location {
 
 	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
+	private static final String 		UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
+
 
 	@Inject
 	public static ITypedDao<Facility>	DAO;
@@ -83,6 +86,7 @@ public class Facility extends Location {
 	}
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
+
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
@@ -133,7 +137,7 @@ public class Facility extends Location {
 	@Getter
 	@Setter
 	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
-
+	
 	// TODO: replace with configuration via database table
 	static {
 		String sequencerConfig = System.getProperty("facility.sequencer");
@@ -749,6 +753,13 @@ public class Facility extends Location {
 		}
 	}
 
+	private Location createUnspecifiedLocation(String domainId) {
+		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
+		this.addLocation(location);
+		UnspecifiedLocation.DAO.store(location);
+		return location;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -822,7 +833,7 @@ public class Facility extends Location {
 		DropboxService result = null;
 
 		for (IEdiService ediService : getEdiServices()) {
-			if (ediService instanceof DropboxService) {
+			if (Hibernate.getClass(ediService).equals(DropboxService.class)) {
 				result = (DropboxService) ediService;
 				break;
 			}
@@ -1254,7 +1265,7 @@ public class Facility extends Location {
 		Location location = this.getLocations().get(domainId);
 
 		if (location != null) {
-			if (location.getClass().equals(Aisle.class)) {
+			if (location.isAisle()) {
 				return (Aisle) location;
 			} else {
 				LOGGER.error("child location " + domainId + " of Facility was not an Aisle, found " + location.getClassName());
@@ -1266,5 +1277,14 @@ public class Facility extends Location {
 	@Override
 	public String toString() {
 		return getDomainId();
+	}
+
+	synchronized
+	public Location getUnspecifiedLocation() {
+		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
+		if (unspecifiedLocation == null) {
+			unspecifiedLocation = createUnspecifiedLocation(UNSPECIFIED_LOCATION_DOMAINID);
+		}
+		return unspecifiedLocation;
 	}
 }

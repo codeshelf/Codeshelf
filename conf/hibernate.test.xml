@@ -22,9 +22,12 @@
         <!-- Enable Hibernate's automatic session context management -->
         <property name="current_session_context_class">thread</property>
 
-        <!-- Disable the second-level cache -->
-        <property name="cache.provider_class">org.hibernate.cache.NoCacheProvider</property>
-        
+        <!-- configure second-level cache -->
+        <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+        <property name="hibernate.cache.use_second_level_cache">true</property>
+        <property name="hibernate.cache.use_query_cache">true</property>
+        <property name="net.sf.ehcache.configurationResourceName">ehcache.xml</property>
+                
         <!-- Disable join fetching -->
         <property name="cmax_fetch_depth">0</property>
         
@@ -41,6 +44,8 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.Aisle"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Tier"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Slot"/>
+        <mapping class="com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation"/>
+        
 
         <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectProperty"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault"/>
