@@ -1531,6 +1531,14 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n"; //
+		
+		// Improve this, or new test to do:
+		// Two or three clone lines in a row
+		// One clone line, then another fully defined bay, with its own clones.
+		// If it is a clone, complain (Warn) and do not allow change of controllerLED, or orientXorY fields.
+		// Your choice for depthCm. If you allow change in depth, respect it. Simplest to not allow that either.
+		// An Aisle clone line, followed by a bay line must be an error. After Aisle clone, you can only have another aisle, or the file ends.
+		
 
 		byte[] csvArray = csvString.getBytes();
 

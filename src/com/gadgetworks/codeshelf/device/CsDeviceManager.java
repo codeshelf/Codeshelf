@@ -27,7 +27,6 @@ import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.PcapRecord;
@@ -370,7 +369,7 @@ public class CsDeviceManager implements
 		if (netDevice == null) {
 			// new device
 			if (deviceType.equals(DEVICETYPE_CHE)) {
-				netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
+				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
 				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
@@ -415,7 +414,7 @@ public class CsDeviceManager implements
 				}
 				// can't really change the NetGuid so we will create new device
 				if (deviceType.equals(DEVICETYPE_CHE)) {
-					netDevice = new CheDeviceLogic(persistentId, deviceGuid, this, radioController);
+					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
 					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
@@ -483,8 +482,7 @@ public class CsDeviceManager implements
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
-				
-				/*
+								
 				Che.ProcessMode theMode = che.getProcessMode();
 				if (theMode == null)
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
@@ -500,9 +498,8 @@ public class CsDeviceManager implements
 							LOGGER.error("unimplemented case in updateNetwork");
 							continue;
 					}
-				}
-				*/
-				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE); // comment this in favor of block above
+				}				
+				// doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE); // comment this in favor of block above
 				
 				updateDevices.add(id);
 			} catch (Exception e) {
