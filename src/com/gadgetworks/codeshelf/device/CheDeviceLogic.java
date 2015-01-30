@@ -38,8 +38,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 /**
- * @author jeffw
- *
+ * CheDeviceLogic is now an abstract base class for CHE programs with different state machines.
+ * See SetupOrdersDeviceLogic to get what CheDeviceLogic used to be all by itself.
  */
 public class CheDeviceLogic extends DeviceLogicABC {
 	// This code runs on the site controller, not the CHE.
