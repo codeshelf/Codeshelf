@@ -899,31 +899,21 @@ public class RadioController implements IRadioController {
 	 * @param inNetId
 	 * @param inSrcAddr
 	 */
-	private void respondToAck(final byte ackId, final NetworkId netId, final NetAddress srcAddr) {
-
-		//Get Network Device
-		INetworkDevice device = mDeviceNetAddrMap.get(srcAddr);
-		if (device == null) {
-			LOGGER.warn("Unable to respond to ack: Device with address={}", srcAddr);
-			return;
-		}
-
+	private void respondToAck(INetworkDevice device, final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
 		ContextLogging.setNetGuid(device.getGuid());
 		try {
-			if (device.isAckIdNew(ackId)) {
-				device.setLastAckId(ackId);
 
-				LOGGER.info("Remote ack request RECEIVED: ack={}; netId={}; srcAddr={}", ackId, netId, srcAddr);
+			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 
-				device.setLastAckId(ackId);
-				CommandAssocAck ackCmd = new CommandAssocAck("00000000", new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS,
-					(byte) 0));
+			device.setLastAckId(inAckId);
+			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
-				IPacket ackPacket = new Packet(ackCmd, netId, mServerAddress, srcAddr, false);
-				ackCmd.setPacket(ackPacket);
-				ackPacket.setAckId(ackId);
-				sendPacket(ackPacket);
-			}
+			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
+			ackCmd.setPacket(ackPacket);
+			ackPacket.setAckId(inAckId);
+			sendPacket(ackPacket);
+
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -986,23 +976,55 @@ public class RadioController implements IRadioController {
 	}
 
 	public void handleInboundPacket(IPacket packet) {
+		NetAddress packetSourceAddress = packet.getSrcAddr();
+
+		if (packetSourceAddress == mServerAddress) {
+			//Ignore packet from ourselves or other servers
+			LOGGER.debug("Ignoring packet from serverAddress={}", packetSourceAddress);
+			return;
+		}
+
+		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
+		if (device != null) {
+			ContextLogging.setNetGuid(device.getGuid());
+		}
 		//Update the last IO Timestamp -- this a best effort attempt. Again the Map is not 100% gaurunteed to prevent incorrectly spaced IO.
 		//We may read a packet then send something immediately afterwards before updating the timestamp.
 		//To prevent that we would need to lock this map during a read, but that will require gateway changes that are TODO
 		AtomicLong lastIOTimestmapMs = getLastIOTimestamp(packet.getSrcAddr());
 		updateTimestampIfLarger(lastIOTimestmapMs, System.currentTimeMillis());
 
-		if (packet.getPacketType() == IPacket.ACK_PACKET) {
-			LOGGER.debug("Packet remote ACK req RECEIVED={}", packet.toString());
-			processAckPacket(packet);
-		} else {
-			// If the inbound packet had an ACK ID then respond with an ACK ID.
-			byte ackId = packet.getAckId();
-			if (ackId != IPacket.EMPTY_ACK_ID) {
-				respondToAck(ackId, packet.getNetworkId(), packet.getSrcAddr());
+		try {
+			if (packet.getPacketType() == IPacket.ACK_PACKET) {
+				LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
+				processAckPacket(packet);
+			} else {
+				// If the inbound packet had an ACK ID then respond with an ACK ID.
+				boolean shouldActOnCommand = true;
+				if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
+					if (device == null) {
+						LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
+						return;
+					} else {
+						//Only act on the command if the ACK is new (i.e. > last ack id)
+						shouldActOnCommand = device.isAckIdNew(packet.getAckId());
+
+						//Always respond to an ACK
+						respondToAck(device, packet.getAckId(), packet.getNetworkId(), packetSourceAddress);
+					}
+				}
+
+				if (shouldActOnCommand) {
+					receiveCommand(packet.getCommand(), packetSourceAddress);
+				} else {
+					LOGGER.warn("We ACKed but did not process a packet that was already acked befinAckIdore; packet={}", packet);
+
+				}
 			}
-			receiveCommand(packet.getCommand(), packet.getSrcAddr());
+		} finally {
+			ContextLogging.clearNetGuid();
 		}
+
 	}
 
 	final static class ChannelInfo {
