@@ -154,4 +154,10 @@ public interface INetworkDevice {
 	 */
 	public boolean isDeviceAssociated();
 	
+	// --------------------------------------------------------------------------
+	/**
+	 * What is the string name of this kind of device? Gives answers such as CsDeviceManager.DEVICETYPE_LED 
+	 */
+	public String getDeviceType();
+
 }
