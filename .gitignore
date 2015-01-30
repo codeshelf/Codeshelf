@@ -27,5 +27,6 @@ lib/.DS_Store
 lib/dist/.DS_Store
 .DS_Store
 /.gradle
-/.classpath
+.classpath
+
 

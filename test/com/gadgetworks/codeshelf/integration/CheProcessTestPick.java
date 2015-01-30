@@ -1311,7 +1311,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check State Make sure we do not hit REVIEW
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 
-		//Case 1: 1 good pick no flashing
+
+		LOGGER.info("Case 1: 1 good pick no flashing");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
@@ -1328,7 +1329,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.logout();
 		picker.login("Picker #1");
 
-		//Continue setting up containers with bad counts
+		
+		LOGGER.info("Continue setting up containers with bad counts");
 		picker.setupOrderIdAsContainer("a1111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
 		picker.setupOrderIdAsContainer("33333", "3"); //missing order id
@@ -1352,10 +1354,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 5).byteValue(),
 			PosControllerInstr.BITENCODED_DIGITS[0]);
 
+		LOGGER.info("Starting pick");
+
 		picker.scanCommand("START");
 
 		//Check State
+		this.getPersistenceService().beginTenantTransaction(); // hmm
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 3000);
+		this.getPersistenceService().commitTenantTransaction(); 
 
 		//Check Screens
 		//Case 1: 2 good picks - solid , bright
