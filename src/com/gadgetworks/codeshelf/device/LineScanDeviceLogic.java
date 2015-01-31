@@ -105,7 +105,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
-			clearAllPositionControllers();
 			setState(CheStateEnum.READY);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -118,6 +117,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * The CHE is in the READY state. We normally expect an order detail ID with no scan prefix
 	 */
 	private void processReadyStateScan(final String inScanPrefixStr, final String inScanStr) {
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.info("Expecting order detail ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.READY);
+			return;
+		}
+		// if an apparently good order detail ID, send that off to the backend, but transition to a "querying" state.
+		sendDetailWIRequest(inScanStr);
+		setState(CheStateEnum.GET_WORK);
 
 	}
 
@@ -126,6 +133,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * The CHE is in the PICK state. For non-command scans, we only expect new order detail
 	 */
 	private void processPickStateScan(final String inScanPrefixStr, final String inScanStr) {
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send this in a command to the server. We expect it is an order detail Id.
+	 */
+	private void sendDetailWIRequest(final String inScanStr) {
 
 	}
 
@@ -174,6 +189,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 			case READY:
 				sendDisplayCommand(SCAN_LINE_MSG, EMPTY_MSG);
+				break;
+				
+			case GET_WORK:
+				sendDisplayCommand(COMPUTE_WORK_MSG, GO_TO_LOCATION_MSG);
 				break;
 
 			case SHORT_PICK_CONFIRM:
