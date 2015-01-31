@@ -84,7 +84,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 	
 	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
-	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ONE LINE");
+	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
 	
 
 	protected static final String			STARTWORK_COMMAND						= "START";

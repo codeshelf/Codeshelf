@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
-
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -22,8 +21,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger	LOGGER									= LoggerFactory.getLogger(LineScanDeviceLogic.class);
-
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -35,7 +33,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	@Override
 	public String getDeviceType() {
-		return CsDeviceManager.DEVICETYPE_CHE_LINESCAN; 
+		return CsDeviceManager.DEVICETYPE_CHE_LINESCAN;
 	}
 
 	/** 
@@ -82,11 +80,60 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	public void processNonCommandScan(String inScanPrefixStr, String inContent) {
-		// needs implementation
+		// Non-command scans are split out by state then the scan content
+		switch (mCheStateEnum) {
+			case IDLE:
+				processIdleStateScan(inScanPrefixStr, inContent);
+				break;
+			case READY:
+				processReadyStateScan(inScanPrefixStr, inContent);
+				break;
+			case DO_PICK:
+				processPickStateScan(inScanPrefixStr, inContent);
+				break;
+
+			default:
+				break;
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the Idle state (not logged in), so if we get a user scan then move to ready state.
+	 */
+	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
+
+		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			clearAllPositionControllers();
+			setState(CheStateEnum.READY);
+		} else {
+			LOGGER.info("Not a user ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.IDLE);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the READY state. We normally expect an order detail ID with no scan prefix
+	 */
+	private void processReadyStateScan(final String inScanPrefixStr, final String inScanStr) {
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the PICK state. For non-command scans, we only expect new order detail
+	 */
+	private void processPickStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 	}
 
 	@Override
+	// --------------------------------------------------------------------------
+	/**
+	 * If on a job, abandon it and go back to ready state
+	 */
 	protected void clearErrorCommandReceived() {
 		// needs implementation
 	}
@@ -124,42 +171,33 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case IDLE:
 				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 				break;
-				
+
 			case READY:
 				sendDisplayCommand(SCAN_LINE_MSG, EMPTY_MSG);
 				break;
 
 			case SHORT_PICK_CONFIRM:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
+				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
 			case SHORT_PICK:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
+				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				showTheActivePick();
 				break;
 
 			case DO_PICK:
-				if (isSameState || previousState == CheStateEnum.GET_WORK) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				showTheActivePick(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
-				// fewer direct calls to showActivePicks elsewhere.
+				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				showTheActivePick();
 				break;
-
 
 			default:
 				break;
 		}
 	}
-	
-	private void showTheActivePick(){
+
+	private void showTheActivePick() {
 		// needs implementation. Roughly corresponds to showActivePicks
 	}
-
 
 }
