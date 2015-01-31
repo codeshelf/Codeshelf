@@ -50,6 +50,7 @@ import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -220,7 +221,6 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		return getFacility();
 	}
 
-
 	private void setUpLineScanOrders(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
 		// Using preferredLocation. No inventory.
@@ -249,10 +249,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 	}
 
-
 	@SuppressWarnings("unused")
 	@Test
-	public final void testDataSetupForLineScan() throws IOException {
+	public final void testLineScanLogin() throws IOException {
 
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
@@ -264,16 +263,47 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
-		List<Container> containers = facility.getContainers();
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE-E2E-1");
+		Assert.assertNotNull(che1);
+		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid());
+
+		ProcessMode processMode = ProcessMode.getMode("LINE_SCAN");
+		che1.setProcessMode(processMode);
+		Che.DAO.store(che1);
+
 		this.getPersistenceService().commitTenantTransaction();
-		
+
 		this.getPersistenceService().beginTenantTransaction();
+
+		// FIXME  picker's device logic is not correct
+		// test the first few transitions. On powerup, in idle state
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+
+		// login goes to ready state. (Says to scan a line).
 		picker.login("Picker #1");
+		// picker.waitForCheState(CheStateEnum.READY, 2000);
+
+		// logout back to idle state.
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
+		// login again
+		picker.login("Picker #1");
+		// picker.waitForCheState(CheStateEnum.READY, 2000);
+
+		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
+		picker.scanOrderId("12345.1"); // does not add "%"
+		// picker.waitForCheState(CheStateEnum.READY, 2000);
+
+		// logout back to idle state.
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
 		this.getPersistenceService().commitTenantTransaction();
 
 	}
-
-
 
 }
