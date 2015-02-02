@@ -7,6 +7,9 @@ package com.gadgetworks.codeshelf.device;
 
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,6 +25,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
+	
+	@Getter
+	@Setter
+	private String lastScanedDetailId;
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -118,11 +125,12 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processReadyStateScan(final String inScanPrefixStr, final String inScanStr) {
 		if (!inScanPrefixStr.isEmpty()) {
-			LOGGER.info("Expecting order detail ID: " + inScanStr);
+			LOGGER.info("processReadyStateScan: Expecting order detail ID: " + inScanStr);
 			invalidScanMsg(CheStateEnum.READY);
 			return;
 		}
 		// if an apparently good order detail ID, send that off to the backend, but transition to a "querying" state.
+		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
 		sendDetailWIRequest(inScanStr);
 		setState(CheStateEnum.GET_WORK);
 
@@ -133,6 +141,17 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * The CHE is in the PICK state. For non-command scans, we only expect new order detail
 	 */
 	private void processPickStateScan(final String inScanPrefixStr, final String inScanStr) {
+		// if on one job, and new detail scan comes in, then we ask about aborting the current job.
+		
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.info("processPickStateScan: Expecting order detail ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.READY);
+			return;
+		}
+		
+		// need to save new detail ID that was scanned in.
+		setLastScanedDetailId(inScanStr); // needed
+		setState(CheStateEnum.ABANDON_CHECK);
 
 	}
 
@@ -165,11 +184,30 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**
 	 * The user scanned YES or NO.
-	 * @param inScanStr
+	 * Two uses: confirm scan, or abandon job check 
 	 */
 	@Override
 	protected void yesOrNoCommandReceived(final String inScanStr) {
-		// needs implementation
+		boolean theValue = Boolean.parseBoolean(inScanStr);
+		
+		switch (mCheStateEnum) {
+			case ABANDON_CHECK:
+				if (theValue) {
+					String lastDetailId = getLastScanedDetailId();
+					sendDetailWIRequest(lastDetailId);
+					setState(CheStateEnum.GET_WORK);					
+				}
+				else {
+					// If no, we want to remain on current job
+					setState(CheStateEnum.DO_PICK);	
+					// or on GET_WORK if we never got past get work?
+				}
+				break;
+				
+			default:
+				break;
+
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -208,6 +246,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case DO_PICK:
 				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				showTheActivePick();
+				break;
+				
+			case ABANDON_CHECK:
+				sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
 				break;
 
 			default:

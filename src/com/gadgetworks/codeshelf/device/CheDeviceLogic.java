@@ -86,6 +86,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
 	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
 	protected static final String			GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
+	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
 
 	protected static final String			STARTWORK_COMMAND						= "START";
 	protected static final String			SETUP_COMMAND							= "SETUP";
