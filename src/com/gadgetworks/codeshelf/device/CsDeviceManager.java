@@ -61,10 +61,10 @@ public class CsDeviceManager implements
 
 	private static final Logger							LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
-	static final String							DEVICETYPE_CHE				= "CHE";
-	static final String							DEVICETYPE_LED				= "LED Controller";
-	static final String							DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
-	static final String							DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
+	static final String									DEVICETYPE_CHE				= "CHE";
+	static final String									DEVICETYPE_LED				= "LED Controller";
+	static final String									DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
+	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
@@ -279,15 +279,14 @@ public class CsDeviceManager implements
 		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds);
 		client.sendMessage(req);
 	}
-	
+
 	@Override
 	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final String orderDetailId) {
 		LOGGER.debug("Compute work: Che={}; DetailId={}", inCheId, orderDetailId);
 		String cheId = inPersistentId.toString();
-		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId,orderDetailId);
+		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId, orderDetailId);
 		client.sendMessage(req);
 	}
-
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -357,21 +356,21 @@ public class CsDeviceManager implements
 		LOGGER.info("Disconnected from server");
 	}
 
-private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGuid, String newDeviceType) {
-	if (existingDevice == null) {
-		LOGGER.error(" error in needNewDevice");
+	private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGuid, String newDeviceType) {
+		if (existingDevice == null) {
+			LOGGER.error(" error in needNewDevice");
+			return false;
+		}
+		if (!existingDevice.getGuid().equals(newDeviceGuid)) {
+			return true;
+		}
+		String oldDeviceType = existingDevice.getDeviceType();
+		if (!oldDeviceType.equals(newDeviceType)) {
+			String oldDeviceType2 = existingDevice.getDeviceType();
+			return true;
+		}
 		return false;
-	}		
-	if (!existingDevice.getGuid().equals(newDeviceGuid)){
-		return true;
 	}
-	String oldDeviceType = existingDevice.getDeviceType();
-	if (!oldDeviceType.equals(newDeviceType)){
-		String oldDeviceType2 = existingDevice.getDeviceType();
-		return true;
-	}
-	return false;
-}
 
 	private void doCreateUpdateNetDevice(UUID persistentId, NetGuid deviceGuid, String deviceType) {
 		Preconditions.checkNotNull(persistentId, "persistentId of device cannot be null");
@@ -412,7 +411,7 @@ private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGu
 		} else {
 			// update existing device
 			if (needNewDevice(netDevice, deviceGuid, deviceType)) {
-			// if (!netDevice.getGuid().equals(deviceGuid)) {
+				// if (!netDevice.getGuid().equals(deviceGuid)) {
 				// changing NetGuid (deprecated/bad!)
 				INetworkDevice oldNetworkDevice = radioController.getNetworkDevice(netDevice.getGuid());
 				if (oldNetworkDevice != null) {
@@ -491,6 +490,25 @@ private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGu
 		}
 	}
 
+	/**
+	 * This API used by the test system only so far, for changing process mode for the picker.
+	 * The persistentId and GUID should not change. Only the process mode.
+	 */
+	public INetworkDevice updateOneDevice(UUID persistentId, NetGuid deviceGuid, String newProcessType) {
+		Preconditions.checkNotNull(persistentId, "persistentId cannot be null");
+		Preconditions.checkNotNull(deviceGuid, "deviceGuidc annot be null");
+		Preconditions.checkNotNull(newProcessType, "newProcessTypecannot be null");
+		// make sure this GUID exists.
+		INetworkDevice existingDevice = mDeviceMap.get(persistentId);
+		if (existingDevice == null || !deviceGuid.equals(existingDevice.getGuid())) {
+			LOGGER.error("misuse of updateOneDevice()");
+			return existingDevice;
+		}			
+		doCreateUpdateNetDevice(persistentId, deviceGuid, newProcessType);
+		INetworkDevice newDevice = mDeviceMap.get(persistentId);
+		return newDevice;
+	}
+
 	public void updateNetwork(CodeshelfNetwork network) {
 		Set<UUID> updateDevices = new HashSet<UUID>();
 		// update network devices
@@ -498,7 +516,7 @@ private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGu
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
-								
+
 				Che.ProcessMode theMode = che.getProcessMode();
 				if (theMode == null)
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
@@ -514,9 +532,9 @@ private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGu
 							LOGGER.error("unimplemented case in updateNetwork");
 							continue;
 					}
-				}				
+				}
 				// doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE); // comment this in favor of block above
-				
+
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others

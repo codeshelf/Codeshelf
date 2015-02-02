@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.device.CsDeviceManager;
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
 import com.gadgetworks.codeshelf.device.PosControllerInstr;
@@ -269,34 +270,35 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid());
 
-		ProcessMode processMode = ProcessMode.getMode("LINE_SCAN");
-		che1.setProcessMode(processMode);
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
 
-		// FIXME  picker's device logic is not correct
 		// test the first few transitions. On powerup, in idle state
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		// Ideally, the new PickSimulator() would get the right processmode from the CHE. But we have to set it.
+		String currentType = picker.getProcessType();
+		picker.updateProcessType("CHE_LINESCAN");
+		currentType = picker.getProcessType();
+		
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 
 		// login goes to ready state. (Says to scan a line).
-		picker.login("Picker #1");
-		// picker.waitForCheState(CheStateEnum.READY, 2000);
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
 
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		// login again
-		picker.login("Picker #1");
-		// picker.waitForCheState(CheStateEnum.READY, 2000);
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		picker.scanOrderId("12345.1"); // does not add "%"
-		// picker.waitForCheState(CheStateEnum.READY, 2000);
+		picker.waitForCheState(CheStateEnum.GET_WORK, 2000);
 
 		// logout back to idle state.
 		picker.logout();
