@@ -83,6 +83,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	protected static final String			CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
+	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
+	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
+	protected static final String			GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
+
 	protected static final String			STARTWORK_COMMAND						= "START";
 	protected static final String			SETUP_COMMAND							= "SETUP";
 	protected static final String			SHORT_COMMAND							= "SHORT";
@@ -145,7 +149,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	public String getDeviceType() {
 		LOGGER.error("getDeviceType(): Should have specific instance of this abstract type");
-		return CsDeviceManager.DEVICETYPE_CHE; 
+		return CsDeviceManager.DEVICETYPE_CHE;
 	}
 
 	// The last-aisle-controller-for-this-CHE package.
@@ -420,11 +424,32 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/* 
-	 * 
+	 */
+	public void processNonCommandScan(String inScanPrefixStr, String inContent) {
+		LOGGER.error("processNonCommandScan needs override");
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
 	 */
 	@Override
 	public void scanCommandReceived(String inCommandStr) {
-		LOGGER.error("base class scanCommandReceived() call. Need override");
+		if (!connectedToServer) {
+			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
+			return;
+		}
+
+		LOGGER.info(this + " received scan command: " + inCommandStr);
+
+		String scanPrefixStr = getScanPrefix(inCommandStr);
+		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
+
+		// Command scans actions are determined by the scan content (the command issued) then state because they are more likely to be state independent
+		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
+			processCommandScan(scanStr);
+		} else {
+			processNonCommandScan(scanPrefixStr, scanStr);
+		}
 	}
 
 	// --------------------------------------------------------------------------
