@@ -1,7 +1,8 @@
 apply plugin: 'java'
-
 apply plugin: 'eclipse'
+
 tasks.eclipse.dependsOn(cleanEclipseClasspath)
+
 eclipse {
 	classpath {
 		defaultOutputDir file('eclipse-bin')
@@ -78,6 +79,9 @@ dependencies {
 			'com.eaio.uuid:uuid:3.2',
 			'org.projectlombok:lombok:1.14.8',
 			
+			'org.apache.httpcomponents:httpclient:4.3.6',
+			'org.apache.httpcomponents:httpmime:4.3.6',
+			
 			// manually update
 			files('lib/dist/classindex-3.3.jar'), // needs to be in fixed location for eclipse annotation processing
 			files('lib/dist/JD2XX.jar') // our library for interacting with FTDI USB-Serial interface
@@ -152,5 +156,3 @@ task copyNativeLibraries(type: Copy) {
 task dist {
 	dependsOn serverJar, siteControllerJar, copyRuntimeDeps, copyNativeLibraries
 }
-
-

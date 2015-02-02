@@ -13,6 +13,8 @@ import java.util.List;
 import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
+import org.apache.tomcat.InstanceManager;
+import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
 import org.eclipse.jetty.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.jsp.JettyJspServlet;
@@ -175,6 +177,7 @@ public class WebApiServer {
 		        contextHandler.setResourceBase(baseUri.toASCIIString());
 		        contextHandler.setAttribute("org.eclipse.jetty.containerInitializers", jspInitializers());
 		        contextHandler.setAttribute("javax.servlet.context.tempdir", tempDir);
+		        contextHandler.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
 		        contextHandler.addBean(new ServletContainerInitializersStarter(new WebAppContext()), true);
 		        contextHandler.setClassLoader(jspClassLoader);
 		        contextHandler.addServlet(jspServletHolder(), "*.jsp");
