@@ -5,8 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
-
 import java.util.UUID;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +24,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger	LOGGER									= LoggerFactory.getLogger(LineScanDeviceLogic.class);
-
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
+	
+	@Getter
+	@Setter
+	private String lastScanedDetailId;
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -35,7 +40,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	@Override
 	public String getDeviceType() {
-		return CsDeviceManager.DEVICETYPE_CHE_LINESCAN; 
+		return CsDeviceManager.DEVICETYPE_CHE_LINESCAN;
 	}
 
 	/** 
@@ -82,11 +87,106 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	public void processNonCommandScan(String inScanPrefixStr, String inContent) {
-		// needs implementation
+		// Non-command scans are split out by state then the scan content
+		switch (mCheStateEnum) {
+			case IDLE:
+				processIdleStateScan(inScanPrefixStr, inContent);
+				break;
+			case READY:
+				processReadyStateScan(inScanPrefixStr, inContent);
+				break;
+			case GET_WORK:
+				processGetWorkStateScan(inScanPrefixStr, inContent);
+				break;
+			case DO_PICK:
+				processPickStateScan(inScanPrefixStr, inContent);
+				break;
+
+			default:
+				break;
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the Idle state (not logged in), so if we get a user scan then move to ready state.
+	 */
+	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
+
+		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			setState(CheStateEnum.READY);
+		} else {
+			LOGGER.info("Not a user ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.IDLE);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the GET_WORK state. 
+	 * Should only happen if the get work answer did not come back from server before user scanned another detailId
+	 */
+	private void processGetWorkStateScan(final String inScanPrefixStr, final String inScanStr) {
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.info("processReadyStateScan: Expecting order detail ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.READY);
+			return;
+		}
+		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
+		setState(CheStateEnum.ABANDON_CHECK);
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the READY state. We normally expect an order detail ID with no scan prefix
+	 */
+	private void processReadyStateScan(final String inScanPrefixStr, final String inScanStr) {
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.info("processReadyStateScan: Expecting order detail ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.READY);
+			return;
+		}
+		// if an apparently good order detail ID, send that off to the backend, but transition to a "querying" state.
+		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
+		sendDetailWIRequest(inScanStr);
+		setState(CheStateEnum.GET_WORK);
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the PICK state. For non-command scans, we only expect new order detail
+	 */
+	private void processPickStateScan(final String inScanPrefixStr, final String inScanStr) {
+		// if on one job, and new detail scan comes in, then we ask about aborting the current job.
+		
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.info("processPickStateScan: Expecting order detail ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.READY);
+			return;
+		}
+		
+		// need to save new detail ID that was scanned in.
+		setLastScanedDetailId(inScanStr); // needed
+		setState(CheStateEnum.ABANDON_CHECK);
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send this in a command to the server. We expect it is an order detail Id.
+	 */
+	private void sendDetailWIRequest(final String inScanStr) {
 
 	}
 
 	@Override
+	// --------------------------------------------------------------------------
+	/**
+	 * If on a job, abandon it and go back to ready state
+	 */
 	protected void clearErrorCommandReceived() {
 		// needs implementation
 	}
@@ -103,11 +203,30 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**
 	 * The user scanned YES or NO.
-	 * @param inScanStr
+	 * Two uses: confirm scan, or abandon job check 
 	 */
 	@Override
 	protected void yesOrNoCommandReceived(final String inScanStr) {
-		// needs implementation
+		boolean theValue = Boolean.parseBoolean(inScanStr);
+		
+		switch (mCheStateEnum) {
+			case ABANDON_CHECK:
+				if (theValue) {
+					String lastDetailId = getLastScanedDetailId();
+					sendDetailWIRequest(lastDetailId);
+					setState(CheStateEnum.GET_WORK);					
+				}
+				else {
+					// If no, we want to remain on current job
+					setState(CheStateEnum.DO_PICK);	
+					// or on GET_WORK if we never got past get work?
+				}
+				break;
+				
+			default:
+				break;
+
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -124,42 +243,43 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case IDLE:
 				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 				break;
-				
+
 			case READY:
 				sendDisplayCommand(SCAN_LINE_MSG, EMPTY_MSG);
 				break;
+				
+			case GET_WORK:
+				sendDisplayCommand(COMPUTE_WORK_MSG, GO_TO_LOCATION_MSG);
+				break;
 
 			case SHORT_PICK_CONFIRM:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
+				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
 			case SHORT_PICK:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
+				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				showTheActivePick();
 				break;
 
 			case DO_PICK:
-				if (isSameState || previousState == CheStateEnum.GET_WORK) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				showTheActivePick(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
-				// fewer direct calls to showActivePicks elsewhere.
+				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				showTheActivePick();
 				break;
-
+				
+			case ABANDON_CHECK:
+				sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
+				break;
 
 			default:
 				break;
 		}
 	}
-	
-	private void showTheActivePick(){
-		// needs implementation. Roughly corresponds to showActivePicks
-	}
 
+	private void showTheActivePick() {
+		// needs implementation. Roughly corresponds to showActivePicks
+		sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
+
+	}
 
 }

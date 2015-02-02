@@ -82,10 +82,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
 	protected static final String			CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	protected static final String			CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
-	
+
 	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
-	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ONE LINE");
-	
+	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
+	protected static final String			GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
+	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
+	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)"); // remove this later
 
 	protected static final String			STARTWORK_COMMAND						= "START";
 	protected static final String			SETUP_COMMAND							= "SETUP";
@@ -149,7 +151,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	public String getDeviceType() {
 		LOGGER.error("getDeviceType(): Should have specific instance of this abstract type");
-		return CsDeviceManager.DEVICETYPE_CHE; 
+		return CsDeviceManager.DEVICETYPE_CHE;
 	}
 
 	// The last-aisle-controller-for-this-CHE package.
@@ -432,7 +434,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.error("processNonCommandScan needs override");
 	}
 
-		// --------------------------------------------------------------------------
+	// --------------------------------------------------------------------------
 	/* 
 	 */
 	@Override

@@ -10,10 +10,14 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
+import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
+import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
@@ -37,10 +41,31 @@ public class PickSimulator {
 	}
 
 	public void login(String pickerId) {
-		// This is the "scan badge" scan
+		// This is the original "scan badge" scan for setuporders process that assumes transition to Container_Select state.
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
+
+	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
+		// This is the "scan badge" scan
+		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
+		waitForCheState(inState, 1000);
+	}
+
+	public String getProcessType(){
+		// what process mode are we using?
+		return cheDeviceLogic.getDeviceType();
+	}
+	
+	public void updateProcessType(String inProcessMode){
+		ICsDeviceManager theDeviceManager = cheDeviceLogic.getDeviceManager();
+		// We will use the same GUID and persistentId as we now have.
+		NetGuid theGuid = cheDeviceLogic.getGuid();
+		UUID theUuid = cheDeviceLogic.getPersistentId();
+		// old one was deleted and removed. Keep our new one
+		cheDeviceLogic = (CheDeviceLogic) theDeviceManager.updateOneDevice(theUuid, theGuid, inProcessMode);				
+	}
+	
 
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.

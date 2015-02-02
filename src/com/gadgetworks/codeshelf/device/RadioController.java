@@ -1016,8 +1016,7 @@ public class RadioController implements IRadioController {
 				if (shouldActOnCommand) {
 					receiveCommand(packet.getCommand(), packetSourceAddress);
 				} else {
-					LOGGER.warn("We ACKed but did not process a packet that was already acked befinAckIdore; packet={}", packet);
-
+					LOGGER.warn("ACKed, but did not process a packet that we acked before; {}", packet);
 				}
 			}
 			this.packetsSentCounter.inc();

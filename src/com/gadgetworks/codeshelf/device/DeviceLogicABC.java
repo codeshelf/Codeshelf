@@ -63,6 +63,8 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	protected IRadioController		mRadioController;
 
 	// The device manager.
+	@Accessors(prefix = "m")
+	@Getter
 	protected ICsDeviceManager		mDeviceManager;
 
 	@Accessors(prefix = "m")
