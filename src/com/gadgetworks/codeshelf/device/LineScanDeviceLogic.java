@@ -179,7 +179,18 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Send this in a command to the server. We expect it is an order detail Id.
 	 */
 	private void sendDetailWIRequest(final String inScanStr) {
-
+		/*
+		 * Call the computeCheWork() method in CsDeviceManager  with parameters
+		 * (final String inCheId, final UUID inPersistentId, final String orderDetailId)
+		 * 
+		 * For a similar call, see method
+		 * computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList)
+		 * 
+		 * The new request will envoke method getWorkInstructionsForOrderDetail() in WorkService
+		 * And return a GetWorkResponse response, with field  
+		 * List<WorkInstruction> workInstructions
+		 * containing the list of instructions needed for this order detail.
+		 */
 	}
 
 	@Override
