@@ -60,9 +60,8 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 
-// --------------------------------------------------------------------------
 /**
- *  @author jeffw
+ *  @author jeffw, saba
  */
 
 public class RadioController implements IRadioController {
@@ -485,10 +484,6 @@ public class RadioController implements IRadioController {
 		sendCommand(inCommand, packetIOService.getNetworkId(), inDstAddr, inAckRequested);
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * 
-	 */
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com.gadgetworks.flyweight.command.ICommand, com.gadgetworks.flyweight.command.NetworkId, com.gadgetworks.flyweight.command.NetAddress, boolean)
@@ -930,7 +925,6 @@ public class RadioController implements IRadioController {
 
 	}
 
-	// --------------------------------------------------------------------------
 	/**
 	 * @param inPacket
 	 */
@@ -941,8 +935,9 @@ public class RadioController implements IRadioController {
 			Lock writeLock = broadcastReadWriteLock.writeLock();
 			try {
 				writeLock.lock();
+
 				//At this point we are the only one that can send a packet.
-				long maxLastPacketSentTimestampMs = Long.MIN_VALUE;
+				long maxLastPacketSentTimestampMs = 0;
 
 				//A concurrentHashMap will never throw ConcurrentModificationException. Concurrent modications
 				//could happen since below, we (potentially) modify this map before obtaining a read lock. In that scenario,
@@ -978,13 +973,13 @@ public class RadioController implements IRadioController {
 			}
 		} else {
 
-			//Get the last packet sent timestamp for this destionation address
+			//Get the last packet sent timestamp for this destination address
 			AtomicLong lastPacketSentTimestampMs = getLastPacketSentTimestamp(inPacket.getDstAddr());
 
 			//Lock on the timestamp to ensure only one thread can proceed per destination address.
 			//We lock on this timestamp before the read lock to minimize time spent holding the read lock so that the
 			//broadcast thread can send a packet asap. Furthermore, this timestamp does not need to be atomic but a normal
-			//Long object does not provide a setter.
+			//Long object does not provide a setter, so we use atomicLong instead.
 			synchronized (lastPacketSentTimestampMs) {
 
 				//Since we are not broadcasting, we need to obtain a read lock before proceeding.
@@ -1018,6 +1013,9 @@ public class RadioController implements IRadioController {
 		}
 	}
 
+	/**
+	 * Gaurtuneed to return the same timestamp object for every thread.
+	 */
 	private AtomicLong getLastPacketSentTimestamp(NetAddress remoteAddr) {
 		AtomicLong lastIOTimestmapMs = mLastPacketSentTimestampMsMap.get(remoteAddr);
 		if (lastIOTimestmapMs == null) {
@@ -1044,11 +1042,6 @@ public class RadioController implements IRadioController {
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
-		//Update the last IO Timestamp -- this a best effort attempt. Again the Map is not 100% gaurunteed to prevent incorrectly spaced IO.
-		//We may read a packet then send something immediately afterwards before updating the timestamp.
-		//To prevent that we would need to lock this map during a read, but that will require gateway changes that are TODO
-		//AtomicLong lastIOTimestmapMs = getLastIOTimestamp(packet.getSrcAddr());
-		//updateTimestampIfLarger(lastIOTimestmapMs, System.currentTimeMillis());
 
 		try {
 			if (packet.getPacketType() == IPacket.ACK_PACKET) {
@@ -1078,57 +1071,6 @@ public class RadioController implements IRadioController {
 			}
 		} finally {
 			ContextLogging.clearNetGuid();
-		}
-
-	}
-
-	final static class ChannelInfo {
-
-		private int	mChannelEnergy;
-		private int	mControllerCount;
-
-		ChannelInfo() {
-
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 *  @return Returns the chennelEnergy.
-		 */
-		public int getChannelEnergy() {
-			return mChannelEnergy;
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 *  @param outChennelEnergy The chennelEnergy to set.
-		 */
-		public void setChannelEnergy(int inChannelEnergy) {
-			mChannelEnergy = inChannelEnergy;
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 *  @return Returns the controllerCount.
-		 */
-		public int getControllerCount() {
-			return mControllerCount;
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 *  @param outControllerCount The controllerCount to set.
-		 */
-		public void setControllerCount(int inControllerCount) {
-			mControllerCount = inControllerCount;
-		}
-
-		// --------------------------------------------------------------------------
-		/**
-		 *  @param outControllerCount The controllerCount to set.
-		 */
-		public void incrementControllerCount() {
-			mControllerCount++;
 		}
 
 	}
