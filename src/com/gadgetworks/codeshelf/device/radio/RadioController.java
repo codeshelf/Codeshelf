@@ -18,6 +18,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import lombok.Getter;
 
@@ -63,81 +66,88 @@ import com.google.inject.Inject;
  */
 
 public class RadioController implements IRadioController {
-	private static final Logger										LOGGER						= LoggerFactory.getLogger(RadioController.class);
+	private static final Logger										LOGGER							= LoggerFactory.getLogger(RadioController.class);
 
-	public static final String										PRIVATE_GUID				= "00000000";
-	public static final String										VIRTUAL_GUID				= "%%%%%%%%";
+	public static final String										PRIVATE_GUID					= "00000000";
+	public static final String										VIRTUAL_GUID					= "%%%%%%%%";
 
-	public static final byte										MAX_CHANNELS				= 16;
-	public static final byte										NO_PREFERRED_CHANNEL		= (byte) 255;
-	public static final String										NO_PREFERRED_CHANNEL_TEXT	= "None";
+	public static final byte										MAX_CHANNELS					= 16;
+	public static final byte										NO_PREFERRED_CHANNEL			= (byte) 255;
+	public static final String										NO_PREFERRED_CHANNEL_TEXT		= "None";
 
-	private static final String										CONTROLLER_THREAD_NAME		= "Radio Controller";
-	private static final String										STARTER_THREAD_NAME			= "Intferface Starter";
+	private static final String										CONTROLLER_THREAD_NAME			= "Radio Controller";
+	private static final String										STARTER_THREAD_NAME				= "Intferface Starter";
 
-	private static final int										STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
+	private static final int										STARTER_THREAD_PRIORITY			= Thread.NORM_PRIORITY;
 
-	private static final long										CTRL_START_DELAY_MILLIS		= 5;
-	private static final long										NETCHECK_DELAY_MILLIS		= 250;
+	private static final long										CTRL_START_DELAY_MILLIS			= 5;
+	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS			= 20;
-	private static final int										ACK_SEND_RETRY_COUNT		= 20;
-	private static final long										MAX_PACKET_AGE_MILLIS		= 20000;
+	private static final long										ACK_TIMEOUT_MILLIS				= 20;
+	private static final int										ACK_SEND_RETRY_COUNT			= 20;
+	private static final long										MAX_PACKET_AGE_MILLIS			= 20000;
 
 	//The background service delay is reduced to the packet read rate of 1ms to minimize the amount of time a packet is
 	//queued before before being sent
-	private static final long										BACKGROUND_SERVICE_DELAY_MS	= 1;
+	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 1;
 
-	private static final long										BROADCAST_RATE_MILLIS		= 750;
+	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
-	private static final int										MAX_CHANNEL_VALUE			= 255;
-	private static final long										PACKET_SPACING_MILLIS		= 20;
-	private static final int										ACK_QUEUE_SIZE				= 200;
+	private static final int										MAX_CHANNEL_VALUE				= 255;
+	private static final long										PACKET_SPACING_MILLIS			= 20;
+	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter
 	private final IGatewayInterface									gatewayInterface;
 
-	private volatile boolean										mShouldRun					= true;
+	private volatile boolean										mShouldRun						= true;
 
-	private final NetAddress										mServerAddress				= new NetAddress(IPacket.GATEWAY_ADDRESS);
+	private final NetAddress										mServerAddress					= new NetAddress(IPacket.GATEWAY_ADDRESS);
 
 	//We iterate over this list often, but write almost never. It needs to be thread-safe so we chose to make writes slow and reads lock-free.
-	private final List<IRadioControllerEventListener>				mEventListeners				= new CopyOnWriteArrayList<>();
+	private final List<IRadioControllerEventListener>				mEventListeners					= new CopyOnWriteArrayList<>();
 
 	//This does not need to be synchronized because it is only ever used by a single thread in the packet handler service
 	//processNetworkCheckCommand only accesses this array for the broadcast network address.
-	private final ChannelInfo[]										mChannelInfo				= new ChannelInfo[MAX_CHANNELS];
+	private final ChannelInfo[]										mChannelInfo					= new ChannelInfo[MAX_CHANNELS];
 
 	//This 3 variables are only every modified in a synchronized method
-	private boolean													mChannelSelected			= false;
+	private boolean													mChannelSelected				= false;
 	private byte													mPreferredChannel;
-	private byte													mRadioChannel				= 0;
+	private byte													mRadioChannel					= 0;
 
 	private Thread													mControllerThread;
 
 	//Background service executor
-	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
-																									.build());
+	private final ScheduledExecutorService							backgroundService				= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
+																										.build());
 
 	//The 3 variables below are only modifed in a synchronized method because their modifications must sequential and atomic
 	//since multiple threads can use this class. The maps must be thread-safe because other threads maybe read from the map
 	//without being in the synchronized block
-	private byte													mNextAddress				= 1;
-	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap				= Maps.newConcurrentMap();
-	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap			= Maps.newConcurrentMap();
+	private byte													mNextAddress					= 1;
+	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap					= Maps.newConcurrentMap();
+	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap				= Maps.newConcurrentMap();
 
 	//Ack Id must start from 1
-	private final AtomicInteger										mAckId						= new AtomicInteger(1);
+	private final AtomicInteger										mAckId							= new AtomicInteger(1);
 
-	private volatile boolean										mRunning					= false;
+	private volatile boolean										mRunning						= false;
 
 	//Services
 	private final RadioControllerPacketHandlerService				packetHandlerService;
 	private final RadioControllerPacketIOService					packetIOService;
 	private final RadioControllerBroadcastService					broadcastService;
 
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
-	private final ConcurrentMap<NetAddress, AtomicLong>				mLastIOTimestampMsMap		= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap					= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, AtomicLong>				mLastPacketSentTimestampMsMap	= Maps.newConcurrentMap();
+
+	/**
+	 * We use a read-write lock to prevent any threads from sending out packets when we want to send a packet out on the broadcast address (i.e. to all devices).
+	 * All normal packets will aquire a read lock (which will only be possible if there are no writers). Furthermore, aquiring a write lock means all read locks
+	 * have been released. This way we can send the broadcast packet out and update all the lastSentTimestamps for every destination addr before resuming.
+	 */
+	private final ReadWriteLock										broadcastReadWriteLock			= new ReentrantReadWriteLock();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -322,7 +332,7 @@ public class RadioController implements IRadioController {
 									if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
 											&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
 
-										sendPacket(packet);
+										sendSpacedPacket(packet);
 									} else {
 										// If we've exceeded the retry time then remove the packet.
 										// We should probably mark the device lost and clear the queue.
@@ -545,7 +555,7 @@ public class RadioController implements IRadioController {
 				}
 				LOGGER.debug("Packet is now pending ACK: {}", packet);
 			} else {
-				sendPacket(packet);
+				sendSpacedPacket(packet);
 			}
 
 		} finally {
@@ -912,7 +922,7 @@ public class RadioController implements IRadioController {
 			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
 			ackCmd.setPacket(ackPacket);
 			ackPacket.setAckId(inAckId);
-			sendPacket(ackPacket);
+			sendSpacedPacket(ackPacket);
 
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -924,50 +934,96 @@ public class RadioController implements IRadioController {
 	/**
 	 * @param inPacket
 	 */
-	private void sendPacket(IPacket inPacket) {
-		//Update the last IO Timestamp -- this a best effort attempt. Again the Map is not 100% gaurunteed to prevent incorrectly spaced IO.
-		//We may read a packet then send something immediately afterwards before updating the timestamp.
-		//To prevent that we would need to lock this map during a read, but that will require gateway changes that are TODO
-		//Also the reason we have to lock the whole map is because the broadcaster will need to send something to everyone
-		AtomicLong lastIOTimestamp = getLastIOTimestamp(inPacket.getDstAddr());
+	private void sendSpacedPacket(IPacket inPacket) {
 
-		//Lock so that only one thread can write per DstAddr (this blocks the bg processing thread from writing at the same time)
-		synchronized (lastIOTimestamp) {
-			long differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
-			//We loop as a best effort against reads
-			LOGGER.info("differnce={}", differenceMs);
-			while (differenceMs < 20) {
-				try {
-					Thread.sleep(Math.max(0, differenceMs));
-				} catch (InterruptedException e) {
-					LOGGER.error("SendPckt ", e);
+		if (inPacket.getDstAddr() == broadcastService.getBroadcastAddress()) {
+			//If we are broadcasting a packet. We must make sure no other threads are sending packet to their respective dstAddress before proceeding.
+			Lock writeLock = broadcastReadWriteLock.writeLock();
+			try {
+				writeLock.lock();
+				//At this point we are the only one that can send a packet.
+				long maxLastPacketSentTimestampMs = Long.MIN_VALUE;
+
+				//A concurrentHashMap will never throw ConcurrentModificationException. Concurrent modications
+				//could happen since below, we (potentially) modify this map before obtaining a read lock. In that scenario,
+				//we would send a broadcast to that addrr and potentially fail to set its lastSentTimestamp as it may
+				//not become visible in the collection below. Later, this could result in a poorly spaced packet, however that
+				//would mean the device would have to have never received a packet from us before and thus it would just
+				//have a slightly delayed assocation which isn't too bad.
+				for (AtomicLong lastPacketSentTimestamp : mLastPacketSentTimestampMsMap.values()) {
+					maxLastPacketSentTimestampMs = Math.max(maxLastPacketSentTimestampMs, lastPacketSentTimestamp.get());
 				}
-				differenceMs = System.currentTimeMillis() - lastIOTimestamp.get();
+
+				long differenceMs = System.currentTimeMillis() - maxLastPacketSentTimestampMs;
+
+				//Sleep if needed to ensure all device are ready to read our packet.
+				if (differenceMs < PACKET_SPACING_MILLIS) {
+					try {
+						Thread.sleep(Math.max(0, differenceMs));
+					} catch (InterruptedException e) {
+						LOGGER.error("SendPckt ", e);
+					}
+				}
+
+				//Send the broadcast packet				
+				packetIOService.handleOutboundPacket(inPacket);
+
+				//Update everybody's last sent timestamp
+				for (AtomicLong lastPacketSentTimestamp : mLastPacketSentTimestampMsMap.values()) {
+					lastPacketSentTimestamp.set(inPacket.getSentTimeMillis());
+				}
+
+			} finally {
+				writeLock.unlock();
+			}
+		} else {
+
+			//Get the last packet sent timestamp for this destionation address
+			AtomicLong lastPacketSentTimestampMs = getLastPacketSentTimestamp(inPacket.getDstAddr());
+
+			//Lock on the timestamp to ensure only one thread can proceed per destination address.
+			//We lock on this timestamp before the read lock to minimize time spent holding the read lock so that the
+			//broadcast thread can send a packet asap. Furthermore, this timestamp does not need to be atomic but a normal
+			//Long object does not provide a setter.
+			synchronized (lastPacketSentTimestampMs) {
+
+				//Since we are not broadcasting, we need to obtain a read lock before proceeding.
+				Lock readLock = broadcastReadWriteLock.readLock();
+				try {
+					readLock.lock();
+					//At this point we are allowed to write to the radio
+
+					//Sleep as need to ensure proper packet spacing
+					long differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
+					if (differenceMs < PACKET_SPACING_MILLIS) {
+						try {
+							Thread.sleep(Math.max(0, differenceMs));
+						} catch (InterruptedException e) {
+							LOGGER.error("SendPckt ", e);
+						}
+					}
+
+					//Write out the packet
+					packetIOService.handleOutboundPacket(inPacket);
+
+					//Upate the timestamp
+					lastPacketSentTimestampMs.set(inPacket.getSentTimeMillis());
+
+				} finally {
+					readLock.unlock();
+				}
+
 			}
 
-			//A read io could have happened here right after the check -- we don't protect against this case
-			packetIOService.handleOutboundPacket(inPacket);
-
-			this.updateTimestampIfLarger(lastIOTimestamp, inPacket.getSentTimeMillis());
 		}
 	}
 
-	/**
-	 * Updates the timestamp in the atomic long iff the new value is greater than the present value
-	 */
-	private void updateTimestampIfLarger(AtomicLong timestmapMsToUpdate, long newTimestampMs) {
-		long currentValue = timestmapMsToUpdate.get();
-		while (newTimestampMs > currentValue && !timestmapMsToUpdate.compareAndSet(currentValue, newTimestampMs)) {
-			currentValue = timestmapMsToUpdate.get();
-		}
-	}
-
-	private AtomicLong getLastIOTimestamp(NetAddress remoteAddr) {
-		AtomicLong lastIOTimestmapMs = mLastIOTimestampMsMap.get(remoteAddr);
+	private AtomicLong getLastPacketSentTimestamp(NetAddress remoteAddr) {
+		AtomicLong lastIOTimestmapMs = mLastPacketSentTimestampMsMap.get(remoteAddr);
 		if (lastIOTimestmapMs == null) {
-			//Initialize as current timestamp
-			lastIOTimestmapMs = new AtomicLong(System.currentTimeMillis());
-			AtomicLong currentValue = mLastIOTimestampMsMap.putIfAbsent(remoteAddr, lastIOTimestmapMs);
+			//Initialize as current timestamp as 0
+			lastIOTimestmapMs = new AtomicLong(0);
+			AtomicLong currentValue = mLastPacketSentTimestampMsMap.putIfAbsent(remoteAddr, lastIOTimestmapMs);
 			if (currentValue != null) {
 				lastIOTimestmapMs = currentValue;
 			}
@@ -991,8 +1047,8 @@ public class RadioController implements IRadioController {
 		//Update the last IO Timestamp -- this a best effort attempt. Again the Map is not 100% gaurunteed to prevent incorrectly spaced IO.
 		//We may read a packet then send something immediately afterwards before updating the timestamp.
 		//To prevent that we would need to lock this map during a read, but that will require gateway changes that are TODO
-		AtomicLong lastIOTimestmapMs = getLastIOTimestamp(packet.getSrcAddr());
-		updateTimestampIfLarger(lastIOTimestmapMs, System.currentTimeMillis());
+		//AtomicLong lastIOTimestmapMs = getLastIOTimestamp(packet.getSrcAddr());
+		//updateTimestampIfLarger(lastIOTimestmapMs, System.currentTimeMillis());
 
 		try {
 			if (packet.getPacketType() == IPacket.ACK_PACKET) {

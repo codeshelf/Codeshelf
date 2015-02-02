@@ -10,7 +10,6 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.RadioController;
 import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
 
 // --------------------------------------------------------------------------
@@ -19,7 +18,7 @@ import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
  */
 public final class CommandFactory {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(RadioController.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandFactory.class);
 
 	private CommandFactory() {
 

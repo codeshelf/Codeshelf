@@ -43,9 +43,10 @@ public final class CsSiteControllerMain {
 		Configuration.loadConfig("sitecontroller");
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(CsSiteControllerMain.class);
 
-	private static WebSocketContainer websocketContainer = ContainerProvider.getWebSocketContainer();
+	private static WebSocketContainer	websocketContainer	= ContainerProvider.getWebSocketContainer();
+
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -60,27 +61,25 @@ public final class CsSiteControllerMain {
 		// Create and start the application.
 		ICodeshelfApplication application = createApplication(new DefaultModule());
 		application.startApplication();
-		
+
 		// public metrics to opentsdb
 		String useMetricsReporter = System.getProperty("metrics.reporter.enabled");
 		if ("true".equalsIgnoreCase(useMetricsReporter)) {
 			String metricsServerUrl = System.getProperty("metrics.reporter.serverurl");
 			String intervalStr = System.getProperty("metrics.reporter.interval");
 			int interval = Integer.parseInt(intervalStr);
-			
-			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
+
+			LOGGER.info("Starting OpenTSDB Reporter writing to " + metricsServerUrl + " in " + interval + " sec intervals");
 			MetricRegistry registry = MetricsService.getRegistry();
 			String hostName = MetricsService.getInstance().getHostName();
 			OpenTsdbReporter.forRegistry(registry)
-			      .prefixedWith("")
-			      .withTags(ImmutableMap.of("host", hostName))
-			      .build(OpenTsdb.forService(metricsServerUrl)
-			      .create())
-			      .start(interval, TimeUnit.SECONDS);
-		}
-		else {
+				.prefixedWith("")
+				.withTags(ImmutableMap.of("host", hostName))
+				.build(OpenTsdb.forService(metricsServerUrl).create())
+				.start(interval, TimeUnit.SECONDS);
+		} else {
 			LOGGER.info("Metrics reporter is not enabled");
-		}		
+		}
 
 		// Handle events until the application exits.
 		application.handleEvents();
@@ -89,14 +88,14 @@ public final class CsSiteControllerMain {
 	}
 
 	// --------------------------------------------------------------------------
-	
+
 	public static CsSiteControllerApplication createApplication(Module guiceModule) {
 		Injector injector = Guice.createInjector(guiceModule);
-		return injector.getInstance(CsSiteControllerApplication.class); 
+		return injector.getInstance(CsSiteControllerApplication.class);
 	}
-	
+
 	public static class BaseModule extends AbstractModule {
-		
+
 		@Override
 		protected void configure() {
 			bind(WebSocketContainer.class).toInstance(websocketContainer);
@@ -105,17 +104,17 @@ public final class CsSiteControllerMain {
 			bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 			bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 		}
-		
+
 	}
 
 	public static class DefaultModule extends BaseModule {
-		
+
 		@Override
 		protected void configure() {
 			super.configure();
 			bind(IGatewayInterface.class).to(FTDIInterface.class);
 		}
-		
+
 	}
 
 }
