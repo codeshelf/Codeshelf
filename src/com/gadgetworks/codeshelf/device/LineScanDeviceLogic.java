@@ -95,6 +95,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case READY:
 				processReadyStateScan(inScanPrefixStr, inContent);
 				break;
+			case GET_WORK:
+				processGetWorkStateScan(inScanPrefixStr, inContent);
+				break;
 			case DO_PICK:
 				processPickStateScan(inScanPrefixStr, inContent);
 				break;
@@ -117,6 +120,22 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			invalidScanMsg(CheStateEnum.IDLE);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The CHE is in the GET_WORK state. 
+	 * Should only happen if the get work answer did not come back from server before user scanned another detailId
+	 */
+	private void processGetWorkStateScan(final String inScanPrefixStr, final String inScanStr) {
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.info("processReadyStateScan: Expecting order detail ID: " + inScanStr);
+			invalidScanMsg(CheStateEnum.READY);
+			return;
+		}
+		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
+		setState(CheStateEnum.ABANDON_CHECK);
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -259,6 +278,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	private void showTheActivePick() {
 		// needs implementation. Roughly corresponds to showActivePicks
+		sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
+
 	}
 
 }

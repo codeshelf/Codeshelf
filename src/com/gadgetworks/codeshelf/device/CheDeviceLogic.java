@@ -87,6 +87,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
 	protected static final String			GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
 	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
+	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)"); // remove this later
 
 	protected static final String			STARTWORK_COMMAND						= "START";
 	protected static final String			SETUP_COMMAND							= "SETUP";
