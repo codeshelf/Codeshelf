@@ -82,15 +82,15 @@ public class RadioController implements IRadioController {
 	private static final long										CTRL_START_DELAY_MILLIS			= 5;
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 20;
+	private static final long										ACK_TIMEOUT_MILLIS				= 25;
 	private static final int										ACK_SEND_RETRY_COUNT			= 20;
-	private static final long										MAX_PACKET_AGE_MILLIS			= 20000;
+	private static final long										MAX_PACKET_AGE_MILLIS			= 5000;
 
 	//The background service delay is reduced to the packet read rate of 1ms to minimize the amount of time a packet is
 	//queued before before being sent
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 1;
 
-	private static final long										BROADCAST_RATE_MILLIS			= 750;
+	private static final long										BROADCAST_RATE_MILLIS			= 900;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
 	private static final long										PACKET_SPACING_MILLIS			= 20;
@@ -327,7 +327,7 @@ public class RadioController implements IRadioController {
 							}
 							try {
 								// If we've timed out waiting for an ACK then resend the command.
-								if (System.currentTimeMillis() > (packet.getSentTimeMillis() + (ACK_TIMEOUT_MILLIS * packet.getSendCount()))) {
+								if (System.currentTimeMillis() - packet.getSentTimeMillis() > ACK_TIMEOUT_MILLIS) {
 									if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
 											&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
 
@@ -952,12 +952,14 @@ public class RadioController implements IRadioController {
 				long differenceMs = System.currentTimeMillis() - maxLastPacketSentTimestampMs;
 
 				//Sleep if needed to ensure all device are ready to read our packet.
-				if (differenceMs < PACKET_SPACING_MILLIS) {
+				//We use a while loop here because sleep is not gaurunteed to sleep for even at least the specified time.
+				while (differenceMs < PACKET_SPACING_MILLIS) {
 					try {
-						Thread.sleep(Math.max(0, differenceMs));
+						Thread.sleep(Math.max(1, differenceMs));
 					} catch (InterruptedException e) {
 						LOGGER.error("SendPckt ", e);
 					}
+					differenceMs = System.currentTimeMillis() - maxLastPacketSentTimestampMs;
 				}
 
 				//Send the broadcast packet				
@@ -990,12 +992,20 @@ public class RadioController implements IRadioController {
 
 					//Sleep as need to ensure proper packet spacing
 					long differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
-					if (differenceMs < PACKET_SPACING_MILLIS) {
+
+					//We use a while loop here because sleep is not gaurunteed to sleep for even at least the specified time.
+					while (differenceMs < PACKET_SPACING_MILLIS) {
 						try {
-							Thread.sleep(Math.max(0, differenceMs));
+							Thread.sleep(Math.max(1, differenceMs));
 						} catch (InterruptedException e) {
 							LOGGER.error("SendPckt ", e);
 						}
+						differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
+					}
+
+					differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
+					if (differenceMs < PACKET_SPACING_MILLIS) {
+						LOGGER.error("SABA WTF d={}", differenceMs);
 					}
 
 					//Write out the packet
