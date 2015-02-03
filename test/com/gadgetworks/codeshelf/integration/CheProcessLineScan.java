@@ -304,7 +304,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		picker.scanOrderId("12345.1"); // does not add "%"
-		picker.waitForCheState(CheStateEnum.GET_WORK, 2000);
+		// picker.waitForCheState(CheStateEnum.GET_WORK, 500);
+		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
+		// picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		// logout back to idle state.
 		picker.logout();

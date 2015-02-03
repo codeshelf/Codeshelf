@@ -158,8 +158,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 		// if an apparently good order detail ID, send that off to the backend, but transition to a "querying" state.
 		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
+		LOGGER.info("set state GET_WORK in processReadyStateScan");
+
+		setState(CheStateEnum.GET_WORK); // need to this before sending the command, or else timing is odd in unit test
 		sendDetailWIRequest(inScanStr);
-		setState(CheStateEnum.GET_WORK);
 
 	}
 
@@ -206,6 +208,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			mAllPicksWiList.clear();
 			mActivePickWiList.add(wi);
 			setState(CheStateEnum.DO_PICK);
+			LOGGER.info("set state DO_PICK in assignWork");
 		} else {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
 
@@ -253,14 +256,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void yesOrNoCommandReceived(final String inScanStr) {
-		boolean theValue = Boolean.parseBoolean(inScanStr);
+		boolean answeredYes = Boolean.parseBoolean(inScanStr);
 
 		switch (mCheStateEnum) {
 			case ABANDON_CHECK:
-				if (theValue) {
+				if (answeredYes) {
 					String lastDetailId = getLastScanedDetailId();
+					setState(CheStateEnum.GET_WORK); // do this before sending the command
 					sendDetailWIRequest(lastDetailId);
-					setState(CheStateEnum.GET_WORK);
 				} else {
 					// If no, we want to remain on current job
 					setState(CheStateEnum.DO_PICK);
@@ -323,7 +326,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	private void showTheActivePick() {
 		// needs implementation. Roughly corresponds to showActivePicks
-		sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
+		// sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
+		showActivePicks();
 
 	}
 
