@@ -591,6 +591,16 @@ public class CsDeviceManager implements
 		}
 	}
 
+	public void processOrderDetailWorkResponse(String networkGuid, List<WorkInstruction> workInstructions) {
+		NetGuid cheId = new NetGuid("0x" + networkGuid);
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			LOGGER.error("Need useful implementation");
+		} else {
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+		}
+	}
+
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
 	}

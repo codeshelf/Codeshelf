@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -96,7 +97,17 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			if (response.getStatus() == ResponseStatus.Success) {
 				this.deviceManager.processWorkInstructionCompletedResponse(workResponse.getWorkInstructionId());
 			}
-		} else {
+		} 
+		//////////////////////////////////////////
+		// Handler for Get Order Detail Work-- LINE_SCAN work flow
+		else if (response instanceof GetOrderDetailWorkResponse) {
+			GetOrderDetailWorkResponse workResponse = (GetOrderDetailWorkResponse) response;
+			if (response.getStatus() == ResponseStatus.Success) {
+				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions());
+			}
+		}
+
+		else {
 			LOGGER.warn("Failed to handle response " + response);
 		}
 	}
