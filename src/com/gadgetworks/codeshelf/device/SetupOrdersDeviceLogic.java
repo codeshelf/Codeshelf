@@ -801,9 +801,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			default:
 				break;
 		}
-		
-	}
 
+	}
 
 	/**
 	 * Use the configuration system to return custom setup MSG. Defaults to "SCAN ORDER"
@@ -1315,145 +1314,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
-	 */
-	protected void showActivePicks() {
-		final int kMaxLedSetsToLog = 20;
-
-		if (mActivePickWiList.size() > 0) {
-			// The first WI has the SKU and location info.
-			WorkInstruction firstWi = mActivePickWiList.get(0);
-
-			// Send the CHE a display command (any of the WIs has the info we need).
-			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
-				LOGGER.error("unanticipated state in showActivePicks");
-				setState(CheStateEnum.DO_PICK);
-				//return because setting state to DO_PICK will call this function again
-				return;
-			}
-
-			// Tell the last aisle controller this device displayed on, to remove any led commands for this.
-			ledControllerClearLeds();
-
-			// This part is easy. Just display on the CHE controller
-			sendDisplayWorkInstruction(firstWi);
-
-			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
-			// List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
-			String wiCmdString = firstWi.getLedCmdStream();
-			LOGGER.info("deserialize and send out this WI cmd string: " + wiCmdString);
-			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wiCmdString);
-			if (!LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroups))
-				LOGGER.error("WI cmd string did not deserialize properly");
-
-			// It is important sort the CmdGroups.
-			Collections.sort(ledCmdGroups, new CmdGroupComparator());
-
-			INetworkDevice lastLedController = null;
-			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
-			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
-
-			String myGuidStr = getMyGuidStrForLog();
-
-			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-				LedCmdGroup ledCmdGroup = iterator.next();
-
-				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
-				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
-				INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
-
-				if (ledController != null) {
-					// jr/hibernate. See null channel in testPickViaChe test. Screen
-					Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-					if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
-						String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: "
-								+ firstWi.getContainerId();
-						LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
-						continue;
-					}
-
-					Short startLedNum = ledCmdGroup.getPosNum();
-					Short currLedNum = startLedNum;
-
-					// Clear the last LED commands to this controller if the last controller was different.
-					if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
-						ledControllerClearLeds(nextControllerGuid);
-						lastLedController = ledController;
-					}
-
-					NetGuid ledControllerGuid = ledController.getGuid();
-					String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
-					// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-					String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
-					Integer setCount = 0;
-					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
-
-						// why are we doing this? Aren't the samples made correctly?
-						ledSample.setPosition(currLedNum++);
-
-						// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
-						ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
-
-						// Log concisely instead of each ledCmd individually
-						setCount++;
-						if (setCount <= kMaxLedSetsToLog)
-							toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
-					}
-					if (setCount > 0)
-						LOGGER.info(toLogString);
-					if (setCount > kMaxLedSetsToLog)
-						LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
-
-					if (ledController.isDeviceAssociated()) {
-						ledControllerShowLeds(ledControllerGuid);
-					}
-				}
-			}
-
-			// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
-			if (!sendHousekeepingDisplay()) {
-				byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
-				byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
-				byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
-				if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
-					minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
-
-				// Also pretty easy. Light the position controllers on this CHE
-				byte freq = PosControllerInstr.SOLID_FREQ;
-				byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-				// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
-				if (planQuantityForPositionController != minQuantityForPositionController
-						|| planQuantityForPositionController != maxQuantityForPositionController) {
-					freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
-					brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-				}
-
-				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-				for (WorkInstruction wi : mActivePickWiList) {
-					for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
-						if (mapEntry.getValue().equals(wi.getContainerId())) {
-							PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
-								planQuantityForPositionController,
-								minQuantityForPositionController,
-								maxQuantityForPositionController,
-								freq,
-								brightness);
-							instructions.add(instruction);
-						}
-					}
-				}
-				sendPositionControllerInstructions(instructions);
-			}
-
-		}
-		ledControllerShowLeds(getGuid());
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
 	 */
-	private boolean sendHousekeepingDisplay() {
+	@Override
+	protected boolean sendHousekeepingDisplay() {
 		boolean returnBool = false;
 		if (mActivePickWiList.size() == 1) {
 			WorkInstruction wi = mActivePickWiList.get(0);
@@ -1471,6 +1335,48 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 		return returnBool;
+	}
+
+	/**
+	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
+	 */
+	@Override
+	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+
+		// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
+		if (!sendHousekeepingDisplay()) {
+			byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
+			byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
+			byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
+			if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+				minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
+
+			// Also pretty easy. Light the position controllers on this CHE
+			byte freq = PosControllerInstr.SOLID_FREQ;
+			byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+			// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
+			if (planQuantityForPositionController != minQuantityForPositionController
+					|| planQuantityForPositionController != maxQuantityForPositionController) {
+				freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
+				brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+			}
+
+			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+			for (WorkInstruction wi : mActivePickWiList) {
+				for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
+					if (mapEntry.getValue().equals(wi.getContainerId())) {
+						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+							planQuantityForPositionController,
+							minQuantityForPositionController,
+							maxQuantityForPositionController,
+							freq,
+							brightness);
+						instructions.add(instruction);
+					}
+				}
+			}
+			sendPositionControllerInstructions(instructions);
+		}
 	}
 
 	// --------------------------------------------------------------------------

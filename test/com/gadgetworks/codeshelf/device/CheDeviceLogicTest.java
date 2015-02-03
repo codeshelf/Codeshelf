@@ -88,7 +88,8 @@ public class CheDeviceLogicTest extends DomainTestABC {
 
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONBEFOREPICK");
 		
-		
+		/*
+		 * Remove in favor of our better integration tests
 		cheDeviceLogic.assignWork(wiToDo);
 		
 
@@ -98,7 +99,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		InOrder ordered = inOrder(radioController);
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), wi.getPickInstruction());
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), "COMPLETE");
-
+		 */
 	}
 
 	@SuppressWarnings("unused")

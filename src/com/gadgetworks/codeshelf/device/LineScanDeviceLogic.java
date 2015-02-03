@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -13,6 +14,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
@@ -25,10 +27,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
-	
+
 	@Getter
 	@Setter
-	private String lastScanedDetailId;
+	private String				lastScanedDetailId;
+
+	@Getter
+	@Setter
+	private String				readyMsg;
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -36,6 +42,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
+		setLastScanedDetailId("");
+		setReadyMsg("");
 	}
 
 	@Override
@@ -150,8 +158,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 		// if an apparently good order detail ID, send that off to the backend, but transition to a "querying" state.
 		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
+		LOGGER.info("set state GET_WORK in processReadyStateScan");
+
+		setState(CheStateEnum.GET_WORK); // need to this before sending the command, or else timing is odd in unit test
 		sendDetailWIRequest(inScanStr);
-		setState(CheStateEnum.GET_WORK);
 
 	}
 
@@ -161,13 +171,13 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processPickStateScan(final String inScanPrefixStr, final String inScanStr) {
 		// if on one job, and new detail scan comes in, then we ask about aborting the current job.
-		
+
 		if (!inScanPrefixStr.isEmpty()) {
 			LOGGER.info("processPickStateScan: Expecting order detail ID: " + inScanStr);
 			invalidScanMsg(CheStateEnum.READY);
 			return;
 		}
-		
+
 		// need to save new detail ID that was scanned in.
 		setLastScanedDetailId(inScanStr); // needed
 		setState(CheStateEnum.ABANDON_CHECK);
@@ -179,27 +189,55 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Send this in a command to the server. We expect it is an order detail Id.
 	 */
 	private void sendDetailWIRequest(final String inScanStr) {
-		/*
-		 * Call the computeCheWork() method in CsDeviceManager  with parameters
-		 * (final String inCheId, final UUID inPersistentId, final String orderDetailId)
-		 * 
-		 * For a similar call, see method
-		 * computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList)
-		 * 
-		 * The new request will envoke method getWorkInstructionsForOrderDetail() in WorkService
-		 * And return a GetWorkResponse response, with field  
-		 * List<WorkInstruction> workInstructions
-		 * containing the list of instructions needed for this order detail.
-		 */
+		LOGGER.info("sendDetailWIRequest for detail:" + inScanStr);
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
+		// sends a command. Ultimately returns back the work instruction list below in assignWork
 	}
 
-	@Override
+	// --------------------------------------------------------------------------
+	/**
+	 * Usually only one uncompleted WI back
+	 */
+	public void assignWork(final List<WorkInstruction> inWorkItemList) {
+		int wiCount = inWorkItemList.size();
+		LOGGER.info("assignWork returned " + wiCount + " work instruction(s)");
+		// Implement the success case first. Then worry about the rest.
+		if (wiCount == 1) {
+			WorkInstruction wi = inWorkItemList.get(0);
+			mActivePickWiList.clear();
+			mAllPicksWiList.clear();
+			mActivePickWiList.add(wi);
+			setState(CheStateEnum.DO_PICK);
+			LOGGER.info("set state DO_PICK in assignWork");
+		} else {
+			// if 0 or more than 1, we want to transition back to ready, but with a message
+
+			if (wiCount == 0)
+				setReadyMsg("No jobs last scan");
+			else if (wiCount == 0)
+				setReadyMsg(wiCount + " jobs last scan");
+			setState(CheStateEnum.READY);
+		}
+
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * If on a job, abandon it and go back to ready state
 	 */
+	@Override
 	protected void clearErrorCommandReceived() {
 		// needs implementation
+		CheStateEnum currentState = getCheStateEnum();
+		switch (currentState) {
+			case DO_PICK:
+				setReadyMsg("Abandoned last job");
+				setState(CheStateEnum.READY);
+				break;
+				
+			default:
+				break;
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -218,22 +256,21 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void yesOrNoCommandReceived(final String inScanStr) {
-		boolean theValue = Boolean.parseBoolean(inScanStr);
-		
+		boolean answeredYes = Boolean.parseBoolean(inScanStr);
+
 		switch (mCheStateEnum) {
 			case ABANDON_CHECK:
-				if (theValue) {
+				if (answeredYes) {
 					String lastDetailId = getLastScanedDetailId();
+					setState(CheStateEnum.GET_WORK); // do this before sending the command
 					sendDetailWIRequest(lastDetailId);
-					setState(CheStateEnum.GET_WORK);					
-				}
-				else {
+				} else {
 					// If no, we want to remain on current job
-					setState(CheStateEnum.DO_PICK);	
+					setState(CheStateEnum.DO_PICK);
 					// or on GET_WORK if we never got past get work?
 				}
 				break;
-				
+
 			default:
 				break;
 
@@ -256,9 +293,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case READY:
-				sendDisplayCommand(SCAN_LINE_MSG, EMPTY_MSG);
+				sendDisplayCommand(SCAN_LINE_MSG, getReadyMsg());
 				break;
-				
+
 			case GET_WORK:
 				sendDisplayCommand(COMPUTE_WORK_MSG, GO_TO_LOCATION_MSG);
 				break;
@@ -277,7 +314,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				showTheActivePick();
 				break;
-				
+
 			case ABANDON_CHECK:
 				sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
 				break;
@@ -289,7 +326,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	private void showTheActivePick() {
 		// needs implementation. Roughly corresponds to showActivePicks
-		sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
+		// sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
+		showActivePicks();
 
 	}
 

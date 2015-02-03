@@ -234,6 +234,8 @@ public class WorkService implements IApiService {
 		if (inScannedOrderDetailId == null) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
+		
+		LOGGER.info("getWorkInstructionsForOrderDetail request for " + inChe.getDomainId() + " detail:" + inScannedOrderDetailId);
 
 		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
 			"facilityId", inChe.getFacility().getPersistentId(),
@@ -242,10 +244,14 @@ public class WorkService implements IApiService {
 		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
 
 		if (orderDetails.isEmpty()) {
-			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			// temporary: just return empty list instead of throwing
+			return new ArrayList<WorkInstruction>();
+			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
 		if (orderDetails.size() > 1) {
-			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
+			// temporary: just return empty list instead of throwing
+			return new ArrayList<WorkInstruction>();
+			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
 		}
 		
 		OrderDetail orderDetail = orderDetails.get(0);

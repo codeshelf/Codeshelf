@@ -229,7 +229,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// Order 12345 has 2 modeled locations and one not.
 		// Order 11111 has 5 unmodeled locations.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderDetailId,orderId,itemId,description,quantity,uom, preferredLocation"
+		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, preferredLocation"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,1,each, D601"
@@ -263,6 +263,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
+		
+		// Prove that our orders file is working
+		OrderHeader order1 = facility.getOrderHeader("11111");
+		Assert.assertNotNull(order1);
+		OrderDetail detail1_1 = order1.getOrderDetail("11111.1");
+		Assert.assertNotNull(detail1_1);
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
@@ -298,7 +304,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		picker.scanOrderId("12345.1"); // does not add "%"
-		picker.waitForCheState(CheStateEnum.GET_WORK, 2000);
+		// picker.waitForCheState(CheStateEnum.GET_WORK, 500);
+		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
+		// picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		// logout back to idle state.
 		picker.logout();
