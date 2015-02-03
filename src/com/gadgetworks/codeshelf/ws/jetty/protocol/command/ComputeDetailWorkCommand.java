@@ -10,7 +10,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
@@ -31,7 +31,7 @@ public class ComputeDetailWorkCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		GetWorkResponse response = new GetWorkResponse();
+		GetOrderDetailWorkResponse response = new GetOrderDetailWorkResponse();
 		String cheId = request.getCheId();
 		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
