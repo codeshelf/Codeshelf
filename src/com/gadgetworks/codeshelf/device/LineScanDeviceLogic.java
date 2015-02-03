@@ -198,7 +198,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList) {
 		int wiCount = inWorkItemList.size();
-		LOGGER.info("assignWork returned " + wiCount + "work instructions");
+		LOGGER.info("assignWork returned " + wiCount + " work instruction(s)");
 		// Implement the success case first. Then worry about the rest.
 		if (wiCount == 1) {
 			WorkInstruction wi = inWorkItemList.get(0);
@@ -210,9 +210,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
 
 			if (wiCount == 0)
-				setReadyMsg("NO JOBS FOR SCANNED");
+				setReadyMsg("No jobs last scan");
 			else if (wiCount == 0)
-				setReadyMsg(wiCount + " JOBS FOR SCANNED");
+				setReadyMsg(wiCount + " jobs last scan");
 			setState(CheStateEnum.READY);
 		}
 
@@ -225,6 +225,16 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	@Override
 	protected void clearErrorCommandReceived() {
 		// needs implementation
+		CheStateEnum currentState = getCheStateEnum();
+		switch (currentState) {
+			case DO_PICK:
+				setReadyMsg("Abandoned last job");
+				setState(CheStateEnum.READY);
+				break;
+				
+			default:
+				break;
+		}
 	}
 
 	// --------------------------------------------------------------------------
