@@ -613,7 +613,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	protected void showCartRunFeedbackIfNeeded(Byte inPosition) {
-		LOGGER.error("base class call for showCartRunFeedbackIfNeeded. Need override");
+		LOGGER.error("showCartRunFeedbackIfNeeded() needs override");
 	}
 
 	// --------------------------------------------------------------------------
