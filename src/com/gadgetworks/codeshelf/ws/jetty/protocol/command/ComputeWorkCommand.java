@@ -10,8 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
@@ -39,14 +40,11 @@ public class ComputeWorkCommand extends CommandABC {
 		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			// Figure out the CHE's work area by its scanned location.
-			Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
-			List<WorkInstruction> workInstructions = workService.computeWorkInstructions(che, request.getContainerIds());
+			WorkList workList = workService.computeWorkInstructions(che, request.getContainerIds());
 
 			//Get the counts
-			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workInstructions,
-				request.getContainerIds());
+			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList,	request.getContainerIds());
 			
 			// ~bhe: should we check for null/zero and return a different status?
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
@@ -63,8 +61,9 @@ public class ComputeWorkCommand extends CommandABC {
 	/**
 	 * Compute work instruction counts by containerId
 	 */
-	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(List<WorkInstruction> workInstructions,
+	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList workList,
 		List<String> containerIds) {
+		List<WorkInstruction> workInstructions = workList.getInstructions();
 		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
 		for (WorkInstruction wi : workInstructions) {
 			//Grab count reference
@@ -104,6 +103,12 @@ public class ComputeWorkCommand extends CommandABC {
 						break;
 				}
 			}
+		}
+
+		List<OrderDetail> details = workList.getDetails();
+		for (OrderDetail detail : details) {
+			String containerId = detail.getParent().getContainerId();
+			containerToWorkInstructCountMap.get(containerId).incrementNonFoundDetails();
 		}
 		return containerToWorkInstructCountMap;
 	}

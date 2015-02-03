@@ -60,6 +60,8 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkPackage.SingleWorkItem;
+import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
@@ -289,8 +291,8 @@ public class WorkService implements IApiService {
 	 * @param inContainerIdList
 	 * @return
 	 */
-	public final List<WorkInstruction> computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		clearChe(inChe);
 		
@@ -353,19 +355,23 @@ public class WorkService implements IApiService {
 		Timestamp theTime = now();
 
 		// Get all of the OUTBOUND work instructions.
-		wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
+		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);
+		//wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
-		wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
+		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
+		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
+		workList.getInstructions().addAll(crossInstructions);
 
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
-		sortAndSaveActionableWIs(facility, wiResultList);
+		//sortAndSaveActionableWIs(facility, wiResultList);
+		sortAndSaveActionableWIs(facility, workList.getInstructions());
 
-		LOGGER.info("TOTAL WIs {}", wiResultList);
+		LOGGER.info("TOTAL WIs {}", workList.getInstructions());
 
 		//Return original full list
-		return wiResultList;
+		return workList;
 	}
 
 	private Timestamp now() {
@@ -732,12 +738,13 @@ public class WorkService implements IApiService {
 	 * @param inTime
 	 * @return
 	 */
-	private List<WorkInstruction> generateOutboundInstructions(final Facility facility,
+	private WorkList generateOutboundInstructions(final Facility facility,
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		List<OrderDetail> uncompletedDetails = new ArrayList<OrderDetail>();
 		int count = 0;
 
 		// To proceed, there should container use linked to outbound order
@@ -754,12 +761,16 @@ public class WorkService implements IApiService {
 						Location defaultLocation = facility;
 						try {
 							// Pass facility as the default location of a short WI..
-							WorkInstruction aWi = makeWIForOutbound(orderDetail,
+							SingleWorkItem workItem = makeWIForOutbound(orderDetail,
 								inChe,
 								container,
 								inTime,
 								defaultLocation,
 								facility.getPaths()); // Could be normal WI, or a short WI
+							if (workItem.getDetail() != null) {
+								uncompletedDetails.add(workItem.getDetail());
+							}
+							WorkInstruction aWi = workItem.getInstruction();
 							if (aWi != null) {
 								wiResultList.add(aWi);
 								orderDetailChanged |= orderDetail.reevaluateStatus();
@@ -788,9 +799,13 @@ public class WorkService implements IApiService {
 				}
 			}
 		}
-		return wiResultList;
+		//return wiResultList;
+		WorkList workList = new WorkList();
+		workList.setInstructions(wiResultList);
+		workList.setDetails(uncompletedDetails);
+		return workList;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Find all of the OUTBOUND orders that need items held in containers holding CROSS orders.
@@ -868,7 +883,7 @@ public class WorkService implements IApiService {
 	 * @param inTime
 	 * @return
 	 */
-	private WorkInstruction makeWIForOutbound(final OrderDetail inOrderDetail,
+	private SingleWorkItem makeWIForOutbound(final OrderDetail inOrderDetail,
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime,
@@ -876,6 +891,7 @@ public class WorkService implements IApiService {
 		final List<Path> paths) throws DaoException {
 
 		WorkInstruction resultWi = null;
+		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
 		if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
@@ -884,19 +900,25 @@ public class WorkService implements IApiService {
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
 			deleteExistingShortWiToFacility(inOrderDetail);
-			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
-				WorkInstructionTypeEnum.ACTUAL,
-				inOrderDetail,
-				inContainer,
-				inChe,
-				defaultLocation,
-				inTime);
-
-			if (resultWi != null) {
-				resultWi.setPlanQuantity(0);
-				resultWi.setPlanMinQuantity(0);
-				resultWi.setPlanMaxQuantity(0);
-				WorkInstruction.DAO.store(resultWi);
+			
+			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list 
+			if (doAutoShortInstructions()) {
+				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
+					WorkInstructionTypeEnum.ACTUAL,
+					inOrderDetail,
+					inContainer,
+					inChe,
+					defaultLocation,
+					inTime);
+				if (resultWi != null) {
+					resultWi.setPlanQuantity(0);
+					resultWi.setPlanMinQuantity(0);
+					resultWi.setPlanMaxQuantity(0);
+					WorkInstruction.DAO.store(resultWi);
+				}
+				resultWork.setInstruction(resultWi);
+			} else {
+				resultWork.setDetail(inOrderDetail);				
 			}
 		} else {
 			for (Path path : paths) {
@@ -912,8 +934,10 @@ public class WorkService implements IApiService {
 						inChe,
 						item.getStoredLocation(),
 						inTime);
-					if (resultWi != null)
+					if (resultWi != null){
 						foundOne = true;
+						resultWork.setInstruction(resultWi);
+					}
 				}
 				// We only want one work instruction made, not one per path.
 				if (foundOne)
@@ -921,7 +945,11 @@ public class WorkService implements IApiService {
 				// Bug remains, sort of. If cases exist on several paths, we would like to choose more intelligently which area to pick from.
 			}
 		}
-		return resultWi;
+		return resultWork;
+	}
+
+	private boolean doAutoShortInstructions(){
+		return false;
 	}
 
 	private void sortAndSaveActionableWIs(Facility facility, List<WorkInstruction> allWIs) {

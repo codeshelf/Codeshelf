@@ -16,6 +16,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
 
 public class ComputeWorkCommandTest {
 
@@ -90,8 +91,9 @@ public class ComputeWorkCommandTest {
 		workInstructions.add(hkWI4);
 
 
-		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workInstructions,
-			containers);
+		WorkList workList = new WorkList();
+		workList.setInstructions(workInstructions);
+		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workList, containers);
 
 		//Make sure we have 4 entries with proper counts
 		assertTrue(containerToWICountMap.size() == 4);

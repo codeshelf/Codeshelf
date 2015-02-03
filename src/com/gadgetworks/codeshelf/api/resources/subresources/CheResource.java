@@ -19,6 +19,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.google.inject.Inject;
@@ -62,8 +63,8 @@ public class CheResource {
 					validContainers.add(containerId);
 				}
 			}
-			List<WorkInstruction> instructions = workService.computeWorkInstructions(che, validContainers);
-			return BaseResponse.buildResponse(instructions);
+			WorkList workList = workService.computeWorkInstructions(che, validContainers);
+			return BaseResponse.buildResponse(workList);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
