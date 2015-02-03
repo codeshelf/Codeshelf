@@ -60,7 +60,7 @@ public class RadioControllerPacketIOService {
 	}
 
 	/**
-	 * This method will block until there is space in the queue.
+	 * This method is synchronized because the gateway's thread safety is unknown
 	 */
 	public synchronized void handleOutboundPacket(IPacket packet) {
 		//Send packet

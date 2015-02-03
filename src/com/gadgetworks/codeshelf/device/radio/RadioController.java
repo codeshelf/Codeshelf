@@ -60,7 +60,8 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 
-/**
+/** IEEE_802_15_2_RadioController
+ * 
  *  @author jeffw, saba
  */
 
@@ -82,7 +83,7 @@ public class RadioController implements IRadioController {
 	private static final long										CTRL_START_DELAY_MILLIS			= 5;
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 25;
+	private static final long										ACK_TIMEOUT_MILLIS				= 20;
 	private static final int										ACK_SEND_RETRY_COUNT			= 20;
 	private static final long										MAX_PACKET_AGE_MILLIS			= 5000;
 
@@ -93,7 +94,7 @@ public class RadioController implements IRadioController {
 	private static final long										BROADCAST_RATE_MILLIS			= 900;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
-	private static final long										PACKET_SPACING_MILLIS			= 20;
+	private static final long										PACKET_SPACING_MILLIS			= 15;
 	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter
