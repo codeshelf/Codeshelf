@@ -144,11 +144,11 @@ public final class Configuration {
 		String osName = System.getProperty("os.name");
 				
 		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName,true); // base config (as resource)
-		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName,true); // base config (as resource)
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName,false); // production standard config 
-		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName+"."+osName,false); // os-specific
-		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName+"."+userName,false); // instance customized
-		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName+"."+userName,false); // developer customized
+
+		// developer specific config, let's try both file and resource
+		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName+"."+userName,true); 
+		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName+"."+userName,false);
 		
 		return (propertiesLoaded?properties:null);
 	}

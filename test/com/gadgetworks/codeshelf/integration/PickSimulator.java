@@ -315,5 +315,12 @@ public class PickSimulator {
 		}
 
 	}
+	
+	/**
+	 * Intentionally incomplete. Could parameterize for each line, but initially only remember the first line.
+	 */
+	public String getLastCheDisplayString() {
+		return cheDeviceLogic.getRecentCheDisplayString();
+	}
 
 }

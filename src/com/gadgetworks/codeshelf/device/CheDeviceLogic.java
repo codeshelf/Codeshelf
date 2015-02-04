@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.Map.Entry;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -120,6 +121,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
+	
+	// Remember the first string in last display message sent
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String mRecentCheDisplayString;
 
 	// The active pick WIs.
 	@Accessors(prefix = "m")
@@ -204,8 +211,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
+		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
+		setRecentCheDisplayString(inLine1Message);
+
 		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
 		// Lots of upstream code generates display messages.
+		
 		if (!this.isDeviceAssociated()) {
 			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
 			// This is far less logging than if the command actually goes, so might as well say what is going on.
@@ -238,7 +249,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	private void sendDisplayWorkInstruction(WorkInstruction wi) {
+	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
 		LOGGER.info("need override for sendDisplayWorkInstruction()");
 		// much of the function in SetupOrdersDeviceLogic might be appropriate.
 	}
