@@ -106,8 +106,14 @@ public class ComputeWorkCommand extends CommandABC {
 		}
 
 		List<OrderDetail> details = workList.getDetails();
+		WorkInstructionCount count = null;
 		for (OrderDetail detail : details) {
 			String containerId = detail.getParent().getContainerId();
+			count = containerToWorkInstructCountMap.get(containerId);
+			if (count == null) {
+				count = new WorkInstructionCount();
+				containerToWorkInstructCountMap.put(containerId, count);
+			}
 			containerToWorkInstructCountMap.get(containerId).incrementNonFoundDetails();
 		}
 		return containerToWorkInstructCountMap;

@@ -635,7 +635,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		int completes = theSummary.getCompleteCount();
 		Assert.assertEquals(0, completes);
 		Assert.assertEquals(3, actives);
-		Assert.assertEquals(1, shorts);
+		//Auto-shorting functionality disabled 02/03/2015
+		//Assert.assertEquals(0, shorts);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
@@ -990,13 +991,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		}
 		Assert.assertNotNull(userShortWi);
 		Assert.assertNotNull(shortAheadWi);
-		Assert.assertNotNull(immediateShortWi);
-		logOneWi(immediateShortWi);
+		//Auto-shorting functionality disabled 02/03/2015
+		//Assert.assertNotNull(immediateShortWi);
+		//logOneWi(immediateShortWi);
 		logOneWi(userShortWi);
 		logOneWi(shortAheadWi);
 		// All should have the same assign time
-		Assert.assertEquals(immediateShortWi.getAssigned(), userShortWi.getAssigned());
-		Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
+		Assert.assertEquals(shortAheadWi.getAssigned(), userShortWi.getAssigned());
+		//Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
 		mPropertyService.restoreHKDefaults(facility);
 

@@ -36,6 +36,7 @@ import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
 import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -439,22 +440,20 @@ public class InventoryPickRunTest extends EdiTestABC {
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		LOGGER.info("Set up CHE for order 12000.");
-		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
-		Integer theSize = wiList.size();
+		WorkList workList = mWorkService.setUpCheContainerFromString(theChe, "12000");
+		Integer theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
-		List<WorkInstruction> cheWiList = theChe.getCheWorkInstructions();
-		theSize = cheWiList.size();
-		Assert.assertEquals((Integer) 10, theSize); // Infer 2 shorts in there
+		theSize = workList.getDetails().size();
+		Assert.assertEquals((Integer) 2, theSize); // Infer 2 shorts in there
 
 		// Set up the CHE again. DEV-609. This should delete the previous 2 immediate shorts, then make 2 new ones
-		wiList = startWorkFromBeginning(facility, "CHE1", "12000");
-		theSize = wiList.size();
+		workList = mWorkService.setUpCheContainerFromString(theChe, "12000");
+		theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
-		cheWiList = theChe.getCheWorkInstructions();
-		theSize = cheWiList.size();
-		Assert.assertEquals((Integer) 10, theSize); // Before DEV-609, this had 12
+		theSize = workList.getDetails().size();
+		Assert.assertEquals((Integer) 2, theSize); // Before DEV-609, this had 12
 		
 		mPropertyService.restoreHKDefaults(facility);
 

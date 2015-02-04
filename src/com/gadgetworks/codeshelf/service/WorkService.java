@@ -443,18 +443,19 @@ public class WorkService implements IApiService {
 	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
 	 *
 	 */
-	public final void setUpCheContainerFromString(Che inChe, String inContainers) {
+	public final WorkList setUpCheContainerFromString(Che inChe, String inContainers) {
 		if (inChe == null)
-			return;
+			return null;
 
 		// computeWorkInstructions wants a containerId list
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
 
 		if (containersIdList.size() > 0) {
-			this.computeWorkInstructions(inChe, containersIdList);
+			return this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 		}
+		return null;
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
