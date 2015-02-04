@@ -77,79 +77,79 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
 
 	// The owning path.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
-	private Path parent;
+	private Path				parent;
 
 	// The order of this path segment in the path (from the tail/origin).
 	@NonNull
-	@Column(nullable = true,name="segment_order")
+	@Column(nullable = true, name = "segment_order")
 	@Getter
 	@Setter
-	private Integer segmentOrder;
+	private Integer				segmentOrder;
 
 	// The positioning type.
 	@NonNull
-	@Column(nullable = true,name="pos_type")
+	@Column(nullable = true, name = "pos_type")
 	@Getter
 	@Setter
 	@JsonProperty
 	private PositionTypeEnum	posType;
 
 	@NonNull
-	@Column(nullable = true,name="start_pos_x")
+	@Column(nullable = true, name = "start_pos_x")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosX;
 
 	@NonNull
-	@Column(nullable = true,name="start_pos_y")
+	@Column(nullable = true, name = "start_pos_y")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosY;
 
 	@NonNull
-	@Column(nullable = true,name="start_pos_z")
+	@Column(nullable = true, name = "start_pos_z")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				startPosZ;
 
 	@NonNull
-	@Column(nullable = true,name="end_pos_x")
+	@Column(nullable = true, name = "end_pos_x")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				endPosX;
 
 	@NonNull
-	@Column(nullable = true,name="end_pos_y")
+	@Column(nullable = true, name = "end_pos_y")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				endPosY;
 
 	@NonNull
-	@Column(nullable = true,name="end_pos_z")
+	@Column(nullable = true, name = "end_pos_z")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Double				endPosZ;
 
-	@Column(nullable = true,name="start_pos_along_path")
+	@Column(nullable = true, name = "start_pos_along_path")
 	@Setter
 	@Getter
 	private Double				startPosAlongPath;
 
 	@OneToMany(mappedBy = "pathSegment")
 	@Getter
-	private List<Location>  locations = new ArrayList<Location>();
-	
+	private List<Location>		locations		= new ArrayList<Location>();
+
 	public PathSegment() {
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<PathSegment> getDao() {
 		return DAO;
@@ -163,7 +163,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 		parent = inParent;
 		computePathDistance();
 	}
-	
+
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
@@ -199,28 +199,27 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public Double getLength() {
 		return Math.sqrt(Math.pow(startPosX - endPosX, 2) + Math.pow(startPosY - endPosY, 2));
 	}
-	
+
 	public void addLocation(Location inLocation) {
 		if (inLocation.isFacility()) {
 			LOGGER.error("cannot add Facility in addLocation");
 			return;
 		}
-		
-        PathSegment previousSegment = inLocation.getPathSegment();
-        if(previousSegment == null) {
-    		locations.add(inLocation);
-    		inLocation.setPathSegment(this);
-        }
+
+		PathSegment previousSegment = inLocation.getPathSegment();
+		if (previousSegment == null) {
+			locations.add(inLocation);
+			inLocation.setPathSegment(this);
+		}
 	}
 
 	public void removeLocation(Location location) {
-        if (locations.contains(location)) {
-        	location.setPathSegment(null);
-        	locations.remove(location);
-        }
+		if (locations.contains(location)) {
+			location.setPathSegment(null);
+			locations.remove(location);
+		}
 	}
 
-	
 	// For a UI field
 	public int getAssociatedLocationCount() {
 		return getLocations().size();
