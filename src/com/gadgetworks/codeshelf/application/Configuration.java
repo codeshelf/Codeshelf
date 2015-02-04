@@ -145,7 +145,7 @@ public final class Configuration {
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName,false); // production standard config 
 
 		// developer specific local config
-		propertiesLoaded |= tryMergeProperties(properties,"local/"+propertiesFileName,true); 
+		propertiesLoaded |= tryMergeProperties(properties,"local/"+propertiesFileName,false); 
 		
 		return (propertiesLoaded?properties:null);
 	}

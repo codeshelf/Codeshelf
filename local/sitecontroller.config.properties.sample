@@ -1,0 +1,12 @@
+# developer local site controller config
+# copy to sitecontroller.config.properties 
+
+#api.port=8182
+
+#websocket.uri=ws://127.0.0.1:8189/ws/
+#websocket.username=5000
+#websocket.password=0.6910096026612129
+
+#pcapbuffer.enable=true
+#pcapbuffer.size=655360
+#pcapbuffer.slack=4096

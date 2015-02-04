@@ -1,0 +1,16 @@
+# developer local logging configuration sample
+# copy to 'log4j.properties'
+
+# Individual logger category definitions/overrides below
+
+#log4j.category.com.gadgetworks=INFO, CONSOLE, FILE, REMOTE
+#log4j.additivity.com.gadgetworks=FALSE
+
+#log4j.category.com.gadgetworks.flyweight.controller=INFO, CONSOLE, FILE, REMOTE
+#log4j.additivity.com.gadgetworks.flyweight.controller=FALSE
+
+# web server
+#log4j.category.org.eclipse.jetty=INFO, CONSOLE, FILE, REMOTE
+#log4j.additivity.org.eclipse.jetty=FALSE
+
+# ...

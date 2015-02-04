@@ -9,6 +9,20 @@ eclipse {
 	}
 }
 
+task cleanLegacy {
+	(new File('target')).deleteDir()
+	(new File('APIs')).deleteDir()
+	(new File('conf')).deleteDir()
+	(new File('design-docs')).deleteDir()
+	(new File('hooks')).deleteDir()
+	(new File('installer')).deleteDir()
+	(new File('liquibase')).deleteDir()
+	(new File('lib/junit')).deleteDir()
+	(new File('lib/retired')).deleteDir()
+}
+
+tasks.clean.dependsOn(cleanLegacy)
+
 task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
 
 repositories {
