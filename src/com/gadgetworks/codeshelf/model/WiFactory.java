@@ -110,7 +110,7 @@ public class WiFactory {
 		resultWi.setLocationId(inFacility.getFullDomainId());
 		resultWi.setItemMaster(null);
 		resultWi.setDescription(getDescriptionForHK(inType));
-		resultWi.setPickInstruction(getPickInstructionForHK(inType)); // This is normally the location name
+		resultWi.doSetPickInstruction(getPickInstructionForHK(inType)); // This is normally the location name
 		resultWi.setPosAlongPath(inPrevWi.getPosAlongPath()); // Need to matche this to the surrounding work instructions. Or else when che scans start location, these may filter out or reorder.
 
 		resultWi.setPlanQuantity(0);
@@ -165,9 +165,9 @@ public class WiFactory {
 		resultWi.setLocationId(inLocation.getFullDomainId());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
 		if (locAlias != null) {
-			resultWi.setPickInstruction(locAlias.getAlias());
+			resultWi.doSetPickInstruction(locAlias.getAlias());
 		} else {
-			resultWi.setPickInstruction(resultWi.getLocationId());
+			resultWi.doSetPickInstruction(resultWi.getLocationId());
 		}
 
 		boolean isInventoryPickInstruction = false;
@@ -312,9 +312,15 @@ public class WiFactory {
 			resultWi.setLocationId(Strings.nullToEmpty(preferredLocation));
 			resultWi.setContainer(null);
 			if (inOrderDetail.getItemMaster().getDdcId() != null) {
-				resultWi.setPickInstruction(inOrderDetail.getItemMaster().getDdcId());
+				resultWi.doSetPickInstruction(inOrderDetail.getItemMaster().getDdcId());
 			} else {
-				resultWi.setPickInstruction(resultWi.getLocationId());
+				// This is a little tricky with preferredLocation.
+				// If LOCAPICK was true, the inventory was made at the preferred location, so the wi location works normally
+				// If LOCAPICK was false, use the preferred location for the pick instruction, even though there is no such location.
+				String locStr = resultWi.getLocationId();
+				if (locStr.isEmpty() && preferredLocation != null) 
+					locStr = preferredLocation;
+				resultWi.doSetPickInstruction(locStr);
 			}
 
 			WorkInstruction.DAO.store(resultWi);

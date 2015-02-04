@@ -1209,109 +1209,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Breakup the description into three static lines no longer than 20 characters.
-	 * Except the last line can be up to 40 characters (since it scrolls).
-	 * Important change from v3. If quantity > 98, then tweak the description adding the count to the start.
-	 * @param inPickInstructions
-	 * @param inDescription
-	 */
-	@Override
-	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
-		int planQty = wi.getPlanQuantity();
-
-		String[] pickInfoLines = { "", "", "" };
-
-		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-			//First line is SKU, 2nd line is desc + qty if >= 99
-			String info = wi.getItemId();
-
-			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
-			}
-
-			pickInfoLines[0] = info;
-
-			String displayDescription = wi.getDescription();
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + displayDescription;
-			}
-
-			//Add description
-			int charPos = 0;
-			for (int line = 1; line < 3; line++) {
-				if (charPos < displayDescription.length()) {
-					int toGet = Math.min(20, displayDescription.length() - charPos);
-					pickInfoLines[line] = displayDescription.substring(charPos, charPos + toGet);
-					charPos += toGet;
-				}
-			}
-
-		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-
-			String displayDescription = wi.getDescription();
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + displayDescription;
-			}
-
-			int pos = 0;
-			for (int line = 0; line < 3; line++) {
-				if (pos < displayDescription.length()) {
-					int toGet = Math.min(20, displayDescription.length() - pos);
-					pickInfoLines[line] = displayDescription.substring(pos, pos + toGet);
-					pos += toGet;
-				}
-			}
-
-			// Check if there is more description to add to the last line.
-			if (pos < displayDescription.length()) {
-				int toGet = Math.min(20, displayDescription.length() - pos);
-				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
-			}
-		} else {
-			//DEFAULT TO SKU
-			//First line is SKU, 2nd line is QTY if >= 99
-			String info = wi.getItemId();
-
-			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
-			}
-
-			pickInfoLines[0] = info;
-
-			String quantity = "";
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				quantity = "QTY " + planQty;
-			}
-
-			//Make sure we do not exceed 40 chars
-			if (quantity.length() > 40) {
-				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
-				quantity = quantity.substring(0, 40);
-			}
-
-			pickInfoLines[1] = quantity;
-		}
-
-		//Override last line if short is needed
-		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
-			pickInfoLines[2] = "DECREMENT POSITION";
-		}
-
-		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
-		// GoodEggs many locations orders hitting too long case
-		String cleanedPickInstructions = wi.getPickInstruction();
-		if (cleanedPickInstructions.length() > 19) {
-			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
-		}
-
-		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1366,7 +1263,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			for (WorkInstruction wi : mActivePickWiList) {
 				for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+						Byte posconIndex = Byte.valueOf(mapEntry.getKey());
+						PosControllerInstr instruction = new PosControllerInstr(posconIndex,
 							planQuantityForPositionController,
 							minQuantityForPositionController,
 							maxQuantityForPositionController,

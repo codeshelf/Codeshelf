@@ -5,8 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map.Entry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -60,6 +62,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 			case LOGOUT_COMMAND:
 				//You can logout at any time
+				setReadyMsg("");
 				logout();
 				break;
 
@@ -131,6 +134,16 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * Temporary
+	 */
+	@Override
+	protected void doSetRecentCheDisplayString(String inFirstLine) {
+		// a place to override that does not interfere with lomboc
+		LOGGER.info("saving last display message: " + inFirstLine);
+		super.setRecentCheDisplayString(inFirstLine);
+	}
+
 	/**
 	 * The CHE is in the GET_WORK state. 
 	 * Should only happen if the get work answer did not come back from server before user scanned another detailId
@@ -207,8 +220,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mActivePickWiList.add(wi);
+			LOGGER.info("calling set state DO_PICK in assignWork");
 			setState(CheStateEnum.DO_PICK);
-			LOGGER.info("set state DO_PICK in assignWork");
 		} else {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
 
@@ -234,7 +247,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				setReadyMsg("Abandoned last job");
 				setState(CheStateEnum.READY);
 				break;
-				
+
 			default:
 				break;
 		}
@@ -256,7 +269,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void yesOrNoCommandReceived(final String inScanStr) {
-		boolean answeredYes = Boolean.parseBoolean(inScanStr);
+		boolean answeredYes = inScanStr.equals(YES_COMMAND);
+		// do not use Boolean.parseBoolean(inScanStr); as it returns false for "YES".
 
 		switch (mCheStateEnum) {
 			case ABANDON_CHECK:
@@ -266,6 +280,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					sendDetailWIRequest(lastDetailId);
 				} else {
 					// If no, we want to remain on current job
+					LOGGER.info("calling setState DO_PICK in yesOrNoCommandReceived");
 					setState(CheStateEnum.DO_PICK);
 					// or on GET_WORK if we never got past get work?
 				}
@@ -279,13 +294,48 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Very simple for line scan CHE. Send the one WI count to poscon #1.
+	 */
+	@Override
+	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+
+		byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
+		byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
+		byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
+		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
+
+		byte freq = PosControllerInstr.SOLID_FREQ;
+		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
+		if (planQuantityForPositionController != minQuantityForPositionController
+				|| planQuantityForPositionController != maxQuantityForPositionController) {
+			freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
+			brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		}
+
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		Byte posconIndex = 1;
+
+		PosControllerInstr instruction = new PosControllerInstr(posconIndex,
+			planQuantityForPositionController,
+			minQuantityForPositionController,
+			maxQuantityForPositionController,
+			freq,
+			brightness);
+		instructions.add(instruction);
+		sendPositionControllerInstructions(instructions);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 */
 	@Override
 	protected void setState(final CheStateEnum inCheState) {
 		CheStateEnum previousState = mCheStateEnum;
 		boolean isSameState = previousState == inCheState;
 		mCheStateEnum = inCheState;
-		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
+		LOGGER.info("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
 		switch (inCheState) {
 			case IDLE:
@@ -297,6 +347,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case GET_WORK:
+				setReadyMsg("");
 				sendDisplayCommand(COMPUTE_WORK_MSG, GO_TO_LOCATION_MSG);
 				break;
 

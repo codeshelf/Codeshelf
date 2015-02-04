@@ -691,7 +691,7 @@ public class WorkService implements IApiService {
 		locationString = Joiner.on(" ").join(locIdList);
 		// end DEV-315 modification
 
-		inWi.setPickInstruction(locationString);
+		inWi.doSetPickInstruction(locationString);
 
 		try {
 			WorkInstruction.DAO.store(inWi);

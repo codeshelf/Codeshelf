@@ -150,6 +150,13 @@ public class PickSimulator {
 		cheDeviceLogic.scanCommandReceived(inOrderId);
 	}
 
+	/**
+	 * Same as scanOrderId. DEV-621. Just given this name for clarity of JUnit tests.
+	 */
+	public void scanOrderDetailId(String inOrderDetailId) {
+		cheDeviceLogic.scanCommandReceived(inOrderDetailId);
+	}
+
 	public void scanPosition(String inPositionId) {
 		cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
 	}

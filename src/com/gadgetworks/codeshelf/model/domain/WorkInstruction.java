@@ -529,6 +529,17 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return "";
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * A simple wrapper that does not interfere with Json serialization
+	 */
+	public void doSetPickInstruction(String inPickInstruction){
+		this.setPickInstruction(inPickInstruction);
+		if (inPickInstruction == null || inPickInstruction.isEmpty()) {
+			LOGGER.error("probable bug by caller of doSetPickInstruction");
+		}
+	}
 
 
 	// --------------------------------------------------------------------------

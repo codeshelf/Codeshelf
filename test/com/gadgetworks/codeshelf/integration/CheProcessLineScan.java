@@ -229,7 +229,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// Order 12345 has 2 modeled locations and one not.
 		// Order 11111 has 5 unmodeled locations.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, preferredLocation"
+		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,1,each, D601"
@@ -269,6 +269,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Assert.assertNotNull(order1);
 		OrderDetail detail1_1 = order1.getOrderDetail("11111.1");
 		Assert.assertNotNull(detail1_1);
+		String loc1_1 = detail1_1.getPreferredLocationUi();
+		Assert.assertEquals("D401", loc1_1);
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
@@ -286,9 +288,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// test the first few transitions. On powerup, in idle state
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 		// Ideally, the new PickSimulator() would get the right processmode from the CHE. But we have to set it.
-		String currentType = picker.getProcessType();
+		LOGGER.info("intial picker process type = " + picker.getProcessType());
 		picker.updateProcessType("CHE_LINESCAN");
-		currentType = picker.getProcessType();
+		LOGGER.info("new picker process type = " + picker.getProcessType());
 		
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 
@@ -298,15 +300,24 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		LOGGER.info("after logout picker process type = " + picker.getProcessType());
 
 		// login again
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+		LOGGER.info("after login picker process type = " + picker.getProcessType());
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
-		picker.scanOrderId("12345.1"); // does not add "%"
-		// picker.waitForCheState(CheStateEnum.GET_WORK, 500);
+		picker.scanOrderDetailId("12345.1"); // does not add "%"
+		
+		picker.waitForCheState(CheStateEnum.GET_WORK, 500);
+		LOGGER.info("finished waiting for GET_WORK");
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		// picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		String firstLine = picker.getLastCheDisplayString();
+		LOGGER.info("firstLine is "+ firstLine);
+
+		// Should be showing the job now. But is not. Why?
+		// Assert.assertEquals("D403", firstLine);
 
 		// logout back to idle state.
 		picker.logout();
