@@ -824,6 +824,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		LOGGER.info("Case 2: A happy-day pick startup. No housekeeping jobs.");
 		picker.setup();
 		picker.setupContainer("12345", "1"); // This prepended to scan "C%12345" as per Codeshelf scan specification
+		String firstLine = picker.getLastCheDisplayString();
+		Assert.assertEquals("SCAN ORDER", firstLine); // see getContainerSetupMsg()
 
 		//Check that container show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
@@ -831,12 +833,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		picker.scanOrderId("11111");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		firstLine = picker.getLastCheDisplayString();
+		Assert.assertEquals("SELECT POSITION", firstLine); // see getContainerSetupMsg()
 
 		//Make sure we do not lose last container
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
 
 		picker.scanPosition("2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		firstLine = picker.getLastCheDisplayString();
+		Assert.assertEquals("SCAN ORDER", firstLine); // see getContainerSetupMsg()
 
 		//Check that containers show last 2 digits of container id
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), Byte.valueOf("45"));
@@ -848,9 +854,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 		picker.scanLocation("BAD_LOCATION");
 		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		firstLine = picker.getLastCheDisplayString();
+		Assert.assertEquals("NO WORK TO DO", firstLine);
 
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		firstLine = picker.getLastCheDisplayString();
+		Assert.assertEquals("D303", firstLine);
 
 		LOGGER.info("List the work instructions as the server sees them");
 
