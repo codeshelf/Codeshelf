@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import javassist.NotFoundException;
 
@@ -30,8 +31,11 @@ import org.hibernate.type.StandardBasicTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.edi.IEdiExportServiceProvider;
 import com.gadgetworks.codeshelf.edi.WorkInstructionCSVExporter;
+import com.gadgetworks.codeshelf.metrics.MetricsGroup;
+import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.HousekeepingInjector;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.OrderTypeEnum;
@@ -583,6 +587,8 @@ public class WorkService implements IApiService {
 		if (wrapComputeDurationMs > 2000) {
 			LOGGER.warn("GetWork() took {}; totalWis={};", wrapComputeDurationMs, wrappedRouteWiList.size());
 		}
+		Timer timer = MetricsService.addTimer(MetricsGroup.WSS, "cheWorkFromLocation");
+		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
 
 		return wrappedRouteWiList;
 	}
