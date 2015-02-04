@@ -238,7 +238,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	private void sendDisplayWorkInstruction(WorkInstruction wi) {
+	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
 		LOGGER.info("need override for sendDisplayWorkInstruction()");
 		// much of the function in SetupOrdersDeviceLogic might be appropriate.
 	}

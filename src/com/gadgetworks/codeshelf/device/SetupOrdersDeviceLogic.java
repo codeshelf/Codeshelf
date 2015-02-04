@@ -1217,7 +1217,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	private void sendDisplayWorkInstruction(WorkInstruction wi) {
+	@Override
+	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
 		int planQty = wi.getPlanQuantity();
 
 		String[] pickInfoLines = { "", "", "" };
