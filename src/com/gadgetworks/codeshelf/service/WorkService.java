@@ -214,81 +214,6 @@ public class WorkService implements IApiService {
 		}
 	}
 
-	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {
-		WiSummarizer summarizer = new WiSummarizer();
-		summarizer.computeWiSummariesForChe(cheId, facilityId);
-		return summarizer.getSummaries();
-	}
-
-
-    /**
-     * Computes work instruction for the given OrderDetail that is scanning by line item instead of container.
-     */
-	
-	/**
-	 * Provides the list of actual work instruction for the scanned orderdetail
-	 * @param inChe
-	 * @param inScannedOrderDetailId
-	 * @return
-	 */
-	public List<WorkInstruction> getWorkInstructionsForOrderDetail(final Che inChe, final String inScannedOrderDetailId) {
-		if (inChe == null) {
-			throw new MethodArgumentException(0, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
-		}
-		if (inScannedOrderDetailId == null) {
-			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
-		}
-		
-		LOGGER.info("getWorkInstructionsForOrderDetail request for " + inChe.getDomainId() + " detail:" + inScannedOrderDetailId);
-
-		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
-			"facilityId", inChe.getFacility().getPersistentId(),
-			"domainId", inScannedOrderDetailId
-		);
-		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
-
-		if (orderDetails.isEmpty()) {
-			// temporary: just return empty list instead of throwing
-			return new ArrayList<WorkInstruction>();
-			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
-		}
-		if (orderDetails.size() > 1) {
-			// temporary: just return empty list instead of throwing
-			return new ArrayList<WorkInstruction>();
-			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
-		}
-		
-		OrderDetail orderDetail = orderDetails.get(0);
-		clearChe(inChe);
-		Timestamp theTime = now();
-
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-		// Pass facility as the default location of a short WI..
-		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-			WorkInstructionTypeEnum.PLAN,
-			orderDetail,
-			inChe,
-			theTime); // Could be normal WI, or a short WI
-		if (aWi != null) {
-			wiResultList.add(aWi);
-			orderDetail.reevaluateStatus();
-		} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
-			//As of DEV-561 we are adding completed WIs to the list in order to be able
-			//give feedback on complete orders (and differentiate a 100% complete order from
-			//unknown container id. The computeWork method will filter these out before sorting
-			//and saving
-			for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
-				//As of DEV-603 we are only adding completed WIs to the list
-				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
-					LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
-					wiResultList.add(wi);
-				}
-			}
-		}
-
-		return wiResultList;
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -510,6 +435,70 @@ public class WorkService implements IApiService {
 		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
 	}
 
+	/**
+	 * Provides the list of actual work instruction for the scanned orderdetail
+	 * @param inChe
+	 * @param inScannedOrderDetailId
+	 * @return
+	 */
+	public List<WorkInstruction> getWorkInstructionsForOrderDetail(final Che inChe, final String inScannedOrderDetailId) {
+		if (inChe == null) {
+			throw new MethodArgumentException(0, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
+		}
+		if (inScannedOrderDetailId == null) {
+			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
+		}
+		
+		LOGGER.info("getWorkInstructionsForOrderDetail request for " + inChe.getDomainId() + " detail:" + inScannedOrderDetailId);
+
+		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
+			"facilityId", inChe.getFacility().getPersistentId(),
+			"domainId", inScannedOrderDetailId
+		);
+		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
+
+		if (orderDetails.isEmpty()) {
+			// temporary: just return empty list instead of throwing
+			return new ArrayList<WorkInstruction>();
+			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+		}
+		if (orderDetails.size() > 1) {
+			// temporary: just return empty list instead of throwing
+			return new ArrayList<WorkInstruction>();
+			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
+		}
+		
+		OrderDetail orderDetail = orderDetails.get(0);
+		clearChe(inChe);
+		Timestamp theTime = now();
+
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		// Pass facility as the default location of a short WI..
+		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+			WorkInstructionTypeEnum.PLAN,
+			orderDetail,
+			inChe,
+			theTime); // Could be normal WI, or a short WI
+		if (aWi != null) {
+			wiResultList.add(aWi);
+			orderDetail.reevaluateStatus();
+		} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
+			//As of DEV-561 we are adding completed WIs to the list in order to be able
+			//give feedback on complete orders (and differentiate a 100% complete order from
+			//unknown container id. The computeWork method will filter these out before sorting
+			//and saving
+			for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
+				//As of DEV-603 we are only adding completed WIs to the list
+				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+					LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
+					wiResultList.add(wi);
+				}
+			}
+		}
+
+		return wiResultList;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
@@ -524,8 +513,7 @@ public class WorkService implements IApiService {
 		Facility facility = inChe.getFacility();
 
 		//Get current complete list of WIs
-		List<WorkInstruction> completeRouteWiList = new ArrayList<WorkInstruction>();
-		queryAddCheInstructionsToList(inChe, 0.0, completeRouteWiList);
+		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0);
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -546,8 +534,8 @@ public class WorkService implements IApiService {
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
-		List<WorkInstruction> wiListFromStartLocation = new ArrayList<WorkInstruction>();
-		queryAddCheInstructionsToList(inChe, startingPathPos, wiListFromStartLocation);
+		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos);
+		
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
@@ -1009,6 +997,12 @@ public class WorkService implements IApiService {
 		}
 	}
 
+	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {
+		WiSummarizer summarizer = new WiSummarizer();
+		summarizer.computeWiSummariesForChe(cheId, facilityId);
+		return summarizer.getSummaries();
+	}
+
 	@SuppressWarnings("unchecked")
 	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
@@ -1181,12 +1175,14 @@ public class WorkService implements IApiService {
 	 * @param inWiList
 	 * May return empty list, but never null
 	 */
-	private void queryAddCheInstructionsToList(final Che inChe, final Double inFromStartingPosition, List<WorkInstruction> inWiList) {
-		if (inChe == null || inFromStartingPosition == null || inWiList == null) {
+	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition) {
+		List<WorkInstruction> cheWorkInstructions = new ArrayList<>();
+		if (inChe == null || inFromStartingPosition == null) {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
-			return;
+			return cheWorkInstructions;
 		}
 
+			
 		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
 		wiTypes.add(WorkInstructionTypeEnum.PLAN);
 		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
@@ -1212,10 +1208,11 @@ public class WorkService implements IApiService {
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
 			else if (loc.isActive()) //unlikely that location got deleted between complete work instructions and scan location
-				inWiList.add(wi);
+				cheWorkInstructions.add(wi);
 			else
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}
+		return cheWorkInstructions;
 	}
 
 	/**
