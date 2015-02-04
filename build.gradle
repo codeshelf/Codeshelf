@@ -12,7 +12,7 @@ eclipse {
 task cleanLegacy {
 	(new File('target')).deleteDir()
 	(new File('APIs')).deleteDir()
-	(new File('conf')).deleteDir()
+	//(new File('conf')).deleteDir() should delete but don't want to wipe out custom developer configs stored here
 	(new File('design-docs')).deleteDir()
 	(new File('hooks')).deleteDir()
 	(new File('installer')).deleteDir()
