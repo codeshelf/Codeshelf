@@ -28,4 +28,4 @@ lib/dist/.DS_Store
 .DS_Store
 /.gradle
 .classpath
-
+/local/*.properties

@@ -140,15 +140,12 @@ public final class Configuration {
 	private static Properties loadAllPropertiesFilesNamed(String propertiesFileName) {
 		Properties properties=new Properties();
 		boolean propertiesLoaded = false;
-		String userName = System.getProperty("user.name");
-		String osName = System.getProperty("os.name");
 				
 		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName,true); // base config (as resource)
 		propertiesLoaded |= tryMergeProperties(properties,"/etc/codeshelf/"+propertiesFileName,false); // production standard config 
 
-		// developer specific config, let's try both file and resource
-		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName+"."+userName,true); 
-		propertiesLoaded |= tryMergeProperties(properties,propertiesFileName+"."+userName,false);
+		// developer specific local config
+		propertiesLoaded |= tryMergeProperties(properties,"local/"+propertiesFileName,true); 
 		
 		return (propertiesLoaded?properties:null);
 	}
