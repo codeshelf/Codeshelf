@@ -558,7 +558,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		List<WorkInstruction> wiListBeginningOfPathAfterSetup = mWorkService.getWorkInstructions(theChe, "");
 
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
-		assertAutoShort(theChe, wiListBeginningOfPathAfterSetup.get(0).getAssigned()); //get any for assigned time)
+		//Auto-shorting functionality disabled 02/03/2015
+		//assertAutoShort(theChe, wiListBeginningOfPathAfterSetup.get(0).getAssigned()); //get any for assigned time)
 
 		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D403");
 
@@ -606,7 +607,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
 		Assert.assertEquals(0, completes);
-		Assert.assertEquals(1, shorts);
+		//Auto shorting disabled on 02/03/2015
+		//Assert.assertEquals(1, shorts);
 		Assert.assertEquals(2, actives);
 
 		this.getPersistenceService().commitTenantTransaction();

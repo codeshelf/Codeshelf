@@ -30,6 +30,10 @@ public class WorkInstructionCount {
 	@Getter
 	@Setter
 	private int	invalidOrUnknownStatusCount	= 0;
+	
+	@Getter
+	@Setter
+	private int	nonFoundDetails = 0;
 
 	public WorkInstructionCount(int goodCount,
 		int unknownOrderIdCount,
@@ -61,7 +65,7 @@ public class WorkInstructionCount {
 	 * @return immediateShortCount > 0 || invalidOrUnknownStatusCount > 0
 	 */
 	public boolean hasBadCounts() {
-		return shortCount > 0 || invalidOrUnknownStatusCount > 0;
+		return shortCount > 0 || invalidOrUnknownStatusCount > 0 || nonFoundDetails > 0;
 	}
 
 	public void incrementGoodCount() {
@@ -78,6 +82,10 @@ public class WorkInstructionCount {
 
 	public void incrementInvalidOrUnknownStatusCount() {
 		invalidOrUnknownStatusCount++;
+	}
+	
+	public void incrementNonFoundDetails(){
+		nonFoundDetails++;
 	}
 
 	@Override
