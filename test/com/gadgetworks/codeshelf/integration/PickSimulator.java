@@ -248,7 +248,6 @@ public class PickSimulator {
 			// retry every 100ms
 			ThreadUtils.sleep(100);
 			CheStateEnum currentState = cheDeviceLogic.getCheStateEnum();
-			System.out.println(currentState);
 			if (currentState.equals(state)) {
 				// expected state found - all good
 				return;
