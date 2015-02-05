@@ -954,6 +954,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanLocation("D302");
 		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
 		Byte ctrlDispValueObj = picker.getLastSentPositionControllerDisplayValue((byte) button);
@@ -1532,6 +1533,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanLocation("D301");
 		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		//Make sure we have a bright 1 on the poscon
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
@@ -1634,6 +1636,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupOrderIdAsContainer("44444", "4");
 		picker.setupOrderIdAsContainer("55555", "5");
 		picker.startAndSkipReview("D301", 3000, 3000);
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		//Check Screens -- Everything should be clear except the one we are picked #1, #4 immediate short and #3 unknown order id
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
@@ -1657,6 +1660,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
 
 		picker.pick(1, 1);
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		//Check Screens -- #1 it should be done so display solid, dim "oc"
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
