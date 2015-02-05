@@ -128,6 +128,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
+			setReadyMsg("");
 			setState(CheStateEnum.READY);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -211,24 +212,35 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Usually only one uncompleted WI back
+	 * This will be enhanced to have the object parameter that includes the work instruction list and other return information.
+	 * Currently handled: 1 uncompleted, 1 completed, 0 returned, more than one returned.
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList) {
+		
+		// only honor the response if we are in the state where we sent and are waiting for the response.
+		if (this.getCheStateEnum() != CheStateEnum.GET_WORK)
+			return;
+
 		int wiCount = inWorkItemList.size();
 		LOGGER.info("assignWork returned " + wiCount + " work instruction(s)");
 		// Implement the success case first. Then worry about the rest.
 		if (wiCount == 1) {
 			WorkInstruction wi = inWorkItemList.get(0);
-			mActivePickWiList.clear();
-			mAllPicksWiList.clear();
-			mActivePickWiList.add(wi);
-			LOGGER.info("calling set state DO_PICK in assignWork");
-			setState(CheStateEnum.DO_PICK);
+			if (wi.getStatus().equals(WorkInstructionStatusEnum.COMPLETE)) {
+				setReadyMsg("Already completed");
+				setState(CheStateEnum.READY);
+			} else {
+				mActivePickWiList.clear();
+				mAllPicksWiList.clear();
+				mActivePickWiList.add(wi);
+				LOGGER.info("calling set state DO_PICK in assignWork");
+				setState(CheStateEnum.DO_PICK);
+			}
 		} else {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
 			if (wiCount == 0)
 				setReadyMsg("No jobs last scan");
-			else if (wiCount == 0)
+			else // more than 1. Perhaps 1 complete and we should find the uncompleted one. See what the new object brings us
 				setReadyMsg(wiCount + " jobs last scan");
 			setState(CheStateEnum.READY);
 		}
@@ -244,17 +256,21 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {
 			case DO_PICK:
+			case GET_WORK:
+				// get_work is a funny one. If stuck there (no response from server to the request), we want clear to get us out of trouble.
+				// however, if the response is merely slow, we might go back to ready state before the response comes. We only honor the response from 
+				// get_work state.
 			case SHORT_PICK:
 			case ABANDON_CHECK:
 			case SHORT_PICK_CONFIRM:
 				setReadyMsg("Abandoned last job");
 				setState(CheStateEnum.READY); // clears off job and poscon
 				break;
-				
+
 			case READY:
 			case IDLE:
 				setReadyMsg(""); // If user is looking at message on ready state, clear it. But do not change state.
-				// however, call the setState as it forces the CHE update out.
+				// however, call the setState as it forces the CHE update out, which actually clears the message.
 				setState(currentState);
 				break;
 
@@ -312,10 +328,36 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					// or on GET_WORK if we never got past get work?
 				}
 				break;
+				
+			case SHORT_PICK_CONFIRM:
+				confirmShortPick(inScanStr);
+				break;
 
 			default:
 				break;
 
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * YES or NO confirm the short pick.
+	 * @param inScanStr
+	 */
+	protected void confirmShortPick(final String inScanStr) {
+		if (inScanStr.equals(YES_COMMAND)) {
+			WorkInstruction wi = this.getActiveWorkInstruction();
+			if (wi != null) {
+				doShortTransaction(wi, mShortPickQty);
+				LOGGER.info("Pick shorted: " + wi);
+
+				clearLedControllersForWi(wi);
+				setReadyMsg("");
+				setState(CheStateEnum.READY);
+			}
+		} else {
+			// NO will go back to the job, with the full count again
+			setState(CheStateEnum.DO_PICK);
 		}
 	}
 
@@ -348,6 +390,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			showActivePicks();
 		} else {
 			// There's no more active picks, so transition to READY state
+			setReadyMsg("");
 			setState(CheStateEnum.READY);
 		}
 	}
@@ -479,17 +522,15 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SHORT_PICK_CONFIRM:
-				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+				clearThePoscon(); // Clear so it does not look like you can press the button to finish the job. It will come back on NO.
 				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 				break;
 
 			case SHORT_PICK:
-				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				showTheActivePick();
 				break;
 
 			case DO_PICK:
-				this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 				showTheActivePick();
 				break;
 

@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionCount;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlClearPosController;
@@ -218,7 +219,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final String inLine4Message) {
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		doSetRecentCheDisplayString(inLine1Message);
-		
+
 		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
 		// Lots of upstream code generates display messages.
 
@@ -257,7 +258,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
 		// temporary
 		LOGGER.info("sendDisplayWorkInstruction");
-		
+
 		int planQty = wi.getPlanQuantity();
 
 		String[] pickInfoLines = { "", "", "" };
@@ -718,8 +719,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
-		LOGGER.error("doShortTransaction() override needed");
-		// much of the SetupOrdersDeviceLogic one is appropriate still appropriate
+
+		inWi.setActualQuantity(inActualPickQuantity);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatus(WorkInstructionStatusEnum.SHORT);
+
+		// normal short will be in mActivePickWiList.
+		// short-aheads will not be.
+		if (mActivePickWiList.contains(inWi))
+			mActivePickWiList.remove(inWi);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
 
 	protected void showCartRunFeedbackIfNeeded(Byte inPosition) {
@@ -841,7 +852,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inQuantity
 	 */
 	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
-		LOGGER.error("processShortPick() needs override");
+		setState(CheStateEnum.SHORT_PICK_CONFIRM);
+		mShortPickWi = inWi;
+		mShortPickQty = inQuantity;
 	}
 
 	protected void clearOnePositionController(Byte inPosition) {

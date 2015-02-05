@@ -29,9 +29,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
-import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
 /**
@@ -315,23 +313,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The guts of the short transaction
-	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
+	 * call the short transaction
+	 * then update our local counts
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
+		// CheDeviceLogic does the main shorting transactions
+		super.doShortTransaction(inWi, inActualPickQuantity);
 
-		inWi.setActualQuantity(inActualPickQuantity);
-		inWi.setPickerId(mUserId);
-		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatus(WorkInstructionStatusEnum.SHORT);
-
-		// normal short will be in mActivePickWiList.
-		// short-aheads will not be.
-		if (mActivePickWiList.contains(inWi))
-			mActivePickWiList.remove(inWi);
-
-		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-
+		// Extra stuff for setup_orders is keeping track of poscon feedback information
 		//Decrement count as short
 		if (!inWi.isHousekeeping()) {
 			//The HK check should never be false
@@ -348,9 +337,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 			this.showCartRunFeedbackIfNeeded(position);
-
 		}
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -1309,17 +1296,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			sendPositionControllerInstructions(instructions);
 		else
 			LOGGER.error("container match not found in showSpecialPositionCode");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inWi
-	 * @param inQuantity
-	 */
-	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
-		setState(CheStateEnum.SHORT_PICK_CONFIRM);
-		mShortPickWi = inWi;
-		mShortPickQty = inQuantity;
 	}
 
 	// --------------------------------------------------------------------------
