@@ -192,6 +192,11 @@ public class PickSimulator {
 	public CheStateEnum currentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
+	
+	public String getPickerTypeAndState( String inPrefix){
+		return inPrefix + " " +getProcessType() + ": State is " + currentCheState();
+	}
+
 
 	public int buttonFor(WorkInstruction inWorkInstruction) {
 		// returns 0 if none

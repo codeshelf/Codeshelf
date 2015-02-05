@@ -216,10 +216,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Currently handled: 1 uncompleted, 1 completed, 0 returned, more than one returned.
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList) {
+		LOGGER.info("LineScanDeviceLogic.assignWork() entered");
 		
 		// only honor the response if we are in the state where we sent and are waiting for the response.
-		if (this.getCheStateEnum() != CheStateEnum.GET_WORK)
+		CheStateEnum currentState = this.getCheStateEnum();
+		if (!currentState.equals(CheStateEnum.GET_WORK)) {
+			LOGGER.info("LineScanDeviceLogic.assignWork(): not in GET_WORK. In " + currentState);
 			return;
+		}
 
 		int wiCount = inWorkItemList.size();
 		LOGGER.info("assignWork returned " + wiCount + " work instruction(s)");
@@ -228,8 +232,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			WorkInstruction wi = inWorkItemList.get(0);
 			if (wi.getStatus().equals(WorkInstructionStatusEnum.COMPLETE)) {
 				setReadyMsg("Already completed");
+				LOGGER.info("LineScanDeviceLogic.assignWork(): Already completed");
 				setState(CheStateEnum.READY);
 			} else {
+				LOGGER.info("LineScanDeviceLogic.assignWork(): transitioning to DO_PICK");
+
 				mActivePickWiList.clear();
 				mAllPicksWiList.clear();
 				mActivePickWiList.add(wi);
@@ -242,6 +249,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				setReadyMsg("No jobs last scan");
 			else // more than 1. Perhaps 1 complete and we should find the uncompleted one. See what the new object brings us
 				setReadyMsg(wiCount + " jobs last scan");
+			LOGGER.info("LineScanDeviceLogic.assignWork(): not 1 job");
 			setState(CheStateEnum.READY);
 		}
 	}

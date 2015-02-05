@@ -97,13 +97,16 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			if (response.getStatus() == ResponseStatus.Success) {
 				this.deviceManager.processWorkInstructionCompletedResponse(workResponse.getWorkInstructionId());
 			}
-		} 
+		}
 		//////////////////////////////////////////
 		// Handler for Get Order Detail Work-- LINE_SCAN work flow
 		else if (response instanceof GetOrderDetailWorkResponse) {
 			GetOrderDetailWorkResponse workResponse = (GetOrderDetailWorkResponse) response;
 			if (response.getStatus() == ResponseStatus.Success) {
+				LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
 				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions());
+			} else {
+				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
 			}
 		}
 
