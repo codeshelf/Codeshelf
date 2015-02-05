@@ -5,10 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,7 +16,11 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.flyweight.command.CommandControlClearPosController;
+import com.gadgetworks.flyweight.command.ICommand;
+import com.gadgetworks.flyweight.command.NetEndpoint;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
@@ -67,16 +71,12 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SETUP_COMMAND:
-				// does nothing in this workflow
-				break;
-
 			case STARTWORK_COMMAND:
 				// does nothing in this workflow
 				break;
 
 			case SHORT_COMMAND:
 				shortPickCommandReceived();
-				// needs implementation.
 				break;
 
 			case YES_COMMAND:
@@ -194,7 +194,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		// need to save new detail ID that was scanned in.
 		setLastScanedDetailId(inScanStr); // needed
 		setState(CheStateEnum.ABANDON_CHECK);
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -224,14 +223,12 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			setState(CheStateEnum.DO_PICK);
 		} else {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
-
 			if (wiCount == 0)
 				setReadyMsg("No jobs last scan");
 			else if (wiCount == 0)
 				setReadyMsg(wiCount + " jobs last scan");
 			setState(CheStateEnum.READY);
 		}
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -244,8 +241,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {
 			case DO_PICK:
+			case SHORT_PICK:
+			case ABANDON_CHECK:
+			case SHORT_PICK_CONFIRM:
 				setReadyMsg("Abandoned last job");
-				setState(CheStateEnum.READY);
+				setState(CheStateEnum.READY); // clears off job and poscon
 				break;
 
 			default:
@@ -259,7 +259,24 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void shortPickCommandReceived() {
-		// needs implementation
+		WorkInstruction wi = getActiveWorkInstruction();
+		if (wi == null) {
+			invalidScanMsg(mCheStateEnum);
+			return;
+		}
+
+		//Split it out by state
+		switch (mCheStateEnum) {
+
+			case DO_PICK:
+				setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
+
+			default:
+				invalidScanMsg(mCheStateEnum);
+				break;
+
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -294,6 +311,81 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * @param inWi
+	 * @param inQuantity
+	 */
+	private void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
+
+		inWi.setActualQuantity(inQuantity);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
+		LOGGER.info("Pick completed: " + inWi);
+
+		mActivePickWiList.remove(inWi);
+
+		// Skip the count stuff that setup_Orders process has
+
+		// Clear off any lit aisles for last job
+		clearLedControllersForWi(inWi);
+
+		if (mActivePickWiList.size() > 0) {
+			// If there's more active picks then show them.
+			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in processNormalPick");
+			// certainly not expected in Line_Scan process
+			showActivePicks();
+		} else {
+			// There's no more active picks, so transition to READY state
+			setState(CheStateEnum.READY);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * trivial helper function
+	 */
+
+	private WorkInstruction getActiveWorkInstruction() {
+		if (mActivePickWiList.size() == 0)
+			return null;
+		else
+			return mActivePickWiList.get(0);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Complete the active WI. For this process mode, only one poscon is there.
+	 * @param inButtonNum
+	 * @param inQuantity
+	 * @param buttonPosition 
+	 */
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+
+		WorkInstruction wi = getActiveWorkInstruction();
+		if (wi == null) {
+			// Simply ignore button presses when there is no work instruction.
+		} else {
+			// clearOnePositionController(buttonPosition); should not need to clear. State transition should resend what is necessary.
+			String itemId = wi.getItemId();
+			String orderDetailId = wi.getOrderDetailId();
+			LOGGER.info("Button for " + orderDetailId + " / " + itemId);
+			if (inQuantity >= wi.getPlanMinQuantity()) {
+				processNormalPick(wi, inQuantity);
+			} else {
+				// Kludge for count > 99 case
+				Integer planQuantity = wi.getPlanQuantity();
+				if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
+					processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
+				else
+					processShortPick(wi, inQuantity);
+			}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Very simple for line scan CHE. Send the one WI count to poscon #1.
 	 */
 	@Override
@@ -315,9 +407,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		Byte posconIndex = 1;
 
-		PosControllerInstr instruction = new PosControllerInstr(posconIndex,
+		PosControllerInstr instruction = new PosControllerInstr(getPosconIndex(),
 			planQuantityForPositionController,
 			minQuantityForPositionController,
 			maxQuantityForPositionController,
@@ -325,6 +416,29 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			brightness);
 		instructions.add(instruction);
 		sendPositionControllerInstructions(instructions);
+	}
+
+	// --------------------------------------------------------------------------
+	/** Hardcode to return 1 for Line_Scan process mode
+	 */
+	private Byte getPosconIndex() {
+		Byte returnValue = 1;
+		return returnValue;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void clearThePoscon() {
+		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, getPosconIndex());
+		mRadioController.sendCommand(command, getAddress(), true);
+	}
+	// --------------------------------------------------------------------------
+	/**
+	 */
+	private void clearOutCurrentJob() {
+		mActivePickWiList.clear();
+		clearThePoscon();
 	}
 
 	// --------------------------------------------------------------------------
@@ -343,6 +457,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case READY:
+				// We jump back to ready from various places. Do not clear the ready message, but do clear any job that was on before.
+				clearOutCurrentJob();
 				sendDisplayCommand(SCAN_LINE_MSG, getReadyMsg());
 				break;
 
@@ -367,6 +483,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case ABANDON_CHECK:
+				clearThePoscon(); // Clear so it does not look like you can press the button to finish the job. It will come back on NO.
 				sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
 				break;
 
@@ -376,10 +493,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	}
 
 	private void showTheActivePick() {
-		// needs implementation. Roughly corresponds to showActivePicks
-		// sendDisplayCommand(ONE_JOB_MSG, EMPTY_MSG);
-		showActivePicks();
-
+		showActivePicks(); // ancestor method works
 	}
 
 }
