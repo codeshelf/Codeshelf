@@ -927,6 +927,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.pick(button, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
 		picker.scanCommand("YES");
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(4, picker.countRemainingJobs()); // Would be 5, but with one short ahead it is 4.
 
@@ -939,6 +940,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.pick(button, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
 		picker.scanCommand("NO");
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(4, picker.countRemainingJobs()); // Still 4.
 		WorkInstruction wi2 = picker.nextActiveWi();
@@ -950,6 +952,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNotEquals(0, button);
 		quant = wi.getPlanQuantity();
 		picker.scanLocation("D302");
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000); // still on pick state, although with an error message
 
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
@@ -963,6 +966,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(button, 2);
 
 		picker.pick(button, quant);
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(3, picker.countRemainingJobs());
 
@@ -1526,6 +1530,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("D301");
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		//Make sure we have a bright 1 on the poscon
@@ -1535,6 +1540,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//COMPLETE FIRST ITEM
 		picker.pick(1, 1);
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		//SETUP AGAIN
@@ -1542,8 +1548,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("D301");
+		picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		mPropertyService.restoreHKDefaults(facility);
