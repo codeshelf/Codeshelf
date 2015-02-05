@@ -110,6 +110,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				processGetWorkStateScan(inScanPrefixStr, inContent);
 				break;
 			case DO_PICK:
+			case SHORT_PICK:
+			case SHORT_PICK_CONFIRM:
 				processPickStateScan(inScanPrefixStr, inContent);
 				break;
 
@@ -129,7 +131,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			setState(CheStateEnum.READY);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
-			invalidScanMsg(CheStateEnum.IDLE);
+			setReadyMsg("Invalid scan");
+
 		}
 	}
 
@@ -151,7 +154,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	private void processGetWorkStateScan(final String inScanPrefixStr, final String inScanStr) {
 		if (!inScanPrefixStr.isEmpty()) {
 			LOGGER.info("processReadyStateScan: Expecting order detail ID: " + inScanStr);
-			invalidScanMsg(CheStateEnum.READY);
+			setReadyMsg("Invalid scan");
 			return;
 		}
 		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
@@ -166,7 +169,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	private void processReadyStateScan(final String inScanPrefixStr, final String inScanStr) {
 		if (!inScanPrefixStr.isEmpty()) {
 			LOGGER.info("processReadyStateScan: Expecting order detail ID: " + inScanStr);
-			invalidScanMsg(CheStateEnum.READY);
+			setReadyMsg("Invalid scan");
 			return;
 		}
 		// if an apparently good order detail ID, send that off to the backend, but transition to a "querying" state.
@@ -187,7 +190,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 		if (!inScanPrefixStr.isEmpty()) {
 			LOGGER.info("processPickStateScan: Expecting order detail ID: " + inScanStr);
-			invalidScanMsg(CheStateEnum.READY);
+			setReadyMsg("Invalid scan");
 			return;
 		}
 
@@ -247,6 +250,13 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				setReadyMsg("Abandoned last job");
 				setState(CheStateEnum.READY); // clears off job and poscon
 				break;
+				
+			case READY:
+			case IDLE:
+				setReadyMsg(""); // If user is looking at message on ready state, clear it. But do not change state.
+				// however, call the setState as it forces the CHE update out.
+				setState(currentState);
+				break;
 
 			default:
 				break;
@@ -261,7 +271,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	protected void shortPickCommandReceived() {
 		WorkInstruction wi = getActiveWorkInstruction();
 		if (wi == null) {
-			invalidScanMsg(mCheStateEnum);
+			setReadyMsg("Invalid scan");
 			return;
 		}
 
@@ -272,7 +282,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
 
 			default:
-				invalidScanMsg(mCheStateEnum);
+				setReadyMsg("No job to short");
 				break;
 
 		}
@@ -433,6 +443,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, getPosconIndex());
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 */
