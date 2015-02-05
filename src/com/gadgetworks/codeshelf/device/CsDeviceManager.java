@@ -420,8 +420,8 @@ public class CsDeviceManager implements
 						oldNetworkDevice.getGuid(),
 						deviceType,
 						deviceGuid);
-					doDeleteNetDevice(persistentId, deviceGuid); // try this?
-					// radioController.removeNetworkDevice(oldNetworkDevice); // only this originally
+					// doDeleteNetDevice(persistentId, deviceGuid); // try this?
+					radioController.removeNetworkDevice(oldNetworkDevice); // only this originally
 					// mDeviceMap.remove(deviceGuid); // or this?
 				} else {
 					LOGGER.error("Changing NetGuid of deviceType={}; from guid={} to guid={} but couldn't find original network device",
