@@ -110,7 +110,7 @@ public class PickSimulator {
 		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
 	}
 
-	public void simulateCommitByChangingTransaction(PersistenceService inService) {
+/*	public void simulateCommitByChangingTransaction(PersistenceService inService) {
 		// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
 		// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
 		if (inService == null || !inService.hasActiveTransaction()) {
@@ -120,7 +120,7 @@ public class PickSimulator {
 			inService.beginTenantTransaction();
 		}
 	}
-
+*/
 	public void logout() {
 		scanCommand("LOGOUT");
 		waitForCheState(CheStateEnum.IDLE, 1000);
@@ -262,11 +262,14 @@ public class PickSimulator {
 			CheStateEnum currentState = cheDeviceLogic.getCheStateEnum();
 			if (currentState.equals(state)) {
 				// expected state found - all good
+
+				// wait for Che state change to "settle"
+				ThreadUtils.sleep(500);
 				return;
 			}
 		}
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
-		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);
+		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);		
 	}
 
 	public boolean hasLastSentInstruction(byte position) {

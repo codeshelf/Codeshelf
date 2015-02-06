@@ -291,7 +291,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// Ideally, the new PickSimulator() would get the right processmode from the CHE. But we have to set it.
 		LOGGER.info(picker.getPickerTypeAndState("-1:"));
 		picker.updateProcessType("CHE_LINESCAN");
-		picker.simulateCommitByChangingTransaction(this.persistenceService);
+		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		LOGGER.info(picker.getPickerTypeAndState("0:"));
 				
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -308,12 +308,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// login again
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
 		LOGGER.info(picker.getPickerTypeAndState("3:"));
-		picker.simulateCommitByChangingTransaction(this.persistenceService);
+		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		LOGGER.info(picker.getPickerTypeAndState("4:"));
 		picker.scanOrderDetailId("12345.1"); // does not add "%"
-		picker.simulateCommitByChangingTransaction(this.persistenceService);
+		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		LOGGER.info(picker.getPickerTypeAndState("5:"));
 		
 		/*
