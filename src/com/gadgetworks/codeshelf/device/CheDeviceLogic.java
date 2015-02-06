@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.device;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -13,7 +14,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.Map.Entry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.gadgetworks.codeshelf.model.WorkInstructionCount;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlClearPosController;
@@ -90,7 +91,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
 	protected static final String			GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
 	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
-	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)"); // remove this later
+	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
 
 	protected static final String			STARTWORK_COMMAND						= "START";
 	protected static final String			SETUP_COMMAND							= "SETUP";
@@ -121,12 +122,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
-	
+
 	// Remember the first string in last display message sent
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String mRecentCheDisplayString;
+	private String							mRecentCheDisplayString;
 
 	// The active pick WIs.
 	@Accessors(prefix = "m")
@@ -140,6 +141,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected Integer						mShortPickQty;
 
 	protected boolean						connectedToServer						= true;
+	private boolean							mInSetState								= false;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -156,6 +158,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Override
 	public final short getSleepSeconds() {
 		return 180;
+	}
+
+	// See confluence Codeshelf software patterns page on setState.
+	protected void markInSetState(boolean inValue) {
+		mInSetState = inValue;
+	}	
+	public boolean inSetState(){
+		return mInSetState;
 	}
 
 	public String getDeviceType() {
@@ -200,6 +210,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	}
 
+	protected void doSetRecentCheDisplayString(String inFirstLine) {
+		// a place to override that does not interfere with lomboc
+		setRecentCheDisplayString(inFirstLine);
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inLine1Message
@@ -212,11 +227,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		final String inLine3Message,
 		final String inLine4Message) {
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
-		setRecentCheDisplayString(inLine1Message);
+		doSetRecentCheDisplayString(inLine1Message);
 
 		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
 		// Lots of upstream code generates display messages.
-		
+
 		if (!this.isDeviceAssociated()) {
 			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
 			// This is far less logging than if the command actually goes, so might as well say what is going on.
@@ -250,8 +265,102 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inDescription
 	 */
 	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
-		LOGGER.info("need override for sendDisplayWorkInstruction()");
-		// much of the function in SetupOrdersDeviceLogic might be appropriate.
+		// temporary
+		LOGGER.info("sendDisplayWorkInstruction");
+
+		int planQty = wi.getPlanQuantity();
+
+		String[] pickInfoLines = { "", "", "" };
+
+		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+			//First line is SKU, 2nd line is desc + qty if >= 99
+			String info = wi.getItemId();
+
+			//Make sure we do not exceed 40 chars
+			if (info.length() > 40) {
+				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
+				info = info.substring(0, 40);
+			}
+
+			pickInfoLines[0] = info;
+
+			String displayDescription = wi.getDescription();
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				displayDescription = planQty + " " + displayDescription;
+			}
+
+			//Add description
+			int charPos = 0;
+			for (int line = 1; line < 3; line++) {
+				if (charPos < displayDescription.length()) {
+					int toGet = Math.min(20, displayDescription.length() - charPos);
+					pickInfoLines[line] = displayDescription.substring(charPos, charPos + toGet);
+					charPos += toGet;
+				}
+			}
+
+		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+
+			String displayDescription = wi.getDescription();
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				displayDescription = planQty + " " + displayDescription;
+			}
+
+			int pos = 0;
+			for (int line = 0; line < 3; line++) {
+				if (pos < displayDescription.length()) {
+					int toGet = Math.min(20, displayDescription.length() - pos);
+					pickInfoLines[line] = displayDescription.substring(pos, pos + toGet);
+					pos += toGet;
+				}
+			}
+
+			// Check if there is more description to add to the last line.
+			if (pos < displayDescription.length()) {
+				int toGet = Math.min(20, displayDescription.length() - pos);
+				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
+			}
+		} else {
+			//DEFAULT TO SKU
+			//First line is SKU, 2nd line is QTY if >= 99
+			String info = wi.getItemId();
+
+			//Make sure we do not exceed 40 chars
+			if (info.length() > 40) {
+				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
+				info = info.substring(0, 40);
+			}
+
+			pickInfoLines[0] = info;
+
+			String quantity = "";
+			if (planQty >= maxCountForPositionControllerDisplay) {
+				quantity = "QTY " + planQty;
+			}
+
+			//Make sure we do not exceed 40 chars
+			if (quantity.length() > 40) {
+				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
+				quantity = quantity.substring(0, 40);
+			}
+
+			pickInfoLines[1] = quantity;
+		}
+
+		//Override last line if short is needed
+		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
+			pickInfoLines[2] = "DECREMENT POSITION";
+		}
+
+		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
+		// GoodEggs many locations orders hitting too long case
+		String cleanedPickInstructions = wi.getPickInstruction();
+		if (cleanedPickInstructions.length() > 19) {
+			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
+		}
+
+		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -619,8 +728,18 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
-		LOGGER.error("doShortTransaction() override needed");
-		// much of the SetupOrdersDeviceLogic one is appropriate still appropriate
+
+		inWi.setActualQuantity(inActualPickQuantity);
+		inWi.setPickerId(mUserId);
+		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		inWi.setStatus(WorkInstructionStatusEnum.SHORT);
+
+		// normal short will be in mActivePickWiList.
+		// short-aheads will not be.
+		if (mActivePickWiList.contains(inWi))
+			mActivePickWiList.remove(inWi);
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
 
 	protected void showCartRunFeedbackIfNeeded(Byte inPosition) {
@@ -742,7 +861,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inQuantity
 	 */
 	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
-		LOGGER.error("processShortPick() needs override");
+		setState(CheStateEnum.SHORT_PICK_CONFIRM);
+		mShortPickWi = inWi;
+		mShortPickQty = inQuantity;
 	}
 
 	protected void clearOnePositionController(Byte inPosition) {
@@ -828,7 +949,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	private void redisplayState() {
 		setState(mCheStateEnum);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
@@ -847,7 +968,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		if (mActivePickWiList.size() > 0) {
 			// The first WI has the SKU and location info.
 			WorkInstruction firstWi = mActivePickWiList.get(0);
-			
+
 			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 
 			// Send the CHE a display command (any of the WIs has the info we need).
@@ -867,82 +988,87 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
 			// List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
 			String wiCmdString = firstWi.getLedCmdStream();
-			LOGGER.info("deserialize and send out this WI cmd string: " + wiCmdString);
-			List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wiCmdString);
-			if (!LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroups))
-				LOGGER.error("WI cmd string did not deserialize properly");
 
-			// It is important sort the CmdGroups.
-			Collections.sort(ledCmdGroups, new CmdGroupComparator());
+			// If the location is not configured to be lit, most of the following is a noop.
+			// an empty command string is "[]"
+			if (!wiCmdString.equals("[]")) {
+				LOGGER.info("deserialize and send out this WI cmd string: " + wiCmdString);
+				List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wiCmdString);
+				if (!LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroups))
+					LOGGER.error("WI cmd string did not deserialize properly");
 
-			INetworkDevice lastLedController = null;
-			// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
-			// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
+				// It is important to sort the CmdGroups.
+				Collections.sort(ledCmdGroups, new CmdGroupComparator());
 
-			String myGuidStr = getMyGuidStrForLog();
+				INetworkDevice lastLedController = null;
+				// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
+				// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
 
-			for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-				LedCmdGroup ledCmdGroup = iterator.next();
+				String myGuidStr = getMyGuidStrForLog();
 
-				// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
-				NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
-				INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
+				for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+					LedCmdGroup ledCmdGroup = iterator.next();
 
-				if (ledController != null) {
-					// jr/hibernate. See null channel in testPickViaChe test. Screen
-					Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-					if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
-						String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: "
-								+ firstWi.getContainerId();
-						LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
-						continue;
-					}
+					// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
+					NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
+					INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
 
-					Short startLedNum = ledCmdGroup.getPosNum();
-					Short currLedNum = startLedNum;
+					if (ledController != null) {
+						// jr/hibernate. See null channel in testPickViaChe test. Screen
+						Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+						if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
+							String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: "
+									+ firstWi.getContainerId();
+							LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence"
+									+ wiInfo);
+							continue;
+						}
 
-					// Clear the last LED commands to this controller if the last controller was different.
-					if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
-						ledControllerClearLeds(nextControllerGuid);
-						lastLedController = ledController;
-					}
+						Short startLedNum = ledCmdGroup.getPosNum();
+						Short currLedNum = startLedNum;
 
-					NetGuid ledControllerGuid = ledController.getGuid();
-					String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
-					// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-					String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
-					Integer setCount = 0;
-					for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+						// Clear the last LED commands to this controller if the last controller was different.
+						if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
+							ledControllerClearLeds(nextControllerGuid);
+							lastLedController = ledController;
+						}
 
-						// why are we doing this? Aren't the samples made correctly?
-						ledSample.setPosition(currLedNum++);
+						NetGuid ledControllerGuid = ledController.getGuid();
+						String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
+						// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+						String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. "
+								+ EffectEnum.FLASH;
+						Integer setCount = 0;
+						for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
-						// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
-						ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
+							// why are we doing this? Aren't the samples made correctly?
+							ledSample.setPosition(currLedNum++);
 
-						// Log concisely instead of each ledCmd individually
-						setCount++;
-						if (setCount <= kMaxLedSetsToLog)
-							toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
-					}
-					if (setCount > 0)
-						LOGGER.info(toLogString);
-					if (setCount > kMaxLedSetsToLog)
-						LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
+							// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
+							ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
 
-					if (ledController.isDeviceAssociated()) {
-						ledControllerShowLeds(ledControllerGuid);
+							// Log concisely instead of each ledCmd individually
+							setCount++;
+							if (setCount <= kMaxLedSetsToLog)
+								toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
+						}
+						if (setCount > 0)
+							LOGGER.info(toLogString);
+						if (setCount > kMaxLedSetsToLog)
+							LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
+
+						if (ledController.isDeviceAssociated()) {
+							ledControllerShowLeds(ledControllerGuid);
+						}
 					}
 				}
 			}
-			
+
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
 			doPosConDisplaysforWi(firstWi);
-
 		}
-		ledControllerShowLeds(getGuid());
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.

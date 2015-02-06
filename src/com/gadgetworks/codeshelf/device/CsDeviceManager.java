@@ -421,7 +421,9 @@ public class CsDeviceManager implements
 						oldNetworkDevice.getGuid(),
 						deviceType,
 						deviceGuid);
-					radioController.removeNetworkDevice(oldNetworkDevice);
+					// doDeleteNetDevice(persistentId, deviceGuid); // try this?
+					radioController.removeNetworkDevice(oldNetworkDevice); // only this originally
+					// mDeviceMap.remove(deviceGuid); // or this?
 				} else {
 					LOGGER.error("Changing NetGuid of deviceType={}; from guid={} to guid={} but couldn't find original network device",
 						deviceType,
@@ -499,6 +501,7 @@ public class CsDeviceManager implements
 		Preconditions.checkNotNull(persistentId, "persistentId cannot be null");
 		Preconditions.checkNotNull(deviceGuid, "deviceGuidc annot be null");
 		Preconditions.checkNotNull(newProcessType, "newProcessTypecannot be null");
+		LOGGER.info("updateOneDevice: " + deviceGuid + " " + newProcessType);
 		// make sure this GUID exists.
 		INetworkDevice existingDevice = mDeviceMap.get(persistentId);
 		if (existingDevice == null || !deviceGuid.equals(existingDevice.getGuid())) {
@@ -513,6 +516,7 @@ public class CsDeviceManager implements
 	public void updateNetwork(CodeshelfNetwork network) {
 		Set<UUID> updateDevices = new HashSet<UUID>();
 		// update network devices
+		LOGGER.info("updateNetwork() called. Creating or updating deviceLogic for each CHE");
 		for (Che che : network.getChes().values()) {
 			try {
 				UUID id = che.getPersistentId();
@@ -597,6 +601,7 @@ public class CsDeviceManager implements
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
+			LOGGER.info("processOrderDetailWorkResponse calling cheDevie.assignWork()");
 			cheDevice.assignWork(workInstructions); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);

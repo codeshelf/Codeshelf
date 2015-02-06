@@ -31,6 +31,12 @@ public class CriteriaRegistry {
 					"cheId", UUID.class,
 					"assignedTimestamp", Timestamp.class));
 	
+		// Initially, just does all for the CHE. Need to pass in timestamp parameter that is interpreted to filter by day
+		// Might be a little tricky to reliably get by day in local time.
+		indexedCriteria.put("workInstructionByCheAndDay", 
+			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId", 
+					"cheId", UUID.class));
+	
 		indexedCriteria.put("workInstructionBySku",
 			new TypedCriteria("from WorkInstruction where itemMaster.domainId = :sku", "sku", String.class));
 	

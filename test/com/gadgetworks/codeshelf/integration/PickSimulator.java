@@ -10,16 +10,11 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.CsSiteControllerApplication;
 import com.gadgetworks.codeshelf.device.CheDeviceLogic;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
 import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.NetGuid;
@@ -52,20 +47,10 @@ public class PickSimulator {
 		waitForCheState(inState, 1000);
 	}
 
-	public String getProcessType(){
+	public String getProcessType() {
 		// what process mode are we using?
 		return cheDeviceLogic.getDeviceType();
 	}
-	
-	public void updateProcessType(String inProcessMode){
-		ICsDeviceManager theDeviceManager = cheDeviceLogic.getDeviceManager();
-		// We will use the same GUID and persistentId as we now have.
-		NetGuid theGuid = cheDeviceLogic.getGuid();
-		UUID theUuid = cheDeviceLogic.getPersistentId();
-		// old one was deleted and removed. Keep our new one
-		cheDeviceLogic = (CheDeviceLogic) theDeviceManager.updateOneDevice(theUuid, theGuid, inProcessMode);				
-	}
-	
 
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.
@@ -110,17 +95,17 @@ public class PickSimulator {
 		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
 	}
 
-	public void simulateCommitByChangingTransaction(PersistenceService inService) {
-		// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
-		// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
-		if (inService == null || !inService.hasActiveTransaction()) {
-			LOGGER.error("bad call to simulateCommitByChangingTransaction");
-		} else {
-			inService.commitTenantTransaction();
-			inService.beginTenantTransaction();
+	/*	public void simulateCommitByChangingTransaction(PersistenceService inService) {
+			// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
+			// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
+			if (inService == null || !inService.hasActiveTransaction()) {
+				LOGGER.error("bad call to simulateCommitByChangingTransaction");
+			} else {
+				inService.commitTenantTransaction();
+				inService.beginTenantTransaction();
+			}
 		}
-	}
-
+	*/
 	public void logout() {
 		scanCommand("LOGOUT");
 		waitForCheState(CheStateEnum.IDLE, 1000);
@@ -148,6 +133,13 @@ public class PickSimulator {
 	 */
 	public void scanOrderId(String inOrderId) {
 		cheDeviceLogic.scanCommandReceived(inOrderId);
+	}
+
+	/**
+	 * Same as scanOrderId. DEV-621. Just given this name for clarity of JUnit tests.
+	 */
+	public void scanOrderDetailId(String inOrderDetailId) {
+		cheDeviceLogic.scanCommandReceived(inOrderDetailId);
 	}
 
 	public void scanPosition(String inPositionId) {
@@ -186,6 +178,10 @@ public class PickSimulator {
 		return cheDeviceLogic.getCheStateEnum();
 	}
 
+	public String getPickerTypeAndState(String inPrefix) {
+		return inPrefix + " " + getProcessType() + ": State is " + currentCheState();
+	}
+
 	public int buttonFor(WorkInstruction inWorkInstruction) {
 		// returns 0 if none
 		if (!getActivePickList().contains(inWorkInstruction))
@@ -201,6 +197,23 @@ public class PickSimulator {
 	public List<WorkInstruction> getActivePickList() {
 		List<WorkInstruction> activeList = cheDeviceLogic.getActivePickWiList();
 		return activeList;
+	}
+
+	/**
+	 * Careful: simultaneous work instruction situation might have more than one active pick
+	 * return null if none, or the WI if 1. Fails if more than one.
+	 */
+	public WorkInstruction getActivePick() {
+		List<WorkInstruction> activeList = getActivePickList();
+		int count = activeList.size();
+		if (count == 0)
+			return null;
+		else if (count == 1)
+			return activeList.get(0);
+		else {
+			Assert.fail("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
+			return null;
+		}
 	}
 
 	/**
@@ -248,13 +261,18 @@ public class PickSimulator {
 			// retry every 100ms
 			ThreadUtils.sleep(100);
 			CheStateEnum currentState = cheDeviceLogic.getCheStateEnum();
-			if (currentState.equals(state)) {
+			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
+			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
+			// some of the side effects after this call.
+			if (currentState.equals(state) && !cheDeviceLogic.inSetState()) {
 				// expected state found - all good
 				return;
 			}
 		}
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
-		Assert.fail("Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState);
+		String theProblem = "Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState;
+		LOGGER.error(theProblem);
+		Assert.fail(theProblem);
 	}
 
 	public boolean hasLastSentInstruction(byte position) {
@@ -314,7 +332,7 @@ public class PickSimulator {
 		}
 
 	}
-	
+
 	/**
 	 * Intentionally incomplete. Could parameterize for each line, but initially only remember the first line.
 	 */

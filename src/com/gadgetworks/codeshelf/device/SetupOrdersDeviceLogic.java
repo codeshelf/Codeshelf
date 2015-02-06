@@ -29,9 +29,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
-import com.gadgetworks.flyweight.command.EffectEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 
 /**
@@ -76,104 +74,109 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	protected void setState(final CheStateEnum inCheState) {
-		CheStateEnum previousState = mCheStateEnum;
-		boolean isSameState = previousState == inCheState;
-		mCheStateEnum = inCheState;
-		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
+		try {
+			markInSetState(true);
+			CheStateEnum previousState = mCheStateEnum;
+			boolean isSameState = previousState == inCheState;
+			mCheStateEnum = inCheState;
+			LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
-		switch (inCheState) {
-			case IDLE:
-				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
-				break;
+			switch (inCheState) {
+				case IDLE:
+					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+					break;
 
-			case COMPUTE_WORK:
-				sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
-				break;
+				case COMPUTE_WORK:
+					sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
+					break;
 
-			case GET_WORK:
-				sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
-				break;
+				case GET_WORK:
+					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
+					break;
 
-			case LOCATION_SELECT:
-				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-				this.showCartSetupFeedback();
-				break;
+				case LOCATION_SELECT:
+					sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 
-			case LOCATION_SELECT_REVIEW:
-				sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
-					LOCATION_SELECT_REVIEW_MSG_LINE_2,
-					LOCATION_SELECT_REVIEW_MSG_LINE_3,
-					SHOWING_WI_COUNTS);
-				this.showCartSetupFeedback();
-				break;
+				case LOCATION_SELECT_REVIEW:
+					sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
+						LOCATION_SELECT_REVIEW_MSG_LINE_2,
+						LOCATION_SELECT_REVIEW_MSG_LINE_3,
+						SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 
-			case CONTAINER_SELECT:
-				if (mPositionToContainerMap.size() < 1) {
-					sendDisplayCommand(getContainerSetupMsg(), EMPTY_MSG);
-				} else {
-					sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
-				}
-				showContainerAssainments();
-				break;
+				case CONTAINER_SELECT:
+					if (mPositionToContainerMap.size() < 1) {
+						sendDisplayCommand(getContainerSetupMsg(), EMPTY_MSG);
+					} else {
+						sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
+					}
+					showContainerAssainments();
+					break;
 
-			case CONTAINER_POSITION:
-				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
-				showContainerAssainments();
-				break;
+				case CONTAINER_POSITION:
+					sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
+					showContainerAssainments();
+					break;
 
-			case CONTAINER_POSITION_INVALID:
-				invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case CONTAINER_POSITION_INVALID:
+					invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case CONTAINER_POSITION_IN_USE:
-				invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case CONTAINER_POSITION_IN_USE:
+					invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case CONTAINER_SELECTION_INVALID:
-				invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case CONTAINER_SELECTION_INVALID:
+					invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case NO_CONTAINERS_SETUP:
-				invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case NO_CONTAINERS_SETUP:
+					invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case SHORT_PICK_CONFIRM:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
-				break;
+				case SHORT_PICK_CONFIRM:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					break;
 
-			case SHORT_PICK:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				// first try. Show normally, but based on state, the wi min count will be set to zero.
-				showActivePicks();
-				break;
+				case SHORT_PICK:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					// first try. Show normally, but based on state, the wi min count will be set to zero.
+					showActivePicks();
+					break;
 
-			case DO_PICK:
-				if (isSameState || previousState == CheStateEnum.GET_WORK) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
-				// fewer direct calls to showActivePicks elsewhere.
-				break;
+				case DO_PICK:
+					if (isSameState || previousState == CheStateEnum.GET_WORK) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
+					// fewer direct calls to showActivePicks elsewhere.
+					break;
 
-			case PICK_COMPLETE:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
-				break;
+				case PICK_COMPLETE:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
+					break;
 
-			case NO_WORK:
-				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-				this.showCartSetupFeedback();
-				break;
+				case NO_WORK:
+					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 
-			default:
-				break;
+				default:
+					break;
+			}
+		} finally {
+			markInSetState(false);
 		}
 	}
 
@@ -315,23 +318,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The guts of the short transaction
-	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
+	 * call the short transaction
+	 * then update our local counts
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
+		// CheDeviceLogic does the main shorting transactions
+		super.doShortTransaction(inWi, inActualPickQuantity);
 
-		inWi.setActualQuantity(inActualPickQuantity);
-		inWi.setPickerId(mUserId);
-		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatus(WorkInstructionStatusEnum.SHORT);
-
-		// normal short will be in mActivePickWiList.
-		// short-aheads will not be.
-		if (mActivePickWiList.contains(inWi))
-			mActivePickWiList.remove(inWi);
-
-		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-
+		// Extra stuff for setup_orders is keeping track of poscon feedback information
 		//Decrement count as short
 		if (!inWi.isHousekeeping()) {
 			//The HK check should never be false
@@ -348,9 +342,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 			this.showCartRunFeedbackIfNeeded(position);
-
 		}
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -1211,110 +1203,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Breakup the description into three static lines no longer than 20 characters.
-	 * Except the last line can be up to 40 characters (since it scrolls).
-	 * Important change from v3. If quantity > 98, then tweak the description adding the count to the start.
-	 * @param inPickInstructions
-	 * @param inDescription
-	 */
-	@Override
-	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
-		int planQty = wi.getPlanQuantity();
-
-		String[] pickInfoLines = { "", "", "" };
-
-		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-			//First line is SKU, 2nd line is desc + qty if >= 99
-			String info = wi.getItemId();
-
-			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
-			}
-
-			pickInfoLines[0] = info;
-
-			String displayDescription = wi.getDescription();
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + displayDescription;
-			}
-
-			//Add description
-			int charPos = 0;
-			for (int line = 1; line < 3; line++) {
-				if (charPos < displayDescription.length()) {
-					int toGet = Math.min(20, displayDescription.length() - charPos);
-					pickInfoLines[line] = displayDescription.substring(charPos, charPos + toGet);
-					charPos += toGet;
-				}
-			}
-
-		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-
-			String displayDescription = wi.getDescription();
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + displayDescription;
-			}
-
-			int pos = 0;
-			for (int line = 0; line < 3; line++) {
-				if (pos < displayDescription.length()) {
-					int toGet = Math.min(20, displayDescription.length() - pos);
-					pickInfoLines[line] = displayDescription.substring(pos, pos + toGet);
-					pos += toGet;
-				}
-			}
-
-			// Check if there is more description to add to the last line.
-			if (pos < displayDescription.length()) {
-				int toGet = Math.min(20, displayDescription.length() - pos);
-				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
-			}
-		} else {
-			//DEFAULT TO SKU
-			//First line is SKU, 2nd line is QTY if >= 99
-			String info = wi.getItemId();
-
-			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
-			}
-
-			pickInfoLines[0] = info;
-
-			String quantity = "";
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				quantity = "QTY " + planQty;
-			}
-
-			//Make sure we do not exceed 40 chars
-			if (quantity.length() > 40) {
-				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
-				quantity = quantity.substring(0, 40);
-			}
-
-			pickInfoLines[1] = quantity;
-		}
-
-		//Override last line if short is needed
-		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
-			pickInfoLines[2] = "DECREMENT POSITION";
-		}
-
-		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
-		// GoodEggs many locations orders hitting too long case
-		String cleanedPickInstructions = wi.getPickInstruction();
-		if (cleanedPickInstructions.length() > 19) {
-			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
-		}
-
-		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
 	 */
 	@Override
@@ -1366,7 +1254,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			for (WorkInstruction wi : mActivePickWiList) {
 				for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+						Byte posconIndex = Byte.valueOf(mapEntry.getKey());
+						PosControllerInstr instruction = new PosControllerInstr(posconIndex,
 							planQuantityForPositionController,
 							minQuantityForPositionController,
 							maxQuantityForPositionController,
@@ -1411,17 +1300,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			sendPositionControllerInstructions(instructions);
 		else
 			LOGGER.error("container match not found in showSpecialPositionCode");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inWi
-	 * @param inQuantity
-	 */
-	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
-		setState(CheStateEnum.SHORT_PICK_CONFIRM);
-		mShortPickWi = inWi;
-		mShortPickQty = inQuantity;
 	}
 
 	// --------------------------------------------------------------------------

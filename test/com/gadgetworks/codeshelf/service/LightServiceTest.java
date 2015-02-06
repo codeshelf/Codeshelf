@@ -22,6 +22,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.device.LedCmdGroup;
 import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
@@ -55,10 +57,13 @@ import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 
 public class LightServiceTest extends EdiTestABC {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LightServiceTest.class);
 	
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException {
+		
+		LOGGER.info("0: Starting test:  getting facility");
 		this.getPersistenceService().beginTenantTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
@@ -67,6 +72,7 @@ public class LightServiceTest extends EdiTestABC {
 		Facility facility = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		this.getPersistenceService().commitTenantTransaction();
 
+		LOGGER.info("1: reload facility. Get childre aisle, tiers.");
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Aisle aisle = (Aisle) facility.getChildren().get(0);
@@ -74,17 +80,19 @@ public class LightServiceTest extends EdiTestABC {
 		int itemsPerTier = 5;
 
 		
+		LOGGER.info("2: setup inventory.");
 		InventoryGenerator inventoryGenerator = new InventoryGenerator((InventoryCsvImporter) createInventoryImporter());
 		inventoryGenerator.setupVirtuallySlottedInventory(aisle, itemsPerTier);
 		this.getPersistenceService().commitTenantTransaction();
 
+		LOGGER.info("3: get inventory in working order for one aisle.");
 		this.getPersistenceService().beginTenantTransaction();
-
 		aisle = Aisle.DAO.reload(aisle);
 		List<Item> items = aisle.getInventoryInWorkingOrder();
 		Assert.assertNotEquals(0,  items.size());
 		this.getPersistenceService().commitTenantTransaction();
 		
+		LOGGER.info("4: mockProp.getPropertyAsColor");
 		SessionManager sessionManager = mock(SessionManager.class);
 		PropertyService mockProp = mock(PropertyService.class);
 		
@@ -95,8 +103,12 @@ public class LightServiceTest extends EdiTestABC {
 		    }
 		});
 		
+		LOGGER.info("5: new LightService");
 		LightService lightService = new LightService(mockProp, sessionManager, Executors.newSingleThreadScheduledExecutor());
 
+		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
+		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
+		// and pass through to Future<Void> chaserLight()
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		aisle = Aisle.DAO.reload(aisle);
@@ -104,9 +116,12 @@ public class LightServiceTest extends EdiTestABC {
 		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
+		LOGGER.info("7: ArgumentCaptor");
+
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
 		verify(sessionManager, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
 		
+		LOGGER.info("8: assertWillLightItem() from messagesCaptor.getAllValues");
 		List<MessageABC> messages = messagesCaptor.getAllValues();
 		Iterator<Item> itemIterator = items.iterator();
 		for (MessageABC messageABC : messages) {

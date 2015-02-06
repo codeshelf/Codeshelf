@@ -366,7 +366,8 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		logWiList(serverWiList);
 		
-		picker.simulateCommitByChangingTransaction(this.persistenceService);
+		
+		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		List<WorkInstruction> cheWis = che1.getCheWorkInstructions();
