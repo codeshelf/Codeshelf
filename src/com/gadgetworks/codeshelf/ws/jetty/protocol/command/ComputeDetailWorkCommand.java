@@ -32,7 +32,7 @@ public class ComputeDetailWorkCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		GetOrderDetailWorkResponse response = new GetOrderDetailWorkResponse();
-		String cheId = request.getCheId();
+		String cheId = request.getDeviceId();
 		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();

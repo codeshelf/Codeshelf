@@ -1,27 +1,21 @@
 package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
 
-import java.util.UUID;
-
 import lombok.Getter;
 import lombok.Setter;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 
-public class CompleteWorkInstructionRequest extends RequestABC {
+public class CompleteWorkInstructionRequest extends DeviceRequest {
 
 	@Getter
 	@Setter
 	WorkInstruction	workInstruction;
 
-	@Getter
-	@Setter
-	private UUID	cheId;
-
 	public CompleteWorkInstructionRequest() {
 	}
 
-	public CompleteWorkInstructionRequest(UUID cheId, WorkInstruction workInstruction) {
-		this.cheId = cheId;
+	public CompleteWorkInstructionRequest(String cheId, WorkInstruction workInstruction) {
+		this.setDeviceId(cheId);
 		this.workInstruction = workInstruction;
 	}
 

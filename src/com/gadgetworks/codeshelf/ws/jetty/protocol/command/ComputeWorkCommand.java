@@ -36,7 +36,7 @@ public class ComputeWorkCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		ComputeWorkResponse response = new ComputeWorkResponse();
-		String cheId = request.getCheId();
+		String cheId = request.getDeviceId();
 		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
@@ -44,7 +44,7 @@ public class ComputeWorkCommand extends CommandABC {
 			WorkList workList = workService.computeWorkInstructions(che, request.getContainerIds());
 
 			//Get the counts
-			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList,	request.getContainerIds());
+			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList);
 			
 			// ~bhe: should we check for null/zero and return a different status?
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
@@ -61,8 +61,7 @@ public class ComputeWorkCommand extends CommandABC {
 	/**
 	 * Compute work instruction counts by containerId
 	 */
-	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList workList,
-		List<String> containerIds) {
+	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList workList) {
 		List<WorkInstruction> workInstructions = workList.getInstructions();
 		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
 		for (WorkInstruction wi : workInstructions) {
