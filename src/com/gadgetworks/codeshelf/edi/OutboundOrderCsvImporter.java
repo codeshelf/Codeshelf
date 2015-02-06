@@ -798,22 +798,23 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 		// set preferred location, if valid.
 		// Note: we will set to blank if the value is invalid for several reasons. The idea is to only allow good data into the system.
+		// From version 12, we allow  non-modeled preferred location into the system.
 		String preferredLocation = inCsvBean.getLocationId();
 		if (preferredLocation != null) {
 			// check that location is valid
 			LocationAlias locationAlias = inFacility.getLocationAlias(preferredLocation);
 			if (locationAlias == null) {
-				LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean);
-				preferredLocation = "";
+				// LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean); // not much point to this warning. Will happen all the time.
+				// preferredLocation = "";
 			} else {
 				Location location = locationAlias.getMappedLocation();
 				if (location == null) {
-					LOGGER.warn("alias found, but no location for preferredLocation: " + inCsvBean);
-					preferredLocation = "";
+					LOGGER.warn("alias found, but no location for preferredLocation: " + inCsvBean); // odd case, so warn
+					// preferredLocation = "";
 				} else {
 					if (!location.getActive()) {
-						LOGGER.warn("alias and inactive location found for preferredLocation: " + inCsvBean);
-						preferredLocation = "";
+						LOGGER.warn("alias and inactive location found for preferredLocation: " + inCsvBean); // odd case, so warn
+						// preferredLocation = "";
 					}
 				}
 			}

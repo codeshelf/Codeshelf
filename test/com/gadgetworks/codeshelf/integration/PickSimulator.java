@@ -47,11 +47,11 @@ public class PickSimulator {
 		waitForCheState(inState, 1000);
 	}
 
-	public String getProcessType(){
+	public String getProcessType() {
 		// what process mode are we using?
 		return cheDeviceLogic.getDeviceType();
 	}
-	
+
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.
 		scanCommand("SETUP");
@@ -95,17 +95,17 @@ public class PickSimulator {
 		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
 	}
 
-/*	public void simulateCommitByChangingTransaction(PersistenceService inService) {
-		// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
-		// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
-		if (inService == null || !inService.hasActiveTransaction()) {
-			LOGGER.error("bad call to simulateCommitByChangingTransaction");
-		} else {
-			inService.commitTenantTransaction();
-			inService.beginTenantTransaction();
+	/*	public void simulateCommitByChangingTransaction(PersistenceService inService) {
+			// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
+			// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
+			if (inService == null || !inService.hasActiveTransaction()) {
+				LOGGER.error("bad call to simulateCommitByChangingTransaction");
+			} else {
+				inService.commitTenantTransaction();
+				inService.beginTenantTransaction();
+			}
 		}
-	}
-*/
+	*/
 	public void logout() {
 		scanCommand("LOGOUT");
 		waitForCheState(CheStateEnum.IDLE, 1000);
@@ -177,11 +177,10 @@ public class PickSimulator {
 	public CheStateEnum currentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
-	
-	public String getPickerTypeAndState( String inPrefix){
-		return inPrefix + " " +getProcessType() + ": State is " + currentCheState();
-	}
 
+	public String getPickerTypeAndState(String inPrefix) {
+		return inPrefix + " " + getProcessType() + ": State is " + currentCheState();
+	}
 
 	public int buttonFor(WorkInstruction inWorkInstruction) {
 		// returns 0 if none
@@ -198,6 +197,23 @@ public class PickSimulator {
 	public List<WorkInstruction> getActivePickList() {
 		List<WorkInstruction> activeList = cheDeviceLogic.getActivePickWiList();
 		return activeList;
+	}
+
+	/**
+	 * Careful: simultaneous work instruction situation might have more than one active pick
+	 * return null if none, or the WI if 1. Fails if more than one.
+	 */
+	public WorkInstruction getActivePick() {
+		List<WorkInstruction> activeList = getActivePickList();
+		int count = activeList.size();
+		if (count == 0)
+			return null;
+		else if (count == 1)
+			return activeList.get(0);
+		else {
+			Assert.fail("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
+			return null;
+		}
 	}
 
 	/**
@@ -256,7 +272,7 @@ public class PickSimulator {
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
 		String theProblem = "Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState;
 		LOGGER.error(theProblem);
-		Assert.fail(theProblem);		
+		Assert.fail(theProblem);
 	}
 
 	public boolean hasLastSentInstruction(byte position) {
@@ -316,7 +332,7 @@ public class PickSimulator {
 		}
 
 	}
-	
+
 	/**
 	 * Intentionally incomplete. Could parameterize for each line, but initially only remember the first line.
 	 */

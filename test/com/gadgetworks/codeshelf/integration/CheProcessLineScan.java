@@ -9,7 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.UUID;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,6 +33,7 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -204,7 +205,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	private void setUpLineScanOrders(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
 		// Using preferredLocation. No inventory.
-		// Locations D301-301, 401-403, 501-503 are modeled. 600s and 700s are not.
+		// Locations D301-303, 401-403, 501-503 are modeled. 600s and 700s are not.
 		// Order 12345 has 2 modeled locations and one not.
 		// Order 11111 has 5 unmodeled locations.
 
@@ -234,8 +235,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	 * May want to promote this.
 	*/
 	private PickSimulator waitAndGetPickerForProcessType(EndToEndIntegrationTest test, NetGuid cheGuid, String inProcessType) {
-		 // took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
-		ThreadUtils.sleep(250); 
+		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
+		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
 		final long maxTimeToWaitMillis = 5000;
 		String existingType = "";
@@ -250,17 +251,21 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 			}
 			ThreadUtils.sleep(100); // retry every 100ms
 		}
-		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is " + existingType);		
+		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is "
+				+ existingType);
 		return null;
 	}
 
-	@SuppressWarnings("unused")
+	/**
+	 * Basic login, logout, log in again, scan a valid order detail ID, see the job. Complete the job. Same scan again does not give you the job again.
+	 * LOCAPICK is false, so no inventory created at the location.
+	 * Scanning detail 11111.1 with locationId D401, which is modeled.
+	 */
 	@Test
 	public final void testLineScanLogin() throws IOException {
 
 		this.getPersistenceService().beginTenantTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		UUID facId = facility.getPersistentId();
 		setUpLineScanOrders(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -308,7 +313,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		LOGGER.info(picker.getPickerTypeAndState("4:"));
-		picker.scanOrderDetailId("12345.1"); // does not add "%"	
+		picker.scanOrderDetailId("11111.1"); // does not add "%"	
 
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
@@ -316,13 +321,84 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		LOGGER.info(picker.getPickerTypeAndState("5:"));
 
 		// Should be showing the job now. 
-		Assert.assertEquals("D301", firstLine);
+		Assert.assertEquals("D401", firstLine);
+		
+		// Complete this job. For line scan, the poscon index is always 1.
+		WorkInstruction wi = picker.getActivePick();
+		int quant = wi.getPlanQuantity();
+		picker.pick(1, quant);
+		picker.waitForCheState(CheStateEnum.READY, 2000);
+
+		// Try to get the same job again.
+		picker.scanOrderDetailId("11111.1"); // does not add "%"	
+		// GET_WORK happened immediately. Instead of DO_PICK, back to READY if there was no job.
+		picker.waitForCheState(CheStateEnum.READY, 5000);
+		// second line would say "Already completed", but we do not have a means to check htis.
 
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+	}
 
+	/**
+	 * Login, scan a valid order detail ID, see the job. Then assorted re-scans and clears.
+	 * LOCAPICK is false, so no attempt at inventory creation.
+	 * Scanning detail 12345.3 with locationId D601, which is not modeled.
+	 * Other scans of non-existent 44444.1, and of 11111.1 with modeled location D401
+	 */
+	@Test
+	public final void testLineScanProcessExceptions() throws IOException {
 
+		this.getPersistenceService().beginTenantTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrders(facility);
+		this.getPersistenceService().commitTenantTransaction();
+
+		this.getPersistenceService().beginTenantTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+
+		// Prove that our orders file is working
+		OrderHeader order5 = facility.getOrderHeader("12345");
+		Assert.assertNotNull(order5);
+		OrderDetail detail5_3 = order5.getOrderDetail("12345.3");
+		Assert.assertNotNull(detail5_3);
+		String loc5_3 = detail5_3.getPreferredLocationUi();
+		Assert.assertEquals("D601", loc5_3);
+
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE-E2E-1");
+		Assert.assertNotNull(che1);
+		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.DAO.store(che1);
+
+		this.getPersistenceService().commitTenantTransaction();
+
+		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+
+		LOGGER.info("1: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+
+		LOGGER.info("2: scan order, should go to DO_PICK state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"	
+
+		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+		LOGGER.info("2b: List the work instructions as the site controller sees them");
+		List<WorkInstruction> theWiList = picker.getActivePickList();
+		logWiList(theWiList);
+
+		String firstLine = picker.getLastCheDisplayString();
+		// Should be showing the job now. 
+		Assert.assertEquals("D601", firstLine);
+
+		// logout back to idle state.
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 	}
 
 }
