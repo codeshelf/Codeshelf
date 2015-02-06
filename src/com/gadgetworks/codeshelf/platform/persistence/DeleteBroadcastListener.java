@@ -24,6 +24,7 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void onPostDelete(PostDeleteEvent event) {
 		Object entity = event.getEntity();

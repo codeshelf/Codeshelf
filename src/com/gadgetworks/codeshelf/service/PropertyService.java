@@ -18,7 +18,7 @@ public class PropertyService implements IApiService {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyService.class);
 
-	public void PropertyService() {
+	public PropertyService() {
 	}
 
 	// --------------------------------------------------------------------------

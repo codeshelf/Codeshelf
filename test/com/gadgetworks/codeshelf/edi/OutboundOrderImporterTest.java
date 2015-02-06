@@ -1472,6 +1472,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testOrderDetailIdDuplicates() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();

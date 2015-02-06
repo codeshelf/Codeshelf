@@ -17,14 +17,18 @@ import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
+@SuppressWarnings("serial")
 public class LoggingServlet extends HttpServlet {
+	/**
+	 * 
+	 */
 	private static final String CONTENT_TYPE_TEXT = "text/html";
 	private static final String CACHE_CONTROL_HEADER = "Cache-Control";
     private static final String NO_CACHE = "must-revalidate,no-cache,no-store";
 
     private static final String LEVEL_OPTIONS="<option value=ALL>ALL<option value=TRACE>TRACE</option><option value=DEBUG>DEBUG</option><option selected value=INFO>INFO</option><option value=WARN>WARN</option><option value=ERROR>ERROR</option><option value=FATAL>FATAL<option value=OFF>OFF";
 
-    private static final Map<String,String> presets = new HashMap<String,String>() {{
+	private static final Map<String,String> presets = new HashMap<String,String>() {{
     	put("SQL Logging OFF","class1=org.hibernate.type&level1=INFO&class2=org.hibernate.SQL&level2=INFO");
     	put("SQL Logging ON","class1=org.hibernate.type&level1=TRACE&class2=org.hibernate.SQL&level2=TRACE");
     }};

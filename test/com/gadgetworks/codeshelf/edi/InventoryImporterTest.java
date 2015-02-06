@@ -614,6 +614,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	private void assertAutoShort(Che theChe, Timestamp assignedTimestamp) {
 		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime",
 			 ImmutableMap.<String, Object>of(

@@ -24,6 +24,7 @@ public class GetWorkCommand extends CommandABC {
 		this.workService = workService;
 	}
 
+	@SuppressWarnings("unused")
 	@Override
 	public ResponseABC exec() {
 		GetWorkResponse response = new GetWorkResponse();

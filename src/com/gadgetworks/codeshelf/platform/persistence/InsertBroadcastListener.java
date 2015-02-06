@@ -9,7 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 
+@SuppressWarnings("serial")
 public class InsertBroadcastListener implements PostCommitInsertEventListener {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DeleteBroadcastListener.class);
@@ -25,7 +27,9 @@ public class InsertBroadcastListener implements PostCommitInsertEventListener {
 		Object entity = event.getEntity();
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			this.objectChangeBroadcaster.broadcastAdd(Hibernate.getClass(domainObject), domainObject.getPersistentId());
+			@SuppressWarnings("unchecked")
+			Class<? extends IDomainObject> clazz = Hibernate.getClass(domainObject);
+			this.objectChangeBroadcaster.broadcastAdd(clazz, domainObject.getPersistentId());
 		}
 	}
 

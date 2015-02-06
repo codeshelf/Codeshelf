@@ -223,7 +223,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
 		this.getPersistenceService().commitTenantTransaction();
 	}
-	
+	/*
 	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {
 		boolean result = false;
 		for (WorkInstruction wi : WorkInstruction.DAO.getAll()) {
@@ -233,5 +233,5 @@ public class WorkInstructionTest extends DomainTestABC {
 		}
 		return result;
 	}
-
+	*/
 }

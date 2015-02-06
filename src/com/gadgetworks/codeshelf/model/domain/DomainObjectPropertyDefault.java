@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class DomainObjectPropertyDefault {
 	
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(DomainObjectPropertyDefault.class);
 	
 	public DomainObjectPropertyDefault() {

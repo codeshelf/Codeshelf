@@ -113,8 +113,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 		boolean result = false;
 
 		if (inObject instanceof DomainObjectABC) {
-			Class thisClass = Hibernate.getClass(this);
-			Class inObjectClass = Hibernate.getClass(inObject);
+			Class<?> thisClass = Hibernate.getClass(this);
+			Class<?> inObjectClass = Hibernate.getClass(inObject);
 			return (thisClass.equals(inObjectClass)
 					&& Objects.equals(this.persistentId, ((DomainObjectABC) inObject).getPersistentId()));
 		} else {

@@ -220,6 +220,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		return getFacility();
 	}
 
+	@SuppressWarnings("unused")
 	private Facility setUpZigzagSlottedFacility() {
 		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
 		// This is the zigzag/cross-batch portion of the MAT as of v10
@@ -408,6 +409,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	}
 
+	@SuppressWarnings("unused")
 	private void setUpBatchOrdersForZigzag(Facility inFacility) throws IOException {
 		// Setting up containers 2,3,7,11 to match the bug
 
@@ -1175,6 +1177,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.persistenceService.commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void twoChesCrossBatch() throws IOException {
 		// Reproduce DEV-592 seen during MAT for v10
@@ -1242,6 +1245,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.persistenceService.commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
 		// Test cases:
@@ -1558,6 +1562,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testCartRunFeedback() throws IOException {
 		// Test cases:

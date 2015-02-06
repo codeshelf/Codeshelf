@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
+import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.google.common.base.Objects;
 
 public class UpdateBroadcastListener implements PostCommitUpdateEventListener {
@@ -50,7 +51,9 @@ public class UpdateBroadcastListener implements PostCommitUpdateEventListener {
 					}
 				}
 				if (changedProperties.size()>0) {
-					this.objectChangeBroadcaster.broadcastUpdate(Hibernate.getClass(domainObject), domainObject.getPersistentId(), changedProperties);
+					@SuppressWarnings("unchecked")
+					Class<? extends IDomainObject> clazz = Hibernate.getClass(domainObject);
+					this.objectChangeBroadcaster.broadcastUpdate(clazz, domainObject.getPersistentId(), changedProperties);
 				}
 			}
 		}

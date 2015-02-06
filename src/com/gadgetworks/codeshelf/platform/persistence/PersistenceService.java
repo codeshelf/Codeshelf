@@ -329,7 +329,8 @@ public class PersistenceService extends Service {
 			return null;
 		} if (object instanceof HibernateProxy) {
 	        Hibernate.initialize(object);
-	        T realDomainObject = (T) ((HibernateProxy) object)
+	        @SuppressWarnings("unchecked")
+			T realDomainObject = (T) ((HibernateProxy) object)
 	                  .getHibernateLazyInitializer()
 	                  .getImplementation();
 	        return (T)realDomainObject;

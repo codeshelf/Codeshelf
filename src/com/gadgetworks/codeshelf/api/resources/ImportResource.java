@@ -36,7 +36,7 @@ public class ImportResource {
 	private ResourceContext resourceContext;	
 	private PersistenceService persistence = PersistenceService.getInstance();
 	private AislesFileCsvImporter	aislesFileCsvImporter;
-	private OrderLocationCsvImporter orderLocationImporter;
+	//private OrderLocationCsvImporter orderLocationImporter;
 	private LocationAliasCsvImporter locationAliasImporter;
 	private OutboundOrderCsvImporter outboundOrderImporter;
 	private InventoryCsvImporter inventoryImporter;
@@ -48,7 +48,7 @@ public class ImportResource {
 		OutboundOrderCsvImporter outboundOrderImporter,
 		InventoryCsvImporter inventoryImporter) {
 		this.aislesFileCsvImporter = aislesFileCsvImporter;
-		this.orderLocationImporter = orderLocationImporter;
+		//this.orderLocationImporter = orderLocationImporter;
 		this.locationAliasImporter = locationAliasImporter;
 		this.outboundOrderImporter = outboundOrderImporter;
 		this.inventoryImporter = inventoryImporter;
@@ -122,6 +122,7 @@ public class ImportResource {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	@POST
 	@Path("/orders/{facilityId}")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)

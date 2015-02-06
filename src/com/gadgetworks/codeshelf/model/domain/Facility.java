@@ -317,9 +317,7 @@ public class Facility extends Location {
 	public void addWorkInstruction(WorkInstruction wi) {
 		Facility previousFacility = wi.getParent();
 		if (previousFacility == null) {
-			int numWi = workInstructions.size();
-			boolean trans = PersistenceService.getInstance().hasActiveTransaction();
-			workInstructions.add(wi);
+			getWorkInstructions().add(wi);
 			wi.setParent(this);
 		} else if (!previousFacility.equals(this)) {
 			LOGGER.error("cannot add WorkInstruction " + wi.getPersistentId() + " to " + this.getDomainId()

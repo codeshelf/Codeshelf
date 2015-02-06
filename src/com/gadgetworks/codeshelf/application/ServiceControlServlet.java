@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 
+@SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {
 	private static final String CONTENT_TYPE_TEXT = "text/html";
 	private static final String CACHE_CONTROL_HEADER = "Cache-Control";

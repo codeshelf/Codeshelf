@@ -42,10 +42,10 @@ public class UnspecifiedLocation extends Location {
 		return "X";
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public ITypedDao<UnspecifiedLocation> getDao() {
-		// TODO Auto-generated method stub
-		return DAO;
+		return UnspecifiedLocation.DAO;
 	}
 
 }

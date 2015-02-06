@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {
+	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	
 	@Test
@@ -169,6 +170,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 	
 	
 	
+	@SuppressWarnings("unused")
 	private Facility createFacilityWithOneRun(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
 		Facility facility = createDefaultFacility(orgId);
@@ -199,6 +201,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		return generatedWIs;
 	}
 
+	@SuppressWarnings("unused")
 	private Facility createFacilityWithTwoRuns(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
 		//12/23/14 7:40 PM = 1419363620000
@@ -224,6 +227,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		return facility;
 	}	
 
+	@SuppressWarnings("unused")
 	private Facility createFacilityWithTwoGroups(String orgId){
 		Facility facility = createDefaultFacility(orgId);
 		CodeshelfNetwork network = facility.createNetwork("WITEST"); 

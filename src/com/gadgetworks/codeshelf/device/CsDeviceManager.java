@@ -356,6 +356,7 @@ public class CsDeviceManager implements
 		LOGGER.info("Disconnected from server");
 	}
 
+	@SuppressWarnings("unused")
 	private boolean needNewDevice(INetworkDevice existingDevice, NetGuid newDeviceGuid, String newDeviceType) {
 		if (existingDevice == null) {
 			LOGGER.error(" error in needNewDevice");

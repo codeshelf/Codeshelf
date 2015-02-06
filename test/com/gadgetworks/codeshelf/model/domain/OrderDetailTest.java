@@ -1,12 +1,12 @@
 package com.gadgetworks.codeshelf.model.domain;
 
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.mockito.Mockito;
 
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
@@ -15,14 +15,15 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 
 public class OrderDetailTest {
 
-	ITypedDao mockDao;
+	ITypedDao<OrderDetail> mockDao;
 	private OrderDetail	subject;
 	private Integer	testQuantity;
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Before
 	public void setUp() {
 		testQuantity = 5;
-		mockDao = Mockito.mock(ITypedDao.class);
+		mockDao = Mockito.<ITypedDao>mock(ITypedDao.class);
 		OrderDetail.DAO = mockDao;
 
 		subject = new OrderDetail();
@@ -31,7 +32,7 @@ public class OrderDetailTest {
 	}
 	
 	private void verifyStorage() {
-		verify(mockDao, atLeastOnce()).store(any(Object.class));
+		verify(mockDao, atLeastOnce()).store(Matchers.<OrderDetail>any(OrderDetail.class));
 	}
 	
 	/**

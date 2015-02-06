@@ -40,7 +40,7 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 		for (Path path : facility.getPaths()) {
 			List<Location> baysOnPath = path.<Location> getLocationsByClass(Bay.class);
 			for(Location locBay : baysOnPath) {
-				String bayStr = locBay.getNominalLocationId();
+				//String bayStr = locBay.getNominalLocationId();
 				bayList.add(locBay);
 			}
 			// that was for debugging. quick way:
@@ -50,14 +50,14 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path.
 		for (Location subLocation : bayList) {
-			String subLocStr = subLocation.getNominalLocationId();
+			//String subLocStr = subLocation.getNominalLocationId();
 			for (Location workLocation : subLocation.getSubLocationsInWorkingOrder()) {
-				String workLocStr = workLocation.getNominalLocationId();
+				//String workLocStr = workLocation.getNominalLocationId();
 				Iterator<WorkInstruction> wiIterator = inWiList.iterator();
 				while (wiIterator.hasNext()) {
 					WorkInstruction wi = wiIterator.next();
 					Location wiLoc = wi.getLocation();
-					String wiLocStr = wiLoc.getNominalLocationId();
+					//String wiLocStr = wiLoc.getNominalLocationId();
 					if (wiLoc.equals(workLocation)) {
 						LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 						wiResultList.add(wi);

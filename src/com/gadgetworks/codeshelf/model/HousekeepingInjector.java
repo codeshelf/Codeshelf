@@ -36,18 +36,6 @@ public class HousekeepingInjector {
 
 	}
 
-	private static Facility getMyFacility() {
-		// fix for multi-tenancy
-		List<Facility> facilityList = Facility.DAO.getAll();
-		int theSize = facilityList.size();
-		if (theSize == 0)
-			return null;
-		if (theSize > 1) {
-			LOGGER.error("fix HousekeepingInjector for multi-tenancy");
-		}
-		return facilityList.get(0);
-	}
-
 	public static RepeatPosChoice getRepeatPosChoice(Facility inFacility) {
 		String repeatValue = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.RPEATPOS);		
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().

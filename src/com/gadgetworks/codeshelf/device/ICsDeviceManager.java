@@ -8,7 +8,6 @@ package com.gadgetworks.codeshelf.device;
 import java.util.List;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.util.PcapRingBuffer;
 import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;

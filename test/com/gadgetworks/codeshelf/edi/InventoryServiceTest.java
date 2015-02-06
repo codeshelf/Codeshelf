@@ -258,7 +258,6 @@ public class InventoryServiceTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
@@ -283,7 +282,6 @@ public class InventoryServiceTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingNegativeCount() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.gadgetworks.codeshelf.model.domain.User;
 
+@SuppressWarnings("serial")
 public class UsersServlet extends HttpServlet {
 	private static final String CONTENT_TYPE_TEXT = "text/html";
 	private static final String CACHE_CONTROL_HEADER = "Cache-Control";

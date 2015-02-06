@@ -24,7 +24,6 @@ import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.MethodArgumentException;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;

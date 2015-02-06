@@ -37,7 +37,7 @@ public class UiUpdateService implements IApiService {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(UiUpdateService.class);
 
-	public void UiUpdateService() {
+	public UiUpdateService() {
 	}
 
 	public Item storeItem(String facilityId, String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId, String orderDetailId) {

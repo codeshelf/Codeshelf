@@ -1521,6 +1521,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testCloneAisle() {
 		// For DEV-618
@@ -2016,7 +2017,7 @@ public class AisleImporterTest extends EdiTestABC {
 			this.getPersistenceService().beginTenantTransaction();
 
 		inLocation.setActive(inValue);
-		inLocation.getDao().store(inLocation);
+		inLocation.<Location>getDao().store(inLocation);
 
 		if (inThrow) {
 			throw new EdiFileReadException("Just a throw because test commanded it to. No relevance to EDI.");

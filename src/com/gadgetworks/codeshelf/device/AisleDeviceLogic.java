@@ -310,7 +310,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		final Integer kMaxLedCmdToLog = 25;
 		final Integer kMaxLedCmdSendAtATime = 12;
 		final Integer kDelayMillisBetweenPartialSends = 5;
-		final Boolean splitLargeLedSendsIntoPartials = true; // became true at V7
+		//final Boolean splitLargeLedSendsIntoPartials = true; // became true at V7
 		String myGuidStr = getMyGuidStr();
 
 		Short channel = 1;
@@ -352,10 +352,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
 		// New to V9. split commands up by color.
-		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
-			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
-			mRadioController.sendCommand(command, getAddress(), true);
-		} else {
+//		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
+//			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
+//			mRadioController.sendCommand(command, getAddress(), true);
+//		} else {
 			int partialCount = 0;
 			List<LedSample> partialSamples = new ArrayList<LedSample>();
 			final int blackColorValue = 6; // ColorNum.BLACK;// BLACK	= 6;
@@ -405,7 +405,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 					}
 
 			}
-		}
+//
+//		}
+//
 	}
 
 	void logSampleSend(List<LedSample> inSamples){

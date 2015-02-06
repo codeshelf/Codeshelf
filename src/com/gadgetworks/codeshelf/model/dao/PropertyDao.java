@@ -162,7 +162,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
         DomainObjectPropertyDefault theDefault = getPropertyDefault(object, name);
         if (theDefault==null) {
         	LOGGER.warn("Failed to create property "+object.getClassName()+":"+name+": Default does not exist.");
-        	List<DomainObjectPropertyDefault> all = getAllDefaults();
+        	//List<DomainObjectPropertyDefault> all = getAllDefaults();
         	return null;
         }
         prop = createProperty(object, theDefault);

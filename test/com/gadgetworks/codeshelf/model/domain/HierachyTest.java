@@ -10,6 +10,7 @@ public class HierachyTest extends DomainTestABC {
 	public void init() {
 	}
 	
+	@SuppressWarnings("unused")
 	@Test
 	public void testHierachy() {
 		// create facility, aisle, bay & tier

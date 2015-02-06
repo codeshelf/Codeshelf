@@ -16,7 +16,11 @@ import org.hibernate.type.descriptor.sql.VarcharTypeDescriptor;
  */
 public class DialectUUIDType extends AbstractSingleColumnStandardBasicType<UUID> {
 
-    private static final SqlTypeDescriptor descriptor;
+    /**
+	 * 
+	 */
+	private static final long	serialVersionUID	= -6249771892864698659L;
+	private static final SqlTypeDescriptor descriptor;
     static {
     	boolean isPostgres = System.getProperty("db.connectionurl", "").startsWith("jdbc:postgresql");
  
