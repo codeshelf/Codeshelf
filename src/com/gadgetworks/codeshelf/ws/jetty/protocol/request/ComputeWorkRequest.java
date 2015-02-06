@@ -5,10 +5,7 @@ import java.util.LinkedList;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ComputeWorkRequest extends RequestABC {
-
-	@Getter @Setter
-	String cheId;
+public class ComputeWorkRequest extends DeviceRequest {
 	
 	@Getter @Setter
 	LinkedList<String> containerIds;
@@ -17,7 +14,7 @@ public class ComputeWorkRequest extends RequestABC {
 	}
 	
 	public ComputeWorkRequest(String cheId, LinkedList<String> containerIds) {
-		this.cheId = cheId;
+		setDeviceId(cheId);
 		this.containerIds = containerIds;
 	}
 }

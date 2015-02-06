@@ -1,6 +1,7 @@
 package com.gadgetworks.codeshelf.ws.jetty.server;
 
 import org.apache.commons.beanutils.ConvertUtilsBean;
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructi
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.request.DeviceRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -45,6 +47,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -90,7 +93,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 		requestCounter.inc();
 		CommandABC command = null;
 		ResponseABC response = null;
-
+		
         // process message...
     	final Timer.Context context = requestProcessingTimer.time();
 
@@ -182,7 +185,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 					missingResponseCounter.inc();
 				}
 			}
-
+    	} catch (Exception e) {
+    		response = new FailureResponse(ExceptionUtils.getMessage(e));
+    		response.setRequestId(request.getMessageId());
+    		if (request instanceof DeviceRequest) {
+    			String cheId = ((DeviceRequest)request).getDeviceId();
+    			((FailureResponse)response).setCheId(cheId);
+    		}
 	    } finally {
 	        context.stop();
 	    }

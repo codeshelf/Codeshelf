@@ -27,13 +27,13 @@ public class GetWorkCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		GetWorkResponse response = new GetWorkResponse();
-		String cheId = request.getCheId();
+		String cheId = request.getDeviceId();
 		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			String locationId = request.getLocationId();
 			// Figure out the CHE's work area by its scanned location.
-			Facility facility = che.getParent().getParent();
+			// Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
 			List<WorkInstruction> wiList = workService.getWorkInstructions(che, locationId);
 			// ~bhe: check for null/empty list + handle exception?
