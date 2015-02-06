@@ -5,16 +5,10 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.integration;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -24,25 +18,14 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.device.CsDeviceManager;
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.device.PosControllerInstr;
 import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
+import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
@@ -50,12 +33,8 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.flyweight.command.NetGuid;
-import com.google.common.base.Strings;
 
 /**
  * @author jon ranstrom
@@ -250,6 +229,31 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 	}
 
+	/**
+	 * Wait until a recent CHE update went through the updateNetwork mechanism, replacing the device logic for the che
+	 * May want to promote this.
+	*/
+	private PickSimulator waitAndGetPickerForProcessType(EndToEndIntegrationTest test, NetGuid cheGuid, String inProcessType) {
+		 // took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
+		ThreadUtils.sleep(250); 
+		long start = System.currentTimeMillis();
+		final long maxTimeToWaitMillis = 5000;
+		String existingType = "";
+		int count = 0;
+		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
+			count++;
+			PickSimulator picker = new PickSimulator(test, cheGuid);
+			existingType = picker.getProcessType();
+			if (existingType.equals(inProcessType)) {
+				LOGGER.info(count + " pickers made in waitAndGetPickerForProcessType before getting it right");
+				return picker;
+			}
+			ThreadUtils.sleep(100); // retry every 100ms
+		}
+		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is " + existingType);		
+		return null;
+	}
+
 	@SuppressWarnings("unused")
 	@Test
 	public final void testLineScanLogin() throws IOException {
@@ -263,7 +267,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		
+
 		// Prove that our orders file is working
 		OrderHeader order1 = facility.getOrderHeader("11111");
 		Assert.assertNotNull(order1);
@@ -276,28 +280,17 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe("CHE-E2E-1");
 		Assert.assertNotNull(che1);
-		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid());
-
-		// Bizarre: we really want to set the CHE, b this update comes through much later.
+		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 
 		this.getPersistenceService().commitTenantTransaction();
-		
-		// Give time for the network update to happen so that the picker we get will have the CHE_LINESCAN process.
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			LOGGER.error("", e);
-		}
 
-		this.getPersistenceService().beginTenantTransaction();
-
-		// test the first few transitions. On powerup, in idle state
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 
 		LOGGER.info(picker.getPickerTypeAndState("0:"));
-				
+
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 
 		// login goes to ready state. (Says to scan a line).
@@ -311,12 +304,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// login again
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-		LOGGER.info(picker.getPickerTypeAndState("3:"));		//picker.simulateCommitByChangingTransaction(this.persistenceService);
+		LOGGER.info(picker.getPickerTypeAndState("3:")); //picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		LOGGER.info(picker.getPickerTypeAndState("4:"));
 		picker.scanOrderDetailId("12345.1"); // does not add "%"	
-		
+
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		String firstLine = picker.getLastCheDisplayString();
@@ -329,7 +322,6 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
-		this.getPersistenceService().commitTenantTransaction();
 
 	}
 

@@ -217,7 +217,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList) {
 		LOGGER.info("LineScanDeviceLogic.assignWork() entered");
-		
+
 		// only honor the response if we are in the state where we sent and are waiting for the response.
 		CheStateEnum currentState = this.getCheStateEnum();
 		if (!currentState.equals(CheStateEnum.GET_WORK)) {
@@ -247,7 +247,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
 			if (wiCount == 0)
 				setReadyMsg("No jobs last scan");
-			else // more than 1. Perhaps 1 complete and we should find the uncompleted one. See what the new object brings us
+			else
+				// more than 1. Perhaps 1 complete and we should find the uncompleted one. See what the new object brings us
 				setReadyMsg(wiCount + " jobs last scan");
 			LOGGER.info("LineScanDeviceLogic.assignWork(): not 1 job");
 			setState(CheStateEnum.READY);
@@ -336,7 +337,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					// or on GET_WORK if we never got past get work?
 				}
 				break;
-				
+
 			case SHORT_PICK_CONFIRM:
 				confirmShortPick(inScanStr);
 				break;
@@ -508,47 +509,53 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void setState(final CheStateEnum inCheState) {
-		CheStateEnum previousState = mCheStateEnum;
-		boolean isSameState = previousState == inCheState;
-		mCheStateEnum = inCheState;
-		LOGGER.info("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
-		switch (inCheState) {
-			case IDLE:
-				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
-				break;
+		try {
+			markInSetState(true);
+			CheStateEnum previousState = mCheStateEnum;
+			boolean isSameState = previousState == inCheState;
+			mCheStateEnum = inCheState;
+			LOGGER.info("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
-			case READY:
-				// We jump back to ready from various places. Do not clear the ready message, but do clear any job that was on before.
-				clearOutCurrentJob();
-				sendDisplayCommand(SCAN_LINE_MSG, getReadyMsg());
-				break;
+			switch (inCheState) {
+				case IDLE:
+					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+					break;
 
-			case GET_WORK:
-				setReadyMsg("");
-				sendDisplayCommand(COMPUTE_WORK_MSG, GO_TO_LOCATION_MSG);
-				break;
+				case READY:
+					// We jump back to ready from various places. Do not clear the ready message, but do clear any job that was on before.
+					clearOutCurrentJob();
+					sendDisplayCommand(SCAN_LINE_MSG, getReadyMsg());
+					break;
 
-			case SHORT_PICK_CONFIRM:
-				clearThePoscon(); // Clear so it does not look like you can press the button to finish the job. It will come back on NO.
-				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
-				break;
+				case GET_WORK:
+					setReadyMsg("");
+					sendDisplayCommand(COMPUTE_WORK_MSG, GO_TO_LOCATION_MSG);
+					break;
 
-			case SHORT_PICK:
-				showTheActivePick();
-				break;
+				case SHORT_PICK_CONFIRM:
+					clearThePoscon(); // Clear so it does not look like you can press the button to finish the job. It will come back on NO.
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					break;
 
-			case DO_PICK:
-				showTheActivePick();
-				break;
+				case SHORT_PICK:
+					showTheActivePick();
+					break;
 
-			case ABANDON_CHECK:
-				clearThePoscon(); // Clear so it does not look like you can press the button to finish the job. It will come back on NO.
-				sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
-				break;
+				case DO_PICK:
+					showTheActivePick();
+					break;
 
-			default:
-				break;
+				case ABANDON_CHECK:
+					clearThePoscon(); // Clear so it does not look like you can press the button to finish the job. It will come back on NO.
+					sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
+					break;
+
+				default:
+					break;
+			}
+		} finally {
+			markInSetState(false);
 		}
 	}
 

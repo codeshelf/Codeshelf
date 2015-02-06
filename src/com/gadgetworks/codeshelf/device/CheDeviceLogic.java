@@ -141,6 +141,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected Integer						mShortPickQty;
 
 	protected boolean						connectedToServer						= true;
+	private boolean							mInSetState								= false;
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -157,6 +158,14 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Override
 	public final short getSleepSeconds() {
 		return 180;
+	}
+
+	// See confluence Codeshelf software patterns page on setState.
+	protected void markInSetState(boolean inValue) {
+		mInSetState = inValue;
+	}	
+	public boolean inSetState(){
+		return mInSetState;
 	}
 
 	public String getDeviceType() {

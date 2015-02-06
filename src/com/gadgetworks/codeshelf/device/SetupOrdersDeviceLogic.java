@@ -74,104 +74,109 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	protected void setState(final CheStateEnum inCheState) {
-		CheStateEnum previousState = mCheStateEnum;
-		boolean isSameState = previousState == inCheState;
-		mCheStateEnum = inCheState;
-		LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
+		try {
+			markInSetState(true);
+			CheStateEnum previousState = mCheStateEnum;
+			boolean isSameState = previousState == inCheState;
+			mCheStateEnum = inCheState;
+			LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
-		switch (inCheState) {
-			case IDLE:
-				sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
-				break;
+			switch (inCheState) {
+				case IDLE:
+					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+					break;
 
-			case COMPUTE_WORK:
-				sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
-				break;
+				case COMPUTE_WORK:
+					sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
+					break;
 
-			case GET_WORK:
-				sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
-				break;
+				case GET_WORK:
+					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
+					break;
 
-			case LOCATION_SELECT:
-				sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-				this.showCartSetupFeedback();
-				break;
+				case LOCATION_SELECT:
+					sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 
-			case LOCATION_SELECT_REVIEW:
-				sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
-					LOCATION_SELECT_REVIEW_MSG_LINE_2,
-					LOCATION_SELECT_REVIEW_MSG_LINE_3,
-					SHOWING_WI_COUNTS);
-				this.showCartSetupFeedback();
-				break;
+				case LOCATION_SELECT_REVIEW:
+					sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
+						LOCATION_SELECT_REVIEW_MSG_LINE_2,
+						LOCATION_SELECT_REVIEW_MSG_LINE_3,
+						SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 
-			case CONTAINER_SELECT:
-				if (mPositionToContainerMap.size() < 1) {
-					sendDisplayCommand(getContainerSetupMsg(), EMPTY_MSG);
-				} else {
-					sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
-				}
-				showContainerAssainments();
-				break;
+				case CONTAINER_SELECT:
+					if (mPositionToContainerMap.size() < 1) {
+						sendDisplayCommand(getContainerSetupMsg(), EMPTY_MSG);
+					} else {
+						sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
+					}
+					showContainerAssainments();
+					break;
 
-			case CONTAINER_POSITION:
-				sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
-				showContainerAssainments();
-				break;
+				case CONTAINER_POSITION:
+					sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
+					showContainerAssainments();
+					break;
 
-			case CONTAINER_POSITION_INVALID:
-				invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case CONTAINER_POSITION_INVALID:
+					invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case CONTAINER_POSITION_IN_USE:
-				invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case CONTAINER_POSITION_IN_USE:
+					invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case CONTAINER_SELECTION_INVALID:
-				invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case CONTAINER_SELECTION_INVALID:
+					invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case NO_CONTAINERS_SETUP:
-				invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
-				break;
+				case NO_CONTAINERS_SETUP:
+					invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
 
-			case SHORT_PICK_CONFIRM:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
-				break;
+				case SHORT_PICK_CONFIRM:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					break;
 
-			case SHORT_PICK:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				// first try. Show normally, but based on state, the wi min count will be set to zero.
-				showActivePicks();
-				break;
+				case SHORT_PICK:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					// first try. Show normally, but based on state, the wi min count will be set to zero.
+					showActivePicks();
+					break;
 
-			case DO_PICK:
-				if (isSameState || previousState == CheStateEnum.GET_WORK) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
-				// fewer direct calls to showActivePicks elsewhere.
-				break;
+				case DO_PICK:
+					if (isSameState || previousState == CheStateEnum.GET_WORK) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
+					// fewer direct calls to showActivePicks elsewhere.
+					break;
 
-			case PICK_COMPLETE:
-				if (isSameState) {
-					this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-				}
-				sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
-				break;
+				case PICK_COMPLETE:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
+					break;
 
-			case NO_WORK:
-				sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-				this.showCartSetupFeedback();
-				break;
+				case NO_WORK:
+					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 
-			default:
-				break;
+				default:
+					break;
+			}
+		} finally {
+			markInSetState(false);
 		}
 	}
 
@@ -1195,7 +1200,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
