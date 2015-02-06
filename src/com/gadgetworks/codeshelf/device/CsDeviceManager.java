@@ -515,6 +515,7 @@ public class CsDeviceManager implements
 	public void updateNetwork(CodeshelfNetwork network) {
 		Set<UUID> updateDevices = new HashSet<UUID>();
 		// update network devices
+		LOGGER.info("updateNetwork() called. Creating or updating deviceLogic for each CHE");
 		for (Che che : network.getChes().values()) {
 			try {
 				UUID id = che.getPersistentId();

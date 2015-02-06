@@ -283,15 +283,19 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Che.DAO.store(che1);
 
 		this.getPersistenceService().commitTenantTransaction();
+		
+		// Give time for the network update to happen so that the picker we get will have the CHE_LINESCAN process.
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			LOGGER.error("", e);
+		}
 
 		this.getPersistenceService().beginTenantTransaction();
 
 		// test the first few transitions. On powerup, in idle state
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		// Ideally, the new PickSimulator() would get the right processmode from the CHE. But we have to set it.
-		LOGGER.info(picker.getPickerTypeAndState("-1:"));
-		picker.updateProcessType("CHE_LINESCAN");
-		//picker.simulateCommitByChangingTransaction(this.persistenceService);
+
 		LOGGER.info(picker.getPickerTypeAndState("0:"));
 				
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -307,30 +311,23 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// login again
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-		LOGGER.info(picker.getPickerTypeAndState("3:"));
-		//picker.simulateCommitByChangingTransaction(this.persistenceService);
+		LOGGER.info(picker.getPickerTypeAndState("3:"));		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		// scan an order detail id results in sending to server, but transitioning to a computing state to wait for work instruction from server.
 		LOGGER.info(picker.getPickerTypeAndState("4:"));
-		picker.scanOrderDetailId("12345.1"); // does not add "%"
-		//picker.simulateCommitByChangingTransaction(this.persistenceService);
-		LOGGER.info(picker.getPickerTypeAndState("5:"));
+		picker.scanOrderDetailId("12345.1"); // does not add "%"	
 		
-		/*
-		//picker.waitForCheState(CheStateEnum.GET_WORK, 500);
-		//LOGGER.info("finished waiting for GET_WORK");
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		String firstLine = picker.getLastCheDisplayString();
-		LOGGER.info(picker.getPickerTypeAndState("6:"));
+		LOGGER.info(picker.getPickerTypeAndState("5:"));
 
-		// Should be showing the job now. But is not. Why?
+		// Should be showing the job now. 
 		Assert.assertEquals("D301", firstLine);
 
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		*/
 
 		this.getPersistenceService().commitTenantTransaction();
 
