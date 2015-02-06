@@ -1,11 +1,17 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
+task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
 
-tasks.eclipse.dependsOn(cleanEclipseClasspath)
-
+tasks.eclipse.dependsOn(cleanEclipse) // always clean project
 eclipse {
 	classpath {
 		defaultOutputDir file('eclipse-bin')
+	}
+	jdt.file {
+		// restore custom project settings
+		def props = new Properties()
+		props.load(new FileInputStream('.settings/org.eclipse.jdt.core.prefs.template'))
+		withProperties { properties -> properties.putAll(props) }
 	}
 }
 
@@ -20,10 +26,7 @@ task cleanLegacy {
 	(new File('lib/junit')).deleteDir()
 	(new File('lib/retired')).deleteDir()
 }
-
 tasks.clean.dependsOn(cleanLegacy)
-
-task wrapper(type: Wrapper) { gradleVersion = '2.2.1' }
 
 repositories {
 	mavenCentral()
@@ -109,9 +112,9 @@ dependencies {
 
 configurations.all {
 	resolutionStrategy {
-//		force 'junit:junit:4.12'
-//		failOnVersionConflict()
-//		enableNightmarishlyComplicatedManualDependencyResolutionHell()
+		//force 'junit:junit:4.12'
+		//failOnVersionConflict()
+		//enableNightmarishlyComplicatedManualDependencyResolutionHell()
 	}
 }
 
@@ -136,25 +139,21 @@ task serverJar (type: Jar) {
 	baseName = 'server.codeshelf'
 	from(sourceSets.main.output)
 
-	manifest {
-		attributes (
-			'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain',
-			'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
+	manifest.attributes (
+		'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain',
+		'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
 		)
-	}
 }
 
 task siteControllerJar (type: Jar) {
 	destinationDir = file('build/dist')
 	baseName = 'sitecontroller.codeshelf'
 	from(sourceSets.main.output)
-	manifest {
-		attributes (
-			'Main-Class': 'com.gadgetworks.codeshelf.application.CsSiteControllerMain',
-			'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
+
+	manifest.attributes (
+		'Main-Class': 'com.gadgetworks.codeshelf.application.CsSiteControllerMain',
+		'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
 		)
-		
-	}
 }
 
 task copyRuntimeDeps(type: Copy) {
