@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
@@ -24,7 +23,6 @@ public class GetWorkCommand extends CommandABC {
 		this.workService = workService;
 	}
 
-	@SuppressWarnings("unused")
 	@Override
 	public ResponseABC exec() {
 		GetWorkResponse response = new GetWorkResponse();
