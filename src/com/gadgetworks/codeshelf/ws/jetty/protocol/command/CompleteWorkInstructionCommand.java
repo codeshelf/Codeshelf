@@ -30,7 +30,7 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 
-		UUID cheId = request.getCheId();
+		UUID cheId = UUID.fromString(request.getDeviceId());
 		WorkInstruction incomingWI = request.getWorkInstruction();
 		CompleteWorkInstructionResponse response = new CompleteWorkInstructionResponse();
 		response.setWorkInstructionId(incomingWI.getPersistentId());

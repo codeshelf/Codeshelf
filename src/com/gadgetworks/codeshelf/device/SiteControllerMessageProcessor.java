@@ -17,6 +17,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
@@ -109,6 +110,12 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
 			}
 		}
+		// Handle server-side errors
+		else if (response instanceof FailureResponse) {
+			FailureResponse failureResponse = (FailureResponse) response;
+			this.deviceManager.processFailureResponse(failureResponse);
+		}
+		
 
 		else {
 			LOGGER.warn("Failed to handle response " + response);

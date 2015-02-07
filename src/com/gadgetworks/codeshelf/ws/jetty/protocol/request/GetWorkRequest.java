@@ -2,11 +2,8 @@ package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
 
 import lombok.Getter;
 
-public class GetWorkRequest extends RequestABC {
+public class GetWorkRequest extends DeviceRequest {
 
-	@Getter
-	String cheId;
-	
 	@Getter
 	String locationId;
 	
@@ -14,7 +11,7 @@ public class GetWorkRequest extends RequestABC {
 	}
 	
 	public GetWorkRequest(String cheId, String locationId) {
-		this.cheId = cheId;
+		setDeviceId(cheId);
 		this.locationId = locationId;
 	}
 

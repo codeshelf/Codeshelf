@@ -93,7 +93,7 @@ public class ComputeWorkCommandTest {
 
 		WorkList workList = new WorkList();
 		workList.setInstructions(workInstructions);
-		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workList, containers);
+		Map<String, WorkInstructionCount> containerToWICountMap = ComputeWorkCommand.computeContainerWorkInstructionCounts(workList);
 
 		//Make sure we have 4 entries with proper counts
 		assertTrue(containerToWICountMap.size() == 4);

@@ -40,6 +40,7 @@ import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequ
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.gadgetworks.flyweight.command.NetworkId;
 import com.gadgetworks.flyweight.controller.INetworkDevice;
@@ -307,7 +308,7 @@ public class CsDeviceManager implements
 	@Override
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
-		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId, inWorkInstruction);
+		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
 		client.sendMessage(req);
 	}
 
@@ -605,6 +606,20 @@ public class CsDeviceManager implements
 			cheDevice.assignWork(workInstructions); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+		}
+	}
+	
+	public void processFailureResponse(FailureResponse failure) {
+		String cheGuidStr = failure.getCheId();
+		if (cheGuidStr != null) {
+			UUID cheGuid = UUID.fromString(cheGuidStr);
+			CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheGuid);
+			if (cheDevice != null) {
+				String message = failure.getStatusMessage();
+				cheDevice.sendDisplayCommand("Server Error", message==null?"":message);
+			} else {
+				LOGGER.warn("Unable to process failure response for CHE id={} CHE not found", cheGuid);
+			}
 		}
 	}
 
