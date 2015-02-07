@@ -166,7 +166,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 
 		apiServer = new WebApiServer();
-		apiServer.start(8181, null, null, false, "./");
+		apiServer.start(Integer.getInteger("api.port"), null, null, false, "./");
 		ThreadUtils.sleep(2000);
 
 		// start site controller

@@ -100,7 +100,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// Start the pick document generator process;
 		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
 
-		startApiServer(null);
+		startApiServer(null,Integer.getInteger("api.port"));
 		startTsdbReporter();
 		registerSystemMetrics();
 

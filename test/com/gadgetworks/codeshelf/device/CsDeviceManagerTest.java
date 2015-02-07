@@ -77,7 +77,7 @@ public class CsDeviceManagerTest extends DAOTestABC {
 
 	private CsDeviceManager produceAttachedDeviceManager(Organization organization, IRadioController mockRadioController) throws DeploymentException, IOException {
 		Map<String, String> properties = new HashMap<String, String>();
-		properties.put("websocket.uri", "ws://127.0.0.1:8181/ws/");
+		properties.put("websocket.uri", "ws://127.0.0.1:8181/ws/"); // this URL doesn't need to be accurate, just parseable
 		WebSocketContainer container = mock(WebSocketContainer.class);
 		Session mockSession = mock(Session.class);
 		when(mockSession.isOpen()).thenReturn(true);

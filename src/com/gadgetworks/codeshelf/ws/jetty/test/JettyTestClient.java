@@ -22,7 +22,7 @@ public class JettyTestClient {
 		try {
     		// create WS client
         	MessageProcessor responseProcessor = new LogResponseProcessor();
-        	JettyWebSocketClient client = new JettyWebSocketClient(ContainerProvider.getWebSocketContainer(), URI.create("ws://localhost:8181/ws/"),responseProcessor,null);
+        	JettyWebSocketClient client = new JettyWebSocketClient(ContainerProvider.getWebSocketContainer(), URI.create("ws://localhost:"+Integer.getInteger("api.port")+"/ws/"),responseProcessor,null);
         	client.connect();
         	//Message that shouldn't compress
         	char[] charBuf = new char[CompressedJsonMessage.JSON_COMPRESS_MAXIMUM - 1];

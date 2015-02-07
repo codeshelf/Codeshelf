@@ -64,9 +64,9 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	 */
 	private void setupLibraries() {
 		LOGGER.info("Codeshelf version: " + Configuration.getVersionString());
-		LOGGER.info("user.dir = " + System.getProperty("user.dir"));
-		LOGGER.info("java.class.path = " + System.getProperty("java.class.path"));
-		LOGGER.info("java.library.path = " + System.getProperty("java.library.path"));
+		LOGGER.trace("user.dir = " + System.getProperty("user.dir"));
+		LOGGER.trace("java.class.path = " + System.getProperty("java.class.path"));
+		LOGGER.trace("java.library.path = " + System.getProperty("java.library.path"));
 
 		// Set a class loader that can access the classpath when searching for resources.
 		Thread.currentThread().setContextClassLoader(ClassLoader.getSystemClassLoader());
@@ -82,8 +82,8 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		setupLibraries();
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		LOGGER.info("------------------------------------------------------------");
-		LOGGER.info("Process info: " + processName);
+		LOGGER.trace("------------------------------------------------------------");
+		LOGGER.trace("Process info: " + processName);
 
 		installShutdownHook();
 
@@ -191,16 +191,14 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 	
-	protected void startApiServer(ICsDeviceManager deviceManager) {
-		Integer port = Integer.getInteger("api.port");
+	protected void startApiServer(ICsDeviceManager deviceManager, Integer port) {
 		if(port != null) {
 			boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
 
 			LOGGER.info("Starting Admin Server on port "+port+", schema management "+(enableSchemaManagement?"enabled":"disabled"));
 			apiServer.start(port,deviceManager,this,enableSchemaManagement,System.getProperty("webapp.content.path"));
-		} else {
-			LOGGER.error("Could not start admin server, adminserver.port needs to be specified");
 		}
+		// else do not start
 	}
 	
 	protected void stopApiServer() {

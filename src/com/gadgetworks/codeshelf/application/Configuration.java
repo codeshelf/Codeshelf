@@ -38,8 +38,10 @@ public final class Configuration {
 		loadSystemPropertiesNamed(appName+".config.properties");
 
 		// main log file
-		System.setProperty("codeshelf.logfile",
-			System.getProperty("app.log.dir") + System.getProperty("file.separator") + System.getProperty("cs.logfile.name"));
+		String mainLogName = System.getProperty("cs.logfile.name");
+		String mainLogPathName = System.getProperty("app.log.dir") + System.getProperty("file.separator") + mainLogName;
+		System.setProperty("codeshelf.logfile", mainLogPathName);
+		System.out.println("Log file = "+ mainLogPathName);
 
 		// Currently, when PropertyConfigurator.configure(URL) is called, the log4j system will initialize itself
 		// searching for the DEFAULT configuration file always at "log4j.properties" no matter what URL
@@ -56,9 +58,9 @@ public final class Configuration {
 			//System.exit(1);	
 		}
 
-		URL javaUtilLoggingjURL = ClassLoader.getSystemClassLoader().getResource(System.getProperty("java.util.logging.config.file"));
+		URL javaUtilLoggingjURL = ClassLoader.getSystemClassLoader().getResource("logging.properties");
 		if (javaUtilLoggingjURL != null) {
-			System.out.println("java.util.logging props file:" + javaUtilLoggingjURL.toString());
+			//System.out.println("java.util.logging props file:" + javaUtilLoggingjURL.toString());
 			try {
 				java.util.logging.LogManager.getLogManager().readConfiguration(javaUtilLoggingjURL.openStream());
 			} catch (SecurityException e) {
@@ -110,7 +112,7 @@ public final class Configuration {
 					properties = null;
 				}
 			} else {
-				System.out.println("no configuration "+sourceType+" named "+configFileName);
+				//System.out.println("no configuration "+sourceType+"named "+configFileName);
 			}
 		}
 		return properties;

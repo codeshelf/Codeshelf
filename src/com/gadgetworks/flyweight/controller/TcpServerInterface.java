@@ -136,7 +136,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 			if (mServerSocket != null)
 				mServerSocket.close();
 
-			doSetupConnection();
+			//doSetupConnection();
 		} catch (IOException e1) {
 			LOGGER.error("", e1);
 		}

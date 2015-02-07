@@ -62,33 +62,34 @@ public class ImportPerformanceTest {
 			
 			LOGGER.info("Started performance import test started...");
 			
+			String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
 			// post aisle file
-			String url = "http://localhost:8181/api/import/site/"+facilityId;			
+			String url = baseUrl+"api/import/site/"+facilityId;			
 			InputStream is = classloader.getResourceAsStream("perftest/aisles.csv");
 			test.postFile(url, is);
 
 			// post location mappings
-			url = "http://localhost:8181/api/import/locations/"+facilityId;			
+			url = baseUrl+"api/import/locations/"+facilityId;			
 			is = classloader.getResourceAsStream("perftest/location-mapping.csv");
 			test.postFile(url, is);
 
 			// post inventory
-			url = "http://localhost:8181/api/import/inventory/"+facilityId;	
+			url = baseUrl+"api/import/inventory/"+facilityId;	
 			is = classloader.getResourceAsStream("perftest/inventory.csv");
 			test.postFile(url, is);
 
 			// post first order file
-			url = "http://localhost:8181/api/import/orders/"+facilityId;			
+			url = baseUrl+"api/import/orders/"+facilityId;			
 			is = classloader.getResourceAsStream("perftest/orders-1.csv");
 			test.postFile(url, is);
 
 			// post second order file
-			url = "http://localhost:8181/api/import/orders/"+facilityId;			
+			url = baseUrl+"api/import/orders/"+facilityId;			
 			is = classloader.getResourceAsStream("perftest/orders-2.csv");
 			test.postFile(url, is);
 
 			// post third order file
-			url = "http://localhost:8181/api/import/orders/"+facilityId;			
+			url = baseUrl+"api/import/orders/"+facilityId;			
 			is = classloader.getResourceAsStream("perftest/orders-3.csv");
 			test.postFile(url, is);
 			

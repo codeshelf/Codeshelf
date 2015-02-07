@@ -184,7 +184,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	}
 	
 	public void syncPropertyDefaults() {
-		LOGGER.info("Checking property defaults...");
+		LOGGER.trace("Checking property defaults...");
 		PropertyDao dao = PropertyDao.getInstance();
 		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
 		InputStream is = this.getClass().getResourceAsStream(PROPERTY_DEFAULTS_FILENAME);
@@ -195,6 +195,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 			LOGGER.error("Failed to load property defaults");
 			return;
 		}
+		
+		int createdPropertyDefaults = 0;
+		
 		try (Scanner scanner = new Scanner(is)) {
 			while (scanner.hasNextLine()) {
 				String line = scanner.nextLine();
@@ -210,7 +213,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 					DomainObjectPropertyDefault def = dao.getPropertyDefault(objectType, name);
 					if (def==null) {
 						// insert default
-						LOGGER.info("Adding property default "+objectType+":"+name+"="+value);
+						createdPropertyDefaults++;
+						LOGGER.trace("Adding property default "+objectType+":"+name+"="+value);
 						def = new DomainObjectPropertyDefault(name, objectType, value, description);
 						dao.store(def);
 					}
@@ -240,6 +244,9 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 		} catch (Exception e) {
 			LOGGER.error("Failed to sync up property defaults",e);
 			return;
+		}
+		if(createdPropertyDefaults>0) {
+			LOGGER.info("Created "+ createdPropertyDefaults+" property defaults");
 		}
 		// delete properties that are not included in resource file
 		for(DomainObjectPropertyDefault def : currentProperties) {

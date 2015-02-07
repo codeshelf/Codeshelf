@@ -983,11 +983,12 @@ public class WorkService implements IApiService {
 	 */
 	void exportWorkInstruction(WorkInstruction inWorkInstruction) throws IOException {
 		// jr/hibernate  tracking down an error
-		if (completedWorkInstructions == null)
-			LOGGER.error("null completedWorkInstructions in WorkService.exportWorkInstruction", new Exception());
-		else if (inWorkInstruction == null)
+		if (completedWorkInstructions == null) {
+			// if queue not defined, just don't queue it
+			LOGGER.trace("null completedWorkInstructions in WorkService.exportWorkInstruction", new Exception());
+		} else if (inWorkInstruction == null) {
 			LOGGER.error("null input to WorkService.exportWorkInstruction", new Exception());
-		else {
+		} else {
 			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
 			String messageBody = wiCSVExporter.exportWorkInstructions(ImmutableList.of(inWorkInstruction));
 			Facility facility = inWorkInstruction.getParent();

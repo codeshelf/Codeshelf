@@ -41,8 +41,9 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 	/**
 	 */
 	protected void doStartup() {
+		Integer port = Integer.getInteger("sitecontroller.port");
 
-		startApiServer(this.deviceManager);
+		startApiServer(this.deviceManager,port);
 		startTsdbReporter();
 		registerSystemMetrics();
 		
