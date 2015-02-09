@@ -111,6 +111,19 @@ public class WorkServiceTest extends DAOTestABC {
 		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
+
+		ServiceMethodRequest request2 = new ServiceMethodRequest();
+		request2.setClassName("WorkService"); //the ux would use strings
+		request2.setMethodName("workCompletedSummary");
+		request2.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
+		WorkService workService2 = mock(WorkService.class);
+		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
+		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(PropertyService.class), mock(UiUpdateService.class));
+		MessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get());
+		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
+		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
+		Assert.assertTrue(responseABC2.isSuccess());
+	
 	}
 	
 	

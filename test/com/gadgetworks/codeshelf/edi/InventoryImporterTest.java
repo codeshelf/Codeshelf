@@ -592,8 +592,11 @@ public class InventoryImporterTest extends EdiTestABC {
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
 		Assert.assertEquals(facility, PersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
+		
+		// Complete one of the jobs
+		mWorkService.fakeCompleteWi(wi2.getPersistentId().toString(), "COMPLETE");
 
-		// New from v4. Test our work instruction summarizer
+		//Test our work instruction summarizer
 		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(theChe.getPersistentId(),
 			facility.getPersistentId());
 
@@ -602,14 +605,27 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.
 		WiSetSummary theSummary = summaries.get(0);
-		// So, how many shorts, how many active? None complete yet.
+		// So, how many shorts, how many active? One of the two completed.
 		int actives = theSummary.getActiveCount();
 		int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
-		Assert.assertEquals(0, completes);
-		//Auto shorting disabled on 02/03/2015
-		//Assert.assertEquals(1, shorts);
-		Assert.assertEquals(2, actives);
+		Assert.assertEquals(1, completes);
+		Assert.assertEquals(1, actives);
+
+		List<WiSetSummary> summaries2 = new WorkService().start().workCompletedSummary(theChe.getPersistentId(),
+			facility.getPersistentId());
+
+		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
+		Assert.assertEquals(1, summaries.size());
+
+		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.
+		WiSetSummary theSummary2 = summaries2.get(0);
+		// So, how many shorts, how many active? One of the two completed.
+		int actives2 = theSummary2.getActiveCount();
+		int shorts2 = theSummary2.getShortCount();
+		int completes2 = theSummary2.getCompleteCount();
+		Assert.assertEquals(1, completes);
+		Assert.assertEquals(1, actives);
 
 		this.getPersistenceService().commitTenantTransaction();
 	}
