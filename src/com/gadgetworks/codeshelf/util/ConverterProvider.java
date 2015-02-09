@@ -1,6 +1,9 @@
 package com.gadgetworks.codeshelf.util;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 import org.apache.commons.beanutils.ConvertUtilsBean;
@@ -52,7 +55,21 @@ public class ConverterProvider implements Provider<ConvertUtilsBean> {
 	private static class TimestampConverter extends AbstractConverter {
 		@Override
 		protected Object convertToType(Class inClass, Object inValue) throws Throwable {
-			return new Timestamp(Long.valueOf(String.valueOf(inValue)));
+			long timeInMillis = -1;
+			if (inValue instanceof String) {
+				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+				Date time = format.parse(String.valueOf(inValue));
+				timeInMillis = time.getTime();
+			} else if (inValue instanceof Number) {
+				timeInMillis = Long.valueOf(String.valueOf(inValue));
+			} 
+			
+			if (timeInMillis >= 0) {
+				return new Timestamp(timeInMillis);
+			}
+			else {
+				return null;
+			}
 		}
 
 		@Override
