@@ -1,5 +1,6 @@
 package com.gadgetworks.codeshelf.integration;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -52,12 +53,12 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	protected static String facilityId = "F1";
 	protected static String networkId = CodeshelfNetwork.DEFAULT_NETWORK_NAME;
-	protected static String cheId1 = "CHE-E2E-1";
+	protected static String cheId1 = "CHE1";
 	@Getter
-	protected static NetGuid cheGuid1 = new NetGuid("0x23");
-	protected static String cheId2 = "CHE-E2E-2";
+	protected static NetGuid cheGuid1 = new NetGuid("0x00009991");
+	protected static String cheId2 = "CHE2";
 	@Getter
-	protected static NetGuid cheGuid2 = new NetGuid("0x24");
+	protected static NetGuid cheGuid2 = new NetGuid("0x00009992");
 
 	@Getter
 	CsSiteControllerApplication siteController;
@@ -121,7 +122,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
 			facility=Facility.createFacility(getDefaultTenant(),facilityId,"",Point.getZeroPoint());
 			mFacilityDao.store(facility);
-			facility.createDefaultContainerKind();
+
 			// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.
 		}
 		this.facilityPersistentId=facility.getPersistentId();
@@ -129,12 +130,12 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		this.networkPersistentId = network.getPersistentId();
 
-		Che[] ches = (Che[]) network.getChes().values().toArray();
-		Che che1 = ches[0];
+		List<Che> ches = new ArrayList<Che>(network.getChes().values());
+		Che che1 = ches.get(0);
 		che1.setColor(ColorEnum.MAGENTA);
 		this.che1PersistentId = che1.getPersistentId();
 
-		Che che2 = ches[1];
+		Che che2 = ches.get(1);
 		che2.setColor(ColorEnum.WHITE);
 		this.che2PersistentId = che2.getPersistentId();
 

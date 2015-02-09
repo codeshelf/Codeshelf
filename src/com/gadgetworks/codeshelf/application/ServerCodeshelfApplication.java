@@ -91,7 +91,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
 
-		if(!TenantManagerService.getInstance().isRunning()) {
+		if(!TenantManagerService.getInstance().connect()) {
 			LOGGER.error("Failed to initialize Tenant Manager. Server is shutting down.");
 			Thread.sleep(3000);
 			System.exit(1);

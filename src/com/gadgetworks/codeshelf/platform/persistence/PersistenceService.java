@@ -27,6 +27,7 @@ import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.google.inject.Singleton;
 
 /**
@@ -102,7 +103,7 @@ public class PersistenceService extends Service {
 				// this only runs for postgres database
 				SchemaManager schemaManager = tenant.getSchemaManager();
 				
-				//schemaManager.applySchemaUpdates();			
+				schemaManager.applySchemaUpdates();			
 				boolean schemaMatches = schemaManager.checkSchema();
 				
 				if(!schemaMatches) {
@@ -250,12 +251,6 @@ public class PersistenceService extends Service {
 		}
 		// not a domain object
 		return null;
-	}
-
-	public void resetTenantDatabase(Tenant tenant) {
-		LOGGER.warn("Resetting schema for "+tenant.toString());
-		SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
-		se.create(false, true);
 	}
 
 	public static <T>T deproxify(T object) {

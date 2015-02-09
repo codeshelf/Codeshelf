@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import java.sql.SQLException;
+
 import lombok.Getter;
 
 import org.hibernate.HibernateException;
@@ -64,8 +66,9 @@ public class ManagerPersistenceService extends Service {
 			LOGGER.error("manager.hibernateconfig is not defined.");
 			System.exit(-1);
 		}
+		hibernateConfigurationFile = "hibernate/"+hibernateConfigurationFile; // look in hibernate folder
 		
-		Configuration configuration = new Configuration().configure("hibernate/"+hibernateConfigurationFile);
+		Configuration configuration = new Configuration().configure(hibernateConfigurationFile);
 
 		// add database connection info to configuration
 		String connectionUrl = System.getProperty("manager.db.url");
@@ -79,17 +82,20 @@ public class ManagerPersistenceService extends Service {
     	configuration.setProperty("hibernate.connection.url", url);
     	configuration.setProperty("hibernate.connection.username", username);
     	configuration.setProperty("hibernate.connection.password", password);
-
-		String schemaName = System.getProperty("db.schemaname"); //optional
-    	if(schemaName != null) {
-	    	configuration.setProperty("hibernate.default_schema", schemaName);
-    	}
+		
+    	String schemaName = System.getProperty("manager.db.schema"); //optional
+    	configuration.setProperty("hibernate.default_schema", schemaName);
 
     	// wait why is this again
     	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
 
-		schemaManager = new SchemaManager(MASTER_CHANGELOG_NAME,url,username,password,schemaName);			
-
+		schemaManager = new SchemaManager(MASTER_CHANGELOG_NAME,url,username,password,schemaName,hibernateConfigurationFile);
+		try {
+			schemaManager.createSchemaIfNotExists();
+		} catch (SQLException e) {
+			throw new RuntimeException("Cannot start, failed to verify/create manager schema (check db admin rights)");
+		}
+		
 		// do not attempt to actively manage schema of the in-memory testing db; that will be done by Hibernate
 		if(!url.startsWith("jdbc:h2:mem")) {
 			// this only runs for postgres database

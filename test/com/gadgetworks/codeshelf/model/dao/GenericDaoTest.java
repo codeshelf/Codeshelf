@@ -210,7 +210,7 @@ public class GenericDaoTest extends DAOTestABC {
 		// first transaction - create org
 		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
-		Facility facility = createFacility();
+		Facility facility = new Facility();
 		facility.setDomainId("DELETE-TEST");
 		facility.setDescription("DELETE-TEST");
 		mFacilityDao.store(facility);
@@ -239,12 +239,12 @@ public class GenericDaoTest extends DAOTestABC {
 		Session session = persistenceService.getCurrentTenantSession();
 		Transaction t = session.beginTransaction();
 
-		Facility facility= createFacility();
+		Facility facility= new Facility();
 		facility.setDomainId("GETALL-TEST1");
 		facility.setDescription("GETALL-TEST1");
 		mFacilityDao.store(facility);
 
-		facility = createFacility();
+		facility = new Facility();
 		facility.setDomainId("GETALL-TEST2");
 		facility.setDescription("GETALL-TEST2");
 		mFacilityDao.store(facility);

@@ -134,7 +134,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		List<Path> pathList = testFacility.getPaths();
 		Path createdPath1 = pathList.get(0);
 		// Why is facility F1? Passed in DOMID above.
-		Assert.assertEquals("F1.1", createdPath1.getDomainId());	
+		Assert.assertEquals(testFacility.getDomainId()+".1", createdPath1.getDomainId());	
 		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 

@@ -35,7 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 
 // --------------------------------------------------------------------------
@@ -51,6 +54,8 @@ import com.gadgetworks.codeshelf.model.domain.UserType;
 @Table(name = "users") // user can be reserved word in sql
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
+@JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class User {
 
@@ -68,7 +73,7 @@ public class User {
 	public static final int		PBKDF2_INDEX		= 2;
 
 	@Id
-	@Column(nullable = false,name="user_id")
+	@Column(nullable = false,name="id")
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Getter
 	@Setter

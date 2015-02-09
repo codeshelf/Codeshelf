@@ -156,6 +156,8 @@ public abstract class DAOTestABC {
 	
 	@Before
 	public final void setup() throws Exception {
+		TenantManagerService.getInstance().connect();
+		
 		persistenceService = PersistenceService.getInstance();
 		assertTrue(persistenceService.isRunning());
 
@@ -273,7 +275,7 @@ public abstract class DAOTestABC {
 	
 	public void doAfter() {
 		persistenceService.stop();
-		persistenceService.resetTenantDatabase(getDefaultTenant());
+		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
 	}
 
 	protected String getTestName() {

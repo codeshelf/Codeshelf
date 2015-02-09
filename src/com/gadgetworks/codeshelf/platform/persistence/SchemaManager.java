@@ -35,23 +35,18 @@ public class SchemaManager {
 	private String username;
 	private String password;
 	private String schemaName;
+	private String hibernateConfigurationFile;
 	
-	public SchemaManager(String changeLogName, String url,String username,String password,String schemaName) {
+	public SchemaManager(String changeLogName, String url,String username,String password,String schemaName,String hibernateConfigurationFile) {
 		this.changeLogName = changeLogName;
 		this.url = url;
 		this.username = username;
 		this.password = password;
 		this.schemaName = schemaName;
+		this.hibernateConfigurationFile = hibernateConfigurationFile;
 	}
 	
 	public void applySchemaUpdates() {
-/*		try {
-			createSchemaIfNeeded();
-		} catch (SQLException e2) {
-			LOGGER.error("Error trying to check/create schema, cannot continue.", e2);
-			throw new RuntimeException("Error trying to check/create schema, cannot continue.");
-		}
-*/	
 		Database appDatabase = getAppDatabase();
 		if(appDatabase==null) {
 			throw new RuntimeException("Failed to access app database, cannot continue");
@@ -97,7 +92,7 @@ public class SchemaManager {
 		Database hibernateDatabase;
 		try {
 			hibernateDatabase = CommandLineUtils.createDatabaseObject(ClassLoader.getSystemClassLoader(),
-				"hibernate:classic:hibernate/hibernate.tenant.xml", 
+				"hibernate:classic:"+this.hibernateConfigurationFile, 
 				null, null, null, 
 				null, null,
 				false, false,
@@ -195,5 +190,9 @@ public class SchemaManager {
 
 	private boolean isH2Mem() {
 		return (this.url.startsWith("jdbc:h2:mem") );
+	}
+
+	public void createSchemaIfNotExists() throws SQLException {
+		executeSQL("CREATE SCHEMA IF NOT EXISTS "+schemaName);
 	}
 }

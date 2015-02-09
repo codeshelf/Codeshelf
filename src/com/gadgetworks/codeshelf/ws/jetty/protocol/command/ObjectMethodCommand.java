@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -44,10 +45,6 @@ public class ObjectMethodCommand extends CommandABC {
 			response.setStatusMessage("Class name is undefined");
 			return response;
 		}
-		if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-			className = "com.gadgetworks.codeshelf.model.domain." + className;
-		}
-		
 		String methodName = request.getMethodName();
 		if (methodName==null) {
 			response.setStatus(ResponseStatus.Fail);
@@ -55,9 +52,23 @@ public class ObjectMethodCommand extends CommandABC {
 			return response;
 		}
 
+		List<ArgsClass> methodArgs = request.getMethodArgs();
+
+		if (className.equals("Organization")) {
+			// special... ignore ID
+			try {
+				return executeObjectMethodRequest(Organization.class,new Organization(),methodName,methodArgs);
+			} catch (NoSuchMethodException | ClassNotFoundException e) {
+				LOGGER.error("Failed to execute Organization method", e);
+			}
+			response.setStatus(ResponseStatus.Fail);
+			return response;
+		} else if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
+			className = "com.gadgetworks.codeshelf.model.domain." + className;
+		}
+
+		UUID objectId = UUID.fromString(request.getPersistentId());
 		try {
-			UUID objectId = UUID.fromString(request.getPersistentId());
-			List<ArgsClass> methodArgs = request.getMethodArgs();
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
@@ -66,57 +77,7 @@ public class ObjectMethodCommand extends CommandABC {
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 
 				if (targetObject != null) {
-					// Loop over all the arguments, setting each one.
-					List<Class<?>> signatureClasses = new ArrayList<Class<?>>();
-					List<Object> cookedArguments = new ArrayList<Object>();
-					for (ArgsClass arg : methodArgs) {
-						// (The method *must* start with "get" to ensure other methods don't get called.)
-						Object argumentValue = arg.getValue();
-						//Class classType = Class.forName(arg.getClassType());
-						Class<?> classType = ClassUtils.getClass(arg.getClassType());
-						signatureClasses.add(classType);
-						if (Double.class.isAssignableFrom(classType)){
-								argumentValue = Double.valueOf(argumentValue.toString());
-						}
-						cookedArguments.add(argumentValue);		
-					}
-
-					Object methodResult = null;
-					java.lang.reflect.Method method = classObject.getMethod(methodName, signatureClasses.toArray(new Class[0]));
-					if (method != null) {
-						DefaultErrors errors = new DefaultErrors(classObject);
-						try {
-							methodResult = method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
-							response.setResults(methodResult);
-							response.setStatus(ResponseStatus.Success);
-							return response;
-						} catch (InvocationTargetException e ) {
-							Throwable targetException = e.getTargetException();
-							if (targetException instanceof InputValidationException) {
-								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, targetException);
-								errors.addAllErrors(((InputValidationException)targetException).getErrors());
-								response.setStatus(ResponseStatus.Fail);
-								response.setStatusMessage(errors.toString());
-								response.setErrors(errors);
-								return response;
-								
-							}
-							else{
-								LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments, targetException);
-								errors.reject(ErrorCode.GENERAL, targetException.toString());
-								response.setStatus(ResponseStatus.Fail);
-								response.setStatusMessage(errors.toString());
-								response.setErrors(errors);
-								return response;						
-							}
-						} catch (Exception e) {
-							LOGGER.error("Failed to invoke "+className+"."+method + ", with arguments: " + cookedArguments,e);
-							errors.reject(ErrorCode.GENERAL, e.toString());
-							response.setStatus(ResponseStatus.Fail);
-							response.setErrors(errors);
-							return response;
-						}
-					}
+					return executeObjectMethodRequest(classObject, targetObject, methodName, methodArgs);
 				} else {
 					response.setStatus(ResponseStatus.Fail);
 					response.setStatusMessage("Instance " + objectId + " of type " + classObject+" not found");
@@ -132,4 +93,63 @@ public class ObjectMethodCommand extends CommandABC {
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
+	
+	ObjectMethodResponse executeObjectMethodRequest(Class<?> classObject, Object targetObject, String methodName, List<ArgsClass> methodArgs) throws NoSuchMethodException, ClassNotFoundException {
+		ObjectMethodResponse response = new ObjectMethodResponse();
+		
+		// Loop over all the arguments, setting each one.
+		List<Class<?>> signatureClasses = new ArrayList<Class<?>>();
+		List<Object> cookedArguments = new ArrayList<Object>();
+		for (ArgsClass arg : methodArgs) {
+			// (The method *must* start with "get" to ensure other methods don't get called.)
+			Object argumentValue = arg.getValue();
+			//Class classType = Class.forName(arg.getClassType());
+			Class<?> classType = ClassUtils.getClass(arg.getClassType());
+			signatureClasses.add(classType);
+			if (Double.class.isAssignableFrom(classType)){
+					argumentValue = Double.valueOf(argumentValue.toString());
+			}
+			cookedArguments.add(argumentValue);		
+		}
+
+		Object methodResult = null;
+		java.lang.reflect.Method method = classObject.getMethod(methodName, signatureClasses.toArray(new Class[0]));
+		if (method != null) {
+			DefaultErrors errors = new DefaultErrors(classObject);
+			try {
+				methodResult = method.invoke(targetObject, cookedArguments.toArray(new Object[0]));
+				response.setResults(methodResult);
+				response.setStatus(ResponseStatus.Success);
+				return response;
+			} catch (InvocationTargetException e ) {
+				Throwable targetException = e.getTargetException();
+				if (targetException instanceof InputValidationException) {
+					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+method + ", with arguments: " + cookedArguments, targetException);
+					errors.addAllErrors(((InputValidationException)targetException).getErrors());
+					response.setStatus(ResponseStatus.Fail);
+					response.setStatusMessage(errors.toString());
+					response.setErrors(errors);
+					return response;
+					
+				}
+				else{
+					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+method + ", with arguments: " + cookedArguments, targetException);
+					errors.reject(ErrorCode.GENERAL, targetException.toString());
+					response.setStatus(ResponseStatus.Fail);
+					response.setStatusMessage(errors.toString());
+					response.setErrors(errors);
+					return response;						
+				}
+			} catch (Exception e) {
+				LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+method + ", with arguments: " + cookedArguments,e);
+				errors.reject(ErrorCode.GENERAL, e.toString());
+				response.setStatus(ResponseStatus.Fail);
+				response.setErrors(errors);
+				return response;
+			}
+		}
+		response.setStatus(ResponseStatus.Fail);
+		return response;
+	}
+	
 }

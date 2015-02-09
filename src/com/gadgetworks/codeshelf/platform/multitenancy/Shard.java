@@ -32,13 +32,13 @@ public class Shard {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Shard.class);
 
 	@Id
-	@Column(nullable = false,name="shard_id")
+	@Column(nullable = false,name="id")
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Getter
 	@Setter
 	int shardId;
 
-	@Column(nullable = false,name="name")
+	@Column(nullable = false,length=255,name="name")
 	@Getter 
 	@Setter
 	@NonNull
@@ -50,13 +50,13 @@ public class Shard {
 	@NonNull
 	String dbUrl;
 	
-	@Column(nullable = false,name="db_admin_username")
+	@Column(nullable = false,length=16,name="db_admin_username")
 	@Getter
 	@Setter
 	@NonNull
 	String dbAdminUsername;
 
-	@Column(nullable = false,name="db_admin_password")
+	@Column(nullable = false,length=36,name="db_admin_password")
 	@Getter
 	@Setter
 	@NonNull
@@ -90,19 +90,34 @@ public class Shard {
 	private boolean createSchemaAndUser(String dbSchemaName, String dbUsername, String dbPassword) {
 		boolean result = false;
 		try {
-			executeSQL("CREATE USER IF NOT EXISTS "+dbUsername+" PASSWORD '"+dbPassword+"'");
-			executeSQL("CREATE SCHEMA "+dbSchemaName);
-			if(this.getDbUrl().startsWith("jdbc:h2:mem")) {
-				// h2: all users are admins
+			if(isH2MemShard()) {
+				// use H2 syntax
+				executeSQL("CREATE SCHEMA "+dbSchemaName); 
+				executeSQL("CREATE USER "+dbUsername+" PASSWORD '"+dbPassword+"'");
 				executeSQL("ALTER USER "+dbUsername+" ADMIN TRUE");
 			} else {
+				// assuming postgres syntax
+				executeSQL("CREATE SCHEMA IF NOT EXISTS "+dbSchemaName);
+				try {
+					executeSQL("CREATE USER "+dbUsername+" PASSWORD '"+dbPassword+"'");
+				} catch (SQLException e) {
+					if(e.getMessage().equals("ERROR: role \""+dbUsername+"\" already exists")) {
+						LOGGER.warn("Tried to create user but already existed (assuming same password): "+dbUsername);
+					} else {
+						throw e;
+					}
+				}
 				executeSQL("GRANT ALL ON SCHEMA "+dbSchemaName+" TO "+dbUsername);
 			}
 			result = true;
 		} catch (SQLException e) {
-			LOGGER.error("", e);
+			LOGGER.error("SQL error creating tenant schema and user", e);
 		}
 		return result;
+	}
+
+	private boolean isH2MemShard() {
+		return this.getDbUrl().startsWith("jdbc:h2:mem");
 	}
 
 	public Tenant createTenant(String name,String schemaName,String username,String password) {

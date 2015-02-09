@@ -58,7 +58,7 @@ public class ContainerUseTest extends DomainTestABC {
 		Assert.assertEquals(aisleId, "A1.B1");
 
 		String facilityId = bay.getLocationIdToParentLevel(Facility.class);
-		Assert.assertEquals(facilityId, "F1.A1.B1");
+		Assert.assertEquals(facilityId, facility.getDomainId()+".A1.B1");
 
 
 		List<OrderHeader> headerList = facility.getOrderHeaders();

@@ -23,10 +23,17 @@ import com.gadgetworks.codeshelf.service.WorkService;
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
 	protected PropertyService mPropertyService = new PropertyService();
-	protected WorkService mWorkService = new WorkService().start();
+	protected WorkService mWorkService;
 	
 	private EventProducer		mEventProducer	= new EventProducer();
 
+	@Override
+	public void doBefore() throws Exception {
+		super.doBefore();
+		
+		mWorkService = new WorkService().start();
+	}
+	
 	protected AislesFileCsvImporter createAisleFileImporter() {
 		return new AislesFileCsvImporter(mEventProducer, mAisleDao, mBayDao, mTierDao, mSlotDao);
 	}

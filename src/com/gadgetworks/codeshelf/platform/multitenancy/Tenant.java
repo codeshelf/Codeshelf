@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.platform.multitenancy;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,17 +27,23 @@ import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 
 @Entity
 @Table(name="tenant")
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
+@JsonIgnoreProperties({"className"})
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Tenant {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Tenant.class);
 
 	@Id
-	@Column(nullable = false,name="tenant_id")
+	@Column(nullable = false,name="id")
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Getter
 	@Setter
@@ -48,7 +56,7 @@ public class Tenant {
 	@Getter 
 	@Setter
 	@NonNull
-	@Column(unique=true, nullable=false,length=50,name="name")
+	@Column(unique=true, nullable=false,length=255,name="name")
 	String name;
 
 	@Getter
@@ -66,7 +74,7 @@ public class Tenant {
 	@Getter
 	@Setter
 	@NonNull
-	@Column(unique=true,length=36,name="db_password")
+	@Column(unique=true,nullable=false,length=36,name="db_password")
 	String dbPassword = UUID.randomUUID().toString();
 
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
@@ -90,7 +98,8 @@ public class Tenant {
 	public SchemaManager getSchemaManager() {
 		if(schemaManager == null) {
 			schemaManager = new SchemaManager(PersistenceService.getInstance().getChangeLogFilename(), 
-				shard.getDbUrl(), this.getDbUsername(), this.getDbPassword(), this.getDbSchemaName());
+				shard.getDbUrl(), this.getDbUsername(), this.getDbPassword(), this.getDbSchemaName(),
+				this.getHibernateConfigurationFile());
 		}
 		return schemaManager;
 	}
@@ -98,7 +107,7 @@ public class Tenant {
 	public Configuration getHibernateConfiguration() {
 		if(this.hibernateConfiguration == null) {
 			// fetch database config from properties file
-			hibernateConfiguration = new Configuration().configure("hibernate/"+System.getProperty("tenant.hibernateconfig"));
+			hibernateConfiguration = new Configuration().configure(getHibernateConfigurationFile());
 	    	
 			hibernateConfiguration .setProperty("hibernate.connection.url", getShard().getDbUrl());
 			hibernateConfiguration .setProperty("hibernate.connection.username", getDbUsername());
@@ -112,6 +121,10 @@ public class Tenant {
 		return this.hibernateConfiguration;
 	}
 
+	public String getHibernateConfigurationFile() {
+		return ("hibernate/"+System.getProperty("tenant.hibernateconfig"));
+	}
+
 	@Override
 	public String toString() {
 		return "tenant #"+this.getTenantId()+" ("+this.getName()+") on shard "+this.getShard().getName()+"/"+this.getDbSchemaName();
@@ -120,6 +133,15 @@ public class Tenant {
 	public void addUser(User u) {
 		u.setTenant(this);
 		users.put(u.getUsername(), u);
+	}
+	
+	public void removeUser(User u) {
+		u.setTenant(null);
+		users.remove(u.getUsername());
+	}
+	
+	public Collection<User> getUsers() {
+		return new ArrayList<User>(users.values());
 	}
 
 	@Override

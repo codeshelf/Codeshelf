@@ -9,9 +9,11 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.persistence.ManagerPersistenceService;
@@ -42,7 +44,7 @@ public class TenantManagerService extends Service implements ITenantManager {
 		TenantManagerService.theInstance = this;
 	}
 	
-	public final synchronized static TenantManagerService getInstance() {
+	public final synchronized static ITenantManager getInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantManagerService();
 			theInstance.start();
@@ -105,6 +107,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 			createUser(tenant,"work@example.com", "testme",UserType.APPUSER); //view + simulate
 			
 			createUser(tenant,"view@accu-logistics.com", "accu-logistics",UserType.APPUSER); //view
+
+			createUser(tenant,Integer.toString(CodeshelfNetwork.DEFAULT_SITECON_SERIAL),CodeshelfNetwork.DEFAULT_SITECON_PASS,UserType.SITECON);
 		}
 
 	}
@@ -204,6 +208,7 @@ public class TenantManagerService extends Service implements ITenantManager {
 		
 		try {
 			Session session = managerPersistenceService.beginSessionAndTransaction();
+			tenant = (Tenant) session.load(Tenant.class, tenant.getTenantId());
 			if(checkUsername(session,username)) {
 				// ok to create
 				User user = new User();
@@ -220,6 +225,27 @@ public class TenantManagerService extends Service implements ITenantManager {
 			managerPersistenceService.commitTransactionAndCloseSession();	
 		}        
 		return result;
+	}
+
+	@Override
+	public void resetTenant(Tenant tenant) {
+		LOGGER.warn("Resetting schema and users for "+tenant.toString());
+		try {
+			Session session = managerPersistenceService.beginSessionAndTransaction();
+			tenant = (Tenant) session.load(Tenant.class, tenant.getTenantId());
+			
+			// remove all users
+			for(User u : tenant.getUsers()) {
+				tenant.removeUser(u);
+				session.delete(u);
+			}
+
+		} finally {
+			managerPersistenceService.commitTransactionAndCloseSession();	
+		}        
+		// reset schema
+		SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
+		se.create(false, true);
 	}
 
 	@Override
@@ -321,5 +347,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 	public Tenant getDefaultTenant() {
 		return getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
 	}
+
 
 }

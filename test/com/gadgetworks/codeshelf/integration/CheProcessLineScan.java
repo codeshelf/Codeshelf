@@ -306,7 +306,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE-E2E-1");
+		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
@@ -391,7 +391,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE-E2E-1");
+		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
@@ -500,7 +500,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE-E2E-1");
+		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);

@@ -24,6 +24,7 @@ public interface ITenantManager {
 	User authenticate(String username,String password);
 
 	// tenants
+	void resetTenant(Tenant tenant);
 	Tenant getTenantByUsername(String username);
 	Tenant getTenantByName(String name);
 	Tenant createTenant(String name,int shardId,String dbUsername);
