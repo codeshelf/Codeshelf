@@ -73,6 +73,7 @@ import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
 import com.gadgetworks.codeshelf.validation.MethodArgumentException;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -441,7 +442,9 @@ public class WorkService implements IApiService {
 	 * @param inScannedOrderDetailId
 	 * @return
 	 */
-	public List<WorkInstruction> getWorkInstructionsForOrderDetail(final Che inChe, final String inScannedOrderDetailId) {
+	public GetOrderDetailWorkResponse getWorkInstructionsForOrderDetail(final Che inChe, final String inScannedOrderDetailId) {
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		GetOrderDetailWorkResponse response = new GetOrderDetailWorkResponse();
 		if (inChe == null) {
 			throw new MethodArgumentException(0, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
@@ -459,20 +462,21 @@ public class WorkService implements IApiService {
 
 		if (orderDetails.isEmpty()) {
 			// temporary: just return empty list instead of throwing
-			return new ArrayList<WorkInstruction>();
-			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			response.setStatusMessage("Line Item Not Found");
+			response.setWorkInstructions(wiResultList);
+			return response;
 		}
 		if (orderDetails.size() > 1) {
 			// temporary: just return empty list instead of throwing
-			return new ArrayList<WorkInstruction>();
-			// throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
+			response.setStatusMessage("Ambiguous Line Item");
+			response.setWorkInstructions(wiResultList);
+			return response;
 		}
 		
 		OrderDetail orderDetail = orderDetails.get(0);
 		clearChe(inChe);
 		Timestamp theTime = now();
 
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Pass facility as the default location of a short WI..
 		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 			WorkInstructionTypeEnum.PLAN,
@@ -496,7 +500,8 @@ public class WorkService implements IApiService {
 			}
 		}
 
-		return wiResultList;
+		response.setWorkInstructions(wiResultList);
+		return response;
 	}
 
 	// --------------------------------------------------------------------------

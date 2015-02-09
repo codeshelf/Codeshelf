@@ -215,7 +215,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * This will be enhanced to have the object parameter that includes the work instruction list and other return information.
 	 * Currently handled: 1 uncompleted, 1 completed, 0 returned, more than one returned.
 	 */
-	public void assignWork(final List<WorkInstruction> inWorkItemList) {
+	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
 		LOGGER.info("LineScanDeviceLogic.assignWork() entered");
 
 		// only honor the response if we are in the state where we sent and are waiting for the response.
@@ -245,11 +245,16 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			}
 		} else {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
-			if (wiCount == 0)
-				setReadyMsg("No jobs last scan");
-			else
+			if (wiCount == 0){
+				if (message == null) {
+					setReadyMsg("No jobs last scan");					
+				} else {
+					setReadyMsg(message);
+				}
+			} else {
 				// more than 1. Perhaps 1 complete and we should find the uncompleted one. See what the new object brings us
 				setReadyMsg(wiCount + " jobs last scan");
+			}
 			LOGGER.info("LineScanDeviceLogic.assignWork(): not 1 job");
 			setState(CheStateEnum.READY);
 		}

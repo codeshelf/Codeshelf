@@ -587,23 +587,23 @@ public class CsDeviceManager implements
 		}
 	}
 
-	public void processGetWorkResponse(String networkGuid, List<WorkInstruction> workInstructions) {
+	public void processGetWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
-			cheDevice.assignWork(workInstructions);
+			cheDevice.assignWork(workInstructions, message);
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
 
-	public void processOrderDetailWorkResponse(String networkGuid, List<WorkInstruction> workInstructions) {
+	public void processOrderDetailWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processOrderDetailWorkResponse calling cheDevie.assignWork()");
-			cheDevice.assignWork(workInstructions); // will initially use assignWork override, but probably need to add parameters.			
+			cheDevice.assignWork(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}

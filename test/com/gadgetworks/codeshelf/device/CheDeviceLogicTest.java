@@ -142,7 +142,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
 	
 		//Pretend no work ahead of this location
-		cheDeviceLogic.assignWork(Collections.<WorkInstruction>emptyList());
+		cheDeviceLogic.assignWork(Collections.<WorkInstruction>emptyList(), null);
 		
 
 		pressButton(cheDeviceLogic, chePosition, wi.getPlanQuantity());

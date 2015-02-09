@@ -60,7 +60,8 @@ public class LineScanTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 		Che che = Che.DAO.getAll().get(0);
 
-		List<WorkInstruction> instructions = mService.getWorkInstructionsForOrderDetail(che, "11.1");
+		GetOrderDetailWorkResponse response = mService.getWorkInstructionsForOrderDetail(che, "11.1");
+		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getDescription(), "Spoon 6in.");
 		Assert.assertEquals(instruction.getItemId(), "SKU0003");
@@ -121,7 +122,8 @@ public class LineScanTest extends EdiTestABC {
 		instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
 		mService.completeWorkInstruction(che.getPersistentId(), instruction);
 
-		instructions = mService.getWorkInstructionsForOrderDetail(che, "11.1");
+		response = mService.getWorkInstructionsForOrderDetail(che, "11.1"); 
+		instructions = response.getWorkInstructions();
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
 		this.getPersistenceService().commitTenantTransaction();
 	}

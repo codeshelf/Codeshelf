@@ -899,7 +899,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inWorkItemList
 	 * Only not final because we let CsDeviceManager call this generically.
 	 */
-	public void assignWork(final List<WorkInstruction> inWorkItemList) {
+	public void assignWork(final List<WorkInstruction> inWorkItemList, final String message) {
 		LOGGER.error("Inappropriate call to assignWork()");
 
 	}
