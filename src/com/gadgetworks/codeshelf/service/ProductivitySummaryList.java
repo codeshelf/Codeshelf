@@ -17,15 +17,51 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class ProductivitySummaryList {
 	@Getter
-	private HashMap<String, GroupSummary> groups = new HashMap<>();
+	private HashMap<String, StatusSummary> groups = new HashMap<>();
 	
-	public class GroupSummary{
+	public static class StatusSummary{
 		@Getter
-		private short invalid, created, released, inprogress, complete, sHort;
+		@Setter
+		private int invalid, created, released, inprogress, complete;
+		
+		//Notice that short is a keyword so make strange case and use explicit getter/setter
+		private int sHort;
 		
 		@Setter
 		@Getter
 		private Double picksPerHour;
+
+		public void add(int subtotal, OrderStatusEnum orderStatus) {
+			switch (orderStatus) {
+				case INVALID:
+					invalid += subtotal;
+					break;
+				case CREATED:
+					created += subtotal;
+					break;
+				case RELEASED:
+					released += subtotal;
+					break;
+				case INPROGRESS:
+					inprogress += subtotal;
+					break;
+				case COMPLETE:
+					complete += subtotal;
+					break;
+				case SHORT:
+					sHort += subtotal;
+					break;
+			}
+
+		}
+		
+		public int getShort() {
+			return sHort;
+		}
+
+		public void setShort(int sHort) {
+			this.sHort = sHort;
+		}
 	}
 	
 	public ProductivitySummaryList(Facility facility, List<Object[]> picksPerHour) {
@@ -38,47 +74,28 @@ public class ProductivitySummaryList {
 	
 	private void processOrder(OrderHeader orderHeader){
 		String groupName = orderHeader.getOrderGroup() == null? OrderGroup.UNDEFINED : orderHeader.getOrderGroup().getDomainId();
-		GroupSummary groupSummary = groups.get(groupName);
-		if (groupSummary == null) {
-			groupSummary = new GroupSummary();
-			groups.put(groupName, groupSummary);
+		StatusSummary statusSummary = groups.get(groupName);
+		if (statusSummary == null) {
+			statusSummary = new StatusSummary();
+			groups.put(groupName, statusSummary);
 		}
 		for (OrderDetail orderDetail : orderHeader.getOrderDetails()) {
 			OrderStatusEnum status = orderDetail.getStatus();
-			switch (status) {
-				case INVALID:
-					groupSummary.invalid++;
-					break;
-				case CREATED:
-					groupSummary.created++;
-					break;
-				case RELEASED:
-					groupSummary.released++;
-					break;
-				case INPROGRESS:
-					groupSummary.inprogress++;
-					break;
-				case COMPLETE:
-					groupSummary.complete++;
-					break;
-				case SHORT:
-					groupSummary.sHort++;
-					break;
-			}
+			statusSummary.add(1, status);
 		}
 	}
 	
 	private void assignPicksPerHour(List<Object[]> picksPerHour) {
 		if (picksPerHour == null) {return;}
-		GroupSummary group = null;
+		StatusSummary statusSummary = null;
 		String groupName = null;
 		Double groupPicks = null;
 		for (Object[] picksPerHourOneGroup : picksPerHour) {
 			groupName = picksPerHourOneGroup[0].toString(); 
 			groupPicks = (Double)picksPerHourOneGroup[1];
-			group = groups.get(groupName);
-			if (group != null) {
-				group.setPicksPerHour(groupPicks);
+			statusSummary = groups.get(groupName);
+			if (statusSummary != null) {
+				statusSummary.setPicksPerHour(groupPicks);
 			}
 		}		
 	}
