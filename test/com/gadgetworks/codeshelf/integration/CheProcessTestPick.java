@@ -624,9 +624,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getPersistenceService().beginTenantTransaction();
 		che1 = Che.DAO.reload(che1);
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workSummary(che1.getPersistentId(), facility.getPersistentId());
+		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(che1.getPersistentId(), facility.getPersistentId());
 
-		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
+		// as this test, this facility only set up this one che, there should be only one wi set.
 		Assert.assertEquals(1, summaries.size());
 
 		// getAny should get the one. Call it somewhat as the UI would. Get a time, then query again with that time.

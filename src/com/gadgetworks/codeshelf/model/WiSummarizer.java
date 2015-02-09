@@ -7,6 +7,7 @@ package com.gadgetworks.codeshelf.model;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +35,13 @@ public class WiSummarizer {
 	}
 
 	public List<WiSetSummary> getSummaries() {
-		return ImmutableList.<WiSetSummary>copyOf(mWiSetSummaries.values());
+		return ImmutableList.<WiSetSummary> copyOf(mWiSetSummaries.values());
 	}
 
-	public void computeWiSummariesForChe(UUID inCheId, UUID inFacilityId) {
+	/**
+	 * Cart runs all have the same assign time, so this groups by assign times
+	 */
+	public void computeAssignedWiSummariesForChe(UUID inCheId, UUID inFacilityId) {
 		if (inCheId == null || inFacilityId == null) {
 			return;
 		}
@@ -52,6 +56,47 @@ public class WiSummarizer {
 			WorkInstructionStatusEnum status = wi.getStatus();
 			theSummary.incrementStatus(status);
 		}
+	}
+
+	/**
+	 * Line_Scan mode has null assign time by design. (Would be different for each anyway.)
+	 * We want to group by complete time, but day by day.
+	 */
+	public void computeCompletedWiSummariesForChe(UUID inCheId, UUID inFacilityId) {
+		if (inCheId == null || inFacilityId == null) {
+			return;
+		}
+		// Important point. Treats uncompleted work instructions in the completed today group. So do not filter uncompletes out.
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
+		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
+		// wi -> facility
+		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		for (WorkInstruction wi : wis) {
+			Timestamp wiCompleteTime = wi.getCompleted();
+			Timestamp normalizedTime = normalizeTimeToDayBoundary(wiCompleteTime);
+			WiSetSummary theSummary = getOrCreateSummaryForTime(normalizedTime);
+			WorkInstructionStatusEnum status = wi.getStatus();
+			theSummary.incrementStatus(status);
+		}
+	}
+
+	/**
+	 * We want to go back to 00:00:00 of that day. And an interesting effect. 
+	 * If the time is null (such as not completed yet), we take the time as now, and normalize back to midnight
+	 */
+	private Timestamp normalizeTimeToDayBoundary(final Timestamp inputTime) {
+		Calendar cal = Calendar.getInstance();
+		if (inputTime == null) {
+			cal.setTime(new Timestamp(System.currentTimeMillis()));
+		} else {
+			cal.setTime(inputTime);
+		}
+
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		return new Timestamp(cal.getTimeInMillis());
 	}
 
 	public int getCountOfSummaries() { // primarily for unit testing
@@ -96,7 +141,6 @@ public class WiSummarizer {
 		public int compare(Timestamp o1, Timestamp o2) {
 			return o1.compareTo(o2);
 		}
-		
-		
+
 	}
 }

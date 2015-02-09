@@ -998,9 +998,15 @@ public class WorkService implements IApiService {
 		}
 	}
 
-	public List<WiSetSummary> workSummary(UUID cheId, UUID facilityId) {
+	public List<WiSetSummary> workAssignedSummary(UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
-		summarizer.computeWiSummariesForChe(cheId, facilityId);
+		summarizer.computeAssignedWiSummariesForChe(cheId, facilityId);
+		return summarizer.getSummaries();
+	}
+
+	public List<WiSetSummary> workCompletedSummary(UUID cheId, UUID facilityId) {
+		WiSummarizer summarizer = new WiSummarizer();
+		summarizer.computeCompletedWiSummariesForChe(cheId, facilityId);
 		return summarizer.getSummaries();
 	}
 
