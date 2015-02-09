@@ -11,9 +11,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
-
 @SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {
 	private static final String CONTENT_TYPE_TEXT = "text/html";
@@ -25,13 +22,12 @@ public class ServiceControlServlet extends HttpServlet {
     		  Executors.newSingleThreadScheduledExecutor();
     
 	private ApplicationABC	application;
-	private SchemaManager schemaManager = null;
+	boolean enableSchemaManagement;
+//	private SchemaManager schemaManager = null;
 
     public ServiceControlServlet(ApplicationABC application, boolean enableSchemaManagement) {
     	this.application = application;
-    	if(enableSchemaManagement) {
-        	this.schemaManager = PersistenceService.getInstance().getSchemaManager();
-    	}
+    	this.enableSchemaManagement = enableSchemaManagement;
     }
 
     @Override
@@ -59,7 +55,7 @@ public class ServiceControlServlet extends HttpServlet {
             if(action.equals("stop")) {
             	out.println("APP SERVER SHUTDOWN. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
             	stop(ApplicationABC.ShutdownCleanupReq.NONE);
-            } else if(schemaManager != null) {
+            } else if(enableSchemaManagement) {
             	// schema actions
             	if(action.equals("dropschema")) {
                 	out.println("DROP SCHEMA. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
@@ -76,7 +72,7 @@ public class ServiceControlServlet extends HttpServlet {
         	}
             out.println("</br></br>");
         } else {
-            if(schemaManager != null) {
+            if(enableSchemaManagement) {
                 out.println("<h3><a href=\"javascript:if(confirm('Reset Orders/WIs for demo. Are you sure?')){document.deleteorderswis.submit();}\">DEMO RESET: Delete Orders and Work Instructions, shutdown (restart)</a></h3></br></br></br></br>");        
                 out.println("<a href=\"javascript:if(confirm('WARNING - This will delete the facility setup! Are you sure?')){document.dropschema.submit();}\">Erase Database, shutdown (restart)</a></br></br></br></br></br>");
             }

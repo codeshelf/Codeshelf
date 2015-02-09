@@ -54,7 +54,6 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.DropboxService"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.IronMqService"/>
 
-        <mapping class="com.gadgetworks.codeshelf.model.domain.Organization"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Che"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.LedController"/>
@@ -67,7 +66,6 @@
         <mapping class="com.gadgetworks.codeshelf.model.domain.UomMaster"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ItemDdcGroup"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Vertex"/>
-        <mapping class="com.gadgetworks.codeshelf.model.domain.User"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.Container"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerKind"/>
         <mapping class="com.gadgetworks.codeshelf.model.domain.ContainerUse"/>

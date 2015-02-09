@@ -65,7 +65,7 @@ public class WorkServiceTest extends DAOTestABC {
 	}
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
-	private FacilityGenerator facilityGenerator = new FacilityGenerator();
+	private FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {

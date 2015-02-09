@@ -26,11 +26,11 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
@@ -57,14 +57,8 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// All tiers have controllers associated.
 		// There are two CHE called CHE1 and CHE2
 
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-
 		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(), fName, "TEST", Point.getZeroPoint());
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
@@ -139,12 +133,9 @@ public class PickSimulaneousWis extends EdiTestABC {
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network);
-
-		Che che1 = network.createChe("CHE1", new NetGuid("0x00000001"));
-		Che che2 = network.createChe("CHE2", new NetGuid("0x00000002"));
+		CodeshelfNetwork network = facility.getNetworks().get(0);
+		Che che1 = network.createChe("CHE3", new NetGuid("0x00000001"));
+		Che che2 = network.createChe("CHE4", new NetGuid("0x00000002"));
 
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));

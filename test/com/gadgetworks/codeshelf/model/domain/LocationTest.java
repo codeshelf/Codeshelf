@@ -18,7 +18,7 @@ public class LocationTest extends DomainTestABC {
 	public final void getLocationIdToParentLevel() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-LOC.1");
+		Facility facility = createFacilityWithOutboundOrders();
 		
 		Location aisle = facility.findLocationById("A1");
 		Location bay = aisle.findLocationById("B1");

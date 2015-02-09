@@ -37,7 +37,6 @@ public class DropboxServiceTest {
 	@Test
 	public final void dropboxCheckTest() throws IOException {
 
-		Organization.setDao(new MockDao<Organization>());
 		Facility.setDao(new MockDao<Facility>());
 		Aisle.setDao(new MockDao<Aisle>());
 		Bay.setDao(new MockDao<Bay>());
@@ -45,8 +44,6 @@ public class DropboxServiceTest {
 		DropboxService.setDao(new MockDao<DropboxService>());
 		EdiDocumentLocator.setDao(new MockDao<EdiDocumentLocator>());
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("O1");
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");
 

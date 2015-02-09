@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 
 public class TestDatabaseTest extends DomainTestABC {
 	// These tests should be run together, as the tests will not be meaningful if run one at a time.
@@ -39,21 +39,21 @@ public class TestDatabaseTest extends DomainTestABC {
 
 		if(TestDatabaseTest.sequence_static == 1) {
 			// create an org to look for in future steps
-			Organization org=new Organization();
-			org.setDomainId("org_create");
-			Organization.DAO.store(org);
+			Facility fac = this.createFacility();
+			fac.setDomainId("org_create");
+			Facility.DAO.store(fac);
 			
 			// new transaction
 			this.getPersistenceService().commitTenantTransaction();
 			this.getPersistenceService().beginTenantTransaction();
 
 			// org just created should still exist
-			assertNotNull(Organization.DAO.findByDomainId(null,"org_create"));			
+			assertNotNull(Facility.DAO.findByDomainId(null,"org_create"));			
 			
 			// create another org
-			org=new Organization();
-			org.setDomainId("org_rollback");
-			Organization.DAO.store(org);			
+			fac= this.createFacility();
+			fac.setDomainId("org_rollback");
+			Facility.DAO.store(fac);			
 			
 			// rollback and new transaction
 			this.getPersistenceService().rollbackTenantTransaction();
@@ -61,14 +61,14 @@ public class TestDatabaseTest extends DomainTestABC {
 			this.getPersistenceService().beginTenantTransaction();
 
 			// last step rolled back new org, so it should not exist
-			assertNull(Organization.DAO.findByDomainId(null,"org_rollback"));
+			assertNull(Facility.DAO.findByDomainId(null,"org_rollback"));
 
 		} else if(TestDatabaseTest.sequence_static == 2) {
 			// confirm test object was recreated by JUnit (not reused)
 			assertEquals(this.sequence_member,1);
 			
 			// org created in prior step should not exist
-			assertNull(Organization.DAO.findByDomainId(null,"org_create"));			
+			assertNull(Facility.DAO.findByDomainId(null,"org_create"));			
 		}		
 		
 		this.sequence_member++;
@@ -80,19 +80,19 @@ public class TestDatabaseTest extends DomainTestABC {
 	@Test
 	public void testOutOfTransactionUpdate() {
 		beginTenantTransaction();
-		Organization org=new Organization();
+		Facility org = new Facility();
 		org.setDomainId("an org");
 		org.setDescription("foo");
-		Organization.DAO.store(org);					
+		Facility.DAO.store(org);					
 		commitTenantTransaction();
 		
 		beginTenantTransaction();
 		org.setDescription("bar");
-		Organization.DAO.store(org);					
+		Facility.DAO.store(org);					
 		commitTenantTransaction();		
 
 		beginTenantTransaction();
-		Organization org2 = Organization.DAO.findByDomainId(null,"an org");
+		Facility org2 = Facility.DAO.findByDomainId(null,"an org");
 		assertNotNull(org2);
 		assertEquals("bar", org2.getDescription());
 		commitTenantTransaction();		

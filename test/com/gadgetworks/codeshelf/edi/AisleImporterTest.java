@@ -26,15 +26,15 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
-// domain objects needed
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.flyweight.command.NetGuid;
+// domain objects needed
 
 /**
  * @author ranstrom
@@ -64,12 +64,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE9");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE9", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE9");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE9", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -225,12 +220,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE10");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE10", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE10");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE10", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -417,12 +407,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE11");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE11", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE11");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE11", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -540,12 +525,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-SPARSE91");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-SPARSE91", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-SPARSE91");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-SPARSE91", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -658,12 +638,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE12");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE12", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE12");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE12", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -742,12 +717,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE13");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE13", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE13");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE13", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -872,12 +842,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE2X");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE2X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE2X");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE2X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -957,12 +922,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE14");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE14", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE14");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE14", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1020,12 +980,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE15");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE15", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE15");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE15", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1173,12 +1128,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE16");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE16", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE16");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE16", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1345,12 +1295,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE21");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE21", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE21");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE21", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1392,12 +1337,7 @@ public class AisleImporterTest extends EdiTestABC {
 	public final void testPathCreation() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setDomainId("O4X");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F4X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F4X");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F4X", "TEST", Point.getZeroPoint());
 
 		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.0, 12.0, 48.0);
@@ -1472,12 +1412,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE5X");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE5X");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1546,12 +1481,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-CLONE5X");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-CLONE5X");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1626,12 +1556,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-3X");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F3X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F3X");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F3X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1825,12 +1750,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE6X");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE6X", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE6X");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE6X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1924,12 +1844,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE29");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE29", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE29");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE29", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2047,12 +1962,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE30");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE30", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE30");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE30", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2161,12 +2071,7 @@ public class AisleImporterTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-AISLE31");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-AISLE31", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-AISLE31");
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE31", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();

@@ -28,15 +28,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SchemaManager {
-	private static final String MASTER_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	private static final Logger LOGGER	= LoggerFactory.getLogger(SchemaManager.class);
 
+	private String changeLogName;
 	private String url;
 	private String username;
 	private String password;
 	private String schemaName;
 	
-	public SchemaManager(String url,String username,String password,String schemaName) {
+	public SchemaManager(String changeLogName, String url,String username,String password,String schemaName) {
+		this.changeLogName = changeLogName;
 		this.url = url;
 		this.username = username;
 		this.password = password;
@@ -44,28 +45,25 @@ public class SchemaManager {
 	}
 	
 	public void applySchemaUpdates() {
-		try {
+/*		try {
 			createSchemaIfNeeded();
 		} catch (SQLException e2) {
 			LOGGER.error("Error trying to check/create schema, cannot continue.", e2);
 			throw new RuntimeException("Error trying to check/create schema, cannot continue.");
 		}
-		
+*/	
 		Database appDatabase = getAppDatabase();
 		if(appDatabase==null) {
 			throw new RuntimeException("Failed to access app database, cannot continue");
 		}
 		
 		ResourceAccessor fileOpener = new ClassLoaderResourceAccessor(); 
-		//= new CompositeResourceAccessor(
-		//			new FileSystemResourceAccessor(),
-		//			new ClassLoaderResourceAccessor());
 		
 		LOGGER.info("initializing Liquibase");
 		Contexts contexts = new Contexts(); //empty context
 		Liquibase liquibase;
 		try {
-			liquibase = new Liquibase(MASTER_CHANGELOG_FILENAME, fileOpener, appDatabase);
+			liquibase = new Liquibase(changeLogName, fileOpener, appDatabase);
 		} catch (LiquibaseException e) {
 			LOGGER.error("Failed to initialize liquibase, cannot continue.", e);
 			throw new RuntimeException("Failed to initialize liquibase, cannot continue.",e);
@@ -168,28 +166,7 @@ public class SchemaManager {
 		return appDatabase;
 	}        		
 
-	public void createSchemaIfNeeded() throws SQLException {
-		this.executeSQL("CREATE SCHEMA IF NOT EXISTS "+schemaName+" AUTHORIZATION "+username);
-	}
-
-	public void deleteOrdersWis() throws SQLException {
-		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
-		this.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
-		this.executeSQL("DELETE FROM "+schemaName+".container_use");
-		this.executeSQL("DELETE FROM "+schemaName+".work_instruction");
-		this.executeSQL("DELETE FROM "+schemaName+".container");
-		this.executeSQL("DELETE FROM "+schemaName+".order_location");
-		this.executeSQL("DELETE FROM "+schemaName+".order_detail");
-		this.executeSQL("DELETE FROM "+schemaName+".order_header");
-		this.executeSQL("DELETE FROM "+schemaName+".order_group");
-	}
-
-	public void dropSchema() throws SQLException {
-		LOGGER.warn("Deleting entire schema "+schemaName);
-		this.executeSQL("DROP SCHEMA "+schemaName+" CASCADE");
-	}
-
-	private void executeSQL(String sql) throws SQLException {
+	public void executeSQL(String sql) throws SQLException {
 		Connection conn = DriverManager.getConnection(url,username,password);
 		Statement stmt = conn.createStatement();
 		LOGGER.trace("Executing explicit SQL: "+sql);
@@ -198,5 +175,25 @@ public class SchemaManager {
 		conn.close();
 	}
 
+	public void deleteOrdersWis() throws SQLException {
+		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
+		executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
+		executeSQL("DELETE FROM "+schemaName+".container_use");
+		executeSQL("DELETE FROM "+schemaName+".work_instruction");
+		executeSQL("DELETE FROM "+schemaName+".container");
+		executeSQL("DELETE FROM "+schemaName+".order_location");
+		executeSQL("DELETE FROM "+schemaName+".order_detail");
+		executeSQL("DELETE FROM "+schemaName+".order_header");
+		executeSQL("DELETE FROM "+schemaName+".order_group");
+	}
 
+	public void dropSchema() throws SQLException {
+		LOGGER.warn("Deleting entire schema "+schemaName);
+		executeSQL("DROP SCHEMA "+schemaName+
+			(isH2Mem()?"":" CASCADE"));
+	}
+
+	private boolean isH2Mem() {
+		return (this.url.startsWith("jdbc:h2:mem") );
+	}
 }

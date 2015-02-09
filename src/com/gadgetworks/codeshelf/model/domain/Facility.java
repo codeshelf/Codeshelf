@@ -40,8 +40,12 @@ import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.service.PropertyService;
+import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -1201,7 +1205,7 @@ public class Facility extends Location {
 		Set<User> users = new HashSet<User>();
 
 		for (SiteController sitecon : this.getSiteControllers()) {
-			User user = sitecon.getAuthenticationUser();
+			User user = TenantManagerService.getInstance().getUser(sitecon.getDomainId());
 			if (user != null) {
 				users.add(user);
 			} else {
@@ -1285,4 +1289,58 @@ public class Facility extends Location {
 		}
 		return unspecifiedLocation;
 	}
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inDomainId
+	 * @param inDescription
+	 * @param inPosTypeByStr
+	 * @param inAnchorPosx
+	 * @param inAnchorPosY
+	 */
+	// @Transactional
+	public static Facility createFacility(Tenant tenant,final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+
+		Facility facility = new Facility();
+		facility.setDomainId(inDomainId);
+		facility.setDescription(inDescription);
+		facility.setAnchorPoint(inAnchorPoint);
+		facility.store();
+
+		LOGGER.info("Creating facility "+inDomainId+" w/ dropbox, ironmq, network, sitecon, sitecon user, generic container and 2 CHEs");
+
+		// Create a first Dropbox Service entry for this facility.
+		@SuppressWarnings("unused")
+		DropboxService dropboxService = facility.createDropboxService();
+
+		// Create a first IronMQ Service entry for this facility.
+		try {
+			@SuppressWarnings("unused")
+			IronMqService ironMqService = facility.createIronMqService();
+		}
+		catch (PSQLException e) {
+			LOGGER.error("failed to create ironMQ service");			
+		}
+
+		// Create the default network for the facility.
+		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		
+		// Create a site controller & associated user
+		network.createSiteControllerAndUser(tenant,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+		
+		// Create the generic container kind (for all unspecified containers)
+		facility.createDefaultContainerKind();
+		
+		// Setup two dummy CHEs
+		LOGGER.info("creating 2 CHEs");;
+		for (int cheNum = 1; cheNum <= 2; cheNum++) {
+			String cheName = "CHE" + cheNum;
+			Che che = network.getChe(cheName);
+			if (che == null) {
+				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
+			}
+		}
+		
+		return facility;
+	}
+
 }

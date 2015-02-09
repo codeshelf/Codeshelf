@@ -31,7 +31,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 	@Test
 	public void testProductivitySummary() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createFacilityWithOutboundOrders("PRTEST1.O1");
+		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
 		
@@ -51,7 +51,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 	@Test
 	public void testGetCheSummaryNoRuns() throws Exception {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createFacilityWithOutboundOrders("PRTEST2.O1");
+		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
 		this.getPersistenceService().commitTenantTransaction();
 		
@@ -173,9 +173,8 @@ public class ProductivityReportingTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	private Facility createFacilityWithOneRun(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
-		Facility facility = createDefaultFacility(orgId);
-		CodeshelfNetwork network = facility.createNetwork("WITEST"); 
-		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
+		Facility facility = createFacility();
+		Che che = Che.DAO.findByDomainId(null,"CHE1");
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);
@@ -195,7 +194,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 
 	private List<WorkInstruction>  createFacilityWithOneRunAllWorkInstructionCombos(){
 		//12/22/14 6:46 PM = 1419291960000
-		Facility facility = createDefaultFacility(getTestName());
+		Facility facility = getDefaultFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
 		List<WorkInstruction> generatedWIs = generator.generateCombinations(facility, new Timestamp(1419291960000l));
 		return generatedWIs;
@@ -205,9 +204,8 @@ public class ProductivityReportingTest extends DomainTestABC {
 	private Facility createFacilityWithTwoRuns(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
 		//12/23/14 7:40 PM = 1419363620000
-		Facility facility = createDefaultFacility(orgId);
-		CodeshelfNetwork network = facility.createNetwork("WITEST"); 
-		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
+		Facility facility = createFacility();
+		Che che = Che.DAO.findByDomainId(null,"CHE1");
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);
@@ -229,7 +227,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 
 	@SuppressWarnings("unused")
 	private Facility createFacilityWithTwoGroups(String orgId){
-		Facility facility = createDefaultFacility(orgId);
+		Facility facility = createFacility();
 		CodeshelfNetwork network = facility.createNetwork("WITEST"); 
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 

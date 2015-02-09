@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.model.WorkInstructionCount;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.flyweight.command.CommandControlButton;
 import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.NetAddress;
@@ -52,7 +53,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 
 		int chePosition = 1;
 		
-		Facility facility = new FacilityGenerator().generateValid();
+		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();
@@ -107,7 +108,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 
 		int chePosition = 1;
 		
-		Facility facility = new FacilityGenerator().generateValid();
+		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
 		this.getPersistenceService().commitTenantTransaction();
 
 		this.getPersistenceService().beginTenantTransaction();

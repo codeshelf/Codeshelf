@@ -33,7 +33,6 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.validation.BatchResult;
@@ -871,12 +870,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public final void testReimportOutboundOrderNoGroup() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORD2.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORD2.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORD2.1");
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORD2.1", "TEST", Point.getZeroPoint());
 
 		String firstCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1542,12 +1536,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	//******************** private helpers ***********************
 
 	private Facility getTestFacility(String orgId, String facilityId) {
-		Organization organization = new Organization();
-		organization.setDomainId(orgId);
-		mOrganizationDao.store(organization);
-
-		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(facilityId);
+		Facility facility = Facility.createFacility(getDefaultTenant(),facilityId, "TEST", Point.getZeroPoint());
 		return facility;
 	}
 

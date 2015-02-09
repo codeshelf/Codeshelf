@@ -6,7 +6,7 @@ import lombok.Setter;
 public abstract class Service {
 	
 	@Getter @Setter
-	boolean isInitialized=false;
+	boolean running=false;
 	
 	public abstract boolean stop();
 	public abstract boolean start();

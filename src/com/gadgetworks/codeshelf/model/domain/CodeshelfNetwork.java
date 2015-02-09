@@ -31,6 +31,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
@@ -73,7 +75,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	public static final Short			DEFAULT_NETWORK_NUM		= 1;
 	public static final Short			DEFAULT_CHANNEL			= 10;
 	
-	public static final String			DEFAULT_SITECON_SERIAL	= "5000";
+	public static final int				DEFAULT_SITECON_SERIAL	= 5000;
 	public static final String			DEFAULT_SITECON_PASS	= "0.6910096026612129";
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(CodeshelfNetwork.class);
@@ -286,5 +288,41 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	public Facility getFacility() {
 		return this.getParent();
 	}
+
+	public void createSiteControllerAndUser(Tenant tenant,int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+		String username = Integer.toString(serialNumber);
+		
+		if(TenantManagerService.getInstance().canCreateUser(username)) {
+			// no site controller user exists. check for default site controller.
+			SiteController sitecon = SiteController.DAO.findByDomainId(this,username);
+			if(sitecon == null) {
+				// ok to create site controller + user
+				sitecon = new SiteController();
+				sitecon.setDomainId(username);
+				sitecon.setDescription("Site Controller for " + this.getDomainId());
+				sitecon.setDescribeLocation(inDescribeLocation);
+				sitecon.setMonitor(inMonitor);
+				this.addSiteController(sitecon);
+				
+				try {
+					SiteController.DAO.store(sitecon); 
+				} catch (DaoException e) { 
+					LOGGER.error("Couldn't store new Site Controller "+username, e);
+					sitecon=null;
+				}
+				
+				if(sitecon!=null) {
+					if(null == TenantManagerService.getInstance().createUser(tenant, username, password, UserType.SITECON)) {
+						LOGGER.error("Failed to create user for new site controller "+username);
+					}
+				}
+			} else {
+				LOGGER.error("Tried to create Site Controller "+username+" but it already exists (Site Controller does not exist)");
+			}
+		} else {
+			LOGGER.info("Tried to create Site Controller user "+username+" but it already exists");
+		}
+	}
+
 
 }

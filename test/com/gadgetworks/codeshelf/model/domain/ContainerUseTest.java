@@ -44,7 +44,7 @@ public class ContainerUseTest extends DomainTestABC {
 	public final void testUseHeaderRelationship() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
+		Facility facility = createFacilityWithOutboundOrders();
 
 		this.getPersistenceService().commitTenantTransaction();
 		
@@ -246,7 +246,7 @@ public class ContainerUseTest extends DomainTestABC {
 	public void testEmptyCriteriaByChe() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
+		Facility facility = createFacilityWithOutboundOrders();
 
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();

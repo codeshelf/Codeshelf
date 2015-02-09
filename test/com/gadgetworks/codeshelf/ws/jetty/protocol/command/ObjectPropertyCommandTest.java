@@ -14,9 +14,10 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.Organization;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 
 public class ObjectPropertyCommandTest extends DomainTestABC {
@@ -29,9 +30,10 @@ public class ObjectPropertyCommandTest extends DomainTestABC {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
 		beginTenantTransaction();
-		Organization org=new Organization();
+		Facility org=new Facility();
 		org.setDomainId("testOrg");
-		Organization.DAO.store(org);
+		Facility.DAO.store(org);
+
 		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(org);
 		assertNotNull(types);
 		assertEquals(0, types.size());

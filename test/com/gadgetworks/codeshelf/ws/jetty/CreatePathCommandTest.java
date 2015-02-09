@@ -62,7 +62,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
-		Facility testFacility = this.createDefaultFacility(testPathDomainId);
+		Facility testFacility = this.createFacility();
 
 		ObjectChangeBroadcaster objectChangeBroadcaster = this.getPersistenceService().getObjectChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
@@ -106,7 +106,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
-		Facility testFacility = this.createDefaultFacility(testPathDomainId);
+		Facility testFacility = this.createFacility();
 	
 		PathSegment[] segments = createPathSegment(numberOfSegments);
 		

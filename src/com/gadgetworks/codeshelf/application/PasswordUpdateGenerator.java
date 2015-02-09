@@ -3,7 +3,7 @@ package com.gadgetworks.codeshelf.application;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 
 /**
  * 		

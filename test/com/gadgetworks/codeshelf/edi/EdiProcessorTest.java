@@ -25,7 +25,6 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.validation.BatchResult;
@@ -128,12 +127,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-EDI.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-EDI.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-EDI.1");
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F-EDI.1", "TEST", Point.getZeroPoint());
 
 		TestFacilityDao facilityDao = new TestFacilityDao(this.getPersistenceService(), facility);
 		facilityDao.store(facility);

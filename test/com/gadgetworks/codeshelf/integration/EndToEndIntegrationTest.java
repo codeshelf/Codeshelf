@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.integration;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -19,8 +21,8 @@ import com.gadgetworks.codeshelf.edi.EdiTestABC;
 import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
@@ -65,9 +67,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	@Getter
 	WebApiServer apiServer;
-
-	@Getter
-	Organization organization;
 
 	@Getter
 	UUID facilityPersistentId;
@@ -115,52 +114,28 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		//The client WSS needs the self-signed certificate to be trusted
 		
 		this.getPersistenceService().beginTenantTransaction();
-		// ensure facility, organization, network exist in database before booting up site controller
-		this.organization = mOrganizationDao.findByDomainId(null, organizationId);
-		if (organization==null) {
-			// create organization object
-			organization = new Organization();
-			organization.setDomainId(organizationId);
-			mOrganizationDao.store(organization);
-		}
-		Facility facility = mFacilityDao.findByDomainId(organization, facilityId);
+		// ensure facility, network exist in database before booting up site controller
+		Facility facility = mFacilityDao.findByDomainId(null, facilityId);
 		if (facility==null) {
 			// create organization object
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
-			facility=organization.createFacilityUi(facilityId,"",0.0,0.0);
+			facility=Facility.createFacility(getDefaultTenant(),facilityId,"",Point.getZeroPoint());
 			mFacilityDao.store(facility);
 			facility.createDefaultContainerKind();
 			// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.
 		}
 		this.facilityPersistentId=facility.getPersistentId();
 		
-		CodeshelfNetwork network = facility.getNetwork(networkId);
-		if (network==null) {
-			network = facility.createNetwork(networkId);
-			organization.createDefaultSiteControllerUser(network); 
-
-			facility.addNetwork(network);
-			mCodeshelfNetworkDao.store(network);
-		}
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		this.networkPersistentId = network.getPersistentId();
 
-		User scUser = organization.createDefaultSiteControllerUser(network);
-		Che che1 = network.getChe(cheId1);
-		if (che1==null) {
-			che1=network.createChe(cheId1, cheGuid1);
-			che1.setColor(ColorEnum.MAGENTA);
-			che1.setColor(ColorEnum.MAGENTA);
-			che1.setColor(ColorEnum.MAGENTA);
-		}
+		Che[] ches = (Che[]) network.getChes().values().toArray();
+		Che che1 = ches[0];
+		che1.setColor(ColorEnum.MAGENTA);
 		this.che1PersistentId = che1.getPersistentId();
 
-		Che che2 = network.getChe(cheId2);
-		if (che2==null) {
-			che2=network.createChe(cheId2, cheGuid2);
-			che2.setColor(ColorEnum.WHITE);
-			che2.setColor(ColorEnum.WHITE);
-			che2.setColor(ColorEnum.WHITE);
-		}
+		Che che2 = ches[1];
+		che2.setColor(ColorEnum.WHITE);
 		this.che2PersistentId = che2.getPersistentId();
 
 		this.getPersistenceService().commitTenantTransaction();

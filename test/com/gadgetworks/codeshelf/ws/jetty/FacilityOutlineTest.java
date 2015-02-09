@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
@@ -42,11 +41,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 	public final void testCreateVertex() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		this.mOrganizationDao.store(organization);
-
-		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		this.mFacilityDao.store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
@@ -98,12 +93,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		this.mOrganizationDao.store(organization);
-
-		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
-		this.mFacilityDao.store(facility);	
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		
 		/*
 		var anchorPoint = {'posTypeEnum': 'GPS', 'x': event.latLng.lng(), 'y': event.latLng.lat(), 'z' : 0.0};

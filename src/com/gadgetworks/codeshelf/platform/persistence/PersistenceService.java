@@ -26,6 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.platform.Service;
 import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.inject.Singleton;
 
 /**
@@ -34,17 +35,9 @@ import com.google.inject.Singleton;
 @Singleton
 public class PersistenceService extends Service {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
-	private static PersistenceService theInstance = null;
-	private Configuration configuration;
-	private String	hibernateConfigurationFile;
-
-	private String connectionUrl;
-	private String	userId;
-	private String	password;
-	private String schemaName;
+	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	
-	@Getter
-	private SchemaManager schemaManager;
+	private static PersistenceService theInstance = null;
 
 	@Getter
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
@@ -52,98 +45,35 @@ public class PersistenceService extends Service {
 	// stores the factories for different tenants
 	private Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
 
-	// temp solution to get current tenant, while multitenancy has not been built out
-	private Tenant fixedTenant;
-
-	// TODO: for debugging only, remove
-	//private Map<Session,StackTraceElement[]> sessionStarted=new HashMap<Session,StackTraceElement[]>();
-	//private Map<Transaction,StackTraceElement[]> transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
-
 	private PersistenceService() {
-		setInstance();
 		//TODO inject since this is essentially the messaging mechanism
 		objectChangeBroadcaster = new ObjectChangeBroadcaster();
-		fixedTenant = new Tenant("Tenant #1",1);
-	}
-
-	private void setInstance() {
-		PersistenceService.theInstance = this;
-	}
-
-	public final synchronized static boolean isRunning() {
-		return (theInstance != null && theInstance.isInitialized());
 	}
 
 	public final synchronized static PersistenceService getInstance() {
 		if (theInstance == null) {
 			theInstance = new PersistenceService();
-			theInstance.configure();
 			theInstance.start();
-			//LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
 		}
-		else if (!theInstance.isInitialized()) {
+		else if (!theInstance.isRunning()) {
 			theInstance.start();
 			LOGGER.info("PersistanceService was stopped and restarted");
 		}
 		return theInstance;
 	}
 
-	private final void configure() {
-		// fetch database config from properties file
-		this.hibernateConfigurationFile = "hibernate/"+System.getProperty("db.hibernateconfig");
-		if (this.hibernateConfigurationFile==null) {
-			LOGGER.error("hibernateConfigurationFile is not defined.");
-			System.exit(-1);
-		}
-
-		this.connectionUrl = System.getProperty("db.connectionurl");
-		if (this.connectionUrl==null) {
-			LOGGER.error("Database URL is not defined.");
-			System.exit(-1);
-		}
-
-		this.schemaName = System.getProperty("db.schemaname"); //optional
-
-		this.userId = System.getProperty("db.userid");
-		if (this.userId==null) {
-			LOGGER.error("Database User ID is not defined.");
-			System.exit(-1);
-		}
-		this.password = System.getProperty("db.password");
-
-    	configuration = new Configuration().configure(this.hibernateConfigurationFile);
-    	configuration.setProperty("hibernate.connection.url", this.connectionUrl);
-    	configuration.setProperty("hibernate.connection.username", this.userId);
-    	configuration.setProperty("hibernate.connection.password", this.password);
-
-    	if(this.schemaName != null) {
-	    	configuration.setProperty("hibernate.default_schema", this.schemaName);
-    	}
-    	
-    	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
-
-    	// we do not attempt to manage schema of the in-memory test db; that will be done by Hibernate
-		if(!this.connectionUrl.startsWith("jdbc:h2:mem")) {
-			// this only runs for postgres database
-			schemaManager = new SchemaManager(this.connectionUrl,this.userId,this.password,this.schemaName);
-			
-			schemaManager.applySchemaUpdates();
-			
-			boolean schemaMatches = schemaManager.checkSchema();
-			
-			if(!schemaMatches) {
-				throw new RuntimeException("Cannot start, schema does not match");
-			}
-		}
+	public String getChangeLogFilename() {
+		return PersistenceService.TENANT_CHANGELOG_FILENAME;
 	}
 
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {
-		if (this.isInitialized()==false) {
+		if (this.isRunning()==false) {
 			throw new ServiceNotInitializedException();
 		}
 		// ignore tenant and shard for now using static config data
         try {
-        	// Shard shard = this.shardingService.getShard(tenant.getShardId());
+        	Configuration configuration = tenant.getHibernateConfiguration();
+
         	LOGGER.info("Creating session factory for "+tenant);
         	BootstrapServiceRegistryBuilder bootstrapBuilder = 
         			new BootstrapServiceRegistryBuilder()
@@ -166,6 +96,19 @@ public class PersistenceService extends Service {
 	        // enable statistics
 	        factory.getStatistics().setStatisticsEnabled(true);
 	        
+	    	// we do not attempt to manage schema of the in-memory test db; that will be done by Hibernate
+			if(!tenant.getShard().getDbUrl().startsWith("jdbc:h2:mem")) {
+				
+				// this only runs for postgres database
+				SchemaManager schemaManager = tenant.getSchemaManager();
+				
+				//schemaManager.applySchemaUpdates();			
+				boolean schemaMatches = schemaManager.checkSchema();
+				
+				if(!schemaMatches) {
+					throw new RuntimeException("Cannot start, schema does not match");
+				}
+			}
 	        return factory;
         } catch (Exception ex) {
         	if(ex instanceof HibernateException) {
@@ -179,11 +122,11 @@ public class PersistenceService extends Service {
 
 	@Override
 	public final boolean start() {
-		if(this.isInitialized()) {
+		if(this.isRunning()) {
 			LOGGER.error("Attempted to start persistence service more than once");
 		} else {
 			LOGGER.info("Starting "+PersistenceService.class.getSimpleName());
-			this.setInitialized(true);
+			this.setRunning(true);
 		}
 		return true;
 	}
@@ -191,53 +134,46 @@ public class PersistenceService extends Service {
 	@Override
 	public final boolean stop() {
 		LOGGER.info("PersistenceService stopping");
-		if(this.hasActiveTransaction()) {
-			this.rollbackTenantTransaction();
-		}
-
-		/*
-		 * keep session factories...
+		
 		for(SessionFactory sf : this.factories.values()) {
-			sf.close();
+			if(!sf.isClosed()) {
+				Session session = sf.getCurrentSession();
+				if(session != null) {
+					Transaction tx = session.getTransaction();
+					if(tx != null) {
+						if(tx.isActive()) {
+							tx.rollback();
+						}
+					}
+					//session.close();
+				}
+				//sf.close();
+			}
 		}
-		this.factories = new HashMap<Tenant, SessionFactory>(); // unlink session factories
-		 */
 
-		// unlink debugging stuff
-		//this.sessionStarted=new HashMap<Session,StackTraceElement[]>();
-		//this.transactionStarted=new HashMap<Transaction,StackTraceElement[]>();
-
-		this.setInitialized(false);
+		//this.factories = new HashMap<Tenant, SessionFactory>(); // unlink session factories
+		
+		this.setRunning(false);
 		return true;
 	}
 
-	public Session getCurrentTenantSession() {
-		Tenant tenant = getCurrentTenant();
+	public Session getSession(Tenant tenant) {
 		SessionFactory fac = this.factories.get(tenant);
 		if (fac==null) {
 			fac = createTenantSessionFactory(tenant);
 		}
 		Session session = fac.getCurrentSession();
 
-		//if(!this.sessionStarted.containsKey(session)) {
-		//	this.sessionStarted.put(session, Thread.currentThread().getStackTrace());
-		//}
-
 		return session;
 	}
 
-	public SessionFactory getCurrentTenantSessionFactory() {
-		Tenant tenant = getCurrentTenant();
+	public SessionFactory getSessionFactory(Tenant tenant) {
 		SessionFactory fac = this.factories.get(tenant);
 		return fac;
 	}
 
-	private Tenant getCurrentTenant() {
-		return this.fixedTenant;
-	}
-
-	public final Transaction beginTenantTransaction() {
-		Session session = getCurrentTenantSession();
+	public final Transaction beginTenantTransaction(Tenant tenant) {
+		Session session = getSession(tenant);
 		//StackTraceElement st[]=this.sessionStarted.get(session);
 		Transaction tx = session.getTransaction();
 		//if (!this.transactionStarted.containsKey(tx)) {
@@ -254,9 +190,9 @@ public class PersistenceService extends Service {
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
 	}
-
-	public final void commitTenantTransaction() {
-		Session session = getCurrentTenantSession();
+	
+	public final void commitTenantTransaction(Tenant tenant) {
+		Session session = getSession(tenant);
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
 			tx.commit();
@@ -265,8 +201,8 @@ public class PersistenceService extends Service {
 		}
 	}
 
-	public final void rollbackTenantTransaction() {
-		Session session = getCurrentTenantSession();
+	public final void rollbackTenantTransaction(Tenant tenant) {
+		Session session = getSession(tenant);
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
 			tx.rollback();
@@ -276,28 +212,25 @@ public class PersistenceService extends Service {
 	}
 
 	public boolean hasActiveTransaction() {
-		if(this.isInitialized() == false) {
+		if(this.isRunning() == false) {
 			return false;
 		} //else
-		Tenant tenant = fixedTenant;
-		if(this.fixedTenant == null) {
-			return false;
+		for(SessionFactory sf : this.factories.values()) {
+			if(!sf.isClosed()) {
+				Session session = sf.getCurrentSession();
+				if(session != null) {
+					Transaction tx = session.getTransaction();
+					if(tx != null) {
+						if(tx.isActive()) {
+							return true;
+						}
+					}
+				}
+			}
 		}
-		SessionFactory sf = this.factories.get(tenant);
-		if(sf == null || sf.isClosed()) {
-			return false;
-		}
-		Session session = sf.getCurrentSession();
-		if (session==null) {
-			return false;
-		} //else
-		Transaction tx = session.getTransaction();
-		if (tx==null) {
-			return false;
-		} //else
-		return tx.isActive();
+		return false;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
 		if (classObject==null) {
@@ -319,8 +252,9 @@ public class PersistenceService extends Service {
 		return null;
 	}
 
-	public void resetDatabase() {
-		SchemaExport se = new SchemaExport(this.configuration);
+	public void resetTenantDatabase(Tenant tenant) {
+		LOGGER.warn("Resetting schema for "+tenant.toString());
+		SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
 		se.create(false, true);
 	}
 
@@ -337,4 +271,30 @@ public class PersistenceService extends Service {
 	    }
 		return object;
 	}
+
+	public Tenant getDefaultTenant() {
+		return TenantManagerService.getInstance().getDefaultTenant();
+	}
+
+	//@Deprecated
+	public final Transaction beginTenantTransaction() {
+		return beginTenantTransaction(getDefaultTenant());
+	}
+	
+	//@Deprecated
+	public final void commitTenantTransaction() {
+		commitTenantTransaction(getDefaultTenant());
+	}
+	
+	//@Deprecated
+	public final void rollbackTenantTransaction() {
+		rollbackTenantTransaction(getDefaultTenant());
+	}
+	
+	//@Deprecated
+	public final Session getCurrentTenantSession() {
+		return getSession(getDefaultTenant());
+	}
+	
+
 }

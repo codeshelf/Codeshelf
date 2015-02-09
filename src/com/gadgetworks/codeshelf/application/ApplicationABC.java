@@ -25,7 +25,7 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.metrics.OpenTsdb;
 import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
@@ -103,7 +103,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 
 		LOGGER.info("Stopping application");
 		
-		SchemaManager schemaManager = PersistenceService.getInstance().getSchemaManager();
+		SchemaManager schemaManager = TenantManagerService.getInstance().getDefaultTenant().getSchemaManager();
 
 		doShutdown();
 

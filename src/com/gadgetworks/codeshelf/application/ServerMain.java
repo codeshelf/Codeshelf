@@ -74,8 +74,6 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation.OrderLocationDao;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
@@ -91,8 +89,6 @@ import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation;
 import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation.UnspecifiedLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
-import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.User.UserDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 //import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC.WirelessDeviceDao;
@@ -297,10 +293,6 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<OrderLocation>>() {
 				}).to(OrderLocationDao.class);
 
-				requestStaticInjection(Organization.class);
-				bind(new TypeLiteral<ITypedDao<Organization>>() {
-				}).to(OrganizationDao.class);
-
 				requestStaticInjection(Path.class);
 				bind(new TypeLiteral<ITypedDao<Path>>() {
 				}).to(PathDao.class);
@@ -324,11 +316,6 @@ public final class ServerMain {
 				requestStaticInjection(UomMaster.class);
 				bind(new TypeLiteral<ITypedDao<UomMaster>>() {
 				}).to(UomMasterDao.class);
-
-				requestStaticInjection(User.class);
-				bind(new TypeLiteral<ITypedDao<User>>() {
-				}).to(UserDao.class);
-
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);

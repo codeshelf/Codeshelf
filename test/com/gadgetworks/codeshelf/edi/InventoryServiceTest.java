@@ -35,7 +35,7 @@ public class InventoryServiceTest extends EdiTestABC {
 	@Before
 	public void initTest() throws IOException {
 		PersistenceService.getInstance().beginTenantTransaction();
-		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
+		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(getDefaultTenant(),createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
 		Facility facility = generator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		generator.setupOrders(facility);
 		

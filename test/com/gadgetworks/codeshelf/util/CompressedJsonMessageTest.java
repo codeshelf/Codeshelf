@@ -23,7 +23,7 @@ public class CompressedJsonMessageTest {
 		Assert.assertNotNull(decoded);
 		Assert.assertTrue(decoded instanceof LoginResponse);
 		LoginResponse login = (LoginResponse)decoded;
-		Assert.assertTrue(login.getUser().getDomainId().equals("5000"));
+		Assert.assertTrue(login.getUser().getUsername().equals("5000"));
 	}
 	public void testPassthrough() {
 		

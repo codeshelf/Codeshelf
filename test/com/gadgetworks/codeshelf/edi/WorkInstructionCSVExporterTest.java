@@ -20,6 +20,7 @@ import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
+import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -65,7 +66,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	
 	public void doBefore() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
+		Facility facility = Facility.createFacility(getDefaultTenant(),this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
 		exporter  = new WorkInstructionCSVExporter();
 		
 		this.facilityId = facility.getPersistentId();

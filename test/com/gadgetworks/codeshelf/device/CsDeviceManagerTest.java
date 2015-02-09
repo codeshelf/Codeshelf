@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.websocket.DeploymentException;
 import javax.websocket.Endpoint;
@@ -23,28 +22,25 @@ import org.mockito.ArgumentCaptor;
 
 import com.gadgetworks.codeshelf.generators.FacilityGenerator;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.util.MemoryConfiguration;
 import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
 import com.gadgetworks.flyweight.command.ICommand;
 import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
 import com.gadgetworks.flyweight.controller.IRadioController;
 import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest extends DAOTestABC {
-	Organization org = new Organization();
 	
 	@Test
 	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(org,mockRadioController);		
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(TenantManagerService.getInstance().getDefaultTenant(),mockRadioController);		
 
 		attachedDeviceManager.disconnected();
 		
@@ -63,7 +59,7 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(org,mockRadioController);
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(TenantManagerService.getInstance().getDefaultTenant(),mockRadioController);
 
 		attachedDeviceManager.disconnected();
 		
@@ -75,7 +71,7 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
-	private CsDeviceManager produceAttachedDeviceManager(Organization organization, IRadioController mockRadioController) throws DeploymentException, IOException {
+	private CsDeviceManager produceAttachedDeviceManager(Tenant tenant,IRadioController mockRadioController) throws DeploymentException, IOException {
 		Map<String, String> properties = new HashMap<String, String>();
 		properties.put("websocket.uri", "ws://127.0.0.1:8181/ws/"); // this URL doesn't need to be accurate, just parseable
 		WebSocketContainer container = mock(WebSocketContainer.class);
@@ -88,23 +84,17 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		
 		deviceManager.connected();
 		
-		NetGuid cheGuid = new NetGuid("0x001");
-
-		FacilityGenerator facilityGenerator = new FacilityGenerator();
+		FacilityGenerator facilityGenerator = new FacilityGenerator(tenant);
 		Facility facility = facilityGenerator.generateValid();
-		CodeshelfNetwork network = facility.createNetwork("DEFAULTTEST");
-		organization.createDefaultSiteControllerUser(network); 
-		Che che = new Che();
-		che.setPersistentId(UUID.randomUUID());
-		che.setDeviceNetGuid(cheGuid);
-		network.addChe(che);
 
+		CodeshelfNetwork network=facility.getNetworks().get(0);
 		deviceManager.attached(network);
 		
 		// DEV-459  additions. Need at least one associated CHE to see a CHE display message. Critical for above tests of disconnect or unattached.
-		INetworkDevice theCheDevice = deviceManager.getDeviceByGuid(cheGuid);
-		theCheDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		theCheDevice.startDevice();
+		for(CheDeviceLogic theCheDevice : deviceManager.getCheControllers()) {
+			theCheDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
+			theCheDevice.startDevice();
+		}
 
 		return deviceManager;
 	}

@@ -150,5 +150,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 	}
 
-
+	public void store() {
+		this.getDao().store(this);		
+	}
 }

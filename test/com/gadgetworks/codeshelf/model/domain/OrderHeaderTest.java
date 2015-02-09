@@ -23,7 +23,7 @@ public class OrderHeaderTest extends DomainTestABC {
 	public void testReturnActiveLocationsOnly() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createDefaultFacility("ORG-testReturnActiveLocationsOnly");
+		Facility facility = createFacility();
 		Aisle a1 = getDefaultAisle(facility, "A1");
 		a1.setPickFaceEndPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 5.0, 0.0, 0.0));
 		Aisle.DAO.store(a1);

@@ -8,7 +8,7 @@ import org.apache.commons.lang.RandomStringUtils;
 
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
@@ -17,32 +17,18 @@ import com.natpryce.makeiteasy.PropertyLookup;
 public class DAOMaker {
 
 	public DAOMaker(PersistenceService persistenceService) {
-		Organization.setDao(new OrganizationDao(persistenceService));
 		Facility.setDao(new FacilityDao(persistenceService));
 	}
 
-	public static final Property<Organization, String>		organizationId		= newProperty();
-
 	public static final Property<Facility, String>			facilityId			= newProperty();
-	public static final Property<Facility, Organization>	organization		= newProperty();
-
-	public final Instantiator<Organization>					TestOrganization	= new Instantiator<Organization>() {
-																					public Organization instantiate(PropertyLookup<Organization> lookup) {
-																						Organization organization = new Organization();
-																						organization.setOrganizationId(lookup.valueOf(organizationId,
-																							RandomStringUtils.randomAlphanumeric(5)));
-																						Organization.DAO.store(organization);
-																						return organization;
-																					}
-																				};
 
 	public final Instantiator<Facility>						TestFacility		= new Instantiator<Facility>() {
 																					public Facility instantiate(PropertyLookup<Facility> lookup) {
 																						@SuppressWarnings("unchecked")
-																						Organization org = lookup.valueOf(organization,
-																							make(a(TestOrganization)));
 
-																						Facility facility = org.createFacility(lookup.valueOf(facilityId,
+																						Facility facility = Facility.createFacility(
+																							TenantManagerService.getInstance().getDefaultTenant(),
+																							lookup.valueOf(facilityId,
 																							RandomStringUtils.randomAlphanumeric(5)),
 																							lookup.valueOf(facilityId,
 																								RandomStringUtils.randomAlphanumeric(5)),

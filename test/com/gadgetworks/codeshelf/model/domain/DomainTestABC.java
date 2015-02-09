@@ -23,56 +23,23 @@ public abstract class DomainTestABC extends DAOTestABC {
 		super();
 	}
 	
-	// --------------------------------------------------------------------------
-
-	protected Organization getDefaultOrganization(final String inOrganizationName) {
-		Organization organization = mOrganizationDao.findByDomainId(null, inOrganizationName);
-		if (organization == null) {
-			organization = new Organization();
-			organization.setOrganizationId(inOrganizationName);
-			mOrganizationDao.store(organization);
-		}
-		return organization;
-	}
-	
 	/**
 	 * Create a basic organization of the specified name with enough domain data to make it easy to setup various
 	 * business case unit tests.
 	 * 
 	 * @param inOrganizationName
 	 */ 
-	protected Facility getDefaultFacility(Organization inOrganization) {
-		String defaultDomainId = "F1";
+	protected Facility createTestFacility() {
+		String defaultDomainId = testName.getMethodName();
 		
-		Facility resultFacility = mFacilityDao.findByDomainId(inOrganization, defaultDomainId);
+		Facility resultFacility = mFacilityDao.findByDomainId(null, defaultDomainId);
 		if(resultFacility == null) {
-			inOrganization.createFacility(defaultDomainId, "test", new Point(PositionTypeEnum.GPS, -120.0, 30.0, 0.0));
-			resultFacility = inOrganization.getFacility(defaultDomainId);
+			resultFacility = Facility.createFacility(getDefaultTenant(),defaultDomainId, "test", new Point(PositionTypeEnum.GPS, -120.0, 30.0, 0.0));
+			resultFacility.store();
 		}
 		return resultFacility;
 	}
 	
-	protected Facility getDefaultFacility() {
-		return getDefaultFacility(getDefaultOrganization());
-	}
-	
-	protected Organization getDefaultOrganization() {
-		return getDefaultOrganization("orgTest");
-	}
-
-	protected CodeshelfNetwork getDefaultNetwork(Organization organization,Facility inFacility) {
-		String defaultDomainId = "0xFEDCBA";
-		
-		CodeshelfNetwork codeshelfNetwork = mCodeshelfNetworkDao.findByDomainId(inFacility, defaultDomainId);
-		if (codeshelfNetwork == null) {
-			codeshelfNetwork = inFacility.createNetwork(defaultDomainId);
-			codeshelfNetwork.getDao().store(codeshelfNetwork);
-			organization.createDefaultSiteControllerUser(codeshelfNetwork); 
-
-		}
-		return codeshelfNetwork;
-	}
-
 	protected Aisle getDefaultAisle(Facility facility, String inDomainId) {
 		return getDefaultAisle(facility, inDomainId, Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0)); 
 	}
@@ -132,16 +99,6 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return controller;
 	}
 	
-	protected Facility createFacility() {
-		return createDefaultFacility(testName.getMethodName());
-	}
-	
-	protected Facility createDefaultFacility(String orgId) {
-		Organization organization = getDefaultOrganization(orgId);
-		Facility facility = getDefaultFacility(organization);
-		return facility;
-	}
-	
 	/**
 	 * Create a basic organization of the specified name with enough domain data to make it easy to setup various
 	 * business case unit tests.
@@ -166,18 +123,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 	 * 
 	 */
 	@SuppressWarnings("unused")
-	protected Facility createFacilityWithOutboundOrders(final String inOrganizationName) {
+	protected Facility createFacilityWithOutboundOrders() {
 
-		Organization organization = getDefaultOrganization(inOrganizationName);
+		Facility resultFacility = createTestFacility();
+		CodeshelfNetwork network = resultFacility.getNetworks().get(0);
 		
-		Facility resultFacility = getDefaultFacility(organization);
-		
-		CodeshelfNetwork network = resultFacility.createNetwork("WITEST");
-		organization.createDefaultSiteControllerUser(network); 
-
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 
-		LedController controller = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000002"));
+		LedController controller = network.findOrCreateLedController("LEDCON", new NetGuid("0x00000002"));
 
 		Aisle aisle1 = getDefaultAisle(resultFacility, "A1");
 

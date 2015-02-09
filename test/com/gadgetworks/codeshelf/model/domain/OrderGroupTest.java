@@ -22,12 +22,7 @@ public class OrderGroupTest extends DomainTestABC {
 	public final void addRemoveOrderGroupTest() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("OG.1");
-		mOrganizationDao.store(organization);
-		
-		organization.createFacility("F1", "test", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F1");
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
 		
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
@@ -79,12 +74,7 @@ public class OrderGroupTest extends DomainTestABC {
 	public final void releaseOrderGroupTest() {
 		this.getPersistenceService().beginTenantTransaction();
 		
-		Organization organization = new Organization();
-		organization.setOrganizationId("OG.2");
-		mOrganizationDao.store(organization);
-		
-		organization.createFacility("F1", "test", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F1");
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
 
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);

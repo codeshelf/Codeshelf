@@ -19,7 +19,7 @@ public class BayTest extends DomainTestABC {
 	public void testOrderingOfTiers() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());
+		Facility facility = getDefaultFacility();
 		Aisle aisle = getDefaultAisle(facility, "A1");
 		Bay bay = getDefaultBay(aisle, "B1");
 		Tier tier1 = getDefaultTier(bay, "TA");

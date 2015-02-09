@@ -13,13 +13,13 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
+import com.gadgetworks.codeshelf.ws.jetty.protocol.response.Organization;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
@@ -62,9 +62,7 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		*/
 
 		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-
+		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Organization");
 		request.setPersistentId(organization.getPersistentId().toString());

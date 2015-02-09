@@ -22,7 +22,6 @@ import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 
 /**
@@ -279,12 +278,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ ", A2.B2\r\n" // O3333's location
 				+ "O4444, "; //
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORDLOC.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORDLOC.1", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORDLOC.1");
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORDLOC.1", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
@@ -434,12 +428,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		byte[] csvArray = csvString.getBytes();
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-ORDLOC.2");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F-ORDLOC.2", "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F-ORDLOC.2");
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORDLOC.2", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
@@ -708,12 +697,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 
 	private Facility getTestFacility(String orgId, String facilityId) {
-		Organization organization = new Organization();
-		organization.setDomainId(orgId);
-		mOrganizationDao.store(organization);
-
-		organization.createFacility(facilityId, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(facilityId);
+		Facility facility = Facility.createFacility(getDefaultTenant(),facilityId, "TEST", Point.getZeroPoint());
 		return facility;
 	}
 	

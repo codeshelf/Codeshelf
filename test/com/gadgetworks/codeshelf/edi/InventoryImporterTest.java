@@ -68,7 +68,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
+					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
+														createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());
 		

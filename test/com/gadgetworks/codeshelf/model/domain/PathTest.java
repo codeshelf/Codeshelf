@@ -20,7 +20,7 @@ public class PathTest extends DomainTestABC {
 	public final void addRemoveOrderGroupTest() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-PT.1");
+		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
 		this.getPersistenceService().commitTenantTransaction();
 
@@ -49,7 +49,7 @@ public class PathTest extends DomainTestABC {
 	public final void isOrderOnPath() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-PT.2");
+		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);
@@ -65,7 +65,7 @@ public class PathTest extends DomainTestABC {
 	public final void computePosALongPath() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-PT.3");
+		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);

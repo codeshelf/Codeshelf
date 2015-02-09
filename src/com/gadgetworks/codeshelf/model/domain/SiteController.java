@@ -66,10 +66,6 @@ public class SiteController extends WirelessDeviceABC {
 		this.monitor = true; // maybe this should be false, once there is a UI to set it, as it can cause bogus alerts when setting up sites
 		this.describeLocation = defaultLocationDescription;
 	}
-	
-	public User getAuthenticationUser() {
-		return User.DAO.findByDomainId(null, getDomainId());
-	}
 
 	@Override
 	public String getDefaultDomainIdPrefix() {
