@@ -478,7 +478,7 @@ public class WorkService implements IApiService {
 			WorkInstructionTypeEnum.PLAN,
 			orderDetail,
 			inChe,
-			theTime); // Could be normal WI, or a short WI
+			null); // Could be normal WI, or a short WI
 		if (aWi != null) {
 			wiResultList.add(aWi);
 			orderDetail.reevaluateStatus();
