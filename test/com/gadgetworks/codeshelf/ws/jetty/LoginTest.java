@@ -1,12 +1,9 @@
 package com.gadgetworks.codeshelf.ws.jetty;
 
-import java.util.UUID;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.eaio.uuid.UUIDGen;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.UserType;
@@ -62,6 +59,7 @@ public class LoginTest extends DomainTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void testUserIdFail() {
 		this.getPersistenceService().beginTenantTransaction();

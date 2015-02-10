@@ -2,10 +2,10 @@ package com.gadgetworks.codeshelf.model.domain;
 
 import java.util.UUID;
 
+import lombok.Getter;
+
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-
-import lombok.Getter;
 
 public class Organization {
 	@Getter

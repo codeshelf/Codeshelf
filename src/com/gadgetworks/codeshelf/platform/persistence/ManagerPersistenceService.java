@@ -158,6 +158,7 @@ public class ManagerPersistenceService extends Service {
 				return session;
 			} // else we will begin new transaction
 		}
+		@SuppressWarnings("unused")
 		Transaction txBegun = session.beginTransaction();
 		return session;
 	}

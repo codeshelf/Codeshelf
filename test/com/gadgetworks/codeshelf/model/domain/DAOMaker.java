@@ -1,7 +1,5 @@
 package com.gadgetworks.codeshelf.model.domain;
 
-import static com.natpryce.makeiteasy.MakeItEasy.a;
-import static com.natpryce.makeiteasy.MakeItEasy.make;
 import static com.natpryce.makeiteasy.Property.newProperty;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -24,7 +22,6 @@ public class DAOMaker {
 
 	public final Instantiator<Facility>						TestFacility		= new Instantiator<Facility>() {
 																					public Facility instantiate(PropertyLookup<Facility> lookup) {
-																						@SuppressWarnings("unchecked")
 
 																						Facility facility = Facility.createFacility(
 																							TenantManagerService.getInstance().getDefaultTenant(),

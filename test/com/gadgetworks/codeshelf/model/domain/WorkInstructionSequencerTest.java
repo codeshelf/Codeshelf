@@ -21,14 +21,12 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
-import com.gadgetworks.flyweight.command.NetGuid;
 
 public class WorkInstructionSequencerTest extends EdiTestABC {
 	
 	public WorkInstructionSequencerTest() {
 	}
 
-	@SuppressWarnings("unused")
 	private Facility setUpFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle. 
 		//   With location alias for first baytier only, not second. 

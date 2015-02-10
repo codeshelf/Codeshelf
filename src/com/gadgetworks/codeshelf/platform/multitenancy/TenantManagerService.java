@@ -75,7 +75,10 @@ public class TenantManagerService extends Service implements ITenantManager {
 		Session session = managerPersistenceService.beginSessionAndTransaction();
 		Criteria criteria = session.createCriteria(Shard.class);
 		criteria.add(Restrictions.eq("name", DEFAULT_SHARD_NAME));
+		
+		@SuppressWarnings("unchecked")
 		List<Shard> listShard = criteria.list();
+
 		Tenant tenant = null;
 		if(listShard.size() == 0) {
 			// create
@@ -301,7 +304,10 @@ public class TenantManagerService extends Service implements ITenantManager {
 			Session session = managerPersistenceService.beginSessionAndTransaction();
 			Criteria criteria = session.createCriteria(Tenant.class);
 			criteria.add(Restrictions.eq("name", name));
+			
+			@SuppressWarnings("unchecked")
 			List<Tenant> tenantList = criteria.list();
+			
 			if(tenantList != null && tenantList.size() == 1) {
 				result = tenantList.get(0);
 			}

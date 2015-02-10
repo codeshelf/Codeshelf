@@ -24,7 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.platform.persistence.ManagerPersistenceService;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 
 @Entity
 @Table(name = "shard")
