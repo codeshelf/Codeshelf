@@ -334,6 +334,7 @@ public final class ServerMain {
 			}
 			
 			@Provides
+			@Singleton
 			public WorkService createWorkService() {
 				WorkService workService = new WorkService();
 				workService.start();

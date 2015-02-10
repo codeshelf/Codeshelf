@@ -18,27 +18,36 @@ import com.gadgetworks.codeshelf.model.WiFactory;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.gadgetworks.codeshelf.service.OrderService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
-import com.gadgetworks.codeshelf.service.ProductivitySummaryList.GroupSummary;
+import com.gadgetworks.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
-	
+	private OrderService	orderService;
+
+
+	@Override
+	public void doBefore() throws Exception {
+		super.doBefore();
+		orderService = new OrderService(this.getTenantPersistenceService());
+	}
+
 	@Test
 	public void testProductivitySummary() throws Exception {
 		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTenantTransaction();
-		
+
 		this.getTenantPersistenceService().beginTenantTransaction();
-		ProductivitySummaryList productivitySummary = WorkService.getProductivitySummary(facilityId, true);
+		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(facilityId, true);
 		Assert.assertNotNull(productivitySummary);
-		HashMap<String, GroupSummary> groups = productivitySummary.getGroups();
+		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
 		Assert.assertEquals(groups.size(), 3);
 		Iterator<String> groupNames = groups.keySet().iterator();
 		while (groupNames.hasNext()) {
@@ -54,10 +63,10 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTenantTransaction();
-		
+
 		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
-		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		Assert.assertEquals(cheSummaries.getRunsByGroup().size(), 0);
 		this.getTenantPersistenceService().commitTenantTransaction();
@@ -67,13 +76,13 @@ public class ProductivityReportingTest extends DomainTestABC {
 	public void testGetCheSummaryAllWorkInstructionCombos() throws Exception {
 		this.getTenantPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> workInstructions = createFacilityWithOneRunAllWorkInstructionCombos();
-		
+
 		UUID facilityId = workInstructions.get(0).getParent().getPersistentId();
 		this.getTenantPersistenceService().commitTenantTransaction();
-		
+
 		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
-		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		WiSetSummary summary = cheSummaries.getRunsByGroup().values().iterator().next().get(0);
 
 		//filter housekeeping
@@ -83,20 +92,20 @@ public class ProductivityReportingTest extends DomainTestABC {
 				withoutHK.add(workInstruction);
 			}
 		}
-		
+
 		Assert.assertEquals(withoutHK.size(), summary.getTotal());
 	}
-	
+
 	@Test
 	public void testGetCheSummaryOneRun() throws Exception {
 		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithOneRun("PRTEST2.O2");
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTenantTransaction();
-		
+
 		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
-		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		//Get summaries for the only group
 		List<List<WiSetSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
@@ -116,10 +125,10 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Facility facility = createFacilityWithTwoRuns("PRTEST2.O3");
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTenantTransaction();
-		
+
 		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
-		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		//Get summaries for the only group
 		List<List<WiSetSummary>> groups = new ArrayList<>(cheSummaries.getRunsByGroup().values());
@@ -132,19 +141,19 @@ public class ProductivityReportingTest extends DomainTestABC {
 		testRunSummary(groupRuns.get(1), 1, 0, 0, 0, 1, 0);	//"2014-12-22 23:46:00.000+0000"
 		this.getTenantPersistenceService().commitTenantTransaction();
 	}
-	
+
 	@Test
 	public void testGetCheSummaryTwoGroups() throws Exception {
 		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithTwoGroups("PRTEST2.O4");
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTenantTransaction();
-		
+
 		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
-		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
+		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
-		
+
 		//Get groups
 		HashMap<String, List<WiSetSummary>> groups = cheSummaries.getRunsByGroup();
 		Assert.assertEquals(groups.size(), 2);
@@ -158,7 +167,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 			} else {
 				testRunSummary(groupRuns.get(0), 0, 2, 1, 0, 0, 0);
 			}
-			
+
 		}
 		this.getTenantPersistenceService().commitTenantTransaction();
 	}
@@ -167,9 +176,9 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Assert.assertNotNull(s);
 		Assert.assertTrue(s.getInvalidCount() == invalid && s.getNewCount() == New && s.getInprogressCount() == inprogress && s.getShortCount() == Short && s.getCompleteCount() == complete && s.getRevertCount() == revert);
 	}
-	
-	
-	
+
+
+
 	@SuppressWarnings("unused")
 	private Facility createFacilityWithOneRun(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
@@ -181,14 +190,14 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Container container = createContainer("C1", facility);
 		OrderHeader header = createOrderHeader("OH1", OrderTypeEnum.OUTBOUND, facility, null);
 		OrderDetail detail = createOrderDetail(header, itemMaster);
-		
+
 		WorkInstruction wi = null;
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.REVERT, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
-		
+
 		return facility;
 	}
 
@@ -212,7 +221,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		Container container = createContainer("C1", facility);
 		OrderHeader header = createOrderHeader("OH1", OrderTypeEnum.OUTBOUND, facility, null);
 		OrderDetail detail = createOrderDetail(header, itemMaster);
-		
+
 		WorkInstruction wi = null;
 		//Run 1
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
@@ -221,27 +230,27 @@ public class ProductivityReportingTest extends DomainTestABC {
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l));
-		
+
 		return facility;
-	}	
+	}
 
 	@SuppressWarnings("unused")
 	private Facility createFacilityWithTwoGroups(String orgId){
 		Facility facility = createFacility();
-		CodeshelfNetwork network = facility.createNetwork("WITEST"); 
+		CodeshelfNetwork network = facility.createNetwork("WITEST");
 		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);
 		Container container = createContainer("C1", facility);
 		WorkInstruction wi = null;
-		
+
 		//Group 1 (undefined)
 		OrderHeader header1 = createOrderHeader("OH1", OrderTypeEnum.OUTBOUND, facility, null);
 		OrderDetail detail1 = createOrderDetail(header1, itemMaster);
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail1, container, che, facility, new Timestamp(1419291960000l));
 		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INVALID, WorkInstructionTypeEnum.ACTUAL, detail1, container, che, facility, new Timestamp(1419291960000l));
-		
+
 		//Group 2
 		OrderGroup orderGroup1 = createOrderGroup("GROUP1", facility);
 		OrderHeader header2 = createOrderHeader("OH2", OrderTypeEnum.OUTBOUND, facility, orderGroup1);
