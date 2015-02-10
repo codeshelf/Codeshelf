@@ -19,12 +19,12 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
 public class CheResource {
-	private PersistenceService persistence = PersistenceService.getInstance();
+	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 
 	@Setter
 	private UUIDParam mUUIDParam;

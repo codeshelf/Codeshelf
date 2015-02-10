@@ -18,7 +18,7 @@ import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.api.resources.subresources.FacilityResource;
 import com.gadgetworks.codeshelf.api.responses.FacilityShort;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")
@@ -26,7 +26,7 @@ public class FacilitiesResource {
 	@Context
 	private ResourceContext resourceContext;
 	
-	private PersistenceService persistence = PersistenceService.getInstance();
+	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 	
 	@Path("{id}")
 	public FacilityResource getManufacturer(@PathParam("id") UUIDParam uuidParam) throws Exception {

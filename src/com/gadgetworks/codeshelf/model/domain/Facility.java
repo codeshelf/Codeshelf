@@ -43,7 +43,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
@@ -74,8 +74,8 @@ public class Facility extends Location {
 	@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		@Inject
-		public FacilityDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public FacilityDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		@Override

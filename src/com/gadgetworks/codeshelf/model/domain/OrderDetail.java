@@ -39,7 +39,7 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.util.ASCIIAlphanumericComparator;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.google.common.base.Joiner;
@@ -71,8 +71,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
 		@Inject
-		public OrderDetailDao(final PersistenceService persistenceService) {
-			super(persistenceService);
+		public OrderDetailDao(final TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<OrderDetail> getDaoClass() {

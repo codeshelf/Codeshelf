@@ -40,7 +40,7 @@ import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
@@ -66,7 +66,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@Override
 	public void doBefore() {
 		this.mWorkService = new WorkService().start();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
 					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
@@ -78,12 +78,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -106,12 +106,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testEmptyUom() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -121,12 +121,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item = facility.getStoredItemFromMasterIdAndUom("3001", "");
 		Assert.assertNull(item);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testAlphaQuantity() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -141,12 +141,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testNegativeQuantity() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -159,7 +159,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		ItemMaster itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	// --------------------------------------------------------------------------
@@ -168,7 +168,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
@@ -210,14 +210,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		itemMaster = item.getParent();
 		Assert.assertNotNull(itemMaster);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	
 	@SuppressWarnings({"unused" })
 	@Test
 	public final void testBayAnchors() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
@@ -269,14 +269,14 @@ public class InventoryImporterTest extends EdiTestABC {
 		// The last slot in bay3 should have same path value as the bay
 		Assert.assertEquals(slot4Pos, bay3Pos);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedInventory() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		Facility facility = facilityForVirtualSlotting;
@@ -378,12 +378,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(32, theLedRange3.getFirstLedToLight());
 		Assert.assertEquals(35, theLedRange3.getLastLedToLight());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testNonSlottedInventory2() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking leds for this one inventory item
@@ -423,12 +423,12 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(112, theLedRange.getFirstLedToLight());
 		Assert.assertEquals(115, theLedRange.getLastLedToLight());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testNonSlottedInventory3() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking multiple inventory items for same SKU
@@ -455,7 +455,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(item1123Loc403CS);
 		// Not tested here. Later, we will enforce only one each location per item in a facility (or perhaps work area) even as we allow multiple case locations.
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	private Facility setupInventoryData(Facility facility, String csvString) {
@@ -468,7 +468,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedPick() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -530,26 +530,26 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Let's find our CHE
 		// this.getPersistenceService().beginTenantTransaction();
-		Assert.assertTrue(this.getPersistenceService().hasActiveTransaction());
+		Assert.assertTrue(this.getTenantPersistenceService().hasActiveTransaction());
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
 		Assert.assertNotNull(theChe);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		theChe = Che.DAO.reload(theChe);
 		List<WorkInstruction> wiListBeginningOfPath = mWorkService.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		theChe = Che.DAO.reload(theChe);
 		// Set up a cart for order 12345, which will generate work instructions
 		mWorkService.setUpCheContainerFromString(theChe, "12345");
@@ -593,7 +593,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertNotNull(wiDetail);
 		OrderHeader wiOrderHeader = wiDetail.getParent();
 		Assert.assertNotNull(wiOrderHeader);
-		Assert.assertEquals(facility, PersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
+		Assert.assertEquals(facility, TenantPersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
 		
 		// Complete one of the jobs
 		mWorkService.fakeCompleteWi(wi2.getPersistentId().toString(), "COMPLETE");
@@ -629,7 +629,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(1, completes);
 		Assert.assertEquals(1, actives);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -659,7 +659,7 @@ public class InventoryImporterTest extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSameProductPick() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -670,8 +670,8 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		setupInventoryData(facility, csvString);
 
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 
 		Location locationD403 = facility.findSubLocationById("D403");
@@ -682,8 +682,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// SKU 1123 needed for 12000
@@ -699,8 +699,8 @@ public class InventoryImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
@@ -712,9 +712,9 @@ public class InventoryImporterTest extends EdiTestABC {
 		// Set up a cart for the three orders, which will generate work instructions
 		mWorkService.setUpCheContainerFromString(theChe, "12000,12010,12345");
 		//Che.DAO.store(theChe);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		theChe = Che.DAO.findByPersistentId(theChe.getPersistentId());
 		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, ""); // get all in working order
@@ -800,7 +800,7 @@ public class InventoryImporterTest extends EdiTestABC {
 			Assert.assertTrue(LightLedsMessage.verifyCommandString(djsonLedCmdGroupsString));
 		}
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 }

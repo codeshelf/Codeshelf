@@ -13,7 +13,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
@@ -36,7 +35,7 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 	// this should really be an integration test
 	public final void testCreateFacilityOK() {
 
-		getPersistenceService().beginTenantTransaction();
+		getTenantPersistenceService().beginTenantTransaction();
 		
 		// "ObjectMethodRequest":{"className":"Organization","persistentId":"77fdd850-2245-11e4-822c-48d705ccef0f","methodName":"createFacility",
 		// "methodArgs":[{"name":"domainId","value":"F1","classType":"java.lang.String"},
@@ -61,11 +60,9 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		User.setDao(userDao);
 		*/
 
-		Organization organization = new Organization();
-		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Organization");
-		request.setPersistentId(organization.getPersistentId().toString());
+		request.setPersistentId("deprecated"); // organization id is ignored
 		request.setMethodName("createFacilityUi");
 
 		List<ArgsClass> methodArgs = new LinkedList<ArgsClass>();
@@ -94,6 +91,6 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(updateResponse.toString(), ResponseStatus.Success, updateResponse.getStatus());
 		
-		getPersistenceService().commitTenantTransaction();
+		getTenantPersistenceService().commitTenantTransaction();
 	}
 }

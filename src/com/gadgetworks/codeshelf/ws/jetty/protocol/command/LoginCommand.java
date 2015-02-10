@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.PropertyService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
@@ -56,7 +56,7 @@ public class LoginCommand extends CommandABC {
 					SiteController sitecon = SiteController.DAO.findByDomainId(null, username);
 					CodeshelfNetwork network = null;
 					if (sitecon != null) {
-						network = PersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());
+						network = TenantPersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());
 					
 						// send all network updates to this session for this network 
 						NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, session, network);

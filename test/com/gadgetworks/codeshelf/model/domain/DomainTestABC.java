@@ -14,7 +14,7 @@ import com.gadgetworks.codeshelf.model.OrderTypeEnum;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public abstract class DomainTestABC extends DAOTestABC {
@@ -508,11 +508,11 @@ public abstract class DomainTestABC extends DAOTestABC {
 	}
 
 	public Transaction beginTenantTransaction() {
-		return PersistenceService.getInstance().beginTenantTransaction();
+		return TenantPersistenceService.getInstance().beginTenantTransaction();
 	}
 	
 	public void commitTenantTransaction() {
-		PersistenceService.getInstance().commitTenantTransaction();
+		TenantPersistenceService.getInstance().commitTenantTransaction();
 	}
 
 

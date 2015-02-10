@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.common.base.Preconditions;
@@ -115,7 +115,7 @@ public class Filter implements ObjectEventListener {
 	private ResponseABC processEvent(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, EventType type) {
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (this.matchList.contains(domainPersistentId)) {
-			IDomainObject domainObject = PersistenceService.getDao(domainClass).findByPersistentId(domainPersistentId);
+			IDomainObject domainObject = TenantPersistenceService.getDao(domainClass).findByPersistentId(domainPersistentId);
 			if (domainObject != null) {
 				domainObjectList.add(domainObject);
 			} else {

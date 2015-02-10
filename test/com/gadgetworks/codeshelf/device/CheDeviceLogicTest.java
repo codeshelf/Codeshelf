@@ -49,18 +49,18 @@ public class CheDeviceLogicTest extends DomainTestABC {
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
-		this.getPersistenceService().commitTenantTransaction(); // end of transaction for this test
+		this.getTenantPersistenceService().commitTenantTransaction(); // end of transaction for this test
 		
 		IRadioController radioController = mock(IRadioController.class);
 		
@@ -104,17 +104,17 @@ public class CheDeviceLogicTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public void showsNoWorkIfNothingAheadOfLocation() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
 		

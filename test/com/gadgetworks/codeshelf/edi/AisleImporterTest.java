@@ -46,7 +46,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testTierB1S1Side() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A9,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -191,13 +191,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(bayA9B2.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle2.isLowerLedNearAnchor());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testTierNotB1S1Side() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Beside tierNotB1S1Side, this as two aisles, so it makes sure both get their leds properly set, and both vertices set
 		// Not quite realistic; A10 and A20 are on top of each other. Same anchor point
@@ -363,14 +363,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(bayA10B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void test32Led5Slot() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// the purpose of bay B1 is to compare this slotting algorithm to Jeff's hand-done goodeggs zigzag slots
 		// the purpose of bay B2 is to check the sort and LEDs of more than 10 slots in a tier
@@ -499,14 +499,14 @@ public class AisleImporterTest extends EdiTestABC {
 		tierFirstLed = tierB10T1.getFirstLedNumAlongPath();
 		Assert.assertTrue(tierFirstLed == 155);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSparseLeds() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Lasers are sparse: one led per slot
 		// Paul tested 8 leds for 5 slots and found bad behavior
@@ -614,13 +614,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(slotB1T5S5First == 7);
 		Assert.assertTrue(slotB1T5S5Last == 7);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testZigzagB1S1Side() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A12,,,,,zigzagB1S1Side,12.85,43.45,X,120,\r\n" //
@@ -692,13 +692,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(bayA12B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testZigzagNotB1S1Side() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -810,13 +810,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(bayA13B1.isLowerLedNearAnchor());
 		Assert.assertTrue(aisle.isLowerLedNearAnchor());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testMultiAisleZig() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// So this tests Bay to bay attributes changing within an aisle, and tier attributes changing within a bay.
@@ -885,13 +885,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(pickX == 0.0);
 		Assert.assertTrue(pickY == 1.15);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testBadFile1() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Ideally, we want non-throwing or caught exceptions that give good user feedback about what is wrong.
 		// This has tier before bay, and some other blank fields
@@ -959,14 +959,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Bay bayA9B1 = Bay.DAO.findByDomainId(aisle9, "B1");
 		Assert.assertNotNull(bayA9B1); // ok, even with no tiers
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testDoubleFileRead() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A15,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -1103,13 +1103,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Double yValue = thirdV.getPosY();
 		// Assert.assertTrue(yValue == 1.1); // new bay width 110 cm. But aisle is coming as 2.3 which is the original 2 bay value
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testAfterFileModifications() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// The file read does a lot. But then we rely on the user via the UI to do additional things to complete the configuration. This is
 		// a (nearly) end to end test of that. The actual UI will call a websocket command that calls a method on a domain object.
@@ -1237,8 +1237,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 2);
 
 		// DEV-514 Let's persist now. tierB1T1 reference comes from the previous. As does aisle16 reference.
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		// set on the old aisle reference. Does the old tier reference know?
 		aisle16.setControllerChannel(cntrlPersistIdStr55, "1");
 		// These fail!
@@ -1270,13 +1270,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals("(000066)", tierCntrlUiField);
 		Assert.assertEquals("(2)", tierChannelUiField);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testNoLed() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// do a Y orientation on this as well
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1324,7 +1324,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Short ledValue3 = slotB2T1S1.getFirstLedNumAlongPath();
 		Assert.assertTrue(ledValue3 == 0);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -1335,7 +1335,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testPathCreation() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F4X", "TEST", Point.getZeroPoint());
 
@@ -1394,13 +1394,13 @@ public class AisleImporterTest extends EdiTestABC {
 		value = helperGetPosAlongSegment(segment1, 25.0, 62.0);
 		Assert.assertEquals(value, (Double) 20.0);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void simplestPathTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1425,8 +1425,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.00, 48.45);
 
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle51.associatePathSegment(persistStr);
@@ -1452,7 +1452,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotEquals(slot1Meters, slot4Meters); // one of these should be further along the path
 		Assert.assertTrue(slot1Meters > slot4Meters); // path goes right to left, so S4 lowest.
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -1460,7 +1460,7 @@ public class AisleImporterTest extends EdiTestABC {
 	@Test
 	public final void testCloneAisle() {
 		// For DEV-618
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1494,8 +1494,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle52);
 
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// See the A51 and A52 have some of the same locations, and same Led numbers
 		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
@@ -1521,14 +1521,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(led51Value, led52Value);
 		*/
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPath() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// We seemed to have a bug in the parse where when processing A21 beans, we have m values set for A22. That is, A21 might come out as zigzagNotB1S1Side
 		// This also tests Bay to bay attributes changing within A31.
@@ -1612,9 +1612,9 @@ public class AisleImporterTest extends EdiTestABC {
 		String segmentId = segment0.getPersistentId().toString();
 		UUID facilityID = facility.getPersistentId();
 		aisle31.associatePathSegment(segmentId);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31);
 
 		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
@@ -1701,7 +1701,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Double slotA32B1T1S1Value = slotA32B1T1S1.getPosAlongPath();
 		Assert.assertTrue(slotA32B1T1S5Value < slotA32B1T1S1Value); // in A32 also,first bay last slot further along path than second bay first slot
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -1731,7 +1731,7 @@ public class AisleImporterTest extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void nonSlottedTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// For tier-wise non-slotted inventory, we will support the same file format, but with zero tiers.
 
@@ -1774,9 +1774,9 @@ public class AisleImporterTest extends EdiTestABC {
 
 		String persistStr = segment0.getPersistentId().toString();
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		aisle61.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should have position now
 		// Although the old reference to aisle before path association would not.
@@ -1821,7 +1821,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotEquals(tierB1Meters, tierB2Meters); // tier spans the bay, so should be the same
 		// Bay1 and bay2 path position differ by about 1.15 meters;  bay is 115 cm long.
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -1830,7 +1830,7 @@ public class AisleImporterTest extends EdiTestABC {
 		// DAO-correct
 		// This was one common ebeans bug. This test gets references to the same slot at different times, and sees that they are all synchronized.
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A29,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
@@ -1887,9 +1887,9 @@ public class AisleImporterTest extends EdiTestABC {
 		// true in database. False in this transaction, even though we really tried to get it straight from the DAO 
 
 		// Persist it by closing the transaction
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 		// Old reference. Now false in database, and false on this reference. Cannot tell if the reference actually got updated by hibernate.
 
@@ -1908,9 +1908,9 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(slotB1T1S5B.getActive()); // old reference is still active.
 
 		// close the transaction
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive());
@@ -1923,13 +1923,13 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5B.getActive());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	private void setActiveValue(Location inLocation, boolean inValue, boolean inWithTransaction, boolean inThrow) {
 		if (inWithTransaction)
-			this.getPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().beginTenantTransaction();
 
 		inLocation.setActive(inValue);
 		inLocation.<Location>getDao().store(inLocation);
@@ -1939,7 +1939,7 @@ public class AisleImporterTest extends EdiTestABC {
 		}
 
 		if (inWithTransaction)
-			this.getPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -1947,7 +1947,7 @@ public class AisleImporterTest extends EdiTestABC {
 	public final void testThrowInTransaction() {
 		// DAO-correct
 		// And nested transactions
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1968,16 +1968,16 @@ public class AisleImporterTest extends EdiTestABC {
 		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		List<Facility> listA = Facility.DAO.getAll();
 		Facility facilityA = listA.get(0);
 		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A30.B1.T1.S5");
 		Assert.assertTrue(slotB1T1S5.getActive());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 1: try to store without a transaction should throw");
 		boolean caughtExpected = false;
@@ -1997,14 +1997,14 @@ public class AisleImporterTest extends EdiTestABC {
 		final boolean transactionNo = false;
 
 		LOGGER.info("Case 2: simple nested transaction that might work. See errors from PersistenceService");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		setActiveValue(slotB1T1S5, false, transactionYes, throwNo);
 		Assert.assertFalse(slotB1T1S5.getActive());
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 
 		LOGGER.info("Case 3: simple nested transaction will throw");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		caughtExpected = false;
 		try {
 			setActiveValue(slotB1T1S5, true, transactionYes, throwYes);
@@ -2013,11 +2013,11 @@ public class AisleImporterTest extends EdiTestABC {
 		}
 		if (!caughtExpected)
 			Assert.fail("did not see the expected throw");
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 
 		LOGGER.info("Case 4: does nested transaction spoil the outer transaction? See errors from PersistenceService");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		setActiveValue(slotB1T1S5, true, transactionYes, throwNo);
 		slotB1T1S5.setLedChannel((short) 4);
 		try {
@@ -2027,7 +2027,7 @@ public class AisleImporterTest extends EdiTestABC {
 		}
 		if (!caughtExpected)
 			Assert.fail("did not see the expected throw");
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5.getLedChannel() == 4);
 
@@ -2043,10 +2043,10 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertFalse(slotB1T1S5.getActive());
 
 		LOGGER.info("Case 6: After the throw that left a transaction open, continue with normal transaction.");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		slotB1T1S5.setActive(true);
 		Slot.DAO.store(slotB1T1S5);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 	}
 
@@ -2056,7 +2056,7 @@ public class AisleImporterTest extends EdiTestABC {
 		// Attempts to create various detached and reattach object scenarios 
 		// Need to add database queries to this later to see if and when change was persisted.
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Start with a file read to new facility
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2077,32 +2077,32 @@ public class AisleImporterTest extends EdiTestABC {
 		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		List<Facility> listA = Facility.DAO.getAll();
 		Facility facilityA = listA.get(0);
 		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A31.B1.T1.S5");
 		Assert.assertTrue(slotB1T1S5.getActive());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("Case 1: Modify outside a transaction. Then store inside a transaction");
 		slotB1T1S5.setActive(false);
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		slotB1T1S5.setLedChannel((short) 2); // set another field, making it look more like a mistake may be.
 		Slot.DAO.store(slotB1T1S5);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		Assert.assertFalse(slotB1T1S5.getActive());
 
 		LOGGER.info("Case 2: multiple stores in the same transaction");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		slotB1T1S5.setActive(true);
 		Slot.DAO.store(slotB1T1S5);
 		slotB1T1S5.setLedChannel((short) 3);
 		Slot.DAO.store(slotB1T1S5);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5.getLedChannel() == 3);
 	}

@@ -26,7 +26,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 
@@ -53,7 +53,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			crossBatchImporter,
 			aislesFileImporter,
 			Facility.DAO,
-			this.getPersistenceService());
+			this.getTenantPersistenceService());
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -93,8 +93,8 @@ public class EdiProcessorTest extends EdiTestABC {
 		private Facility	mFacility;
 
 		@Inject
-		public TestFacilityDao(final PersistenceService persistenceService, final Facility inFacility) {
-			super(persistenceService);
+		public TestFacilityDao(final TenantPersistenceService tenantPersistenceService, final Facility inFacility) {
+			super(tenantPersistenceService);
 			mFacility = inFacility;
 		}
 
@@ -111,7 +111,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 	@Test
 	public final void ediProcessorTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		final class Result {
 			public boolean	processed	= false;
@@ -129,7 +129,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F-EDI.1", "TEST", Point.getZeroPoint());
 
-		TestFacilityDao facilityDao = new TestFacilityDao(this.getPersistenceService(), facility);
+		TestFacilityDao facilityDao = new TestFacilityDao(this.getTenantPersistenceService(), facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {
@@ -373,7 +373,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			crossBatchImporter,
 			aislesFileImporter,
 			facilityDao,
-			this.getPersistenceService());
+			this.getTenantPersistenceService());
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -386,7 +386,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	private ICsvOrderImporter generateFailingImporter() {

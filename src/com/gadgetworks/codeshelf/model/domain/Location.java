@@ -47,7 +47,7 @@ import com.gadgetworks.codeshelf.device.LedCmdPath;
 import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
@@ -357,7 +357,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			if (Hibernate.getClass(child).equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				// Hibernate: troublesome to cast without first deproxifying
-				result.add(PersistenceService.<T>deproxify((T) child));
+				result.add(TenantPersistenceService.<T>deproxify((T) child));
 			} else {
 				// If the child is not the kind we want the recurse.
 				result.addAll((List<T>) child.getActiveChildrenAtLevel(inClassWanted));
@@ -470,7 +470,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			if (Hibernate.getClass(checkParent).equals(inClassWanted)) {
 				// Hibernate: casting doesn't work right if the parent is a proxy object!
 				//result = (T) checkParent;
-				result = PersistenceService.<T>deproxify((T) checkParent);
+				result = TenantPersistenceService.<T>deproxify((T) checkParent);
 			} else {
 				if (checkParent.isFacility()) {
 					result = null;
@@ -560,7 +560,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		} // else
 		
 		// Hibernate: This result is going to get cast, so deproxify here to avoid problems.
-		return PersistenceService.<Location>deproxify(locations.get(inLocationId));
+		return TenantPersistenceService.<Location>deproxify(locations.get(inLocationId));
 	}
 
 	// --------------------------------------------------------------------------

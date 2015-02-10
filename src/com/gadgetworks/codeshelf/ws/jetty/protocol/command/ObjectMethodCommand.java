@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.validation.DefaultErrors;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
 import com.gadgetworks.codeshelf.validation.InputValidationException;
@@ -72,7 +72,7 @@ public class ObjectMethodCommand extends CommandABC {
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);				
 				// First locate an instance of the parent class.
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 

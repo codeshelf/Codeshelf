@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -54,8 +54,8 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@Singleton
 	public static class WorkAreaDao extends GenericDaoABC<WorkArea> implements ITypedDao<WorkArea> {
 		@Inject
-		public WorkAreaDao(final PersistenceService persistenceService) {
-			super(persistenceService);
+		public WorkAreaDao(final TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 		
 		public final Class<WorkArea> getDaoClass() {

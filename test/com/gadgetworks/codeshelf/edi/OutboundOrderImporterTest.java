@@ -61,17 +61,17 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Before
 	public void initTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		importer = createOrderImporter();
 		facilityId = getTestFacility("O-" + getTestName(), "F-" + getTestName()).getPersistentId();
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -120,12 +120,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(detail931b, detail931);
 		Assert.assertEquals(detail931DomainID, "10706962-each"); // This is the itemID from file above.
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testOrderImporterWithLocationsFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderId,preassignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
@@ -200,12 +200,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		int aliasCount = facility.getLocationAliases().size();
 		Assert.assertEquals(0, aliasCount);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testOrderImporterWithPickStrategyFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,pickStrategy,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
@@ -238,13 +238,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.PARALLEL);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testOrderImporterWithPreassignedContainerIdFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
@@ -280,13 +280,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 1);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public void testFailOrderImporterFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		// orderId,itemId,description,quantity,uom are not nullable according to the bean
@@ -334,13 +334,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		// Seems possibly wrong! Got a detail for missing itemID.
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public void testManyOrderArchive() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -418,13 +418,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public void testOneOrderArchive() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -470,13 +470,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				Assert.assertNotEquals(Integer.valueOf(0), detail.getQuantity());
 			}
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testMinMaxOrderImporterFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,workSequence"
@@ -508,13 +508,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(Integer.valueOf(0), orderDetail.getMinQuantity());
 		Assert.assertEquals(Integer.valueOf(5), orderDetail.getMaxQuantity());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testMinMaxDefaultOrderImporterFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -590,7 +590,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testMinMaxBoundariesCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -621,13 +621,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMinQuantity());
 		Assert.assertEquals(orderDetail.getQuantity(), orderDetail.getMaxQuantity());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testDetailIdOrderImporterFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -697,8 +697,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		//Refresh facility
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityId);
 		
 		//123.1 should no longer exist. Instead, there should be 10700589-each 
@@ -727,13 +727,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 9);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testReimportDetailIdOrderImporterFromCsvStream() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -767,13 +767,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public void testNonsequentialOrderIds() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String nonSequentialOrders = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
@@ -790,7 +790,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(4, theCounts.mActiveDetails);
 		Assert.assertEquals(2, theCounts.mActiveCntrUses);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	/**
@@ -798,7 +798,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public void testMultipleImportOfLargeSet() throws IOException, InterruptedException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
 		foundFacility = mFacilityDao.findByPersistentId(facilityId);
@@ -824,7 +824,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
@@ -832,7 +832,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testImportEmptyQuantityAsZero() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacility();
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis() - 30000);
@@ -845,12 +845,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0, orderDetails.get(0).getQuantity().intValue());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testImportAlphaQuantityAsZero() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacility();
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis() - 30000);
@@ -863,12 +863,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0, orderDetails.get(0).getQuantity().intValue());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testReimportOutboundOrderNoGroup() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORD2.1", "TEST", Point.getZeroPoint());
 
@@ -968,24 +968,24 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 6);
 		Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void testItemCreationfromOrders() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("1: Read a very small aisles and locations file. Aliases exist only for D34, D35, D13");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		loadSmallAislesAndLocations(facility);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("3: Read the orders file, which has some preferred locations");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
@@ -1039,10 +1039,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		// Read the same file again, but this time LOCAPICK is true
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// getting a lazy initialization error during the read on a tier addStoredItem.
 		// Interesting that relaod the facility seems to set the tier straight.
@@ -1058,18 +1058,18 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		List<Item> items2 = theMaster2.getItems();
 		Assert.assertEquals(1, items2.size()); // Inventory should be created since LOCAPICK is true
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void itemCreationChoicesfromOrders() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("1: Read a very small aisles and locations file");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		loadSmallAislesAndLocations(facility);
 
@@ -1079,10 +1079,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("3: Read the orders file, which has some preferred locations");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		String csvString1 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
@@ -1106,12 +1106,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		List<Item> items4 = master4.getItems();
 		Assert.assertEquals(1, items4.size());
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("5: Read a revised orders file. This is testing two things");
 		LOGGER.info("   Change preferredLocation for a case order detail. Should create new inventory for SKU0001, but delete old.");
 		LOGGER.info("   Change preferredLocation for an each order detail. Should move and not create new inventory for SKU0004");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// Checking precondition, and remembering the persistentId of the items.
@@ -1152,11 +1152,11 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		Assert.assertNotEquals(persist1a, persist1b); // made new. Deleted old. So different persistent Id
 		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("7: Move the 10.1 SKU0001 order at D34. But add another SKU0001 order at D34. SKU0001 hould have two itemLocations after that.");
 		// Just for thoroughness, changed the cm Offset of the D34 item. Does not matter.
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		
 		String csvString3 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
@@ -1172,10 +1172,10 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		items1 = master1.getItems();
 		Assert.assertEquals(2, items1.size());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("8: Showing the limits of current implementation. Next day, orders for the same SKUs in different locations. Does not clean up old inventory.");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		
 		String csvString4 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
@@ -1189,7 +1189,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		items1 = master1.getItems();
 		Assert.assertEquals(3, items1.size());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 		// Not shown. But now if we moved the 14.1 SKU0001, that one would delete, after the make of the new CS itemLocation, but the old two would remain.
 		// At some point we will need an archive mechanism.
@@ -1221,7 +1221,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testArchiveOneGroup() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
@@ -1245,7 +1245,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	/**
@@ -1253,7 +1253,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testArchiveNoGroup() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
@@ -1277,7 +1277,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	/**
@@ -1287,7 +1287,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testArchiveTwoGroups() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		
@@ -1313,12 +1313,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		headerExpectations.put("5", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void testArchiveAbandonedGroup() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
@@ -1356,7 +1356,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		assertArchiveStatuses(groupExpectations, headerExpectations);
 		
 		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 		
 	@Test
@@ -1367,7 +1367,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		 * and completing work instructions for the ones that are completed.
 		 * Then drop the second orders file.
 		 */
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		
 		LOGGER.info("1: Read orders for for group 1, as if it is morning wave");
@@ -1378,8 +1378,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				"\r\n3,3,3.1,12/03/14 12:00,12/31/14 12:00,Item9,,100,a,Group1";
 		importCsvString(facility, firstCsvString);
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		OrderHeader header1a = facility.getOrderHeader("1");
@@ -1436,12 +1436,12 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		LOGGER.info("   As expected, completed order 3 remains on group 1.");
 		Assert.assertEquals(orderGroup1b, header3b.getOrderGroup());
 			
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testOrderDetailIdNormal() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		//Test that if orderDetailId is provided, it becomes detail's id. If not, then use the item-uom combination.
 		//Also confirm that detail ids can be reused across orders
@@ -1463,13 +1463,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderDetail d2_2 = h2.getOrderDetail("Item2-each");
 		assertActiveOrderDetail(d2_2);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testOrderDetailIdDuplicates() throws IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				//Repeating orderDetailId - leave last one
@@ -1506,7 +1506,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderDetail d2_2 = h2.getOrderDetail("Item4-each");
 		assertActiveOrderDetail(d2_2);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	/**

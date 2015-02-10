@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
 import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
 import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -34,7 +34,7 @@ public class ImportResource {
 
 	@Context
 	private ResourceContext resourceContext;	
-	private PersistenceService persistence = PersistenceService.getInstance();
+	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 	private AislesFileCsvImporter	aislesFileCsvImporter;
 	//private OrderLocationCsvImporter orderLocationImporter;
 	private LocationAliasCsvImporter locationAliasImporter;

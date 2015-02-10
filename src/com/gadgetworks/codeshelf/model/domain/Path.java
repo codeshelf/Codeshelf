@@ -39,7 +39,7 @@ import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -66,8 +66,8 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class PathDao extends GenericDaoABC<Path> implements ITypedDao<Path> {
 		@Inject
-		public PathDao(final PersistenceService persistenceService) {
-			super(persistenceService);
+		public PathDao(final TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<Path> getDaoClass() {

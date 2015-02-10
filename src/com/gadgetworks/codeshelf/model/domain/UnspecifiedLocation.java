@@ -6,7 +6,7 @@ import javax.persistence.Entity;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -21,8 +21,8 @@ public class UnspecifiedLocation extends Location {
 	@Singleton
 	public static class UnspecifiedLocationDao extends GenericDaoABC<UnspecifiedLocation> implements ITypedDao<UnspecifiedLocation> {
 		@Inject
-		public UnspecifiedLocationDao(final PersistenceService persistenceService) {
-			super(persistenceService);
+		public UnspecifiedLocationDao(final TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<UnspecifiedLocation> getDaoClass() {

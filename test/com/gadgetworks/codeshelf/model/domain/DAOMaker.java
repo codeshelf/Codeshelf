@@ -7,15 +7,15 @@ import org.apache.commons.lang.RandomStringUtils;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;
 
 public class DAOMaker {
 
-	public DAOMaker(PersistenceService persistenceService) {
-		Facility.setDao(new FacilityDao(persistenceService));
+	public DAOMaker(TenantPersistenceService tenantPersistenceService) {
+		Facility.setDao(new FacilityDao(tenantPersistenceService));
 	}
 
 	public static final Property<Facility, String>			facilityId			= newProperty();

@@ -16,25 +16,25 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class OptimisticLockExceptionTest {
 	@Getter
-	PersistenceService persistenceService;
+	TenantPersistenceService tenantPersistenceService;
 
 	@Before
 	public final void setup() {
 		Configuration.loadConfig("test");
-		persistenceService = PersistenceService.getInstance();
-		OrderHeader.DAO = new OrderHeaderDao(persistenceService);
-		OrderDetail.DAO = new OrderDetailDao(persistenceService);
-		Facility.DAO = new FacilityDao(persistenceService);
-		Facility.DAO = new FacilityDao(persistenceService);
+		tenantPersistenceService = TenantPersistenceService.getInstance();
+		OrderHeader.DAO = new OrderHeaderDao(tenantPersistenceService);
+		OrderDetail.DAO = new OrderDetailDao(tenantPersistenceService);
+		Facility.DAO = new FacilityDao(tenantPersistenceService);
+		Facility.DAO = new FacilityDao(tenantPersistenceService);
 	}
 
 	@Test
 	public final void optimisticLockExceptionTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = new Facility();
 		facility.setFacilityId("OPTIMISTIC-F1");
@@ -64,6 +64,6 @@ public class OptimisticLockExceptionTest {
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatus(), order1.getStatus());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 }

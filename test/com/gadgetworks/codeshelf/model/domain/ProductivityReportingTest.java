@@ -30,12 +30,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 	
 	@Test
 	public void testProductivitySummary() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		ProductivitySummaryList productivitySummary = WorkService.getProductivitySummary(facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, GroupSummary> groups = productivitySummary.getGroups();
@@ -45,33 +45,33 @@ public class ProductivityReportingTest extends DomainTestABC {
 			String groupName = groupNames.next();
 			Assert.assertTrue(OrderGroup.UNDEFINED.equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryNoRuns() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		Assert.assertEquals(cheSummaries.getRunsByGroup().size(), 0);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryAllWorkInstructionCombos() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		List<WorkInstruction> workInstructions = createFacilityWithOneRunAllWorkInstructionCombos();
 		
 		UUID facilityId = workInstructions.get(0).getParent().getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		WiSetSummary summary = cheSummaries.getRunsByGroup().values().iterator().next().get(0);
@@ -89,12 +89,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 	
 	@Test
 	public void testGetCheSummaryOneRun() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithOneRun("PRTEST2.O2");
 		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
@@ -107,17 +107,17 @@ public class ProductivityReportingTest extends DomainTestABC {
 		WiSetSummary run = groupRuns.get(0);
 		//Verify retrieved run
 		testRunSummary(run, 0, 0, 2, 0, 2, 1);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryTwoRuns() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithTwoRuns("PRTEST2.O3");
 		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
@@ -130,17 +130,17 @@ public class ProductivityReportingTest extends DomainTestABC {
 		//Verify runs
 		testRunSummary(groupRuns.get(0), 0, 2, 1, 0, 0, 0); //"2014-12-23 19:40:20.000+0000"
 		testRunSummary(groupRuns.get(1), 1, 0, 0, 0, 1, 0);	//"2014-12-22 23:46:00.000+0000"
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public void testGetCheSummaryTwoGroups() throws Exception {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = createFacilityWithTwoGroups("PRTEST2.O4");
 		UUID facilityId = facility.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = WorkService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
@@ -160,7 +160,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 			}
 			
 		}
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	private void testRunSummary(WiSetSummary s, int invalid, int New, int inprogress, int Short, int complete, int revert){

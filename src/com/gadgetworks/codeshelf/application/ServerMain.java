@@ -98,7 +98,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.gadgetworks.codeshelf.platform.multitenancy.ITenantManager;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.security.CodeshelfRealm;
@@ -173,7 +173,7 @@ public final class ServerMain {
 			protected void configure() {
 				bind(ITenantManager.class).toInstance(TenantManagerService.getInstance());
 				
-				bind(PersistenceService.class).toInstance(PersistenceService.getInstance());
+				bind(TenantPersistenceService.class).toInstance(TenantPersistenceService.getInstance());
 				bind(GuiceFilter.class);
 				
 				bind(IConfiguration.class).to(JVMSystemConfiguration.class);

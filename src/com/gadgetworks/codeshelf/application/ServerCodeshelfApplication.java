@@ -27,7 +27,7 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.platform.multitenancy.ITenantManager;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.ws.jetty.server.ServerWatchdogThread;
@@ -42,7 +42,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 
 	@Getter
-	private PersistenceService		persistenceService;
+	private TenantPersistenceService		tenantPersistenceService;
 	
 	@Getter
 	private ITenantManager			tenantManager;
@@ -56,14 +56,14 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
-			final PersistenceService persistenceService,
+			final TenantPersistenceService tenantPersistenceService,
 			final ITenantManager inTenantManager) {
 			
 		super(inWebApiServer);
 		
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		this.persistenceService = persistenceService;
+		this.tenantPersistenceService = tenantPersistenceService;
 		this.tenantManager = inTenantManager;
 			
 		// create and configure watch dog
@@ -100,8 +100,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// this.getPersistenceService().start();
 
 		try {
-			this.getPersistenceService().beginTenantTransaction();
-			this.getPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().commitTenantTransaction();
 		} catch (HibernateException e) {
 			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.", e);
 			Thread.sleep(3000);
@@ -120,7 +120,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		registerSystemMetrics();
 
 		// create server-specific health checks
-		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(persistenceService);
+		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(tenantPersistenceService);
 		MetricsService.registerHealthCheck(dbCheck);
 
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
@@ -143,7 +143,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
 		this.stopApiServer();
-		this.persistenceService.stop();
+		this.tenantPersistenceService.stop();
 		LOGGER.info("Application terminated normally");
 	}
 
@@ -156,16 +156,16 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
 		for(Tenant tenant : tenants) {
 			try {
-				this.getPersistenceService().beginTenantTransaction(tenant);
+				this.getTenantPersistenceService().beginTenantTransaction(tenant);
 				for (Facility facility : Facility.DAO.getAll()) {
 					for (Path path : facility.getPaths()) {
 						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 						facility.recomputeLocationPathDistances(path);
 					}
 				}
-				this.getPersistenceService().commitTenantTransaction(tenant);
+				this.getTenantPersistenceService().commitTenantTransaction(tenant);
 			} catch(Exception e) {
-				this.getPersistenceService().rollbackTenantTransaction(tenant);
+				this.getTenantPersistenceService().rollbackTenantTransaction(tenant);
 				throw e;
 			}
 		}

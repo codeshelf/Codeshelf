@@ -63,7 +63,7 @@ public class LightServiceTest extends EdiTestABC {
 	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException {
 		
 		LOGGER.info("0: Starting test:  getting facility");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(
 			getDefaultTenant(),
@@ -71,10 +71,10 @@ public class LightServiceTest extends EdiTestABC {
 			createLocationAliasImporter(),
 			createOrderImporter());
 		Facility facility = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("1: reload facility. Get childre aisle, tiers.");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Aisle aisle = (Aisle) facility.getChildren().get(0);
 		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
@@ -84,14 +84,14 @@ public class LightServiceTest extends EdiTestABC {
 		LOGGER.info("2: setup inventory.");
 		InventoryGenerator inventoryGenerator = new InventoryGenerator((InventoryCsvImporter) createInventoryImporter());
 		inventoryGenerator.setupVirtuallySlottedInventory(aisle, itemsPerTier);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		LOGGER.info("3: get inventory in working order for one aisle.");
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		aisle = Aisle.DAO.reload(aisle);
 		List<Item> items = aisle.getInventoryInWorkingOrder();
 		Assert.assertNotEquals(0,  items.size());
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
 		SessionManager sessionManager = mock(SessionManager.class);
@@ -110,7 +110,7 @@ public class LightServiceTest extends EdiTestABC {
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
 		// and pass through to Future<Void> chaserLight()
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		aisle = Aisle.DAO.reload(aisle);
 		items = aisle.getInventoryInWorkingOrder();
@@ -130,17 +130,17 @@ public class LightServiceTest extends EdiTestABC {
 			assertWillLightItem(itemIterator.next(), message);
 		}
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 
 	@Test
 	public final void checkTierChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
@@ -153,18 +153,18 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void checkZigZagBayChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
@@ -177,7 +177,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	
@@ -186,12 +186,12 @@ public class LightServiceTest extends EdiTestABC {
 	 */
 	@Test
 	public final void lightAisleWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
@@ -209,18 +209,18 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 		
 
 	@Test
 	public final void lightBayWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
@@ -236,7 +236,7 @@ public class LightServiceTest extends EdiTestABC {
 			}
 		}
 	
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	
@@ -245,12 +245,12 @@ public class LightServiceTest extends EdiTestABC {
 	 */
 	@Test
 	public final void checkChildLocationSequenceForZigZagLayoutAisle() throws IOException, InterruptedException, ExecutionException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		facility = Facility.DAO.reload(facility);
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
@@ -261,7 +261,7 @@ public class LightServiceTest extends EdiTestABC {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	

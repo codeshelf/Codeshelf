@@ -18,7 +18,7 @@ import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.application.ContextLogging;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
 import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -32,7 +32,7 @@ public class CsServerEndPoint {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsServerEndPoint.class);
 
 	@Getter
-	private final PersistenceService persistenceService;
+	private final TenantPersistenceService tenantPersistenceService;
 
 	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
 
@@ -47,7 +47,7 @@ public class CsServerEndPoint {
 	
 	
 	public CsServerEndPoint() {
-		persistenceService = PersistenceService.getInstance();
+		tenantPersistenceService = TenantPersistenceService.getInstance();
 	}
 	
 	@OnOpen
@@ -66,7 +66,7 @@ public class CsServerEndPoint {
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
     	try{
-        	this.getPersistenceService().beginTenantTransaction();
+        	this.getTenantPersistenceService().beginTenantTransaction();
         	UserSession csSession = sessionManager.getSession(session);
     		ContextLogging.setSession(csSession);
     		sessionManager.messageReceived(session);
@@ -94,9 +94,9 @@ public class CsServerEndPoint {
             	LOGGER.debug("Received message on session "+csSession+": "+message);
             	messageProcessor.handleMessage(csSession, message);
         	}
-			this.getPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTenantTransaction();
 		} catch (RuntimeException e) {
-			this.getPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTenantTransaction();
 			LOGGER.error("Unable to persist during message handling: " + message, e);
 		}
     	finally {

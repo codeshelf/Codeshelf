@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.collect.Ordering;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -45,8 +45,8 @@ public class Bay extends Location {
 	@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
 		@Inject
-		public BayDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public BayDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<Bay> getDaoClass() {

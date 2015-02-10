@@ -39,7 +39,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 
 	@Test
 	public final void testCreateVertex() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		this.mFacilityDao.store(facility);
@@ -86,12 +86,12 @@ public class FacilityOutlineTest extends DomainTestABC {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		
@@ -131,6 +131,6 @@ public class FacilityOutlineTest extends DomainTestABC {
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 }

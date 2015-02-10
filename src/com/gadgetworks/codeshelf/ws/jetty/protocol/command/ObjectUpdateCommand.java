@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -72,7 +72,7 @@ public class ObjectUpdateCommand extends CommandABC {
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.				
-				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
 				
 				IDomainObject updateObject = null;
 				if(dao == null) {

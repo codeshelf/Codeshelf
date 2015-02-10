@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.UserType;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class UserSession implements IDaoListener {
@@ -123,16 +123,16 @@ public class UserSession implements IDaoListener {
 			@Override
 			public void run() {
 				try {
-					PersistenceService.getInstance().beginTenantTransaction();
+					TenantPersistenceService.getInstance().beginTenantTransaction();
 					for (ObjectEventListener listener : eventListeners.values()) {
 						MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
 						if (response != null) {
 							sendMessage(response);
 						}
 					}
-					PersistenceService.getInstance().commitTenantTransaction();
+					TenantPersistenceService.getInstance().commitTenantTransaction();
 				} catch (Exception e) {
-					PersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTenantTransaction();
 					LOGGER.error("Unable to handle object add messages", e);
 				}
 			}
@@ -148,7 +148,7 @@ public class UserSession implements IDaoListener {
 			@Override
 			public void run() {
 				try {
-					PersistenceService.getInstance().beginTenantTransaction();
+					TenantPersistenceService.getInstance().beginTenantTransaction();
 					for (ObjectEventListener listener : eventListeners.values()) {
 						MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
 						if (response != null) {
@@ -156,9 +156,9 @@ public class UserSession implements IDaoListener {
 						}
 
 					}
-					PersistenceService.getInstance().commitTenantTransaction();
+					TenantPersistenceService.getInstance().commitTenantTransaction();
 				} catch (Exception e) {
-					PersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTenantTransaction();
 					LOGGER.error("Unable to handle object update", e);
 				}
 			}
@@ -172,16 +172,16 @@ public class UserSession implements IDaoListener {
 			@Override
 			public void run() {
 				try {
-					PersistenceService.getInstance().beginTenantTransaction();
+					TenantPersistenceService.getInstance().beginTenantTransaction();
 					for (ObjectEventListener listener : eventListeners.values()) {
 						MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
 						if (response != null) {
 							sendMessage(response);
 						}
 					}
-					PersistenceService.getInstance().commitTenantTransaction();
+					TenantPersistenceService.getInstance().commitTenantTransaction();
 				} catch (Exception e) {
-					PersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTenantTransaction();
 					LOGGER.error("Unable to handle object delete", e);
 				}
 			}
@@ -226,7 +226,7 @@ public class UserSession implements IDaoListener {
 			this.wsSession = null;
 		}
 		//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-		PersistenceService.getInstance().getObjectChangeBroadcaster().unregisterDAOListener(this);
+		TenantPersistenceService.getInstance().getObjectChangeBroadcaster().unregisterDAOListener(this);
 	}
 
 	public void authenticated(User user) {

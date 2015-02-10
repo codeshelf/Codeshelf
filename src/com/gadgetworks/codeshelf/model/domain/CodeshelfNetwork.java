@@ -34,7 +34,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -63,8 +63,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@Singleton
 	public static class CodeshelfNetworkDao extends GenericDaoABC<CodeshelfNetwork> implements ITypedDao<CodeshelfNetwork> {
 		@Inject
-		public CodeshelfNetworkDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public CodeshelfNetworkDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<CodeshelfNetwork> getDaoClass() {
