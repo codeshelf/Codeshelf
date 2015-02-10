@@ -1244,6 +1244,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 					// First we need to finalize the previous aisle if one exists
 					if (lastAisle != null && lastAisle != mLastReadAisle){
+						// Have to load the depth of the previous aisle to set correct depth
 						mDepthCm = lastDepthCm;
 						finalizeTiersInThisAisle(lastAisle);
 						// Kludge!  make sure lastAisle reference is not stale

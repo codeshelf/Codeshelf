@@ -1911,7 +1911,7 @@ public class AisleImporterTest extends EdiTestABC {
 	@Test
 	public final void testCloneZigzagNotB1S1Aisle(){
 		
-		// Test tierB1S1Side
+
 		this.getPersistenceService().beginTenantTransaction();
 
 		// tierB1S1Side Test 1
@@ -2127,7 +2127,6 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getPersistenceService().commitTenantTransaction();
 	}
 	
-	@SuppressWarnings("unused")
 	@Test
 	public final void testCloneAisle() {
 		// For DEV-618
@@ -2343,7 +2342,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
-	@SuppressWarnings("unused")
+
 	@Test
 	public final void testPath() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -2442,15 +2441,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 		// Lowest path values at A31B2T1S5 and A32B2T1S5
 		// Lowest LED values should be A31B1T1S1 and A32B2T1S5
-		Slot firstA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B2T1, "S5");
 		Slot firstA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S5");
-		Slot lastA31SlotOnPath = Slot.DAO.findByDomainId(tierA31B1T1, "S1");
-		Slot lastA32SlotOnPath = Slot.DAO.findByDomainId(tierA32B2T1, "S1");
-
-		Double valueFirst31 = firstA31SlotOnPath.getPosAlongPath();
-		Double valueFirst32 = firstA32SlotOnPath.getPosAlongPath();
-		Double valueLast31 = lastA31SlotOnPath.getPosAlongPath();
-		Double valueLast32 = lastA32SlotOnPath.getPosAlongPath();
 
 		Short lowestLEDforA32 = firstA32SlotOnPath.getFirstLedNumAlongPath();
 		Assert.assertTrue(lowestLEDforA32 < 4);
@@ -2459,8 +2450,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertTrue(lowestLEDforA31 < 4);
 
 		// old bug got the same position for first two bays. Check that.
-		Double a31b1Value = tierA31B1T1.getPosAlongPath();
-		Double a31b2Value = tierA31B2T1.getPosAlongPath();
+
 		// Values are null. Lets get new tier references after the path was applied, as the posAlongPath is null on old reference
 		tierA31B1T1 = Tier.DAO.findByDomainId(bayA31B1, "T1");
 		tierA31B2T1 = Tier.DAO.findByDomainId(bayA31B2, "T1");
@@ -2468,8 +2458,6 @@ public class AisleImporterTest extends EdiTestABC {
 		tierA32B2T1 = Tier.DAO.findByDomainId(bayA32B2, "T1");
 
 		Double valueTierA31B1T1 = tierA31B1T1.getAnchorPosX();
-		Double valueTierA31B2T1 = tierA31B2T1.getAnchorPosX();
-		Double valueTierA32B1T1 = tierA32B1T1.getAnchorPosX();
 		Double valueTierA32B2T1 = tierA32B2T1.getAnchorPosX();
 		Assert.assertEquals((Double) 0.0, valueTierA31B1T1);
 		Assert.assertEquals((Double) 0.0, valueTierA32B2T1);
