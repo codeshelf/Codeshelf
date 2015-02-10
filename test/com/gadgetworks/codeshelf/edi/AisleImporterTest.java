@@ -43,6 +43,8 @@ import com.gadgetworks.flyweight.command.NetGuid;
 public class AisleImporterTest extends EdiTestABC {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleImporterTest.class);
+	
+	private static double			CM_PER_M		= 100D;
 
 	@Test
 	public final void testTierB1S1Side() {
@@ -1456,6 +1458,675 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public final void testCloneTierB1S1Aisle(){
+		
+		// Test tierB1S1Side
+		this.getPersistenceService().beginTenantTransaction();
+
+		// tierB1S1Side Test 1
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,tierB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,2,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,tierB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,tierB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Check aisles exist
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		Aisle aisle53 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle53);
+		Aisle aisle54 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle54);
+		
+		// Check LED values
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Assert.assertNotNull(bayA51B1);
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Assert.assertNotNull(tierA51B1T1);
+		Slot slotA51B1T1S4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
+		Assert.assertNotNull(slotA51B1T1S4);
+		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value);
+		
+		Bay bayA53B1 = Bay.DAO.findByDomainId(aisle53, "B1");
+		Assert.assertNotNull(bayA53B1);
+		Tier tierA53B1T1 = Tier.DAO.findByDomainId(bayA53B1, "T1");
+		Assert.assertNotNull(tierA53B1T1);
+		Slot slotA53B1T1S4 = Slot.DAO.findByDomainId(tierA53B1T1, "S4");
+		Assert.assertNotNull(slotA53B1T1S4);
+		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value);
+		
+		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B2 = Bay.DAO.findByDomainId(aisle53, "B2");
+		Assert.assertNotNull(bayA53B2);
+		Tier tierA53B2T3 = Tier.DAO.findByDomainId(bayA53B2, "T3");
+		Assert.assertNotNull(tierA53B2T3);
+		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
+		
+		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
+		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
+		Assert.assertEquals((lastLed-firstLed)+1, 32);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// TierB1S1Side Test 2 - (no slots on B2T3)
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,tierB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
+				+ "Aisle,A52,Clone(A51),,,,tierB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,tierB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; //
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		// Check aisles exist
+		Aisle aisle512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle512);
+		Aisle aisle522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle522);
+		Aisle aisle532 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle532);
+		Aisle aisle542 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle542);
+		
+		// Check LED values
+		Bay bayA51B12 = Bay.DAO.findByDomainId(aisle512, "B1");
+		Assert.assertNotNull(bayA51B12);
+		Tier tierA51B1T12 = Tier.DAO.findByDomainId(bayA51B12, "T1");
+		Assert.assertNotNull(tierA51B1T12);
+		Slot slotA51B1T1S42 = Slot.DAO.findByDomainId(tierA51B1T12, "S4");
+		Assert.assertNotNull(slotA51B1T1S42);
+		Short ledA51B1T1S4value2 = slotA51B1T1S42.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value2);
+		
+		Bay bayA53B12 = Bay.DAO.findByDomainId(aisle532, "B1");
+		Assert.assertNotNull(bayA53B12);
+		Tier tierA53B1T12 = Tier.DAO.findByDomainId(bayA53B12, "T1");
+		Assert.assertNotNull(tierA53B1T12);
+		Slot slotA53B1T1S42 = Slot.DAO.findByDomainId(tierA53B1T12, "S4");
+		Assert.assertNotNull(slotA53B1T1S42);
+		Short LedA53B2T1S4value2 = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value2);
+		
+		Assert.assertEquals(ledA51B1T1S4value2, LedA53B2T1S4value2);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B22 = Bay.DAO.findByDomainId(aisle532, "B2");
+		Assert.assertNotNull(bayA53B22);
+		Tier tierA53B2T32 = Tier.DAO.findByDomainId(bayA53B22, "T3");
+		Assert.assertNotNull(tierA53B2T32);
+		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
+		
+		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
+		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
+		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void testCloneTierNotB1S1Aisle(){
+		
+		// Test tierB1S1Side
+		this.getPersistenceService().beginTenantTransaction();
+
+		// tierB1S1Side Test 1
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,tierNotB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,2,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,tierNotB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,tierNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Check aisles exist
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		Aisle aisle53 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle53);
+		Aisle aisle54 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle54);
+		
+		// Check LED values
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Assert.assertNotNull(bayA51B1);
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Assert.assertNotNull(tierA51B1T1);
+		Slot slotA51B1T1S4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
+		Assert.assertNotNull(slotA51B1T1S4);
+		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value);
+		
+		Bay bayA53B1 = Bay.DAO.findByDomainId(aisle53, "B1");
+		Assert.assertNotNull(bayA53B1);
+		Tier tierA53B1T1 = Tier.DAO.findByDomainId(bayA53B1, "T1");
+		Assert.assertNotNull(tierA53B1T1);
+		Slot slotA53B1T1S4 = Slot.DAO.findByDomainId(tierA53B1T1, "S4");
+		Assert.assertNotNull(slotA53B1T1S4);
+		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value);
+		
+		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B2 = Bay.DAO.findByDomainId(aisle53, "B2");
+		Assert.assertNotNull(bayA53B2);
+		Tier tierA53B2T3 = Tier.DAO.findByDomainId(bayA53B2, "T3");
+		Assert.assertNotNull(tierA53B2T3);
+		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
+		
+		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
+		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
+		Assert.assertEquals((lastLed-firstLed)+1, 32);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// TierB1S1Side Test 2 - (no slots on B2T3)
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,tierNotB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
+				+ "Aisle,A52,Clone(A51),,,,tierNotB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,tierNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; //
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		// Check aisles exist
+		Aisle aisle512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle512);
+		Aisle aisle522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle522);
+		Aisle aisle532 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle532);
+		Aisle aisle542 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle542);
+		
+		// Check LED values
+		Bay bayA51B12 = Bay.DAO.findByDomainId(aisle512, "B1");
+		Assert.assertNotNull(bayA51B12);
+		Tier tierA51B1T12 = Tier.DAO.findByDomainId(bayA51B12, "T1");
+		Assert.assertNotNull(tierA51B1T12);
+		Slot slotA51B1T1S42 = Slot.DAO.findByDomainId(tierA51B1T12, "S4");
+		Assert.assertNotNull(slotA51B1T1S42);
+		Short ledA51B1T1S4value2 = slotA51B1T1S42.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value2);
+		
+		Bay bayA53B12 = Bay.DAO.findByDomainId(aisle532, "B1");
+		Assert.assertNotNull(bayA53B12);
+		Tier tierA53B1T12 = Tier.DAO.findByDomainId(bayA53B12, "T1");
+		Assert.assertNotNull(tierA53B1T12);
+		Slot slotA53B1T1S42 = Slot.DAO.findByDomainId(tierA53B1T12, "S4");
+		Assert.assertNotNull(slotA53B1T1S42);
+		Short LedA53B2T1S4value2 = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value2);
+		
+		Assert.assertEquals(ledA51B1T1S4value2, LedA53B2T1S4value2);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B22 = Bay.DAO.findByDomainId(aisle532, "B2");
+		Assert.assertNotNull(bayA53B22);
+		Tier tierA53B2T32 = Tier.DAO.findByDomainId(bayA53B22, "T3");
+		Assert.assertNotNull(tierA53B2T32);
+		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
+		
+		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
+		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
+		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void testCloneZigzagB1S1Aisle(){
+		
+		// Test tierB1S1Side
+		this.getPersistenceService().beginTenantTransaction();
+
+		// tierB1S1Side Test 1
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,2,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Check aisles exist
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		Aisle aisle53 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle53);
+		Aisle aisle54 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle54);
+		
+		// Check LED values
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Assert.assertNotNull(bayA51B1);
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Assert.assertNotNull(tierA51B1T1);
+		Slot slotA51B1T1S4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
+		Assert.assertNotNull(slotA51B1T1S4);
+		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value);
+		
+		Bay bayA53B1 = Bay.DAO.findByDomainId(aisle53, "B1");
+		Assert.assertNotNull(bayA53B1);
+		Tier tierA53B1T1 = Tier.DAO.findByDomainId(bayA53B1, "T1");
+		Assert.assertNotNull(tierA53B1T1);
+		Slot slotA53B1T1S4 = Slot.DAO.findByDomainId(tierA53B1T1, "S4");
+		Assert.assertNotNull(slotA53B1T1S4);
+		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value);
+		
+		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B2 = Bay.DAO.findByDomainId(aisle53, "B2");
+		Assert.assertNotNull(bayA53B2);
+		Tier tierA53B2T3 = Tier.DAO.findByDomainId(bayA53B2, "T3");
+		Assert.assertNotNull(tierA53B2T3);
+		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
+		
+		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
+		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
+		Assert.assertEquals((lastLed-firstLed)+1, 32);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// TierB1S1Side Test 2 - (no slots on B2T3)
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; // 
+		
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		// Check aisles exist
+		Aisle aisle512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle512);
+		Aisle aisle522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle522);
+		Aisle aisle532 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle532);
+		Aisle aisle542 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle542);
+		
+		// Check LED values
+		Bay bayA51B12 = Bay.DAO.findByDomainId(aisle512, "B1");
+		Assert.assertNotNull(bayA51B12);
+		Tier tierA51B1T12 = Tier.DAO.findByDomainId(bayA51B12, "T1");
+		Assert.assertNotNull(tierA51B1T12);
+		Slot slotA51B1T1S42 = Slot.DAO.findByDomainId(tierA51B1T12, "S4");
+		Assert.assertNotNull(slotA51B1T1S42);
+		Short ledA51B1T1S4value2 = slotA51B1T1S42.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value2);
+		
+		Bay bayA53B12 = Bay.DAO.findByDomainId(aisle532, "B1");
+		Assert.assertNotNull(bayA53B12);
+		Tier tierA53B1T12 = Tier.DAO.findByDomainId(bayA53B12, "T1");
+		Assert.assertNotNull(tierA53B1T12);
+		Slot slotA53B1T1S42 = Slot.DAO.findByDomainId(tierA53B1T12, "S4");
+		Assert.assertNotNull(slotA53B1T1S42);
+		Short LedA53B2T1S4value2 = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value2);
+		
+		Assert.assertEquals(ledA51B1T1S4value2, LedA53B2T1S4value2);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B22 = Bay.DAO.findByDomainId(aisle532, "B2");
+		Assert.assertNotNull(bayA53B22);
+		Tier tierA53B2T32 = Tier.DAO.findByDomainId(bayA53B22, "T3");
+		Assert.assertNotNull(tierA53B2T32);
+		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
+		
+		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
+		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
+		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void testCloneZigzagNotB1S1Aisle(){
+		
+		// Test tierB1S1Side
+		this.getPersistenceService().beginTenantTransaction();
+
+		// tierB1S1Side Test 1
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagNotB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,2,32,0,,\r\n"// 
+				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,120\r\n"//
+				+ "Aisle,A53,Clone(A52),,,,zigzagNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; // */
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Check aisles exist
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		Aisle aisle53 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle53);
+		Aisle aisle54 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle54);
+		
+		// Check LED values
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Assert.assertNotNull(bayA51B1);
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Assert.assertNotNull(tierA51B1T1);
+		Slot slotA51B1T1S4 = Slot.DAO.findByDomainId(tierA51B1T1, "S4");
+		Assert.assertNotNull(slotA51B1T1S4);
+		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value);
+		
+		Bay bayA53B1 = Bay.DAO.findByDomainId(aisle53, "B1");
+		Assert.assertNotNull(bayA53B1);
+		Tier tierA53B1T1 = Tier.DAO.findByDomainId(bayA53B1, "T1");
+		Assert.assertNotNull(tierA53B1T1);
+		Slot slotA53B1T1S4 = Slot.DAO.findByDomainId(tierA53B1T1, "S4");
+		Assert.assertNotNull(slotA53B1T1S4);
+		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S4value);
+		
+		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
+		
+		// Check number slots and LEDs on B2 T3
+		
+		Bay bayA53B2 = Bay.DAO.findByDomainId(aisle53, "B2");
+		Assert.assertNotNull(bayA53B2);
+		Tier tierA53B2T3 = Tier.DAO.findByDomainId(bayA53B2, "T3");
+		Assert.assertNotNull(tierA53B2T3);
+		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
+		
+		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
+		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
+		Assert.assertEquals((lastLed-firstLed)+1, 32);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// TierB1S1Side Test 2 - (no slots on B2T3)
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagNotB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE! //FIXME
+				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,zigzagNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n"; // */
+		
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		// Check aisles exist
+		Aisle aisle512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle512);
+		Aisle aisle522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle522);
+		Aisle aisle532 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle532);
+		Aisle aisle542 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle542);
+
+		// Check LED values
+		Bay bayA51B12 = Bay.DAO.findByDomainId(aisle512, "B1");
+		Assert.assertNotNull(bayA51B12);
+		Tier tierA51B1T12 = Tier.DAO.findByDomainId(bayA51B12, "T1");
+		Assert.assertNotNull(tierA51B1T12);
+		Short ledA51B1T1S4value2 = tierA51B1T12.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S4value2);
+		
+		// Check the number of LEDs in A51B2T3 changed
+		Bay bayA51B22 = Bay.DAO.findByDomainId(aisle512, "B2");
+		Assert.assertNotNull(bayA51B22);
+		Tier tierA51B2T32 = Tier.DAO.findByDomainId(bayA51B22, "T3");
+		Assert.assertNotNull(tierA51B2T32);
+		Short firstLed21 = tierA51B2T32.getFirstLedNumAlongPath();
+		Short lastLed21 = tierA51B2T32.getLastLedNumAlongPath();
+		Assert.assertEquals(40,  (lastLed21 - firstLed21)+1);
+		
+		Bay bayA53B12 = Bay.DAO.findByDomainId(aisle532, "B1");
+		Assert.assertNotNull(bayA53B12);
+		Tier tierA53B1T12 = Tier.DAO.findByDomainId(bayA53B12, "T1");
+		Assert.assertNotNull(tierA53B1T12);
+		Short ledA53B2T1S4value2 = tierA53B1T12.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA53B2T1S4value2);
+		
+		Assert.assertEquals(ledA51B1T1S4value2, ledA53B2T1S4value2);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B22 = Bay.DAO.findByDomainId(aisle532, "B2");
+		Assert.assertNotNull(bayA53B22);
+		Tier tierA53B2T32 = Tier.DAO.findByDomainId(bayA53B22, "T3");
+		Assert.assertNotNull(tierA53B2T32);
+		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
+		
+		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
+		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
+		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
+		
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
+	@Test
+	public final void testCloneChangeAttributes(){
+		this.getPersistenceService().beginTenantTransaction();
+		// Test if we can change the X,Y orientation in a clone
+		// A clone should not be able to change the X,Y orientation
+		
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,Y,120\r\n"; //
+		
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+		
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		Assert.assertEquals(aisle51.isLocationXOriented(), true);
+		
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		Assert.assertEquals(aisle52.isLocationXOriented(), true);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		
+		// Test if we can change the depth
+		// A clone should not be able to change the depth
+		
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,200\r\n"; //
+		
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+		
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime);
+		
+		Aisle aisle512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle512);
+		
+		Vertex V3 = Vertex.DAO.findByDomainId(aisle512, "V03");
+		Assert.assertEquals(120, (int)(V3.getPosY()*CM_PER_M));
+		
+		this.getPersistenceService().commitTenantTransaction();
+	}
+	
 	@SuppressWarnings("unused")
 	@Test
 	public final void testCloneAisle() {
@@ -1507,9 +2178,9 @@ public class AisleImporterTest extends EdiTestABC {
 		Short led51Value = slotS4.getFirstLedNumAlongPath();
 
 		Bay bayA52B1 = Bay.DAO.findByDomainId(aisle52, "B1");
-		Assert.assertNull(bayA52B1); // change to notNull with DEV-618
+		Assert.assertNotNull(bayA52B1); // change to notNull with DEV-618
 		
-		/*
+		
 		// curious. Tier.DAO.findByDomainId(null, "T1"); will find the A51 T1
 		Tier tierA52B1T1 = Tier.DAO.findByDomainId(bayA52B1, "T1");
 		Assert.assertNotNull(tierA52B1T1);
@@ -1519,9 +2190,156 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(slot52S4);
 		Short led52Value = slot52S4.getFirstLedNumAlongPath();
 		Assert.assertEquals(led51Value, led52Value);
-		*/
 
 		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// Test Define -> clone defined -> clone defined
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Tier,T2,,4,32,0,,\r\n" //
+				+ "Tier,T3,,2,40,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"; //
+		
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+		
+		facility = Facility.DAO.reload(facility);
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime);
+		
+		// Get A51
+		Aisle aisle512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle512);
+
+		// Get A52
+		Aisle aisle522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle522);
+		
+		// Get A53
+		Aisle aisle532 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle532);
+		
+		// Check slot LED numbers
+		Bay bayA51B12 = Bay.DAO.findByDomainId(aisle512, "B1");
+		Assert.assertNotNull(bayA51B12);
+		Tier tierA51B1T12 = Tier.DAO.findByDomainId(bayA51B12, "T1");
+		Assert.assertNotNull(tierA51B1T12);
+		Slot slotA51B1T1S42 = Slot.DAO.findByDomainId(tierA51B1T12, "S4");
+		Assert.assertNotNull(slotA51B1T1S42);
+		Short ledA51B1T1S42value = slotA51B1T1S42.getFirstLedNumAlongPath();
+		Assert.assertNotNull(ledA51B1T1S42value);
+		
+		Bay bayA53B12 = Bay.DAO.findByDomainId(aisle532, "B1");
+		Assert.assertNotNull(bayA53B12);
+		Tier tierA53B1T12 = Tier.DAO.findByDomainId(bayA53B12, "T1");
+		Assert.assertNotNull(tierA53B1T12);
+		Slot slotA53B1T1S42 = Slot.DAO.findByDomainId(tierA53B1T12, "S4");
+		Assert.assertNotNull(slotA53B1T1S42);
+		Short LedA53B2T1S42value = slotA53B1T1S42.getFirstLedNumAlongPath();
+		Assert.assertNotNull(LedA53B2T1S42value);
+		
+		Assert.assertEquals(ledA51B1T1S42value, LedA53B2T1S42value);
+		
+		// Check number slots and LEDs on B2 T3
+		Bay bayA53B22 = Bay.DAO.findByDomainId(aisle532, "B2");
+		Assert.assertNotNull(bayA53B22);
+		Tier tierA53B2T32 = Tier.DAO.findByDomainId(bayA53B22, "T3");
+		Assert.assertNotNull(tierA53B2T32);
+		
+		Assert.assertEquals(tierA53B2T32.getActiveChildren().size(), 2);
+		
+		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
+		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
+		
+		Assert.assertEquals((lastLed2-firstLed2)+1, 40);
+		
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// Test define -> clone defined -> clone cloned
+		
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"; //
+		
+		byte[] csvArray3 = csvString3.getBytes();
+
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
+		
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime);
+		
+		// Get A51
+		Aisle aisle513 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle513);
+
+		// Get A52
+		Aisle aisle523 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle523);
+		
+		// Get A53
+		Aisle aisle533 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle533);
+		
+		//note 1
+		
+		this.getPersistenceService().commitTenantTransaction();
+		this.getPersistenceService().beginTenantTransaction();
+		
+		// Test define -> clone defined -> define -> clone first defined
+		String csvString4 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,,,,,zigzagB1S1Side,12.85,53.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A54,Clone(A51),,,,zigzagB1S1Side,12.85,58.45,X,120\r\n"; //
+		
+		byte[] csvArray4 = csvString4.getBytes();
+
+		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray4);
+		InputStreamReader reader4 = new InputStreamReader(stream4);
+		
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader4, facility, ediProcessTime);
+		
+		// Get A51
+		Aisle aisle514 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle514);
+
+		// Get A52
+		Aisle aisle524 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle524);
+		
+		// Get A53
+		Aisle aisle534 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNotNull(aisle534);
+		
+		// Get A53
+		Aisle aisle544 = Aisle.DAO.findByDomainId(facility, "A54");
+		Assert.assertNotNull(aisle544);
+		
+		this.getPersistenceService().commitTenantTransaction();
+		
 
 	}
 
