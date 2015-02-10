@@ -1462,7 +1462,7 @@ public class AisleImporterTest extends EdiTestABC {
 	public final void testCloneTierB1S1Aisle(){
 		
 		// Test tierB1S1Side
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// tierB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1534,8 +1534,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed-firstLed)+1, 32);
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// TierB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1605,14 +1605,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void testCloneTierNotB1S1Aisle(){
 		
 		// Test tierB1S1Side
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// tierB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1684,8 +1684,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed-firstLed)+1, 32);
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// TierB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1755,14 +1755,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void testCloneZigzagB1S1Aisle(){
 		
 		// Test tierB1S1Side
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// tierB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1834,8 +1834,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed-firstLed)+1, 32);
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// TierB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1905,14 +1905,14 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
 		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void testCloneZigzagNotB1S1Aisle(){
 		
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// tierB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -1985,8 +1985,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
 		Assert.assertEquals((lastLed-firstLed)+1, 32);
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// TierB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2062,12 +2062,12 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
 		
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void testCloneChangeAttributes(){
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		// Test if we can change the X,Y orientation in a clone
 		// A clone should not be able to change the X,Y orientation
 		
@@ -2096,8 +2096,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(aisle52);
 		Assert.assertEquals(aisle52.isLocationXOriented(), true);
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		
 		// Test if we can change the depth
@@ -2124,7 +2124,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Vertex V3 = Vertex.DAO.findByDomainId(aisle512, "V03");
 		Assert.assertEquals(120, (int)(V3.getPosY()*CM_PER_M));
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -2191,7 +2191,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(led51Value, led52Value);
 
 		this.getTenantPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// Test Define -> clone defined -> clone defined
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2263,8 +2263,8 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals((lastLed2-firstLed2)+1, 40);
 		
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// Test define -> clone defined -> clone cloned
 		
@@ -2298,8 +2298,8 @@ public class AisleImporterTest extends EdiTestABC {
 		
 		//note 1
 		
-		this.getPersistenceService().commitTenantTransaction();
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// Test define -> clone defined -> define -> clone first defined
 		String csvString4 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2337,7 +2337,7 @@ public class AisleImporterTest extends EdiTestABC {
 		Aisle aisle544 = Aisle.DAO.findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle544);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 
 	}
