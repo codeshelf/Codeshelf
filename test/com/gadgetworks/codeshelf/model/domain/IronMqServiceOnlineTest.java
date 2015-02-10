@@ -60,7 +60,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	public void networkConnectionTest() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 		
-		FacilityGenerator facilityGenerator = new FacilityGenerator();
+		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 		Facility facility = facilityGenerator.generateValid();
 		
 		IronMqService service = new IronMqService();
@@ -92,7 +92,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	public void badTokenTest() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		FacilityGenerator facilityGenerator = new FacilityGenerator();
+		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 		Facility facility = facilityGenerator.generateValid();
 		
 		IronMqService service = new IronMqService();
@@ -115,7 +115,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	public void badProjectId() throws IOException {
 		this.getPersistenceService().beginTenantTransaction();
 
-		FacilityGenerator facilityGenerator = new FacilityGenerator();
+		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 		Facility facility = facilityGenerator.generateValid();
 		
 		IronMqService service = new IronMqService();

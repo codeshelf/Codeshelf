@@ -18,16 +18,14 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.application.Configuration;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 // import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.flyweight.command.NetGuid;
 
 /**
  * @author jon ranstrom
@@ -83,22 +81,8 @@ public class DropboxRealTest extends EdiTestABC {
 		// The organization will get "O-" prepended to the name. Facility F-
 		// Caller must use a different organization name each time this is used
 
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-
 		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
-
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
-
-		//Che che = 
-		network.createChe("CHE1", new NetGuid("0x00000001"));
-		network.createChe("CHE2", new NetGuid("0x00000002"));
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		/*
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));

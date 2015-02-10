@@ -62,7 +62,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
-		Facility testFacility = this.createDefaultFacility(testPathDomainId);
+		Facility testFacility = this.createFacility();
 
 		ObjectChangeBroadcaster objectChangeBroadcaster = this.getPersistenceService().getObjectChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
@@ -106,7 +106,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
 		
-		Facility testFacility = this.createDefaultFacility(testPathDomainId);
+		Facility testFacility = this.createFacility();
 	
 		PathSegment[] segments = createPathSegment(numberOfSegments);
 		
@@ -134,7 +134,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		List<Path> pathList = testFacility.getPaths();
 		Path createdPath1 = pathList.get(0);
 		// Why is facility F1? Passed in DOMID above.
-		Assert.assertEquals("F1.1", createdPath1.getDomainId());	
+		Assert.assertEquals(testFacility.getDomainId()+".1", createdPath1.getDomainId());	
 		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 

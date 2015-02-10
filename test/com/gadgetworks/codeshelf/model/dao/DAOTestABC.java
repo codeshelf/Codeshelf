@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.gadgetworks.codeshelf.model.dao;
 
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.sql.SQLException;
@@ -57,12 +56,11 @@ import com.gadgetworks.codeshelf.model.domain.OrderHeader;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation;
 import com.gadgetworks.codeshelf.model.domain.OrderLocation.OrderLocationDao;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.Path.PathDao;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.PathSegment.PathSegmentDao;
+import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.gadgetworks.codeshelf.model.domain.Slot;
@@ -74,14 +72,14 @@ import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation;
 import com.gadgetworks.codeshelf.model.domain.UnspecifiedLocation.UnspecifiedLocationDao;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.model.domain.UomMaster.UomMasterDao;
-import com.gadgetworks.codeshelf.model.domain.User;
-import com.gadgetworks.codeshelf.model.domain.User.UserDao;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.model.domain.Vertex.VertexDao;
 import com.gadgetworks.codeshelf.model.domain.WorkArea;
 import com.gadgetworks.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public abstract class DAOTestABC {
@@ -98,9 +96,8 @@ public abstract class DAOTestABC {
 	}
 	
 	protected PersistenceService persistenceService;
+	Facility defaultFacility = null;
 	
-	protected OrganizationDao		mOrganizationDao;
-	protected UserDao				mUserDao;
 	protected FacilityDao			mFacilityDao;
 	protected PathDao				mPathDao;
 	protected PathSegmentDao		mPathSegmentDao;
@@ -135,24 +132,32 @@ public abstract class DAOTestABC {
 	public DAOTestABC() {
 		super();
 	}
+	
+	public Tenant getDefaultTenant() {
+		return TenantManagerService.getInstance().getDefaultTenant();
+	}
 
 	public PersistenceService getPersistenceService() {
 		return PersistenceService.getInstance();
 	}
 	
+	public Facility createFacility() {
+		return Facility.createFacility(getDefaultTenant(), this.getTestName(), "Test Facility", Point.getZeroPoint());
+	}
+	
+	public Facility getDefaultFacility() {
+		if(defaultFacility == null) {
+			defaultFacility = createFacility();
+		}
+		return defaultFacility;
+	}
+	
 	@Before
 	public final void setup() throws Exception {
-		if(persistenceService != null)
-			assertFalse(PersistenceService.isRunning());
+		TenantManagerService.getInstance().connect();
 		
-		this.persistenceService = PersistenceService.getInstance();
-		assertTrue(PersistenceService.isRunning());
-
-		mOrganizationDao = new OrganizationDao(persistenceService);
-		Organization.DAO = mOrganizationDao;
-
-		mUserDao = new UserDao(persistenceService);
-		User.DAO = mUserDao;
+		persistenceService = PersistenceService.getInstance();
+		assertTrue(persistenceService.isRunning());
 
 		mFacilityDao = new FacilityDao(persistenceService);
 		Facility.DAO = mFacilityDao;
@@ -268,7 +273,7 @@ public abstract class DAOTestABC {
 	
 	public void doAfter() {
 		persistenceService.stop();
-		persistenceService.resetDatabase();
+		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
 	}
 
 	protected String getTestName() {

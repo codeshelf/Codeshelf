@@ -475,6 +475,7 @@ public class WorkService implements IApiService {
 		
 		OrderDetail orderDetail = orderDetails.get(0);
 		clearChe(inChe);
+		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
 		// Pass facility as the default location of a short WI..

@@ -18,7 +18,7 @@ public class LocationTest extends DomainTestABC {
 	public final void getLocationIdToParentLevel() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-LOC.1");
+		Facility facility = createFacilityWithOutboundOrders();
 		
 		Location aisle = facility.findLocationById("A1");
 		Location bay = aisle.findLocationById("B1");
@@ -27,7 +27,7 @@ public class LocationTest extends DomainTestABC {
 		Assert.assertEquals(aisleId, "A1.B1");
 
 		String facilityId = bay.getLocationIdToParentLevel(Facility.class);
-		Assert.assertEquals(facilityId, "F1.A1.B1");
+		Assert.assertEquals(facilityId, facility.getDomainId()+".A1.B1");
 
 		this.getPersistenceService().commitTenantTransaction();
 	}

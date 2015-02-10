@@ -21,14 +21,12 @@ import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
 import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
-import com.gadgetworks.flyweight.command.NetGuid;
 
 public class WorkInstructionSequencerTest extends EdiTestABC {
 	
 	public WorkInstructionSequencerTest() {
 	}
 
-	@SuppressWarnings("unused")
 	private Facility setUpFacility(String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle. 
 		//   With location alias for first baytier only, not second. 
@@ -60,14 +58,8 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-
 		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
+		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -107,12 +99,6 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 		
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
-
-		Che che = network.createChe("CHE1", new NetGuid("0x00000001"));
-
 		return facility;
 	}	
 	

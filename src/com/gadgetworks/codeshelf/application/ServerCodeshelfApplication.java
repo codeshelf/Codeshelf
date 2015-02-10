@@ -7,6 +7,7 @@
 package com.gadgetworks.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
+import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -21,7 +22,11 @@ import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.domain.Organization;
+import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Path;
+import com.gadgetworks.codeshelf.platform.multitenancy.ITenantManager;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -38,6 +43,9 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	@Getter
 	private PersistenceService		persistenceService;
+	
+	@Getter
+	private ITenantManager			tenantManager;
 
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
@@ -48,13 +56,15 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
-			final PersistenceService persistenceService) {
+			final PersistenceService persistenceService,
+			final ITenantManager inTenantManager) {
 			
 		super(inWebApiServer);
 		
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		this.persistenceService = persistenceService;
+		this.tenantManager = inTenantManager;
 			
 		// create and configure watch dog
 		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
@@ -81,6 +91,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 		LOGGER.info("Process info: " + processName);
 
+		if(!TenantManagerService.getInstance().connect()) {
+			LOGGER.error("Failed to initialize Tenant Manager. Server is shutting down.");
+			Thread.sleep(3000);
+			System.exit(1);
+		}
 		// started by injection of getInstance() 
 		// this.getPersistenceService().start();
 
@@ -137,15 +152,22 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 *	Reset some of the persistent object fields to a base state at start-up.
 	 */
 	protected void doInitializeApplicationData() {
-		try {
-			this.getPersistenceService().beginTenantTransaction();
-			Organization.CreateDemo();
-			this.getPersistenceService().commitTenantTransaction();
-		} catch (RuntimeException e) {
-			this.getPersistenceService().rollbackTenantTransaction();
-			LOGGER.error("unable to create demo organization", e);
-			throw e;
+		// Recompute path positions
+		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
+		for(Tenant tenant : tenants) {
+			try {
+				this.getPersistenceService().beginTenantTransaction(tenant);
+				for (Facility facility : Facility.DAO.getAll()) {
+					for (Path path : facility.getPaths()) {
+						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+						facility.recomputeLocationPathDistances(path);
+					}
+				}
+				this.getPersistenceService().commitTenantTransaction(tenant);
+			} catch(Exception e) {
+				this.getPersistenceService().rollbackTenantTransaction(tenant);
+				throw e;
+			}
 		}
-		
 	}
 }

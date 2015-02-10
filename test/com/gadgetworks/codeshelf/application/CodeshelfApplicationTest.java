@@ -28,10 +28,9 @@ import com.gadgetworks.codeshelf.model.dao.Result;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Bay;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
-import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
@@ -170,8 +169,6 @@ public class CodeshelfApplicationTest {
 	public void testStartStopApplication() {
 		Configuration.loadConfig("test");
 
-		Organization.DAO = new MockDao<Organization>();
-		User.DAO = new MockDao<User>();
 		Facility.DAO = new MockDao<Facility>();
 		Aisle.DAO = new MockDao<Aisle>();
 		Bay.DAO = new MockDao<Bay>();
@@ -202,7 +199,8 @@ public class CodeshelfApplicationTest {
 			ediProcessor,
 			pickDocumentGenerator,
 			adminServer,
-			PersistenceService.getInstance());
+			PersistenceService.getInstance(), 
+			TenantManagerService.getInstance());
 
 		final Result checkAppRunning = new Result();
 

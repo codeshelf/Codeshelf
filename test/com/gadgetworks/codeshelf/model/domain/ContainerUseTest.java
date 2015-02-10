@@ -44,7 +44,7 @@ public class ContainerUseTest extends DomainTestABC {
 	public final void testUseHeaderRelationship() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
+		Facility facility = createFacilityWithOutboundOrders();
 
 		this.getPersistenceService().commitTenantTransaction();
 		
@@ -58,7 +58,7 @@ public class ContainerUseTest extends DomainTestABC {
 		Assert.assertEquals(aisleId, "A1.B1");
 
 		String facilityId = bay.getLocationIdToParentLevel(Facility.class);
-		Assert.assertEquals(facilityId, "F1.A1.B1");
+		Assert.assertEquals(facilityId, facility.getDomainId()+".A1.B1");
 
 
 		List<OrderHeader> headerList = facility.getOrderHeaders();
@@ -246,7 +246,7 @@ public class ContainerUseTest extends DomainTestABC {
 	public void testEmptyCriteriaByChe() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createFacilityWithOutboundOrders("O-CTR.1");
+		Facility facility = createFacilityWithOutboundOrders();
 
 		this.getPersistenceService().commitTenantTransaction();
 		this.getPersistenceService().beginTenantTransaction();

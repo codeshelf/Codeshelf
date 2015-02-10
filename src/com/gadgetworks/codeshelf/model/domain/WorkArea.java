@@ -91,11 +91,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 	@Getter
 	private List<Location>	locations	= new ArrayList<Location>();
 
-	// A work area will contain a set of active users (workers).
-	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<User>			users		= new ArrayList<User>();
-
 	public WorkArea() {
 		workAreaId = "";
 	}
@@ -115,16 +110,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 
 	public void removeLocation(Location inLocation) {
 		locations.remove(inLocation);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public void addUser(User inUser) {
-		users.add(inUser);
-	}
-
-	// Even though we don't really use this field, it's tied to an eBean op that keeps the DB in synch.
-	public void removeUser(User inUser) {
-		users.remove(inUser);
 	}
 
 	public static void setDao(WorkAreaDao inWorkAreaDao) {

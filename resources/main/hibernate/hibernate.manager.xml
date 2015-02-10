@@ -1,0 +1,46 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+        "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+        "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+ 
+<hibernate-configuration>
+    <session-factory>
+
+        <!-- In-memory H2 database -->
+        <property name="connection.driver_class">org.postgresql.Driver</property>
+        <property name="dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
+        <property name="hbm2ddl.auto">validate</property>
+
+        <!-- JDBC connection pool -->
+		<property name="hibernate.c3p0.min_size">5</property>
+  		<property name="hibernate.c3p0.max_size">50</property>
+  		<property name="hibernate.c3p0.timeout">120</property>
+  		<property name="hibernate.c3p0.max_statements">100</property>
+  		<property name="hibernate.c3p0.idle_test_period">300</property>
+  		<property name="hibernate.c3p0.testConnectionOnCheckin">true</property>
+  		
+        <!-- Enable Hibernate's automatic session context management -->
+        <property name="current_session_context_class">thread</property>
+
+        <!-- configure second-level cache -->
+        <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
+        <property name="hibernate.cache.use_second_level_cache">false</property>
+        <property name="hibernate.cache.use_query_cache">false</property>
+        <property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
+                
+        <!-- Disable join fetching -->
+        <property name="cmax_fetch_depth">0</property>
+        
+        <!-- output sql to console for debugging 
+        <property name="show_sql">true</property>
+        <property name="format_sql">true</property>
+        <property name="use_sql_comments">true</property>
+        -->
+        
+		<!-- Map these classes (by annotation) -->
+        <mapping class="com.gadgetworks.codeshelf.platform.multitenancy.Shard"/>
+        <mapping class="com.gadgetworks.codeshelf.platform.multitenancy.Tenant"/>
+       	<mapping class="com.gadgetworks.codeshelf.platform.multitenancy.User"/>
+        		
+    </session-factory>
+</hibernate-configuration>

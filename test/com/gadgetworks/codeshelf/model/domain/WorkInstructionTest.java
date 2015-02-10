@@ -87,12 +87,7 @@ public class WorkInstructionTest extends DomainTestABC {
 	public final void addRemoveOrderGroupTest() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("OWI.1");
-		mOrganizationDao.store(organization);
-
-		organization.createFacility("F1", "test", Point.getZeroPoint());
-		Facility facility = organization.getFacility("F1");
+		Facility facility = Facility.createFacility(getDefaultTenant(), "F1", "test", Point.getZeroPoint());
 
 		Aisle aisle1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		mAisleDao.store(aisle1);
@@ -196,7 +191,7 @@ public class WorkInstructionTest extends DomainTestABC {
 	@Test
 	public void filterTest() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility(getTestName());
+		Facility facility = createFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
 		
 		WorkInstruction wi = generator.generateWithNewStatus(facility);

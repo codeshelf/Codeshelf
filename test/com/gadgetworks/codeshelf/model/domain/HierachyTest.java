@@ -15,7 +15,7 @@ public class HierachyTest extends DomainTestABC {
 	public void testHierachy() {
 		// create facility, aisle, bay & tier
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility(this.getClass().toString() + System.currentTimeMillis());		
+		Facility facility = createFacility();		
 		Aisle aisle = getDefaultAisle(facility, "A1");
 		Bay bay = getDefaultBay(aisle, "B1");
 		Tier tier1 = getDefaultTier(bay, "T1");

@@ -33,11 +33,11 @@ import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 
@@ -81,14 +81,8 @@ public class CrossBatchRunTest extends EdiTestABC {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-
 		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -159,13 +153,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network);
-		//Che che =
-		network.createChe("CHE1", new NetGuid("0x00000001"));
-		network.createChe("CHE2", new NetGuid("0x00000002"));
-
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
 		Che che2 = network.getChe("CHE2");

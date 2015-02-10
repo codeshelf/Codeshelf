@@ -24,10 +24,11 @@ import com.gadgetworks.codeshelf.model.domain.ItemMaster;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderGroup;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
+import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.WorkService;
 
 /**
  * @author jeffw
@@ -39,14 +40,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	
 	@Override
 	public void doBefore() {
+		this.mWorkService = new WorkService().start();
+
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization();
-		organization.setDomainId("O-" + testName .getMethodName());
-		mOrganizationDao.store(organization);
-
 		String facilityName = "F-" + testName.getMethodName();
-		Facility facility = organization.createFacility(facilityName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),facilityName, "TEST", Point.getZeroPoint());
 		
 		facilityId = facility.getPersistentId();
 		

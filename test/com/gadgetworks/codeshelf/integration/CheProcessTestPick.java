@@ -46,7 +46,6 @@ import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -175,12 +174,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
-		Organization organization = getOrganization();
-		String organizationId = organization.getDomainId();
 
-		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController("3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -340,11 +337,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
-		Organization organization = getOrganization();
-		String organizationId = organization.getDomainId();
 
-		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
 
 		Short channel1 = 1;
 		Location aisle1x = getFacility().findSubLocationById("A1");

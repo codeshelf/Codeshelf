@@ -65,10 +65,12 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	@Override
 	public void doBefore() {
+		this.mWorkService = new WorkService().start();
 		this.getPersistenceService().beginTenantTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
+					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
+														createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());
 		

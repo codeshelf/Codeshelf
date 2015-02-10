@@ -9,9 +9,7 @@ public class OrganizationTest extends DomainTestABC {
 	public void testFacilityCreation() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Organization organization = new Organization("ORG");
-		mOrganizationDao.store(organization);
-		organization.createFacilityUi("FACILITY NAME", "INDESCRIPTIONS", 0.0, 1.0);
+		Facility.createFacility(getDefaultTenant(),"FACILITY NAME", "INDESCRIPTIONS", Point.getZeroPoint());
 
 		this.getPersistenceService().commitTenantTransaction();
 	}

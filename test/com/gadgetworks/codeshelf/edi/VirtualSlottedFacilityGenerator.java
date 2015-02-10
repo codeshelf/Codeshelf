@@ -13,22 +13,25 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class VirtualSlottedFacilityGenerator {
+	Tenant tenant;
 
 	private final ICsvAislesFileImporter aisleImporter;
 	private final ICsvLocationAliasImporter	locationAliasImporter;
 	private final ICsvOrderImporter	orderImporter;
 
-	public VirtualSlottedFacilityGenerator(ICsvAislesFileImporter aisleFileImporter,
+	public VirtualSlottedFacilityGenerator(Tenant tenant,
+				ICsvAislesFileImporter aisleFileImporter,
 				ICsvLocationAliasImporter locationAliasImporter,
 				ICsvOrderImporter orderImporter) {
+		this.tenant = tenant;
 		this.aisleImporter = aisleFileImporter;
 		this.locationAliasImporter = locationAliasImporter;
 		this.orderImporter = orderImporter;
@@ -71,14 +74,8 @@ public class VirtualSlottedFacilityGenerator {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		Organization.DAO.store(organization);
-
 		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
+		Facility facility = Facility.createFacility(tenant,fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		aisleImporter.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
@@ -125,12 +122,7 @@ public class VirtualSlottedFacilityGenerator {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		locationAliasImporter.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
-
-		//Che che = 
-		network.createChe("CHE1", new NetGuid("0x00000001"));
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));

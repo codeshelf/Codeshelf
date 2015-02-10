@@ -62,9 +62,7 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		*/
 
 		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-
+		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Organization");
 		request.setPersistentId(organization.getPersistentId().toString());

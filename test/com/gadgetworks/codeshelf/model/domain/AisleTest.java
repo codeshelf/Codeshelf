@@ -19,8 +19,6 @@ import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 public class AisleTest extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(AisleTest.class);
 
-	Organization org=new Organization();
-
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
 		this.getPersistenceService().beginTenantTransaction();
@@ -38,9 +36,9 @@ public class AisleTest extends DomainTestABC {
 		this.getPersistenceService().beginTenantTransaction();
 
 		Facility facility = getDefaultFacility();
-		CodeshelfNetwork network = getDefaultNetwork(org,facility);
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		LedController controller1 = getDefaultController(network, "0xABCDEF");
-		Aisle aisle = getDefaultAisle(getDefaultFacility(getDefaultOrganization("Org1")), "A1");
+		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 
 		Short testChannel = 8;
 		aisle.setControllerChannel(controller1.getPersistentId().toString(), testChannel.toString());

@@ -21,7 +21,7 @@ public class ItemTest extends DomainTestABC {
 	public void testItemWithLocationNoPath() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility facility = createDefaultFacility("ORG-testItemWithLocationNoPath");
+		Facility facility = createFacility();
 		Item item = new Item();
 		item.setDomainId("domain");
 
@@ -39,7 +39,7 @@ public class ItemTest extends DomainTestABC {
 	public void testItemWithNullCmFromLeft() {
 		this.getPersistenceService().beginTenantTransaction();
 
-		Facility anyLocation = createDefaultFacility("ORG-testItemWithLocationNoPath");
+		Facility anyLocation = createFacility();
 		Item item = new Item();
 		item.setDomainId("domain");
 		

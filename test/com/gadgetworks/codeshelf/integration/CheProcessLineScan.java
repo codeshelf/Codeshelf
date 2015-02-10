@@ -32,7 +32,6 @@ import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -160,8 +159,6 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
-		Organization organization = getOrganization();
-		String organizationId = organization.getDomainId();
 
 		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
@@ -309,7 +306,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE-E2E-1");
+		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
@@ -394,7 +391,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE-E2E-1");
+		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
@@ -503,7 +500,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE-E2E-1");
+		Che che1 = network.getChe("CHE1");
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);

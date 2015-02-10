@@ -30,7 +30,6 @@ import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Container;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
@@ -153,11 +152,9 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
-		Organization organization = getOrganization();
-		String organizationId = organization.getDomainId();
 
-		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
 
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);

@@ -25,8 +25,9 @@ import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.User;
 import com.gadgetworks.codeshelf.model.domain.UserType;
+import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
@@ -231,8 +232,7 @@ public class UserSession implements IDaoListener {
 	public void authenticated(User user) {
 		this.user = user;
 		if (isSiteController()) {
-			String organizationName = user.getOrganization().getDomainId();
-			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + organizationName + "." + user.getDomainId());
+			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + user.getTenant().getDbSchemaName() + "." + user.getUsername());
 		}
 	}
 
@@ -244,5 +244,11 @@ public class UserSession implements IDaoListener {
 		}
 		double elapsedSec = ((double) delta) / 1000;
 		LOGGER.debug("Ping roundtrip on session " + this.sessionId + " in " + elapsedSec + "s");
+	}
+	
+	public Tenant getTenant() {
+		if(this.user == null)
+			return null;
+		return this.user.getTenant();
 	}
 }

@@ -16,7 +16,6 @@ import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
 import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.gadgetworks.codeshelf.model.domain.Organization.OrganizationDao;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
 
 public class OptimisticLockExceptionTest {
@@ -29,19 +28,13 @@ public class OptimisticLockExceptionTest {
 		persistenceService = PersistenceService.getInstance();
 		OrderHeader.DAO = new OrderHeaderDao(persistenceService);
 		OrderDetail.DAO = new OrderDetailDao(persistenceService);
-		Organization.DAO = new OrganizationDao(persistenceService);
 		Facility.DAO = new FacilityDao(persistenceService);
-		Organization.DAO = new OrganizationDao(persistenceService);
 		Facility.DAO = new FacilityDao(persistenceService);
 	}
 
 	@Test
 	public final void optimisticLockExceptionTest() {
 		this.getPersistenceService().beginTenantTransaction();
-
-		Organization organization = new Organization();
-		organization.setOrganizationId("OPTIMISTIC-O1");
-		Organization.DAO.store(organization);
 
 		Facility facility = new Facility();
 		facility.setFacilityId("OPTIMISTIC-F1");

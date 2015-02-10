@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: User.java,v 1.23 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.gadgetworks.codeshelf.platform.multitenancy;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -19,6 +19,9 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -32,12 +35,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.gadgetworks.codeshelf.model.domain.UserType;
 
 // --------------------------------------------------------------------------
 /**
@@ -52,23 +53,10 @@ import com.google.inject.Singleton;
 @Table(name = "users") // user can be reserved word in sql
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
+@JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class User extends DomainObjectTreeABC<Organization> {
-
-	@Inject
-	public static ITypedDao<User>	DAO;
-
-	@Singleton
-	public static class UserDao extends GenericDaoABC<User> implements ITypedDao<User> {
-		@Inject
-		public UserDao(final PersistenceService persistenceService) {
-			super(persistenceService);
-		}
-		
-		public final Class<User> getDaoClass() {
-			return User.class;
-		}
-	}
+public class User {
 
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(User.class);
 
@@ -83,11 +71,25 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public static final int		SALT_INDEX			= 1;
 	public static final int		PBKDF2_INDEX		= 2;
 
-	// The owning organization.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@Id
+	@Column(nullable = false,name="id")
+	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Getter
 	@Setter
-	private Organization		parent;
+	int userId;
+	
+	// The owning organization.
+	@ManyToOne(optional = false,fetch=FetchType.EAGER)
+	@Getter
+	@Setter
+	private Tenant				tenant;
+
+	@Column(nullable = false,name="username")
+	@NonNull
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				username;
 
 	// The hash salt.
 	@Column(nullable = false,name="hash_salt")
@@ -134,19 +136,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 	public User() {
 		created = new Timestamp(System.currentTimeMillis());
 		active = true;
-	}
-
-	@SuppressWarnings("unchecked")
-	public final ITypedDao<User> getDao() {
-		return DAO;
-	}
-	
-	public final static void setDao(ITypedDao<User> dao) {
-		User.DAO = dao;
-	}
-
-	public final String getDefaultDomainIdPrefix() {
-		return "U";
 	}
 
 	public void setPassword(final String inPassword) {
@@ -278,15 +267,6 @@ public class User extends DomainObjectTreeABC<Organization> {
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
 				" WHERE parent_persistentid = (Select persistentid from "+schemaName+".organization where domainId = '" + organizationName + "') AND domainId = '" + email + "';";
 		return sql;
-	}
-
-	@Override
-	public Facility getFacility() {
-		return null;
-	}
-	
-	public Organization getOrganization() {
-		return this.getParent();
 	}
 
 }

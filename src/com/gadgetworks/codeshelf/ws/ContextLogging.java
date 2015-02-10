@@ -2,7 +2,7 @@ package com.gadgetworks.codeshelf.ws;
 
 import org.apache.log4j.MDC;
 
-import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
 
 public class ContextLogging {
@@ -12,7 +12,7 @@ public class ContextLogging {
     	if(csSession != null) {
         	User user = csSession.getUser();
         	if(user != null) {
-        		username = user.getDomainId();
+        		username = user.getUsername();
         	}
     	}
     	ContextLogging.setUsername(username);

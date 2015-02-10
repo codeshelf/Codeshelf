@@ -2,7 +2,6 @@ package com.gadgetworks.codeshelf.util;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 

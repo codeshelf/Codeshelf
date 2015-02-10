@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
 import com.google.common.collect.Maps;

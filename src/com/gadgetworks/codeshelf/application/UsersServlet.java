@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.gadgetworks.codeshelf.model.domain.User;
+import com.gadgetworks.codeshelf.platform.multitenancy.User;
 
 @SuppressWarnings("serial")
 public class UsersServlet extends HttpServlet {

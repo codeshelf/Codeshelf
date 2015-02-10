@@ -23,7 +23,7 @@ public class FacilityTest extends DomainTestABC {
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
+		Facility facility = createFacility();
 		Tier nullParent = facility.getParentAtLevel(Tier.class);
 		Assert.assertNull(nullParent);
 		this.getPersistenceService().commitTenantTransaction();
@@ -32,7 +32,7 @@ public class FacilityTest extends DomainTestABC {
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility("ORG-testGetParentAtLevelWhenSublevel");
+		Facility facility = createFacility();
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
 		this.getPersistenceService().commitTenantTransaction();
@@ -44,7 +44,7 @@ public class FacilityTest extends DomainTestABC {
 	@Test
 	public void testSerializationOfExtraFields() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility("FTEST2.O1");
+		Facility facility = createFacility();
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));
@@ -55,7 +55,7 @@ public class FacilityTest extends DomainTestABC {
 	@Test
 	public void testVerticesDeletion() {
 		this.getPersistenceService().beginTenantTransaction();
-		Facility facility = createDefaultFacility("FTEST4.O1");
+		Facility facility = createFacility();
 		facility.setDomainId("Vertex Test Facility");
 		UUID id = facility.getPersistentId();
 		//Default anchor = (-120.0, 30.0, 0.0);

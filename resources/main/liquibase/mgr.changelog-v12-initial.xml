@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog logicalFilePath="mgr.changelog-v12-initial.xml"
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd
+		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="default (generated)" id="1423519482908-14">
+		<createSequence sequenceName="hibernate_sequence"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-15">
+		<createTable tableName="shard">
+			<column name="id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="db_admin_password" type="VARCHAR(36)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="db_admin_username" type="VARCHAR(16)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="db_url" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="name" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-16">
+		<createTable tableName="tenant">
+			<column name="id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="created_on" type="timestamp">
+				<constraints nullable="false"/>
+			</column>
+			<column name="db_password" type="VARCHAR(36)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="db_schema_name" type="VARCHAR(16)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="db_username" type="VARCHAR(16)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="name" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="shard_id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-17">
+		<createTable tableName="users">
+			<column name="id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="active" type="BOOLEAN">
+				<constraints nullable="false"/>
+			</column>
+			<column name="created" type="timestamp">
+				<constraints nullable="false"/>
+			</column>
+			<column name="hash_iterations" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="hash_salt" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="hashed_password" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="type" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="username" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+			<column name="tenant_id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-18">
+		<addPrimaryKey columnNames="id" constraintName="shardPK" tableName="shard"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-19">
+		<addPrimaryKey columnNames="id" constraintName="tenantPK" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-20">
+		<addPrimaryKey columnNames="id" constraintName="usersPK" tableName="users"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-21">
+		<addUniqueConstraint columnNames="db_password" constraintName="UC_TENANTDB_PASSWORD_COL"
+			deferrable="false" disabled="false" initiallyDeferred="false" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-22">
+		<addUniqueConstraint columnNames="db_schema_name" constraintName="UC_TENANTDB_SCHEMA_NAME_COL"
+			deferrable="false" disabled="false" initiallyDeferred="false" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-23">
+		<addUniqueConstraint columnNames="db_username" constraintName="UC_TENANTDB_USERNAME_COL"
+			deferrable="false" disabled="false" initiallyDeferred="false" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-24">
+		<addUniqueConstraint columnNames="name" constraintName="UC_TENANTNAME_COL" deferrable="false"
+			disabled="false" initiallyDeferred="false" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-25">
+		<addForeignKeyConstraint baseColumnNames="shard_id" baseTableName="tenant" constraintName="FK_bkis0wg8cdtmrd8alrukfso4c"
+			deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="shard"/>
+	</changeSet>
+	<changeSet author="default (generated)" id="1423519482908-26">
+		<addForeignKeyConstraint baseColumnNames="tenant_id" baseTableName="users" constraintName="FK_hprlrsyr7nwby3t8o76585rwb"
+			deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tenant"/>
+	</changeSet>	
+</databaseChangeLog>

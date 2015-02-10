@@ -14,7 +14,6 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.UiUpdateService;
@@ -48,18 +47,11 @@ public class CreateCheTest extends DAOTestABC {
 
 		String description1 = "che description";
 		String description2 = "changed che description";
-		
-
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-		
-		Facility facility = organization.createFacility("F1", "facilityf1", Point.getZeroPoint());
+				
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facilityf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
-		organization.createDefaultSiteControllerUser(network); 
-		CodeshelfNetwork.DAO.store(network);
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -101,17 +93,11 @@ public class CreateCheTest extends DAOTestABC {
 
 		//setupDaos();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-
-		Facility facility = organization.createFacility("F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
-		CodeshelfNetwork.DAO.store(network);
-		organization.createDefaultSiteControllerUser(network); 
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -150,16 +136,10 @@ public class CreateCheTest extends DAOTestABC {
 		
 		//setupDaos();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-
-		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
-		CodeshelfNetwork.DAO.store(network);
-		organization.createDefaultSiteControllerUser(network); 
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -222,17 +202,10 @@ public class CreateCheTest extends DAOTestABC {
 
 		//setupDaos();
 
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-
-		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
-		CodeshelfNetwork network = facility.createNetwork("N1");
-		CodeshelfNetwork.DAO.store(network);
-		organization.createDefaultSiteControllerUser(network); 
-
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
 		Che che = new Che();
 		che.setDescription(description1);
@@ -310,10 +283,7 @@ public class CreateCheTest extends DAOTestABC {
 	public void getDefaultProcessMode() {
 		this.getPersistenceService().beginTenantTransaction();
 		UiUpdateService service = new UiUpdateService();
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork("WITEST");
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
 
@@ -330,10 +300,7 @@ public class CreateCheTest extends DAOTestABC {
 	}
 	
 	private Che createTestChe(String netGuid){
-		Organization organization = new Organization();
-		organization.setOrganizationId("CTEST1.O1");
-		Organization.DAO.store(organization);
-		Facility facility = organization.createFacility("F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork("WITEST");
 		Che che = network.createChe(netGuid, new NetGuid(netGuid));
 		return che;

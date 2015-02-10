@@ -26,7 +26,6 @@ import com.gadgetworks.codeshelf.model.domain.Item;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.Location;
 import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.Point;
@@ -51,14 +50,8 @@ public class LocationDeleteTest extends EdiTestABC {
 		// One controllers associated per aisle
 		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
 
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-
 		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
+		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		if (inWhichFacility == LARGER_FACILITY)
 			readStandardAisleFile(facility);
@@ -81,13 +74,7 @@ public class LocationDeleteTest extends EdiTestABC {
 
 		readLocationAliases(facility);
 
-		String nName = "N-" + inOrganizationName;
-		CodeshelfNetwork network = facility.createNetwork(nName);
-		organization.createDefaultSiteControllerUser(network); 
-
-		//Che che = 
-		network.createChe("CHE1", new NetGuid("0x00000001"));
-		network.createChe("CHE2", new NetGuid("0x00000002"));
+		CodeshelfNetwork network = facility.getNetworks().get(0);
 
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
