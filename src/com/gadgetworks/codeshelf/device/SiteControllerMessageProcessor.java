@@ -88,7 +88,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 		else if (response instanceof GetWorkResponse) {
 			GetWorkResponse workResponse = (GetWorkResponse) response;
 			if (response.getStatus() == ResponseStatus.Success) {
-				this.deviceManager.processGetWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions());
+				this.deviceManager.processGetWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions(), workResponse.getStatusMessage());
 			}
 		}
 		//////////////////////////////////////////
@@ -105,7 +105,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 			GetOrderDetailWorkResponse workResponse = (GetOrderDetailWorkResponse) response;
 			if (response.getStatus() == ResponseStatus.Success) {
 				LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
-				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions());
+				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions(), workResponse.getStatusMessage());
 			} else {
 				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
 			}

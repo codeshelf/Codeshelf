@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.Vertex;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -35,6 +36,8 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 		try {
 			LOGGER.debug("Decoding message: "+decompressedMessage);
 			ObjectMapper mapper = new ObjectMapper(); // TODO: should reuse and share globally per jackson documentation -ic
+			mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+
 			// register classes
 			Iterable<Class<? extends MessageABC>> requestClasses = ClassIndex.getSubclasses(MessageABC.class);
 			for (Class<? extends MessageABC> requestType : requestClasses) {

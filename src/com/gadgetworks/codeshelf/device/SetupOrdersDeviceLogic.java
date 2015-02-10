@@ -1078,7 +1078,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inWorkItemList
 	 * Only not final because we let CsDeviceManager call this generically.
 	 */
-	public void assignWork(final List<WorkInstruction> inWorkItemList) {
+	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_WORK);
 		} else {

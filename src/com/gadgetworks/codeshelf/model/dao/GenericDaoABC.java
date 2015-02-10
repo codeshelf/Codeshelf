@@ -197,7 +197,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 				throw new IllegalArgumentException("no parameter named: " + name + " found for query: " + criteria.getQuery());
 			}
 			Object value = argument.getValue();
-			Object convertedValue = converter .convert(value, paramType);
+			Object convertedValue = converter.convert(value, paramType);
 			if (convertedValue != null && !paramType.isAssignableFrom(convertedValue.getClass())) {
 				throw new ConversionException("Failed to convert value : " + value + " to type: " + paramType);
 			}

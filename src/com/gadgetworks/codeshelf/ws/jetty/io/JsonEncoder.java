@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class JsonEncoder implements Encoder.Text<MessageABC> {
@@ -29,6 +30,7 @@ public class JsonEncoder implements Encoder.Text<MessageABC> {
 		try {
 			String jsonString = null;
 			ObjectMapper mapper = new ObjectMapper(); // TODO: should reuse and share globally per jackson documentation -ic
+			mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 			jsonString = mapper.writeValueAsString(message);
 			
 			LOGGER.debug("Encoding message: "+jsonString);
