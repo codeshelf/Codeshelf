@@ -69,6 +69,8 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
+	
+	
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTenantTransaction();
@@ -237,6 +239,28 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.PARALLEL);
+
+		this.getTenantPersistenceService().commitTenantTransaction();
+
+	}
+	
+	@Test
+	public final void testOrderImporterWithShipperIdFromCsvStream() throws IOException {
+		this.getTenantPersistenceService().beginTenantTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+
+		String csvString = "orderGroupId,shipperId,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
+				+ "1,TRUCKA,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
+				+ "1,FEDEX,456,4550,Gadget,450,case,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
+				+ "1,,789,3007,Dealybob,300,case,2012-09-26 11:31:02,2012-09-26 11:31:01\r\n";
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+
+		Assert.assertEquals("TRUCKA", facility.getOrderHeader("123").getShipperId());
+		Assert.assertEquals("FEDEX", facility.getOrderHeader("456").getShipperId());
+		//not required
+		Assert.assertEquals("", facility.getOrderHeader("789").getShipperId());
 
 		this.getTenantPersistenceService().commitTenantTransaction();
 
