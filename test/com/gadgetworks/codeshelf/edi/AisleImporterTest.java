@@ -1474,8 +1474,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,tierB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,tierB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -1547,8 +1547,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
-				+ "Aisle,A52,Clone(A51),,,,tierB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,tierB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -1611,10 +1611,10 @@ public class AisleImporterTest extends EdiTestABC {
 	@Test
 	public final void testCloneTierNotB1S1Aisle(){
 		
-		// Test tierB1S1Side
+		// Test tierNotB1S1Side
 		this.getTenantPersistenceService().beginTenantTransaction();
 
-		// tierB1S1Side Test 1
+		// tierNotB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,tierNotB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1624,8 +1624,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,tierNotB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,tierNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -1687,7 +1687,7 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTenantTransaction();
 		this.getTenantPersistenceService().beginTenantTransaction();
 		
-		// TierB1S1Side Test 2 - (no slots on B2T3)
+		// TierNotB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,tierNotB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1697,9 +1697,9 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
-				+ "Aisle,A52,Clone(A51),,,,tierNotB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,tierNotB1S1Side,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
+				+ "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1761,10 +1761,10 @@ public class AisleImporterTest extends EdiTestABC {
 	@Test
 	public final void testCloneZigzagB1S1Aisle(){
 		
-		// Test tierB1S1Side
+		// Test zigzagB1S1Side
 		this.getTenantPersistenceService().beginTenantTransaction();
 
-		// tierB1S1Side Test 1
+		// zigzagB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1774,8 +1774,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -1837,7 +1837,7 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTenantTransaction();
 		this.getTenantPersistenceService().beginTenantTransaction();
 		
-		// TierB1S1Side Test 2 - (no slots on B2T3)
+		// zigzagB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1847,8 +1847,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -1914,7 +1914,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 		this.getTenantPersistenceService().beginTenantTransaction();
 
-		// tierB1S1Side Test 1
+		// zigzagNotB1S1Side Test 1
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagNotB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1924,8 +1924,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n"// 
-				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,120\r\n"//
-				+ "Aisle,A53,Clone(A52),,,,zigzagNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"//
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -1988,7 +1988,7 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTenantTransaction();
 		this.getTenantPersistenceService().beginTenantTransaction();
 		
-		// TierB1S1Side Test 2 - (no slots on B2T3)
+		// zigzagNotB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagNotB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1998,8 +1998,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE! //FIXME
-				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,zigzagNotB1S1Side,12.85,53.45,X,120\r\n"
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
@@ -2075,7 +2075,7 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,Y,120\r\n"; //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,Y,120\r\n"; //
 		
 		byte[] csvArray = csvString.getBytes();
 
@@ -2107,7 +2107,7 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,200\r\n"; //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,200\r\n"; //
 		
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -2125,6 +2125,30 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertEquals(120, (int)(V3.getPosY()*CM_PER_M));
 		
 		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
+		// Test if we can change the LED configuration
+		// A clone should not be able to change the LED configuration
+		// Will print out a warning to the user
+		
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,200\r\n"; //
+		
+		byte[] csvArray3 = csvString3.getBytes();
+
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
+		
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime);
+		
+		Aisle aisle513 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle513);
+		
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
@@ -2136,7 +2160,7 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n"; //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
 		
 		// Improve this, or new test to do:
 		// Two or three clone lines in a row
@@ -2203,8 +2227,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,40,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"; //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"; //
 		
 		byte[] csvArray2 = csvString2.getBytes();
 
@@ -2272,8 +2296,8 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,zigzagB1S1Side,12.85,53.45,X,120\r\n"; //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"; //
 		
 		byte[] csvArray3 = csvString3.getBytes();
 
@@ -2306,11 +2330,11 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
-				+ "Aisle,A52,Clone(A51),,,,zigzagB1S1Side,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A53,,,,,zigzagB1S1Side,12.85,53.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
-				+ "Aisle,A54,Clone(A51),,,,zigzagB1S1Side,12.85,58.45,X,120\r\n"; //
+				+ "Aisle,A54,Clone(A51),,,,,12.85,58.45,X,120\r\n"; //
 		
 		byte[] csvArray4 = csvString4.getBytes();
 
