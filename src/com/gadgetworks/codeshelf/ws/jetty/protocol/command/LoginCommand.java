@@ -9,6 +9,7 @@ import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.gadgetworks.codeshelf.model.domain.Organization;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
@@ -67,6 +68,7 @@ public class LoginCommand extends CommandABC {
 					// generate login response
 					response.setUser(authUser);
 					response.setStatus(ResponseStatus.Success);
+					response.setOrganization(new Organization()); // just to avoid changing UI...
 					response.setNetwork(network);
 
 					// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
