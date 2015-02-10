@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -23,6 +24,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
@@ -67,6 +69,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
 import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.gadgetworks.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
@@ -231,7 +234,7 @@ public class WorkService implements IApiService {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		clearChe(inChe);
-		
+
 		Facility facility = inChe.getFacility();
 		// DEV-492 identify previous container uses
 		ArrayList<ContainerUse> priorCntrUses = new ArrayList<ContainerUse>();
@@ -451,7 +454,7 @@ public class WorkService implements IApiService {
 		if (inScannedOrderDetailId == null) {
 			throw new MethodArgumentException(1, inScannedOrderDetailId, ErrorCode.FIELD_REQUIRED);
 		}
-		
+
 		LOGGER.info("getWorkInstructionsForOrderDetail request for " + inChe.getDomainId() + " detail:" + inScannedOrderDetailId);
 
 		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
@@ -472,7 +475,7 @@ public class WorkService implements IApiService {
 			response.setWorkInstructions(wiResultList);
 			return response;
 		}
-		
+
 		OrderDetail orderDetail = orderDetails.get(0);
 		clearChe(inChe);
 		@SuppressWarnings("unused")
@@ -541,7 +544,7 @@ public class WorkService implements IApiService {
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
 		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos);
-		
+
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
@@ -812,7 +815,7 @@ public class WorkService implements IApiService {
 		workList.setDetails(uncompletedDetails);
 		return workList;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Find all of the OUTBOUND orders that need items held in containers holding CROSS orders.
@@ -907,8 +910,8 @@ public class WorkService implements IApiService {
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
 			deleteExistingShortWiToFacility(inOrderDetail);
-			
-			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list 
+
+			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list
 			if (doAutoShortInstructions()) {
 				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
@@ -925,7 +928,7 @@ public class WorkService implements IApiService {
 				}
 				resultWork.setInstruction(resultWi);
 			} else {
-				resultWork.setDetail(inOrderDetail);				
+				resultWork.setDetail(inOrderDetail);
 			}
 		} else {
 			for (Path path : paths) {
@@ -1014,81 +1017,6 @@ public class WorkService implements IApiService {
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeCompletedWiSummariesForChe(cheId, facilityId);
 		return summarizer.getSummaries();
-	}
-
-	@SuppressWarnings("unchecked")
-	public static ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		if (facility == null) {
-			throw new NotFoundException("Facility " + facilityId + " does not exist");
-		}
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
-		List<Object[]> picksPerHour = null;
-		if (!skipSQL) {
-			String schema = System.getProperty("db.schemaname", "codeshelf");
-			String queryStr = String.format("" + "SELECT dur.order_group AS group,\n" + "		trim(to_char(\n"
-					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
-					+ "		'9999999999999999999D9')) AS picksPerHour\n" + "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
-					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
-					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
-					+ "		FROM %s.work_instruction i\n"
-					+ "			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n"
-					+ "			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n"
-					+ "			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n"
-					+ "		WHERE  i.item_id != 'Housekeeping'\n" + "	) dur\n" + "WHERE dur.group_and_sort_code != '0001'\n"
-					+ "GROUP BY dur.order_group\n" + "ORDER BY dur.order_group", schema, schema, schema, schema);
-			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
-				.addScalar("group", StandardBasicTypes.STRING)
-				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
-			getPicksPerHourQuery.setCacheable(true);
-			picksPerHour = getPicksPerHourQuery.list();
-		}
-		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
-		return productivitySummary;
-	}
-
-	public static ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId),
-			WorkInstruction.class);
-		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
-		return summary;
-	}
-
-	public static List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
-		//Get Facility
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		if (facility == null) {
-			throw new NotFoundException("Facility " + facilityId + " does not exist");
-		}
-		//If group name provided, confirm that such group exists
-		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
-		if (!(allGroups || undefined)) {
-			OrderGroup group = OrderGroup.DAO.findByDomainId(facility, groupNameIn);
-			if (group == null) {
-				throw new NotFoundException("Group " + groupNameIn + " had not been created");
-			}
-		}
-		//Get all instructions and filter those matching the requirements
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId),
-			WorkInstruction.class);
-		List<WorkInstruction> filtered = new ArrayList<>();
-		for (WorkInstruction instruction : instructions) {
-			if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {
-				continue;
-			}
-			OrderDetail detail = instruction.getOrderDetail();
-			if (detail == null) {
-				continue;
-			}
-			OrderHeader header = detail.getParent();
-			String groupName = header.getOrderGroup() == null ? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
-			if (allGroups || groupName.equals(groupNameIn)) {
-				filtered.add(instruction);
-			}
-		}
-		return filtered;
 	}
 
 	/**
@@ -1195,7 +1123,7 @@ public class WorkService implements IApiService {
 			return cheWorkInstructions;
 		}
 
-			
+
 		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
 		wiTypes.add(WorkInstructionTypeEnum.PLAN);
 		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
@@ -1268,4 +1196,5 @@ public class WorkService implements IApiService {
 		}
 		return storedWi;
 	}
+
 }

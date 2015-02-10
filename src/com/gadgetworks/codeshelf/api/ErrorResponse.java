@@ -44,7 +44,7 @@ public class ErrorResponse extends BaseResponse{
 	
 	public void processException(Throwable e) {
 		String message = e.getMessage();
-		LOGGER.error(message);
+		LOGGER.error("Returning error to client", e);
 		if (message == null || message.isEmpty()) {
 			message = ExceptionUtils.getStackTrace(e);
 		}
