@@ -71,9 +71,22 @@ public class TenantPersistenceService extends Service {
 		}
 		// ignore tenant and shard for now using static config data
         try {
-        	Configuration configuration = tenant.getHibernateConfiguration();
+	    	// we do not attempt to manage schema of the in-memory test db; that will be done by Hibernate
+			if(!tenant.getShard().getDbUrl().startsWith("jdbc:h2:mem")) {
+				
+				// this only runs for postgres database
+				SchemaManager schemaManager = tenant.getSchemaManager();
+				
+				schemaManager.applySchemaUpdates();			
+				boolean schemaMatches = schemaManager.checkSchema();
+				
+				if(!schemaMatches) {
+					throw new RuntimeException("Cannot start, schema does not match");
+				}
+			}
 
         	LOGGER.info("Creating session factory for "+tenant);
+        	Configuration configuration = tenant.getHibernateConfiguration();
         	BootstrapServiceRegistryBuilder bootstrapBuilder = 
         			new BootstrapServiceRegistryBuilder()
         				.with(new EventListenerIntegrator(getObjectChangeBroadcaster()));
@@ -95,19 +108,6 @@ public class TenantPersistenceService extends Service {
 	        // enable statistics
 	        factory.getStatistics().setStatisticsEnabled(true);
 	        
-	    	// we do not attempt to manage schema of the in-memory test db; that will be done by Hibernate
-			if(!tenant.getShard().getDbUrl().startsWith("jdbc:h2:mem")) {
-				
-				// this only runs for postgres database
-				SchemaManager schemaManager = tenant.getSchemaManager();
-				
-				schemaManager.applySchemaUpdates();			
-				boolean schemaMatches = schemaManager.checkSchema();
-				
-				if(!schemaMatches) {
-					throw new RuntimeException("Cannot start, schema does not match");
-				}
-			}
 	        return factory;
         } catch (Exception ex) {
         	if(ex instanceof HibernateException) {
