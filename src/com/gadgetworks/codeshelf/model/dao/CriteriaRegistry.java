@@ -33,7 +33,7 @@ public class CriteriaRegistry {
 		// the "assignedTimestamp" is the previous midnight, so we want assigned time > that that, and < that + 24 hours
 		// And, we are using completed, not assigned time from the database.
 		indexedCriteria.put("workInstructionByCheAndDay", 
-			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId and (completed == null || (completed > :assignedTimestamp) ", 
+			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId and (completed = null || (completed > :assignedTimestamp)) ", 
 				"cheId", UUID.class,
 				"assignedTimestamp", Timestamp.class));
 	
