@@ -25,6 +25,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
 import com.gadgetworks.codeshelf.util.ThreadUtils;
@@ -99,6 +100,8 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Override
 	public void doBefore() {
+		mWorkService = new WorkService().start();
+		
 		Injector websocketServerInjector = setupWSSInjector();
 		try { //Ideally this would be statically initialized once before all of the integration tests
 			// Burying the exception allows the normal mode for the design to raise issue,

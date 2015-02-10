@@ -28,6 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.Point;
 import com.gadgetworks.codeshelf.model.domain.UomMaster;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
 import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.service.WorkService;
 
 /**
  * @author jeffw
@@ -39,6 +40,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	
 	@Override
 	public void doBefore() {
+		this.mWorkService = new WorkService().start();
+
 		this.getPersistenceService().beginTenantTransaction();
 
 		String facilityName = "F-" + testName.getMethodName();
