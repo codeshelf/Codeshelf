@@ -15,13 +15,13 @@ import com.gadgetworks.codeshelf.api.BaseResponse;
 import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
 import com.gadgetworks.codeshelf.api.ErrorResponse;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.WorkService;
 
 public class FacilityResource {
-	private PersistenceService persistence = PersistenceService.getInstance();
+	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 
 	@Setter
 	private UUIDParam mUUIDParam;

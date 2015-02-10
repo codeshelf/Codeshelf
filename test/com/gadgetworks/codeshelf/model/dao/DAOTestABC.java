@@ -80,7 +80,7 @@ import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 
 public abstract class DAOTestABC {
 	@Rule
@@ -95,7 +95,7 @@ public abstract class DAOTestABC {
 		}
 	}
 	
-	protected PersistenceService persistenceService;
+	protected TenantPersistenceService tenantPersistenceService;
 	Facility defaultFacility = null;
 	
 	protected FacilityDao			mFacilityDao;
@@ -137,8 +137,8 @@ public abstract class DAOTestABC {
 		return TenantManagerService.getInstance().getDefaultTenant();
 	}
 
-	public PersistenceService getPersistenceService() {
-		return PersistenceService.getInstance();
+	public TenantPersistenceService getTenantPersistenceService() {
+		return TenantPersistenceService.getInstance();
 	}
 	
 	public Facility createFacility() {
@@ -156,109 +156,109 @@ public abstract class DAOTestABC {
 	public final void setup() throws Exception {
 		TenantManagerService.getInstance().connect();
 		
-		persistenceService = PersistenceService.getInstance();
-		assertTrue(persistenceService.isRunning());
+		tenantPersistenceService = TenantPersistenceService.getInstance();
+		assertTrue(tenantPersistenceService.isRunning());
 
-		mFacilityDao = new FacilityDao(persistenceService);
+		mFacilityDao = new FacilityDao(tenantPersistenceService);
 		Facility.DAO = mFacilityDao;
 
-		mAisleDao = new AisleDao(persistenceService);
+		mAisleDao = new AisleDao(tenantPersistenceService);
 		Aisle.DAO = mAisleDao;
 
-		mBayDao = new BayDao(persistenceService);
+		mBayDao = new BayDao(tenantPersistenceService);
 		Bay.DAO = mBayDao;
 
-		mTierDao = new TierDao(persistenceService);
+		mTierDao = new TierDao(tenantPersistenceService);
 		Tier.DAO = mTierDao;
 
-		mSlotDao = new SlotDao(persistenceService);
+		mSlotDao = new SlotDao(tenantPersistenceService);
 		Slot.DAO = mSlotDao;
 
-		mPathDao = new PathDao(persistenceService);
+		mPathDao = new PathDao(tenantPersistenceService);
 		Path.DAO = mPathDao;
 
-		mPathSegmentDao = new PathSegmentDao(persistenceService);
+		mPathSegmentDao = new PathSegmentDao(tenantPersistenceService);
 		PathSegment.DAO = mPathSegmentDao;
 
-		mDropboxServiceDao = new DropboxServiceDao(persistenceService);
+		mDropboxServiceDao = new DropboxServiceDao(tenantPersistenceService);
 		DropboxService.DAO = mDropboxServiceDao;
 
-		mIronMqServiceDao = new IronMqServiceDao(persistenceService);
+		mIronMqServiceDao = new IronMqServiceDao(tenantPersistenceService);
 		IronMqService.DAO = mIronMqServiceDao;
 
-		mEdiServiceABCDao = new EdiServiceABCDao(persistenceService);
+		mEdiServiceABCDao = new EdiServiceABCDao(tenantPersistenceService);
 		EdiServiceABC.DAO = mEdiServiceABCDao;
 		
-		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao(persistenceService);
+		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao(tenantPersistenceService);
 		EdiDocumentLocator.DAO = mEdiDocumentLocatorDao;
 		
-		mCodeshelfNetworkDao = new CodeshelfNetworkDao(persistenceService);
+		mCodeshelfNetworkDao = new CodeshelfNetworkDao(tenantPersistenceService);
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
-		mCheDao = new CheDao(persistenceService);
+		mCheDao = new CheDao(tenantPersistenceService);
 		Che.DAO = mCheDao;
 
-		mSiteControllerDao = new SiteControllerDao(persistenceService);
+		mSiteControllerDao = new SiteControllerDao(tenantPersistenceService);
 		SiteController.DAO = mSiteControllerDao;
 
-		mOrderGroupDao = new OrderGroupDao(persistenceService);
+		mOrderGroupDao = new OrderGroupDao(tenantPersistenceService);
 		OrderGroup.DAO = mOrderGroupDao;
 
-		mOrderHeaderDao = new OrderHeaderDao(persistenceService);
+		mOrderHeaderDao = new OrderHeaderDao(tenantPersistenceService);
 		OrderHeader.DAO = mOrderHeaderDao;
 
-		mOrderDetailDao = new OrderDetailDao(persistenceService);
+		mOrderDetailDao = new OrderDetailDao(tenantPersistenceService);
 		OrderDetail.DAO = mOrderDetailDao;
 
-		mOrderLocationDao = new OrderLocationDao(persistenceService);
+		mOrderLocationDao = new OrderLocationDao(tenantPersistenceService);
 		OrderLocation.DAO = mOrderLocationDao;
 
-		mContainerDao = new ContainerDao(persistenceService);
+		mContainerDao = new ContainerDao(tenantPersistenceService);
 		Container.DAO = mContainerDao;
 
-		mContainerKindDao = new ContainerKindDao(persistenceService);
+		mContainerKindDao = new ContainerKindDao(tenantPersistenceService);
 		ContainerKind.DAO = mContainerKindDao;
 
-		mContainerUseDao = new ContainerUseDao(persistenceService);
+		mContainerUseDao = new ContainerUseDao(tenantPersistenceService);
 		ContainerUse.DAO = mContainerUseDao;
 
-		mItemMasterDao = new ItemMasterDao(persistenceService);
+		mItemMasterDao = new ItemMasterDao(tenantPersistenceService);
 		ItemMaster.DAO = mItemMasterDao;
 
-		mItemDao = new ItemDao(persistenceService);
+		mItemDao = new ItemDao(tenantPersistenceService);
 		Item.DAO = mItemDao;
 		
-		mIronMqServiceDao = new IronMqServiceDao(persistenceService);
+		mIronMqServiceDao = new IronMqServiceDao(tenantPersistenceService);
 		IronMqService.DAO = mIronMqServiceDao;
 		
-		mUomMasterDao = new UomMasterDao(persistenceService);
+		mUomMasterDao = new UomMasterDao(tenantPersistenceService);
 		UomMaster.DAO = mUomMasterDao;
 
-		mUnspecifiedLocationDao = new UnspecifiedLocationDao(persistenceService);
+		mUnspecifiedLocationDao = new UnspecifiedLocationDao(tenantPersistenceService);
 		UnspecifiedLocation.DAO = mUnspecifiedLocationDao;
 		
-		mLedControllerDao = new LedControllerDao(persistenceService);
+		mLedControllerDao = new LedControllerDao(tenantPersistenceService);
 		LedController.DAO = mLedControllerDao;
 
-		mLocationAliasDao = new LocationAliasDao(persistenceService);
+		mLocationAliasDao = new LocationAliasDao(tenantPersistenceService);
 		LocationAlias.DAO = mLocationAliasDao;
 		
-		mVertexDao = new VertexDao(persistenceService);
+		mVertexDao = new VertexDao(tenantPersistenceService);
 		Vertex.DAO = mVertexDao;
 
-		mWorkAreaDao = new WorkAreaDao(persistenceService);
+		mWorkAreaDao = new WorkAreaDao(tenantPersistenceService);
 		WorkArea.DAO = mWorkAreaDao;
 
-		mWorkInstructionDao = new WorkInstructionDao(persistenceService);
+		mWorkInstructionDao = new WorkInstructionDao(tenantPersistenceService);
 		WorkInstruction.DAO = mWorkInstructionDao;
 
-		mWorkAreaDao = new WorkAreaDao(persistenceService);
+		mWorkAreaDao = new WorkAreaDao(tenantPersistenceService);
 		WorkArea.DAO = mWorkAreaDao;
 		
 		// make sure default properties are in the database
-		persistenceService.beginTenantTransaction();
+		tenantPersistenceService.beginTenantTransaction();
         PropertyDao.getInstance().syncPropertyDefaults();
-        persistenceService.commitTenantTransaction();
+        tenantPersistenceService.commitTenantTransaction();
 			
 		doBefore();
 	}
@@ -272,7 +272,7 @@ public abstract class DAOTestABC {
 	}
 	
 	public void doAfter() {
-		persistenceService.stop();
+		tenantPersistenceService.stop();
 		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
 	}
 

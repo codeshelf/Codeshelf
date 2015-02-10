@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -42,18 +42,18 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
 
-	private PersistenceService persistenceService;
+	private TenantPersistenceService tenantPersistenceService;
 
 	private ConvertUtilsBean converter;
 
 	@Inject
-	public GenericDaoABC(PersistenceService persistenceService) {
-		this.persistenceService = persistenceService;
+	public GenericDaoABC(TenantPersistenceService tenantPersistenceService) {
+		this.tenantPersistenceService = tenantPersistenceService;
 		this.converter = new ConverterProvider().get();
 	}
 	
 	protected Session getCurrentSession() {
-		Session session = persistenceService.getCurrentTenantSession(); 
+		Session session = tenantPersistenceService.getCurrentTenantSession(); 
 		return session;
 	}
 

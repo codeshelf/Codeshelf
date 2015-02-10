@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 
 @Entity
@@ -97,7 +97,7 @@ public class Tenant {
 	
 	public SchemaManager getSchemaManager() {
 		if(schemaManager == null) {
-			schemaManager = new SchemaManager(PersistenceService.getInstance().getChangeLogFilename(), 
+			schemaManager = new SchemaManager(TenantPersistenceService.getInstance().getChangeLogFilename(), 
 				shard.getDbUrl(), this.getDbUsername(), this.getDbPassword(), this.getDbSchemaName(),
 				this.getHibernateConfigurationFile());
 		}

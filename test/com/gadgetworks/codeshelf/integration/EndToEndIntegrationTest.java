@@ -22,7 +22,7 @@ import com.gadgetworks.codeshelf.model.domain.Che;
 import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.util.IConfiguration;
 import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
@@ -115,7 +115,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		// ensure facility, network exist in database before booting up site controller
 		Facility facility = mFacilityDao.findByDomainId(null, facilityId);
 		if (facility==null) {
@@ -140,7 +140,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		che2.setColor(ColorEnum.WHITE);
 		this.che2PersistentId = che2.getPersistentId();
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 		apiServer = new WebApiServer();
 		apiServer.start(Integer.getInteger("api.port"), null, null, false, "./");
@@ -204,9 +204,9 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	@Override
 	public void doAfter() {
 		// roll back transaction if active
-		if (PersistenceService.getInstance().hasActiveTransaction()) {
+		if (TenantPersistenceService.getInstance().hasActiveTransaction()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");
-			PersistenceService.getInstance().rollbackTenantTransaction();
+			TenantPersistenceService.getInstance().rollbackTenantTransaction();
 		}
 		// tear down server and site controller
 		stop();

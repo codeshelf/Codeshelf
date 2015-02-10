@@ -1,12 +1,12 @@
 package com.gadgetworks.codeshelf.metrics;
 
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 
-	PersistenceService database;
+	TenantPersistenceService database;
 
-	public DatabaseConnectionHealthCheck(PersistenceService database) {
+	public DatabaseConnectionHealthCheck(TenantPersistenceService database) {
 		super("Database Connection");
 		this.database = database;
 	}

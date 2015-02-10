@@ -30,7 +30,7 @@ import com.gadgetworks.codeshelf.model.LedRange;
 import com.gadgetworks.codeshelf.model.dao.DaoException;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.util.StringUIConverter;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.ErrorCode;
@@ -62,8 +62,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
 		@Inject
-		public ItemDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public ItemDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<Item> getDaoClass() {

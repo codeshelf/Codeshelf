@@ -20,7 +20,7 @@ public class OrderGroupTest extends DomainTestABC {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
 		
@@ -67,12 +67,12 @@ public class OrderGroupTest extends DomainTestABC {
 		orderGroup.removeOrderHeader(order2.getOrderId());
 		Assert.assertNull(orderGroup.getOrderHeader(order2.getOrderId()));
 				
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void releaseOrderGroupTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
 
@@ -96,6 +96,6 @@ public class OrderGroupTest extends DomainTestABC {
 		
 		orderGroup.addOrderHeader(order1);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 }

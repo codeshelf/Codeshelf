@@ -36,7 +36,7 @@ import com.gadgetworks.codeshelf.model.EdiProviderEnum;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -68,8 +68,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	public static class EdiServiceABCDao
 		extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		@Inject
-		public EdiServiceABCDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public EdiServiceABCDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<EdiServiceABC> getDaoClass() {

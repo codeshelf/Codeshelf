@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.EdiDocumentStatusEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -50,8 +50,8 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 	@Singleton
 	public static class EdiDocumentLocatorDao extends GenericDaoABC<EdiDocumentLocator> implements ITypedDao<EdiDocumentLocator> {
 		@Inject
-		public EdiDocumentLocatorDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public EdiDocumentLocatorDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 		
 		public final Class<EdiDocumentLocator> getDaoClass() {

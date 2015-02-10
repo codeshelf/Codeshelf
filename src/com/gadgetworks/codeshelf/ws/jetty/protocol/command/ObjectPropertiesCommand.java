@@ -11,7 +11,7 @@ import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.PropertyDao;
 import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -63,7 +63,7 @@ public class ObjectPropertiesCommand extends CommandABC {
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.				
-				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
 				IDomainObject object = null;
 				if(dao == null) {
 					LOGGER.error("DAO is undefined for "+className);

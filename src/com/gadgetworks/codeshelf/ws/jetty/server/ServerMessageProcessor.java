@@ -10,7 +10,7 @@ import com.codahale.metrics.Timer;
 import com.gadgetworks.codeshelf.metrics.MetricsGroup;
 import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
@@ -83,7 +83,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
-		this.objectChangeBroadcaster = PersistenceService.getInstance().getObjectChangeBroadcaster();
+		this.objectChangeBroadcaster = TenantPersistenceService.getInstance().getObjectChangeBroadcaster();
 		this.converter = converter;
 	}
 	

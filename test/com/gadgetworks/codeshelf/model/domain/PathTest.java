@@ -18,13 +18,13 @@ public class PathTest extends DomainTestABC {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Facility retrievedFacility = Facility.DAO.findByPersistentId(facility.getPersistentId());
 		
 		Path path = retrievedFacility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
@@ -42,12 +42,12 @@ public class PathTest extends DomainTestABC {
 		List<Tier> tierList = path.<Tier> getLocationsByClass(Tier.class);
 		Assert.assertEquals(0, tierList.size());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void isOrderOnPath() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
@@ -58,12 +58,12 @@ public class PathTest extends DomainTestABC {
 
 		Assert.assertTrue(path.isOrderOnPath(order));
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void computePosALongPath() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
@@ -80,6 +80,6 @@ public class PathTest extends DomainTestABC {
 		PathSegment segment2 = path.getPathSegment(1);
 		Assert.assertEquals(segment2.getStartPosAlongPath().doubleValue(), 5.0, 0.0);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 }

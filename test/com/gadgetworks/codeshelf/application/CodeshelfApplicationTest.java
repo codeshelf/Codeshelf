@@ -31,7 +31,7 @@ import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Slot;
 import com.gadgetworks.codeshelf.model.domain.Tier;
 import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
 import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
 import com.gadgetworks.codeshelf.util.IConfiguration;
@@ -189,7 +189,7 @@ public class CodeshelfApplicationTest {
 			crossBatchImporter,
 			aislesFileImporter,
 			Facility.DAO,
-			PersistenceService.getInstance());
+			TenantPersistenceService.getInstance());
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
 		WebApiServer adminServer = new WebApiServer();
@@ -199,7 +199,7 @@ public class CodeshelfApplicationTest {
 			ediProcessor,
 			pickDocumentGenerator,
 			adminServer,
-			PersistenceService.getInstance(), 
+			TenantPersistenceService.getInstance(), 
 			TenantManagerService.getInstance());
 
 		final Result checkAppRunning = new Result();

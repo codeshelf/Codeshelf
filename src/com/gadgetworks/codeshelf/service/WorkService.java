@@ -66,7 +66,7 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.util.CompareNullChecker;
 import com.gadgetworks.codeshelf.util.UomNormalizer;
 import com.gadgetworks.codeshelf.validation.BatchResult;
@@ -104,7 +104,7 @@ public class WorkService implements IApiService {
 	private WorkInstructionCSVExporter	wiCSVExporter;
 
 	@Getter
-	private PersistenceService			persistenceService;
+	private TenantPersistenceService			tenantPersistenceService;
 
 	private WorkServiceThread			wsThread					= null;
 	private static boolean				aWorkServiceThreadExists	= false;
@@ -142,7 +142,7 @@ public class WorkService implements IApiService {
 	}
 
 	private void init(IEdiExportServiceProvider exportServiceProvider) {
-		this.persistenceService = PersistenceService.getInstance();
+		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
@@ -195,7 +195,7 @@ public class WorkService implements IApiService {
 			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
-				persistenceService.beginTenantTransaction();
+				tenantPersistenceService.beginTenantTransaction();
 				boolean sent = false;
 				while (!sent) {
 					try {
@@ -207,9 +207,9 @@ public class WorkService implements IApiService {
 						Thread.sleep(retryDelay);
 					}
 				}
-				persistenceService.commitTenantTransaction();
+				tenantPersistenceService.commitTenantTransaction();
 			} catch (Exception e) {
-				persistenceService.rollbackTenantTransaction();
+				tenantPersistenceService.rollbackTenantTransaction();
 				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 			}
 		}
@@ -1022,7 +1022,7 @@ public class WorkService implements IApiService {
 		if (facility == null) {
 			throw new NotFoundException("Facility " + facilityId + " does not exist");
 		}
-		Session session = PersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
 		List<Object[]> picksPerHour = null;
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");

@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class GetWorkResponse extends ResponseABC {
 
@@ -23,7 +23,7 @@ public class GetWorkResponse extends ResponseABC {
 		} else {
 			workInstructions = new ArrayList<WorkInstruction>(wis.size());
 			for(WorkInstruction wi : wis) {
-				workInstructions.add(PersistenceService.<WorkInstruction>deproxify(wi));
+				workInstructions.add(TenantPersistenceService.<WorkInstruction>deproxify(wi));
 			}
 		}
 	}

@@ -38,7 +38,7 @@ public class LoginTest extends DomainTestABC {
 
 	@Test
 	public final void testLoginSucceed() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		// Create a user for the organization.
 		String password = "password";
@@ -56,13 +56,13 @@ public class LoginTest extends DomainTestABC {
 		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
 		Assert.assertEquals(user.getUsername(), loginResponse.getUser().getUsername());
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testUserIdFail() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Create a user for the organization.
 		String password = "password";
@@ -79,12 +79,12 @@ public class LoginTest extends DomainTestABC {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 
 	@Test
 	public final void testPasswordFail() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		// Create a user for the organization.
 		String password = "password";
@@ -101,6 +101,6 @@ public class LoginTest extends DomainTestABC {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 }

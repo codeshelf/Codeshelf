@@ -43,7 +43,7 @@ public class CreateCheTest extends DAOTestABC {
 	@Test
 	// TODO: create proper mock daoProvider / set up injector /?
 	public final void testUpdateCheOK() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String description1 = "che description";
 		String description2 = "changed che description";
@@ -80,13 +80,13 @@ public class CreateCheTest extends DAOTestABC {
 		Che changedChe = (Che) result;
 		Assert.assertEquals(description2, changedChe.getDescription());
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 	
 	@Test
 	public final void testCheNotFound() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String description1 = "che description";
 		String description2 = "changed che description";
@@ -123,13 +123,13 @@ public class CreateCheTest extends DAOTestABC {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 	
 	@Test
 	public final void testBogusCheId() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String description1 = "che description";
 		String description2 = "changed che description";
@@ -164,7 +164,7 @@ public class CreateCheTest extends DAOTestABC {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 	
@@ -195,7 +195,7 @@ public class CreateCheTest extends DAOTestABC {
 	
 	@Test
 	public final void testUndefinedCheId() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		String description1 = "che description";
 		String description2 = "changed che description";
@@ -230,31 +230,31 @@ public class CreateCheTest extends DAOTestABC {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public void cheUpdateFromUISuccess() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Che che = createTestChe("0x00000002");
 		UiUpdateService service = new UiUpdateService();
 		service.updateCheEdits(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		java.util.UUID cheid = che.getPersistentId();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		che = Che.DAO.findByPersistentId(cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		Assert.assertEquals(che.getProcessMode(), ProcessMode.SETUP_ORDERS);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public void cheUpdateFromUIFail() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		Che che = createTestChe("0x00000003");
 		UiUpdateService service = new UiUpdateService();
 		String persistentId = che.getPersistentId().toString();
@@ -276,12 +276,12 @@ public class CreateCheTest extends DAOTestABC {
 		service.updateCheEdits(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public void getDefaultProcessMode() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		UiUpdateService service = new UiUpdateService();
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork("WITEST");
@@ -296,7 +296,7 @@ public class CreateCheTest extends DAOTestABC {
 		Aisle.DAO.store(aisle);
 		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
 		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles", processMode, ProcessMode.SETUP_ORDERS);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	private Che createTestChe(String netGuid){

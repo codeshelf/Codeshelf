@@ -19,7 +19,7 @@ import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.IEdiService;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -37,7 +37,7 @@ public final class EdiProcessor implements IEdiProcessor {
 	private Thread						mProcessorThread;
 
 	@Getter
-	private PersistenceService			persistenceService;
+	private TenantPersistenceService			tenantPersistenceService;
 
 	private ICsvOrderImporter			mCsvOrderImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
@@ -57,7 +57,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		final ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		final ICsvAislesFileImporter inCsvAislesFileImporter,
 		final ITypedDao<Facility> inFacilityDao,
-		final PersistenceService persistenceService) {
+		final TenantPersistenceService tenantPersistenceService) {
 
 		mCsvOrderImporter = inCsvOrdersImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
@@ -70,7 +70,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		mShouldRun = false;
 		mLastProcessMillis = 0;
 
-		this.persistenceService = persistenceService;
+		this.tenantPersistenceService = tenantPersistenceService;
 
 	}
 
@@ -147,7 +147,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		LOGGER.trace("Begin EDI process.");
 		final Timer.Context context = ediProcessingTimer.time();
 		try {
-			this.getPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().beginTenantTransaction();
 
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
@@ -171,10 +171,10 @@ public final class EdiProcessor implements IEdiProcessor {
 					}
 				}
 			}
-			this.getPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTenantTransaction();
 			completed = true;
 		} catch (RuntimeException e) {
-			this.getPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTenantTransaction();
 			LOGGER.error("Unable to process edi", e);
 		} finally {
 			context.stop();

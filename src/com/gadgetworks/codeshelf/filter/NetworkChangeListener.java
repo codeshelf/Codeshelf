@@ -12,7 +12,7 @@ import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.LedController;
 import com.gadgetworks.codeshelf.model.domain.SiteController;
 import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
@@ -48,16 +48,16 @@ public class NetworkChangeListener implements ObjectEventListener {
 	private MessageABC onAnythingChanged(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		CodeshelfNetwork network = null;
 		if(WirelessDeviceABC.class.isAssignableFrom(domainClass)) {
-			WirelessDeviceABC object = (WirelessDeviceABC) PersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
+			WirelessDeviceABC object = (WirelessDeviceABC) TenantPersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
 			network = object.getParent();
 			
 		} else if(CodeshelfNetwork.class.isAssignableFrom(domainClass)) {
-			network = (CodeshelfNetwork) PersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
+			network = (CodeshelfNetwork) TenantPersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
 		}
 		if(network != null) {
 			// if the object changed within this network, generate a new network status response
 			if(network.equals(this.network)) {
-				return new NetworkStatusMessage(PersistenceService.<CodeshelfNetwork>deproxify(network));
+				return new NetworkStatusMessage(TenantPersistenceService.<CodeshelfNetwork>deproxify(network));
 			}
 		}
 		return null;

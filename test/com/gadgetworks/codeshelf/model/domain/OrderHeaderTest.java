@@ -21,7 +21,7 @@ public class OrderHeaderTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public void testReturnActiveLocationsOnly() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = createFacility();
 		Aisle a1 = getDefaultAisle(facility, "A1");
@@ -55,19 +55,19 @@ public class OrderHeaderTest extends DomainTestABC {
 		Assert.assertEquals(a2, orderLocationAfterInactivating.getLocation());
 		
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public void testOrderHeaderByFacilityAndType() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		OrderHeader.DAO.findByFilterAndClass("orderHeadersByFacilityAndType",
 											ImmutableMap.<String, Object>of(
 												"facilityId", UUID.randomUUID(),
 												"orderType", OrderTypeEnum.OUTBOUND.name()),
 											 OrderHeader.class);
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	private Path createAssociatedPath(Aisle a1, Aisle a2) {

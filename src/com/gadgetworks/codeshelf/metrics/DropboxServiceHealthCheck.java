@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.gadgetworks.codeshelf.model.domain.DropboxService;
 import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.collect.Lists;
 
 public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
@@ -17,7 +17,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 	protected Result check() throws Exception {
 		List<Facility> failedFacilities = Lists.newArrayList();
 		
-		PersistenceService.getInstance().beginTenantTransaction();
+		TenantPersistenceService.getInstance().beginTenantTransaction();
 		int numFacilities = -1;
 		try {
 			List<Facility> allFacilities = Facility.DAO.getAll();
@@ -31,7 +31,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 			}
 			numFacilities = allFacilities.size();
 		} finally {
-			PersistenceService.getInstance().commitTenantTransaction();
+			TenantPersistenceService.getInstance().commitTenantTransaction();
 		}
 		
 		if(failedFacilities.isEmpty()) {

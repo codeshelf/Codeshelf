@@ -12,7 +12,7 @@ import com.gadgetworks.codeshelf.filter.Filter;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -71,7 +71,7 @@ public class RegisterFilterCommand extends CommandABC {
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
 
-				ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
 				// create listener
 				
 				String filterClause = request.getFilterClause();

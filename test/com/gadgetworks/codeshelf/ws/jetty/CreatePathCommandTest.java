@@ -28,7 +28,7 @@ import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
 import com.gadgetworks.codeshelf.model.domain.Facility;
 import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.ServiceFactory;
 import com.gadgetworks.codeshelf.util.ConverterProvider;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -57,20 +57,20 @@ public class CreatePathCommandTest extends DomainTestABC {
 	
 	@Test
 	public void testCreatePathWithCommand() throws JsonGenerationException, JsonMappingException, IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
 		Facility testFacility = this.createFacility();
 
-		ObjectChangeBroadcaster objectChangeBroadcaster = this.getPersistenceService().getObjectChangeBroadcaster();
+		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getObjectChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
 		UserSession viewSession = new UserSession(websocketSession, Executors.newSingleThreadExecutor());
 
 		try {
 			/* register a filter like the UI does */
-			viewSession.registerObjectEventListener(new Filter(PersistenceService.getDao(PathSegment.class), PathSegment.class, "ID1"));
+			viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getDao(PathSegment.class), PathSegment.class, "ID1"));
 			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
 			
 			
@@ -94,14 +94,14 @@ public class CreatePathCommandTest extends DomainTestABC {
 		}
 		finally {
 			objectChangeBroadcaster.unregisterDAOListener(viewSession);
-			this.getPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTenantTransaction();
 		}
 
 	}
 	
 	@Test
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
@@ -138,7 +138,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

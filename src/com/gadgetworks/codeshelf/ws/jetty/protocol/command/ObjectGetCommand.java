@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
@@ -46,7 +46,7 @@ public class ObjectGetCommand extends CommandABC {
 				// First we find the parent object (by it's ID).
 				Class<?> classObject = Class.forName(parentClassName);
 				if (IDomainObject.class.isAssignableFrom(classObject)) {				
-					ITypedDao<IDomainObject> dao = PersistenceService.getDao(classObject);				
+					ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);				
 					IDomainObject parentObject = dao.findByPersistentId(parentId);
 					
 					return doGetCommand(parentObject, getterMethodName);

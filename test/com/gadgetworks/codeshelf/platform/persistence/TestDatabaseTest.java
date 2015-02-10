@@ -34,8 +34,8 @@ public class TestDatabaseTest extends DomainTestABC {
 		
 		LOGGER.info("Test Database sequence #"+TestDatabaseTest.sequence_static);
 		
-		assertFalse(this.getPersistenceService().hasActiveTransaction());
-		this.getPersistenceService().beginTenantTransaction();
+		assertFalse(this.getTenantPersistenceService().hasActiveTransaction());
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		if(TestDatabaseTest.sequence_static == 1) {
 			// create an org to look for in future steps
@@ -44,8 +44,8 @@ public class TestDatabaseTest extends DomainTestABC {
 			Facility.DAO.store(fac);
 			
 			// new transaction
-			this.getPersistenceService().commitTenantTransaction();
-			this.getPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().beginTenantTransaction();
 
 			// org just created should still exist
 			assertNotNull(Facility.DAO.findByDomainId(null,"org_create"));			
@@ -56,9 +56,9 @@ public class TestDatabaseTest extends DomainTestABC {
 			Facility.DAO.store(fac);			
 			
 			// rollback and new transaction
-			this.getPersistenceService().rollbackTenantTransaction();
-			assertFalse(this.getPersistenceService().hasActiveTransaction());
-			this.getPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().rollbackTenantTransaction();
+			assertFalse(this.getTenantPersistenceService().hasActiveTransaction());
+			this.getTenantPersistenceService().beginTenantTransaction();
 
 			// last step rolled back new org, so it should not exist
 			assertNull(Facility.DAO.findByDomainId(null,"org_rollback"));

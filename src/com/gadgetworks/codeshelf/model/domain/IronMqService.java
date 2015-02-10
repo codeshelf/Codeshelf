@@ -38,7 +38,7 @@ import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -64,8 +64,8 @@ public class IronMqService extends EdiServiceABC {
 	@Singleton
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
 		@Inject
-		public IronMqServiceDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public IronMqServiceDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<IronMqService> getDaoClass() {

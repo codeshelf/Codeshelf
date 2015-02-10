@@ -32,11 +32,11 @@ import com.google.inject.Singleton;
  * @author bheckel
  */
 @Singleton
-public class PersistenceService extends Service {
-	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
+public class TenantPersistenceService extends Service {
+	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	
-	private static PersistenceService theInstance = null;
+	private static TenantPersistenceService theInstance = null;
 
 	@Getter
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
@@ -44,14 +44,14 @@ public class PersistenceService extends Service {
 	// stores the factories for different tenants
 	private Map<Tenant,SessionFactory> factories = new HashMap<Tenant, SessionFactory>();
 
-	private PersistenceService() {
+	private TenantPersistenceService() {
 		//TODO inject since this is essentially the messaging mechanism
 		objectChangeBroadcaster = new ObjectChangeBroadcaster();
 	}
 
-	public final synchronized static PersistenceService getInstance() {
+	public final synchronized static TenantPersistenceService getInstance() {
 		if (theInstance == null) {
-			theInstance = new PersistenceService();
+			theInstance = new TenantPersistenceService();
 			theInstance.start();
 		}
 		else if (!theInstance.isRunning()) {
@@ -62,7 +62,7 @@ public class PersistenceService extends Service {
 	}
 
 	public String getChangeLogFilename() {
-		return PersistenceService.TENANT_CHANGELOG_FILENAME;
+		return TenantPersistenceService.TENANT_CHANGELOG_FILENAME;
 	}
 
 	public SessionFactory createTenantSessionFactory(Tenant tenant) {
@@ -124,7 +124,7 @@ public class PersistenceService extends Service {
 		if(this.isRunning()) {
 			LOGGER.error("Attempted to start persistence service more than once");
 		} else {
-			LOGGER.info("Starting "+PersistenceService.class.getSimpleName());
+			LOGGER.info("Starting "+TenantPersistenceService.class.getSimpleName());
 			this.setRunning(true);
 		}
 		return true;

@@ -52,7 +52,7 @@ public class ManagerPersistenceService extends Service {
 		if(this.isRunning()) {
 			LOGGER.error("Attempted to start persistence service more than once");
 		} else {
-			LOGGER.info("Starting "+PersistenceService.class.getSimpleName());
+			LOGGER.info("Starting "+TenantPersistenceService.class.getSimpleName());
 			configure();
 			this.setRunning(true);
 		}

@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.PositionTypeEnum;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -53,8 +53,8 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 	@Singleton
 	public static class VertexDao extends GenericDaoABC<Vertex> implements ITypedDao<Vertex> {
 		@Inject
-		public VertexDao(final PersistenceService persistenceService) {
-			super(persistenceService);
+		public VertexDao(final TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 		
 		public final Class<Vertex> getDaoClass() {

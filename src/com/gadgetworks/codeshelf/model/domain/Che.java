@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
 import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.PersistenceService;
+import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -57,8 +57,8 @@ public class Che extends WirelessDeviceABC {
 	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
 		@Inject
-		public CheDao(PersistenceService persistenceService) {
-			super(persistenceService);
+		public CheDao(TenantPersistenceService tenantPersistenceService) {
+			super(tenantPersistenceService);
 		}
 
 		public final Class<Che> getDaoClass() {

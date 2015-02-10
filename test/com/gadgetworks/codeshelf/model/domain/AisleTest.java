@@ -21,19 +21,19 @@ public class AisleTest extends DomainTestABC {
 
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		
 		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		String locationId = aisle.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void updateControllerOnAisle() {
 		// Case 1: simple add
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Facility facility = getDefaultFacility();
 		CodeshelfNetwork network = facility.getNetworks().get(0);
@@ -47,10 +47,10 @@ public class AisleTest extends DomainTestABC {
 		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
 		assertEquals(testChannel, storedAisle.getLedChannel());
 
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 		// Case 2: Cover the odd-ball case of aisle has a controller, but try to assign to a bad one.
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		try {
 			aisle.setControllerChannel(UUID.randomUUID().toString(),"2");
 			fail("Should have thrown an exception");
@@ -59,23 +59,23 @@ public class AisleTest extends DomainTestABC {
 		}
 		// verify that no change happened.
 		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 		// Case 3: Make sure prior controller is removed
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		LedController controller2 = getDefaultController(network, "0x000FFF");
 		aisle.setControllerChannel(controller2.getPersistentId().toString(),"3");
 		// verify that the change happened.
 		assertEquals(controller2.getDomainId(), storedAisle.getLedControllerId());
 		LOGGER.info("controller1: "+ controller1.getPersistentId().toString());
 		LOGGER.info("controller2: "+ controller2.getPersistentId().toString());
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 
 	}
 
 	@Test
 	public final void updateNonexistantController() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Short testChannel = 8;
 		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
@@ -87,14 +87,14 @@ public class AisleTest extends DomainTestABC {
 			
 		}
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 	}
 	
 	@Test
 	public final void associatePathSegment() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		IDaoListener listener = Mockito.mock(IDaoListener.class);
-		this.getPersistenceService().getObjectChangeBroadcaster().registerDAOListener(listener, Aisle.class);
+		this.getTenantPersistenceService().getObjectChangeBroadcaster().registerDAOListener(listener, Aisle.class);
 		
 		String aisleDomainId = "A1";
 		
@@ -104,10 +104,10 @@ public class AisleTest extends DomainTestABC {
 
 		Aisle aisle = getDefaultAisle(facility, aisleDomainId);
 		String segPersistId = pathSegment.getPersistentId().toString();
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 		
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		aisle.associatePathSegment(segPersistId);
 		// Paul: please see facility.recomputeLocationPathDistances()
 		
@@ -116,10 +116,10 @@ public class AisleTest extends DomainTestABC {
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
 
 		verify(listener, times(1)).objectAdded(eq(Aisle.class), eq(storedAisle.getPersistentId()));
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 		// Cover the odd-ball case of aisle has a path segment, but try to assign to a bad one.
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 		try {
 			aisle.associatePathSegment(UUID.randomUUID().toString());
 			fail("Should have thrown an exception");
@@ -129,12 +129,12 @@ public class AisleTest extends DomainTestABC {
 		}
 		// verify that no change happened.
 		assertEquals(pathSegment.getPersistentId(), storedAisle.getAssociatedPathSegment().getPersistentId());
-		this.getPersistenceService().commitTenantTransaction();		
+		this.getTenantPersistenceService().commitTenantTransaction();		
 	}
 	
 	@Test
 	public final void updateNonexistantPathSegment() {
-		this.getPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTenantTransaction();
 
 		Aisle aisle = getDefaultAisle(getDefaultFacility(), "A1");
 		try {
@@ -145,7 +145,7 @@ public class AisleTest extends DomainTestABC {
 			
 		}
 		
-		this.getPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTenantTransaction();
 		
 	}
 
