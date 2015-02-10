@@ -474,12 +474,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * @return if it was changed
 	 */
 	public boolean reevaluateStatus() {
+		OrderStatusEnum priorStatus = getStatus();
 		if(getWorkInstructions().isEmpty()) {
+			if (priorStatus == OrderStatusEnum.INPROGRESS) {
+				setStatus(OrderStatusEnum.RELEASED);
+				return true;
+			}
 			return false;
 		}
-		
-		
-		OrderStatusEnum priorStatus = getStatus();
 		
 		int qtyPicked = 0;
 		boolean anyToPick = false;

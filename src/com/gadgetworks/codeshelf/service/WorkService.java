@@ -339,9 +339,10 @@ public class WorkService implements IApiService {
 				}
 				OrderDetail owningDetail = wi.getOrderDetail();
 				// detail is optional from v5
-				if (owningDetail != null)
+				if (owningDetail != null) {
 					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-
+					owningDetail.reevaluateStatus();
+				}
 				WorkInstruction.DAO.delete(wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
