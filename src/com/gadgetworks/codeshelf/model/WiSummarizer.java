@@ -16,8 +16,11 @@ import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.gadgetworks.codeshelf.service.WorkService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
@@ -27,6 +30,7 @@ import com.google.common.collect.Ordering;
  * 
  */
 public class WiSummarizer {
+	private static final Logger			LOGGER						= LoggerFactory.getLogger(WiSummarizer.class);
 	private Map<Timestamp, WiSetSummary>	mWiSetSummaries;
 
 	public WiSummarizer() {
@@ -72,13 +76,17 @@ public class WiSummarizer {
 		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
 		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		int wiCount = 0;
 		for (WorkInstruction wi : wis) {
 			Timestamp wiCompleteTime = wi.getCompleted();
 			Timestamp normalizedTime = normalizeTimeToDayBoundary(wiCompleteTime);
 			WiSetSummary theSummary = getOrCreateSummaryForTime(normalizedTime);
 			WorkInstructionStatusEnum status = wi.getStatus();
 			theSummary.incrementStatus(status);
+			wiCount++;
 		}
+		int summaryCount = getCountOfSummaries();
+		LOGGER.info("computeCompletedWiSummariesForChe created " + summaryCount + " summarySets from " + wiCount + " work instructions");
 	}
 
 	/**
@@ -96,6 +104,7 @@ public class WiSummarizer {
 		cal.set(Calendar.HOUR_OF_DAY, 0);
 		cal.set(Calendar.MINUTE, 0);
 		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
 		return new Timestamp(cal.getTimeInMillis());
 	}
 
