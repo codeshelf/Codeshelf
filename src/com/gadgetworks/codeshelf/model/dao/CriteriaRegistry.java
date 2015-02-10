@@ -32,8 +32,9 @@ public class CriteriaRegistry {
 		
 		// the "assignedTimestamp" is the previous midnight, so we want assigned time > that that, and < that + 24 hours
 		// And, we are using completed, not assigned time from the database.
+		final long ONE_DAY_MILLISECONDS = 24 * 60 * 60 * 1000;		
 		indexedCriteria.put("workInstructionByCheAndDay", 
-			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId and (completed = null || (completed > :assignedTimestamp)) ", 
+			new TypedCriteria("from WorkInstruction where assignedChe.persistentId = :cheId and (completed = null OR (completed > :assignedTimestamp AND completed < :assignedTimestamp + INTERVAL '1 DAY')) ", 
 				"cheId", UUID.class,
 				"assignedTimestamp", Timestamp.class));
 	
