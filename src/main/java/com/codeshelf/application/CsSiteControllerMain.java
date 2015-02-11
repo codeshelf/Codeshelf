@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.MetricRegistry;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.ICsDeviceManager;
-import com.codeshelf.device.RadioController;
+import com.codeshelf.device.radio.RadioController;
 import com.codeshelf.flyweight.controller.FTDIInterface;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
 import com.codeshelf.flyweight.controller.IRadioController;
