@@ -85,7 +85,7 @@ public class WorkInstructionTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(), "F1", "test", Point.getZeroPoint());
 
@@ -185,12 +185,12 @@ public class WorkInstructionTest extends DomainTestABC {
 		theString = facility.toString();
 		// no containerUse in this test case
 	
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void filterTest() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
 		
@@ -208,15 +208,15 @@ public class WorkInstructionTest extends DomainTestABC {
 		wi.getOrderDetail().getDao().store(wi.getOrderDetail());
 		
 		WorkInstruction.DAO.store(wi);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Map<String, Object> params = ImmutableMap.<String, Object>of(
 			"cheId", wi.getAssignedChe().getPersistentId().toString(),
 			"assignedTimestamp", wi.getAssigned().getTime());
 		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime", params, WorkInstruction.class);
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	/*
 	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {

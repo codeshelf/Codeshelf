@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
@@ -22,7 +23,6 @@ import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
-import com.codeshelf.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {
 	@SuppressWarnings("unused")
@@ -38,12 +38,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 
 	@Test
 	public void testProductivitySummary() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
@@ -53,33 +53,33 @@ public class ProductivityReportingTest extends DomainTestABC {
 			String groupName = groupNames.next();
 			Assert.assertTrue(OrderGroup.UNDEFINED.equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
 		}
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryNoRuns() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacilityWithOutboundOrders();
 		UUID facilityId = facility.getPersistentId();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
 		Assert.assertEquals(cheSummaries.getRunsByGroup().size(), 0);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryAllWorkInstructionCombos() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		List<WorkInstruction> workInstructions = createFacilityWithOneRunAllWorkInstructionCombos();
 
 		UUID facilityId = workInstructions.get(0).getParent().getPersistentId();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		WiSetSummary summary = cheSummaries.getRunsByGroup().values().iterator().next().get(0);
@@ -97,12 +97,12 @@ public class ProductivityReportingTest extends DomainTestABC {
 
 	@Test
 	public void testGetCheSummaryOneRun() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacilityWithOneRun("PRTEST2.O2");
 		UUID facilityId = facility.getPersistentId();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
@@ -115,17 +115,17 @@ public class ProductivityReportingTest extends DomainTestABC {
 		WiSetSummary run = groupRuns.get(0);
 		//Verify retrieved run
 		testRunSummary(run, 0, 0, 2, 0, 2, 1);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryTwoRuns() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacilityWithTwoRuns("PRTEST2.O3");
 		UUID facilityId = facility.getPersistentId();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
@@ -138,17 +138,17 @@ public class ProductivityReportingTest extends DomainTestABC {
 		//Verify runs
 		testRunSummary(groupRuns.get(0), 0, 2, 1, 0, 0, 0); //"2014-12-23 19:40:20.000+0000"
 		testRunSummary(groupRuns.get(1), 1, 0, 0, 0, 1, 0);	//"2014-12-22 23:46:00.000+0000"
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void testGetCheSummaryTwoGroups() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacilityWithTwoGroups("PRTEST2.O4");
 		UUID facilityId = facility.getPersistentId();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		//Get all summaries
 		ProductivityCheSummaryList cheSummaries = orderService.getCheByGroupSummary(facilityId);
 		Assert.assertNotNull(cheSummaries);
@@ -168,7 +168,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 			}
 
 		}
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	private void testRunSummary(WiSetSummary s, int invalid, int New, int inprogress, int Short, int complete, int revert){

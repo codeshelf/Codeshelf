@@ -122,14 +122,14 @@ public class UserSession implements IDaoListener {
 			@Override
 			public void run() {
 				try {
-					TenantPersistenceService.getInstance().beginTenantTransaction();
+					TenantPersistenceService.getInstance().beginTransaction();
 					for (ObjectEventListener listener : eventListeners.values()) {
 						MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
 						if (response != null) {
 							sendMessage(response);
 						}
 					}
-					TenantPersistenceService.getInstance().commitTenantTransaction();
+					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
 					TenantPersistenceService.getInstance().rollbackTenantTransaction();
 					LOGGER.error("Unable to handle object add messages", e);
@@ -147,7 +147,7 @@ public class UserSession implements IDaoListener {
 			@Override
 			public void run() {
 				try {
-					TenantPersistenceService.getInstance().beginTenantTransaction();
+					TenantPersistenceService.getInstance().beginTransaction();
 					for (ObjectEventListener listener : eventListeners.values()) {
 						MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
 						if (response != null) {
@@ -155,7 +155,7 @@ public class UserSession implements IDaoListener {
 						}
 
 					}
-					TenantPersistenceService.getInstance().commitTenantTransaction();
+					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
 					TenantPersistenceService.getInstance().rollbackTenantTransaction();
 					LOGGER.error("Unable to handle object update", e);
@@ -171,14 +171,14 @@ public class UserSession implements IDaoListener {
 			@Override
 			public void run() {
 				try {
-					TenantPersistenceService.getInstance().beginTenantTransaction();
+					TenantPersistenceService.getInstance().beginTransaction();
 					for (ObjectEventListener listener : eventListeners.values()) {
 						MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
 						if (response != null) {
 							sendMessage(response);
 						}
 					}
-					TenantPersistenceService.getInstance().commitTenantTransaction();
+					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
 					TenantPersistenceService.getInstance().rollbackTenantTransaction();
 					LOGGER.error("Unable to handle object delete", e);

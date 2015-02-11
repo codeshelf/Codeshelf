@@ -40,15 +40,15 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.codeshelf.device.LedCmdPath;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;

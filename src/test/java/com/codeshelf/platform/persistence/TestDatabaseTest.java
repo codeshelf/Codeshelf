@@ -35,7 +35,7 @@ public class TestDatabaseTest extends DomainTestABC {
 		LOGGER.info("Test Database sequence #"+TestDatabaseTest.sequence_static);
 		
 		assertFalse(this.getTenantPersistenceService().hasAnyActiveTransaction());
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		if(TestDatabaseTest.sequence_static == 1) {
 			// create an org to look for in future steps
@@ -44,8 +44,8 @@ public class TestDatabaseTest extends DomainTestABC {
 			Facility.DAO.store(fac);
 			
 			// new transaction
-			this.getTenantPersistenceService().commitTenantTransaction();
-			this.getTenantPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().beginTransaction();
 
 			// org just created should still exist
 			assertNotNull(Facility.DAO.findByDomainId(null,"org_create"));			
@@ -58,7 +58,7 @@ public class TestDatabaseTest extends DomainTestABC {
 			// rollback and new transaction
 			this.getTenantPersistenceService().rollbackTenantTransaction();
 			assertFalse(this.getTenantPersistenceService().hasAnyActiveTransaction());
-			this.getTenantPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().beginTransaction();
 
 			// last step rolled back new org, so it should not exist
 			assertNull(Facility.DAO.findByDomainId(null,"org_rollback"));
@@ -79,22 +79,22 @@ public class TestDatabaseTest extends DomainTestABC {
 	
 	@Test
 	public void testOutOfTransactionUpdate() {
-		beginTenantTransaction();
+		beginTransaction();
 		Facility org = new Facility();
 		org.setDomainId("an org");
 		org.setDescription("foo");
 		Facility.DAO.store(org);					
-		commitTenantTransaction();
+		commitTransaction();
 		
-		beginTenantTransaction();
+		beginTransaction();
 		org.setDescription("bar");
 		Facility.DAO.store(org);					
-		commitTenantTransaction();		
+		commitTransaction();		
 
-		beginTenantTransaction();
+		beginTransaction();
 		Facility org2 = Facility.DAO.findByDomainId(null,"an org");
 		assertNotNull(org2);
 		assertEquals("bar", org2.getDescription());
-		commitTenantTransaction();		
+		commitTransaction();		
 	}
 }

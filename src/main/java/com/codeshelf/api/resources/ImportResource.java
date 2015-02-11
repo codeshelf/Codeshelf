@@ -63,7 +63,7 @@ public class ImportResource {
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.DAO.findByPersistentId(facilityId);
 			if (facility==null) {
@@ -84,7 +84,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 	
@@ -98,7 +98,7 @@ public class ImportResource {
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.DAO.findByPersistentId(facilityId);
 			if (facility==null) {
@@ -118,7 +118,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 
@@ -133,7 +133,7 @@ public class ImportResource {
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.DAO.findByPersistentId(facilityId);
 			if (facility==null) {
@@ -150,7 +150,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 	
@@ -164,7 +164,7 @@ public class ImportResource {
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.DAO.findByPersistentId(facilityId);
 			if (facility==null) {
@@ -184,7 +184,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 }

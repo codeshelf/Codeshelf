@@ -17,6 +17,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -30,8 +32,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * 
@@ -294,7 +294,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		// The idea is to setup, then delete an aisle that has order locations, complete and active work instruction, associated path and controller.
 		// Make sure  no throws as those things are accessed.
 		// Bring it back
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
@@ -385,14 +385,14 @@ public class LocationDeleteTest extends EdiTestABC {
 		locationA1B1T1S1 = facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertTrue(locationA1B1T1S1.getActive());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void locationDelete2() throws IOException {
 		// The idea is to setup, then redo "smaller" aisle file that results in deleted bays, tiers, and slots.
 		// Bring it back with original
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 
 		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
@@ -430,25 +430,25 @@ public class LocationDeleteTest extends EdiTestABC {
 		Assert.assertNotNull(locationA1B2T1S5);
 		Assert.assertTrue(locationA1B2T1S5.isActive());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void locationDelete3() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		// This test starts with the smaller file. Do D-25/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
 		// One of the order locations is for D-25
 		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD03", SMALLER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void locationDelete4() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		// This test starts with the smaller file. So D-26/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
 		LOGGER.info("DeleteLocation Test4 . Part 1. Start by setting up smaller aisle A1 and A2");
@@ -538,7 +538,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		item9923 = facility.getStoredItemFromLocationAndMasterIdAndUom("D-26", "9923", "CS");
 		Assert.assertNotNull(item9923);		
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 }

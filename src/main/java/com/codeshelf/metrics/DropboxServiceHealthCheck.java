@@ -17,7 +17,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 	protected Result check() throws Exception {
 		List<Facility> failedFacilities = Lists.newArrayList();
 		
-		TenantPersistenceService.getInstance().beginTenantTransaction();
+		TenantPersistenceService.getInstance().beginTransaction();
 		int numFacilities = -1;
 		try {
 			List<Facility> allFacilities = Facility.DAO.getAll();
@@ -31,7 +31,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 			}
 			numFacilities = allFacilities.size();
 		} finally {
-			TenantPersistenceService.getInstance().commitTenantTransaction();
+			TenantPersistenceService.getInstance().commitTransaction();
 		}
 		
 		if(failedFacilities.isEmpty()) {

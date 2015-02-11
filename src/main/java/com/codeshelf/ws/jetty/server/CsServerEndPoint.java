@@ -66,7 +66,7 @@ public class CsServerEndPoint {
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
     	try{
-        	this.getTenantPersistenceService().beginTenantTransaction();
+        	this.getTenantPersistenceService().beginTransaction();
         	UserSession csSession = sessionManager.getSession(session);
     		ContextLogging.setSession(csSession);
     		sessionManager.messageReceived(session);
@@ -94,7 +94,7 @@ public class CsServerEndPoint {
             	LOGGER.debug("Received message on session "+csSession+": "+message);
             	messageProcessor.handleMessage(csSession, message);
         	}
-			this.getTenantPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTransaction();
 		} catch (RuntimeException e) {
 			this.getTenantPersistenceService().rollbackTenantTransaction();
 			LOGGER.error("Unable to persist during message handling: " + message, e);

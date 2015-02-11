@@ -18,6 +18,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
@@ -37,8 +39,6 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * 
@@ -254,7 +254,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSequenceAlongTierWithoutTop() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
@@ -311,13 +311,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		// Need more cases for BayDistanceTopLast.
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSequenceAlongTierWithTop() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_02");
 		Assert.assertNotNull(facility);
@@ -386,14 +386,14 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		mPropertyService.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testimmediateShorts() throws IOException {
 		// generation of immediateShort
 		// cleanup of immediate short
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_03");
 		Assert.assertNotNull(facility);
@@ -415,8 +415,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Item.DAO.delete(item1124);
 
 		// Interesting and important. If this commit is not done here, the cart setup will still find undeleted items 1123 and 1124.
-		this.getTenantPersistenceService().commitTenantTransaction();
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		//
 
@@ -444,7 +444,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		
 		mPropertyService.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
@@ -455,7 +455,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// - Selection of the inventory items during computeWorkInstructions
 		// Once that is done, site controller just implements the work instructions that were made.
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvLocP_01");
 		Assert.assertNotNull(facility);
 
@@ -465,11 +465,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
 		}
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2: Read the orders file, which has some preferred locations");
 		// This facility has aliases D26 ->D33 and D71->D74
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D-27,61"
@@ -481,11 +481,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 		ICsvOrderImporter importer = createOrderImporter();
 		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
 
 		LOGGER.info("3: Set up CHE for orders 10 and 11. Should get 3 jobs");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
@@ -504,12 +504,12 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer2 = createInventoryImporter();
 		importer2.importSlottedInventoryFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
@@ -526,11 +526,11 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer3 = createInventoryImporter();
 		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");
 		LOGGER.info("And a logger.warn saying: Item not found at D-71. Substituted item at D-74");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
@@ -539,7 +539,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		logWiList(wiList);
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 

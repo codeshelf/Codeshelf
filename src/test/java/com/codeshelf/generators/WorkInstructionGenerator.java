@@ -7,6 +7,7 @@ import java.util.List;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
@@ -25,7 +26,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {

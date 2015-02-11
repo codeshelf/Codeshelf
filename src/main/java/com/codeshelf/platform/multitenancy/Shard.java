@@ -23,8 +23,6 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.persistence.ManagerPersistenceService;
-
 @Entity
 @Table(name = "shard")
 public class Shard {
@@ -128,13 +126,13 @@ public class Shard {
 			// tenant does not already exist with this 
 			Tenant tenant = new Tenant();
 			tenant.setName(name);
-			tenant.setDbUsername(username);
-			tenant.setDbSchemaName(schemaName); 			
+			tenant.setUsername(username);
+			tenant.setSchemaName(schemaName); 			
 			if(password != null) {
-				tenant.setDbPassword(password);
+				tenant.setPassword(password);
 			}
 
-			if(createSchemaAndUser(schemaName,username,tenant.getDbPassword())) { // automatically generated password
+			if(createSchemaAndUser(schemaName,username,tenant.getPassword())) { // automatically generated password
 				tenant.setShard(this);
 				tenants.put(name, tenant);
 				ManagerPersistenceService.getInstance().getSession().save(tenant);
@@ -151,7 +149,7 @@ public class Shard {
 	private boolean canCreateTenant(String name, String schemaName) {
 		for(Tenant tenant : this.tenants.values()) {
 			if(name.equals(tenant.getName())
-					|| schemaName.equals(tenant.getDbSchemaName()) ) {
+					|| schemaName.equals(tenant.getSchemaName()) ) {
 				return false;
 			}
 		}

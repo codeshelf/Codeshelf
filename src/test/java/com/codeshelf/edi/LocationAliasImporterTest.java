@@ -42,7 +42,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void successEventsProduced() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -65,13 +65,13 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void violationEventProducedWhenLocationInactive() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n";
@@ -88,13 +88,13 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void violationEventProducedWhenLocationNotFound() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "ANOTTHERE, AisleA\r\n";
@@ -108,13 +108,13 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	
 	@Test
 	public final void findLocationByIdAfterImport() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -141,9 +141,9 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		// Make sure we can still look up an aisle by it's FQN.
 		Location location = facility.findLocationById("A1");
@@ -169,14 +169,14 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		location = facility.findLocationById("AisleC");
 		Assert.assertNull(location);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 	
 	@Test
 	public final void rereadLocationsTest() {
 		// With the hibernate change, DEV-595 bug found. Alias reread violated parent-child pattern.
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = createFacility();
 		String facilityDomainId = facility.getDomainId();
@@ -192,11 +192,11 @@ public class LocationAliasImporterTest extends EdiTestABC {
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		mBayDao.store(bay2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		
 		LOGGER.info("1: Read the locations file");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
 				+ "A2, AisleB\r\n" //
@@ -206,19 +206,19 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("2: Normal lookups by alias");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Location aisleA2a = facility.findLocationById("AisleA");
 		Assert.assertNotNull(aisleA2a);
 
 		Location bay2a = facility.findLocationById("B34");
 		Assert.assertNotNull(bay2a);
-		this.getTenantPersistenceService().commitTenantTransaction();		
+		this.getTenantPersistenceService().commitTransaction();		
 		
 		LOGGER.info("3: Reread the locations file, changing some aliases");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleAx\r\n" //
 				+ "A2, AisleBx\r\n" //
@@ -228,10 +228,10 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
 		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("4: Normal lookups by the new alias found. Old not");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Location aisleA2b = facility.findLocationById("AisleA");
 		Assert.assertNull(aisleA2b);
 		aisleA2b = facility.findLocationById("AisleAx");
@@ -248,23 +248,23 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		bay2b = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay2b);
 		Assert.assertEquals(bay2b.getDomainId(), "B2");
-		this.getTenantPersistenceService().commitTenantTransaction();		
+		this.getTenantPersistenceService().commitTransaction();		
 		
 		LOGGER.info("5: Read exactly same locations file again");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer3 = createLocationAliasImporter();
 		importer3.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime3);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("6: Lookups still work");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Location aisleA2c = facility.findLocationById("AisleAx");
 		Assert.assertNotNull(aisleA2c);
 
 		Location bay2c = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay2c);
-		this.getTenantPersistenceService().commitTenantTransaction();		
+		this.getTenantPersistenceService().commitTransaction();		
 
 		LOGGER.info("7: Reread the locations file, swapping two aliases"); 
 		/* This was the actual DEV-594 situation, inverting the names for a tier.
@@ -272,7 +272,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		java.lang.Exception
 			at com.codeshelf.model.domain.Location.addAlias(Location.java:694)
 		*/		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		String csvString4 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleAx\r\n" //
 				+ "A2, AisleBx\r\n" //
@@ -282,10 +282,10 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer4 = createLocationAliasImporter();
 		importer4.importLocationAliasesFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("8: See that the swapped aliases resolve correctly");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Location bay1d = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay1d);
 		String bay1dDomainId = bay1d.getDomainId();
@@ -302,7 +302,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Assert.assertNotNull(bay2d);
 		Assert.assertEquals(bay2d.getDomainId(), "B2"); // fails!
 
-		this.getTenantPersistenceService().commitTenantTransaction();		
+		this.getTenantPersistenceService().commitTransaction();		
 
 	}
 

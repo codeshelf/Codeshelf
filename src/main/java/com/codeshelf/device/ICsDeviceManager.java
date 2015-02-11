@@ -8,12 +8,12 @@ package com.codeshelf.device;
 import java.util.List;
 import java.util.UUID;
 
-import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.util.PcapRingBuffer;
-import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.PcapRingBuffer;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 
 /**
  * @author jeffw

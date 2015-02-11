@@ -20,6 +20,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.model.dao.DAOTestABC;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -27,17 +32,12 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.util.MemoryConfiguration;
-import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
-import com.codeshelf.flyweight.command.ICommand;
-import com.codeshelf.flyweight.command.NetAddress;
-import com.codeshelf.flyweight.controller.IRadioController;
-import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest extends DAOTestABC {
 	
 	@Test
 	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
 		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(TenantManagerService.getInstance().getDefaultTenant(),mockRadioController);		
@@ -51,12 +51,12 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		
 		Assert.assertTrue("Should be showing network unavailable", ((CommandControlDisplayMessage)commandCaptor.getValue()).getEntireMessageStr().contains("Unavailable"));
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public void communicatesServerDisconnectionToChe() throws DeploymentException, IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
 		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(TenantManagerService.getInstance().getDefaultTenant(),mockRadioController);
@@ -68,7 +68,7 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		
 		Assert.assertTrue("Should be showing network unavailable", ((CommandControlDisplayMessage)commandCaptor.getValue()).getEntireMessageStr().contains("Unavailable"));
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	private CsDeviceManager produceAttachedDeviceManager(Tenant tenant,IRadioController mockRadioController) throws DeploymentException, IOException {

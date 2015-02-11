@@ -25,8 +25,8 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
+import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.SchemaManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
@@ -103,8 +103,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 
 		LOGGER.info("Stopping application");
 		
-		SchemaManager schemaManager = TenantManagerService.getInstance().getDefaultTenant().getSchemaManager();
-
+		Tenant defaultTenant = TenantManagerService.getInstance().getDefaultTenant();
 		doShutdown();
 
 		try {
@@ -112,14 +111,10 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 				case NONE:
 					break;
 				case DROP_SCHEMA:
-					if (schemaManager != null) {
-						schemaManager.dropSchema();
-					}
+					TenantManagerService.dropSchema(defaultTenant);
 					break;
 				case DELETE_ORDERS_WIS:
-					if (schemaManager != null) {
-						schemaManager.deleteOrdersWis();
-					}
+					TenantManagerService.deleteOrdersWis(defaultTenant);
 					break;
 				default:
 					break;

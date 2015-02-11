@@ -23,27 +23,22 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.platform.persistence.EventListenerIntegrator;
+import com.codeshelf.platform.persistence.IManagedSchema;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.codeshelf.model.dao.PropertyDao;
-import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.IPersistentCollection;
-import com.codeshelf.platform.persistence.SchemaManager;
 
 @Entity
 @Table(name="tenant")
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Tenant implements IPersistentCollection {
+public class Tenant implements IManagedSchema {
 	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	
 	@SuppressWarnings("unused")
@@ -70,19 +65,19 @@ public class Tenant implements IPersistentCollection {
 	@Setter
 	@NonNull
 	@Column(unique=true, nullable=false,length=16,name="db_schema_name")
-	String dbSchemaName;
+	String schemaName;
 
 	@Getter
 	@Setter
 	@NonNull
 	@Column(unique=true, nullable=false,length=16,name="db_username")
-	String dbUsername;
+	String username;
 
 	@Getter
 	@Setter
 	@NonNull
 	@Column(unique=true,nullable=false,length=36,name="db_password")
-	String dbPassword = UUID.randomUUID().toString();
+	String password = UUID.randomUUID().toString();
 
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
 	@Getter
@@ -94,9 +89,6 @@ public class Tenant implements IPersistentCollection {
 	private Map<String, User> users = new HashMap<String, User>();
 
 	@Transient
-	SchemaManager schemaManager = null;
-	
-	@Transient
 	Configuration hibernateConfiguration = null;
 
 	@Transient
@@ -104,23 +96,24 @@ public class Tenant implements IPersistentCollection {
 	
 	public Tenant() {
 	}
-	
+	/*
 	public SchemaManager getSchemaManager() {
 		if(schemaManager == null) {
 			schemaManager = new SchemaManager(TENANT_CHANGELOG_FILENAME, 
-				shard.getDbUrl(), this.getDbUsername(), this.getDbPassword(), this.getDbSchemaName(),
-				this.getHibernateConfigurationFile());
+				shard.getDbUrl(), this.getUsername(), this.getPassword(), this.getSchemaName(),
+				this.getHibernateConfigurationFilename());
 		}
 		return schemaManager;
 	}
-
-	private String getHibernateConfigurationFile() {
+*/
+	@Override
+	public String getHibernateConfigurationFilename() {
 		return ("hibernate/"+System.getProperty("tenant.hibernateconfig"));
 	}
 
 	@Override
 	public String toString() {
-		return "tenant #"+this.getTenantId()+" ("+this.getName()+") on shard "+this.getShard().getName()+"/"+this.getDbSchemaName();
+		return "tenant #"+this.getTenantId()+" ("+this.getName()+") on shard "+this.getShard().getName()+"/"+this.getSchemaName();
 	}
 	
 	public void addUser(User u) {
@@ -142,9 +135,9 @@ public class Tenant implements IPersistentCollection {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((createdOn == null) ? 0 : createdOn.hashCode());
-		result = prime * result + ((dbPassword == null) ? 0 : dbPassword.hashCode());
-		result = prime * result + ((dbSchemaName == null) ? 0 : dbSchemaName.hashCode());
-		result = prime * result + ((dbUsername == null) ? 0 : dbUsername.hashCode());
+		result = prime * result + ((password == null) ? 0 : password.hashCode());
+		result = prime * result + ((schemaName == null) ? 0 : schemaName.hashCode());
+		result = prime * result + ((username == null) ? 0 : username.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + ((shard == null) ? 0 : shard.hashCode());
 		result = prime * result + tenantId;
@@ -165,20 +158,20 @@ public class Tenant implements IPersistentCollection {
 				return false;
 		} else if (!createdOn.equals(other.getCreatedOn()))
 			return false;
-		if (dbPassword == null) {
-			if (other.getDbPassword() != null)
+		if (password == null) {
+			if (other.getPassword() != null)
 				return false;
-		} else if (!dbPassword.equals(other.getDbPassword()))
+		} else if (!password.equals(other.getPassword()))
 			return false;
-		if (dbSchemaName == null) {
-			if (other.getDbSchemaName() != null)
+		if (schemaName == null) {
+			if (other.getSchemaName() != null)
 				return false;
-		} else if (!dbSchemaName.equals(other.getDbSchemaName()))
+		} else if (!schemaName.equals(other.getSchemaName()))
 			return false;
-		if (dbUsername == null) {
-			if (other.getDbUsername() != null)
+		if (username == null) {
+			if (other.getUsername() != null)
 				return false;
-		} else if (!dbUsername.equals(other.getDbUsername()))
+		} else if (!username.equals(other.getUsername()))
 			return false;
 		if (name == null) {
 			if (other.getName() != null)
@@ -196,26 +189,12 @@ public class Tenant implements IPersistentCollection {
 	}
 
 	@Override
-	public String getShortName() {
-		return this.getDbSchemaName();
+	public String getUrl() {
+		return shard.getDbUrl();
 	}
 
 	@Override
-	public boolean hasStartupActions() {
-		return true;
-	}
-	
-	@Override
-	public void performStartupActions(Session session) {
-        // sync up property defaults with what's defined in resource file 
-
-		Transaction t = session.beginTransaction();
-        PropertyDao.getInstance().syncPropertyDefaults();
-        t.commit();
-	}
-
-	@Override
-	public EventListenerIntegrator generateEventListenerIntegrator() {
-		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
+	public String getChangeLogName() {
+		return Tenant.TENANT_CHANGELOG_FILENAME;
 	}
 }

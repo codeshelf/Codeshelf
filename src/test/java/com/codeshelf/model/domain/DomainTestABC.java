@@ -9,13 +9,13 @@ import java.sql.Timestamp;
 
 import org.hibernate.Transaction;
 
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.TravelDirectionEnum;
 import com.codeshelf.model.dao.DAOTestABC;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.flyweight.command.NetGuid;
 
 public abstract class DomainTestABC extends DAOTestABC {
 
@@ -507,12 +507,12 @@ public abstract class DomainTestABC extends DAOTestABC {
 		return inFacility.createPath("");
 	}
 
-	public Transaction beginTenantTransaction() {
-		return TenantPersistenceService.getInstance().beginTenantTransaction();
+	public Transaction beginTransaction() {
+		return TenantPersistenceService.getInstance().beginTransaction();
 	}
 	
-	public void commitTenantTransaction() {
-		TenantPersistenceService.getInstance().commitTenantTransaction();
+	public void commitTransaction() {
+		TenantPersistenceService.getInstance().commitTransaction();
 	}
 
 

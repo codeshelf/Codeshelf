@@ -1,9 +1,8 @@
 package com.codeshelf.platform.multitenancy;
 
+import java.sql.SQLException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import lombok.Getter;
 
@@ -18,9 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.Service;
-import com.codeshelf.platform.persistence.ManagerPersistenceService;
-import com.codeshelf.platform.persistence.SchemaManager;
-import com.codeshelf.platform.persistence.SchemaManager.SQLSyntax;
+import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.platform.persistence.SchemaUtil;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -31,8 +29,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 	private static TenantManagerService theInstance = null;
 	
 	ManagerPersistenceService managerPersistenceService;
-	
-	Set<Tenant> initializedTenants = new HashSet<Tenant>();
 	
 	@Getter
 	int defaultShardId = -1;
@@ -197,15 +193,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 		}
 	}
 	
-	private void initTenant(Tenant tenant) {
-		synchronized(tenant) {
-			if(!this.initializedTenants.contains(tenant)) {
-				SchemaManager schemaManager = tenant.getSchemaManager();
-				schemaManager.applySchemaUpdates();
-				this.initializedTenants.add(tenant);
-			}
-		}		
-	}
 	//////////////////////////// Manager Service API ////////////////////////////////
 	
 	@Override
@@ -223,8 +210,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 	
 	@Override
 	public User createUser(Tenant tenant,String username,String password,UserType type) {
-		initTenant(tenant);
-
 		User result=null;
 		
 		try {
@@ -250,28 +235,23 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public void resetTenant(Tenant tenant) {
-		initTenant(tenant);
-		if(tenant.getSchemaManager().getSyntax().equals(SQLSyntax.H2)) {
-			LOGGER.warn("Resetting schema and users for "+tenant.toString());
-			try {
-				Session session = managerPersistenceService.getSessionWithTransaction();
-				tenant = (Tenant) session.load(Tenant.class, tenant.getTenantId());
-				
-				// remove all users
-				for(User u : tenant.getUsers()) {
-					tenant.removeUser(u);
-					session.delete(u);
-				}
+		LOGGER.warn("Resetting schema and users for "+tenant.toString());
+		try {
+			Session session = managerPersistenceService.getSessionWithTransaction();
+			tenant = (Tenant) session.load(Tenant.class, tenant.getTenantId());
+			
+			// remove all users
+			for(User u : tenant.getUsers()) {
+				tenant.removeUser(u);
+				session.delete(u);
+			}
 
-			} finally {
-				managerPersistenceService.commitTransaction();	
-			}        
-			// reset schema
-			SchemaExport se = new SchemaExport(tenant.getSchemaManager().getHibernateConfiguration());
-			se.create(false, true);
-		} else {
-			LOGGER.error("resetTenant requested for non-H2 database");
-		}
+		} finally {
+			managerPersistenceService.commitTransaction();	
+		}        
+		// reset schema
+		SchemaExport se = new SchemaExport(SchemaUtil.getHibernateConfiguration(tenant));
+		se.create(false, true);
 	}
 
 	@Override
@@ -316,9 +296,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
-		if(result != null) {
-			initTenant(result);
-		}
 		return result;
 	}
 
@@ -340,9 +317,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}		
-		if(result != null) {
-			initTenant(result);
-		}
 		return result;
 	}
 
@@ -360,9 +334,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
-		if(result != null) {
-			initTenant(result);
-		}
 		return result;
 	}
 
@@ -378,9 +349,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
-		for(Tenant tenant : results) {
-			initTenant(tenant);
-		}
 		return results;
 	}
 
@@ -388,4 +356,25 @@ public class TenantManagerService extends Service implements ITenantManager {
 	public Tenant getDefaultTenant() {
 		return getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
 	}
+
+	public static void deleteOrdersWis(Tenant tenant) throws SQLException {
+		String schemaName = tenant.getSchemaName();
+		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
+		SchemaUtil.executeSQL(tenant,"UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".container_use");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".work_instruction");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".container");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_location");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_detail");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_header");
+		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_group");
+	}
+
+	public static void dropSchema(Tenant tenant) throws SQLException {
+		String schemaName = tenant.getSchemaName();
+		LOGGER.warn("Deleting tenant schema "+schemaName);
+		SchemaUtil.executeSQL(tenant,"DROP SCHEMA "+schemaName+
+			((SchemaUtil.getSQLSyntax(tenant.getUrl())==PersistenceService.SQLSyntax.H2)?"":" CASCADE"));
+	}
+
 }

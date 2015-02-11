@@ -14,13 +14,13 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.eaio.uuid.UUID;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.eaio.uuid.UUID;
 
 public class WorkInstructionSequencerTest extends EdiTestABC {
 	
@@ -105,7 +105,7 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testBayDistanceSequencer()  throws IOException{
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpFacility("FAC-"+new UUID());
 
@@ -191,14 +191,14 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 				Assert.fail("Invalid WI location: "+wi.getLocation().getLocationId());
 			}
 		}	
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 	
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testBayDistanceTopLastSequencer()  throws IOException{
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpFacility("FAC-"+new UUID());
 
@@ -284,7 +284,7 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 				Assert.fail("Invalid WI location: "+ wi.getLocation().getLocationId());
 			}
 		}
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 }

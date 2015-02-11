@@ -23,13 +23,13 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.CompareNullChecker;
-import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.flyweight.controller.IRadioController;
 
 /**
  * @author jonranstrom

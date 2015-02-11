@@ -188,7 +188,7 @@ public class WorkService implements IApiService {
 			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
-				tenantPersistenceService.beginTenantTransaction();
+				tenantPersistenceService.beginTransaction();
 				boolean sent = false;
 				while (!sent) {
 					try {
@@ -200,7 +200,7 @@ public class WorkService implements IApiService {
 						Thread.sleep(retryDelay);
 					}
 				}
-				tenantPersistenceService.commitTenantTransaction();
+				tenantPersistenceService.commitTransaction();
 			} catch (Exception e) {
 				tenantPersistenceService.rollbackTenantTransaction();
 				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);

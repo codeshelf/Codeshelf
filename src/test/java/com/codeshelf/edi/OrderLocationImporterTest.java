@@ -38,7 +38,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testMultipleOrdersToOneSlot() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getTestFacility("O-testMultipleOrdersToOneSlot", "F-testMultipleOrdersToOneSlot");
 		doLocationSetup(facility);
@@ -49,7 +49,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		assertOrderHasLocation(facility, facility.getOrderHeader("01111"), singleSlot);
 		assertOrderHasLocation(facility, facility.getOrderHeader("02222"), singleSlot);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	/*
@@ -57,7 +57,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testSlottingBeforeOrders() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
 		setupTestLocations(facility);
@@ -105,7 +105,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Make sure we can lookup all of the locations for order O1111. This pretty much proves it.
 		Assert.assertEquals(2, order1111.getOrderLocations().size());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Other use cases?
 		// If you redrop the orders file, do the locations go away?
@@ -120,7 +120,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testSlotUpdate() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getTestFacility("ORG-testSlotUpdate", "F-testSlotUpdate");
 
@@ -134,7 +134,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertEquals(1, order.getOrderLocations().size());
 		assertOrderHasLocation(facility, order, "D-22");
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	/**
@@ -144,7 +144,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testOnlyActiveSlotsReturned() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getTestFacility("ORG-testOnlyActiveSlotsReturned", "F-testOnlyActiveSlotsReturned");
 		setupTestLocations(facility);
@@ -187,12 +187,12 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertEquals(1, orderAfterReduction.getOrderLocations().size());
 		assertOrderHasLocation(facility, orderAfterReduction, "D-22");
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public final void testSlotsResetWhenOrdersUnsorted() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getTestFacility("ORG-testSlotsResetWhenOrdersUnsorted", "F-testSlotsResetWhenOrdersUnsorted");
 
@@ -214,7 +214,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		Assert.assertEquals(1, order02222.getOrderLocations().size());
 		assertOrderHasLocation(facility, order02222, "D-23");
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	/**
@@ -225,7 +225,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
      */	
 	@Test
 	public final void testReduceOrderLocationsWithResetLine() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		
 		Facility facility = getTestFacility("ORG-testReduceOrderLocations", "F-testReduceOrderLocations");
 		
@@ -238,7 +238,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		
 		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	
@@ -250,7 +250,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
      */	
 	@Test
 	public final void testReduceOrderLocationsWithSingleLineUpdate() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getTestFacility("ORG-testReduceOrderLocationsWithSingleLineUpdate", "F-testReduceOrderLocationsWithSingleLineUpdate");
 		
@@ -262,12 +262,12 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		
 		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 		
 	@Test
 	public final void testLocationAliasImporterFromCsvStream() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "orderId,locationId\r\n" //
 				+ "O1111, A1.B1\r\n" //
@@ -409,13 +409,13 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Make sure we blanked out the order location for O4444.
 		Assert.assertEquals(0, order4444.getOrderLocations().size());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	// There was a bug when you tried to import the same interchange twice.
 	public final void testReimportSameData() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "orderId,locationId\r\n" //
 				+ "O1111, A1.B1\r\n" //
@@ -589,7 +589,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		// Make sure we blanked out the order location for O4444.
 		Assert.assertEquals(0, order4444.getOrderLocations().size());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private void setupTestLocations(Facility facility) {

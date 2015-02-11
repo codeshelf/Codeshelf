@@ -34,7 +34,7 @@ public class OptimisticLockExceptionTest {
 
 	@Test
 	public final void optimisticLockExceptionTest() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = new Facility();
 		facility.setFacilityId("OPTIMISTIC-F1");
@@ -64,6 +64,6 @@ public class OptimisticLockExceptionTest {
 		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatus(), order1.getStatus());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 }

@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codeshelf.application.ContextLogging;
-import com.codeshelf.metrics.MetricsGroup;
-import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.AckStateEnum;
@@ -51,6 +49,8 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------

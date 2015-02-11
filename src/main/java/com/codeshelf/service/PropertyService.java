@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.codeshelf.model.dao.PropertyDao;
@@ -12,7 +13,6 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.flyweight.command.ColorEnum;
 
 public class PropertyService implements IApiService {
 

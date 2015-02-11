@@ -8,11 +8,11 @@ import org.atteo.classindex.ClassIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 public class JsonDecoder implements Decoder.Text<MessageABC> {
 

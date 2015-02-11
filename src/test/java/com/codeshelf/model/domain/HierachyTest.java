@@ -14,15 +14,15 @@ public class HierachyTest extends DomainTestABC {
 	@Test
 	public void testHierachy() {
 		// create facility, aisle, bay & tier
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();		
 		Aisle aisle = getDefaultAisle(facility, "A1");
 		Bay bay = getDefaultBay(aisle, "B1");
 		Tier tier1 = getDefaultTier(bay, "T1");
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 				
 		// traverse hierarchy
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		
 		Aisle a1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertNotNull("Aisle is undefined",a1);
@@ -33,6 +33,6 @@ public class HierachyTest extends DomainTestABC {
 		Tier t1 = (Tier) facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull("Tier is undefined",t1);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 }

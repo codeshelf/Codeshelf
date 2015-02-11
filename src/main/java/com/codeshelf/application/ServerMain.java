@@ -14,7 +14,6 @@ import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.EdiProcessor;
@@ -111,6 +110,7 @@ import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.SessionManager;
+import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;

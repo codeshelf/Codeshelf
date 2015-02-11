@@ -46,7 +46,7 @@ public class CheResource {
 		}
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			Che che = Che.DAO.findByPersistentId(mUUIDParam.getUUID());
 			if (che == null) {
 				errors.addErrorUUIDDoesntExist(mUUIDParam.getRawValue(), "che");
@@ -68,7 +68,7 @@ public class CheResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 }

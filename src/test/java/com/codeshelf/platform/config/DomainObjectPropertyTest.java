@@ -26,7 +26,7 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 	public void testPropertyDefaultOperations() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTenantTransaction();
+		beginTransaction();
 
 		Facility facilityx = createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
@@ -36,16 +36,16 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTenantTransaction();
+		commitTransaction();
 
 		// add config type
-		beginTenantTransaction();
+		beginTransaction();
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("test-prop",network.getClassName(),"Default-Value-1","Property-Description-1");
 		cfgServ.store(type1);
-		commitTenantTransaction();
+		commitTransaction();
 
 		// retrieve data, check value and delete it
-		beginTenantTransaction();
+		beginTransaction();
 		types = cfgServ.getPropertyDefaults(network);
 		assertNotNull(types);
 		assertEquals(1, types.size());
@@ -53,24 +53,24 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		assertNotNull(type);
 		assertEquals("Property-Description-1", type.getDescription());
 		cfgServ.delete(type);
-		commitTenantTransaction();
+		commitTransaction();
 		
 		// make sure data is deleted
-		beginTenantTransaction();
+		beginTransaction();
 		types = cfgServ.getPropertyDefaults(network);
 		assertNotNull(types);
 		assertEquals(0, types.size());
 		type = cfgServ.getPropertyDefault(network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTenantTransaction();
+		commitTransaction();
 	}
 	
 	@Test
 	public void testPropertyOperations() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 		// create organization and set one config value
-		beginTenantTransaction();
+		beginTransaction();
 
 		Facility facility = createFacility();
 		// create three property types in the database
@@ -83,42 +83,42 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		
 		DomainObjectProperty config = new DomainObjectProperty(facility,type1,"value");
 		cfgServ.store(config);		
-		commitTenantTransaction();
+		commitTransaction();
 		
 		// retrieve data, check value and delete it
-		beginTenantTransaction();
+		beginTransaction();
 		config = cfgServ.getProperty(facility, "Some-Property-1");
 		assertNotNull(config);
 		assertEquals("value", config.getValue());
 		cfgServ.delete(config);
-		commitTenantTransaction();
+		commitTransaction();
 		
 		// make sure config can't be found
-		beginTenantTransaction();
+		beginTransaction();
 		config = cfgServ.getProperty(facility, "Some-Property-1");
 		assertNull(config);
-		commitTenantTransaction();
+		commitTransaction();
 
 		// add two configs
-		beginTenantTransaction();
+		beginTransaction();
 		DomainObjectProperty config2 = new DomainObjectProperty(facility,type2,"Some-Property-2");
 		DomainObjectProperty config3 = new DomainObjectProperty(facility,type3,"Some-Property-3");
 		cfgServ.store(config2);		
 		cfgServ.store(config3);		
-		commitTenantTransaction();
+		commitTransaction();
 		
-		beginTenantTransaction();
+		beginTransaction();
 		List<DomainObjectProperty> configs = cfgServ.getProperties(facility);
 		assertNotNull(configs);
 		assertEquals(2,configs.size());
-		commitTenantTransaction();
+		commitTransaction();
 	}
 	
 	@Test
 	public void testTypedConvenienceMethods() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTenantTransaction();
+		beginTransaction();
 	
 		Facility facility = createFacility();
 		// create three property types in the database
@@ -136,9 +136,9 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		cfgServ.store(config1);
 		cfgServ.store(config2);
 		cfgServ.store(config3);
-		commitTenantTransaction();
+		commitTransaction();
 
-		beginTenantTransaction();
+		beginTransaction();
 
 		String stringValue = cfgServ.getProperty(facility, "string-config").getValue();
 		assertEquals("value", stringValue);
@@ -149,14 +149,14 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		double doubleValue = cfgServ.getProperty(facility, "double-config").getDoubleValue();
 		assertEquals(123.456,doubleValue,0.00001);
 		
-		commitTenantTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public void testPropertiesWithDefaults() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTenantTransaction();
+		beginTransaction();
 
 		Facility facilityx = createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
@@ -166,20 +166,20 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTenantTransaction();
+		commitTransaction();
 
 		// create three property types in the database
-		beginTenantTransaction();
+		beginTransaction();
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("Some-Property-1",network.getClassName(),"Default-Value","Default-Description");
 		cfgServ.store(type1);
 		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("Some-Property-2",network.getClassName(),"Default-Value","Default-Description");
 		cfgServ.store(type2);
 		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("Some-Property-3",network.getClassName(),"Default-Value","Default-Description");
 		cfgServ.store(type3);
-		commitTenantTransaction();
+		commitTransaction();
 		
 		// check config types
-		beginTenantTransaction();
+		beginTransaction();
 		types = cfgServ.getPropertyDefaults(network);
 		assertNotNull(types);
 		assertEquals(3,types.size());
@@ -201,10 +201,10 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		DomainObjectProperty config = new DomainObjectProperty(network, type2);
 		config.setValue("Modified description");
 		cfgServ.store(config);
-		commitTenantTransaction();
+		commitTransaction();
 
 		// check description
-		beginTenantTransaction();
+		beginTransaction();
 		configs = cfgServ.getPropertiesWithDefaults(network);
 		assertNotNull(configs);
 		assertEquals(3,configs.size());
@@ -216,14 +216,14 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 				assertEquals("Default-Value", c.getValue());				
 			}
 		}
-		commitTenantTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public void testPropertyCascadeDelete() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTenantTransaction();
+		beginTransaction();
 		Facility facilityx = createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
 		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(network);
@@ -232,20 +232,20 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTenantTransaction();
+		commitTransaction();
 
 		// create three property types in the database
-		beginTenantTransaction();
+		beginTransaction();
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("Some-Property-1",network.getClassName(),"Default-Value","Default-Description");
 		cfgServ.store(type1);
 		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("Some-Property-2",network.getClassName(),"Default-Value","Default-Description");
 		cfgServ.store(type2);
 		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("Some-Property-3",network.getClassName(),"Default-Value","Default-Description");
 		cfgServ.store(type3);
-		commitTenantTransaction();
+		commitTransaction();
 		
 		// check defaults
-		beginTenantTransaction();
+		beginTransaction();
 		types = cfgServ.getPropertyDefaults(network);
 		assertNotNull(types);
 		assertEquals(3,types.size());
@@ -267,30 +267,30 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 		DomainObjectProperty config = new DomainObjectProperty(network, type2);
 		config.setValue("Modified description");
 		cfgServ.store(config);
-		commitTenantTransaction();
+		commitTransaction();
 
 		// should be one explicit property
-		beginTenantTransaction();
+		beginTransaction();
 		configs = cfgServ.getProperties(network);
 		assertNotNull(configs);
 		assertEquals(1,configs.size());
 		type2 = cfgServ.getPropertyDefault(network, "Some-Property-2");
 		List<DomainObjectProperty> props = type2.getProperties();
 		assertEquals(1,props.size());
-		commitTenantTransaction();
+		commitTransaction();
 
 		// delete default
-		beginTenantTransaction();
+		beginTransaction();
 		cfgServ.delete(type2);
-		commitTenantTransaction();
+		commitTransaction();
 		
 		// make sure default and instance are deleted
-		beginTenantTransaction();
+		beginTransaction();
 		DomainObjectPropertyDefault deletedDefault = cfgServ.getPropertyDefault(network,type2.getName());
 		assertNull(deletedDefault);
 		DomainObjectProperty deletedProp = cfgServ.getProperty(network, "Some-Property-2");
 		assertNull(deletedProp);
-		commitTenantTransaction();
+		commitTransaction();
 	}
 
 }

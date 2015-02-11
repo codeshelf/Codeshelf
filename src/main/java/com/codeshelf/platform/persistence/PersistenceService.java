@@ -19,28 +19,37 @@ import com.codeshelf.platform.Service;
 import com.codeshelf.platform.ServiceNotInitializedException;
 
 public abstract class PersistenceService extends Service {
-	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
+	public enum SQLSyntax {
+		H2,POSTGRES,OTHER;
+	}
 	
-	abstract public IPersistentCollection getDefaultCollection();
+	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
+	
+	// define behavior of service
+	abstract public IManagedSchema getDefaultCollection(); // default (or single) tenant definition
+	abstract protected void performStartupActions(IManagedSchema collection); // actions to perform after initializing collecttion
+	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // per collection; null if not wanted
 
 	// stores the factories for different collections
-	private Map<IPersistentCollection,SessionFactory> factories = new HashMap<IPersistentCollection, SessionFactory>();
+	private Map<IManagedSchema,SessionFactory> factories = new HashMap<IManagedSchema, SessionFactory>();
 
-	private Map<IPersistentCollection,EventListenerIntegrator> listenerIntegrators = new HashMap<IPersistentCollection, EventListenerIntegrator>();
+	// store the event listener integrators
+	private Map<IManagedSchema,EventListenerIntegrator> listenerIntegrators = new HashMap<IManagedSchema, EventListenerIntegrator>();
 
-	private SessionFactory createTenantSessionFactory(IPersistentCollection collection) {
+	private SessionFactory createSessionFactory(IManagedSchema collection) {
 		if (this.isRunning()==false) {
 			throw new ServiceNotInitializedException();
 		}
         try {
-			LOGGER.info("Creating session factory for "+collection.getShortName());
-			SchemaManager schemaManager = collection.getSchemaManager();
-			Configuration configuration = schemaManager.getHibernateConfiguration();
+			SchemaUtil.applySchemaUpdates(collection);
+
+			LOGGER.info("Creating session factory for "+collection.getSchemaName());
+			Configuration configuration = SchemaUtil.getHibernateConfiguration(collection);
         	
 			// initialize hibernate session factory
         	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder();
-        	EventListenerIntegrator integrator = collection.generateEventListenerIntegrator();
-        	if(integrator != null) {
+        	EventListenerIntegrator integrator = this.generateEventListenerIntegrator();
+        	if(integrator != null) { // use subclass definition to attach optional hibernate integrator
         		bootstrapBuilder.with(integrator);
         		this.listenerIntegrators.put(collection, integrator);
         	}
@@ -49,46 +58,27 @@ public abstract class PersistenceService extends Service {
 	        			.applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
 
-	        // add to factory map
-			this.factories.put(collection, factory);
-	        
 	        // enable statistics
 	        factory.getStatistics().setStatisticsEnabled(true);
 	        			
+	        // add to factory map
+			this.factories.put(collection, factory);
+	        
 	        // sync up property defaults (etc) 
-			Session session = factory.getCurrentSession();
-			collection.performStartupActions(session);
-			if(session.isOpen()) {
-				session.close();
-			}
+			this.performStartupActions(collection);
 
 	        return factory;
         } catch (Exception ex) {
+        	LOGGER.error("SessionFactory creation for "+collection.getSchemaName()+" failed",ex);
         	if(ex instanceof HibernateException) {
         		throw ex;
         	} else {
-            	LOGGER.error("SessionFactory creation for "+collection.getShortName()+" failed",ex);
                 throw new RuntimeException(ex);
         	}
         }
 	}
 
-	private SessionFactory getTenantSessionFactory(IPersistentCollection collection) {
-		SessionFactory fac = this.factories.get(collection);
-		if (fac==null) {
-			fac = createTenantSessionFactory(collection);
-		}
-		return fac;
-	}
-	
-	public final Session getSession(IPersistentCollection collection) {
-		SessionFactory fac = this.getTenantSessionFactory(collection);
-		Session session = fac.getCurrentSession();
-
-		return session;
-	}
-
-	public final static Transaction beginTransaction(Session session) {
+	private final static Transaction beginTransaction(Session session) {
 		Transaction tx = session.getTransaction();
 		if (tx != null) {
 			// check for already active transaction
@@ -100,19 +90,34 @@ public abstract class PersistenceService extends Service {
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
 	}
+
+	private final SessionFactory getSessionFactory(IManagedSchema collection) {
+		SessionFactory fac = this.factories.get(collection);
+		if (fac==null) {
+			fac = createSessionFactory(collection);
+		}
+		return fac;
+	}
 	
-	public final Session getSessionWithTransaction(IPersistentCollection collection) {
+	public final Session getSession(IManagedSchema collection) {
+		SessionFactory fac = this.getSessionFactory(collection);
+		Session session = fac.getCurrentSession();
+
+		return session;
+	}
+
+	public final Session getSessionWithTransaction(IManagedSchema collection) {
 		Session session = getSession(collection);
 		PersistenceService.beginTransaction(session);
 		return session;
 	}
 
-	public final Transaction beginTransaction(IPersistentCollection collection) {
+	public final Transaction beginTransaction(IManagedSchema collection) {
 		Session session = getSession(collection);
 		return PersistenceService.beginTransaction(session);
 	}
 	
-	public final void commitTransaction(IPersistentCollection collection) {
+	public final void commitTransaction(IManagedSchema collection) {
 		Session session = getSession(collection);
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
@@ -122,7 +127,7 @@ public abstract class PersistenceService extends Service {
 		}
 	}
 
-	public final void rollbackTransaction(IPersistentCollection collection) {
+	public final void rollbackTransaction(IManagedSchema collection) {
 		Session session = getSession(collection);
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
@@ -132,7 +137,7 @@ public abstract class PersistenceService extends Service {
 		}
 	}
 
-	public final boolean hasActiveTransaction(IPersistentCollection collection) {
+	public final boolean hasActiveTransaction(IManagedSchema collection) {
 		if(this.isRunning() == false) {
 			return false;
 		} 
@@ -155,7 +160,7 @@ public abstract class PersistenceService extends Service {
 		if(this.isRunning() == false) {
 			return false;
 		} 
-		for(IPersistentCollection collection : this.factories.keySet()) {
+		for(IManagedSchema collection : this.factories.keySet()) {
 			if(hasActiveTransaction(collection)) {
 				return true;
 			}
@@ -177,16 +182,15 @@ public abstract class PersistenceService extends Service {
 		return object;
 	}
 	
-	public EventListenerIntegrator getEventListenerIntegrator(IPersistentCollection collection) {
-		getTenantSessionFactory(collection); // ensure this collection has been initialized
+	private final EventListenerIntegrator getEventListenerIntegrator(IManagedSchema collection) {
+		getSessionFactory(collection); // ensure this collection has been initialized
 		return this.listenerIntegrators.get(collection);
 	}
-	
-	/* Methods for using default collection */
 	public final EventListenerIntegrator getEventListenerIntegrator() {
 		return getEventListenerIntegrator(getDefaultCollection());
 	}
 	
+	/* Methods for using default collection */
 	public final Transaction beginTransaction() {
 		return beginTransaction(getDefaultCollection());
 	}

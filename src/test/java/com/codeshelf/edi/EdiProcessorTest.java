@@ -111,7 +111,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 	@Test
 	public final void ediProcessorTest() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		final class Result {
 			public boolean	processed	= false;
@@ -386,7 +386,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private ICsvOrderImporter generateFailingImporter() {

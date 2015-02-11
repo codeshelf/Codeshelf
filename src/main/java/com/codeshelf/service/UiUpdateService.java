@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.InventorySlottedCsvBean;
 import com.codeshelf.event.EventProducer;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
@@ -24,8 +26,6 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 // --------------------------------------------------------------------------
 /**

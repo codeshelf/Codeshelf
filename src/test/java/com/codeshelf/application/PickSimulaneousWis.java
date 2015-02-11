@@ -19,6 +19,7 @@ import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -31,7 +32,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * @author jon ranstrom
@@ -173,11 +173,11 @@ public class PickSimulaneousWis extends EdiTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPick() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility("PK01");
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		/*  From CD_0043  applied to each pick in aisle A1
@@ -204,17 +204,17 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 
@@ -236,9 +236,9 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
@@ -250,9 +250,9 @@ public class PickSimulaneousWis extends EdiTestABC {
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
 		mWorkService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		theChe = Che.DAO.reload(theChe);
 
@@ -265,18 +265,18 @@ public class PickSimulaneousWis extends EdiTestABC {
 		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value.
 		// Therefore, all 8 will be in the result of starting from D402
 		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D402");
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		mPropertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 8, wiCountAfterScan); // all 8 work instructions from D402 should be there.
 
 		// Check the order of the work instructions. What we are really doing is seeing if the the 2nd, 3rd, and 4th WI have group component in the group and sort.
 		// Answer: no. Not now anyway. So no simultaneous dispatch.
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		WorkInstruction wi1 = WorkInstruction.DAO.reload(wiListAfterScan.get(0));
 		Assert.assertNotNull(wi1);
 		String wi1Order = wi1.getOrderId();
@@ -337,7 +337,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		String wi8Item = wi8.getItemId();
 		Assert.assertEquals("1522", wi7Item);
 		Assert.assertEquals("1522", wi8Item);
-		getTenantPersistenceService().commitTenantTransaction();
+		getTenantPersistenceService().commitTransaction();
 	}
 
 }

@@ -42,7 +42,7 @@ h3 {
 </head>
 <body bgcolor="#FFFFFF" style="height:800px;">
 <%
-	SessionFactory sessionFactory = PersistenceService.getInstance().getCurrentTenantSessionFactory();
+	SessionFactory sessionFactory = PersistenceService.getInstance().getSessionFactory();
 	Statistics s = sessionFactory.getStatistics();
 	String x = s.toString();
 	PrintWriter pw = response.getWriter();

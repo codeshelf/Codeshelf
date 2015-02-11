@@ -22,7 +22,7 @@ public class DomainObjectDefaultsTest extends DomainTestABC {
 	public void ensureRequiredDefaultsExist() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTenantTransaction();
+		beginTransaction();
 		
 		// check LOCAPICK default
 		DomainObjectPropertyDefault value = cfgServ.getPropertyDefault(Facility.class.getSimpleName(), DomainObjectProperty.LOCAPICK);
@@ -34,7 +34,7 @@ public class DomainObjectDefaultsTest extends DomainTestABC {
 		assertNotNull(value);
 		assertEquals(false,value.getBooleanValue());
 		
-		commitTenantTransaction();
+		commitTransaction();
 	}
 	
 }

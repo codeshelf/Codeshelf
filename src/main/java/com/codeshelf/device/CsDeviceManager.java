@@ -23,6 +23,12 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
+import com.codeshelf.flyweight.controller.PacketCaptureListener;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -41,12 +47,6 @@ import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
-import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.flyweight.command.NetworkId;
-import com.codeshelf.flyweight.controller.INetworkDevice;
-import com.codeshelf.flyweight.controller.IRadioController;
-import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
-import com.codeshelf.flyweight.controller.PacketCaptureListener;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 

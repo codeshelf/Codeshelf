@@ -9,8 +9,8 @@ import java.util.UUID;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.eaio.uuid.UUIDGen;
 import com.codeshelf.model.dao.ITypedDao;
+import com.eaio.uuid.UUIDGen;
 
 public class PersistABCTest {
 	

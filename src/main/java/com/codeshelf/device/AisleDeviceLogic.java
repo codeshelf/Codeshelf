@@ -21,7 +21,6 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlLed;
@@ -30,6 +29,7 @@ import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.util.CompareNullChecker;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 

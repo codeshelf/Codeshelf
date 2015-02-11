@@ -17,10 +17,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.codeshelf.filter.Filter;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
@@ -39,6 +35,10 @@ import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DomainTestABC {
@@ -57,7 +57,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 	
 	@Test
 	public void testCreatePathWithCommand() throws JsonGenerationException, JsonMappingException, IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
@@ -94,14 +94,14 @@ public class CreatePathCommandTest extends DomainTestABC {
 		}
 		finally {
 			objectChangeBroadcaster.unregisterDAOListener(viewSession);
-			this.getTenantPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTransaction();
 		}
 
 	}
 	
 	@Test
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
@@ -138,7 +138,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
@@ -24,7 +25,6 @@ import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.UserSession;
-import com.codeshelf.flyweight.command.NetGuid;
 
 public class SiteControllerMessageProcessor extends MessageProcessor {
 

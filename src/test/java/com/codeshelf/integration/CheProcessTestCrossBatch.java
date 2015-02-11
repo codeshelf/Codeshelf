@@ -24,6 +24,8 @@ import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -33,8 +35,6 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * @author jon ranstrom
@@ -251,32 +251,32 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 	@Test
 	public final void testDataSetup() throws IOException {
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 		List<Container> containers = facility.getContainers();
 		int containerCount = containers.size(); // This can throw if  we did not re-get the facility in the new transaction boundary. Just testing that.
 		Assert.assertTrue(containerCount == 7);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
@@ -325,20 +325,20 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public final void crossBatchShorts() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
@@ -392,7 +392,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 

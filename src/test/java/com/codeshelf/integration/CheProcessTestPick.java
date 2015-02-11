@@ -33,6 +33,8 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -52,8 +54,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ThreadUtils;
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
 /**
@@ -472,29 +472,29 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 	@Test
 	public final void testDataSetup() throws IOException {
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
 		List<Container> containers = facility.getContainers();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPick() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -515,9 +515,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		Location locationD403 = facility.findSubLocationById("D403");
@@ -527,9 +527,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
@@ -545,9 +545,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
@@ -564,22 +564,22 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
 		mWorkService.setUpCheContainerFromString(che1, "12345");
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
 		List<WorkInstruction> aList = mWorkService.getWorkInstructions(che1, "");
@@ -589,14 +589,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		for (WorkInstruction workInstruction : aList) {
 			Assert.assertEquals(OrderStatusEnum.INPROGRESS, workInstruction.getOrderDetail().getStatus());
 		}
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility); // set it back
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
 		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(che1, "D402");
@@ -616,9 +616,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction wi2 = wiListAfterScan.get(1);
 		Assert.assertTrue(wi2.isHousekeeping());
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		che1 = Che.DAO.reload(che1);
 		// New from v4. Test our work instruction summarizer
 		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(che1.getPersistentId(),
@@ -638,18 +638,18 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Auto-shorting functionality disabled 02/03/2015
 		//Assert.assertEquals(0, shorts);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPickViaChe() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
@@ -670,9 +670,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		Location locationD403 = facility.findSubLocationById("D403");
@@ -683,9 +683,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -705,9 +705,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
@@ -727,12 +727,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 		// Turn off housekeeping work instructions for next test so as to not confuse the counts
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for order 12345, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -740,10 +740,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupContainer("12345", "1");
 		picker.startAndSkipReview("D403", 8000, 5000);
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -779,27 +779,27 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Case 5: Inappropriate location scan, then normal button press works");
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// perform pick operations
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		List<Container> containers = facility.getContainers();
 		Assert.assertEquals(2, containers.size());
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -865,7 +865,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		LOGGER.info("List the work instructions as the server sees them");
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		logWiList(serverWiList);
 
@@ -877,9 +877,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		wi = WorkInstruction.DAO.reload(wi);
 		//Pos 1 should be the same
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
@@ -901,15 +901,15 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(6, picker.countRemainingJobs());
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		LOGGER.info("Case 3: A happy-day short, with one short-ahead");
 		wi = picker.nextActiveWi();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		wi = WorkInstruction.DAO.reload(wi);
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
@@ -921,7 +921,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), (byte) 1);
 		// the third job is for 1522, which happens to be the one item going to both orders. So it should short-ahead
 		Assert.assertEquals("1522", wi.getItemId());
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
@@ -987,7 +987,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		LOGGER.info("List the work instructions as the server sees them");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
 		// In this, we see 2nd wi is user short, and third a short ahead. Item 1555 should have got an immediate short.
@@ -1033,19 +1033,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		mPropertyService.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testRouteWrap() throws IOException {
 		// create test data
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
@@ -1108,19 +1108,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
 
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 	}
 
 	@Test
 	public final void testRouteWrap2() throws IOException {
 		// Reproduce bug seen during MAT for v10
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpZigzagSlottedFacility();
 		setUpBatchOrdersForZigzag(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
@@ -1186,7 +1186,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -1194,13 +1194,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 	public final void twoChesCrossBatch() throws IOException {
 		// Reproduce DEV-592 seen during MAT for v10
 		// This test case setup similarly to testRouteWrap2
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpZigzagSlottedFacility();
 		setUpBatchOrdersForZigzag(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -1254,7 +1254,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//picker2.simulateCommitByChangingTransaction(this.persistenceService);
 
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -1269,7 +1269,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// set up data for pick scenario
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		UUID facId = facility.getPersistentId();
@@ -1290,9 +1290,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
@@ -1318,9 +1318,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);// Outbound order. No group. Using 5 digit order number and preassigned container number.
 
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Start setting up cart etc
 		List<Container> containers = facility.getContainers();
@@ -1337,7 +1337,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// note no transaction active in test thread here - transactions will be opened by server during simulation
 
@@ -1464,9 +1464,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		mPropertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	//DEV-603 test case
@@ -1474,7 +1474,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 	public final void testCartSetupFeedbackWithPreviouslyShortedWI() throws IOException {
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1494,9 +1494,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 1 has two items in stock (Item 1 and Item 2)
@@ -1514,9 +1514,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -1569,7 +1569,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		mPropertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -1584,11 +1584,11 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// set up data for pick scenario
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		UUID facId = facility.getPersistentId();
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1607,9 +1607,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -1626,15 +1626,15 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		List<Container> containers = facility.getContainers();
 		//Make sure we have 4 orders/containers
@@ -1810,17 +1810,17 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		mPropertyService.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void testContainerReassignmentDuringCHESetup() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
@@ -1838,9 +1838,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -1857,12 +1857,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -1882,21 +1882,21 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
 	@Test
 	public void testCheSetupErrors() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
@@ -1914,9 +1914,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -1933,16 +1933,16 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
@@ -2048,18 +2048,18 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		mPropertyService.restoreHKDefaults(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testScanNewLocation() throws IOException {
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
@@ -2074,9 +2074,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -2093,10 +2093,10 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		picker.login("Picker #1");
@@ -2156,7 +2156,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		assertEquals(wiList.get(2).getItemId(), "3");
 
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 	}
 
 	private void assertWIColor(WorkInstruction wi, Che che) {

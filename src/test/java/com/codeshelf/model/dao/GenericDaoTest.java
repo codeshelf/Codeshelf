@@ -29,7 +29,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testFindByFilter() {
-		this.tenantPersistenceService.beginTenantTransaction();
+		this.tenantPersistenceService.beginTransaction();
 		
 		Facility facility = Facility.createFacility(getDefaultTenant(), "LOADBYFILTERTEST1", "LOADBYFILTER", Point.getZeroPoint());		
 		mFacilityDao.store(facility);
@@ -41,7 +41,7 @@ public class GenericDaoTest extends DAOTestABC {
 		filterParams.add(Restrictions.eq("domainId", "LOADBYFILTERTEST1"));
 		List<Facility> foundOrganizationList = mFacilityDao.findByFilter(filterParams);
 		
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 		Assert.assertEquals(1, foundOrganizationList.size());
 	}
 
@@ -49,16 +49,16 @@ public class GenericDaoTest extends DAOTestABC {
 	public final void testLoadByPersistentId() {
 		// store new organization
 		String desc = "Test-Desc";
-		this.tenantPersistenceService.beginTenantTransaction();
+		this.tenantPersistenceService.beginTransaction();
 		Facility facility = createFacility();
 		facility.setDescription(desc);
 		mFacilityDao.store(facility);
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 
 		// load stored org and check data in a sep transaction
-		this.tenantPersistenceService.beginTenantTransaction();
+		this.tenantPersistenceService.beginTransaction();
 		Facility foundFacility = mFacilityDao.findByPersistentId(facility.getPersistentId());
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 
 		Assert.assertNotNull(foundFacility);
 		Assert.assertEquals(desc, foundFacility.getDescription());
@@ -66,7 +66,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testLoadByPersistentIdList() {
-		this.tenantPersistenceService.beginTenantTransaction();
+		this.tenantPersistenceService.beginTransaction();
 
 		List<UUID> persistentIdList = new ArrayList<UUID>();
 		Facility facility = createFacility();
@@ -82,19 +82,19 @@ public class GenericDaoTest extends DAOTestABC {
 		mFacilityDao.store(facility);
 
 		persistentIdList.add(facility.getPersistentId());
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 
-		this.tenantPersistenceService.beginTenantTransaction();
+		this.tenantPersistenceService.beginTransaction();
 		List<Facility> foundFacilityList = mFacilityDao.findByPersistentIdList(persistentIdList);
 		Assert.assertEquals(2, foundFacilityList.size());
-		this.tenantPersistenceService.commitTenantTransaction();
+		this.tenantPersistenceService.commitTransaction();
 	}
 
 	@Test
 	public final void testFindByDomainIdDontIncludeParentDomainId() {
 		String FACILITY_ID = "FIND-BY-DOMAINID";
 
-		Session session = tenantPersistenceService.getCurrentTenantSession();
+		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 
 		Facility facility1 = createFacility();
@@ -106,7 +106,7 @@ public class GenericDaoTest extends DAOTestABC {
 		String NETWORK_ID = network.getDomainId();
 		t.commit();
 
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		Facility foundFacility = mFacilityDao.findByDomainId(null, FACILITY_ID);
 		Assert.assertNotNull(foundFacility);
@@ -122,7 +122,7 @@ public class GenericDaoTest extends DAOTestABC {
 		String FACILITY2_ID = "FAC2-FIND-BY-DOMAINID-INC";
 		String AISLE_ID = "AISLE-FIND-BY-DOMAINID-INC";
 
-		Session session = tenantPersistenceService.getCurrentTenantSession();
+		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 		Facility facility = Facility.createFacility(getDefaultTenant(),FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
@@ -136,7 +136,7 @@ public class GenericDaoTest extends DAOTestABC {
 		mAisleDao.store(aisle1);
 		t.commit();
 
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		Aisle foundAisle = mAisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNotNull(foundAisle);
@@ -146,7 +146,7 @@ public class GenericDaoTest extends DAOTestABC {
 		mFacilityDao.store(facility);
 		t.commit();
 
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		foundAisle = mAisleDao.findByDomainId(facility, AISLE_ID);
 		Assert.assertNull(foundAisle);
@@ -157,7 +157,7 @@ public class GenericDaoTest extends DAOTestABC {
 	public final void testStoreNew() {
 		// store new organization
 		String desc = "Test-Desc";
-		Session session = tenantPersistenceService.getCurrentTenantSession();
+		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 		Facility facility = createFacility();
 		facility.setDomainId("LOADBY-TEST");
@@ -173,7 +173,7 @@ public class GenericDaoTest extends DAOTestABC {
 		String orgDesc = "org-desc";
 		String updatedDesc = "updated-desc";
 		// create org
-		Session session = tenantPersistenceService.getCurrentTenantSession();
+		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 
 		Assert.assertNotNull(mFacilityDao);
@@ -185,7 +185,7 @@ public class GenericDaoTest extends DAOTestABC {
 		t.commit();
 		
 		// make sure org exists and then update it
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		Facility foundFacility = mFacilityDao.findByPersistentId(id);
 		Assert.assertNotNull(foundFacility);
@@ -197,7 +197,7 @@ public class GenericDaoTest extends DAOTestABC {
 		Assert.assertNotNull(foundFacility);
 		
 		// now reload it again and make sure desc has changed
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		foundFacility = mFacilityDao.findByPersistentId(id);
 		Assert.assertNotNull(foundFacility);
@@ -208,7 +208,7 @@ public class GenericDaoTest extends DAOTestABC {
 	@Test
 	public final void testDelete() {
 		// first transaction - create org
-		Session session = tenantPersistenceService.getCurrentTenantSession();
+		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 		Facility facility = new Facility();
 		facility.setDomainId("DELETE-TEST");
@@ -218,7 +218,7 @@ public class GenericDaoTest extends DAOTestABC {
 		t.commit();
 		
 		// make sure org exists and then delete it
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		Facility foundFacility= mFacilityDao.findByPersistentId(id);
 		Assert.assertNotNull(foundFacility);
@@ -227,7 +227,7 @@ public class GenericDaoTest extends DAOTestABC {
 		Assert.assertNotNull(foundFacility);
 		
 		// now try to reload it again
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		foundFacility= mFacilityDao.findByPersistentId(id);
 		Assert.assertNull(foundFacility);
@@ -236,7 +236,7 @@ public class GenericDaoTest extends DAOTestABC {
 
 	@Test
 	public final void testGetAll() {
-		Session session = tenantPersistenceService.getCurrentTenantSession();
+		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 
 		Facility facility= new Facility();
@@ -250,7 +250,7 @@ public class GenericDaoTest extends DAOTestABC {
 		mFacilityDao.store(facility);
 		t.commit();
 		
-		session = tenantPersistenceService.getCurrentTenantSession();
+		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
 		// This is not a great test - all these DB tests run in parallel against the same DB.
 		// There's no way to know how many items getAll() will return, so we just look for the ones we put in.

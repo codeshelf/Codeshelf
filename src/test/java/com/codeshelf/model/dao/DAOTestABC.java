@@ -256,9 +256,9 @@ public abstract class DAOTestABC {
 		WorkArea.DAO = mWorkAreaDao;
 		
 		// make sure default properties are in the database
-		tenantPersistenceService.beginTenantTransaction();
+		tenantPersistenceService.beginTransaction();
         PropertyDao.getInstance().syncPropertyDefaults();
-        tenantPersistenceService.commitTenantTransaction();
+        tenantPersistenceService.commitTransaction();
 			
 		doBefore();
 	}

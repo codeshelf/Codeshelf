@@ -42,14 +42,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	public void doBefore() {
 		this.mWorkService = new WorkService().start();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String facilityName = "F-" + testName.getMethodName();
 		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),facilityName, "TEST", Point.getZeroPoint());
 		
 		facilityId = facility.getPersistentId();
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private ItemMaster createItemMaster(final String inItemMasterId, final String inUom, final Facility inFacility) {
@@ -83,7 +83,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testMissingItemMaster() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
@@ -96,12 +96,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testEmptyItemMaster() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -113,12 +113,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		int count = importCsvString(facility, csvString, new Timestamp(System.currentTimeMillis()));
 		Assert.assertEquals(1,  count);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testInvalidQuantity() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
 		String[] invalidQuantities = new String[]{"0", "-1", "NaN", "1.1"};
@@ -137,12 +137,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			Assert.assertTrue("Did not contain quantity: " + csvString, csvString.contains(invalidQuantity));// sanity check
 		}
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testCrossBatchImporter() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		Assert.assertEquals(0, facility.countCrossOrders().mTotalHeaders);
@@ -188,12 +188,12 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testCrossBatchOrderGroups() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -220,14 +220,14 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		OrderHeader order = group.getOrderHeader(OrderHeader.computeCrossOrderId("C333", ediProcessTime));
 		Assert.assertNotNull(order);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
 		TenantPersistenceService tenantPersistenceService=this.getTenantPersistenceService();
-		tenantPersistenceService.beginTenantTransaction();
+		tenantPersistenceService.beginTransaction();
 
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		
@@ -298,13 +298,13 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
 	@Test
 	public final void testResendCrossBatchAddItem() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -365,13 +365,13 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 500);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
 	@Test
 	public final void testResendCrossBatchAlterItems() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C999,I999.1,100,ea\r\n" //
@@ -415,7 +415,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 999);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
@@ -424,7 +424,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	 */
 	@Test
 	public final void testSendOrdersAfterCrossBatch() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ ",C111,I111.1,100,ea\r\n" //
@@ -487,13 +487,13 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		// Make sure there's four order items.
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
 	@Test
 	public final void testCrossBatchGroupArchives() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		// Good eggs has group IDs. Make sure the behavior on reread is similar to above
 		String csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -577,13 +577,13 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts3.mActiveDetails == 5);
 		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 
 	@Test
 	public final void testCrossBatchDoubleImporter() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
 
@@ -607,8 +607,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		int count = importCsvString(facility, firstCsvString, firstEdiProcessTime);
 		Assert.assertEquals(6,  count);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		
 		// Make sure we created an order with the container's ID.
@@ -682,6 +682,6 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		Assert.assertTrue(theCounts2.mActiveDetails == 12);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 4);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 }

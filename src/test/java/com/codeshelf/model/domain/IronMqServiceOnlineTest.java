@@ -58,7 +58,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void networkConnectionTest() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		
 		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 		Facility facility = facilityGenerator.generateValid();
@@ -84,13 +84,13 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 		while(messages.length > 0);
 		Assert.assertTrue("Did not find work instruction message: " + message, found);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badTokenTest() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 		Facility facility = facilityGenerator.generateValid();
@@ -108,12 +108,12 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 			e.printStackTrace();
 		}
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badProjectId() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
 		Facility facility = facilityGenerator.generateValid();
@@ -131,7 +131,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 			e.printStackTrace();
 
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 }
 	}
 

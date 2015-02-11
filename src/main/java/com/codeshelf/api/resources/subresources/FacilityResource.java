@@ -48,14 +48,14 @@ public class FacilityResource {
 		}
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			ProductivitySummaryList summary = orderService.getProductivitySummary(mUUIDParam.getUUID(), false);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 
@@ -69,7 +69,7 @@ public class FacilityResource {
 		}
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
 			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
 			return BaseResponse.buildResponse(summary);
@@ -77,7 +77,7 @@ public class FacilityResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 
@@ -91,14 +91,14 @@ public class FacilityResource {
 		}
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			List<WorkInstruction> instructions = orderService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
 			return BaseResponse.buildResponse(instructions);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 
@@ -106,7 +106,7 @@ public class FacilityResource {
 	@Path("filters")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
-		persistence.beginTenantTransaction();
+		persistence.beginTransaction();
 		Set<String> filterNames = orderService.getFilterNames();
 		return BaseResponse.buildResponse(filterNames);
 
@@ -121,7 +121,7 @@ public class FacilityResource {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(aggregate, filterName);
 
 			return BaseResponse.buildResponse(summary);
@@ -129,7 +129,7 @@ public class FacilityResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 }

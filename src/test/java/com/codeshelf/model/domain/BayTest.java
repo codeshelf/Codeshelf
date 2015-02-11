@@ -17,7 +17,7 @@ public class BayTest extends DomainTestABC {
 	
 	@Test
 	public void testOrderingOfTiers() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = getDefaultFacility();
 		Aisle aisle = getDefaultAisle(facility, "A1");
@@ -31,6 +31,6 @@ public class BayTest extends DomainTestABC {
 		List<Location> locations = bay.getSubLocationsInWorkingOrder();
 		Assert.assertEquals(ImmutableList.of(tier3, tier2, tier1), ImmutableList.copyOf(locations));
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 }

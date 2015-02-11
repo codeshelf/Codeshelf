@@ -5,12 +5,12 @@ import java.util.UUID;
 
 import lombok.Getter;
 
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 
 @Deprecated
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")

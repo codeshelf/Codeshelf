@@ -29,7 +29,7 @@ public class ObjectPropertyCommandTest extends DomainTestABC {
 	public void testObjectPropertyCommandUsingDefault() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTenantTransaction();
+		beginTransaction();
 		Facility facilityx=createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
 		
@@ -39,16 +39,16 @@ public class ObjectPropertyCommandTest extends DomainTestABC {
 		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTenantTransaction();
+		commitTransaction();
 
 		// add config type
-		beginTenantTransaction();
+		beginTransaction();
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("test-prop",network.getClassName(),"Default-Value-1","Property-Description-1");
 		cfgServ.store(type1);
-		commitTenantTransaction();
+		commitTransaction();
 
 		// retrieve property via command
-		beginTenantTransaction();
+		beginTransaction();
 		ObjectPropertiesRequest req =  new ObjectPropertiesRequest();
 		req.setClassName(network.getClassName());
 		req.setPersistentId(network.getPersistentId().toString());
@@ -71,6 +71,6 @@ public class ObjectPropertyCommandTest extends DomainTestABC {
 		assertEquals(oneResult.get("description"), "Property-Description-1");
 
 		
-		commitTenantTransaction();
+		commitTransaction();
 	}	
 }

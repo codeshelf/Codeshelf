@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 
 import org.junit.Assert;
 
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -18,7 +19,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.flyweight.command.NetGuid;
 
 public class VirtualSlottedFacilityGenerator {
 	Tenant tenant;

@@ -18,6 +18,10 @@ import com.codeshelf.application.WebApiServer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.EdiTestABC;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.TcpServerInterface;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
@@ -32,10 +36,6 @@ import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.SessionManager;
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.flyweight.controller.IGatewayInterface;
-import com.codeshelf.flyweight.controller.TcpServerInterface;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -115,7 +115,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
 		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		// ensure facility, network exist in database before booting up site controller
 		Facility facility = mFacilityDao.findByDomainId(null, facilityId);
 		if (facility==null) {
@@ -140,7 +140,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		che2.setColor(ColorEnum.WHITE);
 		this.che2PersistentId = che2.getPersistentId();
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		apiServer = new WebApiServer();
 		apiServer.start(Integer.getInteger("api.port"), null, null, false, "./");

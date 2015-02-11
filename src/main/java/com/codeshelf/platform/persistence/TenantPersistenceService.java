@@ -2,12 +2,13 @@ package com.codeshelf.platform.persistence;
 
 import java.lang.reflect.Field;
 
-import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.inject.Singleton;
@@ -34,6 +35,18 @@ public class TenantPersistenceService extends PersistenceService {
 		return theInstance;
 	}
 
+	@Override
+	public IManagedSchema getDefaultCollection() {
+		return TenantManagerService.getInstance().getDefaultTenant();
+	}
+
+	@Override
+	protected void performStartupActions(IManagedSchema collection) {
+		Transaction t = this.beginTransaction(collection);
+		PropertyDao.getInstance().syncPropertyDefaults();
+        t.commit();		
+	}
+	
 	@SuppressWarnings("unchecked")
 	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
 		if (classObject==null) {
@@ -55,19 +68,8 @@ public class TenantPersistenceService extends PersistenceService {
 		return null;
 	}
 
-	public IPersistentCollection getDefaultCollection() {
-		return TenantManagerService.getInstance().getDefaultTenant();
-	}
-
-	public Transaction beginTenantTransaction() {
-		return this.beginTransaction();
-	}
-	
-	public void commitTenantTransaction() {
-		this.commitTransaction();
-	}
-	
-	public Session getCurrentTenantSession() {
-		return this.getSession();
+	@Override
+	protected EventListenerIntegrator generateEventListenerIntegrator() {
+		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
 	}
 }

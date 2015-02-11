@@ -41,7 +41,7 @@ public class FacilitiesResource {
 	public Response getAllFacilities() {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			List<Facility> facilities = Facility.DAO.getAll();
 			List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
 			return BaseResponse.buildResponse(facilitiesShort);
@@ -49,7 +49,7 @@ public class FacilitiesResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 }

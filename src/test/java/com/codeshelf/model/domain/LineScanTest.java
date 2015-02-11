@@ -38,7 +38,7 @@ public class LineScanTest extends EdiTestABC {
 
 	@Before
 	public void initTest() throws IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		importer = createOrderImporter();
 		Facility facility = createFacility(); 
 		ServiceFactory serviceFactory = new ServiceFactory(mService, null, null, null);
@@ -52,12 +52,12 @@ public class LineScanTest extends EdiTestABC {
 				+ "\r\n11,11,10.1,SKU0005,Mars Bars,20,EA,,pick,D36,10";
 		importCsvString(facility, csvString);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public void testGetWorkInstructionDirect() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.DAO.getAll().get(0);
 
 		GetOrderDetailWorkResponse response = mService.getWorkInstructionsForOrderDetail(che, "11.1");
@@ -67,12 +67,12 @@ public class LineScanTest extends EdiTestABC {
 		Assert.assertEquals(instruction.getItemId(), "SKU0003");
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public void testGetWorkInstruction() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.DAO.getAll().get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
@@ -86,13 +86,13 @@ public class LineScanTest extends EdiTestABC {
 		Assert.assertEquals(instruction.getItemId(), "SKU0003");
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	
 	@Test
 	public void testGetWorkInstructionDuplicate() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.DAO.getAll().get(0);
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "10.1");
@@ -101,13 +101,13 @@ public class LineScanTest extends EdiTestABC {
 		} catch (MethodArgumentException e) {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
 		} finally {
-			this.getTenantPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTransaction();
 		}
 	}
 
 	@Test
 	public void testGetWorkInstructionCompletedInstruction() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.DAO.getAll().get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
@@ -125,12 +125,12 @@ public class LineScanTest extends EdiTestABC {
 		response = mService.getWorkInstructionsForOrderDetail(che, "11.1"); 
 		instructions = response.getWorkInstructions();
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public void testGetWorkInstructionBadDetailId() throws Exception {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.DAO.getAll().get(0);
 		
 		try {
@@ -140,7 +140,7 @@ public class LineScanTest extends EdiTestABC {
 		} catch (MethodArgumentException e) {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {

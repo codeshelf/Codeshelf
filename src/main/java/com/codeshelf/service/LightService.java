@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -31,7 +32,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.server.SessionManager;
-import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;

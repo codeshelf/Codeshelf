@@ -14,9 +14,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
@@ -33,13 +30,16 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
 public class FacilityOutlineTest extends DomainTestABC {
 
 	@Test
 	public final void testCreateVertex() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		this.mFacilityDao.store(facility);
@@ -86,12 +86,12 @@ public class FacilityOutlineTest extends DomainTestABC {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		
@@ -131,6 +131,6 @@ public class FacilityOutlineTest extends DomainTestABC {
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 }

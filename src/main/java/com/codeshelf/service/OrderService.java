@@ -56,7 +56,7 @@ public class OrderService implements IApiService {
 	private StatusSummary  orderSummary(String filterName) {
 		
 		String hqlWhereString = generateFilters().get(filterName);
-		Session session = persistenceService.getCurrentTenantSession();
+		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select oh from OrderHeader oh where " + hqlWhereString);
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> orderHeaders = (List<OrderHeader>) query.list();
@@ -69,7 +69,7 @@ public class OrderService implements IApiService {
 	
 	private StatusSummary  orderDetailSummary(String filterName) {
 		String hqlWhereString = generateFilters().get(filterName);
-		Session session = persistenceService.getCurrentTenantSession();
+		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select od from OrderDetail od join od.parent oh where od.active = true and " + hqlWhereString);
 		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
@@ -87,7 +87,7 @@ public class OrderService implements IApiService {
 		//TODO temp copy
 		String fromClause = "select od from OrderDetail od join od.parent oh join od.uomMaster uom where uom.domainId in ('CS') and ";
 		String hqlWhereString = generateFilters().get(filterName);
-		Session session = persistenceService.getCurrentTenantSession();
+		Session session = persistenceService.getSession();
 		Query query = session.createQuery(fromClause + hqlWhereString);
 		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
@@ -105,7 +105,7 @@ public class OrderService implements IApiService {
 		if (facility == null) {
 			throw new NotFoundException("Facility " + facilityId + " does not exist");
 		}
-		Session session = persistenceService.getCurrentTenantSession();
+		Session session = persistenceService.getSession();
 		List<Object[]> picksPerHour = null;
 		if (!skipSQL) {
 			String schema = System.getProperty("db.schemaname", "codeshelf");
@@ -199,7 +199,7 @@ public class OrderService implements IApiService {
 	 */
 	private Map<String, String> generateShipperFilters() {
 		Map<String, String> shipperFilters = new HashMap<>();
-		Session session = persistenceService.getCurrentTenantSession();
+		Session session = persistenceService.getSession();
 		@SuppressWarnings("unchecked")
 		List<String> shipperIds = (List<String>) session.createQuery("select distinct oh.shipperId from OrderHeader oh where active = true").list();
 		for (String shipperId : shipperIds) {

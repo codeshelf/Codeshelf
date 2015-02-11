@@ -147,7 +147,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		LOGGER.trace("Begin EDI process.");
 		final Timer.Context context = ediProcessingTimer.time();
 		try {
-			this.getTenantPersistenceService().beginTenantTransaction();
+			this.getTenantPersistenceService().beginTransaction();
 
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
@@ -171,7 +171,7 @@ public final class EdiProcessor implements IEdiProcessor {
 					}
 				}
 			}
-			this.getTenantPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().commitTransaction();
 			completed = true;
 		} catch (RuntimeException e) {
 			this.getTenantPersistenceService().rollbackTenantTransaction();

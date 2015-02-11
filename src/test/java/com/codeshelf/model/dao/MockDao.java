@@ -20,9 +20,9 @@ import javax.persistence.Column;
 import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.criterion.Criterion;
 
-import com.eaio.uuid.UUIDGen;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;
+import com.eaio.uuid.UUIDGen;
 
 /**
  * @author jeffw

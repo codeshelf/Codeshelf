@@ -16,13 +16,13 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.WorkInstructionStatusEnum;
-import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.WorkInstruction;
 
 /**
  * @author jonranstrom

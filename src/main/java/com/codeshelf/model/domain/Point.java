@@ -15,10 +15,10 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
 
+import com.codeshelf.model.PositionTypeEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw

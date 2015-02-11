@@ -24,8 +24,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -35,6 +33,8 @@ import com.codeshelf.util.StringUIConverter;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;

@@ -10,9 +10,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.codeshelf.application.Configuration;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.WorkInstructionCount;
@@ -23,6 +20,9 @@ import com.codeshelf.ws.jetty.io.ObjectMixIn;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonDecoderTest  {
 

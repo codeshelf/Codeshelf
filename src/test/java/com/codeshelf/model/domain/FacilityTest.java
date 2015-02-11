@@ -10,9 +10,9 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.model.PositionTypeEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw
@@ -22,20 +22,20 @@ public class FacilityTest extends DomainTestABC {
 	
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		Tier nullParent = facility.getParentAtLevel(Tier.class);
 		Assert.assertNull(nullParent);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	/**
@@ -43,18 +43,18 @@ public class FacilityTest extends DomainTestABC {
 	 */
 	@Test
 	public void testSerializationOfExtraFields() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));
 		Assert.assertNotNull(objectNode.findValue("hasCrossBatchOrders"));
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public void testVerticesDeletion() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		facility.setDomainId("Vertex Test Facility");
 		UUID id = facility.getPersistentId();
@@ -63,17 +63,17 @@ public class FacilityTest extends DomainTestABC {
 		createAndSaveVertex(facility, "V02", 1, -120d, 30d);
 		createAndSaveVertex(facility, "V03", 2, -119.999d, 29.999d);
 		createAndSaveVertex(facility, "V04", 2, -120d, 29.999d);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(id);
 		facility.removeAllVertices();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(id);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 

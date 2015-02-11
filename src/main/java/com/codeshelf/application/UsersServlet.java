@@ -38,12 +38,12 @@ public class UsersServlet extends HttpServlet {
         out.println("<html><head><title>service control</title></head><body><h4>user management</h4>");
         
         /*
-        PersistenceService.getInstance().beginTenantTransaction();
+        PersistenceService.getInstance().beginTransaction();
         List<User> users = User.DAO.getAll();
         for(User u : users) {
             out.println("<form name=stop action='#' method=post><input type=hidden name='action' value='stop' /></form>");
         }
-        PersistenceService.getInstance().commitTenantTransaction();
+        PersistenceService.getInstance().commitTransaction();
         */
         
         String schema = req.getParameter("schema");

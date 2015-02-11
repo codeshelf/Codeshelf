@@ -20,13 +20,6 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 
-import com.codeshelf.generators.FacilityGenerator;
-import com.codeshelf.generators.WorkInstructionGenerator;
-import com.codeshelf.model.WorkInstructionCount;
-import com.codeshelf.model.domain.DomainTestABC;
-import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.NetAddress;
@@ -34,6 +27,13 @@ import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
+import com.codeshelf.generators.FacilityGenerator;
+import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -49,18 +49,18 @@ public class CheDeviceLogicTest extends DomainTestABC {
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
-		this.getTenantPersistenceService().commitTenantTransaction(); // end of transaction for this test
+		this.getTenantPersistenceService().commitTransaction(); // end of transaction for this test
 		
 		IRadioController radioController = mock(IRadioController.class);
 		
@@ -104,17 +104,17 @@ public class CheDeviceLogicTest extends DomainTestABC {
 	@SuppressWarnings("unused")
 	@Test
 	public void showsNoWorkIfNothingAheadOfLocation() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		int chePosition = 1;
 		
 		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
 		

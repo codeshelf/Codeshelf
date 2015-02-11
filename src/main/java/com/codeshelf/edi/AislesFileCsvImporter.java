@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
@@ -41,7 +42,6 @@ import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

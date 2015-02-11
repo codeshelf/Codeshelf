@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.ThreadUtils;
-import com.codeshelf.flyweight.command.CommandControlButton;
-import com.codeshelf.flyweight.command.NetGuid;
 
 public class PickSimulator {
 
@@ -101,8 +101,8 @@ public class PickSimulator {
 			if (inService == null || !inService.hasActiveTransaction()) {
 				LOGGER.error("bad call to simulateCommitByChangingTransaction");
 			} else {
-				inService.commitTenantTransaction();
-				inService.beginTenantTransaction();
+				inService.commitTransaction();
+				inService.beginTransaction();
 			}
 		}
 	*/

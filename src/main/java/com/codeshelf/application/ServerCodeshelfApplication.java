@@ -100,8 +100,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		// this.getPersistenceService().start();
 
 		try {
-			this.getTenantPersistenceService().beginTenantTransaction();
-			this.getTenantPersistenceService().commitTenantTransaction();
+			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().commitTransaction();
 		} catch (HibernateException e) {
 			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.", e);
 			Thread.sleep(3000);
@@ -144,6 +144,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mPickDocumentGenerator.stopProcessor();
 		this.stopApiServer();
 		this.tenantPersistenceService.stop();
+		TenantManagerService.getInstance().disconnect();
 		LOGGER.info("Application terminated normally");
 	}
 

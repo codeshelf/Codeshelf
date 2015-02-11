@@ -39,7 +39,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	}
 	
 	public DomainObjectPropertyDefault store(DomainObjectPropertyDefault propertyDefault) {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		session.saveOrUpdate(propertyDefault);
 		LOGGER.debug("Config type stored: "+propertyDefault);
 		return propertyDefault;
@@ -49,14 +49,14 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	 * Deletes property default value for a specific tenant.
 	 */
 	public void delete(DomainObjectPropertyDefault propertyDefault) {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		session.delete(propertyDefault);
 		LOGGER.debug("Property default deleted: "+propertyDefault);
 	}
 		
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectPropertyDefault> getPropertyDefaults(IDomainObject object) {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		String queryString = "from DomainObjectPropertyDefault where objectType = :objectType";
         Query query = session.createQuery(queryString);
         query.setParameter("objectType", object.getClassName());
@@ -69,7 +69,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	}
 	
 	public DomainObjectPropertyDefault getPropertyDefault(String objectType, String name) {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		String queryString = "from DomainObjectPropertyDefault where objectType = :objectType and name = :name";
         Query query = session.createQuery(queryString);
         query.setParameter("objectType", objectType);
@@ -83,7 +83,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	 */
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getProperties(IDomainObject object) {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.objectId = :objectId ";
 		Query query = session.createQuery(queryString);
         query.setParameter("objectId", object.getPersistentId());
@@ -131,7 +131,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	 */
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectProperty> getAllProperties() {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		String queryString = "from DomainObjectProperty";
         Query query = session.createQuery(queryString);
         List<DomainObjectProperty> props = query.list();
@@ -142,7 +142,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	 * Get object if it exists. Often it will not.
 	 */
 	public DomainObjectProperty getProperty(IDomainObject object, String name) {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
         Query query = session.createQuery(queryString);
         query.setParameter("objectId", object.getPersistentId());
@@ -176,7 +176,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 
 	@SuppressWarnings("unchecked")
 	public List<DomainObjectPropertyDefault> getAllDefaults() {
-		Session session = TenantPersistenceService.getInstance().getCurrentTenantSession();
+		Session session = TenantPersistenceService.getInstance().getSession();
 		String queryString = "from DomainObjectPropertyDefault";
         Query query = session.createQuery(queryString);
         List<DomainObjectPropertyDefault> props = query.list();

@@ -21,6 +21,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -37,7 +38,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ThreadUtils;
-import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * @author jon ranstrom
@@ -287,12 +287,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	@Test
 	public final void testLineScanLogin() throws IOException {
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
@@ -312,7 +312,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -372,12 +372,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	@Test
 	public final void testLineScanProcessExceptions() throws IOException {
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
@@ -397,7 +397,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -489,12 +489,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	@Test
 	public final void testLineScanShorts() throws IOException {
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
@@ -506,7 +506,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -637,16 +637,16 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	@Test
 	public final void testSetupOrderUnmodeledLocation() throws IOException {
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
@@ -669,11 +669,11 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("2a: Import the orders file again, but with containerId");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 		setUpLineScanOrdersWithCntr(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 		
@@ -694,7 +694,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 		
 		LOGGER.info("3a: Set LOCAPICK, then import the orders file again, with containerId");
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
@@ -704,7 +704,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		}
 		setUpLineScanOrdersWithCntr(facility);
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
@@ -722,11 +722,11 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		Assert.assertEquals(3, serverWiList.size());
 		logWiList(serverWiList);
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 
 		// logout back to idle state.

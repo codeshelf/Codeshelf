@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -29,7 +30,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.SequenceNumber;
-import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
 
 /**

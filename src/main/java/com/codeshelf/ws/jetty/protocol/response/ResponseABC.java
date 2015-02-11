@@ -4,8 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 //@IndexSubclasses
 //@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)

@@ -61,7 +61,7 @@ public class TestingResource {
 		}
 
 		try {
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			Facility facility = Facility.DAO.findByPersistentId(facilityUUID.getUUID());
 			if (facility == null) {
 				errors.addErrorUUIDDoesntExist(facilityUUID.getRawValue(), "facility");;
@@ -71,12 +71,12 @@ public class TestingResource {
 			long order1 = new Date().getTime() / 1000;
 			long order2 = order1 + 1;
 			createOrders(facility, order1, order2);
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 			
 			System.out.println("Orders created");
 			Thread.sleep(6000);
 			
-			persistence.beginTenantTransaction();
+			persistence.beginTransaction();
 			List<Che> ches = Che.DAO.getAll();
 			if (ches == null || ches.isEmpty()){
 				errors.addError("Ensure that facility " + facilityUUID.getRawValue() + " has, at least, one che");
@@ -90,12 +90,12 @@ public class TestingResource {
 			WorkList workList = workService.computeWorkInstructions(che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
 			System.out.println("*****************Got " + instructions.size() + " instructions");
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 			System.out.println("Assigned to CHE");
 			
 			int i = 0;
 			for(WorkInstruction instruction : instructions) {
-				persistence.beginTenantTransaction();
+				persistence.beginTransaction();
 				instruction.setActualQuantity(instruction.getPlanQuantity());
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 				instruction.setType(WorkInstructionTypeEnum.ACTUAL);
@@ -107,14 +107,14 @@ public class TestingResource {
 				workService.completeWorkInstruction(che.getPersistentId(), instruction);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
-				persistence.commitTenantTransaction();
+				persistence.commitTransaction();
 			}
 			return BaseResponse.buildResponse("Test orders created and ran.");
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTenantTransaction();
+			persistence.commitTransaction();
 		}
 	}
 	

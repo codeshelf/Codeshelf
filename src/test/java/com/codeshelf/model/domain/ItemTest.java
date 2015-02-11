@@ -19,7 +19,7 @@ public class ItemTest extends DomainTestABC {
 	
 	@Test
 	public void testItemWithLocationNoPath() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = createFacility();
 		Item item = new Item();
@@ -32,12 +32,12 @@ public class ItemTest extends DomainTestABC {
 		String result = item.getPosAlongPathui();
 		Assert.assertEquals("0", result);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
 	public void testItemWithNullCmFromLeft() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Facility anyLocation = createFacility();
 		Item item = new Item();
@@ -50,17 +50,17 @@ public class ItemTest extends DomainTestABC {
 		item.setCmFromLeftui(" "); //allowed
 		Assert.assertNull(item.getPosAlongPath());
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 
 	}
 	
 	@Test
 	public void testCriteriaByTier() {
-		this.getTenantPersistenceService().beginTenantTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		Item.DAO.findByFilterAndClass("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()), Item.class);
 		
-		this.getTenantPersistenceService().commitTenantTransaction();
+		this.getTenantPersistenceService().commitTransaction();
 		
 	}
 

@@ -7,8 +7,8 @@ package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.codeshelf.model.dao.ITypedDao;
+import com.fasterxml.jackson.annotation.JsonGetter;
 
 /**
  * @author jeffw
