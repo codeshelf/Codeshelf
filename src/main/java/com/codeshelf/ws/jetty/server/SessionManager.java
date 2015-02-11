@@ -47,10 +47,11 @@ public class SessionManager {
 		return theSessionManager;
 	}
 
-	public synchronized void sessionStarted(Session session) {
+	public synchronized UserSession sessionStarted(Session session) {
 		String sessionId = session.getId();
-		if (!activeSessions.containsKey(sessionId)) {
-			UserSession csSession = new UserSession(session, sharedExecutor);
+		UserSession csSession = activeSessions.get(sessionId);
+		if (csSession == null) {
+			csSession = new UserSession(session, sharedExecutor);
 			csSession.setSessionId(sessionId);
 			activeSessions.put(sessionId, csSession);
 			LOGGER.info("Session "+session.getId()+" started");
@@ -60,6 +61,7 @@ public class SessionManager {
 		else {
 			LOGGER.warn("Unable to register session: Session with ID "+sessionId+" already registered");
 		}
+		return csSession;
 	}
 
 	public synchronized void sessionEnded(Session session) {
@@ -84,7 +86,7 @@ public class SessionManager {
 		return this.activeSessions.get(sessionId);
 	}
 	
-	public UserSession getSession(User user) {
+	private UserSession getSession(User user) {
 		for (UserSession session : this.getSessions()) {
 			if(session.getUser().equals(user)) {
 				return session;
@@ -93,16 +95,6 @@ public class SessionManager {
 		return null;
 	}
 	
-	public Set<UserSession> getSessions(Set<User> users) {
-		Set<UserSession> userSessions = new HashSet<UserSession>();
-		for (UserSession session : this.getSessions()) {
-			if(users.contains(session.getUser())) {
-				userSessions.add(session);
-			}
-		}
-		return userSessions;
-	}
-
 	public final Collection<UserSession> getSessions() {
 		return this.activeSessions.values();
 	}
