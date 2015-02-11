@@ -74,7 +74,7 @@ public abstract class Schema {
 	
 	void applyLiquibaseSchemaUpdates() {
 		if(getSQLSyntax() != PersistenceService.SQLSyntax.POSTGRES) {
-			PersistenceService.LOGGER.warn("Will not attempt to apply updates to non-Postgres schema");
+			PersistenceService.LOGGER.warn("Will not attempt to apply Liquibase updates to non-Postgres schema");
 			return;
 		}
 	

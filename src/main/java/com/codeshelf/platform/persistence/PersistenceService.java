@@ -15,6 +15,7 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.platform.Service;
 import com.codeshelf.platform.ServiceNotInitializedException;
 
@@ -27,8 +28,8 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 	
 	// define behavior of service
 	abstract public SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
-	abstract protected void performStartupActions(SCHEMA_TYPE schema); // actions to perform after initializing collecttion
-	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // per schema; null if not wanted
+	abstract protected void performStartupActions(SCHEMA_TYPE schema); // actions to perform after initializing schema
+	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // can be null
 
 	// stores the factories for different schemas
 	private Map<SCHEMA_TYPE,SessionFactory> factories = new HashMap<SCHEMA_TYPE, SessionFactory>();

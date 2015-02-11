@@ -12,9 +12,7 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.google.inject.Singleton;
 
-@Singleton
 public class TenantPersistenceService extends PersistenceService<Tenant> {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
@@ -48,6 +46,11 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
         t.commit();		
 	}
 	
+	@Override
+	protected EventListenerIntegrator generateEventListenerIntegrator() {
+		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
+	}
+
 	@SuppressWarnings("unchecked")
 	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
 		if (classObject==null) {
@@ -67,10 +70,5 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 		}
 		// not a domain object
 		return null;
-	}
-
-	@Override
-	protected EventListenerIntegrator generateEventListenerIntegrator() {
-		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
 	}
 }

@@ -5,9 +5,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
 import com.codeshelf.platform.persistence.PersistenceService;
-import com.google.inject.Singleton;
 
-@Singleton
 public class ManagerPersistenceService extends PersistenceService<ManagerSchema> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ManagerPersistenceService.class);
 	
@@ -36,12 +34,12 @@ public class ManagerPersistenceService extends PersistenceService<ManagerSchema>
 	}
 
 	@Override
-	public EventListenerIntegrator generateEventListenerIntegrator() {
-		return null;
+	protected void performStartupActions(ManagerSchema schema) {
+		return;
 	}
 
 	@Override
-	protected void performStartupActions(ManagerSchema schema) {
-		return;
+	protected EventListenerIntegrator generateEventListenerIntegrator() {
+		return null;
 	}
 }
