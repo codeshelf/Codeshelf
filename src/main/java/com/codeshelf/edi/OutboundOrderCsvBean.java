@@ -107,7 +107,7 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 		// theDescription = theDescription.replaceAll("\\p{C}", ""); // strips valid UTF-8 which does not solve our problem. Misses UTF-16 cases
 
 		try {
-			theDescription = new String(bytes.array(), "US_ASCII");
+			theDescription = new String(bytes.array(), "US-ASCII");
 			// This leaves the string too long if there were a lot of UTF-16 characters
 		} catch (Exception e) {
 			LOGGER.warn("character coding exception", e);
