@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.persistence;
+package com.codeshelf.platform.persistence;
 
 import java.lang.reflect.Field;
 
@@ -7,9 +7,9 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.inject.Singleton;
 
 @Singleton

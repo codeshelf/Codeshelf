@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: CodeshelfNetwork.java,v 1.30 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,14 +28,14 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -10,12 +10,12 @@ import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.CsvToBean;
 import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.event.EventSeverity;
-import com.gadgetworks.codeshelf.event.EventTag;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.codeshelf.event.EventProducer;
+import com.codeshelf.event.EventSeverity;
+import com.codeshelf.event.EventTag;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 
 public abstract class CsvImporter<T> {
 

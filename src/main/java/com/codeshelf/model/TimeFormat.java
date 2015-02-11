@@ -4,7 +4,7 @@
  *  file TimeFormat.java
  *  Author Jon Ranstrom
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;

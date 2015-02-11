@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
@@ -9,9 +9,9 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.dao.ITypedDao;
 
 public class OrderDetailTest {
 

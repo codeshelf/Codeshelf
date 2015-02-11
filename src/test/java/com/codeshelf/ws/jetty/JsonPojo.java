@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty;
+package com.codeshelf.ws.jetty;
 
 import lombok.Getter;
 import lombok.Setter;

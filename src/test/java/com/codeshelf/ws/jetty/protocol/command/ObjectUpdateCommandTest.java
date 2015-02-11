@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -18,11 +18,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.MockModel;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.MockModel;
+import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectUpdateCommandTest {
@@ -101,7 +101,7 @@ public class ObjectUpdateCommandTest {
 	@Test
 	public void shouldReturnErrorResponseWhenClassDoesntExist() throws JsonProcessingException, IOException {
 		ObjectUpdateRequest objectUpdateRequest = createReq();
-		objectUpdateRequest.setClassName("com.gadgetworks.codeshelf.model.domain.NOTFOUND");
+		objectUpdateRequest.setClassName("com.codeshelf.model.domain.NOTFOUND");
 		
 		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
@@ -159,7 +159,7 @@ public class ObjectUpdateCommandTest {
 	private ObjectUpdateRequest createReqCmdJsonNode(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
 		Map <String, Object> properties = new HashMap<String, Object>();
 		properties.put(testProperty, testValue);
-		ObjectUpdateRequest req =  new ObjectUpdateRequest("com.gadgetworks.codeshelf.model.domain.MockModel", UUID.randomUUID(), properties);
+		ObjectUpdateRequest req =  new ObjectUpdateRequest("com.codeshelf.model.domain.MockModel", UUID.randomUUID(), properties);
 		return req;
 	}
 	

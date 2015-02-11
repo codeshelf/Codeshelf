@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
@@ -8,15 +8,15 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PickStrategyEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail.OrderDetailDao;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.PickStrategyEnum;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.domain.Facility.FacilityDao;
+import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
+import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class OptimisticLockExceptionTest {
 	@Getter

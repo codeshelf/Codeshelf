@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 
 import java.io.IOException;
@@ -9,18 +9,18 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.model.domain.Tier;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.UiUpdateService;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.LocationAlias;
+import com.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.validation.InputValidationException;
 
 /**
  * @author jeffw

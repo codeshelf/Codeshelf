@@ -2,7 +2,7 @@
  *  CodeShelf
  *  Copyright (c) 2014-2014, Codeshelf, All rights reserved
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 // --------------------------------------------------------------------------
 /**

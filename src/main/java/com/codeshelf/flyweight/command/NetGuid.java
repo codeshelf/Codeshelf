@@ -4,7 +4,7 @@
  *  $Id: NetGuid.java,v 1.1 2013/02/27 22:06:27 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 public final class NetGuid extends NetParameter {
 

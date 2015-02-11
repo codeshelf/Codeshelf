@@ -1,22 +1,22 @@
-package com.gadgetworks.codeshelf.ws.jetty;
+package com.codeshelf.ws.jetty;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.UserType;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.UserType;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.util.ConverterProvider;
+import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LoginTest extends DomainTestABC {
 	

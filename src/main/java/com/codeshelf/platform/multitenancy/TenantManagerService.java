@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.multitenancy;
+package com.codeshelf.platform.multitenancy;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -15,12 +15,12 @@ import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.UserType;
-import com.gadgetworks.codeshelf.platform.Service;
-import com.gadgetworks.codeshelf.platform.persistence.ManagerPersistenceService;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager.SQLSyntax;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.UserType;
+import com.codeshelf.platform.Service;
+import com.codeshelf.platform.persistence.ManagerPersistenceService;
+import com.codeshelf.platform.persistence.SchemaManager;
+import com.codeshelf.platform.persistence.SchemaManager.SQLSyntax;
 import com.google.inject.Singleton;
 
 @Singleton

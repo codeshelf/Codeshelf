@@ -4,7 +4,7 @@
  *  $Id: CommandAssocAck.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 import java.io.IOException;
 import java.util.Date;
@@ -13,9 +13,9 @@ import java.util.GregorianCalendar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
 
 // --------------------------------------------------------------------------
 /**

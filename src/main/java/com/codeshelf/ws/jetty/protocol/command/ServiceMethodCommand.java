@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -8,16 +8,16 @@ import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.service.IApiService;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.service.IApiService;
+import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
+import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
+import com.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.base.Strings;
 
 public class ServiceMethodCommand extends CommandABC {
@@ -51,8 +51,8 @@ public class ServiceMethodCommand extends CommandABC {
 			response.setErrors(errors);
 			return response;
 		}
-		if (!className.startsWith("com.gadgetworks.codeshelf.service.")) {
-			className = "com.gadgetworks.codeshelf.service." + className;
+		if (!className.startsWith("com.codeshelf.service.")) {
+			className = "com.codeshelf.service." + className;
 		}
 
 		String methodName = request.getMethodName();

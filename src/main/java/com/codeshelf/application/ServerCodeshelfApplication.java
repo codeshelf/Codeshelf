@@ -4,7 +4,7 @@
  *  $Id: ServerCodeshelfApplication.java,v 1.17 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
@@ -17,21 +17,21 @@ import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.edi.IEdiProcessor;
-import com.gadgetworks.codeshelf.metrics.ActiveSiteControllerHealthCheck;
-import com.gadgetworks.codeshelf.metrics.DatabaseConnectionHealthCheck;
-import com.gadgetworks.codeshelf.metrics.DropboxServiceHealthCheck;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.platform.multitenancy.ITenantManager;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
-import com.gadgetworks.codeshelf.util.IConfiguration;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerWatchdogThread;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.edi.IEdiProcessor;
+import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
+import com.codeshelf.metrics.DropboxServiceHealthCheck;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.report.IPickDocumentGenerator;
+import com.codeshelf.util.IConfiguration;
+import com.codeshelf.ws.jetty.server.ServerWatchdogThread;
+import com.codeshelf.ws.jetty.server.SessionManager;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends ApplicationABC {
@@ -77,7 +77,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.application.ApplicationABC#doLoadLibraries()
+	 * @see com.codeshelf.application.ApplicationABC#doLoadLibraries()
 	 */
 	@Override
 	protected void doLoadLibraries() {

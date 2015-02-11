@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: DeviceEmbeddedABC.java,v 1.6 2013/05/03 05:12:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -12,18 +12,18 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.command.CommandAssocABC;
-import com.gadgetworks.flyweight.command.CommandAssocAck;
-import com.gadgetworks.flyweight.command.CommandAssocReq;
-import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControlABC;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetworkId;
-import com.gadgetworks.flyweight.command.Packet;
-import com.gadgetworks.flyweight.controller.IGatewayInterface;
-import com.gadgetworks.flyweight.controller.TcpClientInterface;
+import com.codeshelf.flyweight.command.CommandAssocABC;
+import com.codeshelf.flyweight.command.CommandAssocAck;
+import com.codeshelf.flyweight.command.CommandAssocReq;
+import com.codeshelf.flyweight.command.CommandAssocResp;
+import com.codeshelf.flyweight.command.CommandControlABC;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.TcpClientInterface;
 
 /**
  * This is the CHE code that runs on the device itself.
@@ -66,7 +66,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.device.IEmbeddedDevice#start()
+	 * @see com.codeshelf.device.IEmbeddedDevice#start()
 	 */
 	@Override
 	public final void start() {
@@ -80,7 +80,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.device.IEmbeddedDevice#stop()
+	 * @see com.codeshelf.device.IEmbeddedDevice#stop()
 	 */
 	@Override
 	public final void stop() {

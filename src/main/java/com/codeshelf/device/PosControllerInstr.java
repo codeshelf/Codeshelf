@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: LedSample.java,v 1.3 2013/07/19 02:40:09 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import lombok.Data;
 import lombok.Getter;

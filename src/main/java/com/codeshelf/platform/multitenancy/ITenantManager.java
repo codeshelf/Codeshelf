@@ -1,8 +1,8 @@
-package com.gadgetworks.codeshelf.platform.multitenancy;
+package com.codeshelf.platform.multitenancy;
 
 import java.util.Collection;
 
-import com.gadgetworks.codeshelf.model.domain.UserType;
+import com.codeshelf.model.domain.UserType;
 
 /**
  * API for Tenant Manager interface

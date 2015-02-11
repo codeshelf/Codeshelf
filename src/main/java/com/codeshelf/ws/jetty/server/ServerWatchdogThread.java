@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.server;
+package com.codeshelf.ws.jetty.server;
 
 import java.util.Collection;
 
@@ -11,10 +11,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
+import com.codeshelf.application.ContextLogging;
+import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
+import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 
 public class ServerWatchdogThread extends Thread {
 	

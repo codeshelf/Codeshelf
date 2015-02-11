@@ -4,7 +4,7 @@
  *  $Id: IllegalBoundsException.java,v 1.2 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.bitfields;
+package com.codeshelf.flyweight.bitfields;
 
 public class IllegalBoundsException extends RuntimeException {
 	

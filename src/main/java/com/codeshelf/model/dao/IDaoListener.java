@@ -3,12 +3,12 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: IDaoListener.java,v 1.7 2012/09/08 03:03:24 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.Set;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IDomainObject;
 
 // --------------------------------------------------------------------------
 /**

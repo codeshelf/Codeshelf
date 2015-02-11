@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty;
+package com.codeshelf.ws.jetty;
 
 import java.util.HashMap;
 
@@ -8,24 +8,24 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.eaio.uuid.UUID;
-import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
-import com.gadgetworks.codeshelf.service.UiUpdateService;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.dao.DAOTestABC;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.util.ConverterProvider;
+import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}

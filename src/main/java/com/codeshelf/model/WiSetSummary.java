@@ -3,7 +3,7 @@
  *  Copyright (c) 2014, Codeshelf, Inc., All rights reserved
  *  author jon ranstrom
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import java.sql.Timestamp;
 

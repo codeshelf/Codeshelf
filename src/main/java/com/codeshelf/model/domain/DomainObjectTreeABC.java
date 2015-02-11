@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: DomainObjectTreeABC.java,v 1.6 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
@@ -34,7 +34,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullDomainId()
+	 * @see com.codeshelf.model.domain.IDomainObject#getFullDomainId()
 	 */
 	@JsonIgnore
 	public String getFullDomainId() {
@@ -43,7 +43,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
+	 * @see com.codeshelf.model.domain.IDomainObject#getFullParentDomainId()
 	 */
 	@SuppressWarnings("rawtypes")
 	@JsonIgnore
@@ -63,7 +63,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.IDomainObject#getParentPersistentId()
+	 * @see com.codeshelf.model.domain.IDomainObject#getParentPersistentId()
 	 */
 	@JsonIgnore
 	public UUID getParentPersistentId() {

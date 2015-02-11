@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.multitenancy;
+package com.codeshelf.platform.multitenancy;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,11 +32,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.gadgetworks.codeshelf.platform.persistence.IPersistentCollection;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.platform.persistence.EventListenerIntegrator;
+import com.codeshelf.platform.persistence.IPersistentCollection;
+import com.codeshelf.platform.persistence.SchemaManager;
 
 @Entity
 @Table(name="tenant")

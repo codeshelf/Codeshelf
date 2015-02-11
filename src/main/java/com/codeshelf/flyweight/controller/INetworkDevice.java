@@ -3,11 +3,11 @@
  *  Copyright (c) 2005-2007, Jeffrey B. Williams, All rights reserved
  *  $Id: INetworkDevice.java,v 1.8 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
-import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetGuid;
 
 // --------------------------------------------------------------------------
 /**

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.persistence;
+package com.codeshelf.platform.persistence;
 
 import org.hibernate.Hibernate;
 import org.hibernate.event.spi.PostCommitInsertEventListener;
@@ -7,9 +7,9 @@ import org.hibernate.persister.entity.EntityPersister;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectABC;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.IDomainObject;
 
 @SuppressWarnings("serial")
 public class InsertBroadcastListener implements PostCommitInsertEventListener {

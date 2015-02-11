@@ -1,12 +1,12 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.PositionTypeEnum;
 import com.google.common.collect.ImmutableMap;
 
 public class OrderHeaderTest extends DomainTestABC {

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.message;
+package com.codeshelf.ws.jetty.protocol.message;
 
 import lombok.Getter;
 

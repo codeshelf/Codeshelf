@@ -4,16 +4,16 @@
  *  $Id: CommandAssocResp.java,v 1.5 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
 
 // --------------------------------------------------------------------------
 /**

@@ -1,9 +1,9 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
+package com.codeshelf.ws.jetty.protocol.request;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.PathSegment;
 
 public class CreatePathRequest extends RequestABC {
 	

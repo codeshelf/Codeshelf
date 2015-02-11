@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: BitFieldOutputStream.java,v 1.2 2013/02/27 01:17:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.bitfields;
+package com.codeshelf.flyweight.bitfields;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,7 +11,7 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.IGatewayInterface;
 
 // --------------------------------------------------------------------------
 /**

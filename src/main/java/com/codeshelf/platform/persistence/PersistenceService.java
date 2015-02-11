@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.persistence;
+package com.codeshelf.platform.persistence;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,8 +15,8 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.platform.Service;
-import com.gadgetworks.codeshelf.platform.ServiceNotInitializedException;
+import com.codeshelf.platform.Service;
+import com.codeshelf.platform.ServiceNotInitializedException;
 
 public abstract class PersistenceService extends Service {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);

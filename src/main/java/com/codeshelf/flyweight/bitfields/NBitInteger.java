@@ -4,7 +4,7 @@
  *  $Id: NBitInteger.java,v 1.3 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.bitfields;
+package com.codeshelf.flyweight.bitfields;
 
 import java.io.IOException;
 import java.io.Serializable;

@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: PathSegment.java,v 1.33 2013/09/18 00:40:09 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +27,10 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

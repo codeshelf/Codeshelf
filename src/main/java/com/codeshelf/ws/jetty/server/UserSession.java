@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.server;
+package com.codeshelf.ws.jetty.server;
 
 import java.util.Date;
 import java.util.Map;
@@ -19,16 +19,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
-import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.codeshelf.filter.ObjectEventListener;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.dao.IDaoListener;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.UserType;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.application.ContextLogging;
+import com.codeshelf.filter.ObjectEventListener;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.model.dao.IDaoListener;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.UserType;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class UserSession implements IDaoListener {
 	public enum State {

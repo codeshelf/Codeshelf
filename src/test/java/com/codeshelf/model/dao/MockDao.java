@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: MockDao.java,v 1.13 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -21,8 +21,8 @@ import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.criterion.Criterion;
 
 import com.eaio.uuid.UUIDGen;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IDomainObjectTree;
 
 /**
  * @author jeffw

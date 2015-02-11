@@ -3,17 +3,17 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: ICsDeviceManager.java,v 1.6 2013/04/15 21:27:05 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.util.List;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.util.PcapRingBuffer;
-import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.IRadioController;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.PcapRingBuffer;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
 
 /**
  * @author jeffw

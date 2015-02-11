@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -7,18 +7,18 @@ import java.sql.Timestamp;
 
 import org.junit.Assert;
 
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.Tier;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.Tier;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public class VirtualSlottedFacilityGenerator {
 	Tenant tenant;

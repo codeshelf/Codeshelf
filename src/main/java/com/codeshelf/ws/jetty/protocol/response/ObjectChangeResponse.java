@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
+package com.codeshelf.ws.jetty.protocol.response;
 
 import java.util.List;
 import java.util.Map;

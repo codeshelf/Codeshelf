@@ -3,9 +3,9 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: IRadioControllerEventListener.java,v 1.1 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.command.NetGuid;
 
 
 // --------------------------------------------------------------------------

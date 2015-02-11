@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.io.InputStream;
 import java.util.List;
@@ -9,10 +9,10 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.DomainObjectPropertyDefault;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements ITypedDao<DomainObjectProperty> {
 

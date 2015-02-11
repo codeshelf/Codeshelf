@@ -4,16 +4,16 @@
  *  $Id: Packet.java,v 1.5 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
 
 // --------------------------------------------------------------------------
 /**
@@ -208,7 +208,7 @@ public final class Packet implements IPacket {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getCommand()
+	 * @see com.codeshelf.flyweight.command.IPacket#getCommand()
 	 */
 	public ICommand getCommand() {
 		return mCommand;
@@ -216,7 +216,7 @@ public final class Packet implements IPacket {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getSrcAddr()
+	 * @see com.codeshelf.flyweight.command.IPacket#getSrcAddr()
 	 */
 	public NetAddress getSrcAddr() {
 
@@ -225,7 +225,7 @@ public final class Packet implements IPacket {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getDstAddr()
+	 * @see com.codeshelf.flyweight.command.IPacket#getDstAddr()
 	 */
 	public NetAddress getDstAddr() {
 
@@ -234,7 +234,7 @@ public final class Packet implements IPacket {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#setCommand(com.gadgetworks.flyweight.command.ICommand)
+	 * @see com.codeshelf.flyweight.command.IPacket#setCommand(com.codeshelf.flyweight.command.ICommand)
 	 */
 	public void setCommand(ICommand inCommand) {
 		mCommand = inCommand;
@@ -267,7 +267,7 @@ public final class Packet implements IPacket {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getNetworkId()
+	 * @see com.codeshelf.flyweight.command.IPacket#getNetworkId()
 	 */
 	public NetworkId getNetworkId() {
 		return mNetworkId;
@@ -275,7 +275,7 @@ public final class Packet implements IPacket {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#setNetworkId(com.gadgetworks.flyweight.command.NetworkId)
+	 * @see com.codeshelf.flyweight.command.IPacket#setNetworkId(com.codeshelf.flyweight.command.NetworkId)
 	 */
 	public void setNetworkId(NetworkId inNetworkId) {
 		mNetworkId = inNetworkId;
@@ -299,7 +299,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#incrementSendCount()
+	 * @see com.codeshelf.flyweight.command.IPacket#incrementSendCount()
 	 */
 	public void incrementSendCount() {
 		mSendCount++;
@@ -307,7 +307,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getSendCount()
+	 * @see com.codeshelf.flyweight.command.IPacket#getSendCount()
 	 */
 	public int getSendCount() {
 		return mSendCount;
@@ -315,7 +315,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#setSendCount(int)
+	 * @see com.codeshelf.flyweight.command.IPacket#setSendCount(int)
 	 */
 	public void setSendCount(int inResendCount) {
 		mSendCount = inResendCount;
@@ -323,7 +323,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getAckState()
+	 * @see com.codeshelf.flyweight.command.IPacket#getAckState()
 	 */
 	public AckStateEnum getAckState() {
 		return mAckState;
@@ -331,7 +331,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#setAckedState(com.gadgetworks.flyweight.command.AckedStateEnum)
+	 * @see com.codeshelf.flyweight.command.IPacket#setAckedState(com.codeshelf.flyweight.command.AckedStateEnum)
 	 */
 	public void setAckState(AckStateEnum inAckedState) {
 		mAckState = inAckedState;
@@ -339,7 +339,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getAckData()
+	 * @see com.codeshelf.flyweight.command.IPacket#getAckData()
 	 */
 	public byte[] getAckData() {
 		return mAckData;
@@ -347,7 +347,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#setAckData(int)
+	 * @see com.codeshelf.flyweight.command.IPacket#setAckData(int)
 	 */
 	public void setAckData(byte[] inAckData) {
 		mAckData = inAckData;
@@ -355,7 +355,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#getPacketType()
+	 * @see com.codeshelf.flyweight.command.IPacket#getPacketType()
 	 */
 	public byte getPacketType() {
 		// This bit of weirdness is to deal with the lack of unsigned bytes in Java.
@@ -368,7 +368,7 @@ public final class Packet implements IPacket {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.IPacket#setPacketType(byte)
+	 * @see com.codeshelf.flyweight.command.IPacket#setPacketType(byte)
 	 */
 	public void setPacketType(byte inPacketType) {
 		mPacketType.setValue(inPacketType);

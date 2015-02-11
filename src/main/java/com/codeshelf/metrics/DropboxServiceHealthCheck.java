@@ -1,10 +1,10 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
 import java.util.List;
 
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.domain.DropboxService;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.collect.Lists;
 
 public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {

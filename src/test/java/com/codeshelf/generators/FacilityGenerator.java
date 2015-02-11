@@ -1,8 +1,8 @@
-package com.gadgetworks.codeshelf.generators;
+package com.codeshelf.generators;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.platform.multitenancy.Tenant;
 
 public class FacilityGenerator {
 	Tenant tenant;

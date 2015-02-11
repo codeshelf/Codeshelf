@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -12,9 +12,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gadgetworks.codeshelf.util.PcapRecord;
-import com.gadgetworks.codeshelf.util.PcapRingBuffer;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.util.PcapRecord;
+import com.codeshelf.util.PcapRingBuffer;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public class RadioServlet extends HttpServlet {
 	private static final long	serialVersionUID	= 8642709590957174287L;

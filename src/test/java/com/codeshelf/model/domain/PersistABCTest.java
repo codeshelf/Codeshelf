@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -10,7 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.eaio.uuid.UUIDGen;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ITypedDao;
 
 public class PersistABCTest {
 	

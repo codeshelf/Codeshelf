@@ -4,7 +4,7 @@
  *  $Id: NBitIntegerSaTest.java,v 1.2 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.bitfields;
+package com.codeshelf.flyweight.bitfields;
 
 import org.junit.Assert;
 import org.junit.Test;

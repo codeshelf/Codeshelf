@@ -1,10 +1,10 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.PingResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.protocol.request.PingRequest;
+import com.codeshelf.ws.jetty.protocol.response.PingResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class PingCommand extends CommandABC {
 

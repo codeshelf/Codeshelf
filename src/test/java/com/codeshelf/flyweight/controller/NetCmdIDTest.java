@@ -3,12 +3,12 @@
  *  Copyright (c) 2005, 2006, Jeffrey B. Williams, All rights reserved
  *  $Id: NetCmdIDTest.java,v 1.1 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import org.junit.Test;
 
-import com.gadgetworks.flyweight.command.CommandGroupEnum;
-import com.gadgetworks.flyweight.command.NetCommandGroup;
+import com.codeshelf.flyweight.command.CommandGroupEnum;
+import com.codeshelf.flyweight.command.NetCommandGroup;
 
 /** --------------------------------------------------------------------------
  *  Test the net command ID.
@@ -17,7 +17,7 @@ import com.gadgetworks.flyweight.command.NetCommandGroup;
 public final class NetCmdIDTest {
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.NetEndpoint#NetEndpoint(int)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.command.NetEndpoint#NetEndpoint(int)}.
 	 */
 	@Test
 	public void testNetEndpoint() {

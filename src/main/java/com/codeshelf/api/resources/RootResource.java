@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.api.resources;
+package com.codeshelf.api.resources;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

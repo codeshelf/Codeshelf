@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.io.BufferedInputStream;
 import java.io.File;

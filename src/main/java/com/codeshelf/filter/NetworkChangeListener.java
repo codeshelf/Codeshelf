@@ -1,21 +1,21 @@
-package com.gadgetworks.codeshelf.filter;
+package com.codeshelf.filter;
 
 import java.util.Set;
 import java.util.UUID;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.SiteController;
-import com.gadgetworks.codeshelf.model.domain.WirelessDeviceABC;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.SiteController;
+import com.codeshelf.model.domain.WirelessDeviceABC;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class NetworkChangeListener implements ObjectEventListener {
 

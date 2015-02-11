@@ -4,10 +4,10 @@
  *  $Id: CommandNetMgmtABC.java,v 1.3 2013/05/26 21:50:39 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**

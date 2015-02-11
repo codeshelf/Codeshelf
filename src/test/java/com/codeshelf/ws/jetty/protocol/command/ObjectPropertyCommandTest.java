@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -11,14 +11,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainObjectPropertyDefault;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 
 public class ObjectPropertyCommandTest extends DomainTestABC {
 	

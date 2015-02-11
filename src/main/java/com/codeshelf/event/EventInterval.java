@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.event;
+package com.codeshelf.event;
 
 /**
  * Describe the point of time over which an event occurs.  

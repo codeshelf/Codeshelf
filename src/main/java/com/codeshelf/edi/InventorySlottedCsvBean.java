@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: SlottedInventoryCsvBean.java,v 1.3 2013/04/14 16:47:38 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;

@@ -1,11 +1,11 @@
-package com.gadgetworks.codeshelf.api.exceptions;
+package com.codeshelf.api.exceptions;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
-import com.gadgetworks.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.ErrorResponse;
 
 @Provider
 public class GenericExceptionHandler implements ExceptionMapper<Throwable> {

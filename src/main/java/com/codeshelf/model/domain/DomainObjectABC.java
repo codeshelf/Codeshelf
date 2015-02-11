@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: DomainObjectABC.java,v 1.34 2013/04/14 17:51:29 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -60,7 +60,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	@Type(type="com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
+	@Type(type="com.codeshelf.platform.persistence.DialectUUIDType")
 	private UUID persistentId = UUID.randomUUID();
 
 	// The domain ID

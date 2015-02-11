@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.api.resources.subresources;
+package com.codeshelf.api.resources.subresources;
 
 import java.util.List;
 import java.util.Set;
@@ -13,14 +13,14 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.api.BaseResponse;
-import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
-import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.OrderService;
-import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
-import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
+import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.OrderService;
+import com.codeshelf.service.ProductivityCheSummaryList;
+import com.codeshelf.service.ProductivitySummaryList;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 

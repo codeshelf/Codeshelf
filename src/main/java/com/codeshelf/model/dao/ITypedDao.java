@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: ITypedDao.java,v 1.14 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.List;
 import java.util.Map;
@@ -11,7 +11,7 @@ import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IDomainObject;
 
 /**
  * @author jeffw

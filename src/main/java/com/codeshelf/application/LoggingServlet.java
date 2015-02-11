@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.io.IOException;
 import java.io.PrintWriter;

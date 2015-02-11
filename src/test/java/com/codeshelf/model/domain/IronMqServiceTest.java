@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ITypedDao;
 
 public class IronMqServiceTest {
 	@SuppressWarnings("unchecked")

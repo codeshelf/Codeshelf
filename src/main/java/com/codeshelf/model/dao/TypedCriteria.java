@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: CsvImporter.java,v 1.30 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
@@ -17,28 +17,28 @@ import javax.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.event.EventSeverity;
-import com.gadgetworks.codeshelf.event.EventTag;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.service.WorkService.Work;
-import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.codeshelf.event.EventProducer;
+import com.codeshelf.event.EventSeverity;
+import com.codeshelf.event.EventTag;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.ContainerKind;
+import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkService.Work;
+import com.codeshelf.validation.BatchResult;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -82,7 +82,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
+	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
 	public final int importCrossBatchesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 

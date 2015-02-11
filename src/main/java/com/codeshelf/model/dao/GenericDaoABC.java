@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: GenericDaoABC.java,v 1.25 2013/07/22 04:30:37 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,10 +25,10 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.util.ConverterProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -79,7 +79,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
+	 * @see com.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
 	 */
 	public final <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
 		P result = null;
@@ -94,7 +94,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
+	 * @see com.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
 	public T findByDomainId(final IDomainObject parentObject, final String domainId) {
 		String effectiveId = domainId;
@@ -141,7 +141,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
+	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public final List<T> findByPersistentIdList(List<UUID> inIdList) {
 		Session session = getCurrentSession();
@@ -178,7 +178,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
+	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public List<T> findByFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass) {
 		// create criteria using look-up table
@@ -214,7 +214,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
+	 * @see com.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
 		// TODO: need to add change property intercepter and versioning
@@ -224,7 +224,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
+	 * @see com.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
 	public final void delete(final T inDomainObject) throws DaoException {
 		try {
@@ -239,7 +239,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.IGenericDao#getAll()
+	 * @see com.codeshelf.model.dao.IGenericDao#getAll()
 	 */
 	public List<T> getAll() {
 		Session session = getCurrentSession();
@@ -251,7 +251,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.dao.ITypedDao#getNextId(java.lang.Class)
+	 * @see com.codeshelf.model.dao.ITypedDao#getNextId(java.lang.Class)
 	 */
 	public final Object getNextId(final Class<?> beanType) {
 		// An example of how to do this.

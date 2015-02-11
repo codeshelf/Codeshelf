@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

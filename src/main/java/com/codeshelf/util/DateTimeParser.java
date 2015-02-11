@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.util;
+package com.codeshelf.util;
 
 import java.util.Date;
 import java.util.List;

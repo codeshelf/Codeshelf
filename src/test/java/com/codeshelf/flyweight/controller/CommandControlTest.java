@@ -4,7 +4,7 @@
  *  $Id: CommandControlTest.java,v 1.3 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -15,18 +15,18 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.device.PosControllerInstr;
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
-import com.gadgetworks.flyweight.command.CommandControlSetPosController;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetEndpoint;
-import com.gadgetworks.flyweight.command.NetworkId;
-import com.gadgetworks.flyweight.command.Packet;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.CommandControlSetPosController;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetEndpoint;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.Packet;
 
 public final class CommandControlTest {
 

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.service;
+package com.codeshelf.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,15 +14,15 @@ import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.type.StandardBasicTypes;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.dao.CriteriaRegistry;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.ProductivitySummaryList.StatusSummary;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.dao.CriteriaRegistry;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.sun.jersey.api.NotFoundException;

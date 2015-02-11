@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -12,17 +12,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.WiFactory;
-import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.service.OrderService;
-import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
-import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
-import com.gadgetworks.codeshelf.service.ProductivitySummaryList.StatusSummary;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.service.OrderService;
+import com.codeshelf.service.ProductivityCheSummaryList;
+import com.codeshelf.service.ProductivitySummaryList;
+import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {
 	@SuppressWarnings("unused")

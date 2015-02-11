@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 public enum UserType {
 	INVALID(UserTypeNum.INVALID, "INVALID"),

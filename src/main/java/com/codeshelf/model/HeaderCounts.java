@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2014, Codeshelf, Inc., All rights reserved
  *  $Id: Facility.java,v 1.82 2013/11/05 06:14:55 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 /**
  * Just a class to return some out parameters

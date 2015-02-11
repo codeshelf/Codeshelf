@@ -4,7 +4,7 @@
  *  $Id: ApplicationABC.java,v 1.4 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
@@ -20,13 +20,13 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.metrics.OpenTsdb;
-import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.metrics.OpenTsdb;
+import com.codeshelf.metrics.OpenTsdbReporter;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.SchemaManager;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 

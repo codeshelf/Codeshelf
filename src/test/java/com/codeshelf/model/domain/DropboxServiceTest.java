@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: DropboxServiceTest.java,v 1.6 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
@@ -15,15 +15,15 @@ import java.sql.Timestamp;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.MockDao;
-import com.gadgetworks.codeshelf.validation.BatchResult;
+import com.codeshelf.edi.ICsvAislesFileImporter;
+import com.codeshelf.edi.ICsvCrossBatchImporter;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.dao.MockDao;
+import com.codeshelf.validation.BatchResult;
 
 public class DropboxServiceTest {
 

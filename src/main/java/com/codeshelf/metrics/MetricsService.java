@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
 import java.net.InetAddress;
 

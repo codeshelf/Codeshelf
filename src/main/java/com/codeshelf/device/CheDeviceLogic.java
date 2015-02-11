@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: CheDeviceLogic.java,v 1.12 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -22,20 +22,20 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.AisleDeviceLogic.LedCmd;
-import com.gadgetworks.codeshelf.model.WorkInstructionCount;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.CommandControlClearPosController;
-import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
-import com.gadgetworks.flyweight.command.CommandControlSetPosController;
-import com.gadgetworks.flyweight.command.EffectEnum;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetEndpoint;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.IRadioController;
+import com.codeshelf.device.AisleDeviceLogic.LedCmd;
+import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlClearPosController;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.CommandControlSetPosController;
+import com.codeshelf.flyweight.command.EffectEnum;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetEndpoint;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -491,7 +491,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#start()
+	 * @see com.codeshelf.flyweight.controller.INetworkDevice#start()
 	 */
 	@Override
 	public final void startDevice() {
@@ -581,7 +581,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#buttonCommandReceived(com.gadgetworks.flyweight.command.CommandControlButton)
+	 * @see com.codeshelf.flyweight.controller.INetworkDevice#buttonCommandReceived(com.codeshelf.flyweight.command.CommandControlButton)
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {

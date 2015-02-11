@@ -3,10 +3,10 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: IPacket.java,v 1.3 2013/03/03 23:27:20 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**

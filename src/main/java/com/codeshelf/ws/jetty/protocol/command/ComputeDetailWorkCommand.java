@@ -1,17 +1,17 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.service.WorkService;
+import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ComputeDetailWorkCommand extends CommandABC {
 	@SuppressWarnings("unused")

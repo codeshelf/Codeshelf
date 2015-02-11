@@ -3,12 +3,12 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: IRadioController.java,v 1.3 2013/04/15 04:01:37 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.command.NetworkId;
 
 // --------------------------------------------------------------------------
 /**

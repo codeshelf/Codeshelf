@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty;
+package com.codeshelf.ws.jetty;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -11,18 +11,18 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.util.ConverterProvider;
+import com.codeshelf.ws.jetty.io.JsonEncoder;
+import com.codeshelf.ws.jetty.protocol.command.ArgsClass;
+import com.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectMethodCommandTest extends DomainTestABC {
@@ -40,12 +40,12 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		// "ObjectMethodRequest":{"className":"Organization","persistentId":"77fdd850-2245-11e4-822c-48d705ccef0f","methodName":"createFacility",
 		// "methodArgs":[{"name":"domainId","value":"F1","classType":"java.lang.String"},
 		// {"name":"description","value":"First Facility","classType":"java.lang.String"},
-		// {"name":"anchorPoint","value":{"posTypeEnum":"GPS","x":-122.27488799999999,"y":37.8013437,"z":0},"classType":"com.gadgetworks.codeshelf.model.domain.Point"}],"messageId":"cid_6"}
+		// {"name":"anchorPoint","value":{"posTypeEnum":"GPS","x":-122.27488799999999,"y":37.8013437,"z":0},"classType":"com.codeshelf.model.domain.Point"}],"messageId":"cid_6"}
 
 		// {"ObjectMethodRequest":{"messageId":"ec34aa40-2250-11e4-9427-48d705ccef0f","className":"Organization","persistentId":"ec343510-2250-11e4-9427-48d705ccef0f","methodName":"createFacility",
 		// "methodArgs":[{"name":"domainId","value":"F1","classType":"java.lang.String"},
 		// {"name":"description","value":"First Facility","classType":"java.lang.String"},
-		// {"name":"anchorPoint","value":{"posTypeEnum":"METERS_FROM_PARENT","x":0.0,"y":0.0,"z":0.0},"classType":"com.gadgetworks.codeshelf.model.domain.Point"}]}}
+		// {"name":"anchorPoint","value":{"posTypeEnum":"METERS_FROM_PARENT","x":0.0,"y":0.0,"z":0.0},"classType":"com.codeshelf.model.domain.Point"}]}}
 
 		//Organization.setDao(orgDao);
 		/*

@@ -4,11 +4,11 @@
  *  $Id: NetEndpointTest.java,v 1.1 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import org.junit.Test;
 
-import com.gadgetworks.flyweight.command.NetEndpoint;
+import com.codeshelf.flyweight.command.NetEndpoint;
 
 /** --------------------------------------------------------------------------
  *  Test the net endpoint.
@@ -19,7 +19,7 @@ public final class NetEndpointTest {
 	private static final byte	DEVICE_TEST_ENDPOPINT	= 0x01;
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.NetEndpoint#NetEndpoint(int)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.command.NetEndpoint#NetEndpoint(int)}.
 	 */
 	@Test
 	public void testNetEndpoint() {

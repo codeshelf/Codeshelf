@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.server;
+package com.codeshelf.ws.jetty.server;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,11 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.server.UserSession.State;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 

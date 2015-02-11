@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: DeviceLogicABC.java,v 1.1 2013/05/04 00:30:01 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.util.UUID;
 
@@ -13,11 +13,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 
 /**
  * @author jeffw
@@ -85,7 +85,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#doesMatch(com.gadgetworks.flyweight.command.NetGuid)
+	 * @see com.codeshelf.flyweight.controller.INetworkDevice#doesMatch(com.codeshelf.flyweight.command.NetGuid)
 	 */
 	@Override
 	public final boolean doesMatch(NetGuid inGuid) {
@@ -94,7 +94,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#isAckIdNew(byte)
+	 * @see com.codeshelf.flyweight.controller.INetworkDevice#isAckIdNew(byte)
 	 */
 	@Override
 	public boolean isAckIdNew(byte inAckId) {

@@ -3,7 +3,7 @@
  *  Copyright (c) 2014, Codeshelf, All rights reserved
  *  file IntegrationTest1.java
  *******************************************************************************/
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -14,24 +14,24 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
-import com.gadgetworks.codeshelf.edi.EdiTestABC;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.edi.AislesFileCsvImporter;
+import com.codeshelf.edi.EdiTestABC;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * @author jon ranstrom

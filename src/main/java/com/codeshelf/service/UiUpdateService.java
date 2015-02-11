@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.service;
+package com.codeshelf.service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -9,23 +9,23 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.InventorySlottedCsvBean;
-import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.edi.InventoryCsvImporter;
+import com.codeshelf.edi.InventorySlottedCsvBean;
+import com.codeshelf.event.EventProducer;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 // --------------------------------------------------------------------------
 /**

@@ -4,7 +4,7 @@
  *  $Id: FTDIInterface.java,v 1.5 2013/08/23 21:28:08 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +16,7 @@ import jd2xx.JD2XX.DeviceInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.command.Packet;
+import com.codeshelf.flyweight.command.Packet;
 
 /**
  * --------------------------------------------------------------------------
@@ -86,7 +86,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#clrRTS()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#clrRTS()
 	 */
 	protected void clrRTS() {
 		try {
@@ -99,7 +99,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#setRTS()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#setRTS()
 	 */
 	protected void setRTS() {
 		try {
@@ -112,7 +112,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doSetupConnection()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#doSetupConnection()
 	 */
 	protected boolean doSetupConnection() {
 		boolean result = false;

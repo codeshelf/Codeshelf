@@ -4,10 +4,10 @@
  *  $Id: PacketVersion.java,v 1.1 2013/02/20 08:28:23 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 
 @SuppressWarnings("serial")
 public class PacketVersion extends NBitInteger {

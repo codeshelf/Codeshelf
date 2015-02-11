@@ -2,7 +2,7 @@
  *  CodeShelf
  *  Copyright (c) 2014, Codeshelf All rights reserved
   *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,17 +15,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.domain.DropboxService;
-import com.gadgetworks.codeshelf.model.domain.EdiServiceABC;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-// import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.validation.BatchResult;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.domain.DropboxService;
+import com.codeshelf.model.domain.EdiServiceABC;
+import com.codeshelf.model.domain.Facility;
+// import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.validation.BatchResult;
 
 /**
  * @author jon ranstrom

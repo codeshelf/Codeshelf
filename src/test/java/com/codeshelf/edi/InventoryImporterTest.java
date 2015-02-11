@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: InventoryImporterTest.java,v 1.12 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,33 +20,33 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.WiFactory;
-import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.model.LedRange;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.WorkService;
+import com.codeshelf.ws.jetty.io.JsonDecoder;
+import com.codeshelf.ws.jetty.io.JsonEncoder;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 

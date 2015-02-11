@@ -4,7 +4,7 @@
  *  $Id: CommandABC.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 import java.io.IOException;
 
@@ -13,8 +13,8 @@ import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 
 // --------------------------------------------------------------------------
 /**
@@ -167,7 +167,7 @@ public abstract class CommandABC implements ICommand {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.ICommand#setPacket(com.gadgetworks.flyweight.command.IPacket)
+	 * @see com.codeshelf.flyweight.command.ICommand#setPacket(com.codeshelf.flyweight.command.IPacket)
 	 */
 	public final void setPacket(IPacket inPacket) {
 		mParentPacket = inPacket;
@@ -175,7 +175,7 @@ public abstract class CommandABC implements ICommand {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.ICommand#getAckState()
+	 * @see com.codeshelf.flyweight.command.ICommand#getAckState()
 	 */
 	public final AckStateEnum getAckState() {
 		AckStateEnum result = AckStateEnum.INVALID;
@@ -188,7 +188,7 @@ public abstract class CommandABC implements ICommand {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.command.ICommand#getAckState()
+	 * @see com.codeshelf.flyweight.command.ICommand#getAckState()
 	 */
 	public final byte[] getAckData() {
 		byte[] result = null;

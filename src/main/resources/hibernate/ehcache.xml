@@ -12,21 +12,21 @@
 	</defaultCache>
 
 	<cache 
-		name="com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault" 
+		name="com.codeshelf.model.domain.DomainObjectPropertyDefault" 
 		maxEntriesLocalHeap="50" 
 		timeToIdleSeconds="600" 
 		timeToLiveSeconds="3600"
 	/>
 
 	<cache 
-		name="com.gadgetworks.codeshelf.model.domain.DomainObjectProperty" 
+		name="com.codeshelf.model.domain.DomainObjectProperty" 
 		maxEntriesLocalHeap="500" 
 		timeToIdleSeconds="600" 
 		timeToLiveSeconds="3600"
 	/>
 
 	<cache 
-		name="com.gadgetworks.codeshelf.model.domain.User" 
+		name="com.codeshelf.model.domain.User" 
 		maxEntriesLocalHeap="20" 
 		timeToIdleSeconds="600" 
 		timeToLiveSeconds="3600"

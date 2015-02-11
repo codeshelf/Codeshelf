@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,12 +16,12 @@ import org.junit.Test;
 
 import au.com.bytecode.opencsv.CSVReader;
 
-import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 

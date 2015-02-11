@@ -4,7 +4,7 @@ CodeshelfWebSocketServer *  CodeShelf
  *  $Id: CsNetworkMain.java,v 1.11 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.util.concurrent.TimeUnit;
 
@@ -15,17 +15,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
-import com.gadgetworks.codeshelf.device.CsDeviceManager;
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.device.RadioController;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.metrics.OpenTsdb;
-import com.gadgetworks.codeshelf.metrics.OpenTsdbReporter;
-import com.gadgetworks.codeshelf.util.IConfiguration;
-import com.gadgetworks.codeshelf.util.JVMSystemConfiguration;
-import com.gadgetworks.flyweight.controller.FTDIInterface;
-import com.gadgetworks.flyweight.controller.IGatewayInterface;
-import com.gadgetworks.flyweight.controller.IRadioController;
+import com.codeshelf.device.CsDeviceManager;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.RadioController;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.metrics.OpenTsdb;
+import com.codeshelf.metrics.OpenTsdbReporter;
+import com.codeshelf.util.IConfiguration;
+import com.codeshelf.util.JVMSystemConfiguration;
+import com.codeshelf.flyweight.controller.FTDIInterface;
+import com.codeshelf.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

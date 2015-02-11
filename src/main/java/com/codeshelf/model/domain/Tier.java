@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: Tier.java,v 1.15 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -23,9 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

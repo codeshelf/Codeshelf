@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.message;
+package com.codeshelf.ws.jetty.protocol.message;
 
 import java.util.List;
 
@@ -9,8 +9,8 @@ import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedCmdGroupSerializer;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 

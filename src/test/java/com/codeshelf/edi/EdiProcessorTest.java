@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: EdiProcessorTest.java,v 1.9 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import static org.mockito.Mockito.mock;
 
@@ -19,15 +19,15 @@ import java.util.concurrent.BlockingQueue;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.IEdiService;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.validation.BatchResult;
+import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IEdiService;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 
 /**

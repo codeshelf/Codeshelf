@@ -4,12 +4,12 @@
  *  $Id: NetAddressTest.java,v 1.1 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import org.junit.Test;
 
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetAddress;
 
 /** --------------------------------------------------------------------------
  *  Test the NetAddress calss.
@@ -18,7 +18,7 @@ import com.gadgetworks.flyweight.command.NetAddress;
 public final class NetAddressTest {
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.NetAddress#NetAddress(int)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.command.NetAddress#NetAddress(int)}.
 	 */
 	@Test
 	public void testNetAddress() {

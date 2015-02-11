@@ -1,12 +1,12 @@
-package com.gadgetworks.codeshelf.ws.jetty.client;
+package com.codeshelf.ws.jetty.client;
 
 import java.util.LinkedHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
 public class MessageCoordinator {
 	

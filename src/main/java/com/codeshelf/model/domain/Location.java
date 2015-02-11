@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: LocationABC.java,v 1.40 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,12 +43,12 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.device.LedCmdPath;
-import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.util.StringUIConverter;
+import com.codeshelf.device.LedCmdPath;
+import com.codeshelf.model.LedRange;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.util.StringUIConverter;
 import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
@@ -374,7 +374,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationIdToParentLevel(java.lang.Class)
+	 * @see com.codeshelf.model.domain.LocationABC#getLocationIdToParentLevel(java.lang.Class)
 	 */
 	public String getLocationIdToParentLevel(Class<? extends Location> inClassWanted) {
 		String result;
@@ -489,7 +489,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getAbsolutePosX()
+	 * @see com.codeshelf.model.domain.LocationABC#getAbsolutePosX()
 	 */
 	public Point getAbsoluteAnchorPoint() {
 		//when facility always expected to be a GPS anchor point
@@ -508,7 +508,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#getLocationId()
+	 * @see com.codeshelf.model.domain.LocationABC#getLocationId()
 	 */
 	public String getLocationId() {
 		return getDomainId();
@@ -516,7 +516,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#setLocationId(java.lang.String)
+	 * @see com.codeshelf.model.domain.LocationABC#setLocationId(java.lang.String)
 	 */
 	public void setLocationId(final String inLocationId) {
 		setDomainId(inLocationId);
@@ -524,7 +524,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#addLocation(com.gadgetworks.codeshelf.model.domain.SubLocationABC)
+	 * @see com.codeshelf.model.domain.LocationABC#addLocation(com.codeshelf.model.domain.SubLocationABC)
 	 */
 	public void addLocation(Location inLocation) {
 		if (inLocation.isFacility()) {
@@ -565,7 +565,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
+	 * @see com.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
 	public void removeLocation(String inLocationId) {
 		Location location = locations.get(inLocationId);
@@ -1200,7 +1200,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.domain.LocationABC#computePosAlongPath(com.gadgetworks.codeshelf.model.domain.PathSegment)
+	 * @see com.codeshelf.model.domain.LocationABC#computePosAlongPath(com.codeshelf.model.domain.PathSegment)
 	 */
 	public void computePosAlongPath(final PathSegment inPathSegment) {
 		if (inPathSegment == null) {

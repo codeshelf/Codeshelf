@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: CsvImporter.java,v 1.30 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
@@ -14,19 +14,19 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.event.EventSeverity;
-import com.gadgetworks.codeshelf.event.EventTag;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.codeshelf.event.EventProducer;
+import com.codeshelf.event.EventSeverity;
+import com.codeshelf.event.EventTag;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -60,7 +60,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	//WHEN RENABLED SPLIT TO ITS OWN IMPORTER
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
+	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
 	/*
 	public final boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader,
@@ -112,7 +112,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
+	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
 	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 

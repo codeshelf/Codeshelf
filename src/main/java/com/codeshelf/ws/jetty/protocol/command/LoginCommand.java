@@ -1,27 +1,27 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.codeshelf.filter.NetworkChangeListener;
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.model.domain.SiteController;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.PropertyService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.application.ContextLogging;
+import com.codeshelf.filter.NetworkChangeListener;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Organization;
+import com.codeshelf.model.domain.SiteController;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.PropertyService;
+import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LoginCommand extends CommandABC {
 

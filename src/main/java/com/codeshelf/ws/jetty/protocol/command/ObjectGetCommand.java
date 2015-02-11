@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
@@ -6,15 +6,15 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.Organization;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectGetCommand extends CommandABC {
 
@@ -39,8 +39,8 @@ public class ObjectGetCommand extends CommandABC {
 			} else {
 				// not an Organization
 				UUID parentId = UUID.fromString(request.getPersistentId());
-				if (!parentClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-					parentClassName = "com.gadgetworks.codeshelf.model.domain." + parentClassName;
+				if (!parentClassName.startsWith("com.codeshelf.model.domain.")) {
+					parentClassName = "com.codeshelf.model.domain." + parentClassName;
 				}
 	
 				// First we find the parent object (by it's ID).

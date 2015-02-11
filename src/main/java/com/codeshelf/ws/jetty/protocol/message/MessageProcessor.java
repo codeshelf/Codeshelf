@@ -1,11 +1,11 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.message;
+package com.codeshelf.ws.jetty.protocol.message;
 
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.ws.jetty.client.MessageCoordinator;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.client.MessageCoordinator;
+import com.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public abstract class MessageProcessor {
 	

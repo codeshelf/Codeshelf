@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: InventoryImporterTest.java,v 1.12 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -14,15 +14,15 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.OrderLocation;
-import com.gadgetworks.codeshelf.model.domain.Point;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.OrderLocation;
+import com.codeshelf.model.domain.Point;
 
 /**
  * @author jeffw

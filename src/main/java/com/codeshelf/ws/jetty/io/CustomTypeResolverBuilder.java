@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.io;
+package com.codeshelf.ws.jetty.io;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper.DefaultTypeResolverBuilder;

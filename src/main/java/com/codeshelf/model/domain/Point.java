@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: Point.java,v 1.7 2013/03/16 08:03:08 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
@@ -18,7 +18,7 @@ import lombok.ToString;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw

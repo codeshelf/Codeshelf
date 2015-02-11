@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.service;
+package com.codeshelf.service;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -20,18 +20,18 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedSample;
-import com.gadgetworks.codeshelf.model.LedRange;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedSample;
+import com.codeshelf.model.LedRange;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;

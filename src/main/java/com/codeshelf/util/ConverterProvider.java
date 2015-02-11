@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.util;
+package com.codeshelf.util;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -8,7 +8,7 @@ import java.util.UUID;
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.commons.beanutils.converters.AbstractConverter;
 
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.OrderTypeEnum;
 import com.google.inject.Provider;
 
 public class ConverterProvider implements Provider<ConvertUtilsBean> {

@@ -1,11 +1,11 @@
-package com.gadgetworks.codeshelf.api.resources;
+package com.codeshelf.api.resources;
 
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 
-import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
-import com.gadgetworks.codeshelf.api.resources.subresources.CheResource;
+import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.resources.subresources.CheResource;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/ches")

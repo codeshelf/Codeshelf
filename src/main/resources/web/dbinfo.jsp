@@ -7,7 +7,7 @@
 <%@page import="org.hibernate.stat.SecondLevelCacheStatistics"%>
 <%@page import="java.util.*"%>
 <%@page import="org.hibernate.stat.*"%>
-<%@page import="com.gadgetworks.codeshelf.platform.persistence.PersistenceService"%>
+<%@page import="com.codeshelf.platform.persistence.PersistenceService"%>
 <style type="text/css">
 body {background-color: white}
 th {

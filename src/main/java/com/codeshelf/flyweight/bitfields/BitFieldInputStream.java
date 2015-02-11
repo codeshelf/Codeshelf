@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: BitFieldInputStream.java,v 1.3 2013/02/28 06:24:52 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.bitfields;
+package com.codeshelf.flyweight.bitfields;
 
 import java.io.EOFException;
 import java.io.IOException;

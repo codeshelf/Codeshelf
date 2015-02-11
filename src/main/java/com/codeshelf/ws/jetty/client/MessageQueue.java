@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.client;
+package com.codeshelf.ws.jetty.client;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -6,7 +6,7 @@ import java.util.Queue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class MessageQueue {
 	

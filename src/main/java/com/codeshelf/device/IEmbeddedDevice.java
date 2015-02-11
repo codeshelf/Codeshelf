@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: IEmbeddedDevice.java,v 1.2 2013/04/17 17:02:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 /**
  * @author jeffw

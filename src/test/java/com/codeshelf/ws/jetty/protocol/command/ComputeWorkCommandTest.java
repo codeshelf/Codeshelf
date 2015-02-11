@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -12,11 +12,11 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionCount;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkPackage.WorkList;
 
 public class ComputeWorkCommandTest {
 

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -14,7 +14,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.IDaoListener;
+import com.codeshelf.model.dao.IDaoListener;
 
 public class AisleTest extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(AisleTest.class);

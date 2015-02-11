@@ -1,6 +1,6 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 

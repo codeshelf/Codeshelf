@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.api.resources;
+package com.codeshelf.api.resources;
 
 import java.util.List;
 
@@ -12,13 +12,13 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.gadgetworks.codeshelf.api.BaseResponse;
-import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
-import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.api.resources.subresources.FacilityResource;
-import com.gadgetworks.codeshelf.api.responses.FacilityShort;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.resources.subresources.FacilityResource;
+import com.codeshelf.api.responses.FacilityShort;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")

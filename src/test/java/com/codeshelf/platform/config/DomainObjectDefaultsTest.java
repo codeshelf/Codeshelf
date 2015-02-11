@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.config;
+package com.codeshelf.platform.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -7,11 +7,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectPropertyDefault;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.DomainObjectPropertyDefault;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.Facility;
 
 public class DomainObjectDefaultsTest extends DomainTestABC {
 	

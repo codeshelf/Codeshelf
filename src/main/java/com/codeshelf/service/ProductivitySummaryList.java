@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.service;
+package com.codeshelf.service;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,11 +8,11 @@ import lombok.Setter;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class ProductivitySummaryList {

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.Set;
 import java.util.UUID;
@@ -6,7 +6,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IDomainObject;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
@@ -63,7 +63,7 @@ public class ObjectChangeBroadcaster {
 	 * --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 * @see com.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
 	public final void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
 		mListeners.put(daoClass, inListener);
@@ -73,7 +73,7 @@ public class ObjectChangeBroadcaster {
 	 * --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 * @see com.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
 	public final void unregisterDAOListener(IDaoListener inListener) {
 		//Copy on write
@@ -90,7 +90,7 @@ public class ObjectChangeBroadcaster {
 	 * --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * 
-	 * @see com.gadgetworks.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.gadgetworks.codeshelf.model.dao.IDAOListener)
+	 * @see com.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
 	public final void removeDAOListeners() {
 		mListeners.clear();

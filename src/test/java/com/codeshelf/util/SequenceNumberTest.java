@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.util;
+package com.codeshelf.util;
 
 import org.junit.Assert;
 import org.junit.Test;

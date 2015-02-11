@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.event;
+package com.codeshelf.event;
 
 import java.util.Set;
 

@@ -3,12 +3,12 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: IDomainObject.java,v 1.18 2013/03/15 14:57:13 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ITypedDao;
 
 /**
  * @author jeffw

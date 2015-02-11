@@ -2,7 +2,7 @@
  *  CodeShelf
  *  Copyright (c) 2005-2014, Jeffrey B. Williams, All rights reserved
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
@@ -18,22 +18,22 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.Slot;
-import com.gadgetworks.codeshelf.model.domain.Tier;
-import com.gadgetworks.codeshelf.model.domain.Vertex;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.TravelDirectionEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.Slot;
+import com.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.Vertex;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.flyweight.command.NetGuid;
 // domain objects needed
 
 /**

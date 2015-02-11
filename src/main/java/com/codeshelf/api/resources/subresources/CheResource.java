@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.api.resources.subresources;
+package com.codeshelf.api.resources.subresources;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,15 +12,15 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.api.BaseResponse;
-import com.gadgetworks.codeshelf.api.BaseResponse.UUIDParam;
-import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.WorkPackage.WorkList;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.WorkService;
+import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
 public class CheResource {

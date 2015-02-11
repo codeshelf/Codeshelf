@@ -1,31 +1,31 @@
-package com.gadgetworks.codeshelf.generators;
+package com.codeshelf.generators;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.device.LedSample;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.WiFactory;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.LedSample;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.ContainerKind;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {

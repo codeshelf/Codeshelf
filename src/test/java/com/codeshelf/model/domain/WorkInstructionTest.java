@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: OrderGroupTest.java,v 1.4 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -12,10 +12,10 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.generators.WorkInstructionGenerator;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 

@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: InventoryImporterTest.java,v 1.12 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,12 +15,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.eaio.uuid.UUID;
-import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
-import com.gadgetworks.codeshelf.edi.EdiTestABC;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.edi.AislesFileCsvImporter;
+import com.codeshelf.edi.EdiTestABC;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.model.WorkInstructionSequencerType;
 
 public class WorkInstructionSequencerTest extends EdiTestABC {
 	

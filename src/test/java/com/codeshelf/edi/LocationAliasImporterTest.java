@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: InventoryImporterTest.java,v 1.12 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
@@ -22,15 +22,15 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.event.EventSeverity;
-import com.gadgetworks.codeshelf.event.EventTag;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.validation.Errors;
+import com.codeshelf.event.EventProducer;
+import com.codeshelf.event.EventSeverity;
+import com.codeshelf.event.EventTag;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.validation.Errors;
 
 /**
  * @author jeffw
@@ -270,7 +270,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		/* This was the actual DEV-594 situation, inverting the names for a tier.
 		2015-01-14 12:16:53,054  cannot map Alias D139x to B2 because it is still mapped to B1
 		java.lang.Exception
-			at com.gadgetworks.codeshelf.model.domain.Location.addAlias(Location.java:694)
+			at com.codeshelf.model.domain.Location.addAlias(Location.java:694)
 		*/		
 		this.getTenantPersistenceService().beginTenantTransaction();
 		String csvString4 = "mappedLocationId,locationAlias\r\n" //

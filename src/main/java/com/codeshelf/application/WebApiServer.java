@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -39,11 +39,11 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
 import com.codahale.metrics.servlets.PingServlet;
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.device.RadioServlet;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.metrics.ServiceStatusHealthCheck;
-import com.gadgetworks.codeshelf.ws.jetty.server.CsServerEndPoint;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.RadioServlet;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.metrics.ServiceStatusHealthCheck;
+import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
 

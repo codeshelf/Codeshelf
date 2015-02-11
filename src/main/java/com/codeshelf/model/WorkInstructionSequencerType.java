@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 public enum WorkInstructionSequencerType {
 	BayDistance,

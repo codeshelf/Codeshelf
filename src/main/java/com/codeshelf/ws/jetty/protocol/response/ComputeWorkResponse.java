@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
+package com.codeshelf.ws.jetty.protocol.response;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -6,7 +6,7 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.WorkInstructionCount;
 
 public class ComputeWorkResponse extends ResponseABC {
 

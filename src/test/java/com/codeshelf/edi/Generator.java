@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 public class Generator {
 

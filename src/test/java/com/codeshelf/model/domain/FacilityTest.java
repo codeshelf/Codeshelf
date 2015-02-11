@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: FacilityTest.java,v 1.11 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
@@ -12,7 +12,7 @@ import org.junit.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.PositionTypeEnum;
 
 /**
  * @author jeffw

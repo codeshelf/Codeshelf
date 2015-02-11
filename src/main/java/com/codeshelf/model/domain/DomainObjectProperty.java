@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.Locale;
 import java.util.UUID;
@@ -22,9 +22,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.inject.Inject;
 
 @Entity
@@ -42,7 +42,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	@Getter
 	@NonNull
 	@Column(name = "objectid", nullable = false)
-	@Type(type = "com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
+	@Type(type = "com.codeshelf.platform.persistence.DialectUUIDType")
 	private UUID									objectId			= null;
 
 	@Getter

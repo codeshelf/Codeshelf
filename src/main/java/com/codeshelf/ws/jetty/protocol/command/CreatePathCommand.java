@@ -1,15 +1,15 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
+import com.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class CreatePathCommand extends CommandABC {
 

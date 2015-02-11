@@ -1,8 +1,8 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ITypedDao;
 
 /**
  * 

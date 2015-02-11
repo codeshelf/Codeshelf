@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.client;
+package com.codeshelf.ws.jetty.client;
 
 import java.io.IOException;
 
@@ -18,17 +18,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonEncoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.ws.jetty.io.JsonDecoder;
+import com.codeshelf.ws.jetty.io.JsonEncoder;
+import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 @ClientEndpoint(encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class })
 public class CsClientEndpoint {

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.service;
+package com.codeshelf.service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -10,13 +10,13 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.WorkInstruction;
 
 public class ProductivityCheSummaryList {
 

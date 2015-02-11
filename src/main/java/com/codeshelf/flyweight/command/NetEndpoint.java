@@ -4,9 +4,9 @@
  *  $Id: NetEndpoint.java,v 1.2 2013/02/20 20:39:00 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
 
 // --------------------------------------------------------------------------
 /** 

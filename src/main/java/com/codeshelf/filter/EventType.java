@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.filter;
+package com.codeshelf.filter;
 
 public enum EventType {
 

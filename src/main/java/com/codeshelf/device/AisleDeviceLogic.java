@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: AisleDeviceLogic.java,v 1.6 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,15 +21,15 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.util.CompareNullChecker;
-import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.CommandControlLed;
-import com.gadgetworks.flyweight.command.EffectEnum;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetEndpoint;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.IRadioController;
+import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlLed;
+import com.codeshelf.flyweight.command.EffectEnum;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetEndpoint;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.IRadioController;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 
@@ -180,7 +180,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#scanCommandReceived(java.lang.String)
+	 * @see com.codeshelf.flyweight.controller.INetworkDevice#scanCommandReceived(java.lang.String)
 	 */
 	@Override
 	public void scanCommandReceived(String inCommandStr) {
@@ -189,7 +189,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.INetworkDevice#buttonCommandReceived(com.gadgetworks.flyweight.command.CommandControlButton)
+	 * @see com.codeshelf.flyweight.controller.INetworkDevice#buttonCommandReceived(com.codeshelf.flyweight.command.CommandControlButton)
 	 */
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {

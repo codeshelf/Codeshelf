@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,12 +11,12 @@ import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Point;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Point;
 
 public class GenericDaoTest extends DAOTestABC {
 		

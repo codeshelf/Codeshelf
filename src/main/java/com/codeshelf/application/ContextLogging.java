@@ -1,10 +1,10 @@
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import org.apache.log4j.MDC;
 
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public class ContextLogging {
 	////////////////////////////

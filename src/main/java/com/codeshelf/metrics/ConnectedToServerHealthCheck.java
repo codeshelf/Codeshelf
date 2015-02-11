@@ -1,7 +1,7 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 
 public class ConnectedToServerHealthCheck extends CodeshelfHealthCheck {
 	

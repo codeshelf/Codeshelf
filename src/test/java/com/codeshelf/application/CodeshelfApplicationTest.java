@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: CodeshelfApplicationTest.java,v 1.23 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import static org.mockito.Mockito.mock;
 
@@ -15,26 +15,26 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.edi.EdiProcessor;
-import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.edi.IEdiProcessor;
-import com.gadgetworks.codeshelf.model.dao.MockDao;
-import com.gadgetworks.codeshelf.model.dao.Result;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Slot;
-import com.gadgetworks.codeshelf.model.domain.Tier;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.report.IPickDocumentGenerator;
-import com.gadgetworks.codeshelf.report.PickDocumentGenerator;
-import com.gadgetworks.codeshelf.util.IConfiguration;
+import com.codeshelf.edi.EdiProcessor;
+import com.codeshelf.edi.ICsvAislesFileImporter;
+import com.codeshelf.edi.ICsvCrossBatchImporter;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.IEdiProcessor;
+import com.codeshelf.model.dao.MockDao;
+import com.codeshelf.model.dao.Result;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Slot;
+import com.codeshelf.model.domain.Tier;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.report.IPickDocumentGenerator;
+import com.codeshelf.report.PickDocumentGenerator;
+import com.codeshelf.util.IConfiguration;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -163,7 +163,7 @@ public class CodeshelfApplicationTest {
 	}
 
 	/**
-	 * Test method for {@link com.gadgetworks.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
+	 * Test method for {@link com.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
 	@Test
 	public void testStartStopApplication() {

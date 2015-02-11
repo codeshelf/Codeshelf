@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
@@ -9,14 +9,14 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectUpdateCommand extends CommandABC {
 
@@ -62,8 +62,8 @@ public class ObjectUpdateCommand extends CommandABC {
 			return response;
 		}
 
-		if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-			className = "com.gadgetworks.codeshelf.model.domain." + className;
+		if (!className.startsWith("com.codeshelf.model.domain.")) {
+			className = "com.codeshelf.model.domain." + className;
 		}
 		
 		Map<String, Object> properties = request.getProperties();

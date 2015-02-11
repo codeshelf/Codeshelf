@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeast;
@@ -20,18 +20,18 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
-import com.gadgetworks.codeshelf.generators.FacilityGenerator;
-import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.util.MemoryConfiguration;
-import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.codeshelf.generators.FacilityGenerator;
+import com.codeshelf.model.dao.DAOTestABC;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.util.MemoryConfiguration;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 
 public class CsDeviceManagerTest extends DAOTestABC {
 	

@@ -3,15 +3,15 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: CommandFactory.java,v 1.9 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.RadioController;
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.device.RadioController;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 
 // --------------------------------------------------------------------------
 /**

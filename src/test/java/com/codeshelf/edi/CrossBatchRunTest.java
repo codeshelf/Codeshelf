@@ -3,7 +3,7 @@
  *  Copyright (c) 2014, Codeshelf, All rights reserved
  *  Author Jon Ranstrom
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,25 +21,25 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.HeaderCounts;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.HeaderCounts;
+import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
+import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  *

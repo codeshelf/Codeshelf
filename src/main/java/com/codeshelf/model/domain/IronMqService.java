@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: file.java,v 1.1 2010/09/28 05:41:28 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import io.iron.ironmq.Client;
 import io.iron.ironmq.Cloud;
@@ -27,18 +27,18 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.gadgetworks.codeshelf.edi.ICsvAislesFileImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.edi.ICsvAislesFileImporter;
+import com.codeshelf.edi.ICsvCrossBatchImporter;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;

@@ -1,10 +1,10 @@
-package com.gadgetworks.codeshelf.ws.jetty.client;
+package com.codeshelf.ws.jetty.client;
 
 import java.util.Date;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 
 public class RequestInfo {
 

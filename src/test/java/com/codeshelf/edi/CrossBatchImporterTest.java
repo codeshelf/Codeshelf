@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: OrderImporterTest.java,v 1.11 2013/04/11 07:42:45 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,19 +16,19 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.HeaderCounts;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.WorkService;
+import com.codeshelf.model.HeaderCounts;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.WorkService;
 
 /**
  * @author jeffw

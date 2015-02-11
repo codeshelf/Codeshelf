@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform;
+package com.codeshelf.platform;
 
 public class ServiceNotInitializedException extends RuntimeException {
 

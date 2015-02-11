@@ -4,15 +4,15 @@
  *  $Id: CsNetworkApplication.java,v 1.5 2013/04/01 23:42:40 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.codeshelf.metrics.AssociatedRadioHealthCheck;
-import com.gadgetworks.codeshelf.metrics.ConnectedToServerHealthCheck;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.codeshelf.metrics.RadioOnHealthCheck;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.metrics.AssociatedRadioHealthCheck;
+import com.codeshelf.metrics.ConnectedToServerHealthCheck;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.metrics.RadioOnHealthCheck;
 import com.google.inject.Inject;
 
 public final class CsSiteControllerApplication extends ApplicationABC {
@@ -29,7 +29,7 @@ public final class CsSiteControllerApplication extends ApplicationABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.application.ApplicationABC#doLoadLibraries()
+	 * @see com.codeshelf.application.ApplicationABC#doLoadLibraries()
 	 */
 	@Override
 	protected void doLoadLibraries() {

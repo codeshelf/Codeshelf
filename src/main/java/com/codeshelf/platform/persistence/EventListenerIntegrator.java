@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.persistence;
+package com.codeshelf.platform.persistence;
 
 import lombok.Getter;
 
@@ -12,7 +12,7 @@ import org.hibernate.service.spi.SessionFactoryServiceRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 
 public class EventListenerIntegrator implements Integrator {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EventListenerIntegrator.class);

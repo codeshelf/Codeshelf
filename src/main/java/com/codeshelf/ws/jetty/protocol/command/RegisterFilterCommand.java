@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.util.HashMap;
 import java.util.List;
@@ -7,17 +7,17 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.filter.EventType;
-import com.gadgetworks.codeshelf.filter.Filter;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.filter.EventType;
+import com.codeshelf.filter.Filter;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 /*
 	Example Message:
@@ -51,8 +51,8 @@ public class RegisterFilterCommand extends CommandABC {
 	public ResponseABC exec() {
 		try {
 			String objectClassName = request.getClassName();
-			if (!objectClassName.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-				objectClassName = "com.gadgetworks.codeshelf.model.domain." + objectClassName;
+			if (!objectClassName.startsWith("com.codeshelf.model.domain.")) {
+				objectClassName = "com.codeshelf.model.domain." + objectClassName;
 			}
 			List<Map<String, Object>> filterParams = request.getFilterParams();
 			

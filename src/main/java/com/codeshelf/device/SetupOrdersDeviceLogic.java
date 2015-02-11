@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: CheDeviceLogic.java,v 1.12 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -23,13 +23,13 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionCount;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.util.CompareNullChecker;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.controller.IRadioController;
+import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.IRadioController;
 
 /**
  * @author jonranstrom

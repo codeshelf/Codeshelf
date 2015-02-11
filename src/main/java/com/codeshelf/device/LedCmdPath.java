@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

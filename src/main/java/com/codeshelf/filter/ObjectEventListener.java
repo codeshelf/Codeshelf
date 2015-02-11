@@ -1,10 +1,10 @@
-package com.gadgetworks.codeshelf.filter;
+package com.codeshelf.filter;
 
 import java.util.Set;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public interface ObjectEventListener {
 

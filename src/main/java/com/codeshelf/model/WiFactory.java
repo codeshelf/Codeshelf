@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2014, Codeshelf, Inc., All rights reserved
  *  $Id: Facility.java,v 1.82 2013/11/05 06:14:55 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -13,23 +13,23 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.device.LedSample;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.OrderLocation;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.util.SequenceNumber;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.LedSample;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.LocationAlias;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.OrderLocation;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.SequenceNumber;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.google.common.base.Strings;
 
 /**

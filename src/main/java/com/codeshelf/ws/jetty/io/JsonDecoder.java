@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.io;
+package com.codeshelf.ws.jetty.io;
 
 import javax.websocket.DecodeException;
 import javax.websocket.Decoder;
@@ -10,9 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.model.domain.Vertex;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.Vertex;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class JsonDecoder implements Decoder.Text<MessageABC> {
 

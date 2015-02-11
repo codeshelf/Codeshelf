@@ -1,9 +1,9 @@
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.multitenancy.User;
 
 /**
  * 		

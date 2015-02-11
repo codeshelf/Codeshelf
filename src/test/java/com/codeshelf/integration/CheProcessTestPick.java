@@ -3,7 +3,7 @@
  *  Copyright (c) 2014, Codeshelf, All rights reserved
  *  file IntegrationTest1.java
  *******************************************************************************/
-package com.gadgetworks.codeshelf.integration;
+package com.codeshelf.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -22,38 +22,38 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.device.LedCmdGroup;
-import com.gadgetworks.codeshelf.device.LedCmdGroupSerializer;
-import com.gadgetworks.codeshelf.device.PosControllerInstr;
-import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
-import com.gadgetworks.codeshelf.edi.ICsvCrossBatchImporter;
-import com.gadgetworks.codeshelf.edi.ICsvInventoryImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.WiSetSummary;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.flyweight.command.ColorEnum;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.edi.AislesFileCsvImporter;
+import com.codeshelf.edi.ICsvCrossBatchImporter;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.WorkService;
+import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
 
 /**

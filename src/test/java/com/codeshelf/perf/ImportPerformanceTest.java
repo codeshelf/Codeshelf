@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.perf;
+package com.codeshelf.perf;
 
 import java.io.InputStream;
 import java.text.DecimalFormat;
@@ -15,7 +15,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Configuration;
+import com.codeshelf.application.Configuration;
 
 public class ImportPerformanceTest {
 	

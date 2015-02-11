@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.validation;
+package com.codeshelf.validation;
 
 import java.util.Arrays;
 

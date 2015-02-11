@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: PickDocumentGenerator.java,v 1.1 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.report;
+package com.codeshelf.report;
 
 import java.util.concurrent.BlockingQueue;
 

@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: CsvImporter.java,v 1.30 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.Reader;
 import java.sql.Timestamp;
@@ -21,30 +21,30 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.event.EventProducer;
-import com.gadgetworks.codeshelf.event.EventTag;
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PickStrategyEnum;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.Container;
-import com.gadgetworks.codeshelf.model.domain.ContainerKind;
-import com.gadgetworks.codeshelf.model.domain.ContainerUse;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Item;
-import com.gadgetworks.codeshelf.model.domain.ItemMaster;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.UomMaster;
-import com.gadgetworks.codeshelf.service.PropertyService;
-import com.gadgetworks.codeshelf.util.DateTimeParser;
-import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
+import com.codeshelf.event.EventProducer;
+import com.codeshelf.event.EventTag;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.PickStrategyEnum;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.ContainerKind;
+import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.LocationAlias;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.service.PropertyService;
+import com.codeshelf.util.DateTimeParser;
+import com.codeshelf.validation.BatchResult;
+import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -100,7 +100,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.gadgetworks.codeshelf.model.domain.Facility)
+	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
 	public final BatchResult<Object> importOrdersFromCsvStream(final Reader inCsvReader,
 		final Facility inFacility,

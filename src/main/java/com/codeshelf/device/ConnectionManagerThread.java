@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -6,10 +6,10 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.KeepAlive;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ConnectionManagerThread extends Thread {
 

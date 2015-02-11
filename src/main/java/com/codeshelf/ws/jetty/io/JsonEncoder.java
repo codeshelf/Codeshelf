@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.io;
+package com.codeshelf.ws.jetty.io;
 
 import javax.websocket.EncodeException;
 import javax.websocket.Encoder;
@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class JsonEncoder implements Encoder.Text<MessageABC> {
 	final public static int WEBSOCKET_MAX_MESSAGE_SIZE = Integer.MAX_VALUE; /// tested as long type with extremely large value (50,000,000,000) , did not cause out-of-memory

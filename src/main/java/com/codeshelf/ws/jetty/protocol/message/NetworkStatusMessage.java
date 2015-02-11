@@ -1,9 +1,9 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.message;
+package com.codeshelf.ws.jetty.protocol.message;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 
 public class NetworkStatusMessage extends MessageABC {
 	@Getter @Setter

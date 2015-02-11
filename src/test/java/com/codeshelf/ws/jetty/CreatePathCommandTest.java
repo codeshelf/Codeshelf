@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty;
+package com.codeshelf.ws.jetty;
 
 
 import static org.mockito.Mockito.mock;
@@ -21,24 +21,24 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gadgetworks.codeshelf.filter.Filter;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.ArgsClass;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.filter.Filter;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.util.ConverterProvider;
+import com.codeshelf.ws.jetty.protocol.command.ArgsClass;
+import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
+import com.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
+import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
 public class CreatePathCommandTest extends DomainTestABC {

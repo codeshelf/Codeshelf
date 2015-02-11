@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty;
+package com.codeshelf.ws.jetty;
 
 import java.io.IOException;
 
@@ -13,16 +13,16 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionCount;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.Point;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
-import com.gadgetworks.codeshelf.ws.jetty.io.ObjectMixIn;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.Point;
+import com.codeshelf.ws.jetty.io.JsonDecoder;
+import com.codeshelf.ws.jetty.io.ObjectMixIn;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 
 public class JsonDecoderTest  {
 
@@ -198,8 +198,8 @@ public class JsonDecoderTest  {
 	@Test
 	public void testObjectMethodRequestDecoding() throws DecodeException {
 		JsonDecoder decoder = new JsonDecoder();		
-		//String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'posTypeEnum':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.gadgetworks.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
-		String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'className':'Point','posType':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.gadgetworks.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
+		//String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'posTypeEnum':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
+		String rawMessage = "{'ObjectMethodRequest':{'messageId':'da76ec80-225c-11e4-8ce6-48d705ccef0f','className':'Organization','persistentId':'da76ec81-225c-11e4-8ce6-48d705ccef0f','methodName':'createFacility','methodArgs':[{'name':'domainId','value':'F1','classType':'java.lang.String'},{'name':'description','value':'First Facility','classType':'java.lang.String'},{'name':'anchorPoint','value':{'className':'Point','posType':'METERS_FROM_PARENT','x':0.0,'y':0.0,'z':0.0},'classType':'com.codeshelf.model.domain.Point'}]}}".replace('\'', '"');;
 		MessageABC message = decoder.decode(rawMessage);
 		Assert.assertTrue(message instanceof ObjectMethodRequest);
 		ObjectMethodRequest objectMethodRequest = (ObjectMethodRequest) message;

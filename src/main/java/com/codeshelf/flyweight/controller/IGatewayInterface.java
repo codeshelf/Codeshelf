@@ -3,10 +3,10 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: IGatewayInterface.java,v 1.2 2013/03/03 23:27:21 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetworkId;
 
 // --------------------------------------------------------------------------
 /**

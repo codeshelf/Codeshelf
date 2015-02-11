@@ -1,18 +1,18 @@
-package com.gadgetworks.codeshelf.service;
+package com.codeshelf.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.gadgetworks.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.flyweight.command.ColorEnum;
+import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
+import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
+import com.codeshelf.flyweight.command.ColorEnum;
 
 public class PropertyService implements IApiService {
 

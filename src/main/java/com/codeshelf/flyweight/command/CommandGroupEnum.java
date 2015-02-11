@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: CommandGroupEnum.java,v 1.3 2013/05/28 05:14:45 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
 // --------------------------------------------------------------------------
 /**

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,13 +6,13 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.PropertyService;
 
 public class HousekeepingInjector {
 	// For multi-tenancy, this must convert from a static usage object to having one HousekeepingInjector per facility.

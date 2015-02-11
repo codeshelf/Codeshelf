@@ -4,7 +4,7 @@
  *  $Id: RadioController.java,v 1.17 2013/09/05 03:26:03 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,37 +20,37 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.codeshelf.metrics.MetricsGroup;
-import com.gadgetworks.codeshelf.metrics.MetricsService;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
-import com.gadgetworks.flyweight.command.AckStateEnum;
-import com.gadgetworks.flyweight.command.CommandAssocABC;
-import com.gadgetworks.flyweight.command.CommandAssocAck;
-import com.gadgetworks.flyweight.command.CommandAssocCheck;
-import com.gadgetworks.flyweight.command.CommandAssocReq;
-import com.gadgetworks.flyweight.command.CommandAssocResp;
-import com.gadgetworks.flyweight.command.CommandControlABC;
-import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.CommandControlScan;
-import com.gadgetworks.flyweight.command.CommandNetMgmtABC;
-import com.gadgetworks.flyweight.command.CommandNetMgmtCheck;
-import com.gadgetworks.flyweight.command.CommandNetMgmtIntfTest;
-import com.gadgetworks.flyweight.command.CommandNetMgmtSetup;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetChannelValue;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.command.NetworkId;
-import com.gadgetworks.flyweight.command.Packet;
-import com.gadgetworks.flyweight.controller.FTDIInterface;
-import com.gadgetworks.flyweight.controller.IGatewayInterface;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
-import com.gadgetworks.flyweight.controller.NetworkDeviceStateEnum;
+import com.codeshelf.application.ContextLogging;
+import com.codeshelf.metrics.MetricsGroup;
+import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.OutOfRangeException;
+import com.codeshelf.flyweight.command.AckStateEnum;
+import com.codeshelf.flyweight.command.CommandAssocABC;
+import com.codeshelf.flyweight.command.CommandAssocAck;
+import com.codeshelf.flyweight.command.CommandAssocCheck;
+import com.codeshelf.flyweight.command.CommandAssocReq;
+import com.codeshelf.flyweight.command.CommandAssocResp;
+import com.codeshelf.flyweight.command.CommandControlABC;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlScan;
+import com.codeshelf.flyweight.command.CommandNetMgmtABC;
+import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
+import com.codeshelf.flyweight.command.CommandNetMgmtIntfTest;
+import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetChannelValue;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.flyweight.controller.FTDIInterface;
+import com.codeshelf.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
+import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
@@ -174,7 +174,7 @@ public class RadioController implements IRadioController {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IController#startController(byte)
+	 * @see com.codeshelf.flyweight.controller.IController#startController(byte)
 	 */
 	@Override
 	public final void startController(final byte inPreferredChannel) {
@@ -315,7 +315,7 @@ public class RadioController implements IRadioController {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IController#getChannel()
+	 * @see com.codeshelf.flyweight.controller.IController#getChannel()
 	 */
 	@Override
 	public final byte getRadioChannel() {
@@ -324,7 +324,7 @@ public class RadioController implements IRadioController {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IController#setChannel(byte)
+	 * @see com.codeshelf.flyweight.controller.IController#setChannel(byte)
 	 */
 	@Override
 	public final void setRadioChannel(byte inChannel) {
@@ -542,7 +542,7 @@ public class RadioController implements IRadioController {
 	 */
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com.gadgetworks.flyweight.command.ICommand, com.gadgetworks.flyweight.command.NetworkId, com.gadgetworks.flyweight.command.NetAddress, boolean)
+	 * @see com.codeshelf.flyweight.controller.IRadioController#sendCommand(com.codeshelf.flyweight.command.ICommand, com.codeshelf.flyweight.command.NetworkId, com.codeshelf.flyweight.command.NetAddress, boolean)
 	 */
 	@Override
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
@@ -1182,7 +1182,7 @@ public class RadioController implements IRadioController {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IController#addNetworkDevice(com.gadgetworks.flyweight.controller.INetworkDevice)
+	 * @see com.codeshelf.flyweight.controller.IController#addNetworkDevice(com.codeshelf.flyweight.controller.INetworkDevice)
 	 */
 	@Override
 	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
@@ -1204,7 +1204,7 @@ public class RadioController implements IRadioController {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IController#removeNetworkDevice(com.gadgetworks.flyweight.controller.INetworkDevice)
+	 * @see com.codeshelf.flyweight.controller.IController#removeNetworkDevice(com.codeshelf.flyweight.controller.INetworkDevice)
 	 */
 	@Override
 	public final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
@@ -1219,7 +1219,7 @@ public class RadioController implements IRadioController {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IRadioController#getNetworkDevice(com.gadgetworks.flyweight.command.NetGuid)
+	 * @see com.codeshelf.flyweight.controller.IRadioController#getNetworkDevice(com.codeshelf.flyweight.command.NetGuid)
 	 */
 	@Override
 	public final INetworkDevice getNetworkDevice(NetGuid inGuid) {

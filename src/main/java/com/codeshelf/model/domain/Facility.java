@@ -4,7 +4,7 @@
  *  Copyright (c) 2005-2014, Jeffrey B. Williams, All rights reserved
  *  $Id: Facility.java,v 1.82 2013/11/05 06:14:55 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,21 +31,21 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.gadgetworks.codeshelf.model.EdiProviderEnum;
-import com.gadgetworks.codeshelf.model.EdiServiceStateEnum;
-import com.gadgetworks.codeshelf.model.HeaderCounts;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionSequencerType;
-import com.gadgetworks.codeshelf.model.dao.DaoException;
-import com.gadgetworks.codeshelf.model.dao.GenericDaoABC;
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.service.PropertyService;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.HeaderCounts;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.PropertyService;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

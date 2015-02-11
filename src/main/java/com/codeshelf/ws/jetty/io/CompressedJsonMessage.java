@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.io;
+package com.codeshelf.ws.jetty.io;
 
 import java.nio.charset.Charset;
 

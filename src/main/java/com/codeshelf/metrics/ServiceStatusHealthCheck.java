@@ -1,9 +1,9 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
-import com.gadgetworks.codeshelf.application.Configuration;
+import com.codeshelf.application.Configuration;
 
 public class ServiceStatusHealthCheck extends CodeshelfHealthCheck {
 

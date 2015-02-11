@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.api.resources;
+package com.codeshelf.api.resources;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,16 +14,16 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.gadgetworks.codeshelf.api.BaseResponse;
-import com.gadgetworks.codeshelf.api.ErrorResponse;
-import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
-import com.gadgetworks.codeshelf.edi.InventoryCsvImporter;
-import com.gadgetworks.codeshelf.edi.LocationAliasCsvImporter;
-import com.gadgetworks.codeshelf.edi.OrderLocationCsvImporter;
-import com.gadgetworks.codeshelf.edi.OutboundOrderCsvImporter;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.validation.BatchResult;
+import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.edi.AislesFileCsvImporter;
+import com.codeshelf.edi.InventoryCsvImporter;
+import com.codeshelf.edi.LocationAliasCsvImporter;
+import com.codeshelf.edi.OrderLocationCsvImporter;
+import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.core.header.FormDataContentDisposition;

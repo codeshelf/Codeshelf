@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2008, Jeffrey B. Williams, All rights reserved
  *  $Id: NetworkDeviceStateEnum.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 // --------------------------------------------------------------------------
 /**

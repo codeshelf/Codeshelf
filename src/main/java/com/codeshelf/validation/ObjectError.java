@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gadgetworks.codeshelf.validation;
+package com.codeshelf.validation;
 
 import java.io.Serializable;
 

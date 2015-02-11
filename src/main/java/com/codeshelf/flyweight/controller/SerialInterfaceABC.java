@@ -4,7 +4,7 @@
  *  $Id: SerialInterfaceABC.java,v 1.5 2013/07/12 21:44:38 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -14,15 +14,15 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.ContextLogging;
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.command.CommandAssocABC;
-import com.gadgetworks.flyweight.command.CommandGroupEnum;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetworkId;
-import com.gadgetworks.flyweight.command.Packet;
+import com.codeshelf.application.ContextLogging;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.command.CommandAssocABC;
+import com.codeshelf.flyweight.command.CommandGroupEnum;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.Packet;
 
 /**
  * --------------------------------------------------------------------------
@@ -64,7 +64,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#startInterface()
+	 * @see com.codeshelf.flyweight.controller.IGatewayInterface#startInterface()
 	 */
 	public final void startInterface() {
 		mShouldRun = true;
@@ -118,7 +118,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#resetInterface()
+	 * @see com.codeshelf.flyweight.controller.IGatewayInterface#resetInterface()
 	 */
 	public final void resetInterface() {
 		// We can only reset an already running interface.
@@ -139,7 +139,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#stopInterface()
+	 * @see com.codeshelf.flyweight.controller.IGatewayInterface#stopInterface()
 	 */
 	public final void stopInterface() {
 		mIsStarted = false;
@@ -149,7 +149,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IGatewayInterface#isStarted()
+	 * @see com.codeshelf.flyweight.controller.IGatewayInterface#isStarted()
 	 */
 	public final boolean isStarted() {
 		return mIsStarted;

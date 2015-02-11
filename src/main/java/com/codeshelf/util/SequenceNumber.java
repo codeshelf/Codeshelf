@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.util;
+package com.codeshelf.util;
 
 public class SequenceNumber {
 

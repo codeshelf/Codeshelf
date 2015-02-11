@@ -1,9 +1,9 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.request;
+package com.codeshelf.ws.jetty.protocol.request;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkInstruction;
 
 public class CompleteWorkInstructionRequest extends DeviceRequest {
 

@@ -4,7 +4,7 @@
  *  $Id: PacketTest.java,v 1.2 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -13,15 +13,15 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.flyweight.bitfields.BitFieldInputStream;
-import com.gadgetworks.flyweight.bitfields.BitFieldOutputStream;
-import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.IPacket;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetEndpoint;
-import com.gadgetworks.flyweight.command.NetworkId;
-import com.gadgetworks.flyweight.command.Packet;
+import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
+import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.IPacket;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetEndpoint;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.command.Packet;
 
 /** --------------------------------------------------------------------------
  *  Test the Packet class.
@@ -38,7 +38,7 @@ public final class PacketTest {
 	private static final String			TEST_MSG4			= "TEST4";
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.Packet#Packet(com.gadgetworks.flyweightcontroller.command.CommandABC, com.gadgetworks.flyweightcontroller.command.NetAddress, com.gadgetworks.flyweightcontroller.command.NetAddress, byte)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.command.Packet#Packet(com.codeshelf.flyweightcontroller.command.CommandABC, com.codeshelf.flyweightcontroller.command.NetAddress, com.codeshelf.flyweightcontroller.command.NetAddress, byte)}.
 	 */
 	@Test
 	public void testPacketConstructors() {
@@ -79,7 +79,7 @@ public final class PacketTest {
 	}
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.Packet#toStream(com.gadgetworks.flyweightcontroller.bitfields.BitFieldOutputStream)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.command.Packet#toStream(com.codeshelf.flyweightcontroller.bitfields.BitFieldOutputStream)}.
 	 */
 	@Test
 	public void testFromStream() {
@@ -108,7 +108,7 @@ public final class PacketTest {
 	}
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.command.Packet#fromStream(com.gadgetworks.flyweightcontroller.bitfields.BitFieldInputStream)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.command.Packet#fromStream(com.codeshelf.flyweightcontroller.bitfields.BitFieldInputStream)}.
 	 */
 	@Test
 	public void testToStream() {

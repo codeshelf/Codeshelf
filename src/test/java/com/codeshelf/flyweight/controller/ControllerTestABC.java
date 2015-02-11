@@ -3,16 +3,16 @@
  *  Copyright (c) 2005, 2006, Jeffrey B. Williams, All rights reserved
  *  $Id: ControllerABCTest.java,v 1.1 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.flyweight.command.CommandAssocReq;
-import com.gadgetworks.flyweight.command.CommandControlDisplayMessage;
-import com.gadgetworks.flyweight.command.ICommand;
-import com.gadgetworks.flyweight.command.NetAddress;
-import com.gadgetworks.flyweight.command.NetEndpoint;
+import com.codeshelf.flyweight.command.CommandAssocReq;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetEndpoint;
 
 /** --------------------------------------------------------------------------
  *  Test the controller.
@@ -45,7 +45,7 @@ public abstract class ControllerTestABC {
 	protected abstract IRadioController createControllerABC() throws Exception;
 
 	/**
-	 * Test method for {@link com.gadgetworks.flyweightcontroller.controller.ControllerABC#receiveCommand(com.gadgetworks.controller.CommandABC, com.gadgetworks.flyweightcontroller.command.NetAddress)}.
+	 * Test method for {@link com.codeshelf.flyweightcontroller.controller.ControllerABC#receiveCommand(com.gadgetworks.controller.CommandABC, com.codeshelf.flyweightcontroller.command.NetAddress)}.
 	 */
 	@Test
 	public final void testReceiveCommand() {

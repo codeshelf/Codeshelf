@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.integration;
+package com.codeshelf.integration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +10,14 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.device.CheDeviceLogic;
-import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.device.PosControllerInstr;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.flyweight.command.CommandControlButton;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.device.CheDeviceLogic;
+import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public class PickSimulator {
 

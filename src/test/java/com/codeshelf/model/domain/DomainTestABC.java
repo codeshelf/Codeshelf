@@ -3,19 +3,19 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: EdiTestABC.java,v 1.3 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
 import org.hibernate.Transaction;
 
-import com.gadgetworks.codeshelf.model.OrderStatusEnum;
-import com.gadgetworks.codeshelf.model.OrderTypeEnum;
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.TravelDirectionEnum;
-import com.gadgetworks.codeshelf.model.dao.DAOTestABC;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.TravelDirectionEnum;
+import com.codeshelf.model.dao.DAOTestABC;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public abstract class DomainTestABC extends DAOTestABC {
 

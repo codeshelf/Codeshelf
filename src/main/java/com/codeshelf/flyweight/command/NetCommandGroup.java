@@ -4,11 +4,11 @@
  *  $Id: NetCommandGroup.java,v 1.2 2013/07/22 04:30:18 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.command;
+package com.codeshelf.flyweight.command;
 
-import com.gadgetworks.flyweight.bitfields.IllegalBoundsException;
-import com.gadgetworks.flyweight.bitfields.NBitInteger;
-import com.gadgetworks.flyweight.bitfields.OutOfRangeException;
+import com.codeshelf.flyweight.bitfields.IllegalBoundsException;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 
 /** 
  *  --------------------------------------------------------------------------

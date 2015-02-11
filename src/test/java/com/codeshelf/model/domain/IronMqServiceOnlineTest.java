@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.generators.FacilityGenerator;
-import com.gadgetworks.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.generators.FacilityGenerator;
+import com.codeshelf.model.EdiProviderEnum;
 
 // TODO: should use mock DAO 
 public class IronMqServiceOnlineTest extends DomainTestABC {

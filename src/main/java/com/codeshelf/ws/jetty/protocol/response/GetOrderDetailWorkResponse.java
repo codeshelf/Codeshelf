@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
+package com.codeshelf.ws.jetty.protocol.response;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,8 +6,8 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class GetOrderDetailWorkResponse extends ResponseABC {
 	// Initially a clone of GetWorkResponse, but we expect it will drift.

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public class DomainObjectPropertyDefault {
 	@Column(name = "persistentid", nullable = false)
 	@Getter
 	@JsonProperty
-	@Type(type="com.gadgetworks.codeshelf.platform.persistence.DialectUUIDType")
+	@Type(type="com.codeshelf.platform.persistence.DialectUUIDType")
 	private UUID persistentId = UUID.randomUUID();
 
 	@Getter

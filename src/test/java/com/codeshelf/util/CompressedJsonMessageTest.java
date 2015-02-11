@@ -1,14 +1,14 @@
-package com.gadgetworks.codeshelf.util;
+package com.codeshelf.util;
 
 import javax.websocket.DecodeException;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.ws.jetty.io.CompressedJsonMessage;
-import com.gadgetworks.codeshelf.ws.jetty.io.JsonDecoder;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
+import com.codeshelf.ws.jetty.io.CompressedJsonMessage;
+import com.codeshelf.ws.jetty.io.JsonDecoder;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 public class CompressedJsonMessageTest {
 	@Test
 	public void testCompress() {

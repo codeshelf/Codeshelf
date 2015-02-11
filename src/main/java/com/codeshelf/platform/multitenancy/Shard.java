@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.multitenancy;
+package com.codeshelf.platform.multitenancy;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,7 +23,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.platform.persistence.ManagerPersistenceService;
+import com.codeshelf.platform.persistence.ManagerPersistenceService;
 
 @Entity
 @Table(name = "shard")

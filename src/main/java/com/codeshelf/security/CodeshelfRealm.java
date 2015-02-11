@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: CodeshelfRealm.java,v 1.1 2013/02/17 04:22:21 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.security;
+package com.codeshelf.security;
 
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;

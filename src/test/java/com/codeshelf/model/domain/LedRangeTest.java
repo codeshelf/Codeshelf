@@ -3,12 +3,12 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: FacilityTest.java,v 1.11 2013/11/11 07:46:30 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.LedRange;
+import com.codeshelf.model.LedRange;
 
 /**
  * @author ranstrom

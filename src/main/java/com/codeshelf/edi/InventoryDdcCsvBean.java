@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: DdcInventoryCsvBean.java,v 1.5 2013/07/17 05:48:13 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;

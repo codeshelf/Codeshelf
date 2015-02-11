@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.platform.persistence;
+package com.codeshelf.platform.persistence;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -9,8 +9,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.DomainTestABC;
-import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.model.domain.Facility;
 
 public class TestDatabaseTest extends DomainTestABC {
 	// These tests should be run together, as the tests will not be meaningful if run one at a time.

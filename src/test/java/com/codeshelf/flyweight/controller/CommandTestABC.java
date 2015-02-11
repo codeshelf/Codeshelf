@@ -4,12 +4,12 @@
  *  $Id: CommandABCTest.java,v 1.1 2013/03/04 04:47:29 jeffw Exp $
  *******************************************************************************/
 
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.gadgetworks.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.ICommand;
 
 /** --------------------------------------------------------------------------
  *  

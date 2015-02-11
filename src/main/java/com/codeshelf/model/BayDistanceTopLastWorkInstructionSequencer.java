@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -7,11 +7,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Bay;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.WorkInstruction;
 
 /**
  * Work sequencer that orders bays by distance on path, then tiers from top to bottom, and then slots from distance along path
@@ -28,7 +28,7 @@ public class BayDistanceTopLastWorkInstructionSequencer extends WorkInstructionS
 	// --------------------------------------------------------------------------
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.model.WISequenceStrategy#sort(com.gadgetworks.codeshelf.model.domain.Facility, java.util.List)
+	 * @see com.codeshelf.model.WISequenceStrategy#sort(com.codeshelf.model.domain.Facility, java.util.List)
 	 */
 	@Override
 	public List<WorkInstruction> sort(Facility facility, List<WorkInstruction> inWiList) {

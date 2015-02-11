@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model;
+package com.codeshelf.model;
 
 import lombok.Getter;
 import lombok.Setter;

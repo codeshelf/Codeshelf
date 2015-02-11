@@ -1,14 +1,14 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Tier;
 import com.google.common.collect.Lists;
 
 public class InventoryGenerator {

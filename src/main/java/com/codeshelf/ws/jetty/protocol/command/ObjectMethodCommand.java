@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -9,18 +9,18 @@ import org.apache.commons.lang.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.Organization;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.validation.DefaultErrors;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.InputValidationException;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.Organization;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
+import com.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectMethodCommand extends CommandABC {
 
@@ -63,8 +63,8 @@ public class ObjectMethodCommand extends CommandABC {
 			}
 			response.setStatus(ResponseStatus.Fail);
 			return response;
-		} else if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-			className = "com.gadgetworks.codeshelf.model.domain." + className;
+		} else if (!className.startsWith("com.codeshelf.model.domain.")) {
+			className = "com.codeshelf.model.domain." + className;
 		}
 
 		UUID objectId = UUID.fromString(request.getPersistentId());

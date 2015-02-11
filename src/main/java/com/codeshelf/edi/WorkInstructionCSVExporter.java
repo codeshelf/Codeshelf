@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -8,9 +8,9 @@ import java.util.List;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
-import com.gadgetworks.codeshelf.model.domain.LocationAlias;
-import com.gadgetworks.codeshelf.model.domain.OrderGroup;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.LocationAlias;
+import com.codeshelf.model.domain.OrderGroup;
+import com.codeshelf.model.domain.WorkInstruction;
 
 public class WorkInstructionCSVExporter {
 

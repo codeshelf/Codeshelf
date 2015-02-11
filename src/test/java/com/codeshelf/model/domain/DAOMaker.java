@@ -1,13 +1,13 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import static com.natpryce.makeiteasy.Property.newProperty;
 
 import org.apache.commons.lang.RandomStringUtils;
 
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
-import com.gadgetworks.codeshelf.model.domain.Facility.FacilityDao;
-import com.gadgetworks.codeshelf.platform.multitenancy.TenantManagerService;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.domain.Facility.FacilityDao;
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.util;
+package com.codeshelf.util;
 /*
  
 NaturalOrderComparator.java -- Perform 'natural order' comparisons of strings in Java.

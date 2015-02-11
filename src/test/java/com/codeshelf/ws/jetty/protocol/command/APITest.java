@@ -1,8 +1,8 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
+import com.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 
 public class APITest {
 

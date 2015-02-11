@@ -1,7 +1,7 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
-import com.gadgetworks.flyweight.controller.IRadioController;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.flyweight.controller.IRadioController;
 
 public class RadioOnHealthCheck extends CodeshelfHealthCheck {
 	

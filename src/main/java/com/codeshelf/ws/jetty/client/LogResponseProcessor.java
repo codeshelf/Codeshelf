@@ -1,13 +1,13 @@
-package com.gadgetworks.codeshelf.ws.jetty.client;
+package com.codeshelf.ws.jetty.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LogResponseProcessor extends MessageProcessor {
 

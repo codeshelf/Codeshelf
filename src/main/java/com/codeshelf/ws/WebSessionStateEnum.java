@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: WebSessionStateEnum.java,v 1.2 2013/05/26 21:50:40 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.ws;
+package com.codeshelf.ws;
 
 /**
  * @author jeffw

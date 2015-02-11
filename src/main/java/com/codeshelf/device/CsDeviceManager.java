@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
  *  $Id: CsDeviceManager.java,v 1.19 2013/07/20 00:54:49 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.io.IOException;
 import java.net.URI;
@@ -23,30 +23,30 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.WorkInstructionCount;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.util.IConfiguration;
-import com.gadgetworks.codeshelf.util.PcapRecord;
-import com.gadgetworks.codeshelf.util.PcapRingBuffer;
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.codeshelf.util.TwoKeyMap;
-import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
-import com.gadgetworks.codeshelf.ws.jetty.client.WebSocketEventListener;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.FailureResponse;
-import com.gadgetworks.flyweight.command.NetGuid;
-import com.gadgetworks.flyweight.command.NetworkId;
-import com.gadgetworks.flyweight.controller.INetworkDevice;
-import com.gadgetworks.flyweight.controller.IRadioController;
-import com.gadgetworks.flyweight.controller.IRadioControllerEventListener;
-import com.gadgetworks.flyweight.controller.PacketCaptureListener;
+import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.IConfiguration;
+import com.codeshelf.util.PcapRecord;
+import com.codeshelf.util.PcapRingBuffer;
+import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.util.TwoKeyMap;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.WebSocketEventListener;
+import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
+import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
+import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.command.NetworkId;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
+import com.codeshelf.flyweight.controller.PacketCaptureListener;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -223,7 +223,7 @@ public class CsDeviceManager implements
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#getDeviceByGuid(com.gadgetworks.flyweight.command.NetGuid)
+	 * @see com.codeshelf.device.ICsDeviceManager#getDeviceByGuid(com.codeshelf.flyweight.command.NetGuid)
 	 */
 	@Override
 	public final INetworkDevice getDeviceByGuid(NetGuid inGuid) {
@@ -232,7 +232,7 @@ public class CsDeviceManager implements
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IRadioControllerEventListener#canNetworkDeviceAssociate(com.gadgetworks.flyweight.command.NetGuid)
+	 * @see com.codeshelf.flyweight.controller.IRadioControllerEventListener#canNetworkDeviceAssociate(com.codeshelf.flyweight.command.NetGuid)
 	 */
 	@Override
 	public final boolean canNetworkDeviceAssociate(final NetGuid inGuid) {
@@ -247,7 +247,7 @@ public class CsDeviceManager implements
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.IRadioControllerEventListener#deviceLost(com.gadgetworks.flyweight.controller.INetworkDevice)
+	 * @see com.codeshelf.flyweight.controller.IRadioControllerEventListener#deviceLost(com.codeshelf.flyweight.controller.INetworkDevice)
 	 */
 	@Override
 	public void deviceLost(INetworkDevice inNetworkDevice) {
@@ -267,7 +267,7 @@ public class CsDeviceManager implements
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
@@ -291,7 +291,7 @@ public class CsDeviceManager implements
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
 	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
@@ -303,7 +303,7 @@ public class CsDeviceManager implements
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.codeshelf.device.ICsDeviceManager#completeWi(java.lang.String, java.util.UUID, com.gadgetworks.codeshelf.model.domain.WorkInstruction)
+	 * @see com.codeshelf.device.ICsDeviceManager#completeWi(java.lang.String, java.util.UUID, com.codeshelf.model.domain.WorkInstruction)
 	 */
 	@Override
 	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {

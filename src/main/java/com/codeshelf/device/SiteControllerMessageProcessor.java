@@ -1,30 +1,30 @@
-package com.gadgetworks.codeshelf.device;
+package com.codeshelf.device;
 
 import java.io.IOException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.CommandABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.command.PingCommand;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.PingRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.FailureResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.LoginResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.protocol.command.CommandABC;
+import com.codeshelf.ws.jetty.protocol.command.PingCommand;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.jetty.protocol.request.PingRequest;
+import com.codeshelf.ws.jetty.protocol.request.RequestABC;
+import com.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
+import com.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
+import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
+import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
+import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.flyweight.command.NetGuid;
 
 public class SiteControllerMessageProcessor extends MessageProcessor {
 

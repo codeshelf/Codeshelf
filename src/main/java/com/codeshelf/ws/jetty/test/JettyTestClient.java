@@ -1,16 +1,16 @@
-package com.gadgetworks.codeshelf.ws.jetty.test;
+package com.codeshelf.ws.jetty.test;
 
 import java.net.URI;
 import java.util.Arrays;
 
 import javax.websocket.ContainerProvider;
 
-import com.gadgetworks.codeshelf.ws.jetty.client.JettyWebSocketClient;
-import com.gadgetworks.codeshelf.ws.jetty.client.LogResponseProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.io.CompressedJsonMessage;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.EchoRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.LoginRequest;
+import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.LogResponseProcessor;
+import com.codeshelf.ws.jetty.io.CompressedJsonMessage;
+import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
+import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 
 public class JettyTestClient {
 

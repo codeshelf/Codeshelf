@@ -1,8 +1,8 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
-import com.gadgetworks.codeshelf.device.AisleDeviceLogic;
-import com.gadgetworks.codeshelf.device.CheDeviceLogic;
-import com.gadgetworks.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.AisleDeviceLogic;
+import com.codeshelf.device.CheDeviceLogic;
+import com.codeshelf.device.ICsDeviceManager;
 
 public class AssociatedRadioHealthCheck extends CodeshelfHealthCheck {
 

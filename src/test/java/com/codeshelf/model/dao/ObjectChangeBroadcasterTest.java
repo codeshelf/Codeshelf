@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.dao;
+package com.codeshelf.model.dao;
 
 import java.util.Set;
 import java.util.UUID;
@@ -12,8 +12,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IDomainObject;
 
 public class ObjectChangeBroadcasterTest extends DAOTestABC {
 

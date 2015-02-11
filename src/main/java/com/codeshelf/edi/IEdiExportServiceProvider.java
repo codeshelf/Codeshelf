@@ -1,7 +1,7 @@
-package com.gadgetworks.codeshelf.edi;
+package com.codeshelf.edi;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.IEdiService;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IEdiService;
 
 public interface IEdiExportServiceProvider {
 

@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.application;
+package com.codeshelf.application;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.gadgetworks.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.multitenancy.User;
 
 @SuppressWarnings("serial")
 public class UsersServlet extends HttpServlet {

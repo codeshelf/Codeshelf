@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.util.List;
 
@@ -6,7 +6,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.gadgetworks.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.PositionTypeEnum;
 import com.google.common.collect.ImmutableList;
 
 public class BayTest extends DomainTestABC {

@@ -1,11 +1,11 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.response;
+package com.codeshelf.ws.jetty.protocol.response;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 //@IndexSubclasses
 //@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_OBJECT)

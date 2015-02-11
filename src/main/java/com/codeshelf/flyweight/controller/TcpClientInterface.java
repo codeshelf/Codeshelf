@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: TcpClientInterface.java,v 1.4 2013/03/17 19:19:13 jeffw Exp $
  *******************************************************************************/
-package com.gadgetworks.flyweight.controller;
+package com.codeshelf.flyweight.controller;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +32,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doSetupConnection()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#doSetupConnection()
 	 */
 	@Override
 	protected final boolean doSetupConnection() {
@@ -52,7 +52,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doStartInterface()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#doStartInterface()
 	 */
 	@Override
 	protected final void doStartInterface() {
@@ -61,7 +61,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doResetInterface()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#doResetInterface()
 	 */
 	@Override
 	final protected void doResetInterface() {
@@ -74,7 +74,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#doStopInterface()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#doStopInterface()
 	 */
 	@Override
 	protected void doStopInterface() {
@@ -84,7 +84,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#setRTS()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#setRTS()
 	 */
 	@Override
 	protected void setRTS() {
@@ -94,7 +94,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#clrRTS()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#clrRTS()
 	 */
 	@Override
 	protected void clrRTS() {
@@ -104,7 +104,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#readByte()
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#readByte()
 	 */
 	@Override
 	protected final byte readByte() {
@@ -126,7 +126,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#readBytes(byte[])
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#readBytes(byte[])
 	 */
 	@Override
 	protected final int readBytes(byte[] inBuffer) {
@@ -142,7 +142,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#writeByte(byte)
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#writeByte(byte)
 	 */
 	@Override
 	protected final void writeByte(byte inByte) {
@@ -157,7 +157,7 @@ public class TcpClientInterface extends SerialInterfaceABC {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.gadgetworks.flyweight.controller.SerialInterfaceABC#writeBytes(byte[], int)
+	 * @see com.codeshelf.flyweight.controller.SerialInterfaceABC#writeBytes(byte[], int)
 	 */
 	@Override
 	protected final void writeBytes(byte[] inBytes, int inLength) {

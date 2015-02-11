@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.filter;
+package com.codeshelf.filter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,12 +15,12 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.model.domain.IDomainObjectTree;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IDomainObjectTree;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;

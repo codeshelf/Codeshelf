@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.model.domain;
+package com.codeshelf.model.domain;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -12,22 +12,22 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.edi.EdiTestABC;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
-import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
-import com.gadgetworks.codeshelf.service.ServiceFactory;
-import com.gadgetworks.codeshelf.service.WorkService;
-import com.gadgetworks.codeshelf.util.ConverterProvider;
-import com.gadgetworks.codeshelf.validation.BatchResult;
-import com.gadgetworks.codeshelf.validation.ErrorCode;
-import com.gadgetworks.codeshelf.validation.MethodArgumentException;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.edi.EdiTestABC;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.WorkService;
+import com.codeshelf.util.ConverterProvider;
+import com.codeshelf.validation.BatchResult;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.MethodArgumentException;
+import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LineScanTest extends EdiTestABC {
 	@SuppressWarnings("unused")

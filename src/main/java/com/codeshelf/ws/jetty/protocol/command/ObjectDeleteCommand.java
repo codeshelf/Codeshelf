@@ -1,18 +1,18 @@
-package com.gadgetworks.codeshelf.ws.jetty.protocol.command;
+package com.codeshelf.ws.jetty.protocol.command;
 
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.model.dao.ITypedDao;
-import com.gadgetworks.codeshelf.model.domain.IDomainObject;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.gadgetworks.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
+import com.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
+import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
+import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
+import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ObjectDeleteCommand extends CommandABC {
 	
@@ -29,8 +29,8 @@ public class ObjectDeleteCommand extends CommandABC {
 	public ResponseABC exec() {
 		try {
 			String className = request.getClassName();
-			if (!className.startsWith("com.gadgetworks.codeshelf.model.domain.")) {
-				className = "com.gadgetworks.codeshelf.model.domain." + className;
+			if (!className.startsWith("com.codeshelf.model.domain.")) {
+				className = "com.codeshelf.model.domain." + className;
 			}
 			UUID objectIdId = UUID.fromString(request.getPersistentId());
 

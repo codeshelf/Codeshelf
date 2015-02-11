@@ -1,10 +1,10 @@
-package com.gadgetworks.codeshelf.metrics;
+package com.codeshelf.metrics;
 
 import java.util.Collection;
 
-import com.gadgetworks.codeshelf.ws.jetty.server.SessionManager;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession;
-import com.gadgetworks.codeshelf.ws.jetty.server.UserSession.State;
+import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.UserSession.State;
 
 public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
 

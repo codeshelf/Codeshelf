@@ -3,7 +3,7 @@
  *  Copyright (c) 2014, Codeshelf, All rights reserved
  *  file IntegrationTest1.java
  *******************************************************************************/
-package com.gadgetworks.codeshelf.integration;
+package com.codeshelf.integration;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,28 +16,28 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.application.Configuration;
-import com.gadgetworks.codeshelf.device.CheStateEnum;
-import com.gadgetworks.codeshelf.edi.AislesFileCsvImporter;
-import com.gadgetworks.codeshelf.edi.ICsvLocationAliasImporter;
-import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
-import com.gadgetworks.codeshelf.model.dao.PropertyDao;
-import com.gadgetworks.codeshelf.model.domain.Aisle;
-import com.gadgetworks.codeshelf.model.domain.Che;
-import com.gadgetworks.codeshelf.model.domain.Che.ProcessMode;
-import com.gadgetworks.codeshelf.model.domain.CodeshelfNetwork;
-import com.gadgetworks.codeshelf.model.domain.DomainObjectProperty;
-import com.gadgetworks.codeshelf.model.domain.Facility;
-import com.gadgetworks.codeshelf.model.domain.LedController;
-import com.gadgetworks.codeshelf.model.domain.Location;
-import com.gadgetworks.codeshelf.model.domain.OrderDetail;
-import com.gadgetworks.codeshelf.model.domain.OrderHeader;
-import com.gadgetworks.codeshelf.model.domain.Path;
-import com.gadgetworks.codeshelf.model.domain.PathSegment;
-import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
-import com.gadgetworks.codeshelf.service.PropertyService;
-import com.gadgetworks.codeshelf.util.ThreadUtils;
-import com.gadgetworks.flyweight.command.NetGuid;
+import com.codeshelf.application.Configuration;
+import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.edi.AislesFileCsvImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
+import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.LedController;
+import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.PropertyService;
+import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.flyweight.command.NetGuid;
 
 /**
  * @author jon ranstrom

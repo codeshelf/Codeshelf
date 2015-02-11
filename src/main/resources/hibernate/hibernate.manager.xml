@@ -38,9 +38,9 @@
         -->
         
 		<!-- Map these classes (by annotation) -->
-        <mapping class="com.gadgetworks.codeshelf.platform.multitenancy.Shard"/>
-        <mapping class="com.gadgetworks.codeshelf.platform.multitenancy.Tenant"/>
-       	<mapping class="com.gadgetworks.codeshelf.platform.multitenancy.User"/>
+        <mapping class="com.codeshelf.platform.multitenancy.Shard"/>
+        <mapping class="com.codeshelf.platform.multitenancy.Tenant"/>
+       	<mapping class="com.codeshelf.platform.multitenancy.User"/>
         		
     </session-factory>
 </hibernate-configuration>

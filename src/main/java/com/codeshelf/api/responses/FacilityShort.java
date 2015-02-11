@@ -1,4 +1,4 @@
-package com.gadgetworks.codeshelf.api.responses;
+package com.codeshelf.api.responses;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-import com.gadgetworks.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Facility;
 
 public class FacilityShort {
 	@Getter
