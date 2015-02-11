@@ -1098,11 +1098,6 @@ public class RadioController implements IRadioController {
 						differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
 					}
 
-					differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
-					if (differenceMs < PACKET_SPACING_MILLIS) {
-						LOGGER.error("SABA WTF d={}", differenceMs);
-					}
-
 					// Write out the packet
 					packetIOService.handleOutboundPacket(inPacket);
 

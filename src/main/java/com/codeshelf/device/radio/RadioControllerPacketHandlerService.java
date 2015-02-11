@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  * that queue is full, the handle method will throw an exception. Each submitted
  * packed is processed in order by the SourceAddr and in parallel across
  * different SourceAddres. The parallelism of this service defaults to the
- * number of available cores
+ * number of available cores*2
  * 
  * @author saba
  *
@@ -29,7 +29,7 @@ public class RadioControllerPacketHandlerService {
 	private static final Logger										LOGGER					= LoggerFactory.getLogger(RadioControllerPacketHandlerService.class);
 
 	private final ExecutorService									executor				= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
-																								.availableProcessors(),
+																								.availableProcessors() * 2,
 																								2),
 																								new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																									.build());
