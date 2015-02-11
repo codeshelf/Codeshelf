@@ -129,7 +129,7 @@ task serverJar (type: Jar) {
 	from(sourceSets.main.output)
 
 	manifest.attributes (
-		'Main-Class': 'com.gadgetworks.codeshelf.application.ServerMain',
+		'Main-Class': 'com.codeshelf.application.ServerMain',
 		'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
 		)
 }
@@ -140,7 +140,7 @@ task siteControllerJar (type: Jar) {
 	from(sourceSets.main.output)
 
 	manifest.attributes (
-		'Main-Class': 'com.gadgetworks.codeshelf.application.CsSiteControllerMain',
+		'Main-Class': 'com.codeshelf.application.CsSiteControllerMain',
 		'Class-Path': configurations.runtime.files.collect {"lib/${it.name}"}.join(' ')
 		)
 }

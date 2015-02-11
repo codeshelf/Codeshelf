@@ -15,7 +15,7 @@ public class CustomTypeResolverBuilder extends DefaultTypeResolverBuilder
     @Override
     public boolean useForType(JavaType t)
     {
-        if (t.getRawClass().getName().startsWith("com.gadgetworks")) {
+        if (t.getRawClass().getName().startsWith("com.codeshelf")) {
             return true;
         }
         if (t.getRawClass().equals(Object.class)) {
