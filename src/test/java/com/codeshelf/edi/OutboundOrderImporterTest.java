@@ -10,6 +10,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -90,7 +96,20 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csvArray = csvString.getBytes();
+		CharsetEncoder charsetEncoder = StandardCharsets.US_ASCII.newEncoder();
+		charsetEncoder.onMalformedInput(CodingErrorAction.REPLACE);
+		charsetEncoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+		ByteBuffer bytes = charsetEncoder.encode(CharBuffer.wrap(csvString));
+		
+		/*
+		CharsetDecoder charsetDecoder = StandardCharsets.US_ASCII.newDecoder();
+		charsetDecoder.onMalformedInput(CodingErrorAction.REPLACE);
+		charsetDecoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
+		charsetDecoder.replaceWith("?");
+		charsetDecoder.decode(bytes);
+		*/
+		
+		byte[] csvArray = bytes.array(); //csvString.getBytes();
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
