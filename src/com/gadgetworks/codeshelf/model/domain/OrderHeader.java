@@ -418,6 +418,9 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public void reevaluateStatus() {
 		setStatus(OrderStatusEnum.COMPLETE);
 		for (OrderDetail detail : getOrderDetails()) {
+			if (!detail.getActive()){
+				continue;
+			}
 			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
 				setStatus(OrderStatusEnum.SHORT);
 				break;
