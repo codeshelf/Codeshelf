@@ -991,7 +991,7 @@ public class RadioController implements IRadioController {
 			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 
 			device.setLastAckId(inAckId);
-			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+			CommandAssocAck ackCmd = new CommandAssocAck(device.getGuid().getHexStringNoPrefix(),
 				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
 			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
