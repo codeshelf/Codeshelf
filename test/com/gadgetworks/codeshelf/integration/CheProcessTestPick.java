@@ -35,6 +35,7 @@ import com.gadgetworks.codeshelf.edi.ICsvOrderImporter;
 import com.gadgetworks.codeshelf.edi.ICsvOrderLocationImporter;
 import com.gadgetworks.codeshelf.model.OrderStatusEnum;
 import com.gadgetworks.codeshelf.model.WiSetSummary;
+import com.gadgetworks.codeshelf.model.WorkInstructionStatusEnum;
 import com.gadgetworks.codeshelf.model.WorkInstructionTypeEnum;
 import com.gadgetworks.codeshelf.model.domain.Aisle;
 import com.gadgetworks.codeshelf.model.domain.Che;
@@ -50,6 +51,7 @@ import com.gadgetworks.codeshelf.model.domain.Path;
 import com.gadgetworks.codeshelf.model.domain.PathSegment;
 import com.gadgetworks.codeshelf.model.domain.WorkInstruction;
 import com.gadgetworks.codeshelf.service.WorkService;
+import com.gadgetworks.codeshelf.util.ThreadUtils;
 import com.gadgetworks.flyweight.command.ColorEnum;
 import com.gadgetworks.flyweight.command.NetGuid;
 import com.google.common.base.Strings;
@@ -619,7 +621,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTenantTransaction();
 		che1 = Che.DAO.reload(che1);
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(che1.getPersistentId(), facility.getPersistentId());
+		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(che1.getPersistentId(),
+			facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set.
 		Assert.assertEquals(1, summaries.size());
@@ -971,6 +974,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
+		UUID changingWiPersist = wi.getPersistentId();
 
 		//Last check:
 		//Next job has a quantity of 1 for position 2. Make sure it matches the button and quant from the wi
@@ -990,6 +994,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		WorkInstruction userShortWi = serverWiList2.get(1);
 		WorkInstruction shortAheadWi = serverWiList2.get(2);
 		WorkInstruction immediateShortWi = null;
+
+		// wait here because doButton above takes some time to percolate over to server side.
+		// Below, che1b.getCheWorkInstructions() should have the completed work instruction. Get a staleObjectState exception if it changes to slow.
+		boolean done = false;
+		int count = 0;
+		while (!done && count < 200) { // 2 seconds bail. Test should fail below so don't worry.
+			WorkInstruction wi3 = WorkInstruction.DAO.findByPersistentId(changingWiPersist);
+			if (wi3.getStatus() == WorkInstructionStatusEnum.COMPLETE) {
+				done = true;
+			}
+			count++;
+			ThreadUtils.sleep(10);
+		}
 
 		// If you ask che1 for getCheWorkInstructions(), the list will throw during lazy load because the che reference came from a different transaction.
 		// But we had to change the transaction in order to see the completed work instructions.
@@ -1329,7 +1346,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//Check State Make sure we do not hit REVIEW
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 
-
 		LOGGER.info("Case 1: 1 good pick no flashing");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -1347,7 +1363,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.logout();
 		picker.login("Picker #1");
 
-		
 		LOGGER.info("Continue setting up containers with bad counts");
 		picker.setupOrderIdAsContainer("a1111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
@@ -1418,7 +1433,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		//Scan location to make sure position controller does not show counts anymore
 		picker.scanLocation("D301");
-		
+
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		//Make sure all position controllers are cleared - except for case 3,4,6 since they are zero and 2 since that is the first task

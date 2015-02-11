@@ -52,7 +52,7 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	protected String	destinationId;
 	protected String	pickStrategy;
 	protected String	preAssignedContainerId;
-	protected String	shipmentId;
+	protected String	shipperId;
 	protected String	customerId;
 	protected String	workSequence;
 	// new fields for location-based pick DEV-571
@@ -117,8 +117,8 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 		return strip(preAssignedContainerId);
 	}
 
-	public final String getShipmentId() {
-		return strip(shipmentId);
+	public final String getShipperId() {
+		return strip(shipperId);
 	}
 
 	public final String getCustomerId() {
