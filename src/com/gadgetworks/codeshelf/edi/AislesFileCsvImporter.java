@@ -1243,7 +1243,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 					// First we need to finalize the previous aisle if one exists
 					if (lastAisle != null && lastAisle != mLastReadAisle){
-						// Have to load the depth of the previous aisle to set correct depth
+						// Have to load the depth of the previous aisle to set correct depth when finalizing
 						mDepthCm = lastDepthCm;
 						finalizeTiersInThisAisle(lastAisle);
 						// Kludge!  make sure lastAisle reference is not stale
@@ -1257,7 +1257,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					// Determine LED configuration
 					boolean ledsIncrease = true;			
 					mControllerLed = getLedConfiguration(aisleToCloneFrom);
-					if (!controllerLed.equalsIgnoreCase(mControllerLed)){
+					if (!controllerLed.isEmpty() && !controllerLed.equalsIgnoreCase(mControllerLed)){
 						LOGGER.warn("Cloning does not allow change of led orientation. " 
 								+ "Using led orientation of aisle " + aisleToCloneFrom.getDomainId());
 					}

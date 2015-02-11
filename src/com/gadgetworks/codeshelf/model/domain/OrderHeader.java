@@ -144,11 +144,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// Reference to the shipment for this order.
 	// Lower numbers work first.
-	@Column(nullable = true,name="shipment_id")
+	@Column(nullable = true,name="shipper_id")
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						shipmentId;
+	private String						shipperId;
 
 	// The work sequence.
 	// This is a sort of the actively working order groups in a facility.
@@ -418,6 +418,9 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public void reevaluateStatus() {
 		setStatus(OrderStatusEnum.COMPLETE);
 		for (OrderDetail detail : getOrderDetails()) {
+			if (!detail.getActive()){
+				continue;
+			}
 			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
 				setStatus(OrderStatusEnum.SHORT);
 				break;
