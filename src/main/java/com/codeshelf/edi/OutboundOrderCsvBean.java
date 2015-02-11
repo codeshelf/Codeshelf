@@ -86,11 +86,14 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	}
 
 	public final String getDescription() {
+		if(null == description) {
+			return "null";
+		}
 		String theDescription = description;
 		theDescription = strip(theDescription);
 		// Customer can send anything. We saw non-UTF8 from GoodEggs
 
-		CharsetEncoder charsetEncoder = StandardCharsets.ISO_8859_1.newEncoder();
+		CharsetEncoder charsetEncoder = StandardCharsets.US_ASCII.newEncoder();
 		charsetEncoder.onMalformedInput(CodingErrorAction.REPLACE);
 		charsetEncoder.onUnmappableCharacter(CodingErrorAction.REPLACE);
 		ByteBuffer bytes = null; //= ByteBuffer.wrap(byte[]);
@@ -104,7 +107,7 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 		// theDescription = theDescription.replaceAll("\\p{C}", ""); // strips valid UTF-8 which does not solve our problem. Misses UTF-16 cases
 
 		try {
-			theDescription = new String(bytes.array(), "ISO-8859-1");
+			theDescription = new String(bytes.array(), "US_ASCII");
 			// This leaves the string too long if there were a lot of UTF-16 characters
 		} catch (Exception e) {
 			LOGGER.warn("character coding exception", e);
