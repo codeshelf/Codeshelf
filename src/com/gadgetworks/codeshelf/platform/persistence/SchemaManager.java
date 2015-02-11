@@ -23,19 +23,32 @@ import liquibase.exception.LiquibaseException;
 import liquibase.integration.commandline.CommandLineUtils;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
+import lombok.Getter;
 
+import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class SchemaManager {
+	public enum SQLSyntax {
+		H2,POSTGRES,OTHER;
+	}
+	
 	private static final Logger LOGGER	= LoggerFactory.getLogger(SchemaManager.class);
 
+	@Getter
 	private String changeLogName;
+	@Getter
 	private String url;
+	@Getter
 	private String username;
+	@Getter
 	private String password;
+	@Getter
 	private String schemaName;
 	private String hibernateConfigurationFile;
+	
+	Configuration hibernateConfiguration = null;
 	
 	public SchemaManager(String changeLogName, String url,String username,String password,String schemaName,String hibernateConfigurationFile) {
 		this.changeLogName = changeLogName;
@@ -47,6 +60,11 @@ public class SchemaManager {
 	}
 	
 	public void applySchemaUpdates() {
+		if(this.getSyntax() != SchemaManager.SQLSyntax.POSTGRES) {
+			LOGGER.warn("Will not attempt to apply updates to non-Postgres schema");
+			return;
+		}
+
 		Database appDatabase = getAppDatabase();
 		if(appDatabase==null) {
 			throw new RuntimeException("Failed to access app database, cannot continue");
@@ -83,6 +101,10 @@ public class SchemaManager {
 			LOGGER.info("Done applying Liquibase changesets");
 		} else {
 			LOGGER.info("No pending Liquibase changesets");
+		}
+
+		if(!checkSchema()) {
+			throw new RuntimeException("Cannot start, schema does not match");
 		}
 	}
 	
@@ -182,17 +204,40 @@ public class SchemaManager {
 		executeSQL("DELETE FROM "+schemaName+".order_group");
 	}
 
-	public void dropSchema() throws SQLException {
-		LOGGER.warn("Deleting entire schema "+schemaName);
-		executeSQL("DROP SCHEMA "+schemaName+
-			(isH2Mem()?"":" CASCADE"));
-	}
-
-	private boolean isH2Mem() {
-		return (this.url.startsWith("jdbc:h2:mem") );
-	}
-
 	public void createSchemaIfNotExists() throws SQLException {
 		executeSQL("CREATE SCHEMA IF NOT EXISTS "+schemaName);
 	}
+
+	public void dropSchema() throws SQLException {
+		LOGGER.warn("Deleting entire schema "+schemaName);
+		executeSQL("DROP SCHEMA "+schemaName+
+			((getSyntax()==SQLSyntax.H2)?"":" CASCADE"));
+	}
+	
+	public SQLSyntax getSyntax() {
+		if(this.url.startsWith("jdbc:postgresql:")) {
+			return SQLSyntax.POSTGRES;
+		} else if(this.url.startsWith("jdbc:h2:mem")) {
+			return SQLSyntax.H2;
+		} else {
+			return SQLSyntax.OTHER;
+		}
+	}
+	
+	public Configuration getHibernateConfiguration() {
+		if(this.hibernateConfiguration == null) {
+			// fetch database config from properties file
+			hibernateConfiguration = new Configuration().configure(this.hibernateConfigurationFile);
+	    	
+			hibernateConfiguration .setProperty("hibernate.connection.url", this.getUrl());
+			hibernateConfiguration .setProperty("hibernate.connection.username", this.getUsername());
+			hibernateConfiguration .setProperty("hibernate.connection.password", this.getPassword());
+    		hibernateConfiguration .setProperty("hibernate.default_schema", this.getSchemaName());
+
+    		// wait why this again
+	    	hibernateConfiguration .setProperty("javax.persistence.schema-generation-source","metadata-then-script");
+		}
+		return this.hibernateConfiguration;
+	}
+
 }

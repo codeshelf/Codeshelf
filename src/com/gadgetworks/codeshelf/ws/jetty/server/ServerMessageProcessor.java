@@ -83,7 +83,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
-		this.objectChangeBroadcaster = TenantPersistenceService.getInstance().getObjectChangeBroadcaster();
+		this.objectChangeBroadcaster = TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
 		this.converter = converter;
 	}
 	

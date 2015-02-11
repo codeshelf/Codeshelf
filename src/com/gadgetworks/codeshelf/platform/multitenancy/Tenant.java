@@ -23,6 +23,8 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +32,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
+import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.gadgetworks.codeshelf.model.dao.PropertyDao;
+import com.gadgetworks.codeshelf.platform.persistence.EventListenerIntegrator;
+import com.gadgetworks.codeshelf.platform.persistence.IPersistentCollection;
 import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 
 @Entity
@@ -38,7 +43,9 @@ import com.gadgetworks.codeshelf.platform.persistence.SchemaManager;
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Tenant {
+public class Tenant implements IPersistentCollection {
+	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
+	
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(Tenant.class);
 
@@ -90,38 +97,24 @@ public class Tenant {
 	SchemaManager schemaManager = null;
 	
 	@Transient
-	Configuration hibernateConfiguration;
+	Configuration hibernateConfiguration = null;
+
+	@Transient
+	private EventListenerIntegrator eventListenerIntegrator = null;
 	
 	public Tenant() {
 	}
 	
 	public SchemaManager getSchemaManager() {
 		if(schemaManager == null) {
-			schemaManager = new SchemaManager(TenantPersistenceService.getInstance().getChangeLogFilename(), 
+			schemaManager = new SchemaManager(TENANT_CHANGELOG_FILENAME, 
 				shard.getDbUrl(), this.getDbUsername(), this.getDbPassword(), this.getDbSchemaName(),
 				this.getHibernateConfigurationFile());
 		}
 		return schemaManager;
 	}
-	
-	public Configuration getHibernateConfiguration() {
-		if(this.hibernateConfiguration == null) {
-			// fetch database config from properties file
-			hibernateConfiguration = new Configuration().configure(getHibernateConfigurationFile());
-	    	
-			hibernateConfiguration .setProperty("hibernate.connection.url", getShard().getDbUrl());
-			hibernateConfiguration .setProperty("hibernate.connection.username", getDbUsername());
-			hibernateConfiguration .setProperty("hibernate.connection.password", getDbPassword());
 
-	    	if(getDbSchemaName() != null) {
-	    		hibernateConfiguration .setProperty("hibernate.default_schema", getDbSchemaName());
-	    	}
-	    	hibernateConfiguration .setProperty("javax.persistence.schema-generation-source","metadata-then-script");
-		}
-		return this.hibernateConfiguration;
-	}
-
-	public String getHibernateConfigurationFile() {
+	private String getHibernateConfigurationFile() {
 		return ("hibernate/"+System.getProperty("tenant.hibernateconfig"));
 	}
 
@@ -201,6 +194,28 @@ public class Tenant {
 			return false;
 		return true;
 	}
+
+	@Override
+	public String getShortName() {
+		return this.getDbSchemaName();
+	}
+
+	@Override
+	public boolean hasStartupActions() {
+		return true;
+	}
 	
-	
+	@Override
+	public void performStartupActions(Session session) {
+        // sync up property defaults with what's defined in resource file 
+
+		Transaction t = session.beginTransaction();
+        PropertyDao.getInstance().syncPropertyDefaults();
+        t.commit();
+	}
+
+	@Override
+	public EventListenerIntegrator generateEventListenerIntegrator() {
+		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
+	}
 }

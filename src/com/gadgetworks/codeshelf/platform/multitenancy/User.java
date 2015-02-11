@@ -28,6 +28,7 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.AccessLevel;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -80,8 +81,8 @@ public class User {
 	
 	// The owning organization.
 	@ManyToOne(optional = false,fetch=FetchType.EAGER)
-	@Getter
-	@Setter
+	@Getter(AccessLevel.PROTECTED)
+	@Setter(AccessLevel.PROTECTED)
 	private Tenant				tenant;
 
 	@Column(nullable = false,name="username")
@@ -267,6 +268,10 @@ public class User {
 				"hash_salt='"+toHex(salt)+"', hashed_password='"+ passwordOut +"', hash_iterations="+ hashIterations +
 				" WHERE parent_persistentid = (Select persistentid from "+schemaName+".organization where domainId = '" + organizationName + "') AND domainId = '" + email + "';";
 		return sql;
+	}
+
+	public boolean tenantEquals(Tenant tenant2) {
+		return this.getTenant().equals(tenant2);
 	}
 
 }

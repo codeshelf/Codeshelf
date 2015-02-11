@@ -1,5 +1,7 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
+import lombok.Getter;
+
 import org.hibernate.cfg.Configuration;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.event.service.spi.EventListenerRegistry;
@@ -15,7 +17,7 @@ import com.gadgetworks.codeshelf.model.dao.ObjectChangeBroadcaster;
 public class EventListenerIntegrator implements Integrator {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EventListenerIntegrator.class);
 
-	
+	@Getter
 	private ObjectChangeBroadcaster changeBroadcaster;
 	
 	public EventListenerIntegrator(ObjectChangeBroadcaster changeBroadcaster) {

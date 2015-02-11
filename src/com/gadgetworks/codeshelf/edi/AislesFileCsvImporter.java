@@ -284,7 +284,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private class BayComparable implements Comparator<Bay> {
 		// We want B1, B2, ...B9, B10,B11, etc.
 		public int compare(Bay inLoc1, Bay inLoc2) {

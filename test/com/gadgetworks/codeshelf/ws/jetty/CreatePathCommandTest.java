@@ -64,7 +64,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		
 		Facility testFacility = this.createFacility();
 
-		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getObjectChangeBroadcaster();
+		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
 		UserSession viewSession = new UserSession(websocketSession, Executors.newSingleThreadExecutor());
 

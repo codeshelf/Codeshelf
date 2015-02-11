@@ -1,11 +1,13 @@
 package com.gadgetworks.codeshelf.platform.persistence;
 
 import org.hibernate.Session;
-import org.hibernate.integrator.spi.Integrator;
 
 public interface IPersistentCollection {
 	String getShortName();
 	SchemaManager getSchemaManager();
-	Integrator getIntegrator();
+	
+	EventListenerIntegrator generateEventListenerIntegrator();
+	
+	boolean hasStartupActions();
 	void performStartupActions(Session session);
 }

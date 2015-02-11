@@ -45,7 +45,7 @@ public class LoginCommand extends CommandABC {
 		if (session != null) {
 			User authUser = TenantManagerService.getInstance().authenticate(username, password);
 			if (authUser != null) {
-				Tenant tenant = authUser.getTenant();				
+				Tenant tenant = TenantManagerService.getInstance().getTenantByUsername(authUser.getUsername());				
 				session.authenticated(authUser);
 				ContextLogging.setSession(session);
 				try {

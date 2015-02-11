@@ -34,7 +34,7 @@ public class TestDatabaseTest extends DomainTestABC {
 		
 		LOGGER.info("Test Database sequence #"+TestDatabaseTest.sequence_static);
 		
-		assertFalse(this.getTenantPersistenceService().hasActiveTransaction());
+		assertFalse(this.getTenantPersistenceService().hasAnyActiveTransaction());
 		this.getTenantPersistenceService().beginTenantTransaction();
 
 		if(TestDatabaseTest.sequence_static == 1) {
@@ -57,7 +57,7 @@ public class TestDatabaseTest extends DomainTestABC {
 			
 			// rollback and new transaction
 			this.getTenantPersistenceService().rollbackTenantTransaction();
-			assertFalse(this.getTenantPersistenceService().hasActiveTransaction());
+			assertFalse(this.getTenantPersistenceService().hasAnyActiveTransaction());
 			this.getTenantPersistenceService().beginTenantTransaction();
 
 			// last step rolled back new org, so it should not exist

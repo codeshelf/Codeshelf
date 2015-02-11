@@ -4,41 +4,29 @@ import java.sql.SQLException;
 
 import lombok.Getter;
 
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
-import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gadgetworks.codeshelf.platform.Service;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ManagerPersistenceService extends Service {
+public class ManagerPersistenceService extends PersistenceService implements IPersistentCollection {
 	private static final String MASTER_CHANGELOG_NAME = "liquibase/mgr.changelog-master.xml";
 	private static final Logger LOGGER = LoggerFactory.getLogger(ManagerPersistenceService.class);
 	
 	private static ManagerPersistenceService theInstance = null;
-	SessionFactory sessionFactory = null;
 	
 	@Getter
 	SchemaManager schemaManager = null;
 	
-	public ManagerPersistenceService() {		
-		setInstance();
+	private ManagerPersistenceService() {		
 	}
 
-	private void setInstance() {
-		ManagerPersistenceService.theInstance = this;
-	} 
-	
 	public final synchronized static ManagerPersistenceService getInstance() {
 		if (theInstance == null) {
 			theInstance = new ManagerPersistenceService();
+			theInstance.configure();
 			theInstance.start();
 		} else if (!theInstance.isRunning()) {
 			theInstance.start();
@@ -47,18 +35,6 @@ public class ManagerPersistenceService extends Service {
 		return theInstance;
 	}
 
-	@Override
-	public boolean start() {
-		if(this.isRunning()) {
-			LOGGER.error("Attempted to start persistence service more than once");
-		} else {
-			LOGGER.info("Starting "+TenantPersistenceService.class.getSimpleName());
-			configure();
-			this.setRunning(true);
-		}
-		return true;
-	}
-	
 	private void configure() {		
 		// fetch hibernate configuration from properties file
 		String hibernateConfigurationFile = System.getProperty("manager.hibernateconfig");
@@ -68,135 +44,50 @@ public class ManagerPersistenceService extends Service {
 		}
 		hibernateConfigurationFile = "hibernate/"+hibernateConfigurationFile; // look in hibernate folder
 		
-		Configuration configuration = new Configuration().configure(hibernateConfigurationFile);
-
-		// add database connection info to configuration
-		String connectionUrl = System.getProperty("manager.db.url");
-		if (connectionUrl==null) {
-			LOGGER.error("manager.db.url is not defined.");
-			System.exit(-1);
-		}
 		String url = System.getProperty("manager.db.url");
 		String username = System.getProperty("manager.db.username");
-		String password = System.getProperty("manager.db.password");
-    	configuration.setProperty("hibernate.connection.url", url);
-    	configuration.setProperty("hibernate.connection.username", username);
-    	configuration.setProperty("hibernate.connection.password", password);
-		
-    	String schemaName = System.getProperty("manager.db.schema"); //optional
-    	configuration.setProperty("hibernate.default_schema", schemaName);
+		String password = System.getProperty("manager.db.password");		
+    	String schemaName = System.getProperty("manager.db.schema");
 
-    	// wait why is this again
-    	configuration.setProperty("javax.persistence.schema-generation-source","metadata-then-script");
+    	this.schemaManager = new SchemaManager(MASTER_CHANGELOG_NAME,url,username,password,schemaName,hibernateConfigurationFile);
 
-		schemaManager = new SchemaManager(MASTER_CHANGELOG_NAME,url,username,password,schemaName,hibernateConfigurationFile);
-		try {
+    	try {
 			schemaManager.createSchemaIfNotExists();
 		} catch (SQLException e) {
-			throw new RuntimeException("Cannot start, failed to verify/create manager schema (check db admin rights)");
+			throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)");
 		}
-		
-		// do not attempt to actively manage schema of the in-memory testing db; that will be done by Hibernate
-		if(!url.startsWith("jdbc:h2:mem")) {
-			// this only runs for postgres database
-			schemaManager.applySchemaUpdates();			
-			if(!schemaManager.checkSchema()) {
-				throw new RuntimeException("Cannot start, schema does not match");
-			}
-		}
+    	
+    	this.schemaManager.applySchemaUpdates();
+	}
 
-		// set up session factory
-        try {
-        	LOGGER.info("Creating manager session factory");
-        	BootstrapServiceRegistryBuilder bootstrapBuilder = 
-        			new BootstrapServiceRegistryBuilder();
-        				
-	        StandardServiceRegistryBuilder ssrb = 
-	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
-	        			.applySettings(configuration.getProperties());
-
-	        this.sessionFactory = configuration.buildSessionFactory(ssrb.build());
-        } catch (Exception ex) {
-        	if(ex instanceof HibernateException) {
-        		throw ex;
-        	} else {
-            	LOGGER.error("SessionFactory creation failed",ex);
-                throw new RuntimeException(ex);
-        	}
-        }
-
+	public void save(Object entity) {
+		Session session = this.getSessionWithTransaction();
+		session.saveOrUpdate(entity);
+		this.commitTransaction();
 	}
 
 	@Override
-	public final boolean stop() {
-		LOGGER.info("PersistenceService stopping");
-		if(this.hasActiveTransaction()) {
-			this.rollbackTransactionAndCloseSession();
-		}
-		this.setRunning(false);
-		return true;
+	public String getShortName() {
+		return "TenantManager";
 	}
 
-	public Session getSession() {
-		return sessionFactory.getCurrentSession();
+	@Override
+	public IPersistentCollection getDefaultCollection() {
+		return this;
+	}
+
+	@Override
+	public EventListenerIntegrator generateEventListenerIntegrator() {
+		return null;
+	}
+
+	@Override
+	public boolean hasStartupActions() {
+		return false;
 	}
 	
-	public void save(Object entity) {
-		Session session = this.beginSessionAndTransaction();
-		session.saveOrUpdate(entity);
-		this.commitTransactionAndCloseSession();
-	}
-
-	public final Session beginSessionAndTransaction() {
-		Session session = getSession();
-		Transaction tx = session.getTransaction();
-		if (tx != null) {
-			// check for already active transaction
-			if (tx.isActive()) {
-				// StackTraceElement[] tst=transactionStarted.get(tx);
-				LOGGER.error("tried to begin transaction, but was already in active transaction");
-				return session;
-			} // else we will begin new transaction
-		}
-		@SuppressWarnings("unused")
-		Transaction txBegun = session.beginTransaction();
-		return session;
-	}
-
-	public final void commitTransactionAndCloseSession() {
-		Session session = getSession();
-		Transaction tx = session.getTransaction();
-		if (tx.isActive()) {
-			tx.commit();
-		} else {
-			LOGGER.error("tried to close inactive transaction");
-		}
-		//session.close();
-	}
-
-	public final void rollbackTransactionAndCloseSession() {
-		Session session = getSession();
-		Transaction tx = session.getTransaction();
-		if (tx.isActive()) {
-			tx.rollback();
-		} else {
-			LOGGER.error("tried to roll back inactive Tenant transaction");
-		}
-		//session.close();
-	}
-
-	public boolean hasActiveTransaction() {
-		if(this.isRunning() == false) {
-			return false;
-		} //else
-		Session session = getSession();
-		if (session==null) {
-			return false;
-		} //else
-		Transaction tx = session.getTransaction();
-		if (tx==null) {
-			return false;
-		} //else
-		return tx.isActive();
+	@Override
+	public void performStartupActions(Session session) {
+		return;
 	}
 }

@@ -58,6 +58,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getCurrentTenantSession();
 		Query query = session.createQuery("select oh from OrderHeader oh where " + hqlWhereString);
+		@SuppressWarnings("unchecked")
 		List<OrderHeader> orderHeaders = (List<OrderHeader>) query.list();
 		StatusSummary summary = new StatusSummary();
 		for (OrderHeader orderHeader : orderHeaders) {
@@ -70,6 +71,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getCurrentTenantSession();
 		Query query = session.createQuery("select od from OrderDetail od join od.parent oh where od.active = true and " + hqlWhereString);
+		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
 		StatusSummary summary = new StatusSummary();
 		for (OrderDetail orderDetail : orderDetails) {
@@ -87,6 +89,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getCurrentTenantSession();
 		Query query = session.createQuery(fromClause + hqlWhereString);
+		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
 
 		StatusSummary summary = new StatusSummary();
@@ -197,8 +200,9 @@ public class OrderService implements IApiService {
 	private Map<String, String> generateShipperFilters() {
 		Map<String, String> shipperFilters = new HashMap<>();
 		Session session = persistenceService.getCurrentTenantSession();
-		List<String> shippmentIds = (List<String>) session.createQuery("select distinct oh.shipmentId from OrderHeader oh where active = true").list();
-		for (String shipmentId : shippmentIds) {
+		@SuppressWarnings("unchecked")
+		List<String> shipmentIds = (List<String>) session.createQuery("select distinct oh.shipmentId from OrderHeader oh where active = true").list();
+		for (String shipmentId : shipmentIds) {
 			shipperFilters.put(shipmentId, String.format("oh.active = true and oh.shipmentId = '%s'", shipmentId));
 		}
 		return shipperFilters;

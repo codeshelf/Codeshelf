@@ -20,7 +20,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 	@Test
 	public void usesDifferentThreads() {
 		this.getTenantPersistenceService().beginTenantTransaction();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getObjectChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		IDaoListener listener = new DaoTestListener();
 		broadcaster.registerDAOListener(listener, Facility.class);
 		Facility facility = createFacility();
@@ -33,7 +33,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 	public final void testAddNotification() throws InterruptedException {
 		// register event listener
 		DaoTestListener l = new DaoTestListener();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getObjectChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		broadcaster.registerDAOListener(l, Facility.class);
 		try {
 			Assert.assertEquals(0, l.getObjectsAdded());
@@ -59,7 +59,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 	@Test
 	public final void testUpdateNotification() throws InterruptedException {
 		DaoTestListener l = new DaoTestListener();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getObjectChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		try {
 			broadcaster.registerDAOListener(l, Facility.class);
 			
@@ -109,7 +109,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 	@Test
 	public final void testDeleteNotification() throws InterruptedException {
 		DaoTestListener l = new DaoTestListener();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getObjectChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		broadcaster.registerDAOListener(l, Facility.class);
 		try {
 			Assert.assertEquals(0, l.getObjectsDeleted());

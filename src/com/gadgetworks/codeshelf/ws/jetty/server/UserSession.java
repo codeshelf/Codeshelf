@@ -26,7 +26,6 @@ import com.gadgetworks.codeshelf.metrics.MetricsService;
 import com.gadgetworks.codeshelf.model.dao.IDaoListener;
 import com.gadgetworks.codeshelf.model.domain.IDomainObject;
 import com.gadgetworks.codeshelf.model.domain.UserType;
-import com.gadgetworks.codeshelf.platform.multitenancy.Tenant;
 import com.gadgetworks.codeshelf.platform.multitenancy.User;
 import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -226,13 +225,13 @@ public class UserSession implements IDaoListener {
 			this.wsSession = null;
 		}
 		//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-		TenantPersistenceService.getInstance().getObjectChangeBroadcaster().unregisterDAOListener(this);
+		TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
 	}
 
 	public void authenticated(User user) {
 		this.user = user;
 		if (isSiteController()) {
-			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + user.getTenant().getDbSchemaName() + "." + user.getUsername());
+			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}
 	}
 
@@ -245,10 +244,10 @@ public class UserSession implements IDaoListener {
 		double elapsedSec = ((double) delta) / 1000;
 		LOGGER.debug("Ping roundtrip on session " + this.sessionId + " in " + elapsedSec + "s");
 	}
-	
+	/*
 	public Tenant getTenant() {
 		if(this.user == null)
 			return null;
 		return this.user.getTenant();
-	}
+	}*/
 }

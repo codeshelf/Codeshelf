@@ -21,7 +21,6 @@ import com.gadgetworks.codeshelf.platform.persistence.TenantPersistenceService;
 import com.gadgetworks.codeshelf.service.OrderService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 

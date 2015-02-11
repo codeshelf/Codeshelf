@@ -22,7 +22,6 @@ import com.gadgetworks.codeshelf.service.OrderService;
 import com.gadgetworks.codeshelf.service.ProductivityCheSummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList;
 import com.gadgetworks.codeshelf.service.ProductivitySummaryList.StatusSummary;
-import com.gadgetworks.codeshelf.service.WorkService;
 import com.gadgetworks.flyweight.command.NetGuid;
 
 public class ProductivityReportingTest extends DomainTestABC {

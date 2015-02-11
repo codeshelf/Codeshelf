@@ -156,16 +156,16 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
 		for(Tenant tenant : tenants) {
 			try {
-				this.getTenantPersistenceService().beginTenantTransaction(tenant);
+				this.getTenantPersistenceService().beginTransaction(tenant);
 				for (Facility facility : Facility.DAO.getAll()) {
 					for (Path path : facility.getPaths()) {
 						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 						facility.recomputeLocationPathDistances(path);
 					}
 				}
-				this.getTenantPersistenceService().commitTenantTransaction(tenant);
+				this.getTenantPersistenceService().commitTransaction(tenant);
 			} catch(Exception e) {
-				this.getTenantPersistenceService().rollbackTenantTransaction(tenant);
+				this.getTenantPersistenceService().rollbackTransaction(tenant);
 				throw e;
 			}
 		}

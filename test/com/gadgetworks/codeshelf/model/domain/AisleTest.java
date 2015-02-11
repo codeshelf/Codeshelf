@@ -94,7 +94,7 @@ public class AisleTest extends DomainTestABC {
 	public final void associatePathSegment() {
 		this.getTenantPersistenceService().beginTenantTransaction();
 		IDaoListener listener = Mockito.mock(IDaoListener.class);
-		this.getTenantPersistenceService().getObjectChangeBroadcaster().registerDAOListener(listener, Aisle.class);
+		this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster().registerDAOListener(listener, Aisle.class);
 		
 		String aisleDomainId = "A1";
 		
