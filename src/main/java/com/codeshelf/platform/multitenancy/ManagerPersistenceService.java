@@ -4,17 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.IManagedSchema;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ManagerPersistenceService extends PersistenceService {
+public class ManagerPersistenceService extends PersistenceService<ManagerSchema> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ManagerPersistenceService.class);
 	
 	private static ManagerPersistenceService theInstance = null;
 
-	private IManagedSchema	managerSchema;
+	private ManagerSchema managerSchema;
 
 	private ManagerPersistenceService() {	
 		managerSchema = new ManagerSchema();
@@ -32,7 +31,7 @@ public class ManagerPersistenceService extends PersistenceService {
 	}
 
 	@Override
-	public IManagedSchema getDefaultCollection() {
+	public ManagerSchema getDefaultSchema() {
 		return this.managerSchema;
 	}
 
@@ -42,7 +41,7 @@ public class ManagerPersistenceService extends PersistenceService {
 	}
 
 	@Override
-	protected void performStartupActions(IManagedSchema collection) {
+	protected void performStartupActions(ManagerSchema schema) {
 		return;
 	}
 }

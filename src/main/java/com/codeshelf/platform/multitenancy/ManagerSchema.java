@@ -1,10 +1,10 @@
 package com.codeshelf.platform.multitenancy;
 
-import com.codeshelf.platform.persistence.IManagedSchema;
+import com.codeshelf.platform.persistence.Schema;
 
 import lombok.Getter;
 
-public class ManagerSchema implements IManagedSchema {
+public class ManagerSchema extends Schema {
 	private static final String MASTER_CHANGELOG_NAME = "liquibase/mgr.changelog-master.xml";
 
 	@Getter

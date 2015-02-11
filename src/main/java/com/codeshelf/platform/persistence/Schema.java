@@ -26,21 +26,65 @@ import liquibase.resource.ResourceAccessor;
 
 import org.hibernate.cfg.Configuration;
 
-public class SchemaUtil {
+public abstract class Schema {
 
-	public static void applySchemaUpdates(IManagedSchema collection) {
-		if(SchemaUtil.getSQLSyntax(collection.getUrl()) != PersistenceService.SQLSyntax.POSTGRES) {
+	public abstract String getUrl();
+	public abstract String getUsername();
+	public abstract String getPassword();
+	public abstract String getSchemaName();
+	public abstract String getHibernateConfigurationFilename();
+	public abstract String getChangeLogName();
+
+	public void executeSQL(String sql) throws SQLException {
+		Connection conn = DriverManager.getConnection(
+			this.getUrl(),
+			this.getUsername(),
+			this.getPassword());
+		Statement stmt = conn.createStatement();
+		PersistenceService.LOGGER.trace("Executing explicit SQL: "+sql);
+		stmt.execute(sql);
+		stmt.close();
+		conn.close();
+	}
+
+	public PersistenceService.SQLSyntax getSQLSyntax() {
+		String url = this.getUrl();
+		if(url.startsWith("jdbc:postgresql:")) {
+			return PersistenceService.SQLSyntax.POSTGRES;
+		} else if(url.startsWith("jdbc:h2:mem")) {
+			return PersistenceService.SQLSyntax.H2;
+		} else {
+			return PersistenceService.SQLSyntax.OTHER;
+		}
+	}
+
+	public Configuration getHibernateConfiguration() {
+		// fetch database config from properties file
+		Configuration hibernateConfiguration = new Configuration().configure(this.getHibernateConfigurationFilename());
+		
+		hibernateConfiguration .setProperty("hibernate.connection.url", this.getUrl());
+		hibernateConfiguration .setProperty("hibernate.connection.username", this.getUsername());
+		hibernateConfiguration .setProperty("hibernate.connection.password", this.getPassword());
+		hibernateConfiguration .setProperty("hibernate.default_schema", this.getSchemaName());
+	
+		// wait why this again
+		hibernateConfiguration .setProperty("javax.persistence.schema-generation-source","metadata-then-script");
+		return hibernateConfiguration;
+	}
+	
+	void applyLiquibaseSchemaUpdates() {
+		if(getSQLSyntax() != PersistenceService.SQLSyntax.POSTGRES) {
 			PersistenceService.LOGGER.warn("Will not attempt to apply updates to non-Postgres schema");
 			return;
 		}
 	
 		try {
-			SchemaUtil.executeSQL(collection,"CREATE SCHEMA IF NOT EXISTS "+collection.getSchemaName());
+			this.executeSQL("CREATE SCHEMA IF NOT EXISTS "+this.getSchemaName());
 		} catch (SQLException e) {
 			throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)");
 		}
 	
-		Database appDatabase = SchemaUtil.getAppDatabase(collection);
+		Database appDatabase = this.getAppDatabase();
 		if(appDatabase==null) {
 			throw new RuntimeException("Failed to access app database, cannot continue");
 		}
@@ -51,7 +95,7 @@ public class SchemaUtil {
 		Contexts contexts = new Contexts(); //empty context
 		Liquibase liquibase;
 		try {
-			liquibase = new Liquibase(collection.getChangeLogName(), fileOpener, appDatabase);
+			liquibase = new Liquibase(this.getChangeLogName(), fileOpener, appDatabase);
 		} catch (LiquibaseException e) {
 			PersistenceService.LOGGER.error("Failed to initialize liquibase, cannot continue.", e);
 			throw new RuntimeException("Failed to initialize liquibase, cannot continue.",e);
@@ -78,31 +122,19 @@ public class SchemaUtil {
 			PersistenceService.LOGGER.info("No pending Liquibase changesets");
 		}
 	
-		if(!SchemaUtil.checkSchema(collection)) {
+		if(!this.liquibaseCheckSchema()) {
 			throw new RuntimeException("Cannot start, schema does not match");
 		}
 	}
 
-	public static void executeSQL(IManagedSchema collection,String sql) throws SQLException {
-		Connection conn = DriverManager.getConnection(
-			collection.getUrl(),
-			collection.getUsername(),
-			collection.getPassword());
-		Statement stmt = conn.createStatement();
-		PersistenceService.LOGGER.trace("Executing explicit SQL: "+sql);
-		stmt.execute(sql);
-		stmt.close();
-		conn.close();
-	}
-
-	public static Database getAppDatabase(IManagedSchema collection) {
+	private Database getAppDatabase() {
 	    Database appDatabase;
 		try {
 			appDatabase = CommandLineUtils.createDatabaseObject(ClassLoader.getSystemClassLoader(),
-				collection.getUrl(), 
-				collection.getUsername(), 
-				collection.getPassword(), null, 
-				null, collection.getSchemaName(),
+				this.getUrl(), 
+				this.getUsername(), 
+				this.getPassword(), null, 
+				null, this.getSchemaName(),
 				false, false,
 				null,null,
 				null,null);
@@ -113,37 +145,13 @@ public class SchemaUtil {
 		return appDatabase;
 	}
 
-	public static Configuration getHibernateConfiguration(IManagedSchema collection) {
-		// fetch database config from properties file
-		Configuration hibernateConfiguration = new Configuration().configure(collection.getHibernateConfigurationFilename());
-		
-		hibernateConfiguration .setProperty("hibernate.connection.url", collection.getUrl());
-		hibernateConfiguration .setProperty("hibernate.connection.username", collection.getUsername());
-		hibernateConfiguration .setProperty("hibernate.connection.password", collection.getPassword());
-		hibernateConfiguration .setProperty("hibernate.default_schema", collection.getSchemaName());
-	
-		// wait why this again
-		hibernateConfiguration .setProperty("javax.persistence.schema-generation-source","metadata-then-script");
-		return hibernateConfiguration;
-	}
-
-	public static PersistenceService.SQLSyntax getSQLSyntax(String url) {
-		if(url.startsWith("jdbc:postgresql:")) {
-			return PersistenceService.SQLSyntax.POSTGRES;
-		} else if(url.startsWith("jdbc:h2:mem")) {
-			return PersistenceService.SQLSyntax.H2;
-		} else {
-			return PersistenceService.SQLSyntax.OTHER;
-		}
-	}
-
-	public static boolean checkSchema(IManagedSchema collection) {
+	private boolean liquibaseCheckSchema() {
 		
 		// TODO: this, but cleanly without using unsupported CommandLineUtils interface
 		Database hibernateDatabase;
 		try {
 			hibernateDatabase = CommandLineUtils.createDatabaseObject(ClassLoader.getSystemClassLoader(),
-				"hibernate:classic:"+collection.getHibernateConfigurationFilename(), 
+				"hibernate:classic:"+this.getHibernateConfigurationFilename(), 
 				null, null, null, 
 				null, null,
 				false, false,
@@ -163,7 +171,7 @@ public class SchemaUtil {
 	    	this.liquibaseCatalogName, this.liquibaseSchemaName);
 	     */
 	
-		Database appDatabase = getAppDatabase(collection);
+		Database appDatabase = this.getAppDatabase();
 		if(appDatabase==null) {
 			return false;
 		}

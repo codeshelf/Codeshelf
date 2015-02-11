@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.IManagedSchema;
+import com.codeshelf.platform.persistence.Schema;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Tenant implements IManagedSchema {
+public class Tenant extends Schema {
 	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	
 	@SuppressWarnings("unused")

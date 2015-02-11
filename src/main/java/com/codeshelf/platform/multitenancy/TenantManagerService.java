@@ -18,7 +18,6 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.Service;
 import com.codeshelf.platform.persistence.PersistenceService;
-import com.codeshelf.platform.persistence.SchemaUtil;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -250,7 +249,7 @@ public class TenantManagerService extends Service implements ITenantManager {
 			managerPersistenceService.commitTransaction();	
 		}        
 		// reset schema
-		SchemaExport se = new SchemaExport(SchemaUtil.getHibernateConfiguration(tenant));
+		SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
 		se.create(false, true);
 	}
 
@@ -360,21 +359,21 @@ public class TenantManagerService extends Service implements ITenantManager {
 	public static void deleteOrdersWis(Tenant tenant) throws SQLException {
 		String schemaName = tenant.getSchemaName();
 		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
-		SchemaUtil.executeSQL(tenant,"UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".container_use");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".work_instruction");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".container");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_location");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_detail");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_header");
-		SchemaUtil.executeSQL(tenant,"DELETE FROM "+schemaName+".order_group");
+		tenant.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
+		tenant.executeSQL("DELETE FROM "+schemaName+".container_use");
+		tenant.executeSQL("DELETE FROM "+schemaName+".work_instruction");
+		tenant.executeSQL("DELETE FROM "+schemaName+".container");
+		tenant.executeSQL("DELETE FROM "+schemaName+".order_location");
+		tenant.executeSQL("DELETE FROM "+schemaName+".order_detail");
+		tenant.executeSQL("DELETE FROM "+schemaName+".order_header");
+		tenant.executeSQL("DELETE FROM "+schemaName+".order_group");
 	}
 
 	public static void dropSchema(Tenant tenant) throws SQLException {
 		String schemaName = tenant.getSchemaName();
 		LOGGER.warn("Deleting tenant schema "+schemaName);
-		SchemaUtil.executeSQL(tenant,"DROP SCHEMA "+schemaName+
-			((SchemaUtil.getSQLSyntax(tenant.getUrl())==PersistenceService.SQLSyntax.H2)?"":" CASCADE"));
+		tenant.executeSQL("DROP SCHEMA "+schemaName+
+			((tenant.getSQLSyntax()==PersistenceService.SQLSyntax.H2)?"":" CASCADE"));
 	}
 
 }
