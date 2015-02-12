@@ -1180,9 +1180,45 @@ public class RadioController implements IRadioController {
 
 	}
 
+	private byte getBestNetAddressForDevice(final INetworkDevice inNetworkDevice) {
+		/* DEV-639 old code was equivalent to
+		mNextAddress++;
+		return mNextAddress;
+		*/
+
+		NetGuid theGuid = inNetworkDevice.getGuid();
+		// we want the last byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
+		byte[] theBytes = theGuid.getParamValueAsByteArray();
+		int guidByteSize = NetGuid.NET_GUID_BYTES;
+		byte returnByte = theBytes[guidByteSize - 1];
+		// Now we must see if this is already in the map
+		boolean done = false;
+		boolean wentAround = false;
+		while (!done) {
+			if (!mDeviceNetAddrMap.containsKey(returnByte))
+				done = true;
+			else {
+				// we would like unsigned byte
+				int unsignedValue = (returnByte & 0xff);
+				if (unsignedValue >= 255) {
+					if (wentAround) { // some looping error. Bail
+						LOGGER.error("getBestNetAddressForDevice has loop error");
+						return 127; // or throw?
+					}
+					unsignedValue = 1;
+					wentAround = true;
+				} else {
+					unsignedValue++;
+				}
+				returnByte = (byte) unsignedValue;
+			}
+		}
+		return returnByte;
+	}
+
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.flyweight.controller.IController#addNetworkDevice(com.codeshelf.flyweight.controller.INetworkDevice)
+	/* 
+	 * Get a netAddress (0-255) then add the the device to both the guid map and the netAddress map.
 	 */
 	@Override
 	public final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
@@ -1190,7 +1226,10 @@ public class RadioController implements IRadioController {
 		try {
 			// If the device has no address then assign one.
 			if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
-				inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
+				byte netAddressToUse = getBestNetAddressForDevice(inNetworkDevice);
+				LOGGER.info("adding network address " + netAddressToUse);
+				inNetworkDevice.setAddress(new NetAddress(netAddressToUse));
+				// inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 			}
 
 			mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
