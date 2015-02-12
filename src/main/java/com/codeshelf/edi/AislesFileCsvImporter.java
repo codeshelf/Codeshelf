@@ -1106,49 +1106,49 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			Collection<? extends Tier> tierCollection = (Collection<? extends Tier>) tierList;
 			tiers.addAll(tierCollection);
 			Collections.sort(tiers, new TierBayComparable());
-		}
 						
-		if (tiers.size() == 1){
-			// We assume tier configuration as zigzag does not make sense
-			
-			if (tiers.get(0).getFirstLedNumAlongPath() == 1){
-				ledConfig = "tierB1S1Side";
-			} else {
-				ledConfig = "tierNotB1S1Side";
-			}
-			
-		} else if (tiers.size() > 1){
-			// Check for tier configuration
-			
-			if (tiers.get(0).getFirstLedNumAlongPath() == tiers.get(1).getFirstLedNumAlongPath()){
+			if (tiers.size() == 1){
+				// We assume tier configuration as zigzag does not make sense
 				
-				// Check for tierB1S1Side or tiernotB1S1
 				if (tiers.get(0).getFirstLedNumAlongPath() == 1){
 					ledConfig = "tierB1S1Side";
 				} else {
 					ledConfig = "tierNotB1S1Side";
 				}
-			} else {
 				
-				// Want check the first led number in the top tier of the first bay
-				if (tiers.get(tiers.size()-1).getFirstLedNumAlongPath() == 1){
-					ledConfig = "zigzagB1S1Side";
+			} else if (tiers.size() > 1){
+				// Check for tier configuration
+				
+				if (tiers.get(0).getFirstLedNumAlongPath() == tiers.get(1).getFirstLedNumAlongPath()){
+					
+					// Check for tierB1S1Side or tiernotB1S1
+					if (tiers.get(0).getFirstLedNumAlongPath() == 1){
+						ledConfig = "tierB1S1Side";
+					} else {
+						ledConfig = "tierNotB1S1Side";
+					}
 				} else {
-					ledConfig = "zigzagNotB1S1Side";
+					
+					// Want check the first led number in the top tier of the first bay
+					if (tiers.get(tiers.size()-1).getFirstLedNumAlongPath() == 1){
+						ledConfig = "zigzagB1S1Side";
+					} else {
+						ledConfig = "zigzagNotB1S1Side";
+					}
+					
 				}
-				
-			}
-		} else {
-			// There are no tiers
-			// We assume tier configuration as zigzag does not make sense
-			
-			if (bays.get(0).getFirstLedNumAlongPath() == 1){
-				ledConfig = "tierB1S1Side";
 			} else {
-				ledConfig = "tierNotB1S1Side";
+				// There are no tiers
+				// We assume tier configuration as zigzag does not make sense
+				
+				if (bays.get(0).getFirstLedNumAlongPath() == 1){
+					ledConfig = "tierB1S1Side";
+				} else {
+					ledConfig = "tierNotB1S1Side";
+				}
 			}
 		}
-			
+		
 		return ledConfig;
 	}
 	
