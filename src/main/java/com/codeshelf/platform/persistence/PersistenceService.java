@@ -98,7 +98,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		}
 		return fac;
 	}
-	
+
 	public final Session getSession(SCHEMA_TYPE schema) {
 		SessionFactory fac = this.getSessionFactory(schema);
 		Session session = fac.getCurrentSession();
@@ -209,6 +209,10 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 	
 	public final Session getSessionWithTransaction() {
 		return getSessionWithTransaction(getDefaultSchema());
+	}
+	
+	public final SessionFactory getSessionFactory() {
+		return getSessionFactory(getDefaultSchema());
 	}
 	
 	/* Service methods */
