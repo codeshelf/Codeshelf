@@ -58,6 +58,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select oh from OrderHeader oh where " + hqlWhereString);
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> orderHeaders = (List<OrderHeader>) query.list();
 		StatusSummary summary = new StatusSummary();
@@ -90,6 +91,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getSession();
 		Query query = session.createQuery(fromClause + hqlWhereString);
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
 
