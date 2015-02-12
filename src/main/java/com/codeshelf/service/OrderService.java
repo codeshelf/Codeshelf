@@ -200,8 +200,10 @@ public class OrderService implements IApiService {
 	private Map<String, String> generateShipperFilters() {
 		Map<String, String> shipperFilters = new HashMap<>();
 		Session session = persistenceService.getSession();
+		Query query = session.createQuery("select distinct oh.shipperId from OrderHeader oh where active = true");
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
-		List<String> shipperIds = (List<String>) session.createQuery("select distinct oh.shipperId from OrderHeader oh where active = true").list();
+		List<String> shipperIds = (List<String>) query.list();
 		for (String shipperId : shipperIds) {
 			shipperFilters.put(shipperId, String.format("oh.active = true and oh.shipperId = '%s'", shipperId));
 		}
