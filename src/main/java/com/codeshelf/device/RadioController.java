@@ -125,8 +125,6 @@ public class RadioController implements IRadioController {
 	private Thread												mBackgroundThread;
 	private Thread												mPacketProcessorThread;
 
-	private byte												mNextAddress;
-
 	private boolean												mRunning;
 
 	private final Counter										packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
@@ -155,7 +153,6 @@ public class RadioController implements IRadioController {
 		mPendingAcksMap = new ConcurrentHashMap<NetAddress, BlockingQueue<IPacket>>();
 		mDeviceGuidMap = new HashMap<NetGuid, INetworkDevice>();
 		mDeviceNetAddrMap = new HashMap<NetAddress, INetworkDevice>();
-		mNextAddress = 1;
 
 		mRunning = false;
 	}
