@@ -15,7 +15,6 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.platform.Service;
 import com.codeshelf.platform.ServiceNotInitializedException;
 
