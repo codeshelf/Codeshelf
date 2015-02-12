@@ -15,7 +15,6 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.platform.Service;
 import com.codeshelf.platform.ServiceNotInitializedException;
 
@@ -92,14 +91,14 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		return txBegun;
 	}
 
-	private final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
+	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
 		SessionFactory fac = this.factories.get(schema);
 		if (fac==null) {
 			fac = createSessionFactory(schema);
 		}
 		return fac;
 	}
-	
+
 	public final Session getSession(SCHEMA_TYPE schema) {
 		SessionFactory fac = this.getSessionFactory(schema);
 		Session session = fac.getCurrentSession();
@@ -210,6 +209,10 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 	
 	public final Session getSessionWithTransaction() {
 		return getSessionWithTransaction(getDefaultSchema());
+	}
+	
+	public final SessionFactory getSessionFactory() {
+		return getSessionFactory(getDefaultSchema());
 	}
 	
 	/* Service methods */

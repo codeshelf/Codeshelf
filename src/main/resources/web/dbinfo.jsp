@@ -7,7 +7,7 @@
 <%@page import="org.hibernate.stat.SecondLevelCacheStatistics"%>
 <%@page import="java.util.*"%>
 <%@page import="org.hibernate.stat.*"%>
-<%@page import="com.codeshelf.platform.persistence.PersistenceService"%>
+<%@page import="com.codeshelf.platform.persistence.TenantPersistenceService"%>
 <style type="text/css">
 body {background-color: white}
 th {
@@ -42,7 +42,7 @@ h3 {
 </head>
 <body bgcolor="#FFFFFF" style="height:800px;">
 <%
-	SessionFactory sessionFactory = PersistenceService.getInstance().getSessionFactory();
+	SessionFactory sessionFactory = TenantPersistenceService.getInstance().getSessionFactory(); // default tenant
 	Statistics s = sessionFactory.getStatistics();
 	String x = s.toString();
 	PrintWriter pw = response.getWriter();

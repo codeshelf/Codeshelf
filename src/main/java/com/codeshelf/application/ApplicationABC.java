@@ -34,7 +34,8 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	public enum ShutdownCleanupReq {
 		NONE , 
 		DROP_SCHEMA , 
-		DELETE_ORDERS_WIS
+		DELETE_ORDERS_WIS ,
+		DELETE_ORDERS_WIS_INVENTORY
 		};
 		
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
@@ -115,6 +116,9 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 					break;
 				case DELETE_ORDERS_WIS:
 					TenantManagerService.deleteOrdersWis(defaultTenant);
+					break;
+				case DELETE_ORDERS_WIS_INVENTORY:
+					TenantManagerService.deleteOrdersWisInventory(defaultTenant);
 					break;
 				default:
 					break;
