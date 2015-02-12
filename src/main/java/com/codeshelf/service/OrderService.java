@@ -71,6 +71,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select od from OrderDetail od join od.parent oh where od.active = true and " + hqlWhereString);
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
 		StatusSummary summary = new StatusSummary();
