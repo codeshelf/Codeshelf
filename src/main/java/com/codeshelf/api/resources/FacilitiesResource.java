@@ -37,7 +37,6 @@ public class FacilitiesResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@OneToMany(fetch=FetchType.EAGER)
 	public Response getAllFacilities() {
 		ErrorResponse errors = new ErrorResponse();
 		try {
