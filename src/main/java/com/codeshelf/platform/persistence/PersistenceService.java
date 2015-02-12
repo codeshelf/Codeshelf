@@ -91,7 +91,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		return txBegun;
 	}
 
-	private final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
+	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
 		SessionFactory fac = this.factories.get(schema);
 		if (fac==null) {
 			fac = createSessionFactory(schema);
