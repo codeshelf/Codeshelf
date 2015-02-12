@@ -1285,7 +1285,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 						depth = V3.getPosX();
 					}
 					
-					int cloneAisleDepthCm = (int)(depth*CM_PER_M);
+					int cloneAisleDepthCm = Math.round((int)(depth*CM_PER_M));
 					
 					if (mDepthCm != cloneAisleDepthCm){
 						LOGGER.warn("Cloning does not allow change of depth. "
@@ -1305,8 +1305,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					
 					for (Location bay : bays){
 						Point endPoint = bay.getPickFaceEndPoint();
-						Double xEndPoint = endPoint.getX();
-						mBayLengthCm = (int) (xEndPoint * CM_PER_M);
+						
+						if (bay.isLocationXOriented()){
+							mBayLengthCm = (int) Math.round((endPoint.getX() * CM_PER_M));
+						} else {
+							mBayLengthCm = (int) Math.round((endPoint.getY() * CM_PER_M));
+						}
 						
 						Bay newBay = editOrCreateOneBay(bay.getDomainId(), mBayLengthCm);
 						
