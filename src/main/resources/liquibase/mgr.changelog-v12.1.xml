@@ -7,29 +7,29 @@
 		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 	<changeSet author="ivan (generated)" id="1423788488360-24">
 		<addColumn tableName="tenant">
-			<column name="active" type="boolean" defaultValue="true">
+			<column name="active" type="boolean" valueBoolean="true">
 				<constraints nullable="false"/>
 			</column>
 		</addColumn>
 	</changeSet>
 	<changeSet author="ivan (generated)" id="1423788488360-25">
 		<addColumn tableName="shard">
-			<column name="created" type="timestamp" defaultValueComputed="now()::timestamp"/>
+			<column name="created" type="timestamp" valueComputed="now()::timestamp"/>
 		</addColumn>
 	</changeSet>
 	<changeSet author="ivan (generated)" id="1423788488360-27">
 		<addColumn tableName="shard">
-			<column name="last_modified" type="timestamp" defaultValueComputed="now()::timestamp"/>
+			<column name="last_modified" type="timestamp" valueComputed="now()::timestamp"/>
 		</addColumn>
 	</changeSet>
 	<changeSet author="ivan (generated)" id="1423788488360-28">
 		<addColumn tableName="tenant">
-			<column name="last_modified" type="timestamp" defaultValueComputed="now()::timestamp"/>
+			<column name="last_modified" type="timestamp" valueComputed="now()::timestamp"/>
 		</addColumn>
 	</changeSet>
 	<changeSet author="ivan (generated)" id="1423788488360-29">
 		<addColumn tableName="users">
-			<column name="last_modified" type="timestamp" defaultValueComputed="now()::timestamp"/>
+			<column name="last_modified" type="timestamp" valueComputed="now()::timestamp"/>
 		</addColumn>
 	</changeSet>
 
@@ -42,9 +42,7 @@
 	<changeSet author="ivan (generated)" id="1423788488360-38">
 		<dropUniqueConstraint constraintName="uc_tenantdb_username_col" tableName="tenant"/>
 	</changeSet>
-	<changeSet author="ivan (generated)" id="1423788488360-43">
-		<dropNotNullConstraint columnDataType="timestamp" columnName="created" tableName="users"/>
-	</changeSet>
+	
 	<changeSet author="ivan (generated)" id="1423788488360-44">
 		<dropNotNullConstraint columnDataType="int4" columnName="hash_iterations" tableName="users"/>
 	</changeSet>

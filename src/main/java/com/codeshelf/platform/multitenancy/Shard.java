@@ -45,13 +45,13 @@ public class Shard extends DatabaseConnection {
 	/* Timestamped entity */
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name="created")
+	@Column(nullable = false,name="created")
 	@JsonProperty
 	Date created;
 	//
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name="last_modified")
+	@Column(nullable = false,name="last_modified")
 	@JsonProperty
 	Date lastModified;
 	//
