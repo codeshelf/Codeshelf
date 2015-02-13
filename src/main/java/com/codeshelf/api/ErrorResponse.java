@@ -33,6 +33,10 @@ public class ErrorResponse extends BaseResponse{
 	public void addErrorMissingQueryParam(String param) {
 		addError("Missing query param '" + param + "'");
 	}
+	
+	public void addErrorMissingBodyParam(String param) {
+		addError("Missing body param '" + param + "'");
+	}
 
 	public void addErrorBadUUID(String uuid) {
 		addError("Could not parse uuid " + uuid);
