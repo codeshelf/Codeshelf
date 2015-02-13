@@ -5,7 +5,11 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public abstract class DatabaseConnection {
+	private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConnection.class);
 
 	public enum SQLSyntax {
 		H2,POSTGRES,OTHER;
@@ -32,11 +36,9 @@ public abstract class DatabaseConnection {
 			this.getUsername(),
 			this.getPassword());
 		Statement stmt = conn.createStatement();
-		PersistenceService.LOGGER.trace("Executing explicit SQL: "+sql);
+		LOGGER.trace("Executing explicit SQL: "+sql);
 		stmt.execute(sql);
 		stmt.close();
 		conn.close();
 	}
-
-
 }
