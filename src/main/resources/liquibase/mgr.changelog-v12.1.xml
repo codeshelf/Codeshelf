@@ -17,11 +17,6 @@
 			<column name="created" type="timestamp" defaultValueComputed="now()::timestamp"/>
 		</addColumn>
 	</changeSet>
-	<changeSet author="ivan (generated)" id="1423788488360-26">
-		<addColumn tableName="tenant">
-			<column name="created" type="timestamp" defaultValueComputed="now()::timestamp"/>
-		</addColumn>
-	</changeSet>
 	<changeSet author="ivan (generated)" id="1423788488360-27">
 		<addColumn tableName="shard">
 			<column name="last_modified" type="timestamp" defaultValueComputed="now()::timestamp"/>
