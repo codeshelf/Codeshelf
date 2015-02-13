@@ -80,5 +80,18 @@
 		<addUniqueConstraint columnNames="schema_name" constraintName="UC_TENANTSCHEMA_NAME_COL"
 			deferrable="false" disabled="false" initiallyDeferred="false" tableName="tenant"/>
 	</changeSet>
-		
+	
+    <changeSet author="default (generated)" id="1423860006704-5">
+        <addNotNullConstraint columnDataType="timestamp" columnName="created" tableName="shard"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1423860006704-6">
+        <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="shard"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1423860006704-7">
+        <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="tenant"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1423860006704-8">
+        <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="users"/>
+    </changeSet>
+    		
 </databaseChangeLog>
