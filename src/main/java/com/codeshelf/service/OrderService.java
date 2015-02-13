@@ -58,6 +58,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select oh from OrderHeader oh where " + hqlWhereString);
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> orderHeaders = (List<OrderHeader>) query.list();
 		StatusSummary summary = new StatusSummary();
@@ -71,6 +72,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select od from OrderDetail od join od.parent oh where od.active = true and " + hqlWhereString);
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
 		StatusSummary summary = new StatusSummary();
@@ -89,6 +91,7 @@ public class OrderService implements IApiService {
 		String hqlWhereString = generateFilters().get(filterName);
 		Session session = persistenceService.getSession();
 		Query query = session.createQuery(fromClause + hqlWhereString);
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<OrderDetail> orderDetails = (List<OrderDetail>) query.list();
 
@@ -200,8 +203,10 @@ public class OrderService implements IApiService {
 	private Map<String, String> generateShipperFilters() {
 		Map<String, String> shipperFilters = new HashMap<>();
 		Session session = persistenceService.getSession();
+		Query query = session.createQuery("select distinct oh.shipperId from OrderHeader oh where active = true");
+		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
-		List<String> shipperIds = (List<String>) session.createQuery("select distinct oh.shipperId from OrderHeader oh where active = true").list();
+		List<String> shipperIds = (List<String>) query.list();
 		for (String shipperId : shipperIds) {
 			shipperFilters.put(shipperId, String.format("oh.active = true and oh.shipperId = '%s'", shipperId));
 		}

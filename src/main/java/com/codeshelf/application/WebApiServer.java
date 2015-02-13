@@ -195,6 +195,7 @@ public class WebApiServer {
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 		//restApiContext.setSecurityHandler(createRestApiSecurityHandler());

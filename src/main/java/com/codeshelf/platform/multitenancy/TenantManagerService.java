@@ -368,6 +368,14 @@ public class TenantManagerService extends Service implements ITenantManager {
 		tenant.executeSQL("DELETE FROM "+schemaName+".order_header");
 		tenant.executeSQL("DELETE FROM "+schemaName+".order_group");
 	}
+	
+	public static void deleteOrdersWisInventory(Tenant tenant) throws SQLException {
+		String schemaName = tenant.getSchemaName();
+		TenantManagerService.deleteOrdersWis(tenant);
+		LOGGER.warn("Deleting itemMasters ");
+		tenant.executeSQL("DELETE FROM "+schemaName+".item");
+		tenant.executeSQL("DELETE FROM "+schemaName+".item_master");
+	}
 
 	public static void dropSchema(Tenant tenant) throws SQLException {
 		String schemaName = tenant.getSchemaName();

@@ -100,7 +100,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		String effectiveId = domainId;
 		try {
 			Session session = getCurrentSession();
-			// Query<T> query = mServer.createQuery(getDaoClass());
 	        Criteria criteria = session.createCriteria(getDaoClass());
 			if (parentObject != null) {
 				Class<T> clazz = getDaoClass();
@@ -108,20 +107,17 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 					criteria
 						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
 						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,parentObject.getPersistentId()));
-					// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_ORG_PROPERTY, inParentObject.getPersistentId());
 				} 
 				else {
 					criteria
 						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
 						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,parentObject.getPersistentId()));
-					// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId).eq(IDomainObjectTree.PARENT_PROPERTY, inParentObject.getPersistentId());
 				}
 			} 
 			else {
 				criteria.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId));
-				// query.where().eq(IDomainObject.ID_PROPERTY, effectiveId);
 			}
-			//query = query.setUseCache(true);
+			criteria.setCacheable(true);
 			List<T> results = criteria.list();
 			if (results.size()==0) {
 				return null;
@@ -148,8 +144,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
         Criteria criteria = session.createCriteria(getDaoClass());
         criteria.add(Restrictions.in("persistentId", inIdList));
         List<T> methodResultsList = (List<T>) criteria.list();
-		//Query<T> query = mServer.find(getDaoClass());
-		//List<T> methodResultsList = query.where().in("persistentId", inIdList).findList();
 		return methodResultsList;
 	}
 
@@ -217,7 +211,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
 	public final void store(final T inDomainObject) throws DaoException {
-		// TODO: need to add change property intercepter and versioning
 		Session session = getCurrentSession();
 		session.saveOrUpdate(inDomainObject);
 	}
@@ -230,7 +223,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		try {
 			Session session = getCurrentSession();
 			session.delete(inDomainObject);
-			// broadcastDelete(inDomainObject); done now via hibernate interceptors
 		} catch (OptimisticLockException e) {
 			LOGGER.error("Failed to delete object", e);
 			throw new DaoException(e.getMessage());
@@ -254,10 +246,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.codeshelf.model.dao.ITypedDao#getNextId(java.lang.Class)
 	 */
 	public final Object getNextId(final Class<?> beanType) {
-		// An example of how to do this.
-		//		Object nextId = Path.DAO.getNextId(Path.class);
-		//		path.setPersistentId(new Long((Integer) nextId));
-		//return mServer.nextId(beanType);
 	    UUID persistentId = UUID.randomUUID();
 	    return persistentId;
 	}
