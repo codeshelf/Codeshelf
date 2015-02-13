@@ -11,6 +11,7 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.jpa.event.spi.JpaIntegrator;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +20,6 @@ import com.codeshelf.platform.Service;
 import com.codeshelf.platform.ServiceNotInitializedException;
 
 public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Service {
-	public enum SQLSyntax {
-		H2,POSTGRES,OTHER;
-	}
-	
 	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
 	
 	// define behavior of service
@@ -46,18 +43,22 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 			LOGGER.info("Creating session factory for "+schema.getSchemaName());
 			Configuration configuration = schema.getHibernateConfiguration();
         	
-			// initialize hibernate session factory
-        	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder();
+        	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder()
+        			.with(new JpaIntegrator()); // support for JPA annotations e.g. @PrePersist
+
+        	// use subclass definition to attach optional custom hibernate integrator if desired
         	EventListenerIntegrator integrator = this.generateEventListenerIntegrator();
-        	if(integrator != null) { // use subclass definition to attach optional hibernate integrator
+        	if(integrator != null) { 
         		bootstrapBuilder.with(integrator);
         		this.listenerIntegrators.put(schema, integrator);
         	}
-	        StandardServiceRegistryBuilder ssrb = 
+
+			// initialize hibernate session factory
+        	StandardServiceRegistryBuilder ssrb = 
 	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
 	        			.applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
-
+	        
 	        // enable statistics
 	        factory.getStatistics().setStatisticsEnabled(true);
 	        			

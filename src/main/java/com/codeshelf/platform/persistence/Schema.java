@@ -1,10 +1,7 @@
 package com.codeshelf.platform.persistence;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -26,37 +23,11 @@ import liquibase.resource.ResourceAccessor;
 
 import org.hibernate.cfg.Configuration;
 
-public abstract class Schema {
+public abstract class Schema extends DatabaseConnection {
 
-	public abstract String getUrl();
-	public abstract String getUsername();
-	public abstract String getPassword();
 	public abstract String getSchemaName();
 	public abstract String getHibernateConfigurationFilename();
 	public abstract String getChangeLogName();
-
-	public void executeSQL(String sql) throws SQLException {
-		Connection conn = DriverManager.getConnection(
-			this.getUrl(),
-			this.getUsername(),
-			this.getPassword());
-		Statement stmt = conn.createStatement();
-		PersistenceService.LOGGER.trace("Executing explicit SQL: "+sql);
-		stmt.execute(sql);
-		stmt.close();
-		conn.close();
-	}
-
-	public PersistenceService.SQLSyntax getSQLSyntax() {
-		String url = this.getUrl();
-		if(url.startsWith("jdbc:postgresql:")) {
-			return PersistenceService.SQLSyntax.POSTGRES;
-		} else if(url.startsWith("jdbc:h2:mem")) {
-			return PersistenceService.SQLSyntax.H2;
-		} else {
-			return PersistenceService.SQLSyntax.OTHER;
-		}
-	}
 
 	public Configuration getHibernateConfiguration() {
 		// fetch database config from properties file
@@ -73,7 +44,7 @@ public abstract class Schema {
 	}
 	
 	void applyLiquibaseSchemaUpdates() {
-		if(getSQLSyntax() != PersistenceService.SQLSyntax.POSTGRES) {
+		if(getSQLSyntax() != DatabaseConnection.SQLSyntax.POSTGRES) {
 			PersistenceService.LOGGER.warn("Will not attempt to apply Liquibase updates to non-Postgres schema");
 			return;
 		}

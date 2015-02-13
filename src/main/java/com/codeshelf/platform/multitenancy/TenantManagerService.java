@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.Service;
-import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.platform.persistence.DatabaseConnection;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -85,9 +85,9 @@ public class TenantManagerService extends Service implements ITenantManager {
 			// create
 			Shard shard = new Shard();
 			shard.setName(DEFAULT_SHARD_NAME);
-			shard.setDbUrl(System.getProperty("shard.default.db.url"));
-			shard.setDbAdminUsername(System.getProperty("shard.default.db.admin_username"));
-			shard.setDbAdminPassword(System.getProperty("shard.default.db.admin_password"));
+			shard.setUrl(System.getProperty("shard.default.db.url"));
+			shard.setUsername(System.getProperty("shard.default.db.admin_username"));
+			shard.setPassword(System.getProperty("shard.default.db.admin_password"));
 			session.save(shard);
 
 			this.defaultShardId = shard.getShardId();
@@ -381,7 +381,7 @@ public class TenantManagerService extends Service implements ITenantManager {
 		String schemaName = tenant.getSchemaName();
 		LOGGER.warn("Deleting tenant schema "+schemaName);
 		tenant.executeSQL("DROP SCHEMA "+schemaName+
-			((tenant.getSQLSyntax()==PersistenceService.SQLSyntax.H2)?"":" CASCADE"));
+			((tenant.getSQLSyntax()==DatabaseConnection.SQLSyntax.H2)?"":" CASCADE"));
 	}
 
 }

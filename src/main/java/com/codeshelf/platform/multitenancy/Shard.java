@@ -1,9 +1,7 @@
 package com.codeshelf.platform.multitenancy;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,8 +12,13 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -23,9 +26,13 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.platform.persistence.DatabaseConnection;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(name = "shard")
-public class Shard {
+@EqualsAndHashCode(callSuper = false,of={"shardId","created"})
+public class Shard extends DatabaseConnection {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Shard.class);
 
 	@Id
@@ -35,29 +42,48 @@ public class Shard {
 	@Setter
 	int shardId;
 
+	/* Timestamped entity */
+	@Getter
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(nullable = false,name="created")
+	@JsonProperty
+	Date created;
+	//
+	@Getter
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(nullable = false,name="last_modified")
+	@JsonProperty
+	Date lastModified;
+	//
+	@PrePersist
+	protected void onCreate() { this.created = this.lastModified = new Date(); }
+	@PreUpdate
+	protected void onUpdate() { this.lastModified = new Date(); }
+	/* Timestamped entity */
+	
 	@Column(nullable = false,length=255,name="name")
 	@Getter 
 	@Setter
 	@NonNull
+	@JsonProperty
 	String name;
 	
-	@Column(nullable = false,name="db_url")
+	@Column(nullable = false,name="url")
 	@Getter 
 	@Setter
 	@NonNull
-	String dbUrl;
+	@JsonProperty
+	String url;
 	
-	@Column(nullable = false,length=16,name="db_admin_username")
+	@Column(nullable = false,length=16,name="username")
 	@Getter
 	@Setter
-	@NonNull
-	String dbAdminUsername;
+	String username;
 
-	@Column(nullable = false,length=36,name="db_admin_password")
+	@Column(nullable = false,length=36,name="password")
 	@Getter
 	@Setter
-	@NonNull
-	String dbAdminPassword;
+	String password;
 
     @OneToMany(mappedBy = "shard", targetEntity=Tenant.class)
     @MapKey(name = "name")
@@ -75,46 +101,33 @@ public class Shard {
 		return tenants.get(name);
 	}
 
-	private void executeSQL(String sql) throws SQLException {
-		Connection conn = DriverManager.getConnection(this.getDbUrl(),this.getDbAdminUsername(),this.getDbAdminPassword());
-		Statement stmt = conn.createStatement();
-		LOGGER.trace("Executing explicit SQL: "+sql);
-		stmt.execute(sql);
-		stmt.close();
-		conn.close();
-	}
-
-	private boolean createSchemaAndUser(String dbSchemaName, String dbUsername, String dbPassword) {
+	private boolean createSchemaAndUser(Tenant newTenant) {
 		boolean result = false;
 		try {
-			if(isH2MemShard()) {
+			if(newTenant.getSQLSyntax() == DatabaseConnection.SQLSyntax.H2) {
 				// use H2 syntax
-				executeSQL("CREATE SCHEMA "+dbSchemaName); 
-				executeSQL("CREATE USER "+dbUsername+" PASSWORD '"+dbPassword+"'");
-				executeSQL("ALTER USER "+dbUsername+" ADMIN TRUE");
+				executeSQL("CREATE SCHEMA "+newTenant.getSchemaName()); 
+				executeSQL("CREATE USER "+newTenant.getUsername()+" PASSWORD '"+newTenant.getPassword()+"'");
+				executeSQL("ALTER USER "+newTenant.getUsername()+" ADMIN TRUE");
 			} else {
 				// assuming postgres syntax
-				executeSQL("CREATE SCHEMA IF NOT EXISTS "+dbSchemaName);
+				executeSQL("CREATE SCHEMA IF NOT EXISTS "+newTenant.getSchemaName());
 				try {
-					executeSQL("CREATE USER "+dbUsername+" PASSWORD '"+dbPassword+"'");
+					executeSQL("CREATE USER "+newTenant.getUsername()+" PASSWORD '"+newTenant.getPassword()+"'");
 				} catch (SQLException e) {
-					if(e.getMessage().equals("ERROR: role \""+dbUsername+"\" already exists")) {
-						LOGGER.warn("Tried to create user but already existed (assuming same password): "+dbUsername);
+					if(e.getMessage().equals("ERROR: role \""+newTenant.getUsername()+"\" already exists")) {
+						LOGGER.warn("Tried to create user but already existed (assuming same password): "+newTenant.getUsername());
 					} else {
 						throw e;
 					}
 				}
-				executeSQL("GRANT ALL ON SCHEMA "+dbSchemaName+" TO "+dbUsername);
+				executeSQL("GRANT ALL ON SCHEMA "+newTenant.getSchemaName()+" TO "+newTenant.getUsername());
 			}
 			result = true;
 		} catch (SQLException e) {
 			LOGGER.error("SQL error creating tenant schema and user", e);
 		}
 		return result;
-	}
-
-	private boolean isH2MemShard() {
-		return this.getDbUrl().startsWith("jdbc:h2:mem");
 	}
 
 	public Tenant createTenant(String name,String schemaName,String username,String password) {
@@ -127,13 +140,11 @@ public class Shard {
 			Tenant tenant = new Tenant();
 			tenant.setName(name);
 			tenant.setUsername(username);
-			tenant.setSchemaName(schemaName); 			
-			if(password != null) {
-				tenant.setPassword(password);
-			}
+			tenant.setSchemaName(schemaName);
+			tenant.setPassword(password);
+			tenant.setShard(this);
 
-			if(createSchemaAndUser(schemaName,username,tenant.getPassword())) { // automatically generated password
-				tenant.setShard(this);
+			if(createSchemaAndUser(tenant)) { // automatically generated password
 				tenants.put(name, tenant);
 				ManagerPersistenceService.getInstance().getSession().save(tenant);
 				result = tenant;
@@ -153,52 +164,6 @@ public class Shard {
 				return false;
 			}
 		}
-		return true;
-	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((dbAdminPassword == null) ? 0 : dbAdminPassword.hashCode());
-		result = prime * result + ((dbAdminUsername == null) ? 0 : dbAdminUsername.hashCode());
-		result = prime * result + ((dbUrl == null) ? 0 : dbUrl.hashCode());
-		result = prime * result + shardId;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Shard other = (Shard) obj;
-		if (name == null) {
-			if (other.getName() != null)
-				return false;
-		} else if (!name.equals(other.getName()))
-			return false;
-		if (dbAdminPassword == null) {
-			if (other.getDbAdminPassword() != null)
-				return false;
-		} else if (!dbAdminPassword.equals(other.getDbAdminPassword()))
-			return false;
-		if (dbAdminUsername == null) {
-			if (other.getDbAdminUsername() != null)
-				return false;
-		} else if (!dbAdminUsername.equals(other.getDbAdminUsername()))
-			return false;
-		if (dbUrl == null) {
-			if (other.getDbUrl() != null)
-				return false;
-		} else if (!dbUrl.equals(other.getDbUrl()))
-			return false;
-		if (shardId != other.getShardId())
-			return false;
 		return true;
 	}
 
