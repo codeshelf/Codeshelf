@@ -7,7 +7,7 @@
 		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
 	<changeSet author="ivan (generated)" id="1423788488360-24">
 		<addColumn tableName="tenant">
-			<column name="active" type="boolean" valueBoolean="true">
+			<column name="active" type="boolean" defaultValueBoolean="true">
 				<constraints nullable="false"/>
 			</column>
 		</addColumn>
@@ -93,5 +93,9 @@
     <changeSet author="default (generated)" id="1423860006704-8">
         <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="users"/>
     </changeSet>
-    		
+
+    <changeSet author="default (generated)" id="1423871042645-2">
+        <dropDefaultValue columnDataType="boolean" columnName="active" tableName="tenant"/>
+    </changeSet>
+    
 </databaseChangeLog>
