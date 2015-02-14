@@ -10,6 +10,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.codeshelf.ws.jetty.protocol.command.PingCommand;
+import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -141,6 +142,11 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				NetGuid theGuid = new NetGuid(guidStr);
 				this.deviceManager.lightSomeLeds(theGuid, msg.getDurationSeconds(), msg.getLedCommands());
 			}
+		} else if (message instanceof CheDisplayMessage) {
+			CheDisplayMessage msg = (CheDisplayMessage) message;
+			String guidStr = msg.getNetGuidStr();
+			NetGuid theGuid = new NetGuid(guidStr);
+			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
 		}
 	}
 

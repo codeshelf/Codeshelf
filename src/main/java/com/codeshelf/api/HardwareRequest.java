@@ -11,30 +11,39 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class HardwareRequest implements Validatable{
 	@Getter
-	private String controller;
+	private String lightController;
 	@Getter
-	private short channel;
+	private short lightChannel;
 	@Getter
 	private int lightDuration;	
 	@Getter
-	private List<LightCommand> lights;
+	private List<LightRequest> lights;
+	@Getter
+	private List<CheDisplayRequest> cheMessages;
 	
 	public boolean isValid(ErrorResponse errors) {
 		boolean valid = true;
-		if (controller == null) {
-			errors.addErrorMissingBodyParam("lights.controller");
+		if (lightController == null) {
+			errors.addErrorMissingBodyParam("lightController");
 			valid = false;
 		}
-		if (channel <= 0) {
-			errors.addError("Provide positive controller lights.channel");
+		if (lightChannel <= 0) {
+			errors.addError("Provide positive controller lightChannel");
 			valid = false;
 		}
 		if (lightDuration <= 0) {
 			errors.addError("Provide positive duration for the Light commands");
 			valid = false;
 		}
+		if (cheMessages != null) {
+			for (CheDisplayRequest che : cheMessages) {
+				if (!che.isValid(errors)){
+					valid = false;
+				}
+			}
+		}
 		if (lights != null) {
-			for (LightCommand light : lights) {
+			for (LightRequest light : lights) {
 				if (!light.isValid(errors)){
 					valid = false;
 				}
@@ -45,12 +54,13 @@ public class HardwareRequest implements Validatable{
 	}
 	
 	@JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-	static public class LightCommand implements Validatable{
-		public LightCommand() {}
+	static public class LightRequest implements Validatable{
 		@Getter
-		private short position;
+		private Short position;
 		@Getter
 		private ColorEnum color;
+		
+		public LightRequest() {}
 		
 		@Override
 		public boolean isValid(ErrorResponse errors) {
@@ -60,7 +70,34 @@ public class HardwareRequest implements Validatable{
 				errors.addErrorMissingBodyParam("lights.color");
 				valid = false;
 			}
+			if (position == null || position < 0) {
+				errors.addErrorMissingBodyParam("Provide non-negative lights.position");
+				valid = false;
+			}
+
 			return valid;
 		}
 	}
+	
+	@JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
+	static public class CheDisplayRequest implements Validatable{
+		@Getter
+		private String che;
+		@Getter
+		private String line1, line2, line3, line4;
+		
+		public CheDisplayRequest() {}
+		
+		@Override
+		public boolean isValid(ErrorResponse errors) {
+			boolean valid = true;
+
+			if (che == null) {
+				errors.addErrorMissingBodyParam("cheMessages.che");
+				valid = false;
+			}
+			return valid;
+		}
+	}
+
 }

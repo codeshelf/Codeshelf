@@ -197,7 +197,7 @@ public class LightService implements IApiService {
 		return scheduleChaserRunnable(lightLocationRunnable, millisToSleep, TimeUnit.MILLISECONDS);
 	}
 
-	public int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
+	private int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
 		return this.sessionManager.sendMessage(users, message);
 	}
 

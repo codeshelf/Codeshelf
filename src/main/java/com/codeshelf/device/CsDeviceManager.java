@@ -623,6 +623,16 @@ public class CsDeviceManager implements
 		}
 	}
 
+	public void processDisplayCheMessage(NetGuid cheId, String line1, String line2, String line3, String line4) {
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			LOGGER.info("processDisplayCheMessage calling cheDevice.sendDisplayCommand()");
+			cheDevice.sendDisplayCommand(line1, line2, line3, line4);			
+		} else {
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+		}
+	}
+
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
 	}

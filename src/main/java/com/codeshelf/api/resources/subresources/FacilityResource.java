@@ -20,17 +20,21 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.api.HardwareRequest.LightCommand;
+import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
+import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.LightService;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
+import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.server.SessionManager;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -39,16 +43,16 @@ public class FacilityResource {
 
 	private final TenantPersistenceService persistence;
 	private final OrderService orderService;
-	private final LightService lightService;
+	private final SessionManager sessionManager;
 
 	@Setter
 	private UUIDParam mUUIDParam;
 
 	@Inject
-	public FacilityResource(TenantPersistenceService persistenceService, OrderService orderService, LightService lightService) {
+	public FacilityResource(TenantPersistenceService persistenceService, OrderService orderService, SessionManager sessionManager) {
 		this.persistence = persistenceService;
 		this.orderService = orderService;
-		this.lightService = lightService;
+		this.sessionManager = sessionManager;
 	}
 
 	@GET
@@ -161,16 +165,24 @@ public class FacilityResource {
 		try {
 			persistence.beginTransaction();
 			Facility facility = Facility.DAO.findByPersistentId(mUUIDParam.getUUID());
+			Set<User> users = facility.getSiteControllerUsers();
+			
+			//LIGHTS
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
 			
-			for (LightCommand light :req.getLights()){
+			for (LightRequest light :req.getLights()){
 				ledSamples.add(new LedSample(light.getPosition(), light.getColor()));				
 			}
 			
-			LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getController(), req.getChannel(), (short)0, ledSamples);
-			LightLedsMessage message = new LightLedsMessage(req.getController(), req.getChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
-			lightService.sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
+			LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
+			LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+			sessionManager.sendMessage(users, lightMessage);
 			
+			//CHE MESSAGES
+			for (CheDisplayRequest cheReq : req.getCheMessages()) {
+				CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
+				sessionManager.sendMessage(users, cheMessage);
+			}
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {
 			errors.processException(e);
