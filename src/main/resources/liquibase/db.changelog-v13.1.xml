@@ -9,6 +9,8 @@
         <addColumn tableName="order_detail">
             <column name="preferred_sequence" type="int4"/>
         </addColumn>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1424203527223-21">
         <dropColumn columnName="work_sequence" tableName="order_header" />
     </changeSet>
 </databaseChangeLog>
