@@ -63,6 +63,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 				deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
 				deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
+				deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 			}
 			if (!attached) {
 				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
