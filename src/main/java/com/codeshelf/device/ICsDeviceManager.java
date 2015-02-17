@@ -70,6 +70,8 @@ public interface ICsDeviceManager {
 	String getPickInfoValue();
 
 	String getContainerTypeValue();
+	
+	String getScanTypeValue();
 
 	INetworkDevice updateOneDevice(UUID theUuid, NetGuid theGuid, String newProcessType);
 }
