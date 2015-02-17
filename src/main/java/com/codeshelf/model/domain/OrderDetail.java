@@ -250,6 +250,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public String getOrderId() {
 		return parent.getOrderId();
 	}
+	
+	public String getShipperId() {
+		return parent.getShipperId();
+	}
 
 	/**
 	 * Convenience function to set all quantities at once
