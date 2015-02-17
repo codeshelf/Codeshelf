@@ -468,10 +468,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		else
 			return foundLocation;
 	}
-	
-	public final String getShipperId(){
-		return parent.getShipperId();
-	}
 
 	/**
 	 * Revaluate the status
