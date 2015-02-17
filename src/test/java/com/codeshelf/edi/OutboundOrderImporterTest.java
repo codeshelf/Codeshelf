@@ -1534,7 +1534,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	public final void testPreferedSequence() throws IOException{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,preferedSequence" + 
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,preferredSequence" + 
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" + 
 				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
 				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1," +
