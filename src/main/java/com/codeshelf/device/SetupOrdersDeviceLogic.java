@@ -1089,7 +1089,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
 			doNextPick();
-			// setState(CheStateEnum.DO_PICK);  // doNextPick will set the state.
+			// doNextPick will set the state.
 		}
 	}
 

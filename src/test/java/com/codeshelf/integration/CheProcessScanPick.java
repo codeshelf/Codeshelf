@@ -282,10 +282,10 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 	
 	/**
-	 * Setup up basic SCANPICK situation
+	 * A trivial reference test of Setup_Orders
 	 */
 	@Test
-	public final void testSetupOrderUnmodeledLocation() throws IOException {
+	public final void testNotScanPick() throws IOException {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
@@ -333,11 +333,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		// DEV-653 go to SCAN_SOMETHING state instead of DO_PICK
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		
-		this.getTenantPersistenceService().beginTransaction();
-		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
-		Assert.assertEquals(3, serverWiList.size());
-		logWiList(serverWiList);
-		this.getTenantPersistenceService().commitTransaction();
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+		Assert.assertEquals(3, scWiList.size());
+		logWiList(scWiList);
 
 
 		// logout back to idle state.
@@ -345,5 +343,83 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 	}
+	
+	/**
+	 * Simple test of Setup_Orders with SCANPICK. DEV-653 is the SCANPICK enhancement
+	 */
+	@Test
+	public final void testScanPick() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+
+		this.getTenantPersistenceService().commitTransaction();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+
+		
+		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		DomainObjectProperty locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (locapickProperty != null) {
+			locapickProperty.setValue(true);
+			PropertyDao.getInstance().store(locapickProperty);
+		}
+		/*
+		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK;
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		*/
+		
+		setUpLineScanOrdersWithCntr(facility);
+		mPropertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+	
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+
+		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		
+		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		
+		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state.");
+		picker.scanLocation("D303");
+		
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		// picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("1e: scan the SKU. This data has 1493");
+		picker.scanSomething("1493");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+		Assert.assertEquals(3, scWiList.size());
+		logWiList(scWiList);
+
+		// logout back to idle state.
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
+	}
+
 
 }
