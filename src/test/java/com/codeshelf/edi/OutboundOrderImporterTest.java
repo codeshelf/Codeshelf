@@ -1529,6 +1529,32 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
+	
+	@Test
+	public final void testPreferedSequence() throws IOException{
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,preferedSequence" + 
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" + 
+				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
+				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1," +
+				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1,2";
+		importCsvString(facility, firstCsvString);
+		
+		OrderHeader h1 = facility.getOrderHeader("1");
+		OrderDetail d1_1 = h1.getOrderDetail("101");
+		Assert.assertEquals(d1_1.getPreferedSequence(), (Integer)1);
+		OrderDetail d1_2 = h1.getOrderDetail("102");
+		Assert.assertEquals(d1_2.getPreferedSequence(), (Integer)2);
+		
+		OrderHeader h2 = facility.getOrderHeader("2");
+		OrderDetail d2_1 = h2.getOrderDetail("201");
+		Assert.assertNull(d2_1.getPreferedSequence());
+		OrderDetail d2_2 = h2.getOrderDetail("202");
+		Assert.assertEquals(d2_2.getPreferedSequence(), (Integer)2);
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
 
 	/**
 	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.

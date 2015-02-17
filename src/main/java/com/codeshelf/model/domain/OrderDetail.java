@@ -167,7 +167,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private String							preferedSequence;
+	private Integer							preferedSequence;
 
 	public OrderDetail() {
 		this(null, true);
