@@ -1997,7 +1997,7 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n" //
-				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE! //FIXME
+				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE!
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
 				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
@@ -2366,7 +2366,321 @@ public class AisleImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public final void testCloneAisleSlotCount() {
+		// For DEV-618
+		this.getTenantPersistenceService().beginTransaction();
 
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
+		
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get A51
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+
+		
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		
+		
+		// Check slot counts on A51
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisle51, "B1");
+		Assert.assertNotNull(bayA51B1);
+		
+		// Aisle 51 - Bay 1 - Tier 1
+		Tier tierA51B1T1 = Tier.DAO.findByDomainId(bayA51B1, "T1");
+		Assert.assertNotNull(tierA51B1T1);
+		
+		List<Location> slotsA51B1T1 = tierA51B1T1.getActiveChildren(); 
+		Assert.assertEquals(1, slotsA51B1T1.size());
+
+		// Aisle 51 - Bay 1 - Tier 2
+		Tier tierA51B1T2 = Tier.DAO.findByDomainId(bayA51B1, "T2");
+		Assert.assertNotNull(tierA51B1T2);
+		
+		List<Location> slotsA51B1T2 = tierA51B1T2.getActiveChildren(); 
+		Assert.assertEquals(2, slotsA51B1T2.size());
+		
+		// Check slot counts on A51
+		Bay bayA52B1 = Bay.DAO.findByDomainId(aisle52, "B1");
+		Assert.assertNotNull(bayA52B1);
+		
+		// Aisle 51 - Bay 1 - Tier 1
+		Tier tierA52B1T1 = Tier.DAO.findByDomainId(bayA52B1, "T1");
+		Assert.assertNotNull(tierA52B1T1);
+		
+		List<Location> slotsA52B1T1 = tierA52B1T1.getActiveChildren(); 
+		Assert.assertEquals(1, slotsA52B1T1.size());
+
+		// Aisle 51 - Bay 1 - Tier 2
+		Tier tierA52B1T2 = Tier.DAO.findByDomainId(bayA52B1, "T2");
+		Assert.assertNotNull(tierA52B1T2);
+		
+		List<Location> slotsA52B1T2 = tierA52B1T2.getActiveChildren(); 
+		Assert.assertEquals(2, slotsA52B1T2.size());
+		
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+	}
+	
+	@Test
+	public final void testCloneBay() {
+		this.getTenantPersistenceService().beginTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
+				+ "Bay,B3,CLONE(B1),,,,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
+		
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get aisle A51 and check
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		
+		// Check if the second bay exists and its tiers
+		Bay bayA51B2 = Bay.DAO.findByDomainId(aisle51, "B2");
+		Assert.assertNotNull(bayA51B2);
+		
+		Tier tierA51B2T1 = Tier.DAO.findByDomainId(bayA51B2, "T1");
+		Assert.assertNotNull(tierA51B2T1);
+		
+		Tier tierA51B2T2 = Tier.DAO.findByDomainId(bayA51B2, "T2");
+		Assert.assertNotNull(tierA51B2T2);
+
+		// Check if the third bay exists and its tiers
+		Bay bayA51B3 = Bay.DAO.findByDomainId(aisle51, "B3");
+		Assert.assertNotNull(bayA51B3);
+		
+		Tier tierA51B3T1 = Tier.DAO.findByDomainId(bayA51B3, "T1");
+		Assert.assertNotNull(tierA51B3T1);
+		
+		Tier tierA51B3T2 = Tier.DAO.findByDomainId(bayA51B3, "T2");
+		Assert.assertNotNull(tierA51B3T2);
+		
+		// Check that the number of slots in the tiers is correct
+		List<Location> slotsA51B3T1 = tierA51B3T1.getActiveChildren();
+		Assert.assertEquals(1, slotsA51B3T1.size());
+		
+		List<Location> slotsA51B3T2 = tierA51B3T2.getActiveChildren();
+		Assert.assertEquals(2, slotsA51B3T2.size());
+		
+		// Get aisle A52 and check
+		Aisle aisle52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisle52);
+		
+		// Check if the second bay exists and its tiers
+		Bay bayA52B2 = Bay.DAO.findByDomainId(aisle52, "B2");
+		Assert.assertNotNull(bayA52B2);
+		
+		Tier tierA52B2T1 = Tier.DAO.findByDomainId(bayA52B2, "T1");
+		Assert.assertNotNull(tierA52B2T1);
+		
+		Tier tierA52B2T2 = Tier.DAO.findByDomainId(bayA52B2, "T2");
+		Assert.assertNotNull(tierA52B2T2);
+
+		// Check if the third bay exists and its tiers
+		Bay bayA52B3 = Bay.DAO.findByDomainId(aisle52, "B3");
+		Assert.assertNotNull(bayA52B3);
+		
+		Tier tierA52B3T1 = Tier.DAO.findByDomainId(bayA52B3, "T1");
+		Assert.assertNotNull(tierA52B3T1);
+		
+		Tier tierA52B3T2 = Tier.DAO.findByDomainId(bayA52B3, "T2");
+		Assert.assertNotNull(tierA52B3T2);
+		
+		// Check that the number of slots in the tiers is correct
+		List<Location> slotsA52B3T1 = tierA52B3T1.getActiveChildren();
+		Assert.assertEquals(1, slotsA52B3T1.size());
+		
+		List<Location> slotsA52B3T2 = tierA52B3T2.getActiveChildren();
+		Assert.assertEquals(2, slotsA52B3T2.size());
+		
+		// Check the number of LEDS on two tiers
+		short firstLedT1 = tierA52B3T1.getFirstLedNumAlongPath();
+		short lastLedT1 = tierA52B3T1.getLastLedNumAlongPath();
+		Assert.assertEquals(32, (lastLedT1 - firstLedT1) + 1);
+		
+		short firstLedT2 = tierA52B3T2.getFirstLedNumAlongPath();
+		short lastLedT2 = tierA52B3T2.getLastLedNumAlongPath();
+		Assert.assertEquals(40, (lastLedT2 - firstLedT2) + 1);
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
+	@Test
+	public final void testCloneBayOrderings() {
+		this.getTenantPersistenceService().beginTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
+				+ "Bay,B3,115,,,,,\r\n"	//
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Bay,B4,CLONE(B1),,,,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
+		
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+	
+		// Check all the aisles exist
+		Aisle aisleA51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisleA51);
+		
+		Aisle aisleA52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(aisleA52);
+		
+		// Check the bays exist
+		Bay bayA51B1 = Bay.DAO.findByDomainId(aisleA51, "B1");
+		Assert.assertNotNull(bayA51B1);
+		
+		Bay bayA51B2 = Bay.DAO.findByDomainId(aisleA51, "B2");
+		Assert.assertNotNull(bayA51B2);
+		
+		Bay bayA51B3 = Bay.DAO.findByDomainId(aisleA51, "B3");
+		Assert.assertNotNull(bayA51B3);
+		
+		Bay bayA51B4 = Bay.DAO.findByDomainId(aisleA51, "B4");
+		Assert.assertNotNull(bayA51B4);
+		
+		Bay bayA52B1 = Bay.DAO.findByDomainId(aisleA52, "B1");
+		Assert.assertNotNull(bayA52B1);
+		
+		Bay bayA52B2 = Bay.DAO.findByDomainId(aisleA52, "B2");
+		Assert.assertNotNull(bayA52B2);
+		
+		Bay bayA52B3 = Bay.DAO.findByDomainId(aisleA52, "B3");
+		Assert.assertNotNull(bayA52B3);
+		
+		Bay bayA52B4 = Bay.DAO.findByDomainId(aisleA52, "B4");
+		Assert.assertNotNull(bayA52B4);
+		
+		// Check some of the tiers exist - also slots and leds
+		Tier tierA51B2T1 = Tier.DAO.findByDomainId(bayA51B2, "T1");
+		Assert.assertNotNull(tierA51B2T1);
+		
+		List<Location> slotsA51B2T1 = tierA51B2T1.getActiveChildren();
+		Assert.assertEquals(1, slotsA51B2T1.size());
+		
+		short firstLedT1 = tierA51B2T1.getFirstLedNumAlongPath();
+		short lastLedT1 = tierA51B2T1.getLastLedNumAlongPath();
+		Assert.assertEquals(32, (lastLedT1 - firstLedT1) + 1);
+		
+		Tier tierA51B2T2 = Tier.DAO.findByDomainId(bayA51B2, "T2");
+		Assert.assertNotNull(tierA51B2T2);
+		
+		List<Location> slotsA51B2T2 = tierA51B2T2.getActiveChildren();
+		Assert.assertEquals(2, slotsA51B2T2.size());
+		
+		short firstLedT2 = tierA51B2T2.getFirstLedNumAlongPath();
+		short lastLedT2 = tierA51B2T2.getLastLedNumAlongPath();
+		Assert.assertEquals(40, (lastLedT2 - firstLedT2) + 1);
+		
+		// Check the number of tiers in A52 B3
+		List<Location> tiersA51B3 = bayA52B3.getActiveChildren();
+		Assert.assertEquals(1, tiersA51B3.size());
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
+				+ "Bay,B3,CLONE(B2),,,,,\r\n";	//
+		
+		byte[] csvArray2 = csvString2.getBytes();
+		
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		reader = new InputStreamReader(stream2);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		// Check if cloning a cloned bay works
+		Aisle aisleA512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisleA512);
+		
+		Bay bayA51B22 = Bay.DAO.findByDomainId(aisleA512, "B2");
+		Assert.assertNotNull(bayA51B22);
+		
+		Bay bayA51B32 = Bay.DAO.findByDomainId(aisleA512, "B3");
+		Assert.assertNotNull(bayA51B32);
+		
+		// Check tiers of aisles
+		Tier tierA51B2T12 = Tier.DAO.findByDomainId(bayA51B22, "T1");
+		Assert.assertNotNull(tierA51B2T12);
+		
+		Tier tierA51B2T22 = Tier.DAO.findByDomainId(bayA51B22, "T2");
+		Assert.assertNotNull(tierA51B2T22);
+		
+		Tier tierA51B3T12 = Tier.DAO.findByDomainId(bayA51B32, "T1");
+		Assert.assertNotNull(tierA51B3T12);
+		
+		Tier tierA51B3T22 = Tier.DAO.findByDomainId(bayA51B32, "T2");
+		Assert.assertNotNull(tierA51B3T22);
+		
+		// Check the slot counts of B3
+		List<Location> slotsA51B3T12 = tierA51B3T12.getActiveChildren();
+		Assert.assertEquals(1, slotsA51B3T12.size());
+		
+		List<Location> slotsA51B3T22 = tierA51B3T22.getActiveChildren();
+		Assert.assertEquals(2, slotsA51B3T22.size());
+		
+		// Check the LED count of the B3 tiers
+		short firstLedB3T1 = tierA51B3T12.getFirstLedNumAlongPath();
+		short lastLedB3T1 = tierA51B3T12.getLastLedNumAlongPath();
+		Assert.assertEquals(32, (lastLedB3T1 - firstLedB3T1) + 1);
+		
+		short firstLedB3T2 = tierA51B3T22.getFirstLedNumAlongPath();
+		short lastLedB3T2 = tierA51B3T22.getLastLedNumAlongPath();
+		Assert.assertEquals(40, (lastLedB3T2 - firstLedB3T2) + 1);
+		
+	}
+	
 	@Test
 	public final void testPath() {
 		this.getTenantPersistenceService().beginTransaction();
