@@ -163,6 +163,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Getter
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
+	@Column(nullable = true, name = "prefered_sequence")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String							preferedSequence;
+
 	public OrderDetail() {
 		this(null, true);
 	}

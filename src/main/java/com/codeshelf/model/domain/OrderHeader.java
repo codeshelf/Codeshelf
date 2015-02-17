@@ -150,15 +150,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String						shipperId;
 
-	// The work sequence.
-	// This is a sort of the actively working order groups in a facility.
-	// Lower numbers work first.
-	@Column(nullable = true,name="work_sequence")
-	@Getter
-	@Setter
-	@JsonProperty
-	private Integer						workSequence;
-
 	// Order date.
 	@Column(nullable = true,name="order_date")
 	@Getter

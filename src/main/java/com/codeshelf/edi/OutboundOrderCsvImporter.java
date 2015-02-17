@@ -635,9 +635,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipperId(inCsvBean.getShipperId());
-		if (inCsvBean.getWorkSequence() != null) {
-			result.setWorkSequence(Integer.valueOf(inCsvBean.getWorkSequence()));
-		}
 
 		if (inCsvBean.getOrderDate() != null) {
 			try {
@@ -825,6 +822,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
+		result.setPreferedSequence(inCsvBean.getPreferedSequence());
 
 		int quantities = 0;
 		try {
