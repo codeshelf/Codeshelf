@@ -962,7 +962,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	/**
 	 * Send the LED controllers the active pick locations for current wi or wis.
 	 */
-	private void lightWiLocations(WorkInstruction inFirstWi) {
+	protected void lightWiLocations(WorkInstruction inFirstWi) {
 		
 		String wiCmdString = inFirstWi.getLedCmdStream();
 		// If the location is not configured to be lit, all of the following is a noop.

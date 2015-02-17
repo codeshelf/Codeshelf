@@ -51,7 +51,7 @@ public enum CheStateEnum {
 	ABANDON_CHECK(CheStateNum.ABANDON_CHECK, "ABANDON_CHECK"),
 
 	// states used in Setup_Orders mode if SCANPICK parameter is set.
-	// @EnumValue("SCAN_SOMTHING")
+	// @EnumValue("SCAN_SOMETHING")
 	SCAN_SOMETHING(CheStateNum.SCAN_SOMETHING, "SCAN_SOMETHING"),
 	// @EnumValue("SCAN_SOMTHING_SHORT")
 	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT");

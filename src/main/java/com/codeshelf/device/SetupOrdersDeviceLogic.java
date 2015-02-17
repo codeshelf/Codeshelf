@@ -152,7 +152,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case DO_PICK:
-					if (isSameState || previousState == CheStateEnum.GET_WORK) {
+					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
 					showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
