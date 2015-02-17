@@ -114,6 +114,10 @@ public class CsDeviceManager implements
 	@Setter
 	private String										containerTypeValue			= "Order";
 
+	@Getter
+	@Setter
+	private String										scanTypeValue				= "null";
+	
 	private WebSocketContainer							webSocketContainer;
 
 	@Inject

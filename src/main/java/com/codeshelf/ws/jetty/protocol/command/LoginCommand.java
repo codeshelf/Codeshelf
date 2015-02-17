@@ -82,6 +82,10 @@ public class LoginCommand extends CommandABC {
 
 						String containerType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
 						response.setContainerTypeValue(containerType);
+						
+						String scanType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+						response.setScanTypeValue(scanType);
+						
 					} else {
 						response.setAutoShortValue(false); // not read by client. No need to look it up.
 					}
