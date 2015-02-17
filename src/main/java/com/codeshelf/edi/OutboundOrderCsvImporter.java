@@ -824,13 +824,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setUomMaster(inUomMaster);
 		
 		try  {
-			String prefSeq = inCsvBean.getPreferedSequence();
+			String prefSeq = inCsvBean.getPreferredSequence();
 			if (prefSeq != null) {
-				result.setPreferedSequence(Integer.valueOf(prefSeq));
+				result.setPreferredSequence(Integer.valueOf(prefSeq));
 			}
 		} catch (NumberFormatException e) {
 			LOGGER.warn("prefered sequence could not be coerced to integer, setting to null: " + inCsvBean);
-			result.setPreferedSequence(null);
+			result.setPreferredSequence(null);
 		}
 
 		int quantities = 0;

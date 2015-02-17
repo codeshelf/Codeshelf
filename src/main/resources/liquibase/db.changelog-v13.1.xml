@@ -7,7 +7,7 @@
 	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
     <changeSet author="ilya (generated)" id="1424203527223-2">
         <addColumn tableName="order_detail">
-            <column name="prefered_sequence" type="int4"/>
+            <column name="preferred_sequence" type="int4"/>
         </addColumn>
         <dropColumn columnName="work_sequence" tableName="order_header" />
     </changeSet>

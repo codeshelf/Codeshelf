@@ -1543,15 +1543,15 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		
 		OrderHeader h1 = facility.getOrderHeader("1");
 		OrderDetail d1_1 = h1.getOrderDetail("101");
-		Assert.assertEquals(d1_1.getPreferedSequence(), (Integer)1);
+		Assert.assertEquals(d1_1.getPreferredSequence(), (Integer)1);
 		OrderDetail d1_2 = h1.getOrderDetail("102");
-		Assert.assertEquals(d1_2.getPreferedSequence(), (Integer)2);
+		Assert.assertEquals(d1_2.getPreferredSequence(), (Integer)2);
 		
 		OrderHeader h2 = facility.getOrderHeader("2");
 		OrderDetail d2_1 = h2.getOrderDetail("201");
-		Assert.assertNull(d2_1.getPreferedSequence());
+		Assert.assertNull(d2_1.getPreferredSequence());
 		OrderDetail d2_2 = h2.getOrderDetail("202");
-		Assert.assertEquals(d2_2.getPreferedSequence(), (Integer)2);
+		Assert.assertEquals(d2_2.getPreferredSequence(), (Integer)2);
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
