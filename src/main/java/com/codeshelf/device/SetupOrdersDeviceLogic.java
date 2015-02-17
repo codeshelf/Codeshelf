@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.apache.commons.lang.StringUtils;
@@ -55,6 +56,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	private String								mLocationId;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private boolean								mScanNeededToVerifyPick;
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -62,6 +68,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
+		mScanNeededToVerifyPick = false;
 
 	}
 
@@ -155,8 +162,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
-					showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
-					// fewer direct calls to showActivePicks elsewhere.
+					showActivePicks(); // if setState(DO_PICK) is called, it always calls showActivePicks. fewer direct calls to showActivePicks elsewhere.
+					break;
+
+				case SCAN_SOMETHING:
+					if (isSameState || previousState == CheStateEnum.GET_WORK) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					showActivePicks(); // change this? DEV-653
+					break;
+
+				case SCAN_SOMETHING_SHORT: // this is like a short confirm.
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 					break;
 
 				case PICK_COMPLETE:
@@ -274,6 +294,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				confirmShortPick(inScanStr);
 				break;
 
+			case SCAN_SOMETHING_SHORT:
+				confirmSomethingShortPick(inScanStr);
+				break;
+
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
@@ -346,41 +370,68 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Process the Yes after a short. P
+	 */
+	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
+		// HACK HACK HACK
+		// StitchFix is the first client and they only pick one item at a time - ever.
+		// When we have h/w that picks more than one item we'll address this.
+		doShortTransaction(inWi, inPicked);
+
+		LOGGER.info("Pick shorted: " + inWi);
+
+		clearLedControllersForWi(inWi);
+
+		// DEV-582 hook up to AUTOSHRT parameter
+		if (mDeviceManager.getAutoShortValue())
+			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+
+		if (mActivePickWiList.size() > 0) {
+			// If there's more active picks then show them.
+			// This is tricky. Simultaneous work instructions: which was short? All of them?
+			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
+			showActivePicks();
+		} else {
+			// There's no more active picks, so move to the next set.
+			doNextPick();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * YES or NO confirm the short pick.
 	 * @param inScanStr
 	 */
 	protected void confirmShortPick(final String inScanStr) {
 		if (inScanStr.equals(YES_COMMAND)) {
-			// HACK HACK HACK
-			// StitchFix is the first client and they only pick one item at a time - ever.
-			// When we have h/w that picks more than one item we'll address this.
 			WorkInstruction wi = mShortPickWi;
-			;
 			if (wi != null) {
-				doShortTransaction(wi, mShortPickQty);
-
-				LOGGER.info("Pick shorted: " + wi);
-
-				clearLedControllersForWi(wi);
-
-				// DEV-582 hook up to AUTOSHRT parameter
-				if (mDeviceManager.getAutoShortValue())
-					doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
-
-				if (mActivePickWiList.size() > 0) {
-					// If there's more active picks then show them.
-					// This is tricky. Simultaneous work instructions: which was short? All of them?
-					LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
-					showActivePicks();
-				} else {
-					// There's no more active picks, so move to the next set.
-					doNextPick();
-				}
+				processShortPickYes(wi, mShortPickQty);
 			}
 		} else {
 			// Just return to showing the active picks.
 			setState(CheStateEnum.DO_PICK);
-			// showActivePicks();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * YES or NO confirm the short pick from the SCAN_SOMETHING state.
+	 * @param inScanStr
+	 */
+	protected void confirmSomethingShortPick(final String inScanStr) {
+		if (inScanStr.equals(YES_COMMAND)) {
+			List<WorkInstruction> wiList = this.getActivePickWiList();
+			WorkInstruction wi = null;
+			if (wiList.size() > 0)
+				wi = wiList.get(0);
+
+			if (wi != null) {
+				processShortPickYes(wi, 0);
+			}
+		} else {
+			// Just return to showing the active picks.
+			setState(CheStateEnum.SCAN_SOMETHING);
 		}
 	}
 
@@ -400,7 +451,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 
 			if (selectNextActivePicks()) {
-				setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
+				if (isScanNeededToVerifyPick())
+					setState(CheStateEnum.SCAN_SOMETHING); // This will cause showActivePicks();
+				else
+					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
 				// showActivePicks();
 			} else {
 				processPickComplete();
