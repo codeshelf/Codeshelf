@@ -1,6 +1,7 @@
 package com.codeshelf.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -73,7 +74,7 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 					WorkInstruction wi = wiIterator.next();
 					Location wiLoc = wi.getLocation();
 					//String wiLocStr = wiLoc.getNominalLocationId();
-					if (wiLoc.equals(workLocation)) {
+					if (workLocation.equals(wiLoc)) {
 						LOGGER.debug("Adding WI "+wi+" at "+workLocation);
 						wiResultList.add(wi);
 						// WorkInstructionSequencerABC sets the sort code and persists
@@ -82,6 +83,17 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 				}
 			}
 		}
+		
+		
+		//Add all missed instructions with a preferred sequence
+		for (WorkInstruction instruction : inWiList){
+			if(instruction.getPreferredSequence() != null && !wiResultList.contains(instruction)) {
+				wiResultList.add(instruction);
+			}
+		}
+		//Sort by preferred sequence
+		Collections.sort(wiResultList, Ordering.from(new PreferredSequenceComparator()));
+
 		return wiResultList;
 	}
 
@@ -97,11 +109,8 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 	public class PreferredSequenceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction left, WorkInstruction right) {
-			OrderDetail leftOrderDetail = left.getOrderDetail();
-			OrderDetail rightOrderDetail = right.getOrderDetail();
-			
-			Integer leftPreferredSequence = leftOrderDetail.getPreferredSequence();
-			Integer rightPreferredSequence = rightOrderDetail.getPreferredSequence();
+			Integer leftPreferredSequence = left.getPreferredSequence();
+			Integer rightPreferredSequence = right.getPreferredSequence();
 			
 			return ComparisonChain.start()
 				.compare(leftPreferredSequence, rightPreferredSequence, Ordering.natural().nullsLast())
