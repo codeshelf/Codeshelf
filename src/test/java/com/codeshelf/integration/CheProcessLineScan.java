@@ -405,8 +405,6 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Assert.assertEquals("Description", manager.getContainerTypeValue());
 		
 		// Test scanType
-		Assert.assertEquals("null", manager.getScanTypeValue()); // Default value
-		
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		
