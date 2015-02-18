@@ -347,4 +347,8 @@ public class PickSimulator {
 		return cheDeviceLogic.getRecentCheDisplayString();
 	}
 
+	public void forceDeviceToMatchManagerConfiguration() {
+		cheDeviceLogic.updateConfigurationFromManager();
+		}
+
 }

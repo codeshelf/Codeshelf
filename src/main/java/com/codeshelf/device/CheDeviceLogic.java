@@ -1090,4 +1090,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
 	}
 
+	public void updateConfigurationFromManager() {
+		// stub may be overridden
+	}
+
 }

@@ -57,9 +57,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private String								mLocationId;
 
 	@Accessors(prefix = "m")
-	@Getter
 	@Setter
-	private boolean								mScanNeededToVerifyPick;
+	private byte								mScanNeededToVerifyPick;
+	
+	final static class ScanNeededToVerifyPick {
+
+		static final byte	NO_SCAN_TO_VERIFY				= 0;
+		static final byte	UPC_SCAN_TO_VERIFY				= 1;
+		static final byte	SKU_SCAN_TO_VERIFY				= 2;
+		static final byte	LPN_SCAN_TO_VERIFY				= 3;
+
+		private ScanNeededToVerifyPick() {
+		};
+	}
+
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -68,14 +79,29 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
-		mScanNeededToVerifyPick = false;
+		
+		updateConfigurationFromManager();
+		}
 
+	private boolean isScanNeededToVerifyPick(){
+		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+	}
+	
+	public void updateConfigurationFromManager() {
+		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		String scanPickValue = mDeviceManager.getScanTypeValue();
+		if (scanPickValue.equals("UPC"))
+			setScanNeededToVerifyPick(ScanNeededToVerifyPick.UPC_SCAN_TO_VERIFY);
+		else if (scanPickValue.equals("SKU"))
+			setScanNeededToVerifyPick(ScanNeededToVerifyPick.SKU_SCAN_TO_VERIFY);
+		else if (scanPickValue.equals("LPN"))
+			setScanNeededToVerifyPick(ScanNeededToVerifyPick.LPN_SCAN_TO_VERIFY);		
 	}
 
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 */

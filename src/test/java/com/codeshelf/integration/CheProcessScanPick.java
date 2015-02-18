@@ -381,6 +381,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		
 		setUpLineScanOrdersWithCntr(facility);
 		mPropertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
 		
 		
 		CsDeviceManager manager = this.getDeviceManager();
@@ -390,10 +391,11 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
 		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
+		 // kludgy! Somewhat simulates restarting site controller
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		picker.forceDeviceToMatchManagerConfiguration();
 
-		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
