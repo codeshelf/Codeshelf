@@ -1061,7 +1061,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 
 			// Send the CHE a display command (any of the WIs has the info we need).
-			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
+			CheStateEnum currentState = getCheStateEnum();
+			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK && currentState != CheStateEnum.SCAN_SOMETHING) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again

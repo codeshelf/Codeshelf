@@ -90,6 +90,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	public void updateConfigurationFromManager() {
 		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
 		String scanPickValue = mDeviceManager.getScanTypeValue();
+		if (scanPickValue == null) // That is the case in the units using mock objects
+			return;
 		if (scanPickValue.equals("UPC"))
 			setScanNeededToVerifyPick(ScanNeededToVerifyPick.UPC_SCAN_TO_VERIFY);
 		else if (scanPickValue.equals("SKU"))
