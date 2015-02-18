@@ -154,11 +154,11 @@ public interface INetworkDevice {
 	 */
 	public String getDeviceType();
 
-	public short getHardwareVersion();
+	//public short getHardwareVersion();
 
 	public void setHardwareVersion(short hardwareVersion);
 
-	public short getFirmwareVersion();
+	//public short getFirmwareVersion();
 
 	public void setFirmwareVersion(short firmwareVersion);
 
