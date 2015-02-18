@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.apache.commons.lang.StringUtils;
@@ -56,21 +55,30 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	private String								mLocationId;
 
-	@Accessors(prefix = "m")
-	@Setter
-	private byte								mScanNeededToVerifyPick;
-	
-	final static class ScanNeededToVerifyPick {
+	private ScanNeededToVerifyPick				mScanNeededToVerifyPick;
 
-		static final byte	NO_SCAN_TO_VERIFY				= 0;
-		static final byte	UPC_SCAN_TO_VERIFY				= 1;
-		static final byte	SKU_SCAN_TO_VERIFY				= 2;
-		static final byte	LPN_SCAN_TO_VERIFY				= 3;
+	private enum ScanNeededToVerifyPick {
+		NO_SCAN_TO_VERIFY("disabled"),
+		UPC_SCAN_TO_VERIFY("UPC"),
+		SKU_SCAN_TO_VERIFY("SKU"),
+		LPN_SCAN_TO_VERIFY("LPN");
+		private String	mInternal;
 
-		private ScanNeededToVerifyPick() {
-		};
+		private ScanNeededToVerifyPick(String inString) {
+			mInternal = inString;
+		}
+		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
+			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
+			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
+				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
+					return onValue;
+			}
+			return returnValue;
+		}
+		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
+			return inValue.mInternal;
+		}
 	}
-
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -79,31 +87,33 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
-		
-		updateConfigurationFromManager();
-		}
 
-	private boolean isScanNeededToVerifyPick(){
+		updateConfigurationFromManager();
+	}
+
+	private boolean isScanNeededToVerifyPick() {
 		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
 	}
-	
+
+	private void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
+		mScanNeededToVerifyPick = inValue;
+	}
+	public String getScanVerificationType(){
+		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
+	}
+
 	public void updateConfigurationFromManager() {
 		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
 		String scanPickValue = mDeviceManager.getScanTypeValue();
-		if (scanPickValue == null) // That is the case in the units using mock objects
-			return;
-		if (scanPickValue.equals("UPC"))
-			setScanNeededToVerifyPick(ScanNeededToVerifyPick.UPC_SCAN_TO_VERIFY);
-		else if (scanPickValue.equals("SKU"))
-			setScanNeededToVerifyPick(ScanNeededToVerifyPick.SKU_SCAN_TO_VERIFY);
-		else if (scanPickValue.equals("LPN"))
-			setScanNeededToVerifyPick(ScanNeededToVerifyPick.LPN_SCAN_TO_VERIFY);		
+		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
+		setScanNeededToVerifyPick(theEnum);		// String resolvedPickString = ScanNeededToVerifyPick.scanPickEnumToString(theEnum);
+		LOGGER.info("Update scan verification value to " + theEnum);
 	}
 
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -739,9 +749,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			//Anywhere else we can start work if there's anything setup
 			default:
-				if (mActivePickWiList.size() > 0) {
+				WorkInstruction wi = getOneActiveWorkInstruction();
+				if (wi != null) {
 					// short scan of housekeeping work instruction makes no sense
-					WorkInstruction wi = mActivePickWiList.get(0);
 					if (wi.isHousekeeping())
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					else
@@ -827,6 +837,66 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private String verifyWiField(final WorkInstruction inWi, String inScanStr) {
+
+		String returnString = "";
+		
+		String wiVerifyValue = "";
+		switch (mScanNeededToVerifyPick) {
+			case SKU_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId();
+				break;
+				
+			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
+			case UPC_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
+				break;
+				
+			default:
+				
+		}
+		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
+			returnString = "Data error in WI"; // try to keep to 20 characters
+		else if (!wiVerifyValue.equals(inScanStr))
+			returnString = "Scan mismatch"; 
+		
+		return returnString;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		if (inScanPrefixStr.isEmpty()) {
+
+			WorkInstruction wi = getOneActiveWorkInstruction();
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr.isEmpty()) {
+				setState(CheStateEnum.DO_PICK);
+			} else {
+				LOGGER.info("errorStr "); // TODO get this to the CHE display
+				invalidScanMsg(mCheStateEnum);
+			}
+
+		} else {
+			// Want some feedback here. Tell the user to scan something
+			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
+			invalidScanMsg(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
 	/* 
 	 */
 	@Override
@@ -869,6 +939,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
+				break;
+
+			case SCAN_SOMETHING:
+				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
+				processVerifyScan(inScanPrefixStr, inContent);
 				break;
 
 			default:

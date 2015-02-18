@@ -395,8 +395,26 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
+		
+		// A small side trip. The enumeration for scan verification values is private. The only way to unit test odd values is here.
+		// see these logged in the console. The picker has the ancestor CheDeviceLogic. No interface to get this private field from SetupOrderDeviceLogic
+		// Will see 4 in a row to NO_SCAN_TO_VERIFY
+		manager.setScanTypeValue("UPC");
+		picker.forceDeviceToMatchManagerConfiguration();
+		manager.setScanTypeValue("disabled");
+		picker.forceDeviceToMatchManagerConfiguration();
+		manager.setScanTypeValue("");
+		picker.forceDeviceToMatchManagerConfiguration();
+		manager.setScanTypeValue(null);
+		picker.forceDeviceToMatchManagerConfiguration();
+		manager.setScanTypeValue("xxxx");
+		picker.forceDeviceToMatchManagerConfiguration();
+		manager.setScanTypeValue("LPN");
+		picker.forceDeviceToMatchManagerConfiguration();
+		// Now set as we want it for this test
+		manager.setScanTypeValue("SKU");
+		picker.forceDeviceToMatchManagerConfiguration();	
 
-	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
 		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
@@ -412,23 +430,19 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state.");
 		picker.scanLocation("D303");
 
-		/*
-		// picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
-		LOGGER.info("1e: scan the SKU. This data has 1493");
-		picker.scanSomething("1493");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
 		
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
 		Assert.assertEquals(3, scWiList.size());
 		logWiList(scWiList);
 
+		LOGGER.info("1e: scan the SKU. This data has 1493");
+		picker.scanSomething("1493");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		*/
 
 	}
 

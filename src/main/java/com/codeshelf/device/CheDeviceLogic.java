@@ -163,8 +163,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// See confluence Codeshelf software patterns page on setState.
 	protected void markInSetState(boolean inValue) {
 		mInSetState = inValue;
-	}	
-	public boolean inSetState(){
+	}
+
+	public boolean inSetState() {
 		return mInSetState;
 	}
 
@@ -963,7 +964,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Send the LED controllers the active pick locations for current wi or wis.
 	 */
 	protected void lightWiLocations(WorkInstruction inFirstWi) {
-		
+
 		String wiCmdString = inFirstWi.getLedCmdStream();
 		// If the location is not configured to be lit, all of the following is a noop.
 		// an empty command string is "[]"
@@ -998,8 +999,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
 					String wiInfo = inFirstWi.getGroupAndSortCode() + "--  item: " + inFirstWi.getItemId() + "  cntr: "
 							+ inFirstWi.getContainerId();
-					LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence"
-							+ wiInfo);
+					LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
 					continue;
 				}
 
@@ -1015,8 +1015,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				NetGuid ledControllerGuid = ledController.getGuid();
 				String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
 				// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-				String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. "
-						+ EffectEnum.FLASH;
+				String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
 				Integer setCount = 0;
 				for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
@@ -1046,6 +1045,22 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get the work instruction that is active on the CHE now
+	 * Note: after we implement simultaneous work instructions, this should still be valid. If mActivePickWiList.size() > 1, then
+	 * all the the work instructions will be for the same SKU from the same location.
+	 * It is only lighting the poscons where we need to look at all of the active pick list.
+	 */
+	protected WorkInstruction getOneActiveWorkInstruction() {
+		WorkInstruction firstWi = null;
+		if (mActivePickWiList.size() > 0) {
+			// The first WI has the SKU and location info.
+			firstWi = mActivePickWiList.get(0);
+		}
+		return firstWi;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * For the work instruction that's active on the CHE now:
 	 * 1) Clear out prior ledController lighting for this CHE
 	 * 2) Send the CHE display
@@ -1054,15 +1069,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	protected void showActivePicks() {
 
-		if (mActivePickWiList.size() > 0) {
-			// The first WI has the SKU and location info.
-			WorkInstruction firstWi = mActivePickWiList.get(0);
-
-			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
-
+		// The first WI has the SKU and location info.
+		WorkInstruction firstWi = getOneActiveWorkInstruction();
+		if (firstWi != null) {
 			// Send the CHE a display command (any of the WIs has the info we need).
 			CheStateEnum currentState = getCheStateEnum();
-			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK && currentState != CheStateEnum.SCAN_SOMETHING) {
+			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
+					&& currentState != CheStateEnum.SCAN_SOMETHING) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again
@@ -1080,6 +1093,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
 			doPosConDisplaysforWi(firstWi);
+			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
 
