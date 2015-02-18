@@ -28,7 +28,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.service.LightService;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
