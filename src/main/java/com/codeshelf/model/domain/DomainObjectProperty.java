@@ -79,7 +79,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public final static String						CNTRTYPE			= "CNTRTYPE";
 	public final static String						Default_CNTRTYPE	= "Order";
 	public final static String						SCANPICK			= "SCANPICK";
-	public final static String						Default_SCANPICK	= "null";
+	public final static String						Default_SCANPICK	= "Disabled";
 
 	public DomainObjectProperty() {
 	}
@@ -263,7 +263,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		else if (myName.equals(CNTRTYPE))
 			return "Order, Container";
 		else if (myName.equals(SCANPICK))
-			return "null, SKU, UPC";
+			return "Disabled, SKU, UPC";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -313,13 +313,13 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	}
 	
 	private String validate_scantype(String inValue) {
-		// valid values are "null, SKU, UPC"
-		final String nullStr = "null";
+		// valid values are "Disabled, SKU, UPC"
+		final String disabled = "Disabled";
 		final String sku = "SKU";
 		final String upc = "UPC";
 		
-		if (inValue.equalsIgnoreCase(nullStr))
-			return nullStr;
+		if (inValue.equalsIgnoreCase(disabled))
+			return disabled;
 		else if (inValue.equalsIgnoreCase(sku))
 			return sku;
 		else if (inValue.equalsIgnoreCase(upc))

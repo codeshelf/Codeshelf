@@ -116,7 +116,7 @@ public class CsDeviceManager implements
 
 	@Getter
 	@Setter
-	private String										scanTypeValue				= "null";
+	private String										scanTypeValue				= "Disabled";
 	
 	private WebSocketContainer							webSocketContainer;
 
