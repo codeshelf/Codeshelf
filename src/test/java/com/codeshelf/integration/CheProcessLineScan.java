@@ -411,8 +411,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		manager.setScanTypeValue("UPC");
 		Assert.assertEquals("UPC", manager.getScanTypeValue());
 		
-		manager.setScanTypeValue("null");
-		Assert.assertEquals("null", manager.getScanTypeValue());
+		manager.setScanTypeValue("Disabled");
+		Assert.assertEquals("Disabled", manager.getScanTypeValue());
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
