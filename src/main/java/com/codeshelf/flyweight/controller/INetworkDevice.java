@@ -15,18 +15,13 @@ import com.codeshelf.flyweight.command.NetGuid;
  */
 public interface INetworkDevice {
 
-	String	HW_VERSION_KEY		= "hw_version";
-	String	SW_VERSION_KEY		= "sw_version";
-
-	byte	PROTOCOL_VERSION_1	= 1;
-
 	// --------------------------------------------------------------------------
 	/**
 	 *  Every device has a globally unique ID.
 	 *  @return	The GUID for this device.
 	 */
 	NetGuid getGuid();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Set the GUID for this device.
@@ -111,15 +106,14 @@ public interface INetworkDevice {
 	 *  @param inButtonNumberPressed
 	 */
 	void scanCommandReceived(String inCommandStr);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *  The userpressed a button on the remote.
 	 *  @param inButtonNumberPressed
 	 */
 	void buttonCommandReceived(CommandControlButton inButtonCommand);
-	
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Figure out if the ack ID is new (later) or not.
@@ -127,37 +121,45 @@ public interface INetworkDevice {
 	 * @return
 	 */
 	boolean isAckIdNew(byte inAckId);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Get the last ack ID that we processed.
 	 */
 	byte getLastAckId();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Set the last ack ID that we processed.
 	 * @param inAckId
 	 */
 	void setLastAckId(byte inAckId);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * This is the number of seconds the remote device should sleep after the last user action.
 	 * @return
 	 */
 	short getSleepSeconds();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Was this device associated?
 	 */
 	public boolean isDeviceAssociated();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * What is the string name of this kind of device? Gives answers such as CsDeviceManager.DEVICETYPE_LED 
 	 */
 	public String getDeviceType();
+
+	//public short getHardwareVersion();
+
+	public void setHardwareVersion(short hardwareVersion);
+
+	//public short getFirmwareVersion();
+
+	public void setFirmwareVersion(short firmwareVersion);
 
 }

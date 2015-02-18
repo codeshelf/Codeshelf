@@ -27,7 +27,6 @@ public final class CommandAssocCheck extends CommandAssocABC {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocCheck.class);
 
-	private byte				mDeviceVersion;
 	private byte				mBatteryLevel;
 
 	// --------------------------------------------------------------------------
@@ -38,8 +37,6 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 */
 	public CommandAssocCheck(final byte inDeviceVersion, final String inRemoteGUID, final byte inBatteryLevel) {
 		super(new NetCommandId(ASSOC_CHECK_COMMAND), inRemoteGUID);
-
-		mDeviceVersion = inDeviceVersion;
 		mBatteryLevel = inBatteryLevel;
 	}
 
@@ -55,20 +52,20 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
+	@Override
 	public String doToString() {
-		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel + " ver=" + mDeviceVersion;
+		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel;
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doToStream(com.gadgetworks.bitfields.BitFieldOutputStream)
 	 */
+	@Override
 	protected void doToStream(BitFieldOutputStream inOutputStream) {
 		super.doToStream(inOutputStream);
 
 		try {
-			// Write the device version.
-			inOutputStream.writeByte(mDeviceVersion);
 			inOutputStream.writeByte(mBatteryLevel);
 		} catch (IOException e) {
 			LOGGER.error("", e);
@@ -79,12 +76,11 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doFromStream(com.gadgetworks.bitfields.BitFieldInputStream, int)
 	 */
+	@Override
 	protected void doFromStream(BitFieldInputStream inInputStream, int inCommandByteCount) {
 		super.doFromStream(inInputStream, inCommandByteCount);
 
 		try {
-			// Read the device version.
-			mDeviceVersion = inInputStream.readByte();
 			mBatteryLevel = inInputStream.readByte();
 			if (mBatteryLevel < 0) {
 				mBatteryLevel = 0;
@@ -100,18 +96,11 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doComputeCommandSize()
 	 */
+	@Override
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + DEVICE_VERSION_BYTES;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  @return
-	 */
-	public byte getDeviceVersion() {
-		return mDeviceVersion;
-	}
-	
 	// --------------------------------------------------------------------------
 	/**
 	 *  @return
