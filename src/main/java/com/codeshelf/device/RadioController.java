@@ -811,8 +811,6 @@ public class RadioController implements IRadioController {
 			return;
 		}
 
-		// LOGGER.info("AssocReq rcvd: " + inCommand.toString()); No longer do this. Happens all the time.
-
 		// First let's make sure that this is a request from an actor that we are managing.
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
@@ -833,9 +831,11 @@ public class RadioController implements IRadioController {
 				try {
 
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
+					foundDevice.setHardwareVersion(inCommand.getHardwareVersion());
+					foundDevice.setFirmwareVersion(inCommand.getFirmwareVersion());
 
 					//LOGGER.info("----------------------------------------------------");
-					LOGGER.info("Device associated: " + foundDevice.getGuid().getHexStringNoPrefix());
+					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					if ((inCommand.getSystemStatus() & 0x02) > 0) {
 						LOGGER.info(" Status: LVD");
 					}

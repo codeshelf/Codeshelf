@@ -31,6 +31,7 @@ import com.codeshelf.flyweight.controller.TcpClientInterface;
  * @author jeffw
  *
  */
+@Deprecated
 @Accessors(prefix = "m")
 public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
@@ -39,7 +40,11 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	private static final String	RECEIVER_THREAD_NAME	= "Packet Receiver";
 
 	private static final long	CTRL_START_DELAY_MILLIS	= 200;
-	private static final byte	DEVICE_VERSION			= 0x01;
+
+	private static final byte	HARDWARE_VERSION		= 0x01;
+	private static final byte	FIRMWARE_VERSION		= 0x01;
+	private static final byte	RADIOPROTOCOL_VERSION	= 0x01;
+
 	private static final byte	RESET_REASON_POWERON	= 0x00;
 
 	private IGatewayInterface	mGatewayInterface;
@@ -48,7 +53,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	@Getter(value = AccessLevel.PROTECTED)
 	private NetAddress			mNetAddress;
 	@Getter(value = AccessLevel.PROTECTED)
-//	@Setter(value = AccessLevel.PROTECTED)
+	//	@Setter(value = AccessLevel.PROTECTED)
 	private boolean				mShouldRun;
 
 	private String				mGUID;
@@ -61,7 +66,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	}
 
 	abstract void processControlCmd(CommandControlABC inCommand);
-	
+
 	abstract void doStart();
 
 	// --------------------------------------------------------------------------
@@ -72,9 +77,9 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	public final void start() {
 		mGatewayInterface = new TcpClientInterface(mServerName);
 		mShouldRun = true;
-		
+
 		doStart();
-		
+
 		startPacketReceivers();
 	}
 
@@ -95,13 +100,18 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	private void startPacketReceivers() {
 
 		Thread gwThread = new Thread(new Runnable() {
+			@Override
 			public void run() {
 				while (mShouldRun) {
 					try {
 						if (!mGatewayInterface.isStarted()) {
 							mGatewayInterface.startInterface();
 							if (mGatewayInterface.isStarted()) {
-								ICommand command = new CommandAssocReq(DEVICE_VERSION, RESET_REASON_POWERON, mGUID);
+								ICommand command = new CommandAssocReq(HARDWARE_VERSION,
+									FIRMWARE_VERSION,
+									RADIOPROTOCOL_VERSION,
+									RESET_REASON_POWERON,
+									mGUID);
 								IPacket packet = new Packet(command,
 									new NetworkId(IPacket.BROADCAST_NETWORK_ID),
 									new NetAddress(IPacket.BROADCAST_ADDRESS),
@@ -118,7 +128,8 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 							}
 						} else {
 							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
-							if ((packet != null) && ((packet.getDstAddr().equals(new NetAddress(IPacket.BROADCAST_ADDRESS)) || (packet.getDstAddr().equals(mNetAddress))))) {
+							if ((packet != null)
+									&& ((packet.getDstAddr().equals(new NetAddress(IPacket.BROADCAST_ADDRESS)) || (packet.getDstAddr().equals(mNetAddress))))) {
 								//putPacketInRcvQueue(packet);
 								if (packet.getPacketType() == IPacket.ACK_PACKET) {
 									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
@@ -133,7 +144,8 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 					}
 				}
 			}
-		}, RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
+		},
+			RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
 		gwThread.setPriority(Thread.MIN_PRIORITY);
 		gwThread.start();
 	}
