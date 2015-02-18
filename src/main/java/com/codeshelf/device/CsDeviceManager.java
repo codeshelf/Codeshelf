@@ -114,6 +114,10 @@ public class CsDeviceManager implements
 	@Setter
 	private String										containerTypeValue			= "Order";
 
+	@Getter
+	@Setter
+	private String										scanTypeValue				= "Disabled";
+	
 	private WebSocketContainer							webSocketContainer;
 
 	@Inject
@@ -620,6 +624,16 @@ public class CsDeviceManager implements
 			} else {
 				LOGGER.warn("Unable to process failure response for CHE id={} CHE not found", cheGuid);
 			}
+		}
+	}
+
+	public void processDisplayCheMessage(NetGuid cheId, String line1, String line2, String line3, String line4) {
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			LOGGER.info("processDisplayCheMessage calling cheDevice.sendDisplayCommand()");
+			cheDevice.sendDisplayCommand(line1, line2, line3, line4);			
+		} else {
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
 

@@ -9,7 +9,7 @@ import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
-import java.sql.Timestamp;
+import java.util.Date;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -23,9 +23,14 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import lombok.AccessLevel;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -57,6 +62,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
+@EqualsAndHashCode(of={"userId","created","username","tenant"})
 public class User {
 
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(User.class);
@@ -79,6 +85,25 @@ public class User {
 	@Setter
 	int userId;
 	
+	/* Timestamped entity */
+	@Getter
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(nullable = false,name="created")
+	@JsonProperty
+	Date created;
+	//
+	@Getter
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(nullable = false,name="last_modified")
+	@JsonProperty
+	Date lastModified;
+	//
+	@PrePersist
+	protected void onCreate() { this.created = this.lastModified = new Date(); }
+	@PreUpdate
+	protected void onUpdate() { this.lastModified = new Date(); }
+	/* Timestamped entity */
+
 	// The owning organization.
 	@ManyToOne(optional = false,fetch=FetchType.EAGER)
 	@Getter(AccessLevel.PROTECTED)
@@ -93,23 +118,16 @@ public class User {
 	private String				username;
 
 	// The hash salt.
-	@Column(nullable = false,name="hash_salt")
-	@NonNull
-	@Getter
-	@Setter
+	@Column(name="hash_salt")
 	private String				hashSalt;
 
 	// The hash iterations.
-	@Column(nullable = false,name="hash_iterations")
-	@NonNull
-	@Getter
-	@Setter
+	@Column(name="hash_iterations")
 	private Integer				hashIterations;
 
 	// The hashed password. It's not safe to expose these values outside this object!
 	// It's not safe to expose these values outside this object!
-	@Column(nullable = false,name="hashed_password")
-	@NonNull
+	@Column(name="hashed_password")
 	private String				hashedPassword;
 
 	// sitecon, webapp, system user etc
@@ -120,22 +138,14 @@ public class User {
 	@JsonProperty
 	private UserType			type;
 
-	// Create date.
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	private Timestamp			created;
-
 	// Is it active.
-	@Column(nullable = false)
 	@Getter
 	@Setter
+	@Column(nullable = false,name="active")
 	@JsonProperty
-	private Boolean				active;
+	private boolean				active;
 
 	public User() {
-		created = new Timestamp(System.currentTimeMillis());
 		active = true;
 	}
 
@@ -143,8 +153,7 @@ public class User {
 		try {
 			// Hash the password
 			byte[] salt = generateSalt();
-			setHashSalt(toHex(salt
-				));
+			hashSalt = toHex(salt);
 			hashedPassword = hashPassword(inPassword, salt, PBKDF2_ITERATIONS);
 			hashIterations = PBKDF2_ITERATIONS;
 		} catch (NoSuchAlgorithmException | InvalidKeySpecException e) {

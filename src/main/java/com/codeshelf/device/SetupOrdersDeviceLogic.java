@@ -55,6 +55,31 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	private String								mLocationId;
 
+	private ScanNeededToVerifyPick				mScanNeededToVerifyPick;
+
+	private enum ScanNeededToVerifyPick {
+		NO_SCAN_TO_VERIFY("disabled"),
+		UPC_SCAN_TO_VERIFY("UPC"),
+		SKU_SCAN_TO_VERIFY("SKU"),
+		LPN_SCAN_TO_VERIFY("LPN");
+		private String	mInternal;
+
+		private ScanNeededToVerifyPick(String inString) {
+			mInternal = inString;
+		}
+		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
+			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
+			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
+				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
+					return onValue;
+			}
+			return returnValue;
+		}
+		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
+			return inValue.mInternal;
+		}
+	}
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -63,6 +88,26 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		mPositionToContainerMap = new HashMap<String, String>();
 
+		updateConfigurationFromManager();
+	}
+
+	private boolean isScanNeededToVerifyPick() {
+		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+	}
+
+	private void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
+		mScanNeededToVerifyPick = inValue;
+	}
+	public String getScanVerificationType(){
+		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
+	}
+
+	public void updateConfigurationFromManager() {
+		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		String scanPickValue = mDeviceManager.getScanTypeValue();
+		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
+		setScanNeededToVerifyPick(theEnum);		// String resolvedPickString = ScanNeededToVerifyPick.scanPickEnumToString(theEnum);
+		LOGGER.info("Update scan verification value to " + theEnum);
 	}
 
 	public String getDeviceType() {
@@ -152,11 +197,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case DO_PICK:
+					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					showActivePicks(); // if setState(DO_PICK) is called, it always calls showActivePicks. fewer direct calls to showActivePicks elsewhere.
+					break;
+
+				case SCAN_SOMETHING:
 					if (isSameState || previousState == CheStateEnum.GET_WORK) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
-					showActivePicks(); // used to only fire if not already in this state. Now if setState(DO_PICK) is called, it always calls showActivePicks.
-					// fewer direct calls to showActivePicks elsewhere.
+					showActivePicks(); // change this? DEV-653
+					break;
+
+				case SCAN_SOMETHING_SHORT: // this is like a short confirm.
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 					break;
 
 				case PICK_COMPLETE:
@@ -274,6 +332,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				confirmShortPick(inScanStr);
 				break;
 
+			case SCAN_SOMETHING_SHORT:
+				confirmSomethingShortPick(inScanStr);
+				break;
+
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
@@ -346,41 +408,68 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Process the Yes after a short. P
+	 */
+	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
+		// HACK HACK HACK
+		// StitchFix is the first client and they only pick one item at a time - ever.
+		// When we have h/w that picks more than one item we'll address this.
+		doShortTransaction(inWi, inPicked);
+
+		LOGGER.info("Pick shorted: " + inWi);
+
+		clearLedControllersForWi(inWi);
+
+		// DEV-582 hook up to AUTOSHRT parameter
+		if (mDeviceManager.getAutoShortValue())
+			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+
+		if (mActivePickWiList.size() > 0) {
+			// If there's more active picks then show them.
+			// This is tricky. Simultaneous work instructions: which was short? All of them?
+			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
+			showActivePicks();
+		} else {
+			// There's no more active picks, so move to the next set.
+			doNextPick();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * YES or NO confirm the short pick.
 	 * @param inScanStr
 	 */
 	protected void confirmShortPick(final String inScanStr) {
 		if (inScanStr.equals(YES_COMMAND)) {
-			// HACK HACK HACK
-			// StitchFix is the first client and they only pick one item at a time - ever.
-			// When we have h/w that picks more than one item we'll address this.
 			WorkInstruction wi = mShortPickWi;
-			;
 			if (wi != null) {
-				doShortTransaction(wi, mShortPickQty);
-
-				LOGGER.info("Pick shorted: " + wi);
-
-				clearLedControllersForWi(wi);
-
-				// DEV-582 hook up to AUTOSHRT parameter
-				if (mDeviceManager.getAutoShortValue())
-					doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
-
-				if (mActivePickWiList.size() > 0) {
-					// If there's more active picks then show them.
-					// This is tricky. Simultaneous work instructions: which was short? All of them?
-					LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
-					showActivePicks();
-				} else {
-					// There's no more active picks, so move to the next set.
-					doNextPick();
-				}
+				processShortPickYes(wi, mShortPickQty);
 			}
 		} else {
 			// Just return to showing the active picks.
 			setState(CheStateEnum.DO_PICK);
-			// showActivePicks();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * YES or NO confirm the short pick from the SCAN_SOMETHING state.
+	 * @param inScanStr
+	 */
+	protected void confirmSomethingShortPick(final String inScanStr) {
+		if (inScanStr.equals(YES_COMMAND)) {
+			List<WorkInstruction> wiList = this.getActivePickWiList();
+			WorkInstruction wi = null;
+			if (wiList.size() > 0)
+				wi = wiList.get(0);
+
+			if (wi != null) {
+				processShortPickYes(wi, 0);
+			}
+		} else {
+			// Just return to showing the active picks.
+			setState(CheStateEnum.SCAN_SOMETHING);
 		}
 	}
 
@@ -400,7 +489,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 
 			if (selectNextActivePicks()) {
-				setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
+				if (isScanNeededToVerifyPick())
+					setState(CheStateEnum.SCAN_SOMETHING); // This will cause showActivePicks();
+				else
+					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
 				// showActivePicks();
 			} else {
 				processPickComplete();
@@ -657,9 +749,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			//Anywhere else we can start work if there's anything setup
 			default:
-				if (mActivePickWiList.size() > 0) {
+				WorkInstruction wi = getOneActiveWorkInstruction();
+				if (wi != null) {
 					// short scan of housekeeping work instruction makes no sense
-					WorkInstruction wi = mActivePickWiList.get(0);
 					if (wi.isHousekeeping())
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					else
@@ -745,6 +837,66 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private String verifyWiField(final WorkInstruction inWi, String inScanStr) {
+
+		String returnString = "";
+		
+		String wiVerifyValue = "";
+		switch (mScanNeededToVerifyPick) {
+			case SKU_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId();
+				break;
+				
+			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
+			case UPC_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
+				break;
+				
+			default:
+				
+		}
+		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
+			returnString = "Data error in WI"; // try to keep to 20 characters
+		else if (!wiVerifyValue.equals(inScanStr))
+			returnString = "Scan mismatch"; 
+		
+		return returnString;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		if (inScanPrefixStr.isEmpty()) {
+
+			WorkInstruction wi = getOneActiveWorkInstruction();
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr.isEmpty()) {
+				setState(CheStateEnum.DO_PICK);
+			} else {
+				LOGGER.info("errorStr "); // TODO get this to the CHE display
+				invalidScanMsg(mCheStateEnum);
+			}
+
+		} else {
+			// Want some feedback here. Tell the user to scan something
+			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
+			invalidScanMsg(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
 	/* 
 	 */
 	@Override
@@ -787,6 +939,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
+				break;
+
+			case SCAN_SOMETHING:
+				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
+				processVerifyScan(inScanPrefixStr, inContent);
 				break;
 
 			default:
@@ -1089,7 +1246,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
 			doNextPick();
-			// setState(CheStateEnum.DO_PICK);  // doNextPick will set the state.
+			// doNextPick will set the state.
 		}
 	}
 

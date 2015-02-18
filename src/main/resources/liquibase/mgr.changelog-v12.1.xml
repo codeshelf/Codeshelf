@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog logicalFilePath="mgr.changelog-v12.1.xml"
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd
+		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="ivan (generated)" id="1423788488360-24">
+		<addColumn tableName="tenant">
+			<column name="active" type="boolean" defaultValueBoolean="true">
+				<constraints nullable="false"/>
+			</column>
+		</addColumn>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-25">
+		<addColumn tableName="shard">
+			<column name="created" type="timestamp" valueComputed="now()::timestamp"/>
+		</addColumn>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-27">
+		<addColumn tableName="shard">
+			<column name="last_modified" type="timestamp" valueComputed="now()::timestamp"/>
+		</addColumn>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-28">
+		<addColumn tableName="tenant">
+			<column name="last_modified" type="timestamp" valueComputed="now()::timestamp"/>
+		</addColumn>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-29">
+		<addColumn tableName="users">
+			<column name="last_modified" type="timestamp" valueComputed="now()::timestamp"/>
+		</addColumn>
+	</changeSet>
+
+	<changeSet author="ivan (generated)" id="1423788488360-36">
+		<dropUniqueConstraint constraintName="uc_tenantdb_password_col" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-37">
+		<dropUniqueConstraint constraintName="uc_tenantdb_schema_name_col" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-38">
+		<dropUniqueConstraint constraintName="uc_tenantdb_username_col" tableName="tenant"/>
+	</changeSet>
+	
+	<changeSet author="ivan (generated)" id="1423788488360-44">
+		<dropNotNullConstraint columnDataType="int4" columnName="hash_iterations" tableName="users"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-45">
+		<dropNotNullConstraint columnDataType="varchar(255)" columnName="hash_salt" tableName="users"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-46">
+		<dropNotNullConstraint columnDataType="varchar(255)" columnName="hashed_password"
+			tableName="users"/>
+	</changeSet>
+	
+	<changeSet author="ivan (generated)" id="1423788488360-39">
+		<renameColumn oldColumnName="created_on" newColumnName="created" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-40">
+		<renameColumn oldColumnName="db_password" newColumnName="password" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-41">
+		<renameColumn oldColumnName="db_schema_name" newColumnName="schema_name" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-42">
+		<renameColumn oldColumnName="db_username" newColumnName="username" tableName="tenant"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-140">
+		<renameColumn oldColumnName="db_url" newColumnName="url" tableName="shard"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1423788488360-141">
+		<renameColumn oldColumnName="db_admin_password" newColumnName="password" tableName="shard"/>
+	</changeSet>
+		<changeSet author="ivan (generated)" id="1423788488360-142">
+		<renameColumn oldColumnName="db_admin_username" newColumnName="username" tableName="shard"/>
+	</changeSet>
+	
+	<changeSet author="ivan (generated)" id="1423788488360-34">
+		<addUniqueConstraint columnNames="schema_name" constraintName="UC_TENANTSCHEMA_NAME_COL"
+			deferrable="false" disabled="false" initiallyDeferred="false" tableName="tenant"/>
+	</changeSet>
+	
+    <changeSet author="default (generated)" id="1423860006704-5">
+        <addNotNullConstraint columnDataType="timestamp" columnName="created" tableName="shard"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1423860006704-6">
+        <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="shard"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1423860006704-7">
+        <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="tenant"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1423860006704-8">
+        <addNotNullConstraint columnDataType="timestamp" columnName="last_modified" tableName="users"/>
+    </changeSet>
+
+    <changeSet author="default (generated)" id="1423871042645-2">
+        <dropDefaultValue columnDataType="boolean" columnName="active" tableName="tenant"/>
+    </changeSet>
+    
+</databaseChangeLog>

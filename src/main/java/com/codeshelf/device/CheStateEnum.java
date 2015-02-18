@@ -47,7 +47,14 @@ public enum CheStateEnum {
 	// new states only used in Line_Scan mode. Many are used in both line_scan and Setup_Orders, so keeping all together.
 	// @EnumValue("READY")
 	READY(CheStateNum.READY, "READY"),
-	ABANDON_CHECK(CheStateNum.ABANDON_CHECK, "ABANDON_CHECK");
+	// @EnumValue("ABANDON_CHECK")
+	ABANDON_CHECK(CheStateNum.ABANDON_CHECK, "ABANDON_CHECK"),
+
+	// states used in Setup_Orders mode if SCANPICK parameter is set.
+	// @EnumValue("SCAN_SOMETHING")
+	SCAN_SOMETHING(CheStateNum.SCAN_SOMETHING, "SCAN_SOMETHING"),
+	// @EnumValue("SCAN_SOMTHING_SHORT")
+	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT");
 
 	private int		mValue;
 	private String	mName;
@@ -165,6 +172,9 @@ public enum CheStateEnum {
 		// new states only used in Line_Scan mode. Many are used in both line_scan and Setup_Orders, so keeping all together.
 		static final byte	READY						= 17;
 		static final byte	ABANDON_CHECK				= 18;
+		// states used in Setup_Orders mode if SCANPICK parameter is set.
+		static final byte	SCAN_SOMETHING				= 19;
+		static final byte	SCAN_SOMETHING_SHORT		= 20;
 
 		private CheStateNum() {
 		};

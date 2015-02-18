@@ -11,6 +11,7 @@ import org.hibernate.Transaction;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.jpa.event.spi.JpaIntegrator;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,58 +19,58 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.platform.Service;
 import com.codeshelf.platform.ServiceNotInitializedException;
 
-public abstract class PersistenceService extends Service {
-	public enum SQLSyntax {
-		H2,POSTGRES,OTHER;
-	}
-	
+public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Service {
 	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
 	
 	// define behavior of service
-	abstract public IManagedSchema getDefaultCollection(); // default (or single) tenant definition
-	abstract protected void performStartupActions(IManagedSchema collection); // actions to perform after initializing collecttion
-	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // per collection; null if not wanted
+	abstract public SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
+	abstract protected void performStartupActions(SCHEMA_TYPE schema); // actions to perform after initializing schema
+	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // can be null
 
-	// stores the factories for different collections
-	private Map<IManagedSchema,SessionFactory> factories = new HashMap<IManagedSchema, SessionFactory>();
+	// stores the factories for different schemas
+	private Map<SCHEMA_TYPE,SessionFactory> factories = new HashMap<SCHEMA_TYPE, SessionFactory>();
 
 	// store the event listener integrators
-	private Map<IManagedSchema,EventListenerIntegrator> listenerIntegrators = new HashMap<IManagedSchema, EventListenerIntegrator>();
+	private Map<SCHEMA_TYPE,EventListenerIntegrator> listenerIntegrators = new HashMap<SCHEMA_TYPE, EventListenerIntegrator>();
 
-	private SessionFactory createSessionFactory(IManagedSchema collection) {
+	private SessionFactory createSessionFactory(SCHEMA_TYPE schema) {
 		if (this.isRunning()==false) {
 			throw new ServiceNotInitializedException();
 		}
         try {
-			SchemaUtil.applySchemaUpdates(collection);
+			schema.applyLiquibaseSchemaUpdates();
 
-			LOGGER.info("Creating session factory for "+collection.getSchemaName());
-			Configuration configuration = SchemaUtil.getHibernateConfiguration(collection);
+			LOGGER.info("Creating session factory for "+schema.getSchemaName());
+			Configuration configuration = schema.getHibernateConfiguration();
         	
-			// initialize hibernate session factory
-        	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder();
+        	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder()
+        			.with(new JpaIntegrator()); // support for JPA annotations e.g. @PrePersist
+
+        	// use subclass definition to attach optional custom hibernate integrator if desired
         	EventListenerIntegrator integrator = this.generateEventListenerIntegrator();
-        	if(integrator != null) { // use subclass definition to attach optional hibernate integrator
+        	if(integrator != null) { 
         		bootstrapBuilder.with(integrator);
-        		this.listenerIntegrators.put(collection, integrator);
+        		this.listenerIntegrators.put(schema, integrator);
         	}
-	        StandardServiceRegistryBuilder ssrb = 
+
+			// initialize hibernate session factory
+        	StandardServiceRegistryBuilder ssrb = 
 	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
 	        			.applySettings(configuration.getProperties());
 	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
-
+	        
 	        // enable statistics
 	        factory.getStatistics().setStatisticsEnabled(true);
 	        			
 	        // add to factory map
-			this.factories.put(collection, factory);
+			this.factories.put(schema, factory);
 	        
 	        // sync up property defaults (etc) 
-			this.performStartupActions(collection);
+			this.performStartupActions(schema);
 
 	        return factory;
         } catch (Exception ex) {
-        	LOGGER.error("SessionFactory creation for "+collection.getSchemaName()+" failed",ex);
+        	LOGGER.error("SessionFactory creation for "+schema.getSchemaName()+" failed",ex);
         	if(ex instanceof HibernateException) {
         		throw ex;
         	} else {
@@ -91,34 +92,34 @@ public abstract class PersistenceService extends Service {
 		return txBegun;
 	}
 
-	private final SessionFactory getSessionFactory(IManagedSchema collection) {
-		SessionFactory fac = this.factories.get(collection);
+	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
+		SessionFactory fac = this.factories.get(schema);
 		if (fac==null) {
-			fac = createSessionFactory(collection);
+			fac = createSessionFactory(schema);
 		}
 		return fac;
 	}
-	
-	public final Session getSession(IManagedSchema collection) {
-		SessionFactory fac = this.getSessionFactory(collection);
+
+	public final Session getSession(SCHEMA_TYPE schema) {
+		SessionFactory fac = this.getSessionFactory(schema);
 		Session session = fac.getCurrentSession();
 
 		return session;
 	}
 
-	public final Session getSessionWithTransaction(IManagedSchema collection) {
-		Session session = getSession(collection);
+	public final Session getSessionWithTransaction(SCHEMA_TYPE schema) {
+		Session session = getSession(schema);
 		PersistenceService.beginTransaction(session);
 		return session;
 	}
 
-	public final Transaction beginTransaction(IManagedSchema collection) {
-		Session session = getSession(collection);
+	public final Transaction beginTransaction(SCHEMA_TYPE schema) {
+		Session session = getSession(schema);
 		return PersistenceService.beginTransaction(session);
 	}
 	
-	public final void commitTransaction(IManagedSchema collection) {
-		Session session = getSession(collection);
+	public final void commitTransaction(SCHEMA_TYPE schema) {
+		Session session = getSession(schema);
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
 			tx.commit();
@@ -127,8 +128,8 @@ public abstract class PersistenceService extends Service {
 		}
 	}
 
-	public final void rollbackTransaction(IManagedSchema collection) {
-		Session session = getSession(collection);
+	public final void rollbackTransaction(SCHEMA_TYPE schema) {
+		Session session = getSession(schema);
 		Transaction tx = session.getTransaction();
 		if (tx.isActive()) {
 			tx.rollback();
@@ -137,11 +138,11 @@ public abstract class PersistenceService extends Service {
 		}
 	}
 
-	public final boolean hasActiveTransaction(IManagedSchema collection) {
+	public final boolean hasActiveTransaction(SCHEMA_TYPE schema) {
 		if(this.isRunning() == false) {
 			return false;
 		} 
-		SessionFactory sf = this.factories.get(collection);
+		SessionFactory sf = this.factories.get(schema);
 		if(!sf.isClosed()) {
 			Session session = sf.getCurrentSession();
 			if(session != null) {
@@ -160,8 +161,8 @@ public abstract class PersistenceService extends Service {
 		if(this.isRunning() == false) {
 			return false;
 		} 
-		for(IManagedSchema collection : this.factories.keySet()) {
-			if(hasActiveTransaction(collection)) {
+		for(SCHEMA_TYPE schema : this.factories.keySet()) {
+			if(hasActiveTransaction(schema)) {
 				return true;
 			}
 		}
@@ -182,33 +183,37 @@ public abstract class PersistenceService extends Service {
 		return object;
 	}
 	
-	private final EventListenerIntegrator getEventListenerIntegrator(IManagedSchema collection) {
-		getSessionFactory(collection); // ensure this collection has been initialized
-		return this.listenerIntegrators.get(collection);
+	private final EventListenerIntegrator getEventListenerIntegrator(SCHEMA_TYPE schema) {
+		getSessionFactory(schema); // ensure this schema has been initialized
+		return this.listenerIntegrators.get(schema);
 	}
 	public final EventListenerIntegrator getEventListenerIntegrator() {
-		return getEventListenerIntegrator(getDefaultCollection());
+		return getEventListenerIntegrator(getDefaultSchema());
 	}
 	
-	/* Methods for using default collection */
+	/* Methods for using default schema */
 	public final Transaction beginTransaction() {
-		return beginTransaction(getDefaultCollection());
+		return beginTransaction(getDefaultSchema());
 	}
 	
 	public final void commitTransaction() {
-		commitTransaction(getDefaultCollection());
+		commitTransaction(getDefaultSchema());
 	}
 	
 	public final void rollbackTenantTransaction() {
-		rollbackTransaction(getDefaultCollection());
+		rollbackTransaction(getDefaultSchema());
 	}
 	
 	public final Session getSession() {
-		return getSession(getDefaultCollection());
+		return getSession(getDefaultSchema());
 	}
 	
 	public final Session getSessionWithTransaction() {
-		return getSessionWithTransaction(getDefaultCollection());
+		return getSessionWithTransaction(getDefaultSchema());
+	}
+	
+	public final SessionFactory getSessionFactory() {
+		return getSessionFactory(getDefaultSchema());
 	}
 	
 	/* Service methods */

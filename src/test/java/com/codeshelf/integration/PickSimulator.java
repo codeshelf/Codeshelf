@@ -141,6 +141,13 @@ public class PickSimulator {
 	public void scanOrderDetailId(String inOrderDetailId) {
 		cheDeviceLogic.scanCommandReceived(inOrderDetailId);
 	}
+	/**
+	 * Same as scanOrderId. DEV-653. Just given this name for clarity of JUnit tests. (Scan the SKU, or UPC, or license plate)
+	 */
+	public void scanSomething(String inSomething) {
+		cheDeviceLogic.scanCommandReceived(inSomething);
+	}
+
 
 	public void scanPosition(String inPositionId) {
 		cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
@@ -339,5 +346,9 @@ public class PickSimulator {
 	public String getLastCheDisplayString() {
 		return cheDeviceLogic.getRecentCheDisplayString();
 	}
+
+	public void forceDeviceToMatchManagerConfiguration() {
+		cheDeviceLogic.updateConfigurationFromManager();
+		}
 
 }

@@ -163,8 +163,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// See confluence Codeshelf software patterns page on setState.
 	protected void markInSetState(boolean inValue) {
 		mInSetState = inValue;
-	}	
-	public boolean inSetState(){
+	}
+
+	public boolean inSetState() {
 		return mInSetState;
 	}
 
@@ -960,19 +961,121 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
+	 * Send the LED controllers the active pick locations for current wi or wis.
 	 */
-	protected void showActivePicks() {
-		final int kMaxLedSetsToLog = 20;
+	protected void lightWiLocations(WorkInstruction inFirstWi) {
 
+		String wiCmdString = inFirstWi.getLedCmdStream();
+		// If the location is not configured to be lit, all of the following is a noop.
+		// an empty command string is "[]"
+		if (wiCmdString.equals("[]")) {
+			return;
+		}
+
+		final int kMaxLedSetsToLog = 20;
+		LOGGER.info("deserialize and send out this WI cmd string: " + wiCmdString);
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wiCmdString);
+		if (!LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroups))
+			LOGGER.error("WI cmd string did not deserialize properly");
+
+		// It is important to sort the CmdGroups.
+		Collections.sort(ledCmdGroups, new CmdGroupComparator());
+
+		INetworkDevice lastLedController = null;
+		// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
+		// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
+
+		String myGuidStr = getMyGuidStrForLog();
+
+		for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
+			LedCmdGroup ledCmdGroup = iterator.next();
+
+			// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
+			NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
+			INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
+
+			if (ledController != null) {
+				Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+				if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
+					String wiInfo = inFirstWi.getGroupAndSortCode() + "--  item: " + inFirstWi.getItemId() + "  cntr: "
+							+ inFirstWi.getContainerId();
+					LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
+					continue;
+				}
+
+				Short startLedNum = ledCmdGroup.getPosNum();
+				Short currLedNum = startLedNum;
+
+				// Clear the last LED commands to this controller if the last controller was different.
+				if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
+					ledControllerClearLeds(nextControllerGuid);
+					lastLedController = ledController;
+				}
+
+				NetGuid ledControllerGuid = ledController.getGuid();
+				String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
+				// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
+				String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
+				Integer setCount = 0;
+				for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
+
+					// why are we doing this? Aren't the samples made correctly?
+					ledSample.setPosition(currLedNum++);
+
+					// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
+					ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
+
+					// Log concisely instead of each ledCmd individually
+					setCount++;
+					if (setCount <= kMaxLedSetsToLog)
+						toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
+				}
+				if (setCount > 0)
+					LOGGER.info(toLogString);
+				if (setCount > kMaxLedSetsToLog)
+					LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
+
+				if (ledController.isDeviceAssociated()) {
+					ledControllerShowLeds(ledControllerGuid);
+				}
+			}
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the work instruction that is active on the CHE now
+	 * Note: after we implement simultaneous work instructions, this should still be valid. If mActivePickWiList.size() > 1, then
+	 * all the the work instructions will be for the same SKU from the same location.
+	 * It is only lighting the poscons where we need to look at all of the active pick list.
+	 */
+	protected WorkInstruction getOneActiveWorkInstruction() {
+		WorkInstruction firstWi = null;
 		if (mActivePickWiList.size() > 0) {
 			// The first WI has the SKU and location info.
-			WorkInstruction firstWi = mActivePickWiList.get(0);
+			firstWi = mActivePickWiList.get(0);
+		}
+		return firstWi;
+	}
 
-			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
+	// --------------------------------------------------------------------------
+	/**
+	 * For the work instruction that's active on the CHE now:
+	 * 1) Clear out prior ledController lighting for this CHE
+	 * 2) Send the CHE display
+	 * 3) Send new ledController lighting instructions
+	 * 4) Send poscon display instructions
+	 */
+	protected void showActivePicks() {
 
+		// The first WI has the SKU and location info.
+		WorkInstruction firstWi = getOneActiveWorkInstruction();
+		if (firstWi != null) {
 			// Send the CHE a display command (any of the WIs has the info we need).
-			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
+			CheStateEnum currentState = getCheStateEnum();
+			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
+					&& currentState != CheStateEnum.SCAN_SOMETHING) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again
@@ -985,87 +1088,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// This part is easy. Just display on the CHE controller
 			sendDisplayWorkInstruction(firstWi);
 
-			// Not as easy. Clear this CHE's last leds off of aisle controller(s), and tell aisle controller(s) what to light next
-			// List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(firstWi.getLedCmdStream());
-			String wiCmdString = firstWi.getLedCmdStream();
-
-			// If the location is not configured to be lit, most of the following is a noop.
-			// an empty command string is "[]"
-			if (!wiCmdString.equals("[]")) {
-				LOGGER.info("deserialize and send out this WI cmd string: " + wiCmdString);
-				List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wiCmdString);
-				if (!LedCmdGroupSerializer.verifyLedCmdGroupList(ledCmdGroups))
-					LOGGER.error("WI cmd string did not deserialize properly");
-
-				// It is important to sort the CmdGroups.
-				Collections.sort(ledCmdGroups, new CmdGroupComparator());
-
-				INetworkDevice lastLedController = null;
-				// This is not about clearing controllers/channels this CHE had lights on for.  Rather, it was about iterating the command groups and making sure
-				// we do not clear out the first group when adding on a second. This is a concern for simultaneous multiple dispatch--not currently done.
-
-				String myGuidStr = getMyGuidStrForLog();
-
-				for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
-					LedCmdGroup ledCmdGroup = iterator.next();
-
-					// The WI's ledCmdStream includes the controller ID. Usually only one command group per WI. So, we are setting ledController as the aisleDeviceLogic for the next WI's lights
-					NetGuid nextControllerGuid = new NetGuid(ledCmdGroup.getControllerId());
-					INetworkDevice ledController = mRadioController.getNetworkDevice(nextControllerGuid);
-
-					if (ledController != null) {
-						// jr/hibernate. See null channel in testPickViaChe test. Screen
-						Short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-						if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
-							String wiInfo = firstWi.getGroupAndSortCode() + "--  item: " + firstWi.getItemId() + "  cntr: "
-									+ firstWi.getContainerId();
-							LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence"
-									+ wiInfo);
-							continue;
-						}
-
-						Short startLedNum = ledCmdGroup.getPosNum();
-						Short currLedNum = startLedNum;
-
-						// Clear the last LED commands to this controller if the last controller was different.
-						if ((lastLedController != null) && (!ledController.equals(lastLedController))) {
-							ledControllerClearLeds(nextControllerGuid);
-							lastLedController = ledController;
-						}
-
-						NetGuid ledControllerGuid = ledController.getGuid();
-						String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
-						// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-						String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. "
-								+ EffectEnum.FLASH;
-						Integer setCount = 0;
-						for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
-
-							// why are we doing this? Aren't the samples made correctly?
-							ledSample.setPosition(currLedNum++);
-
-							// Add this LED display to the aisleController. We are accumulating the log information here rather than logging separate in the called routine.
-							ledControllerSetLed(ledControllerGuid, cmdGroupChannnel, ledSample, EffectEnum.FLASH);
-
-							// Log concisely instead of each ledCmd individually
-							setCount++;
-							if (setCount <= kMaxLedSetsToLog)
-								toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
-						}
-						if (setCount > 0)
-							LOGGER.info(toLogString);
-						if (setCount > kMaxLedSetsToLog)
-							LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
-
-						if (ledController.isDeviceAssociated()) {
-							ledControllerShowLeds(ledControllerGuid);
-						}
-					}
-				}
-			}
+			// Tell aisle controller(s) what to light next
+			lightWiLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
 			doPosConDisplaysforWi(firstWi);
+			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
 
@@ -1075,6 +1103,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
+	}
+
+	public void updateConfigurationFromManager() {
+		// stub may be overridden
 	}
 
 }

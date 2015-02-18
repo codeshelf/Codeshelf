@@ -2,8 +2,6 @@ package com.codeshelf.api.resources;
 
 import java.util.List;
 
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -37,7 +35,6 @@ public class FacilitiesResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	@OneToMany(fetch=FetchType.EAGER)
 	public Response getAllFacilities() {
 		ErrorResponse errors = new ErrorResponse();
 		try {

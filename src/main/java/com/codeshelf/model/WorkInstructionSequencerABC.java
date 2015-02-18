@@ -27,7 +27,7 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	/**
 	 * Sort WorkInstructions by their posAlongPath. This is identical to CheDeviceLogic.WiDistanceComparator
 	 */
-	private class PosAlongPathComparator implements Comparator<WorkInstruction> {
+	class PosAlongPathComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
 			int value = CompareNullChecker.compareNulls(inWi1, inWi2);

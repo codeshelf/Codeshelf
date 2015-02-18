@@ -10,11 +10,10 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.google.inject.Singleton;
 
-@Singleton
-public class TenantPersistenceService extends PersistenceService {
+public class TenantPersistenceService extends PersistenceService<Tenant> {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
 	private static TenantPersistenceService theInstance = null;
@@ -36,17 +35,22 @@ public class TenantPersistenceService extends PersistenceService {
 	}
 
 	@Override
-	public IManagedSchema getDefaultCollection() {
+	public Tenant getDefaultSchema() {
 		return TenantManagerService.getInstance().getDefaultTenant();
 	}
 
 	@Override
-	protected void performStartupActions(IManagedSchema collection) {
-		Transaction t = this.beginTransaction(collection);
+	protected void performStartupActions(Tenant schema) {
+		Transaction t = this.beginTransaction(schema);
 		PropertyDao.getInstance().syncPropertyDefaults();
         t.commit();		
 	}
 	
+	@Override
+	protected EventListenerIntegrator generateEventListenerIntegrator() {
+		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
+	}
+
 	@SuppressWarnings("unchecked")
 	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
 		if (classObject==null) {
@@ -66,10 +70,5 @@ public class TenantPersistenceService extends PersistenceService {
 		}
 		// not a domain object
 		return null;
-	}
-
-	@Override
-	protected EventListenerIntegrator generateEventListenerIntegrator() {
-		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
 	}
 }

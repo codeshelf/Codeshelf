@@ -78,6 +78,8 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public final static String						Default_PICKINFO	= "SKU";
 	public final static String						CNTRTYPE			= "CNTRTYPE";
 	public final static String						Default_CNTRTYPE	= "Order";
+	public final static String						SCANPICK			= "SCANPICK";
+	public final static String						Default_SCANPICK	= "Disabled";
 
 	public DomainObjectProperty() {
 	}
@@ -113,6 +115,9 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		}
 		if (inParameterName.equals(CNTRTYPE)) {
 			return Default_CNTRTYPE;
+		}
+		if (inParameterName.equals(SCANPICK)) {
+			return Default_SCANPICK;
 		}
 		// Do not log an error if not pre-known
 		return null;
@@ -257,6 +262,8 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return "SKU, Description, Both";
 		else if (myName.equals(CNTRTYPE))
 			return "Order, Container";
+		else if (myName.equals(SCANPICK))
+			return "Disabled, SKU, UPC";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -297,10 +304,28 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 			return validate_pickinfo(trimmedValue);
 		else if (myName.equals(CNTRTYPE))
 			return validate_containertype(trimmedValue);
+		else if (myName.equals(SCANPICK))
+			return validate_scantype(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
 		}
 		return null;
+	}
+	
+	private String validate_scantype(String inValue) {
+		// valid values are "Disabled, SKU, UPC"
+		final String disabled = "Disabled";
+		final String sku = "SKU";
+		final String upc = "UPC";
+		
+		if (inValue.equalsIgnoreCase(disabled))
+			return disabled;
+		else if (inValue.equalsIgnoreCase(sku))
+			return sku;
+		else if (inValue.equalsIgnoreCase(upc))
+			return upc;
+		else
+			return null;
 	}
 
 	private String validate_baychang(String inValue) {

@@ -281,6 +281,7 @@ public class DomainObjectPropertyTest extends DomainTestABC {
 
 		// delete default
 		beginTransaction();
+		type2 = cfgServ.getPropertyDefault(network,type2.getName()); // will throw on try to delete detached instance in Hibernate 4.3.8
 		cfgServ.delete(type2);
 		commitTransaction();
 		

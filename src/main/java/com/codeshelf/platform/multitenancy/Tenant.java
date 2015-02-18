@@ -16,9 +16,14 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -28,9 +33,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.IManagedSchema;
+import com.codeshelf.platform.persistence.Schema;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 @Entity
@@ -38,7 +44,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Tenant implements IManagedSchema {
+@EqualsAndHashCode(callSuper = false, of={"tenantId","created"})
+public class Tenant extends Schema {
 	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 	
 	@SuppressWarnings("unused")
@@ -51,38 +58,65 @@ public class Tenant implements IManagedSchema {
 	@Setter
 	int tenantId;
 
+	/* Timestamped entity */
 	@Getter
-	@Column(nullable = false,name="created_on")
-	Date createdOn = new Date();
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(nullable = false,name="created")
+	@JsonProperty
+	Date created;
+	//
+	@Getter
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(nullable = false,name="last_modified")
+	@JsonProperty
+	Date lastModified;
+	//
+	@PrePersist
+	protected void onCreate() { this.created = this.lastModified = new Date(); }
+	@PreUpdate
+	protected void onUpdate() { this.lastModified = new Date(); }
+	/* Timestamped entity */
 	
 	@Getter 
 	@Setter
 	@NonNull
 	@Column(unique=true, nullable=false,length=255,name="name")
+	@JsonProperty
 	String name;
 
 	@Getter
 	@Setter
 	@NonNull
-	@Column(unique=true, nullable=false,length=16,name="db_schema_name")
+	@Column(unique=true, nullable=false,length=16,name="schema_name")
+	@JsonProperty
 	String schemaName;
 
 	@Getter
 	@Setter
 	@NonNull
-	@Column(unique=true, nullable=false,length=16,name="db_username")
+	@Column(nullable=false,length=16,name="username")
+	@JsonProperty
 	String username;
 
 	@Getter
 	@Setter
 	@NonNull
-	@Column(unique=true,nullable=false,length=36,name="db_password")
+	@Column(nullable=false,length=36,name="password")
+	@JsonProperty
 	String password = UUID.randomUUID().toString();
 
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
 	@Getter
 	@Setter
+	@NonNull
+	@JsonProperty
 	Shard shard;
+	
+	@Getter
+	@Setter
+	@Column(nullable=false,name="active")
+	@JsonProperty
+	boolean	active = true;
 	
 	@OneToMany(mappedBy = "tenant",targetEntity=User.class)
 	@MapKey(name = "username")
@@ -93,19 +127,10 @@ public class Tenant implements IManagedSchema {
 
 	@Transient
 	private EventListenerIntegrator eventListenerIntegrator = null;
-	
+
 	public Tenant() {
 	}
-	/*
-	public SchemaManager getSchemaManager() {
-		if(schemaManager == null) {
-			schemaManager = new SchemaManager(TENANT_CHANGELOG_FILENAME, 
-				shard.getDbUrl(), this.getUsername(), this.getPassword(), this.getSchemaName(),
-				this.getHibernateConfigurationFilename());
-		}
-		return schemaManager;
-	}
-*/
+
 	@Override
 	public String getHibernateConfigurationFilename() {
 		return ("hibernate/"+System.getProperty("tenant.hibernateconfig"));
@@ -116,7 +141,8 @@ public class Tenant implements IManagedSchema {
 		return "tenant #"+this.getTenantId()+" ("+this.getName()+") on shard "+this.getShard().getName()+"/"+this.getSchemaName();
 	}
 	
-	public void addUser(User u) {
+	
+	protected void addUser(User u) {
 		u.setTenant(this);
 		users.put(u.getUsername(), u);
 	}
@@ -131,66 +157,8 @@ public class Tenant implements IManagedSchema {
 	}
 
 	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((createdOn == null) ? 0 : createdOn.hashCode());
-		result = prime * result + ((password == null) ? 0 : password.hashCode());
-		result = prime * result + ((schemaName == null) ? 0 : schemaName.hashCode());
-		result = prime * result + ((username == null) ? 0 : username.hashCode());
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		result = prime * result + ((shard == null) ? 0 : shard.hashCode());
-		result = prime * result + tenantId;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		Tenant other = (Tenant) obj;
-		if (createdOn == null) {
-			if (other.getCreatedOn() != null)
-				return false;
-		} else if (!createdOn.equals(other.getCreatedOn()))
-			return false;
-		if (password == null) {
-			if (other.getPassword() != null)
-				return false;
-		} else if (!password.equals(other.getPassword()))
-			return false;
-		if (schemaName == null) {
-			if (other.getSchemaName() != null)
-				return false;
-		} else if (!schemaName.equals(other.getSchemaName()))
-			return false;
-		if (username == null) {
-			if (other.getUsername() != null)
-				return false;
-		} else if (!username.equals(other.getUsername()))
-			return false;
-		if (name == null) {
-			if (other.getName() != null)
-				return false;
-		} else if (!name.equals(other.getName()))
-			return false;
-		if (shard == null) {
-			if (other.getShard() != null)
-				return false;
-		} else if (!shard.equals(other.getShard()))
-			return false;
-		if (tenantId != other.getTenantId())
-			return false;
-		return true;
-	}
-
-	@Override
 	public String getUrl() {
-		return shard.getDbUrl();
+		return shard.getUrl();
 	}
 
 	@Override

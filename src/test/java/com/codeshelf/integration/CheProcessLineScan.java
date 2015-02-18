@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
@@ -363,6 +364,60 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 	}
 
+	/**
+	 * Basic login, logout, log in again, scan a valid order detail ID, see the job. Complete the job. Same scan again does not give you the job again.
+	 * LOCAPICK is false, so no inventory created at the location.
+	 * Scanning detail 11111.1 with locationId D401, which is modeled.
+	 */
+	
+	@Test
+	public final void testSiteParamConfig() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+		
+		// Test autoShort
+		manager.setAutoShortValue(true);
+		Assert.assertTrue(manager.getAutoShortValue());
+		
+		manager.setAutoShortValue(false);
+		Assert.assertFalse(manager.getAutoShortValue());
+		
+		// Test containterType
+		manager.setContainerTypeValue("Both");
+		Assert.assertEquals("Both", manager.getContainerTypeValue());
+		
+		manager.setContainerTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getContainerTypeValue());
+		
+		manager.setContainerTypeValue("Description");
+		Assert.assertEquals("Description", manager.getContainerTypeValue());
+		
+		// Test scanType
+		manager.setScanTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		
+		manager.setScanTypeValue("UPC");
+		Assert.assertEquals("UPC", manager.getScanTypeValue());
+		
+		manager.setScanTypeValue("Disabled");
+		Assert.assertEquals("Disabled", manager.getScanTypeValue());
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+	}
+	
 	/**
 	 * Login, scan a valid order detail ID, see the job. Then assorted re-scans and clears.
 	 * LOCAPICK is false, so no attempt at inventory creation.

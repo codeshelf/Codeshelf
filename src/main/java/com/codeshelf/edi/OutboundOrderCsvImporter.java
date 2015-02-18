@@ -635,9 +635,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setStatus(OrderStatusEnum.RELEASED);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipperId(inCsvBean.getShipperId());
-		if (inCsvBean.getWorkSequence() != null) {
-			result.setWorkSequence(Integer.valueOf(inCsvBean.getWorkSequence()));
-		}
 
 		if (inCsvBean.getOrderDate() != null) {
 			try {
@@ -825,6 +822,16 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
+		
+		try  {
+			String prefSeq = inCsvBean.getPreferredSequence();
+			if (prefSeq != null) {
+				result.setPreferredSequence(Integer.valueOf(prefSeq));
+			}
+		} catch (NumberFormatException e) {
+			LOGGER.warn("prefered sequence could not be coerced to integer, setting to null: " + inCsvBean);
+			result.setPreferredSequence(null);
+		}
 
 		int quantities = 0;
 		try {

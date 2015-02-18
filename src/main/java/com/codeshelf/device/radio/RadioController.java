@@ -126,13 +126,6 @@ public class RadioController implements IRadioController {
 	// Background service executor
 	private final ScheduledExecutorService							backgroundService				= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
 																										.build());
-
-	// The 3 variables below are only modifed in a synchronized method because
-	// their modifications must sequential and atomic
-	// since multiple threads can use this class. The maps must be thread-safe
-	// because other threads maybe read from the map
-	// without being in the synchronized block
-	private byte													mNextAddress					= 1;
 	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap					= Maps.newConcurrentMap();
 	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap				= Maps.newConcurrentMap();
 
@@ -173,6 +166,8 @@ public class RadioController implements IRadioController {
 			mChannelInfo[channel] = new ChannelInfo();
 			mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
 		}
+
+		mRadioChannel = 0;
 
 		// Create Services
 		this.packetHandlerService = new RadioControllerPacketHandlerService(this);
@@ -814,11 +809,6 @@ public class RadioController implements IRadioController {
 			return;
 		}
 
-		// LOGGER.info("AssocReq rcvd: " + inCommand.toString()); No longer do
-		// this. Happens all the time.
-
-		// First let's make sure that this is a request from an actor that we
-		// are managing.
 		// Indicate to listeners that there is a new actor.
 		boolean canAssociate = false;
 		for (IRadioControllerEventListener listener : mEventListeners) {
@@ -839,9 +829,10 @@ public class RadioController implements IRadioController {
 				try {
 
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
+					foundDevice.setHardwareVersion(inCommand.getHardwareVersion());
+					foundDevice.setFirmwareVersion(inCommand.getFirmwareVersion());
 
-					// LOGGER.info("----------------------------------------------------");
-					LOGGER.info("Device associated {}", foundDevice.getGuid().getHexStringNoPrefix());
+					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					if ((inCommand.getSystemStatus() & 0x02) > 0) {
 						LOGGER.info(" Status: LVD");
 					}
@@ -1233,21 +1224,52 @@ public class RadioController implements IRadioController {
 
 	}
 
-	// --------------------------------------------------------------------------
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.gadgetworks.flyweight.controller.IController#addNetworkDevice(com
-	 * .gadgetworks.flyweight.controller.INetworkDevice)
-	 */
+	private byte getBestNetAddressForDevice(final INetworkDevice inNetworkDevice) {
+		/* DEV-639 old code was equivalent to
+		mNextAddress++;
+		return mNextAddress;
+		*/
+
+		NetGuid theGuid = inNetworkDevice.getGuid();
+		// we want the last byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
+		byte[] theBytes = theGuid.getParamValueAsByteArray();
+		int guidByteSize = NetGuid.NET_GUID_BYTES;
+		byte returnByte = theBytes[guidByteSize - 1];
+		// Now we must see if this is already in the map
+		boolean done = false;
+		boolean wentAround = false;
+		while (!done) {
+			if (!mDeviceNetAddrMap.containsKey(returnByte))
+				done = true;
+			else {
+				// we would like unsigned byte
+				int unsignedValue = (returnByte & 0xff);
+				if (unsignedValue >= 255) {
+					if (wentAround) { // some looping error. Bail
+						LOGGER.error("getBestNetAddressForDevice has loop error");
+						return 127; // or throw?
+					}
+					unsignedValue = 1;
+					wentAround = true;
+				} else {
+					unsignedValue++;
+				}
+				returnByte = (byte) unsignedValue;
+			}
+		}
+		return returnByte;
+	}
+
 	@Override
 	public synchronized final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
 		try {
 			// If the device has no address then assign one.
 			if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
-				inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
+				byte netAddressToUse = getBestNetAddressForDevice(inNetworkDevice);
+				LOGGER.info("adding network address " + netAddressToUse);
+				inNetworkDevice.setAddress(new NetAddress(netAddressToUse));
+				// inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 			}
 
 			mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);

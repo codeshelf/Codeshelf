@@ -188,7 +188,7 @@ public final class BitFieldInputStream {
 				mCurrentBit = 0;
 			}
 		}
-		
+
 		try {
 			inNBitInt.setValue(newValue);
 		} catch (OutOfRangeException e) {
@@ -243,6 +243,10 @@ public final class BitFieldInputStream {
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
+	}
+
+	public int readableBytes() throws IOException {
+		return mBaseInputStream.available();
 	}
 
 }
