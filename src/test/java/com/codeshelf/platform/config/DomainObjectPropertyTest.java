@@ -16,7 +16,6 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.platform.persistence.PersistenceService;
 
 public class DomainObjectPropertyTest extends DomainTestABC {
 	

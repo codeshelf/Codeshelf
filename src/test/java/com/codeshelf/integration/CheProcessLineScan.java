@@ -36,7 +36,6 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.SiteController.SiteControllerDao;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ThreadUtils;
@@ -406,16 +405,14 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Assert.assertEquals("Description", manager.getContainerTypeValue());
 		
 		// Test scanType
-		Assert.assertEquals("null", manager.getScanTypeValue()); // Default value
-		
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		
 		manager.setScanTypeValue("UPC");
 		Assert.assertEquals("UPC", manager.getScanTypeValue());
 		
-		manager.setScanTypeValue("null");
-		Assert.assertEquals("null", manager.getScanTypeValue());
+		manager.setScanTypeValue("Disabled");
+		Assert.assertEquals("Disabled", manager.getScanTypeValue());
 		
 		this.getTenantPersistenceService().commitTransaction();
 		

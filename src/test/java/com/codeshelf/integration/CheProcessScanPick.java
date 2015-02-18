@@ -18,21 +18,18 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -376,17 +373,29 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 			locapickProperty.setValue(true);
 			PropertyDao.getInstance().store(locapickProperty);
 		}
-		/*
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK;
+		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
 		}
-		*/
 		
 		setUpLineScanOrdersWithCntr(facility);
 		mPropertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
+		
+		
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+		
+		String scanPickValue = manager.getScanTypeValue();
+		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
+		 // kludgy! Somewhat simulates restarting site controller
+		manager.setScanTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		picker.forceDeviceToMatchManagerConfiguration();
+
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
@@ -402,9 +411,10 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		
 		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state.");
 		picker.scanLocation("D303");
-		
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		// picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		/*
+		// picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		
 		LOGGER.info("1e: scan the SKU. This data has 1493");
 		picker.scanSomething("1493");
@@ -418,6 +428,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		*/
 
 	}
 
