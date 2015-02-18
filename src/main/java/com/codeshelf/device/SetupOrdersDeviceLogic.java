@@ -106,8 +106,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
 		String scanPickValue = mDeviceManager.getScanTypeValue();
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
-		setScanNeededToVerifyPick(theEnum);		// String resolvedPickString = ScanNeededToVerifyPick.scanPickEnumToString(theEnum);
-		LOGGER.info("Update scan verification value to " + theEnum);
+		setScanNeededToVerifyPick(theEnum);
+		// remove the logging as this will happen for each CHE. Kind of pointless. Unit test of this then is mostly looking for NPE.
+		// LOGGER.info("Update scan verification value to " + theEnum);
 	}
 
 	public String getDeviceType() {
@@ -747,6 +748,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerSelectScan(COMMAND_PREFIX, SHORT_COMMAND);
 				break;
 
+			case SCAN_SOMETHING:
+				setState(CheStateEnum.SCAN_SOMETHING_SHORT); 
+				break;
+
 			//Anywhere else we can start work if there's anything setup
 			default:
 				WorkInstruction wi = getOneActiveWorkInstruction();
@@ -1078,7 +1083,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					PosControllerInstr.BITENCODED_LED_DASH,
 					PosControllerInstr.SOLID_FREQ.byteValue(),
 					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-				LOGGER.info("Position {} has unknwon container id", position);
+				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
 				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
@@ -1330,6 +1335,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param buttonPosition 
 	 */
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
+		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
+		
+		// The point is, let's check our state
+		switch (mCheStateEnum) {
+			case DO_PICK:
+			case SHORT_PICK:
+				break;
+				
+			case SCAN_SOMETHING:
+				// Do not allow button press in this state. We did display the count on poscon. User might get confused.
+				setState(mCheStateEnum);			
+				return;
+			default: {
+				// We want to ignore the button press, but force out starting poscon situation again.
+				setState(mCheStateEnum);
+				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
+				return;
+			}
+		}
+		
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.

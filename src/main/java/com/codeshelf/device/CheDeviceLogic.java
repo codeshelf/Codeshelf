@@ -348,10 +348,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			pickInfoLines[1] = quantity;
 		}
 
-		//Override last line if short is needed
-		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
-			pickInfoLines[2] = "DECREMENT POSITION";
-		}
+		// get "DECREMENT POSITION" or other instruction
+		pickInfoLines[2] = getFourthLineDisplay();
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		// GoodEggs many locations orders hitting too long case
@@ -363,6 +361,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * trying to have the fourth line only depend on the state. We might throw additional messaging here if necessary.
+	 */
+	protected String getFourthLineDisplay() {
+		String returnString = "";
+		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
+			returnString = "DECREMENT POSITION";
+		}
+		// kind of funny. States are uniformly defined, so this works even from wrong object
+		else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
+			returnString = "SCAN UPC NEEDED";
+			// TODO: UPC or LPN or SKU
+		}
+		return returnString;
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**

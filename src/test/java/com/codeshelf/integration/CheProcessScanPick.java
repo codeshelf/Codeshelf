@@ -19,12 +19,14 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -435,14 +437,133 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
 		Assert.assertEquals(3, scWiList.size());
 		logWiList(scWiList);
+		
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
 
-		LOGGER.info("1e: scan the SKU. This data has 1493");
+		LOGGER.info("1e: although the poscon shows the count, prove that the button press is not handled");
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		scWiList = picker.getAllPicksList();
+		Assert.assertEquals(3, scWiList.size());
+		logWiList(scWiList);
+		WorkInstruction wi2 = picker.nextActiveWi();
+		Assert.assertEquals(wi, wi2);
+
+		LOGGER.info("1f: scan the SKU. This data has 1493");
 		picker.scanSomething("1493");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-
+		
+		LOGGER.info("1g: now the button press works");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals(2, picker.countRemainingJobs()); 
+		
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		
+
+		LOGGER.info("2a: setup same two orders on the cart. Start. Location. Brings to SCAN_SOMETHING state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);	
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);		
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("2b: scan incorrect SKU. This pick should be 1123");
+		picker.scanSomething("1555");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("2c: See if you can logout from SCAN_SOMETHING state");
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
+		LOGGER.info("3a: setup same two orders again. Start. Location. Brings to SCAN_SOMETHING state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);	
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);		
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("3b: scan correct SKU. This pick should be 1123");
+		picker.scanSomething("1123");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("3c: see that normal short process works from this point");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+		// Leaves us at the DO_PICK stage, as we already scanned to confirm the job.
+
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
+		LOGGER.info("4a: setup same two orders again. Start. Location. Brings to SCAN_SOMETHING state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);	
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);		
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("4b: No product present. Worker's only choice is to scan short");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
+
+		LOGGER.info("4c: Scan NO on the confirm message");
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals(2, picker.countRemainingJobs()); // still 2 jobs
+		
+		LOGGER.info("4d: Worker decides to complete the short.");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
+		LOGGER.info("4c: Scan YES on the confirm message");
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals(1, picker.countRemainingJobs()); // that job shorted. Only one left
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
+		LOGGER.info("5a: setup again. Just to see that we can logout from SCAN_SOMETHING_SHORT state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);	
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);		
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("5b: No product present. Worker's only choice is to scan short");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
+
+		LOGGER.info("5c: logout from this confirm screen");
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
 
 	}
 
