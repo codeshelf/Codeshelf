@@ -8,10 +8,12 @@ import java.util.HashMap;
 public class PFSWebOrderConverter {
 	
 	public static void main(String[] args) {
+		// check command-line arguments
 		if (args.length!=3) {
 			System.out.println("Missing arguments.  Usage: PFSWebOrderConverter <inventory-file> <input-order-file> <output-order-file>");
 			return;
 		}
+		
 		// process item description file and store content in map
 		String inventoryFile = args[0];
 		HashMap<String,String> descriptionMap = new HashMap<String,String>();
