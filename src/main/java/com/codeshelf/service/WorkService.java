@@ -755,6 +755,9 @@ public class WorkService implements IApiService {
 			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 				boolean orderDetailChanged = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					if (!orderDetail.getActive()) {
+						continue;
+					}
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
 						count++;

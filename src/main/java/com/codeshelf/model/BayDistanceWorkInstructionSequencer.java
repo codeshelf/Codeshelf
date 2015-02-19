@@ -87,12 +87,12 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 		
 		//Add all missed instructions with a preferred sequence
 		for (WorkInstruction instruction : inWiList){
-			if(instruction.getPreferredSequence() != null && !wiResultList.contains(instruction)) {
+			if(instruction.getWorkSequence() != null && !wiResultList.contains(instruction)) {
 				wiResultList.add(instruction);
 			}
 		}
 		//Sort by preferred sequence
-		Collections.sort(wiResultList, Ordering.from(new PreferredSequenceComparator()));
+		Collections.sort(wiResultList, Ordering.from(new WorkSequenceComparator()));
 
 		return wiResultList;
 	}
@@ -106,14 +106,14 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 
 	}
 
-	public class PreferredSequenceComparator implements Comparator<WorkInstruction> {
+	public class WorkSequenceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction left, WorkInstruction right) {
-			Integer leftPreferredSequence = left.getPreferredSequence();
-			Integer rightPreferredSequence = right.getPreferredSequence();
+			Integer leftWorkSequence = left.getWorkSequence();
+			Integer rightWorkSequence = right.getWorkSequence();
 			
 			return ComparisonChain.start()
-				.compare(leftPreferredSequence, rightPreferredSequence, Ordering.natural().nullsLast())
+				.compare(leftWorkSequence, rightWorkSequence, Ordering.natural().nullsLast())
 				.result();
 		}
 

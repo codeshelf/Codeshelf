@@ -91,7 +91,8 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		doInitializeApplicationData();
 		
-		LOGGER.debug("------------------------------------------------------------");
+		//Need the following line to know at a glance when startup is complete
+		LOGGER.info("------------------------------------------------------------");
 		LOGGER.info("Started app version {} - process info {} ",Configuration.getVersionString(),processName);
 	}
 

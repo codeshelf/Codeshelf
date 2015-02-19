@@ -49,7 +49,7 @@ public class PFSWebOrderConverter {
 			PrintWriter writer = new PrintWriter(orderOutputFile, "UTF-8");	
 			
 			// write header
-			writer.println("orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,preferredSequence");
+			writer.println("orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence");
 
 			// read input order file line by line and write to output file in Codeshelf format
 			String line=null;
