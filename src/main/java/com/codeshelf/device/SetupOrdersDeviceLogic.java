@@ -55,31 +55,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	private String								mLocationId;
 
-	private ScanNeededToVerifyPick				mScanNeededToVerifyPick;
-
-	private enum ScanNeededToVerifyPick {
-		NO_SCAN_TO_VERIFY("disabled"),
-		UPC_SCAN_TO_VERIFY("UPC"),
-		SKU_SCAN_TO_VERIFY("SKU"),
-		LPN_SCAN_TO_VERIFY("LPN");
-		private String	mInternal;
-
-		private ScanNeededToVerifyPick(String inString) {
-			mInternal = inString;
-		}
-		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
-			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
-			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
-				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
-					return onValue;
-			}
-			return returnValue;
-		}
-		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
-			return inValue.mInternal;
-		}
-	}
-
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -91,25 +66,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		updateConfigurationFromManager();
 	}
 
-	private boolean isScanNeededToVerifyPick() {
-		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
-	}
-
-	private void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
-		mScanNeededToVerifyPick = inValue;
-	}
-	public String getScanVerificationType(){
-		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
-	}
-
-	public void updateConfigurationFromManager() {
-		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
-		String scanPickValue = mDeviceManager.getScanTypeValue();
-		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
-		setScanNeededToVerifyPick(theEnum);
-		// remove the logging as this will happen for each CHE. Kind of pointless. Unit test of this then is mostly looking for NPE.
-		// LOGGER.info("Update scan verification value to " + theEnum);
-	}
 
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
@@ -861,6 +817,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
 				break;
 				
+			case LPN_SCAN_TO_VERIFY: // not implemented
+				LOGGER.error("LPN scan not implemented yet");
+				break;
+				
 			default:
 				
 		}
@@ -888,7 +848,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 			String errorStr = verifyWiField(wi, inScanStr);
 			if (errorStr.isEmpty()) {
+				// clear usually not needed. Only after correcting a bad scan
+				clearAllPositionControllers();
 				setState(CheStateEnum.DO_PICK);
+				
 			} else {
 				LOGGER.info("errorStr "); // TODO get this to the CHE display
 				invalidScanMsg(mCheStateEnum);

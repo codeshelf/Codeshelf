@@ -143,6 +143,49 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected boolean						connectedToServer						= true;
 	private boolean							mInSetState								= false;
 
+	protected ScanNeededToVerifyPick				mScanNeededToVerifyPick;
+
+	protected enum ScanNeededToVerifyPick {
+		NO_SCAN_TO_VERIFY("disabled"),
+		UPC_SCAN_TO_VERIFY("UPC"),
+		SKU_SCAN_TO_VERIFY("SKU"),
+		LPN_SCAN_TO_VERIFY("LPN");
+		private String	mInternal;
+
+		private ScanNeededToVerifyPick(String inString) {
+			mInternal = inString;
+		}
+		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
+			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
+			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
+				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
+					return onValue;
+			}
+			return returnValue;
+		}
+		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
+			return inValue.mInternal;
+		}
+	}
+
+	protected boolean isScanNeededToVerifyPick() {
+		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+	}
+
+	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
+		mScanNeededToVerifyPick = inValue;
+	}
+	public String getScanVerificationType(){
+		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
+	}
+
+	public void updateConfigurationFromManager() {
+		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		String scanPickValue = mDeviceManager.getScanTypeValue();
+		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
+		setScanNeededToVerifyPick(theEnum);
+	}
+	
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -1121,8 +1164,5 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
 	}
 
-	public void updateConfigurationFromManager() {
-		// stub may be overridden
-	}
 
 }

@@ -403,19 +403,26 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		// Will see 4 in a row to NO_SCAN_TO_VERIFY
 		manager.setScanTypeValue("UPC");
 		picker.forceDeviceToMatchManagerConfiguration();
-		manager.setScanTypeValue("disabled");
+		Assert.assertEquals("UPC", picker.getCheDeviceLogic().getScanVerificationType());
+		manager.setScanTypeValue("Disabled");
 		picker.forceDeviceToMatchManagerConfiguration();
+		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
 		manager.setScanTypeValue("");
 		picker.forceDeviceToMatchManagerConfiguration();
+		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
 		manager.setScanTypeValue(null);
 		picker.forceDeviceToMatchManagerConfiguration();
+		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
 		manager.setScanTypeValue("xxxx");
 		picker.forceDeviceToMatchManagerConfiguration();
+		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
 		manager.setScanTypeValue("LPN");
 		picker.forceDeviceToMatchManagerConfiguration();
+		Assert.assertEquals("LPN", picker.getCheDeviceLogic().getScanVerificationType());
 		// Now set as we want it for this test
 		manager.setScanTypeValue("SKU");
 		picker.forceDeviceToMatchManagerConfiguration();	
+		Assert.assertEquals("SKU", picker.getCheDeviceLogic().getScanVerificationType());
 
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
@@ -485,6 +492,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("2b: scan incorrect SKU. This pick should be 1123");
 		picker.scanSomething("1555");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		// This had the side effect of setting E on the poscons
 		
 		LOGGER.info("2c: See if you can logout from SCAN_SOMETHING state");
 		picker.logout();
@@ -567,5 +575,72 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 	}
 
+	/**
+	 * Exploring what happens when user scans the wrong thing
+	 */
+	@Test
+	public final void testScanPickError() throws IOException {
 
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		this.getTenantPersistenceService().commitTransaction();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		
+		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		DomainObjectProperty locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (locapickProperty != null) {
+			locapickProperty.setValue(true);
+			PropertyDao.getInstance().store(locapickProperty);
+		}
+		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		
+		setUpLineScanOrdersWithCntr(facility);
+		mPropertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();	
+		
+		CsDeviceManager manager = this.getDeviceManager();
+		// We would rather have the device manager know from the SCANPICK parameter update,
+		manager.setScanTypeValue("SKU");
+		picker.forceDeviceToMatchManagerConfiguration();
+		Assert.assertEquals("SKU", picker.getCheDeviceLogic().getScanVerificationType());
+
+		LOGGER.info("1b: setup two orders on the cart. Start. Location. Brings to SCAN_SOMETHING state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);	
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);		
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("1c: scan incorrect SKU. The SKU for this pick should be 1493");
+		picker.scanSomething("1555");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		// This had the side effect of setting E on the poscons
+		Assert.assertTrue(picker.getLastSentPositionControllerMinQty((byte) 1) == PosControllerInstr.BITENCODED_LED_E);
+		Assert.assertTrue(picker.getLastSentPositionControllerMinQty((byte) 2) == PosControllerInstr.BITENCODED_LED_E);
+		
+		LOGGER.info("1d: scan correct SKU.");
+		picker.scanSomething("1493");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		// This should clear the E
+		Assert.assertFalse(picker.getLastSentPositionControllerMinQty((byte) 1) == PosControllerInstr.BITENCODED_LED_E);
+		// Assert.assertFalse(picker.getLastSentPositionControllerMinQty((byte) 2) == PosControllerInstr.BITENCODED_LED_E);
+
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+
+	}
 }
