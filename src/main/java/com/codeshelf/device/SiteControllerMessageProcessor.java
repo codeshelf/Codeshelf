@@ -55,15 +55,17 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				if (network != null) {
 					LOGGER.info("Attached to network " + network.getDomainId());
 					attached = true;
+					
+					// DEV-582 hook up to AUTOSHRT parameter
+					deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
+					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
+					deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
+					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
+					// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
 					this.deviceManager.attached(network);
 				} else {
 					LOGGER.error("loginResponse has no network");
 				}
-				// DEV-582 hook up to AUTOSHRT parameter
-				deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
-				deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
-				deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
-				deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 			}
 			if (!attached) {
 				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
