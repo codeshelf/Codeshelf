@@ -97,6 +97,8 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 	private List<Tier>				mTiersThisAisle;
 	private Map<UUID, Location>	mAisleLocationsMapThatMayBecomeInactive;
+	private Map<UUID, Location> mLocationsNotToClone;
+	private Location mLastReadLocation;
 
 	private String getAppropriateControllerLed() {
 		if (mLastControllerLed.isEmpty())
@@ -152,6 +154,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Timestamp inProcessTime) {
  		boolean result = true;
 
+ 		mLocationsNotToClone = new HashMap<UUID, Location>();
 		mFacility = inFacility;
 
 		List<AislesFileCsvBean> aislesFileBeanList = toCsvBean(inCsvReader, AislesFileCsvBean.class);
@@ -164,7 +167,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			for (AislesFileCsvBean aislesFileBean : aislesFileBeanList) {
 				Aisle lastAisle = mLastReadAisle;
 				mBeanReadIsClone = false;
-
+				
 				// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
 				try {
 					// This creates one location: aisle, bay, tier; (tier also creates slots). 
@@ -178,6 +181,15 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				} catch (EdiFileReadException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, aislesFileBean);
 					LOGGER.warn("Unable to process record: " + aislesFileBean, e);
+					
+					// Add the Aisle/Bay to the list of locations we should not clone from
+					mLocationsNotToClone.put(mLastReadLocation.getPersistentId(), mLastReadLocation);
+					
+					// If some bay operation failed in an aisle we do not want to be able
+					// to clone that aisle and repeat the incorrect configuration
+					if ( mLastReadLocation.isBay() ) {
+						mLocationsNotToClone.put(mLastReadAisle.getPersistentId(), mLastReadAisle);
+					}
 
 					// Mark that that we must now skip beans until the next aisle starts
 					needAisleBean = true;
@@ -1272,6 +1284,23 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// Figure out what kind of bin we have.
 		if (binType.equalsIgnoreCase("aisle")) {
 			returnThisIsAisleBean = true;
+			
+			Aisle aisleToCloneFrom = getAisleToClone(lengthCm);
+			
+			// Check that the aisleToCloneFrom actually exists
+			if ( lengthCm.toUpperCase().contains("CLONE") && aisleToCloneFrom == null ){
+				LOGGER.info("Unable to complete clone request: " + lengthCm + ". Aisle does not exist.");
+				return false;
+			}
+			
+			// If we are cloning an aisle make sure it's not in our black list
+			if ( aisleToCloneFrom != null && mLocationsNotToClone.containsKey(aisleToCloneFrom.getPersistentId()) ) {
+				LOGGER.info("Unable to clone aisle: " + aisleToCloneFrom.getDomainId() + ". A create/update"
+						+ " operation on this aisle failed earlier. Please review error logs and aisle definition"
+						+ " of aisle " + aisleToCloneFrom.getDomainId() + ".");
+				throw new EdiFileReadException("Cloning aisle failed. Aisle to clone ("
+					+ aisleToCloneFrom.getDomainId() +") had previous errors.");
+			}
 
 			Double dAnchorX = 0.0;
 			Double dAnchorY = 0.0;
@@ -1313,6 +1342,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				// We need to save this aisle as it is the master for the next bay line. 
 				Aisle lastAisle = mLastReadAisle;
 
+				mLastReadLocation = newAisle;
 				mLastReadAisle = newAisle;
 				mLastReadBayForVertices = mLastReadBay; // remember the last bay of the previous aisle
 				// null out bay/tier
@@ -1322,10 +1352,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				mTierCountThisBay = 0;
 
 				// DEV-618 Are we cloning another aisle? Instructions in the lengthCm field
-				Aisle aisleToCloneFrom = getAisleToClone(lengthCm);
+				
 				if (aisleToCloneFrom != null) {
-
-					LOGGER.info("Cloning a aisle "+ aisleToCloneFrom.getDomainId() +" as specified");
+					
+					LOGGER.info("Cloning aisle "+ aisleToCloneFrom.getDomainId() +" as specified.");
 
 					mBeanReadIsClone = true;
 
@@ -1358,7 +1388,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 					// Check orientation
 					mIsOrientationX = aisleToCloneFrom.isLocationXOriented();
-					if (mIsOrientationX && !orientation.toUpperCase().equals("X")){
+					if ( !orientation.isEmpty() && mIsOrientationX && !orientation.toUpperCase().equals("X")){
 						LOGGER.warn("Cloning does not allow change of orientXorY. " 
 								+ "Using orientation of aisle " + aisleToCloneFrom.getDomainId());
 					}
@@ -1456,10 +1486,23 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 			Bay bayToCloneFrom = getBayToClone(lengthCm);
 			
+			// Check that the bayToCloneFrom actually exists
+			if ( lengthCm.toUpperCase().contains("CLONE") && bayToCloneFrom == null ){
+				LOGGER.info("Unable to complete clone request: " + lengthCm + ". Bay does not exist.");
+				return false;
+			}
+			
+			// If we are cloning make sure the bay is not in our black list
+			if ( bayToCloneFrom != null && mLocationsNotToClone.containsKey(bayToCloneFrom.getPersistentId())) {
+				LOGGER.info("Unable to clone bay: " + bayToCloneFrom.getPersistentId() + ". An create/update"
+						+ "operation on this bay failed earlier. Please review error logs and bay definition.");
+				return false;
+			}
+			
 			Integer intValueLengthCm = 122; // Giving default length of 4 foot bay. Not that this is common; I want people to notice.
 			
 			// Get length from input file or bay to clone from
-			if (bayToCloneFrom == null){
+			if (bayToCloneFrom == null) {
 				try {
 					intValueLengthCm = Integer.valueOf(lengthCm);
 				} catch (NumberFormatException e) {
@@ -1476,6 +1519,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			Bay newBay = editOrCreateOneBay(nominalDomainID, intValueLengthCm);
 
 			if (newBay != null) {
+				mLastReadLocation = newBay;
 				mLastReadBay = newBay;
 				mBayLengthCm = intValueLengthCm;
 				mBayCountThisAisle++;
@@ -1485,6 +1529,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				mTierCountThisBay = 0;
 				
 				if (bayToCloneFrom != null) {
+					LOGGER.info("Cloning bay "+ bayToCloneFrom.getDomainId() +" as specified.");
 					cloneBayTiers(bayToCloneFrom);
 				}
 				
