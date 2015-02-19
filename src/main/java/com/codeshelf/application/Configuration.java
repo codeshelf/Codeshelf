@@ -26,12 +26,40 @@ public final class Configuration {
 		System.setProperty("log.file.location", Configuration.getApplicationLogDirPath());
 		System.setProperty("log.file.basename", appName);
 
-		// load app configuration
+		// load app configuration from various places
 		loadSystemPropertiesNamed("common.config.properties");
 		loadSystemPropertiesNamed(appName+".config.properties");
-
-		// initialize logging + all supported APIs
 		
+		// configure logging
+		prepareLog4j2(appName);
+	}
+
+	private static void prepareLog4j2(String appName) {
+		String key = "log4j.configurationFile";
+		String localSpecificConfig = "local/log4j2-"+appName+".yml";
+		String localGeneralConfig = "local/log4j2.yml";
+		// similar to automatic log4j2 initialization behavior - log4j2-test.yml is checked first if testing
+		String defaultSpecificConfig = "log4j2-"+appName+".yml";
+		String defaultGeneralConfig = "log4j2.yml";
+		
+		if(canReadFileOrResource(localSpecificConfig)) {
+			System.out.println("log4j configuration from "+localSpecificConfig);
+			System.setProperty(key, localSpecificConfig);
+		} else if(canReadFileOrResource(localGeneralConfig)) {
+			System.out.println("log4j configuration from "+localGeneralConfig);
+			System.setProperty(key, localGeneralConfig);
+		} else if(canReadFileOrResource(defaultSpecificConfig)) {
+			System.out.println("log4j configuration from "+defaultSpecificConfig);
+			System.setProperty(key, defaultSpecificConfig);
+		} else if(canReadFileOrResource(defaultGeneralConfig)) {
+			System.out.println("log4j configuration from "+defaultGeneralConfig);
+			System.setProperty(key, defaultGeneralConfig);
+		} else {
+			System.out.println("Cannot find log4j configuration, shutting down");
+			System.exit(1);
+		}
+		
+		// initialize logging + all supported APIs
 		org.apache.logging.log4j.Logger log4j2_logger = org.apache.logging.log4j.LogManager.getLogger(Configuration.class.getName()+".log4j2");
 		log4j2_logger.info("logging: log4j (v2)");
 		
@@ -52,6 +80,18 @@ public final class Configuration {
 		
 		org.eclipse.jetty.util.log.Logger jetty_logger = org.eclipse.jetty.util.log.Log.getLogger(Configuration.class.getName()+".jetty");
 		jetty_logger.info("logging: jetty");
+	}
+		
+	private static boolean canReadFileOrResource(String name) {
+		InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(name);
+		if(stream == null) {
+			try {
+				stream = new FileInputStream(name);
+			} catch (FileNotFoundException e) {
+			}
+		}
+		
+		return stream != null;
 	}
 
 	private static void ensureFolderExists(String appFolder) {

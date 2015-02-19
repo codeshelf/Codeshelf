@@ -1,0 +1,77 @@
+# junit tests only log to console, log.* properties are ignored
+
+configuration:
+  appenders:
+    Console:
+      name: console
+      target: SYSTEM_OUT
+      patternlayout:
+        pattern: '%d{ISO8601} [%-5p] %m (%c)%n'
+
+  loggers:
+    root:
+      level: info
+      appenderref:
+        ref: console
+
+# behavior for loggers, copied from default configuration:
+    logger: 
+    - name: org.hibernate
+      level: warn
+      
+    - name: com.sun
+      level: warn
+
+    - name: javax
+      level: warn
+
+    - name: org.apache
+      level: warn
+
+    - name: com.mchange
+      level: warn
+
+    - name: com.google
+      level: warn
+
+    - name: com.dropbox
+      level: warn
+      
+    - name: com.codeshelf.edi
+      level: info # this is a convenient server log 'heartbeat'
+      
+    - name: org.eclipse.jetty.util.log
+      level: warn # don't log init
+
+    - name: com.codeshelf.application.Configuration
+      level: warn # info to show logging subsystems initialize
+      
+    - name: org.apache.flume.sink.FailoverSinkProcessor
+      level: info # show failover messages
+
+    - name: com.codeshelf.metrics.MetricsService
+      level: warn
+      
+    - name: org.eclipse.jetty.server.NetworkTrafficServerConnector
+      level: warn
+      
+    - name: org.eclipse.jetty.server.Server
+      level: warn
+    
+    - name: com.codeshelf.ws.jetty.server.ServerWatchdogThread
+      level: info # 
+    
+    - name: org.hibernate.engine.internal.StatefulPersistenceContext
+      level: error # don't log about "Narrowing proxy to class"
+
+    - name: org.hibernate.cache.ehcache.AbstractEhcacheRegionFactory
+      level: error # don't log individual object caches being configured with default settings
+
+    - name: org.hibernate.tool.hbm2ddl.SchemaExport
+      level: 'off' # don't log anything from hbm2ddl schema export (not used in production)
+
+    # configs for turning SQL logging on/off
+    - name: org.hibernate.type
+      level: info
+    - name: org.hibernate.SQL
+      level: info
