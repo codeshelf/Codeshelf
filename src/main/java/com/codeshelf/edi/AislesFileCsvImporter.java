@@ -1289,17 +1289,22 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			
 			// Check that the aisleToCloneFrom actually exists
 			if ( lengthCm.toUpperCase().contains("CLONE") && aisleToCloneFrom == null ){
-				LOGGER.info("Unable to complete clone request: " + lengthCm + ". Aisle does not exist.");
+				LOGGER.warn("Unable to complete clone request: " + lengthCm + ". Aisle does not exist.");
 				return false;
 			}
 			
 			// If we are cloning an aisle make sure it's not in our black list
 			if ( aisleToCloneFrom != null && mLocationsNotToClone.containsKey(aisleToCloneFrom.getPersistentId()) ) {
-				LOGGER.info("Unable to clone aisle: " + aisleToCloneFrom.getDomainId() + ". A create/update"
+				LOGGER.warn("Unable to clone aisle: " + aisleToCloneFrom.getDomainId() + ". A create/update"
 						+ " operation on this aisle failed earlier. Please review error logs and aisle definition"
 						+ " of aisle " + aisleToCloneFrom.getDomainId() + ".");
-				throw new EdiFileReadException("Cloning aisle failed. Aisle to clone ("
-					+ aisleToCloneFrom.getDomainId() +") had previous errors.");
+				return false;
+			}
+			
+			// Check that we are not cloning the aisle that we are defining
+			if ( aisleToCloneFrom != null && aisleToCloneFrom.getDomainId().equals(nominalDomainID) ) {
+				LOGGER.warn("Cannot define and clone the same aisle in the same line! Did nothing.");
+				return false;
 			}
 
 			Double dAnchorX = 0.0;
@@ -1308,17 +1313,20 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			try {
 				dAnchorX = Double.valueOf(anchorX);
 			} catch (NumberFormatException e) {
+				LOGGER.warn("Warning! Missing x anchor point!");
 			}
 
 			try {
 				dAnchorY = Double.valueOf(anchorY);
 			} catch (NumberFormatException e) {
+				LOGGER.warn("Warning! Missing y anchor point!");
 			}
 
 			Integer depthCm = 0;
 			try {
 				depthCm = Integer.valueOf(depthCMString);
 			} catch (NumberFormatException e) {
+				LOGGER.warn("Warning! Missing depth!");
 			}
 
 			// remember what we had if we are resetting these.
@@ -1488,14 +1496,20 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			
 			// Check that the bayToCloneFrom actually exists
 			if ( lengthCm.toUpperCase().contains("CLONE") && bayToCloneFrom == null ){
-				LOGGER.info("Unable to complete clone request: " + lengthCm + ". Bay does not exist.");
+				LOGGER.warn("Unable to complete clone request: " + lengthCm + ". Bay does not exist.");
 				return false;
 			}
 			
 			// If we are cloning make sure the bay is not in our black list
 			if ( bayToCloneFrom != null && mLocationsNotToClone.containsKey(bayToCloneFrom.getPersistentId())) {
-				LOGGER.info("Unable to clone bay: " + bayToCloneFrom.getPersistentId() + ". An create/update"
+				LOGGER.warn("Unable to clone bay: " + bayToCloneFrom.getPersistentId() + ". An create/update"
 						+ "operation on this bay failed earlier. Please review error logs and bay definition.");
+				return false;
+			}
+			
+			// Check that we are not cloning the aisle that we are defining
+			if ( bayToCloneFrom != null && bayToCloneFrom.getDomainId().equals(nominalDomainID) ) {
+				LOGGER.warn("Cannot define and clone the same bay in the same line! Did nothing.");
 				return false;
 			}
 			

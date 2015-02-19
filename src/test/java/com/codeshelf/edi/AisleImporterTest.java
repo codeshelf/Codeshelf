@@ -2438,6 +2438,26 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNull(A522);
 		
 		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		// Should not be able to define and clone an aisle in the same line.
+		// There should be a warning for doing this. Check logs.
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A51,Clone(A51),,,,,12.85,48.45,X,120\r\n";
+
+		byte[] csvArray3 = csvString3.getBytes();
+
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
+
+		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
+		
+		this.getTenantPersistenceService().commitTransaction();
 		
 	}
 	
@@ -2745,6 +2765,28 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNull(A512B3);
 		
 		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		// Check that we cannot define and clone the same bay in the same line.
+		// Check error logs for a warning about this. Nothing should be done.
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B1,CLONE(B1),,,,,\r\n" //
+				+ "Bay,B2,CLONE(B1),,,,,\r\n";	//
+		
+		byte[] csvArray3 = csvString3.getBytes();
+		
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		reader = new InputStreamReader(stream3);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		this.getTenantPersistenceService().commitTransaction();
 		
 	}
 	@Test
@@ -2888,7 +2930,7 @@ public class AisleImporterTest extends EdiTestABC {
 		short firstLedB3T2 = tierA51B3T22.getFirstLedNumAlongPath();
 		short lastLedB3T2 = tierA51B3T22.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedB3T2 - firstLedB3T2) + 1);
-		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test
