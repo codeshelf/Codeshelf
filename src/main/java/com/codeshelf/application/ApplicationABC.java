@@ -64,7 +64,6 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	 * Setup the JVM environment.
 	 */
 	private void setupLibraries() {
-		LOGGER.info("Codeshelf version: " + Configuration.getVersionString());
 		LOGGER.trace("user.dir = " + System.getProperty("user.dir"));
 		LOGGER.trace("java.class.path = " + System.getProperty("java.class.path"));
 		LOGGER.trace("java.library.path = " + System.getProperty("java.library.path"));
@@ -79,12 +78,11 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	/**
 	 */
 	public final void startApplication() throws Exception {
+		LOGGER.debug("startApplication() beginning");
 
 		setupLibraries();
 
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		LOGGER.trace("------------------------------------------------------------");
-		LOGGER.trace("Process info: " + processName);
 
 		installShutdownHook();
 
@@ -93,8 +91,8 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		doInitializeApplicationData();
 		
-		LOGGER.info("------------------------------------------------------------");
-		LOGGER.info("startApplication() DONE");
+		LOGGER.debug("------------------------------------------------------------");
+		LOGGER.info("Started app version {} - process info {} ",Configuration.getVersionString(),processName);
 	}
 
 	// --------------------------------------------------------------------------
@@ -223,7 +221,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 			      .start(interval, TimeUnit.SECONDS);
 		}
 		else {
-			LOGGER.info("Metrics reporter is not enabled");
+			LOGGER.debug("Metrics reporter is not enabled");
 		}
 
 	}

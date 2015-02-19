@@ -17,9 +17,9 @@ import javax.ws.rs.core.Response;
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;

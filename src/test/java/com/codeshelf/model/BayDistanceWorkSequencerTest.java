@@ -3,7 +3,6 @@ package com.codeshelf.model;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.model.domain.Facility;

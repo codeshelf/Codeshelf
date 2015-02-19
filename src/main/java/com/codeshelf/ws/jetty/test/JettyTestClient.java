@@ -17,7 +17,7 @@ public class JettyTestClient {
 	// private static final Logger	LOGGER = LoggerFactory.getLogger(JettyTestClient.class);
 
     public static void main(String[] args) {
-		System.setProperty("console.appender","org.apache.log4j.ConsoleAppender");
+		//System.setProperty("console.appender","org.apache.log4j.ConsoleAppender");
 		
 		try {
     		// create WS client

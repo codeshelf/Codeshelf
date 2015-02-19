@@ -9,14 +9,12 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
-import org.apache.log4j.PropertyConfigurator;
-
 public final class Configuration {
 	private static Boolean mainConfigDone = null;
 
 	/**
 	 * prepare to run application by configuring system properties + logging subsystems. should be called from static block before main() and injection.
-	 * @param appName the name of the app running (sitecontroller or server)  
+	 * @param appName the name of the app running (sitecontroller or server or test)  
 	 */
 	public static synchronized void loadConfig(String appName) {		
 		if (mainConfigDone!=null) {
@@ -24,55 +22,38 @@ public final class Configuration {
 		}
 		mainConfigDone=true;
 
-		String appDataDir = Configuration.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-		ensureFolderExists(appDataDir);
-		
-		String appLogPath = Configuration.getApplicationLogDirPath();
-		System.setProperty("app.log.dir", appLogPath);
-		ensureFolderExists(appLogPath);
-
+		// load app configuration
 		loadSystemPropertiesNamed("common.config.properties");
-				
-		// Load properties config file(s) from defined locations/names
 		loadSystemPropertiesNamed(appName+".config.properties");
 
-		// main log file
-		String mainLogName = System.getProperty("cs.logfile.name");
-		String mainLogPathName = System.getProperty("app.log.dir") + System.getProperty("file.separator") + mainLogName;
-		System.setProperty("codeshelf.logfile", mainLogPathName);
-		System.out.println("Log file = "+ mainLogPathName);
+		// set path for local log file automatically, if not configured
+		if(System.getProperty("codeshelf.log.file.location") == null)
+			System.setProperty("codeshelf.log.file.location", Configuration.getApplicationLogDirPath());
+		if(System.getProperty("codeshelf.log.file.basename") == null)
+			System.setProperty("codeshelf.log.file.basename", appName);
 
-		// Currently, when PropertyConfigurator.configure(URL) is called, the log4j system will initialize itself
-		// searching for the DEFAULT configuration file always at "log4j.properties" no matter what URL
-		// we pass in. Then, it will initialize from our URL.
-		//
-		// This does not seem to be documented behavior, but it happens nonetheless. So here we do
-		// explicitly (re)load the default file in case that behavior changes in the future.
-
-		Properties log4jProps = loadAllPropertiesFilesNamed("log4j.properties");
-		if(log4jProps!=null) {
-			PropertyConfigurator.configure(log4jProps);
-		} else {
-			System.err.println("Failed to initialize log4j");
-			//System.exit(1);	
-		}
-
-		URL javaUtilLoggingjURL = ClassLoader.getSystemClassLoader().getResource("logging.properties");
-		if (javaUtilLoggingjURL != null) {
-			//System.out.println("java.util.logging props file:" + javaUtilLoggingjURL.toString());
-			try {
-				java.util.logging.LogManager.getLogManager().readConfiguration(javaUtilLoggingjURL.openStream());
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		} else {
-			System.out.println("Failed to init java.util.logging properties");
-			//System.exit(1);
-		}
-		System.out.println("Configuration done");
+		// initialize logging + all supported APIs
+		
+		org.apache.logging.log4j.Logger log4j2_logger = org.apache.logging.log4j.LogManager.getLogger(Configuration.class.getName()+".log4j2");
+		log4j2_logger.info("logging: log4j (v2)");
+		
+		org.slf4j.Logger slf4j_logger = org.slf4j.LoggerFactory.getLogger(Configuration.class.getName()+".slf4j");
+		slf4j_logger.info("logging: slf4j");
+		
+		java.util.logging.Logger jul_logger = java.util.logging.Logger.getLogger(Configuration.class.getName()+".jul");
+		jul_logger.log(java.util.logging.Level.INFO, "logging: java.util.logging");
+		
+		org.apache.commons.logging.Log commons_logger = org.apache.commons.logging.LogFactory.getLog(Configuration.class.getName()+".commons");
+		commons_logger.info("logging: commons");
+		
+		org.apache.log4j.Logger log4j12_logger = org.apache.log4j.LogManager.getLogger(Configuration.class.getName()+".log4j12");
+		log4j12_logger.info("logging: log4j (v1.2)");
+		
+		org.jboss.logging.Logger jboss_logger = org.jboss.logging.Logger.getLogger(Configuration.class.getName()+".jboss");
+		jboss_logger.info("logging: jboss");
+		
+		org.eclipse.jetty.util.log.Logger jetty_logger = org.eclipse.jetty.util.log.Log.getLogger(Configuration.class.getName()+".jetty");
+		jetty_logger.info("logging: jetty");
 	}
 
 	private static void ensureFolderExists(String appFolder) {
@@ -187,6 +168,7 @@ public final class Configuration {
 			System.exit(1);
 		}
 	
+		ensureFolderExists(result);
 		return result;
 	}
 
@@ -199,7 +181,8 @@ public final class Configuration {
 	
 		// Setup the data directory for this application.
 		result = getApplicationDataDirPath() + System.getProperty("file.separator") + "logs";
-	
+
+		ensureFolderExists(result);
 		return result;
 	}
 

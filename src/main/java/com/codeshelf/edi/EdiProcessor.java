@@ -80,8 +80,8 @@ public final class EdiProcessor implements IEdiProcessor {
 	public void startProcessor(final BlockingQueue<String> inEdiSignalQueue) {
 		mShouldRun = true;
 		try {
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
+			Thread.sleep(Integer.getInteger("service.edi.init.delay"));
+		} catch (Exception e) {
 		}
 		mProcessorThread = new Thread(new Runnable() {
 			public void run() {

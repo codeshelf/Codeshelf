@@ -18,7 +18,7 @@ eclipse {
 task cleanLegacy {
 	(new File('target')).deleteDir()
 	(new File('APIs')).deleteDir()
-	//(new File('conf')).deleteDir() should delete but don't want to wipe out custom developer configs stored here
+	(new File('conf')).deleteDir()
 	(new File('design-docs')).deleteDir()
 	(new File('hooks')).deleteDir()
 	(new File('installer')).deleteDir()
@@ -35,13 +35,23 @@ repositories {
 
 dependencies {
 	runtime 'javax.inject:javax.inject:1',
-			'org.slf4j:jul-to-slf4j:1.6.4',
 			'org.hibernate:hibernate-c3p0:4.3.8.Final',
 			'org.hibernate:hibernate-ehcache:4.3.8.Final',
 			'net.sf.ehcache:ehcache-core:2.6.9',
-			'com.mchange:c3p0:0.9.5'
+			'com.mchange:c3p0:0.9.5',
+			'org.apache.logging.log4j:log4j-flume-ng:2.1',
+			'org.apache.flume:flume-ng-embedded-agent:1.5.2',
+			'org.apache.logging.log4j:log4j-slf4j-impl:2.1', // log4j2 implementation of slf4j
+			'org.apache.logging.log4j:log4j-1.2-api:2.1', // log4j2 implementation of log4j 1.2 api
+			'org.apache.logging.log4j:log4j-jcl:2.1', // log4j2 implementation of commons-logging
+			'org.apache.logging.log4j:log4j-jul:2.1', // log4j2 implementation of java.util.logging
+			'org.springframework:spring-beans:4.1.4.RELEASE' // this is only to suppress a liquibase startup warning
 			
-	compile	'org.slf4j:slf4j-log4j12:1.7.7',
+	compile		'org.apache.logging.log4j:log4j-api:2.1', // log4j2 api
+			'commons-logging:commons-logging:1.2',	// commons-logging api
+			'org.slf4j:slf4j-api:1.7.7',	// slf4j api
+			'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.5.1',
+
 			'com.google.inject:guice:3.0',
 			'com.google.inject.extensions:guice-servlet:3.0',
 			'com.google.guava:guava:16.0',
@@ -105,6 +115,10 @@ configurations.all {
 		//failOnVersionConflict()
 		//enableNightmarishlyComplicatedManualDependencyResolutionHell()
 	}
+
+	// added log4j 1.2 -> 2.0 api bridge instead of:
+	exclude group: 'log4j', module: 'log4j'
+	exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }
 
 compileJava {
