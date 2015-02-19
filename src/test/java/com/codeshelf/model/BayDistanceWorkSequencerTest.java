@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 import com.codeshelf.integration.EndToEndIntegrationTest;
 import com.codeshelf.model.domain.Facility;

@@ -42,12 +42,13 @@ dependencies {
 			'org.apache.logging.log4j:log4j-flume-ng:2.1',
 			'org.apache.flume:flume-ng-embedded-agent:1.5.2',
 			'org.apache.logging.log4j:log4j-slf4j-impl:2.1', // log4j2 implementation of slf4j
-			'org.apache.logging.log4j:log4j-1.2-api:2.1', // log4j2 implementation of log4j 1.2 api
 			'org.apache.logging.log4j:log4j-jcl:2.1', // log4j2 implementation of commons-logging
 			'org.apache.logging.log4j:log4j-jul:2.1', // log4j2 implementation of java.util.logging
 			'org.springframework:spring-beans:4.1.4.RELEASE' // this is only to suppress a liquibase startup warning
 			
+	
 	compile		'org.apache.logging.log4j:log4j-api:2.1', // log4j2 api
+			'org.apache.logging.log4j:log4j-1.2-api:2.1', // log4j2 implementation of log4j 1.2 api
 			'commons-logging:commons-logging:1.2',	// commons-logging api
 			'org.slf4j:slf4j-api:1.7.7',	// slf4j api
 			'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.5.1',
@@ -85,7 +86,6 @@ dependencies {
 			'com.github.sps.metrics:metrics-opentsdb:1.0.2',
 			'net.jpountz.lz4:lz4:1.2.0',
 
-
 			'au.com.bytecode:opencsv:2.4',
 			'javax.validation:validation-api:1.1.0.Final',
 			'com.joestelmach:natty:0.8',
@@ -116,7 +116,7 @@ configurations.all {
 		//enableNightmarishlyComplicatedManualDependencyResolutionHell()
 	}
 
-	// added log4j 1.2 -> 2.0 api bridge instead of:
+	// we have log4j 1.2->2.1 api and slf4j-log4j2, which drop in for these legacy APIs:
 	exclude group: 'log4j', module: 'log4j'
 	exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 }

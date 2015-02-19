@@ -18,15 +18,18 @@ configuration:
         pattern: ${sys:log.file.enable}
         route: 
           key: true
-          RollingRandomAccessFile:
+          RollingFile:
             name: file
-            fileName: ${sys:log.file.location}${sys:file.seperator}${sys:log.file.basename}.log
-            filePattern: ${sys:log.file.location}${sys:file.seperator}${sys:log.file.basename}-%i.log.zip
-            policies:
-            - OnStartupTriggeringPolicy:
-            - TimeBasedTriggeringPolicy:
+            fileName: "${sys:log.file.location}/${sys:log.file.basename}.log"
+            filePattern: "${sys:log.file.location}/${sys:log.file.basename}-%d{yyyy-MM-dd-HH}-%i.log.zip"
+            patternlayout:
+              pattern: '%d{ISO8601} %m [%p] (%c) "%X{user}" [%X{netguid}]%n'
+            TimeBasedTriggeringPolicy:
               interval: 24
               modulate: true
+            DefaultRolloverStrategy:
+              max: 10
+              fileIndex: 'min'
     - name: socket_route
       routes:
         pattern: ${sys:log.socket.enable}

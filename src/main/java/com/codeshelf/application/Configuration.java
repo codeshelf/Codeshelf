@@ -22,15 +22,13 @@ public final class Configuration {
 		}
 		mainConfigDone=true;
 
+		// set path for local log file automatically, if not configured
+		System.setProperty("log.file.location", Configuration.getApplicationLogDirPath());
+		System.setProperty("log.file.basename", appName);
+
 		// load app configuration
 		loadSystemPropertiesNamed("common.config.properties");
 		loadSystemPropertiesNamed(appName+".config.properties");
-
-		// set path for local log file automatically, if not configured
-		if(System.getProperty("codeshelf.log.file.location") == null)
-			System.setProperty("codeshelf.log.file.location", Configuration.getApplicationLogDirPath());
-		if(System.getProperty("codeshelf.log.file.basename") == null)
-			System.setProperty("codeshelf.log.file.basename", appName);
 
 		// initialize logging + all supported APIs
 		
