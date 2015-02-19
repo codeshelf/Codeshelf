@@ -166,10 +166,10 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each"
-				+ "\r\n,USF314,TARGET,12000,12000,1522,Tshirt-small,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,TARGET,12000,12000,1523,Tshirt-med,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,TARGET,12000,12000,1524,Tshirt-large,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,TARGET,12000,12000,1525,Tshirt-xl,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\n";
+				+ "\r\n,USF314,TARGET,12000,12000,1522,Tshirt-small,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
+				+ "\r\n,USF314,TARGET,12000,12000,1523,Tshirt-med,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
+				+ "\r\n,USF314,TARGET,12000,12000,1524,Tshirt-large,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
+				+ "\r\n,USF314,TARGET,12000,12000,1525,Tshirt-xl,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03" + "\n";
 
 		byte[] csvArray2 = csvString2.getBytes();
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
