@@ -25,6 +25,16 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
  */
 public abstract class DeviceLogicABC implements INetworkDevice {
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private short					mHardwareVersion;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private short					mFirmwareVersion;
+
 	// PersistentId
 	@Accessors(prefix = "m")
 	@Getter

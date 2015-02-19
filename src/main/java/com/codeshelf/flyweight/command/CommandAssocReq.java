@@ -26,8 +26,12 @@ public final class CommandAssocReq extends CommandAssocABC {
 	public static final int		ASSOC_REQ_BYTES	= 2;
 
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(CommandAssocReq.class);
-	private byte				mDeviceVersion;
-	private byte				mSystemStatus;
+
+	//Note these need to be treated as unsigned
+	private short				hardwareVersion;
+	private short				firmwareVersion;
+	private byte				radioProtocolVersion;
+	private byte				systemStatus;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -35,11 +39,18 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 *  @param inDatagramBytes
 	 *  @param inEndpoint
 	 */
-	public CommandAssocReq(final byte inDeviceVersion, final byte inSystemStatus, final String inRemoteGUID) {
+	public CommandAssocReq(short hardwareVersion,
+		short firmwareVersion,
+		byte radioProtocolVersion,
+		byte systemStatus,
+		final String inRemoteGUID) {
 		super(new NetCommandId(ASSOC_REQ_COMMAND), inRemoteGUID);
 
-		mDeviceVersion = inDeviceVersion;
-		mSystemStatus = inSystemStatus;
+		this.hardwareVersion = hardwareVersion;
+		this.firmwareVersion = firmwareVersion;
+		this.radioProtocolVersion = radioProtocolVersion;
+		this.systemStatus = systemStatus;
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -54,25 +65,27 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doToString()
 	 */
+	@Override
 	public String doToString() {
-		String statusStr = Integer.toBinaryString(mSystemStatus);
-		if (statusStr.length() > 8) {
-			statusStr = String.copyValueOf(statusStr.toCharArray(), 24, 8);
-		}
-		return Integer.toHexString(ASSOC_REQ_COMMAND) + " REQ" + super.doToString() + " ver=" + mDeviceVersion + " sys stat=" + statusStr;
+		return Integer.toHexString(ASSOC_REQ_COMMAND) + " REQ" + super.doToString() + " hw=" + (hardwareVersion & 0xffff) + " fw="
+				+ (firmwareVersion & 0xffff) + " rp=" + (radioProtocolVersion & 0xff) + " sys stat=0x"
+				+ Integer.toHexString(systemStatus & 0xff);
 	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doToStream(com.gadgetworks.bitfields.BitFieldOutputStream)
 	 */
+	@Override
 	protected void doToStream(BitFieldOutputStream inOutputStream) {
 		super.doToStream(inOutputStream);
 
 		try {
 			// Write the device version.
-			inOutputStream.writeByte(mDeviceVersion);
-			inOutputStream.writeByte(mSystemStatus);
+			inOutputStream.writeShort(hardwareVersion);
+			inOutputStream.writeShort(firmwareVersion);
+			inOutputStream.writeByte(radioProtocolVersion);
+			inOutputStream.writeByte(systemStatus);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -82,13 +95,24 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doFromStream(com.gadgetworks.bitfields.BitFieldInputStream, int)
 	 */
+	@Override
 	protected void doFromStream(BitFieldInputStream inInputStream, int inCommandByteCount) {
 		super.doFromStream(inInputStream, inCommandByteCount);
 
 		try {
-			// Read the device version.
-			mDeviceVersion = inInputStream.readByte();
-			mSystemStatus = inInputStream.readByte();
+			// Read the hw,fw,rp and system status register
+			if (inInputStream.readableBytes() >= 2) {
+				hardwareVersion = inInputStream.readShort();
+			}
+			if (inInputStream.readableBytes() >= 2) {
+				firmwareVersion = inInputStream.readShort();
+			}
+			if (inInputStream.readableBytes() >= 1) {
+				radioProtocolVersion = inInputStream.readByte();
+			}
+			if (inInputStream.readableBytes() >= 1) {
+				systemStatus = inInputStream.readByte();
+			}
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -98,24 +122,25 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 * (non-Javadoc)
 	 * @see com.gadgetworks.controller.CommandABC#doComputeCommandSize()
 	 */
+	@Override
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + ASSOC_REQ_BYTES;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  @return
-	 */
-	public byte getDeviceVersion() {
-		return mDeviceVersion;
+	public short getHardwareVersion() {
+		return hardwareVersion;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  @return
-	 */
+	public short getFirmwareVersion() {
+		return firmwareVersion;
+	}
+
+	public byte getRadioProtocolVersion() {
+		return radioProtocolVersion;
+	}
+
 	public byte getSystemStatus() {
-		return mSystemStatus;
+		return systemStatus;
 	}
 
 }

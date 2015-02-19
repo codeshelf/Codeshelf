@@ -570,4 +570,14 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public Facility getFacility() {
 		return getParent();
 	}
+
+	@JsonIgnore
+	public Integer getPreferredSequence() {
+		OrderDetail detail = getOrderDetail();
+		if (detail != null) {
+			return detail.getPreferredSequence();
+		} else {
+			return null;
+		}
+	}
 }

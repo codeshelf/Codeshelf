@@ -17,7 +17,6 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.apache.commons.lang.StringUtils;
@@ -56,11 +55,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	private String								mLocationId;
 
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private boolean								mScanNeededToVerifyPick;
-
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -68,9 +62,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
-		mScanNeededToVerifyPick = false;
 
+		updateConfigurationFromManager();
 	}
+
 
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
@@ -709,11 +704,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerSelectScan(COMMAND_PREFIX, SHORT_COMMAND);
 				break;
 
+			case SCAN_SOMETHING:
+				setState(CheStateEnum.SCAN_SOMETHING_SHORT); 
+				break;
+
 			//Anywhere else we can start work if there's anything setup
 			default:
-				if (mActivePickWiList.size() > 0) {
+				WorkInstruction wi = getOneActiveWorkInstruction();
+				if (wi != null) {
 					// short scan of housekeeping work instruction makes no sense
-					WorkInstruction wi = mActivePickWiList.get(0);
 					if (wi.isHousekeeping())
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					else
@@ -799,6 +798,73 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private String verifyWiField(final WorkInstruction inWi, String inScanStr) {
+
+		String returnString = "";
+		
+		String wiVerifyValue = "";
+		switch (mScanNeededToVerifyPick) {
+			case SKU_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId();
+				break;
+				
+			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
+			case UPC_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
+				break;
+				
+			case LPN_SCAN_TO_VERIFY: // not implemented
+				LOGGER.error("LPN scan not implemented yet");
+				break;
+				
+			default:
+				
+		}
+		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
+			returnString = "Data error in WI"; // try to keep to 20 characters
+		else if (!wiVerifyValue.equals(inScanStr))
+			returnString = "Scan mismatch"; 
+		
+		return returnString;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	private void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		if (inScanPrefixStr.isEmpty()) {
+
+			WorkInstruction wi = getOneActiveWorkInstruction();
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr.isEmpty()) {
+				// clear usually not needed. Only after correcting a bad scan
+				clearAllPositionControllers();
+				setState(CheStateEnum.DO_PICK);
+				
+			} else {
+				LOGGER.info("errorStr "); // TODO get this to the CHE display
+				invalidScanMsg(mCheStateEnum);
+			}
+
+		} else {
+			// Want some feedback here. Tell the user to scan something
+			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
+			invalidScanMsg(mCheStateEnum);
+		}
+	}
+
+	// --------------------------------------------------------------------------
 	/* 
 	 */
 	@Override
@@ -841,6 +907,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
+				break;
+
+			case SCAN_SOMETHING:
+				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
+				processVerifyScan(inScanPrefixStr, inContent);
 				break;
 
 			default:
@@ -975,7 +1046,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					PosControllerInstr.BITENCODED_LED_DASH,
 					PosControllerInstr.SOLID_FREQ.byteValue(),
 					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-				LOGGER.info("Position {} has unknwon container id", position);
+				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
 				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
@@ -1227,6 +1298,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param buttonPosition 
 	 */
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
+		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
+		
+		// The point is, let's check our state
+		switch (mCheStateEnum) {
+			case DO_PICK:
+			case SHORT_PICK:
+				break;
+				
+			case SCAN_SOMETHING:
+				// Do not allow button press in this state. We did display the count on poscon. User might get confused.
+				setState(mCheStateEnum);			
+				return;
+			default: {
+				// We want to ignore the button press, but force out starting poscon situation again.
+				setState(mCheStateEnum);
+				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
+				return;
+			}
+		}
+		
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.

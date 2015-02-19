@@ -143,6 +143,49 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected boolean						connectedToServer						= true;
 	private boolean							mInSetState								= false;
 
+	protected ScanNeededToVerifyPick				mScanNeededToVerifyPick;
+
+	protected enum ScanNeededToVerifyPick {
+		NO_SCAN_TO_VERIFY("disabled"),
+		UPC_SCAN_TO_VERIFY("UPC"),
+		SKU_SCAN_TO_VERIFY("SKU"),
+		LPN_SCAN_TO_VERIFY("LPN");
+		private String	mInternal;
+
+		private ScanNeededToVerifyPick(String inString) {
+			mInternal = inString;
+		}
+		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
+			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
+			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
+				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
+					return onValue;
+			}
+			return returnValue;
+		}
+		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
+			return inValue.mInternal;
+		}
+	}
+
+	protected boolean isScanNeededToVerifyPick() {
+		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+	}
+
+	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
+		mScanNeededToVerifyPick = inValue;
+	}
+	public String getScanVerificationType(){
+		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
+	}
+
+	public void updateConfigurationFromManager() {
+		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		String scanPickValue = mDeviceManager.getScanTypeValue();
+		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
+		setScanNeededToVerifyPick(theEnum);
+	}
+	
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -163,8 +206,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// See confluence Codeshelf software patterns page on setState.
 	protected void markInSetState(boolean inValue) {
 		mInSetState = inValue;
-	}	
-	public boolean inSetState(){
+	}
+
+	public boolean inSetState() {
 		return mInSetState;
 	}
 
@@ -347,10 +391,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			pickInfoLines[1] = quantity;
 		}
 
-		//Override last line if short is needed
-		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
-			pickInfoLines[2] = "DECREMENT POSITION";
-		}
+		// get "DECREMENT POSITION" or other instruction
+		pickInfoLines[2] = getFourthLineDisplay();
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		// GoodEggs many locations orders hitting too long case
@@ -362,6 +404,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * trying to have the fourth line only depend on the state. We might throw additional messaging here if necessary.
+	 */
+	protected String getFourthLineDisplay() {
+		String returnString = "";
+		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
+			returnString = "DECREMENT POSITION";
+		}
+		// kind of funny. States are uniformly defined, so this works even from wrong object
+		else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
+			returnString = "SCAN UPC NEEDED";
+			// TODO: UPC or LPN or SKU
+		}
+		return returnString;
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**
@@ -963,7 +1023,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * Send the LED controllers the active pick locations for current wi or wis.
 	 */
 	protected void lightWiLocations(WorkInstruction inFirstWi) {
-		
+
 		String wiCmdString = inFirstWi.getLedCmdStream();
 		// If the location is not configured to be lit, all of the following is a noop.
 		// an empty command string is "[]"
@@ -998,8 +1058,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				if (cmdGroupChannnel == null || cmdGroupChannnel == 0) {
 					String wiInfo = inFirstWi.getGroupAndSortCode() + "--  item: " + inFirstWi.getItemId() + "  cntr: "
 							+ inFirstWi.getContainerId();
-					LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence"
-							+ wiInfo);
+					LOGGER.error("Bad channel after deserializing LED command from the work instruction for sequence" + wiInfo);
 					continue;
 				}
 
@@ -1015,8 +1074,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				NetGuid ledControllerGuid = ledController.getGuid();
 				String controllerGuidStr = ledControllerGuid.getHexStringNoPrefix();
 				// short cmdGroupChannnel = ledCmdGroup.getChannelNum();
-				String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. "
-						+ EffectEnum.FLASH;
+				String toLogString = "CHE " + myGuidStr + " telling " + controllerGuidStr + " to set LEDs. " + EffectEnum.FLASH;
 				Integer setCount = 0;
 				for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 
@@ -1046,6 +1104,22 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get the work instruction that is active on the CHE now
+	 * Note: after we implement simultaneous work instructions, this should still be valid. If mActivePickWiList.size() > 1, then
+	 * all the the work instructions will be for the same SKU from the same location.
+	 * It is only lighting the poscons where we need to look at all of the active pick list.
+	 */
+	protected WorkInstruction getOneActiveWorkInstruction() {
+		WorkInstruction firstWi = null;
+		if (mActivePickWiList.size() > 0) {
+			// The first WI has the SKU and location info.
+			firstWi = mActivePickWiList.get(0);
+		}
+		return firstWi;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * For the work instruction that's active on the CHE now:
 	 * 1) Clear out prior ledController lighting for this CHE
 	 * 2) Send the CHE display
@@ -1054,14 +1128,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	protected void showActivePicks() {
 
-		if (mActivePickWiList.size() > 0) {
-			// The first WI has the SKU and location info.
-			WorkInstruction firstWi = mActivePickWiList.get(0);
-
-			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
-
+		// The first WI has the SKU and location info.
+		WorkInstruction firstWi = getOneActiveWorkInstruction();
+		if (firstWi != null) {
 			// Send the CHE a display command (any of the WIs has the info we need).
-			if (getCheStateEnum() != CheStateEnum.DO_PICK && getCheStateEnum() != CheStateEnum.SHORT_PICK) {
+			CheStateEnum currentState = getCheStateEnum();
+			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
+					&& currentState != CheStateEnum.SCAN_SOMETHING) {
 				LOGGER.error("unanticipated state in showActivePicks");
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again
@@ -1079,6 +1152,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
 			doPosConDisplaysforWi(firstWi);
+			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
 
@@ -1089,5 +1163,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
 	}
+
 
 }

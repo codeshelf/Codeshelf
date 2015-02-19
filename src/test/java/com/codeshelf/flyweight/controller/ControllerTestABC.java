@@ -8,7 +8,6 @@ package com.codeshelf.flyweight.controller;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.flyweight.command.CommandAssocReq;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetAddress;
@@ -22,16 +21,16 @@ import com.codeshelf.flyweight.command.NetEndpoint;
 public abstract class ControllerTestABC {
 
 	//private static final byte			TEST_ENDPOINT_NUM	= 0x01;
-	private static final byte			SRS_BYTE			= 0x00;
+	private static final byte	SRS_BYTE	= 0x00;
 	//private static final NetEndpoint	TEST_ENDPOINT		= new NetEndpoint(TEST_ENDPOINT_NUM);
-	private static final String			TEST_ID				= "12345678";
+	private static final String	TEST_ID		= "12345678";
 
-	private static final String			TEST_MSG1			= "TEST1";
-	private static final String			TEST_MSG2			= "TEST2";
-	private static final String			TEST_MSG3			= "TEST3";
-	private static final String			TEST_MSG4			= "TEST4";
+	private static final String	TEST_MSG1	= "TEST1";
+	private static final String	TEST_MSG2	= "TEST2";
+	private static final String	TEST_MSG3	= "TEST3";
+	private static final String	TEST_MSG4	= "TEST4";
 
-	private IRadioController			mControllerABC;
+	private IRadioController	mControllerABC;
 
 	public final void setUp() throws Exception {
 		mControllerABC = createControllerABC();
@@ -54,10 +53,12 @@ public abstract class ControllerTestABC {
 		NetAddress srcAddress = new NetAddress((byte) 0x04);
 
 		//byte[] cmdBytes = { 0x00, 0x01, 0x02, 0x03, 0x04 };
-		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
+			TEST_MSG1,
+			TEST_MSG2,
+			TEST_MSG3,
+			TEST_MSG4);
 		mControllerABC.receiveCommand(command, srcAddress);
-
-		new CommandAssocReq(INetworkDevice.PROTOCOL_VERSION_1, SRS_BYTE, TEST_ID);
 
 	}
 
