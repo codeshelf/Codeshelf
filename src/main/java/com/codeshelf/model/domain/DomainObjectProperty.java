@@ -245,7 +245,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		else if (myName.equals(RPEATPOS))
 			return "None, ContainerOnly, ContainerAndCount";
 		else if (myName.equals(WORKSEQR))
-			return "BayDistance";
+			return "BayDistance, WorkSequence";
 		else if (myName.equals(LIGHTSEC))
 			return "number between 2 and 30";
 		else if (myName.equals(LIGHTCLR))
