@@ -93,7 +93,7 @@ public class RadioController implements IRadioController {
 	// queued before before being sent
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 1;
 
-	private static final long										BROADCAST_RATE_MILLIS			= 900;
+	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
 	private static final long										PACKET_SPACING_MILLIS			= 15;
