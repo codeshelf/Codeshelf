@@ -88,17 +88,11 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 */
 	protected void doStartup() throws Exception {
 
-		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		LOGGER.info("Process info: " + processName);
-
 		if(!TenantManagerService.getInstance().connect()) {
 			LOGGER.error("Failed to initialize Tenant Manager. Server is shutting down.");
 			Thread.sleep(3000);
 			System.exit(1);
 		}
-		// started by injection of getInstance() 
-		// this.getPersistenceService().start();
-
 		try {
 			this.getTenantPersistenceService().beginTransaction();
 			this.getTenantPersistenceService().commitTransaction();
@@ -131,7 +125,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 
 		// start server watchdog
 		watchdog.start();        
-
 	}
 
 	// --------------------------------------------------------------------------

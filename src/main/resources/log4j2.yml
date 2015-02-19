@@ -1,0 +1,150 @@
+configuration:
+  appenders:
+    Console:
+      name: console
+      target: SYSTEM_OUT
+      patternlayout:
+        pattern: '%d{ISO8601} %m%n %c [%p] "%X{user}" [%X{netguid}]%n'
+
+    Routing:
+    - name: console_route
+      routes:
+        pattern: ${sys:log.console.enable}
+        route:
+          key: true # if enabled
+          ref: console
+    - name: file_route
+      routes:
+        pattern: ${sys:log.file.enable}
+        route: 
+          key: true
+          RollingRandomAccessFile:
+            name: file
+            fileName: "${sys:log.file.location}/${sys:log.file.basename}.log"
+            filePattern: "${sys:log.file.location}/${sys:log.file.basename}-%d{yyyy-MM-dd-HH}-%i.log.zip"
+            patternlayout:
+              pattern: '%d{ISO8601} %m [%p] (%c) "%X{user}" [%X{netguid}]%n'
+            TimeBasedTriggeringPolicy:
+              interval: 24
+              modulate: true
+            DefaultRolloverStrategy:
+              max: 10
+              fileIndex: 'min'
+    - name: socket_route
+      routes:
+        pattern: ${sys:log.socket.enable}
+        route:
+          key: true
+          Socket:
+            name: socket
+            host: ${sys:log.socket.host}
+            port: ${sys:log.socket.port}
+    - name: flume_route
+      routes:
+        pattern: ${sys:log.flume.enable}
+        route: 
+          key: true
+          Flume:
+            name: flume
+            type: embedded
+            property:
+            - name: channel.type
+              value: memory
+            - name: sinks
+              value: agent1 agent2
+            - name: agent1.type
+              value: avro
+            - name: agent1.hostname
+              value: ${sys:log.flume.primary.host}
+            - name: agent1.port
+              value: ${sys:log.flume.primary.port}
+            - name: agent2.type
+              value: avro
+            - name: agent2.hostname
+              value: ${sys:log.flume.secondary.host}
+            - name: agent2.port
+              value: ${sys:log.flume.secondary.port}
+            - name: processor.type
+              value: failover
+            - name: processor.priority.agent1
+              value: 10
+            - name: processor.priority.agent2
+              value: 5
+
+    Async:
+      name: asyncAll
+      blocking: false
+      bufferSize: 1024
+      errorRef: console
+      appenderref:
+      - ref: console_route
+      - ref: file_route
+      - ref: socket_route
+      - ref: flume_route
+
+  loggers:
+    root:
+      level: info
+      appenderref:
+        ref: asyncAll
+        
+    logger:
+    - name: org.hibernate
+      level: warn
+      
+    - name: com.sun
+      level: warn
+
+    - name: javax
+      level: warn
+
+    - name: org.apache
+      level: warn
+
+    - name: com.mchange
+      level: warn
+
+    - name: com.google
+      level: warn
+
+    - name: com.dropbox
+      level: warn
+      
+    - name: com.codeshelf.edi
+      level: info # this is a convenient server log 'heartbeat'
+      
+    - name: org.eclipse.jetty.util.log
+      level: warn # don't log init
+
+    - name: com.codeshelf.application.Configuration
+      level: warn # info to show logging subsystems initialize
+      
+    - name: org.apache.flume.sink.FailoverSinkProcessor
+      level: info # show failover messages
+
+    - name: com.codeshelf.metrics.MetricsService
+      level: warn
+      
+    - name: org.eclipse.jetty.server.NetworkTrafficServerConnector
+      level: warn
+      
+    - name: org.eclipse.jetty.server.Server
+      level: warn
+    
+    - name: com.codeshelf.ws.jetty.server.ServerWatchdogThread
+      level: info # 
+    
+    - name: org.hibernate.engine.internal.StatefulPersistenceContext
+      level: error # don't log about "Narrowing proxy to class"
+
+    - name: org.hibernate.cache.ehcache.AbstractEhcacheRegionFactory
+      level: error # don't log individual object caches being configured with default settings
+
+    - name: org.hibernate.tool.hbm2ddl.SchemaExport
+      level: 'off' # don't log anything from hbm2ddl schema export (not used in production)
+
+    # configs for turning SQL logging on/off
+    - name: org.hibernate.type
+      level: info
+    - name: org.hibernate.SQL
+      level: info

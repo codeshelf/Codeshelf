@@ -3,8 +3,8 @@ package com.codeshelf.application;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,9 +13,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.LoggerConfig;
 
 @SuppressWarnings("serial")
 public class LoggingServlet extends HttpServlet {
@@ -64,16 +65,14 @@ public class LoggingServlet extends HttpServlet {
         }
         
         out.println("</form><h4>available loggers:</h4>");
-        Enumeration<?> loggers = LogManager.getCurrentLoggers();
+        
+        org.apache.logging.log4j.core.config.Configuration conf = getConfiguration();
+        Collection<LoggerConfig> logConfigs = conf.getLoggers().values();
+        
         ArrayList<String> loggerDescriptions = new ArrayList<String>();
-        while(loggers.hasMoreElements()) {
-        	Object loggerItem = loggers.nextElement();
-        	if(loggerItem instanceof Logger) {
-        		Logger logger = (Logger) loggerItem;
-        		loggerDescriptions.add(logger.getName() + " (" + logger.getEffectiveLevel().toString()+")");
-        	} else {
-        		loggerDescriptions.add(loggerItem.toString());
-        	}
+
+        for(LoggerConfig logConfig : logConfigs) {
+    		loggerDescriptions.add(logConfig.getName() + " (" + logConfig.getLevel().name()+")");
         }
         Collections.sort(loggerDescriptions);
         for(String description : loggerDescriptions) {
@@ -85,23 +84,30 @@ public class LoggingServlet extends HttpServlet {
         out.close();
 
     }
+    
+    private org.apache.logging.log4j.core.config.Configuration getConfiguration() {
+        LoggerContext ctx = (LoggerContext)LogManager.getContext(false);
+        return ctx.getConfiguration();
+    }
 
 	private String setLevel(String loggerName, String levelName) {
 		if(loggerName == null)
 			return null;
 		if(loggerName.isEmpty())
 			return null;
-		
-		Logger logger = LogManager.exists(loggerName);
-		if(logger == null) {	    	
-	        return "Invalid logger name - "+loggerName;
+
+		org.apache.logging.log4j.core.config.Configuration conf = getConfiguration();
+		LoggerConfig logger = conf.getLoggerConfig(loggerName);
+		if (logger == null) {
+			return "Invalid logger name - "+loggerName;
 	    }
-		
 		Level level = Level.toLevel(levelName); // returns DEBUG for invalid input
 		
-		logger.setLevel(level);
-	    
-	    // TODO: confirm level is valid
-	    return "Set logging for "+loggerName+" to "+level.toString(); 
+		if(logger.getName().equals(loggerName)) {
+			logger.setLevel(level);
+		    return "Set logging for "+loggerName+" to "+level.toString(); 
+		} else {
+			return "Sorry, no specific loggerConfig exists for "+loggerName;
+		}			    
 	}
 }

@@ -40,7 +40,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
         try {
 			schema.applyLiquibaseSchemaUpdates();
 
-			LOGGER.info("Creating session factory for "+schema.getSchemaName());
+			LOGGER.debug("Creating session factory for "+schema.getSchemaName());
 			Configuration configuration = schema.getHibernateConfiguration();
         	
         	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder()
@@ -222,7 +222,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		if(this.isRunning()) {
 			LOGGER.error("Attempted to start "+this.getClass().getSimpleName()+" more than once");
 		} else {
-			LOGGER.info("Starting "+this.getClass().getSimpleName());
+			LOGGER.debug("Starting "+this.getClass().getSimpleName());
 			this.setRunning(true);
 		}
 		return true;

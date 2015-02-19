@@ -1,6 +1,6 @@
 package com.codeshelf.application;
 
-import org.apache.log4j.MDC;
+import org.apache.logging.log4j.ThreadContext;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.platform.multitenancy.User;
@@ -29,25 +29,25 @@ public class ContextLogging {
 		setNetGuid(guid.getHexStringNoPrefix());
 	}
 	static public void setNetGuid(String guidStr) {
-		MDC.put("netguid", guidStr);
+		ThreadContext.put("netguid", guidStr);
 	}
 	static public void clearNetGuid() {
-		MDC.remove("netguid");
+		ThreadContext.remove("netguid");
 	}
 	
 	////////////////////////////
 	
 	static public void setUsername(String username) {
-		MDC.put("username", username);
+		ThreadContext.put("username", username);
 	}	
 	static public void clearUsername() {
-    	MDC.remove("username");
+		ThreadContext.remove("username");
 	}
 
 	//////////////////////////////
 	
 	static public void clearAll() {
-    	MDC.clear();
+		ThreadContext.clearAll();
 	}
 
 }

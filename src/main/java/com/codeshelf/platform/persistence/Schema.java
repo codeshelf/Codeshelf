@@ -22,8 +22,11 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 
 import org.hibernate.cfg.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class Schema extends DatabaseConnection {
+	static final Logger LOGGER	= LoggerFactory.getLogger(Schema.class);
 
 	public abstract String getSchemaName();
 	public abstract String getHibernateConfigurationFilename();
@@ -45,7 +48,7 @@ public abstract class Schema extends DatabaseConnection {
 	
 	void applyLiquibaseSchemaUpdates() {
 		if(getSQLSyntax() != DatabaseConnection.SQLSyntax.POSTGRES) {
-			PersistenceService.LOGGER.warn("Will not attempt to apply Liquibase updates to non-Postgres schema");
+			LOGGER.debug("Will not attempt to apply Liquibase updates to non-Postgres schema");
 			return;
 		}
 	
@@ -62,13 +65,13 @@ public abstract class Schema extends DatabaseConnection {
 		
 		ResourceAccessor fileOpener = new ClassLoaderResourceAccessor(); 
 		
-		PersistenceService.LOGGER.info("initializing Liquibase");
+		LOGGER.debug("initializing Liquibase");
 		Contexts contexts = new Contexts(); //empty context
 		Liquibase liquibase;
 		try {
 			liquibase = new Liquibase(this.getChangeLogName(), fileOpener, appDatabase);
 		} catch (LiquibaseException e) {
-			PersistenceService.LOGGER.error("Failed to initialize liquibase, cannot continue.", e);
+			LOGGER.error("Failed to initialize liquibase, cannot continue.", e);
 			throw new RuntimeException("Failed to initialize liquibase, cannot continue.",e);
 		}
 	
@@ -76,21 +79,21 @@ public abstract class Schema extends DatabaseConnection {
 		try {
 			pendingChanges = liquibase.listUnrunChangeSets(contexts);
 		} catch (LiquibaseException e1) {
-			PersistenceService.LOGGER.error("Could not get pending schema changes, cannot continue.", e1);
+			LOGGER.error("Could not get pending schema changes, cannot continue.", e1);
 			throw new RuntimeException("Could not get pending schema changes, cannot continue.",e1);
 		}
 		
 		if(pendingChanges.size() > 0) {	
-			PersistenceService.LOGGER.info("Now updating db schema - will apply "+pendingChanges.size()+" changesets");
+			LOGGER.info("Now updating db schema - will apply "+pendingChanges.size()+" changesets to {}",this.getSchemaName());
 			try {
 				liquibase.update(contexts);
 			} catch (LiquibaseException e) {
-				PersistenceService.LOGGER.error("Failed to apply changes to app database, cannot continue. Database might be corrupt.", e);
+				LOGGER.error("Failed to apply changes to app database, cannot continue. Database might be corrupt.", e);
 				throw new RuntimeException("Failed to apply changes to app database, cannot continue. Database might be corrupt.",e);
 			}
-			PersistenceService.LOGGER.info("Done applying Liquibase changesets");
+			LOGGER.info("Done applying Liquibase changesets: {}",this.getSchemaName());
 		} else {
-			PersistenceService.LOGGER.info("No pending Liquibase changesets");
+			LOGGER.info("Liquibase initializing with 0 changesets: {}",this.getSchemaName());
 		}
 	
 		if(!this.liquibaseCheckSchema()) {
@@ -110,7 +113,7 @@ public abstract class Schema extends DatabaseConnection {
 				null,null,
 				null,null);
 		} catch (DatabaseException e1) {
-			PersistenceService.LOGGER.error("Database exception evaluating app database configuration", e1);
+			LOGGER.error("Database exception evaluating app database configuration", e1);
 			return null;
 		} 
 		return appDatabase;
@@ -129,7 +132,7 @@ public abstract class Schema extends DatabaseConnection {
 				null,null,
 				null,null);
 		} catch (DatabaseException e1) {
-			PersistenceService.LOGGER.error("Database exception evaluating Hibernate configuration", e1);
+			LOGGER.error("Database exception evaluating Hibernate configuration", e1);
 			return false;
 		}
 		
@@ -153,7 +156,7 @@ public abstract class Schema extends DatabaseConnection {
 		try {
 			diff = diffGen.compare(hibernateDatabase, appDatabase, CompareControl.STANDARD);
 		} catch (LiquibaseException e1) {
-			PersistenceService.LOGGER.error("Liquibase exception diffing Hibernate/database configuration", e1);
+			LOGGER.error("Liquibase exception diffing Hibernate/database configuration", e1);
 			return false;
 		}
 		
@@ -167,7 +170,7 @@ public abstract class Schema extends DatabaseConnection {
 			try {
 				diff2cl.print(System.out);
 			} catch (ParserConfigurationException | IOException | DatabaseException e) {
-				PersistenceService.LOGGER.error("Unexpected exception outputing diff", e);
+				LOGGER.error("Unexpected exception outputing diff", e);
 			}
 			return false;
 		} //else
