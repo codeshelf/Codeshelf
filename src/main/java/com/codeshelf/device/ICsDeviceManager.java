@@ -73,5 +73,7 @@ public interface ICsDeviceManager {
 	
 	String getScanTypeValue();
 
+	String getSequenceKind();
+
 	INetworkDevice updateOneDevice(UUID theUuid, NetGuid theGuid, String newProcessType);
 }

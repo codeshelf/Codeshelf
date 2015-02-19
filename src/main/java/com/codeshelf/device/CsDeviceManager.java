@@ -118,6 +118,10 @@ public class CsDeviceManager implements
 	@Setter
 	private String										scanTypeValue				= "Disabled";
 	
+	@Getter
+	@Setter
+	private String										sequenceKind				= "BayDistance";
+
 	private WebSocketContainer							webSocketContainer;
 
 	@Inject

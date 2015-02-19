@@ -32,6 +32,10 @@ public class LoginResponse extends ResponseABC {
 	@Setter
 	String					scanTypeValue;
 
+	@Getter
+	@Setter
+	String					sequenceKind;
+
 
 	public LoginResponse() {
 	}

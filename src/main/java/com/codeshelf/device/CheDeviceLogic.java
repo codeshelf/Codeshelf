@@ -184,6 +184,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPickValue = mDeviceManager.getScanTypeValue();
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 		setScanNeededToVerifyPick(theEnum);
+
+		String mSequenceKind = mDeviceManager.getSequenceKind();
+
 	}
 	
 	public CheDeviceLogic(final UUID inPersistentId,
