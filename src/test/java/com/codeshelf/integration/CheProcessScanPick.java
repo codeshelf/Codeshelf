@@ -251,6 +251,29 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 	}
 
+	private void setUpOrdersWithCntrAndSequence(Facility inFacility) throws IOException {
+		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301, 4000"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.2,1493,PARK RANGER Doll,1,each, D302, 4001"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.3,1522,Butterfly Yoyo,3,each, D601, 2000"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.1,1122,8 oz Bowl Lids -PLA Compostable,2,each, D401, 3000"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.2,1522,Butterfly Yoyo,1,each, D601, 2000"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.3,1523,SJJ BPP,1,each, D602, 2001"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603, 2002"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604, 2003";
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+	}
+
 
 	/**
 	 * Wait until a recent CHE update went through the updateNetwork mechanism, replacing the device logic for the che
@@ -643,4 +666,109 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 	}
+	
+	/**
+	 * Simple test of Setup_Orders with SCANPICK. DEV-653 is the SCANPICK enhancement
+	 */
+	@Test
+	public final void testPfswebPicks() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+
+		this.getTenantPersistenceService().commitTransaction();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+
+		
+		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		DomainObjectProperty locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (locapickProperty != null) {
+			locapickProperty.setValue(false);
+			PropertyDao.getInstance().store(locapickProperty);
+		}
+		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		DomainObjectProperty seqrProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.WORKSEQR);
+		if (seqrProperty != null) {
+			seqrProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(seqrProperty);
+		}
+	
+		this.setUpOrdersWithCntrAndSequence(facility);
+		mPropertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+		
+		
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+		
+		// We would rather have the device manager know from parameter updates, but that does not happen yet in the integration test.
+		manager.setSequenceKind("WorkSequence");
+		Assert.assertEquals("WorkSequence", manager.getSequenceKind());
+		manager.setScanTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		picker.forceDeviceToMatchManagerConfiguration();
+		
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+
+		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		
+		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
+		picker.scanCommand("START");
+		
+		// Shouldn't we get work? We have supplied location, and sequence. 
+		/*
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		
+		LOGGER.info("1d: in WorkSequence mode, we scan start again, instead of a location");
+		picker.scanCommand("START");
+
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+		Assert.assertEquals(3, scWiList.size());
+		logWiList(scWiList);
+		
+		LOGGER.info("1f: scan the SKU. This data has 1493");
+		picker.scanSomething("1493");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("1g: now the button press works");
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals(2, picker.countRemainingJobs()); 
+
+		*/
+
+		// logout back to idle state.
+		/*
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		*/
+
+	}
+
 }
