@@ -162,6 +162,16 @@ public class UiUpdateService implements IApiService {
 		Che.DAO.store(che);
 	}
 	
+	public void deleteChe(final String cheId) {
+		Che che = Che.DAO.findByPersistentId(cheId);
+
+		if (che == null) {
+			LOGGER.error("Could not find che {0}", cheId);
+			return;	
+		}
+		Che.DAO.delete(che);
+	}
+	
 	public ProcessMode getDefaultProcessMode(String cheId){
 		Che che = Che.DAO.findByPersistentId(cheId);
 		if (che == null) {
