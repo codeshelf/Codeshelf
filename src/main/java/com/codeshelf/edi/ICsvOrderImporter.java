@@ -20,4 +20,7 @@ public interface ICsvOrderImporter {
 
 	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
 
+	// here for easier testablity
+	int toInteger(final String inString);
+
 }

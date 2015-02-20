@@ -669,6 +669,17 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+	
+		// a diversion to test the importer toInteger() function
+		// Data in this test has workSequence as " 4000" which uses to yield null.
+		ICsvOrderImporter importer3 = createOrderImporter();
+		Assert.assertEquals(0, importer3.toInteger("0"));
+		Assert.assertEquals(0, importer3.toInteger("000"));
+		Assert.assertEquals(0, importer3.toInteger(" 0"));
+		Assert.assertEquals(0, importer3.toInteger(" 00 "));
+		Assert.assertEquals(3, importer3.toInteger(" 3 "));
+		Assert.assertEquals(3, importer3.toInteger(" 003 "));
+
 		this.setUpOrdersWithCntrAndSequence(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -768,6 +779,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 			locapickProperty.setValue(true);
 			PropertyDao.getInstance().store(locapickProperty);
 		}
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
 		this.setUpOrdersWithCntrAndSequence(facility);
 		this.getTenantPersistenceService().commitTransaction();
 

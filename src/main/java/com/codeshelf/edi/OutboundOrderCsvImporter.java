@@ -823,10 +823,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
 		
+		String workSeq = inCsvBean.getWorkSequence();
 		try  {
-			String workSeq = inCsvBean.getWorkSequence();
 			if (workSeq != null) {
-				result.setWorkSequence(Integer.valueOf(workSeq));
+				result.setWorkSequence(toInteger((workSeq)));
 			}
 		} catch (NumberFormatException e) {
 			LOGGER.warn("prefered sequence could not be coerced to integer, setting to null: " + inCsvBean);
@@ -836,7 +836,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		int quantities = 0;
 		try {
 			if (!Strings.isNullOrEmpty(inCsvBean.getQuantity())) {
-				quantities = Integer.valueOf(inCsvBean.getQuantity());
+				quantities = toInteger(inCsvBean.getQuantity());
 			}
 		} catch (NumberFormatException e) {
 			LOGGER.warn("quantity could not be coerced to integer, setting to zero: " + inCsvBean);
@@ -846,7 +846,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMinQuantity() != null) {
-				Integer minVal = Integer.valueOf(inCsvBean.getMinQuantity());
+				Integer minVal = toInteger(inCsvBean.getMinQuantity());
 				if (minVal > result.getQuantity())
 					LOGGER.warn("minQuantity may not be higher than quantity");
 				else
@@ -855,7 +855,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 			// Override the max quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMaxQuantity() != null) {
-				Integer maxVal = Integer.valueOf(inCsvBean.getMaxQuantity());
+				Integer maxVal = toInteger(inCsvBean.getMaxQuantity());
 				if (maxVal < result.getQuantity())
 					LOGGER.warn("maxQuantity may not be lower than quantity");
 				else

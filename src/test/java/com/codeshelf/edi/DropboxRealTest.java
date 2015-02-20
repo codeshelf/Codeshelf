@@ -280,6 +280,10 @@ public class DropboxRealTest extends EdiTestABC {
 			// Provide a wrapper for CsvOrderImporter
 			ICsvOrderImporter testImporter = new ICsvOrderImporter() {
 				@Override
+				public int toInteger(final String inString) {
+					return 0;
+				}
+				@Override
 				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
 					Facility inFacility,
 					Timestamp inProcessTime) throws IOException {
