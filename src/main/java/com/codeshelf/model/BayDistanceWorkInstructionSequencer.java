@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ComparisonChain;
@@ -26,6 +25,7 @@ public class BayDistanceWorkInstructionSequencer extends WorkInstructionSequence
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(BayDistanceWorkInstructionSequencer.class);
 	//TODO utilize location comparator
+	@SuppressWarnings("unused")
 	private Comparator<Location> locationComparator;
 
 	public BayDistanceWorkInstructionSequencer() {

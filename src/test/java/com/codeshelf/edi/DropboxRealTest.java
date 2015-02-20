@@ -15,7 +15,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.DropboxService;
@@ -41,9 +40,6 @@ public class DropboxRealTest extends EdiTestABC {
 	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
 
-	static {
-		Configuration.loadConfig("test");
-	}
 	// This obtained by jon Oct. 5 2014.  Pretty easy. Just run server normally. Dropbox link, etc.  Then later, pull this from the provider_credentials field in the database.
 	private final static String			TEST_CREDENTIALS3	= "rMS4NWXXc90AAAAAAAAAbXlihAPhBC7TafUSn3Tla4H3U43UauXCuWsFA7U3K-1U";
 

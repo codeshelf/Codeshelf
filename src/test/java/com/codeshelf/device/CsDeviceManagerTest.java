@@ -31,7 +31,6 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.util.MemoryConfiguration;
 
 public class CsDeviceManagerTest extends DAOTestABC {
 	
@@ -78,7 +77,7 @@ public class CsDeviceManagerTest extends DAOTestABC {
 		Session mockSession = mock(Session.class);
 		when(mockSession.isOpen()).thenReturn(true);
 		when(container.connectToServer(any(Endpoint.class), any(URI.class))).thenReturn(mockSession);
-		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, new MemoryConfiguration(properties), container);
+		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, container);
 		
 		deviceManager.start();
 		

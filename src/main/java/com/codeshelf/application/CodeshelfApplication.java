@@ -30,7 +30,7 @@ import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
-public abstract class ApplicationABC implements ICodeshelfApplication {
+public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	public enum ShutdownCleanupReq {
 		NONE , 
 		DROP_SCHEMA , 
@@ -38,7 +38,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		DELETE_ORDERS_WIS_INVENTORY
 		};
 		
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CodeshelfApplication.class);
 
 	private boolean				mIsRunning	= true;
 	private Thread				mShutdownHookThread;
@@ -47,7 +47,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	private WebApiServer apiServer;
 
 	@Inject
-	public ApplicationABC(WebApiServer apiServer) {
+	public CodeshelfApplication(WebApiServer apiServer) {
 		this.apiServer = apiServer;
 	}
 
@@ -93,7 +93,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		
 		//Need the following line to know at a glance when startup is complete
 		LOGGER.info("------------------------------------------------------------");
-		LOGGER.info("Started app version {} - process info {} ",Configuration.getVersionString(),processName);
+		LOGGER.info("Started app version {} - process info {} ",JvmProperties.getVersionString(),processName);
 	}
 
 	// --------------------------------------------------------------------------
@@ -160,7 +160,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 				// Only execute this hook if the application is still running at (external) shutdown.
 				// (This is to help where the shutdown is done externally and not through our own means.)
 				if (mIsRunning) {
-					stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
+					stopApplication(CodeshelfApplication.ShutdownCleanupReq.NONE);
 				}
 			}
 		};

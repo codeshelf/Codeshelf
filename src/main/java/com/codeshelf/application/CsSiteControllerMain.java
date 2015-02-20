@@ -24,8 +24,6 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
-import com.codeshelf.util.IConfiguration;
-import com.codeshelf.util.JVMSystemConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -40,7 +38,7 @@ public final class CsSiteControllerMain {
 
 	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Configuration.loadConfig("sitecontroller");
+		JvmProperties.load("sitecontroller");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
@@ -90,9 +88,9 @@ public final class CsSiteControllerMain {
 
 	// --------------------------------------------------------------------------
 	
-	public static CsSiteControllerApplication createApplication(Module guiceModule) {
+	public static SiteControllerApplication createApplication(Module guiceModule) {
 		Injector injector = Guice.createInjector(guiceModule);
-		return injector.getInstance(CsSiteControllerApplication.class); 
+		return injector.getInstance(SiteControllerApplication.class); 
 	}
 	
 	public static class BaseModule extends AbstractModule {
@@ -100,9 +98,8 @@ public final class CsSiteControllerMain {
 		@Override
 		protected void configure() {
 			bind(WebSocketContainer.class).toInstance(websocketContainer);
-			bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
+			bind(ICodeshelfApplication.class).to(SiteControllerApplication.class);
 			bind(IRadioController.class).to(RadioController.class);
-			bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 			bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 		}
 		

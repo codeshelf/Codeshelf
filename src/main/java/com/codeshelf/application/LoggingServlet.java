@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 
 @SuppressWarnings("serial")
@@ -66,7 +67,7 @@ public class LoggingServlet extends HttpServlet {
         
         out.println("</form><h4>available loggers:</h4>");
         
-        org.apache.logging.log4j.core.config.Configuration conf = getConfiguration();
+        Configuration conf = getConfiguration();
         Collection<LoggerConfig> logConfigs = conf.getLoggers().values();
         
         ArrayList<String> loggerDescriptions = new ArrayList<String>();
@@ -85,7 +86,7 @@ public class LoggingServlet extends HttpServlet {
 
     }
     
-    private org.apache.logging.log4j.core.config.Configuration getConfiguration() {
+    private Configuration getConfiguration() {
         LoggerContext ctx = (LoggerContext)LogManager.getContext(false);
         return ctx.getConfiguration();
     }
@@ -96,7 +97,7 @@ public class LoggingServlet extends HttpServlet {
 		if(loggerName.isEmpty())
 			return null;
 
-		org.apache.logging.log4j.core.config.Configuration conf = getConfiguration();
+		Configuration conf = getConfiguration();
 		LoggerConfig logger = conf.getLoggerConfig(loggerName);
 		if (logger == null) {
 			return "Invalid logger name - "+loggerName;

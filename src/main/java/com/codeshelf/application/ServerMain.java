@@ -104,8 +104,6 @@ import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
-import com.codeshelf.util.IConfiguration;
-import com.codeshelf.util.JVMSystemConfiguration;
 import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
@@ -133,7 +131,7 @@ public final class ServerMain {
 	
 	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Configuration.loadConfig("server");
+		JvmProperties.load("server");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ServerMain.class);
@@ -176,7 +174,6 @@ public final class ServerMain {
 				bind(TenantPersistenceService.class).toInstance(TenantPersistenceService.getInstance());
 				bind(GuiceFilter.class);
 				
-				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);

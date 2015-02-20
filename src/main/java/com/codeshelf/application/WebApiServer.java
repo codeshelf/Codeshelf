@@ -58,7 +58,7 @@ public class WebApiServer {
 		this.server = new Server();
 	}
 
-	public final void start(int port, ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement, String staticContentPath) {
+	public final void start(int port, ICsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement, String staticContentPath) {
 		try {
 			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 			connector.setPort(port);
@@ -121,7 +121,7 @@ public class WebApiServer {
         return holderJsp;
     }
     
-	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, ApplicationABC application, boolean enableSchemaManagement) throws FileNotFoundException, URISyntaxException {
+	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement) throws FileNotFoundException, URISyntaxException {
 		ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		
 		contextHandler.setContextPath("/adm");

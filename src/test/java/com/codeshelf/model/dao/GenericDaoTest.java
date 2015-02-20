@@ -11,7 +11,6 @@ import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -19,10 +18,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 
 public class GenericDaoTest extends DAOTestABC {
-		
-	static {
-		Configuration.loadConfig("test");
-	}
 	
 	public GenericDaoTest() {
 	}

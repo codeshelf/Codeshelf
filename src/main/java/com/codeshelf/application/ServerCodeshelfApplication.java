@@ -6,7 +6,6 @@
 
 package com.codeshelf.application;
 
-import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -29,12 +28,11 @@ import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
-import com.codeshelf.util.IConfiguration;
 import com.codeshelf.ws.jetty.server.ServerWatchdogThread;
 import com.codeshelf.ws.jetty.server.SessionManager;
 import com.google.inject.Inject;
 
-public final class ServerCodeshelfApplication extends ApplicationABC {
+public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
@@ -52,8 +50,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	private final ServerWatchdogThread watchdog;
 
 	@Inject
-	public ServerCodeshelfApplication(final IConfiguration configuration,
-			final IEdiProcessor inEdiProcessor,
+	public ServerCodeshelfApplication(final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
 			final TenantPersistenceService tenantPersistenceService,
@@ -68,8 +65,8 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 			
 		// create and configure watch dog
 		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
-		boolean suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive");
-		boolean killIdle = configuration.getBoolean("websocket.idle.kill");
+		boolean suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
+		boolean killIdle = Boolean.getBoolean("websocket.idle.kill");
 		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
 		this.watchdog.setKillIdle(killIdle);
 

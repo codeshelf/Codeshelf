@@ -185,10 +185,12 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		return instructions;
 	}
 	
+	@SuppressWarnings("unused")
 	private static class StubLocationComparator implements Comparator<Location> {
 
 		private Ordering<Location> ordering;
 		
+		@SuppressWarnings({ "unchecked" })
 		public StubLocationComparator(Location... locations) {
 			this.ordering = Ordering.explicit(Arrays.<Location>asList(locations));
 		}
