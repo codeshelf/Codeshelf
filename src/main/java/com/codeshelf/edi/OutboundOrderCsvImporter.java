@@ -461,6 +461,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					if (thisDetailHadOldDifferentPreferredLocation) {
 						// We need to find the item at the old location. Then determine if a new item was made at the new location. If so, add the old item to a list for investigation.
 						Location oldLocation = inFacility.findSubLocationById(oldStr);
+						// DEV-635 note  if location is not resolved, but order detail will be ok with preferred location and sequence, then we can make inventory if we wish at facility. Only if LOCAPICK is true.
 						if (oldLocation != null) {
 							// we would normally expect the old location to have an inventory item there.
 							LOGGER.info("Old location for changing orderdetail was " + oldStr);
