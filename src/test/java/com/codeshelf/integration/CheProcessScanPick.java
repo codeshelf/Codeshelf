@@ -669,7 +669,18 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		setUpLineScanOrdersNoCntr(facility);
+	
+		// a diversion to test the importer toInteger() function
+		// Data in this test has workSequence as " 4000" which uses to yield null.
+		ICsvOrderImporter importer3 = createOrderImporter();
+		Assert.assertEquals(0, importer3.toInteger("0"));
+		Assert.assertEquals(0, importer3.toInteger("000"));
+		Assert.assertEquals(0, importer3.toInteger(" 0"));
+		Assert.assertEquals(0, importer3.toInteger(" 00 "));
+		Assert.assertEquals(3, importer3.toInteger(" 3 "));
+		Assert.assertEquals(3, importer3.toInteger(" 003 "));
+
+		this.setUpOrdersWithCntrAndSequence(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -702,12 +713,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		if (seqrProperty != null) {
 			seqrProperty.setValue("WorkSequence");
 			PropertyDao.getInstance().store(seqrProperty);
-		}
-	
-		this.setUpOrdersWithCntrAndSequence(facility);
+		}	
 		mPropertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
-		
+		this.getTenantPersistenceService().commitTransaction();	
 		
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
@@ -730,10 +738,12 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
 		
+		// DEV-637 note. After that is implemented, we would get plans here even though LOCAPICK is off and we do not get any inventory.		
 		// Shouldn't we get work? We have supplied location, and sequence. 
+		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		// picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+
 		/*
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
-		
 		LOGGER.info("1d: in WorkSequence mode, we scan start again, instead of a location");
 		picker.scanCommand("START");
 
@@ -743,11 +753,11 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(3, scWiList.size());
 		logWiList(scWiList);
 		
-		LOGGER.info("1f: scan the SKU. This data has 1493");
+		LOGGER.info("1e: scan the SKU. This data has 1493");
 		picker.scanSomething("1493");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		
-		LOGGER.info("1g: now the button press works");
+		LOGGER.info("1f: the button press works");
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
@@ -758,11 +768,76 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		*/
 
 		// logout back to idle state.
-		/*
 		picker.logout();
-		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		*/
+		
+		LOGGER.info("2a: Redo, but with LOCAPICK on. SCANPICK, WORKSEQR as in case 1");
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		if (locapickProperty != null) {
+			locapickProperty.setValue(true);
+			PropertyDao.getInstance().store(locapickProperty);
+		}
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		this.setUpOrdersWithCntrAndSequence(facility);
+		this.getTenantPersistenceService().commitTransaction();
 
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+
+		LOGGER.info("2b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		
+		LOGGER.info("2c: START. Should get some work");
+		picker.scanCommand("START");
+		
+		// Probably important. The case above yields some problems so that we hit LOCATION_SELECT_REVIEW state.
+		// Really should replicate this test case that is all clean so it goes to LOCATION_SELECT state.  The second START should work there also.
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+				
+		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+		Assert.assertEquals(3, scWiList.size());
+		logWiList(scWiList);
+		
+		LOGGER.info("2e:work through it, making sure it matches the work sequence order.");
+		// 1122 at loc D401 had workSequence 3000; 1123-D301-4000, 1493-D302-4001
+		picker.scanSomething("1122");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D401", picker.getLastCheDisplayString());		
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		picker.scanSomething("1123");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D301", picker.getLastCheDisplayString());		
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		picker.scanSomething("1493");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D302", picker.getLastCheDisplayString());		
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		
+		picker.logout();			
 	}
 
 }

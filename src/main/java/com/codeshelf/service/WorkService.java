@@ -898,6 +898,8 @@ public class WorkService implements IApiService {
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
+		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
+		// we can make the work instruction anyway. Not implemented yet.
 		if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
 			// If there is no item in inventory for that uom (AT ALL) then create a PLANNED, SHORT WI for this order detail.
 

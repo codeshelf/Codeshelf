@@ -19,6 +19,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
@@ -62,6 +63,25 @@ public class CreateCheTest extends DAOTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
+	@Test
+	public final void testDeleteChe() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = createFacility();
+		Facility.DAO.store(facility);		
+		
+		UiUpdateService service = new UiUpdateService();
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		service.deleteChe(cheid.toString());
+
+		Che che = Che.DAO.findByPersistentId(cheid);
+		Assert.assertNull(che);
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	
 	@Test
 	// TODO: create proper mock daoProvider / set up injector /?
 	public final void testUpdateCheOK() {
