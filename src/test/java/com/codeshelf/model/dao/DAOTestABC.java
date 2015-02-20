@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Aisle.AisleDao;
 import com.codeshelf.model.domain.Bay;
@@ -87,7 +87,7 @@ public abstract class DAOTestABC {
 	public TestName testName = new TestName();
 	
 	static {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 		try {
 			org.h2.tools.Server.createWebServer("-webPort", "8082").start();
 		} catch (SQLException e) {

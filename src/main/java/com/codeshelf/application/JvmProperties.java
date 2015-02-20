@@ -9,21 +9,23 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
-public final class Configuration {
-	private static Boolean mainConfigDone = null;
+public final class JvmProperties {
+	private static Boolean loaded = null;
 
 	/**
-	 * prepare to run application by configuring system properties + logging subsystems. should be called from static block before main() and injection.
+	 * prepare to run application by configuring system properties + logging subsystems. 
+	 * should be called from static block before main() and injection.
+	 * 
 	 * @param appName the name of the app running (sitecontroller or server or test)  
 	 */
-	public static synchronized void loadConfig(String appName) {		
-		if (mainConfigDone!=null) {
+	public static synchronized void load(String appName) {		
+		if (loaded!=null) {
 			return;
 		}
-		mainConfigDone=true;
+		loaded=true;
 
 		// set path for local log file automatically, if not configured
-		System.setProperty("log.file.location", Configuration.getApplicationLogDirPath());
+		System.setProperty("log.file.location", JvmProperties.getApplicationLogDirPath());
 		System.setProperty("log.file.basename", appName);
 
 		// load app configuration from various places
@@ -60,25 +62,25 @@ public final class Configuration {
 		}
 		
 		// initialize logging + all supported APIs
-		org.apache.logging.log4j.Logger log4j2_logger = org.apache.logging.log4j.LogManager.getLogger(Configuration.class.getName()+".log4j2");
+		org.apache.logging.log4j.Logger log4j2_logger = org.apache.logging.log4j.LogManager.getLogger(JvmProperties.class.getName()+".log4j2");
 		log4j2_logger.info("logging: log4j (v2)");
 		
-		org.slf4j.Logger slf4j_logger = org.slf4j.LoggerFactory.getLogger(Configuration.class.getName()+".slf4j");
+		org.slf4j.Logger slf4j_logger = org.slf4j.LoggerFactory.getLogger(JvmProperties.class.getName()+".slf4j");
 		slf4j_logger.info("logging: slf4j");
 		
-		java.util.logging.Logger jul_logger = java.util.logging.Logger.getLogger(Configuration.class.getName()+".jul");
+		java.util.logging.Logger jul_logger = java.util.logging.Logger.getLogger(JvmProperties.class.getName()+".jul");
 		jul_logger.log(java.util.logging.Level.INFO, "logging: java.util.logging");
 		
-		org.apache.commons.logging.Log commons_logger = org.apache.commons.logging.LogFactory.getLog(Configuration.class.getName()+".commons");
+		org.apache.commons.logging.Log commons_logger = org.apache.commons.logging.LogFactory.getLog(JvmProperties.class.getName()+".commons");
 		commons_logger.info("logging: commons");
 		
-		org.apache.log4j.Logger log4j12_logger = org.apache.log4j.LogManager.getLogger(Configuration.class.getName()+".log4j12");
+		org.apache.log4j.Logger log4j12_logger = org.apache.log4j.LogManager.getLogger(JvmProperties.class.getName()+".log4j12");
 		log4j12_logger.info("logging: log4j (v1.2)");
 		
-		org.jboss.logging.Logger jboss_logger = org.jboss.logging.Logger.getLogger(Configuration.class.getName()+".jboss");
+		org.jboss.logging.Logger jboss_logger = org.jboss.logging.Logger.getLogger(JvmProperties.class.getName()+".jboss");
 		jboss_logger.info("logging: jboss");
 		
-		org.eclipse.jetty.util.log.Logger jetty_logger = org.eclipse.jetty.util.log.Log.getLogger(Configuration.class.getName()+".jetty");
+		org.eclipse.jetty.util.log.Logger jetty_logger = org.eclipse.jetty.util.log.Log.getLogger(JvmProperties.class.getName()+".jetty");
 		jetty_logger.info("logging: jetty");
 	}
 		
@@ -188,7 +190,7 @@ public final class Configuration {
 	/**
 	 *  @return
 	 */
-	public static String getApplicationDataDirPath() {
+	private static String getApplicationDataDirPath() {
 		String result = "";
 	
 		// Setup the data directory for this application.
@@ -214,7 +216,7 @@ public final class Configuration {
 	/**
 	 * @return
 	 */
-	public static String getApplicationLogDirPath() {
+	private static String getApplicationLogDirPath() {
 		String result = "";
 	
 		// Setup the data directory for this application.
@@ -274,65 +276,5 @@ public final class Configuration {
 		result += "." + versionProps.getProperty("version.revision");
 		return result;
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	
-	public static Cipher getCipher(int inMode, char[] inPassword) throws Exception {
-	
-		int saltBytes = 8;
-		byte[] salt = new byte[saltBytes];
-		int count = 20;
-	
-		// First let's get the salt from the .salt file.
-		// NB: The salt is not secret - it's just meant to protect against dictionary attacks on the PBE algol for various keys.
-		File file = new File(getApplicationDataDirPath() + File.separatorChar + ".salt");
-		if (!file.exists()) {
-			// The salt file didn't exist, so let's create one, and populate it with a new, random salt.
-	
-			// First let's create a new, random salt.
-			Random randomBytes = new SecureRandom();
-			randomBytes.nextBytes(salt);
-	
-			// Now store that new salt value in the file.
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				System.err.println("FATAL: Unable to create salt file "+file.getName());
-				Util.exitSystem();
-			}
-			FileOutputStream outputStream = new FileOutputStream(file);
-			outputStream.write(salt, 0, saltBytes);
-			outputStream.close();
-		} else {
-			FileInputStream inputStream = new FileInputStream(file);
-			int bytesRead = inputStream.read(salt, 0, saltBytes);
-			if (bytesRead == 0) {
-				System.err.println("FATAL: Unable to read salt value from "+file.getName());
-				Util.exitSystem();
-			}
-			inputStream.close();
-		}
-	
-		PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
-		PBEKeySpec pbeKeySpec = new PBEKeySpec(inPassword);
-		SecretKeyFactory keyFac = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-		SecretKey pbeKey = keyFac.generateSecret(pbeKeySpec);
-		Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-	
-		switch (inMode) {
-			case Cipher.ENCRYPT_MODE:
-				pbeCipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParamSpec);
-				break;
-			case Cipher.DECRYPT_MODE:
-				pbeCipher.init(Cipher.DECRYPT_MODE, pbeKey, pbeParamSpec);
-				break;
-			default:
-				assert (false);
-		}
-	
-		return pbeCipher;
-	}
-	*/
 }
 

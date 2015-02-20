@@ -11,7 +11,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.util.ConverterProvider;
@@ -26,10 +25,6 @@ import com.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectMethodCommandTest extends DomainTestABC {
-
-	static {
-		Configuration.loadConfig("server");
-	}
 
 	@Test
 	// this should really be an integration test

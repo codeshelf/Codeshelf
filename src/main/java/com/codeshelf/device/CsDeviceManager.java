@@ -34,7 +34,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.util.IConfiguration;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.ThreadUtils;
@@ -126,26 +125,25 @@ public class CsDeviceManager implements
 
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController,
-		final IConfiguration configuration,
 		final WebSocketContainer inWebSocketContainer) {
 		// fetch properties from config file
-		radioEnabled = configuration.getBoolean("radio.enabled", true);
-		mUri = URI.create(configuration.getString("websocket.uri"));
-		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
-		idleKill = configuration.getBoolean("websocket.idle.kill", false);
+		radioEnabled = Boolean.getBoolean("radio.enabled");
+		mUri = URI.create(System.getProperty("websocket.uri"));
+		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
+		idleKill = Boolean.getBoolean("websocket.idle.kill");
 
 		this.webSocketContainer = inWebSocketContainer;
 
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		username = configuration.getString("websocket.username");
-		password = configuration.getString("websocket.password");
+		username = System.getProperty("websocket.username");
+		password = System.getProperty("websocket.password");
 
-		if (configuration.getBoolean("pcapbuffer.enable", false)) {
+		if (Boolean.getBoolean("pcapbuffer.enable")) {
 			// set up ring buffer
-			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
-			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);
+			int pcSize = Integer.getInteger("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
+			int pcSlack = Integer.getInteger("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);
 			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack);
 
 			// listen for packets

@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
@@ -24,7 +24,7 @@ public class OptimisticLockExceptionTest {
 
 	@Before
 	public final void setup() {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 		tenantPersistenceService = TenantPersistenceService.getInstance();
 		OrderHeader.DAO = new OrderHeaderDao(tenantPersistenceService);
 		OrderDetail.DAO = new OrderDetailDao(tenantPersistenceService);
