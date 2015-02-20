@@ -99,10 +99,6 @@ public class CsDeviceManager implements
 
 	private boolean										isAttachedToServer			= false;
 
-	@Getter
-	@Setter
-	boolean												radioEnabled				= true;
-
 	private boolean										autoShortValue				= true;											// getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
 
 	@Getter
@@ -116,7 +112,7 @@ public class CsDeviceManager implements
 	@Getter
 	@Setter
 	private String										scanTypeValue				= "Disabled";
-	
+
 	@Getter
 	@Setter
 	private String										sequenceKind				= "BayDistance";
@@ -124,10 +120,8 @@ public class CsDeviceManager implements
 	private WebSocketContainer							webSocketContainer;
 
 	@Inject
-	public CsDeviceManager(final IRadioController inRadioController,
-		final WebSocketContainer inWebSocketContainer) {
+	public CsDeviceManager(final IRadioController inRadioController, final WebSocketContainer inWebSocketContainer) {
 		// fetch properties from config file
-		radioEnabled = Boolean.getBoolean("radio.enabled");
 		mUri = URI.create(System.getProperty("websocket.uri"));
 		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
 		idleKill = Boolean.getBoolean("websocket.idle.kill");
@@ -157,6 +151,11 @@ public class CsDeviceManager implements
 
 	}
 
+	private boolean isRadioEnabled() {
+		// leaving as a function for now. But currently, no known use case for CsDeviceManager that does not have a radio
+		return true;
+	}
+
 	@Override
 	public boolean getAutoShortValue() {
 		return autoShortValue;
@@ -170,7 +169,7 @@ public class CsDeviceManager implements
 	private final void startRadio(CodeshelfNetwork network) {
 		if (radioController.isRunning()) {
 			LOGGER.warn("Radio controller is already running, cannot start again");
-		} else if (this.radioEnabled) {
+		} else if (this.isRadioEnabled()) {
 			// start radio controller
 			NetworkId networkId = new NetworkId(network.getNetworkNum().byteValue());
 			radioController.setNetworkId(networkId);
@@ -514,7 +513,7 @@ public class CsDeviceManager implements
 		if (existingDevice == null || !deviceGuid.equals(existingDevice.getGuid())) {
 			LOGGER.error("misuse of updateOneDevice()");
 			return existingDevice;
-		}			
+		}
 		doCreateUpdateNetDevice(persistentId, deviceGuid, newProcessType);
 		INetworkDevice newDevice = mDeviceMap.get(persistentId);
 		return newDevice;
@@ -614,7 +613,7 @@ public class CsDeviceManager implements
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
-	
+
 	public void processFailureResponse(FailureResponse failure) {
 		String cheGuidStr = failure.getCheId();
 		if (cheGuidStr != null) {
@@ -622,7 +621,7 @@ public class CsDeviceManager implements
 			CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheGuid);
 			if (cheDevice != null) {
 				String message = failure.getStatusMessage();
-				cheDevice.sendDisplayCommand("Server Error", message==null?"":message);
+				cheDevice.sendDisplayCommand("Server Error", message == null ? "" : message);
 			} else {
 				LOGGER.warn("Unable to process failure response for CHE id={} CHE not found", cheGuid);
 			}
@@ -633,7 +632,7 @@ public class CsDeviceManager implements
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
 			LOGGER.info("processDisplayCheMessage calling cheDevice.sendDisplayCommand()");
-			cheDevice.sendDisplayCommand(line1, line2, line3, line4);			
+			cheDevice.sendDisplayCommand(line1, line2, line3, line4);
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
