@@ -12,6 +12,7 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.google.common.util.concurrent.Service.State;
 
 public class TenantPersistenceService extends PersistenceService<Tenant> {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
@@ -22,15 +23,24 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 		super();
 	}
 
-	public final synchronized static TenantPersistenceService getInstance() {
+	/**
+	 * singleton service: any method attempting to access before service 
+	 * is initialized will block; only the service manager can start service 
+	 */
+	public final synchronized static TenantPersistenceService getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantPersistenceService();
-			theInstance.start();
 		}
-		else if (!theInstance.isRunning()) {
-			theInstance.start();
-			LOGGER.info("PersistanceService was stopped and restarted");
+		return theInstance;
+	}
+	public final synchronized static TenantPersistenceService getNonRunningInstance() {
+		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
+			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
+		return theInstance;
+	}	
+	public final static TenantPersistenceService getInstance() {
+		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
 	}
 
@@ -70,5 +80,10 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 		}
 		// not a domain object
 		return null;
+	}
+
+	@Override
+	protected String serviceName() {
+		return this.getClass().getSimpleName();
 	}
 }

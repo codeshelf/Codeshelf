@@ -96,8 +96,8 @@ public class WorkService implements IApiService {
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
 
-	@Getter
-	private TenantPersistenceService			tenantPersistenceService;
+//	@Getter
+//	private TenantPersistenceService			tenantPersistenceService;
 
 	private WorkServiceThread			wsThread					= null;
 	private static boolean				aWorkServiceThreadExists	= false;
@@ -135,7 +135,7 @@ public class WorkService implements IApiService {
 	}
 
 	private void init(IEdiExportServiceProvider exportServiceProvider) {
-		this.tenantPersistenceService = TenantPersistenceService.getInstance();
+//		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
@@ -188,7 +188,7 @@ public class WorkService implements IApiService {
 			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
-				tenantPersistenceService.beginTransaction();
+				TenantPersistenceService.getInstance().beginTransaction();
 				boolean sent = false;
 				while (!sent) {
 					try {
@@ -200,9 +200,9 @@ public class WorkService implements IApiService {
 						Thread.sleep(retryDelay);
 					}
 				}
-				tenantPersistenceService.commitTransaction();
+				TenantPersistenceService.getInstance().commitTransaction();
 			} catch (Exception e) {
-				tenantPersistenceService.rollbackTenantTransaction();
+				TenantPersistenceService.getInstance().rollbackTenantTransaction();
 				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 			}
 		}

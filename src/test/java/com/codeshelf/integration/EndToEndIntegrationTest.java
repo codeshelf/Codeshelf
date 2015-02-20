@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 
@@ -211,7 +212,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	}
 
 	@Override
-	public void doAfter() {
+	public void doAfter() throws TimeoutException {
 		// roll back transaction if active
 		if (TenantPersistenceService.getInstance().hasAnyActiveTransaction()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");

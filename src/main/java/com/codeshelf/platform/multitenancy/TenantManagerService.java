@@ -3,6 +3,8 @@ package com.codeshelf.platform.multitenancy;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 
@@ -16,18 +18,16 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.Service;
 import com.codeshelf.platform.persistence.DatabaseConnection;
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Singleton;
 
-@Singleton
-public class TenantManagerService extends Service implements ITenantManager {
+public class TenantManagerService extends AbstractIdleService implements ITenantManager {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
+	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 15;
 	private static TenantManagerService theInstance = null;
-	
-	ManagerPersistenceService managerPersistenceService;
 	
 	@Getter
 	int defaultShardId = -1;
@@ -38,41 +38,32 @@ public class TenantManagerService extends Service implements ITenantManager {
 	
 	private TenantManagerService() {
 		super();
-		setInstance();
 	}
 	
-	private void setInstance() {
-		TenantManagerService.theInstance = this;
-	}
-	
-	public final synchronized static ITenantManager getInstance() {
+	public final synchronized static ITenantManager getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantManagerService();
-			theInstance.start();
-			//LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
-		}
-		else if (!theInstance.isRunning()) {
-			theInstance.start();
-			LOGGER.info("PersistanceService was stopped and restarted");
 		}
 		return theInstance;
 	}
-
-	@Override
-	public boolean start() {
-		if(isRunning()) {
-			LOGGER.error("tried to start TenantManagerService but was already running");
-			return false;
-		} // else
-		managerPersistenceService=ManagerPersistenceService.getInstance();
-		
-		initDefaultShard();
-		
-		this.setRunning(true);
-		return true;
+	public final static ITenantManager getNonRunningInstance() {
+		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
+			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
+		}
+		return theInstance;
+	}
+	public final static ITenantManager getInstance() {
+		try {
+			getMaybeRunningInstance().awaitRunning(MAX_TENANT_MANAGER_WAIT_SECS,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new IllegalStateException("Timeout contacting tenant manager",e);
+		}
+		return theInstance;
 	}
 	
 	private void initDefaultShard() {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		Criteria criteria = session.createCriteria(Shard.class);
 		criteria.add(Restrictions.eq("name", DEFAULT_SHARD_NAME));
@@ -132,17 +123,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 		return tenant;
 	}
 
-	@Override
-	public boolean stop() {
-		if(isRunning()) {
-			managerPersistenceService.stop();
-			this.setRunning(false);
-			return true;
-		} // else
-		LOGGER.error("Tried to stop TenantManagerService but was not running");
-		return false;
-	}
-	
 	@SuppressWarnings("unchecked")
 	private User getUser(Session session,String username) {
 		User result = null;
@@ -177,25 +157,11 @@ public class TenantManagerService extends Service implements ITenantManager {
 		return (user == null);
 	}
 	
-	@Override
-	public boolean connect() {
-		if(!isRunning()) {
-			start();
-		}
-		return true;
-	}
-
-	@Override
-	public void disconnect() {
-		if(isRunning()) {
-			stop();
-		}
-	}
-	
 	//////////////////////////// Manager Service API ////////////////////////////////
 	
 	@Override
 	public boolean canCreateUser(String username) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
 		// for UI
 		boolean result = false;
 		try {
@@ -209,6 +175,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 	
 	@Override
 	public User createUser(Tenant tenant,String username,String password,UserType type) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		User result=null;
 		
 		try {
@@ -234,6 +202,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public void resetTenant(Tenant tenant) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		LOGGER.warn("Resetting schema and users for "+tenant.toString());
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
@@ -266,6 +236,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 	
 	@Override
 	public User getUser(String username) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		User result = null;
 		
 		try {
@@ -284,6 +256,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public Tenant getTenantByUsername(String username) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Tenant result = null;
 		
 		try {
@@ -300,6 +274,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public Tenant getTenantByName(String name) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Tenant result = null;
 		
 		try {
@@ -321,6 +297,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public Tenant createTenant(String name, int shardId, String dbUsername) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		// use username as schemaname when creating tenant
 		String schemaName = dbUsername;
 		
@@ -339,6 +317,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Collection<Tenant> getTenants() {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Collection<Tenant> results = null;
 		
 		try {
@@ -382,6 +362,15 @@ public class TenantManagerService extends Service implements ITenantManager {
 		LOGGER.warn("Deleting tenant schema "+schemaName);
 		tenant.executeSQL("DROP SCHEMA "+schemaName+
 			((tenant.getSQLSyntax()==DatabaseConnection.SQLSyntax.H2)?"":" CASCADE"));
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		initDefaultShard();
+	}
+
+	@Override
+	protected void shutDown() throws Exception {
 	}
 
 }
