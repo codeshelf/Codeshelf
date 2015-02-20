@@ -101,6 +101,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			NO_COMMAND								= "NO";
 	protected static final String			CLEAR_ERROR_COMMAND						= "CLEAR";
 
+	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
+	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
+	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
+	protected static final String			OR_SCAN_START							= cheLine("OR SCAN START");
+	protected static final String			OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
+
 	protected static final Integer			maxCountForPositionControllerDisplay	= 99;
 
 	// The CHE's current state.
@@ -149,7 +155,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	protected int 							mSetStateStackCount						= 0;
+	protected int							mSetStateStackCount						= 0;
 
 	protected ScanNeededToVerifyPick		mScanNeededToVerifyPick;
 
