@@ -75,8 +75,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	protected void setState(final CheStateEnum inCheState) {
+		int priorCount = getSetStateStackCount();
 		try {
-			markInSetState(true);
+			// This is tricky. setState() may have side effects that call setState. So even as the internal setState is done, the first one may not be done.
+			// Therefore, a counter instead of a boolean.
+			setSetStateStackCount(priorCount + 1);
 			CheStateEnum previousState = mCheStateEnum;
 			boolean isSameState = previousState == inCheState;
 			mCheStateEnum = inCheState;
@@ -190,7 +193,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 			}
 		} finally {
-			markInSetState(false);
+			setSetStateStackCount(priorCount);
 		}
 	}
 

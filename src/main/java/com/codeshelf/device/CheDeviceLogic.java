@@ -146,7 +146,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected Integer						mShortPickQty;
 
 	protected boolean						connectedToServer						= true;
-	private boolean							mInSetState								= false;
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	protected int 							mSetStateStackCount						= 0;
 
 	protected ScanNeededToVerifyPick		mScanNeededToVerifyPick;
 
@@ -215,13 +218,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		return 180;
 	}
 
-	// See confluence Codeshelf software patterns page on setState.
-	protected void markInSetState(boolean inValue) {
-		mInSetState = inValue;
-	}
-
 	public boolean inSetState() {
-		return mInSetState;
+		return mSetStateStackCount > 0;
 	}
 
 	public String getDeviceType() {
