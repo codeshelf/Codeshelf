@@ -782,18 +782,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Factor this out as it is called from two places. The normal processLocationScan, and skipping the location scan if just going by sequence.
+	 * @param inLocationStr
+	 */
+	private void requestWorkAndSetGetWorkState(final String inLocationStr) {
+			clearAllPositionControllers();
+			this.mLocationId = inLocationStr;
+			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr);
+			setState(CheStateEnum.GET_WORK);
+		}
+	// --------------------------------------------------------------------------
+	/**
 	 * @param insScanPrefixStr
 	 * @param inScanStr
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			clearAllPositionControllers();
-
-			this.mLocationId = inScanStr;
-			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
-
-			setState(CheStateEnum.GET_WORK);
-
+			requestWorkAndSetGetWorkState(inScanStr);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
 			invalidScanMsg(mCheStateEnum);
@@ -1171,7 +1176,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
 				break;
 
-			//Anywhere else we can start work if there's anything setup
+			case LOCATION_SELECT:
+			case LOCATION_SELECT_REVIEW:
+				// Normally, start work here would hit the default case below, calling start work() which queries to server again
+				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
+				if (isOkToStartWithoutLocation()) {
+					LOGGER.info("starting without a start location");
+					requestWorkAndSetGetWorkState(""); 
+				}
+				else { // do as we did before
+					if (mPositionToContainerMap.values().size() > 0) {
+						startWork();
+					} else {
+						setState(CheStateEnum.NO_CONTAINERS_SETUP);
+					}				
+				}
+				break;
+
+				//Anywhere else we can start work if there's anything setup
 			case CONTAINER_SELECT:
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {

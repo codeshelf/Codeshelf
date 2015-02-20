@@ -793,26 +793,49 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2"); 
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		
-		LOGGER.info("2c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
+		LOGGER.info("2c: START. Should get some work");
 		picker.scanCommand("START");
 		
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 				
 		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
 		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
-		/*
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
 		Assert.assertEquals(3, scWiList.size());
 		logWiList(scWiList);
-
+		
+		LOGGER.info("2e:work through it, making sure it matches the work sequence order.");
+		// 1122 at loc D401 had workSequence 3000; 1123-D301-4000, 1493-D302-4001
+		picker.scanSomething("1122");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D401", picker.getLastCheDisplayString());		
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
-		picker.logout();
-				*/
-
-
+		picker.scanSomething("1123");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D301", picker.getLastCheDisplayString());		
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		picker.scanSomething("1493");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D302", picker.getLastCheDisplayString());		
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		
+		picker.logout();			
 	}
 
 }
