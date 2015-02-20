@@ -240,7 +240,7 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
 				}).to(DropboxServiceDao.class);
 
-				requestStaticInjection(EdiServiceABCDao.class);
+				requestStaticInjection(EdiServiceABC.class);
 				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
 				}).to(EdiServiceABCDao.class);
 
