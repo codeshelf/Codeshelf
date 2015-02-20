@@ -717,7 +717,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 			this.getTenantPersistenceService().commitTransaction();
 			Assert.fail("Should have thrown exception related to column width");
 		} catch (DataException e) {
-			this.getTenantPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTransaction();
 			LOGGER.debug("Exception OK  during test");
 		}
 
@@ -731,7 +731,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 			Che.DAO.store(che2);
 			this.getTenantPersistenceService().commitTransaction();
 		} catch(DataException e) {
-			this.getTenantPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTransaction();
 			throw e;
 		}
 
@@ -744,7 +744,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 
 			this.getTenantPersistenceService().commitTransaction();
 		} catch(DataException e) {
-			this.getTenantPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTransaction();
 			throw e;
 		}
 
@@ -756,7 +756,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 			Assert.assertEquals(che1DefaultDescription, che1b.getDescription());
 			this.getTenantPersistenceService().commitTransaction();
 		} catch(DataException e) {
-			this.getTenantPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTransaction();
 			throw e;
 		}
 	}

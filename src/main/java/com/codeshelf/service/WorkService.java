@@ -202,7 +202,7 @@ public class WorkService implements IApiService {
 				}
 				TenantPersistenceService.getInstance().commitTransaction();
 			} catch (Exception e) {
-				TenantPersistenceService.getInstance().rollbackTenantTransaction();
+				TenantPersistenceService.getInstance().rollbackTransaction();
 				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 			}
 		}

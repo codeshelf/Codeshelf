@@ -12,7 +12,6 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.google.common.util.concurrent.Service.State;
 
 public class TenantPersistenceService extends PersistenceService<Tenant> {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
@@ -38,19 +37,19 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
-	}	
+	}
 	public final static TenantPersistenceService getInstance() {
 		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
 	}
-
+	
 	@Override
 	public Tenant getDefaultSchema() {
 		return TenantManagerService.getInstance().getDefaultTenant();
 	}
 
 	@Override
-	protected void performStartupActions(Tenant schema) {
+	protected void initialize(Tenant schema) {
 		Transaction t = this.beginTransaction(schema);
 		PropertyDao.getInstance().syncPropertyDefaults();
         t.commit();		

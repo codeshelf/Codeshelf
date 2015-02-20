@@ -214,9 +214,9 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	@Override
 	public void doAfter() throws TimeoutException {
 		// roll back transaction if active
-		if (TenantPersistenceService.getInstance().hasAnyActiveTransaction()) {
+		if (TenantPersistenceService.getInstance().hasAnyActiveTransactions()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");
-			TenantPersistenceService.getInstance().rollbackTenantTransaction();
+			TenantPersistenceService.getInstance().rollbackTransaction();
 		}
 		// tear down server and site controller
 		stop();

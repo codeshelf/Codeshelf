@@ -29,7 +29,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 	
 	// define behavior of service
 	abstract public SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
-	abstract protected void performStartupActions(SCHEMA_TYPE schema); // actions to perform after initializing schema
+	abstract protected void initialize(SCHEMA_TYPE schema); // actions to perform after initializing schema
 	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // can be null
 
 	// stores the factories for different schemas
@@ -94,7 +94,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		return txBegun;
 	}
 	
-	private final synchronized SessionFactory getSessionFactoryWithoutStartupActions(SCHEMA_TYPE schema) {
+	private final synchronized SessionFactory getSessionFactoryWithoutInitialActions(SCHEMA_TYPE schema) {
 		SessionFactory fac = this.factories.get(schema);
 		if (fac==null) {
 			fac = createSessionFactory(schema);
@@ -103,12 +103,16 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 	}
 
 	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
-		SessionFactory fac = getSessionFactoryWithoutStartupActions(schema);
+		SessionFactory fac = getSessionFactoryWithoutInitialActions(schema);
 		if(initializedFactories.add(fac)) {
 	        // sync up property defaults (etc) 
-			this.performStartupActions(schema);
+			this.initialize(schema);
 		}
 		return fac;
+	}
+
+	public void forgetInitialActions(SCHEMA_TYPE schema) {
+		initializedFactories.remove(schema);
 	}
 
 	public final Session getSession(SCHEMA_TYPE schema) {
@@ -149,17 +153,16 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		}
 	}
 
-	public final boolean hasActiveTransaction(SCHEMA_TYPE schema) {
-		if(this.isRunning() == false) {
-			return false;
-		} 
-		SessionFactory sf = this.factories.get(schema);
+	private boolean hasActiveTransaction(SessionFactory sf,boolean rollback) {
 		if(!sf.isClosed()) {
 			Session session = sf.getCurrentSession();
 			if(session != null) {
 				Transaction tx = session.getTransaction();
 				if(tx != null) {
 					if(tx.isActive()) {
+						if(rollback) {
+							tx.rollback();
+						}
 						return true;
 					}
 				}
@@ -167,8 +170,19 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		}
 		return false;
 	}
+	
+	public final boolean hasActiveTransaction(SCHEMA_TYPE schema) {
+		if(this.isRunning() == false) {
+			return false;
+		} 
+		SessionFactory sf = this.factories.get(schema);
+		if(hasActiveTransaction(sf,false)) {
+			return true;
+		} // else
+		return false;
+	}
 
-	public final boolean hasAnyActiveTransaction() {
+	public final boolean hasAnyActiveTransactions() {
 		if(this.isRunning() == false) {
 			return false;
 		} 
@@ -178,6 +192,23 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 			}
 		}
 		return false;
+	}
+	
+	public final boolean rollbackAnyActiveTransactions() {
+		if(this.isRunning() == false) {
+			throw new RuntimeException("tried to rollback transactions on non-running service "+this.serviceName());
+		}
+		
+		int rollback=0;
+		for(SessionFactory sf : this.factories.values()) {
+			if(hasActiveTransaction(sf,true))
+				rollback++;
+		}
+		if(rollback>0) {
+			LOGGER.warn("rolled back "+rollback+" active transactions");
+		}
+		
+		return (rollback>0);
 	}
 
 	public final static <T>T deproxify(T object) {
@@ -211,7 +242,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		commitTransaction(getDefaultSchema());
 	}
 	
-	public final void rollbackTenantTransaction() {
+	public final void rollbackTransaction() {
 		rollbackTransaction(getDefaultSchema());
 	}
 	
@@ -242,7 +273,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		
 		// to confirm started service, successfully create a transaction with default tenant
 		SCHEMA_TYPE defaultSchema = this.getDefaultSchema();
-		SessionFactory fac = this.getSessionFactoryWithoutStartupActions(defaultSchema);
+		SessionFactory fac = this.getSessionFactoryWithoutInitialActions(defaultSchema);
 		Session session = fac.getCurrentSession();
 		Transaction tx = session.beginTransaction();
 		tx.commit();
@@ -250,26 +281,6 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 	}
 	@Override
 	protected void shutDown() throws Exception {
-		int rollback=0;
-		for(SessionFactory sf : this.factories.values()) {
-			if(!sf.isClosed()) {
-				Session session = sf.getCurrentSession();
-				if(session != null) {
-					Transaction tx = session.getTransaction();
-					if(tx != null) {
-						if(tx.isActive()) {
-							tx.rollback();
-							rollback++;
-						}
-					}
-					//session.close();
-				}
-				//sf.close();
-			}
-		}
-		if(rollback>0) {
-			LOGGER.warn("rolled back "+rollback+" active transactions while stopping persistence");
-		}
 		factories = null;
 		initializedFactories = null;
 		listenerIntegrators = null;

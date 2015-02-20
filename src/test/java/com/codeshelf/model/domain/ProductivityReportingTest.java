@@ -90,6 +90,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		}
 
 		Assert.assertEquals(withoutHK.size(), summary.getTotal());
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test

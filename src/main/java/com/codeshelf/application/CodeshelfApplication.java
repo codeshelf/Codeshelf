@@ -32,7 +32,6 @@ import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 

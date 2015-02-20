@@ -20,7 +20,6 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.DatabaseConnection;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.inject.Singleton;
 
 public class TenantManagerService extends AbstractIdleService implements ITenantManager {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);

@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -98,8 +99,8 @@ public abstract class DAOTestABC {
 		// see below for ephemeral services
 		List<Service> services = new ArrayList<Service>();
 		services.add(TenantManagerService.getNonRunningInstance());
-		services.add(TenantPersistenceService.getNonRunningInstance());
 		services.add(ManagerPersistenceService.getNonRunningInstance());
+		services.add(TenantPersistenceService.getNonRunningInstance());
 		jvmServiceManager = new ServiceManager(services);
 		try {
 			jvmServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
@@ -300,8 +301,14 @@ public abstract class DAOTestABC {
 	}
 	
 	public void doAfter() throws TimeoutException {
+		boolean hadActiveTransactions = this.tenantPersistenceService.rollbackAnyActiveTransactions();
+		
 		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
+		this.tenantPersistenceService.forgetInitialActions(getDefaultTenant());
 		//this.ephemeralServiceManager.stopAsync().awaitStopped(10, TimeUnit.SECONDS);
+		
+		Assert.assertFalse(hadActiveTransactions);
+
 	}
 
 	protected String getTestName() {

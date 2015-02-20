@@ -165,7 +165,7 @@ public final class EdiProcessor implements IEdiProcessor {
 			TenantPersistenceService.getInstance().commitTransaction();
 			completed = true;
 		} catch (RuntimeException e) {
-			TenantPersistenceService.getInstance().rollbackTenantTransaction();
+			TenantPersistenceService.getInstance().rollbackTransaction();
 			LOGGER.error("Unable to process edi", e);
 		} finally {
 			context.stop();

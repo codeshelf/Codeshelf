@@ -19,7 +19,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.UiUpdateService;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;

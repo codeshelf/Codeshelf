@@ -607,6 +607,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals((Integer) 5, orderDetail700005.getMinQuantity());
 		Assert.assertEquals((Integer) 5, orderDetail700005.getMaxQuantity());
 
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test

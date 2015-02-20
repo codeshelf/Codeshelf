@@ -47,6 +47,8 @@ import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.codeshelf.model.domain.EdiDocumentLocator;
 import com.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
+import com.codeshelf.model.domain.EdiServiceABC;
+import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 //import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Facility.FacilityDao;
@@ -237,6 +239,10 @@ public final class ServerMain {
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
 				}).to(DropboxServiceDao.class);
+
+				requestStaticInjection(EdiServiceABCDao.class);
+				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
+				}).to(EdiServiceABCDao.class);
 
 				requestStaticInjection(EdiDocumentLocator.class);
 				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {

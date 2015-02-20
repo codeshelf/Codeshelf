@@ -2,7 +2,6 @@ package com.codeshelf.platform.multitenancy;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
 import com.codeshelf.platform.persistence.PersistenceService;
-import com.google.common.util.concurrent.Service.State;
 
 public class ManagerPersistenceService extends PersistenceService<ManagerSchema> {
 	private static ManagerPersistenceService theInstance = null;
@@ -36,7 +35,7 @@ public class ManagerPersistenceService extends PersistenceService<ManagerSchema>
 	}
 
 	@Override
-	protected void performStartupActions(ManagerSchema schema) {
+	protected void initialize(ManagerSchema schema) {
 		return;
 	}
 

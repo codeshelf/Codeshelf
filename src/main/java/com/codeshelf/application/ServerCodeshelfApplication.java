@@ -6,9 +6,7 @@
 
 package com.codeshelf.application;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -30,7 +28,6 @@ import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.ws.jetty.server.ServerWatchdogThread;
 import com.codeshelf.ws.jetty.server.SessionManager;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends CodeshelfApplication {

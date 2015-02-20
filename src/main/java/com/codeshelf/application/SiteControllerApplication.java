@@ -6,9 +6,6 @@
 
 package com.codeshelf.application;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import lombok.Getter;
 
 import com.codeshelf.device.ICsDeviceManager;
@@ -16,7 +13,6 @@ import com.codeshelf.metrics.AssociatedRadioHealthCheck;
 import com.codeshelf.metrics.ConnectedToServerHealthCheck;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
-import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
 
 public final class SiteControllerApplication extends CodeshelfApplication {
