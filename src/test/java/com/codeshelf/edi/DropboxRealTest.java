@@ -18,7 +18,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.DropboxService;
-import com.codeshelf.model.domain.EdiServiceABC;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.OrderHeader;
@@ -97,7 +96,7 @@ public class DropboxRealTest extends EdiTestABC {
 			dropboxService.setDomainId("DB");
 			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
 			dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
-			EdiServiceABC.DAO.store(dropboxService);
+			DropboxService.DAO.store(dropboxService);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
 		}

@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -49,11 +48,6 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
 	@Singleton
 	public static class ItemDdcGroupDao extends GenericDaoABC<ItemDdcGroup> implements ITypedDao<ItemDdcGroup> {
-		@Inject
-		public ItemDdcGroupDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<ItemDdcGroup> getDaoClass() {
 			return ItemDdcGroup.class;
 		}

@@ -37,7 +37,6 @@ import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -70,11 +69,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
-		@Inject
-		public OrderDetailDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<OrderDetail> getDaoClass() {
 			return OrderDetail.class;
 		}

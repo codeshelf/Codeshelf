@@ -33,7 +33,6 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -62,11 +61,6 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class CodeshelfNetworkDao extends GenericDaoABC<CodeshelfNetwork> implements ITypedDao<CodeshelfNetwork> {
-		@Inject
-		public CodeshelfNetworkDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<CodeshelfNetwork> getDaoClass() {
 			return CodeshelfNetwork.class;
 		}

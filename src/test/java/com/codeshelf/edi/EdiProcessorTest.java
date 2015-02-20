@@ -26,7 +26,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 
@@ -52,8 +51,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			Facility.DAO,
-			this.getTenantPersistenceService());
+			Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -93,8 +91,8 @@ public class EdiProcessorTest extends EdiTestABC {
 		private Facility	mFacility;
 
 		@Inject
-		public TestFacilityDao(final TenantPersistenceService tenantPersistenceService, final Facility inFacility) {
-			super(tenantPersistenceService);
+		public TestFacilityDao(final Facility inFacility) {
+			super();
 			mFacility = inFacility;
 		}
 
@@ -129,7 +127,7 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F-EDI.1", "TEST", Point.getZeroPoint());
 
-		TestFacilityDao facilityDao = new TestFacilityDao(this.getTenantPersistenceService(), facility);
+		TestFacilityDao facilityDao = new TestFacilityDao(facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {
@@ -372,8 +370,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			facilityDao,
-			this.getTenantPersistenceService());
+			facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 

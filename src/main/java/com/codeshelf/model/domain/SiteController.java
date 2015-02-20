@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -35,11 +34,6 @@ public class SiteController extends WirelessDeviceABC {
 
 	@Singleton
 	public static class SiteControllerDao extends GenericDaoABC<SiteController> implements ITypedDao<SiteController> {
-		@Inject
-		public SiteControllerDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-		
 		public final Class<SiteController> getDaoClass() {
 			return SiteController.class;
 		}

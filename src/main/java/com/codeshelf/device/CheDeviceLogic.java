@@ -193,7 +193,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 		setScanNeededToVerifyPick(theEnum);
 
-		@SuppressWarnings("unused")
 		String mSequenceKind = mDeviceManager.getSequenceKind();
 		setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
 

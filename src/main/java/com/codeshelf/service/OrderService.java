@@ -21,10 +21,10 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
 import com.sun.jersey.api.NotFoundException;
 
 /**
@@ -34,29 +34,21 @@ import com.sun.jersey.api.NotFoundException;
  *
  */
 public class OrderService implements IApiService {
-	
-	private TenantPersistenceService	persistenceService;
 
-	@Inject
-	public OrderService(TenantPersistenceService persistenceService) {
-		this.persistenceService = persistenceService;
-	}
-
-	public StatusSummary statusSummary(String aggregate, String filterName) {
+	public StatusSummary statusSummary(Session session, String aggregate, String filterName) {
 		if (aggregate.equals("Case")) {
-			 return caseSummary(filterName);
+			 return caseSummary(session,filterName);
 		} else if (aggregate.equals("OrderHeader")){
-			return orderSummary(filterName);
+			return orderSummary(session, filterName);
 		} else if (aggregate.equals("OrderDetail")) {
-			return orderDetailSummary(filterName);
+			return orderDetailSummary(session,filterName);
 		}
 		return null;
 	}
 		
-	private StatusSummary  orderSummary(String filterName) {
+	private StatusSummary  orderSummary(Session session, String filterName) {
 		
-		String hqlWhereString = generateFilters().get(filterName);
-		Session session = persistenceService.getSession();
+		String hqlWhereString = generateFilters(session).get(filterName);
 		Query query = session.createQuery("select oh from OrderHeader oh where " + hqlWhereString);
 		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
@@ -68,9 +60,8 @@ public class OrderService implements IApiService {
 		return summary;
 	}
 	
-	private StatusSummary  orderDetailSummary(String filterName) {
-		String hqlWhereString = generateFilters().get(filterName);
-		Session session = persistenceService.getSession();
+	private StatusSummary  orderDetailSummary(Session session, String filterName) {
+		String hqlWhereString = generateFilters(session).get(filterName);
 		Query query = session.createQuery("select od from OrderDetail od join od.parent oh where od.active = true and " + hqlWhereString);
 		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
@@ -85,11 +76,10 @@ public class OrderService implements IApiService {
 	/**
 	 * A very specific example of summarizing by a specific field
 	 */
-	private StatusSummary caseSummary(String filterName) {
+	private StatusSummary caseSummary(Session session,String filterName) {
 		//TODO temp copy
 		String fromClause = "select od from OrderDetail od join od.parent oh join od.uomMaster uom where uom.domainId in ('CS') and ";
-		String hqlWhereString = generateFilters().get(filterName);
-		Session session = persistenceService.getSession();
+		String hqlWhereString = generateFilters(session).get(filterName);
 		Query query = session.createQuery(fromClause + hqlWhereString);
 		query.setCacheable(true);
 		@SuppressWarnings("unchecked")
@@ -103,33 +93,41 @@ public class OrderService implements IApiService {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
-		if (facility == null) {
-			throw new NotFoundException("Facility " + facilityId + " does not exist");
-		}
-		Session session = persistenceService.getSession();
+	public ProductivitySummaryList getProductivitySummary(Tenant tenant, UUID facilityId, boolean skipSQL) throws Exception {
+		Facility facility = null;
 		List<Object[]> picksPerHour = null;
-		if (!skipSQL) {
-			String schema = System.getProperty("db.schemaname", "codeshelf");
-			String queryStr = String.format("" + "SELECT dur.order_group AS group,\n" + "		trim(to_char(\n"
-					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
-					+ "		'9999999999999999999D9')) AS picksPerHour\n" + "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
-					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
-					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
-					+ "		FROM %s.work_instruction i\n"
-					+ "			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n"
-					+ "			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n"
-					+ "			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n"
-					+ "		WHERE  i.item_id != 'Housekeeping'\n" + "	) dur\n" + "WHERE dur.group_and_sort_code != '0001'\n"
-					+ "GROUP BY dur.order_group\n" + "ORDER BY dur.order_group", schema, schema, schema, schema);
-			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
-				.addScalar("group", StandardBasicTypes.STRING)
-				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
-			getPicksPerHourQuery.setCacheable(true);
-			picksPerHour = getPicksPerHourQuery.list();
+		ProductivitySummaryList productivitySummary = null;
+		try {
+			Session session = TenantPersistenceService.getInstance().getSessionWithTransaction(tenant);
+			facility = Facility.DAO.findByPersistentId(facilityId);
+			if (facility == null) {
+				throw new NotFoundException("Facility " + facilityId + " does not exist");
+			}
+
+			if (!skipSQL) {
+				String schema = tenant.getSchemaName();
+				
+				String queryStr = String.format("" + "SELECT dur.order_group AS group,\n" + "		trim(to_char(\n"
+						+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
+						+ "		'9999999999999999999D9')) AS picksPerHour\n" + "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
+						+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
+						+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
+						+ "		FROM %s.work_instruction i\n"
+						+ "			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n"
+						+ "			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n"
+						+ "			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n"
+						+ "		WHERE  i.item_id != 'Housekeeping'\n" + "	) dur\n" + "WHERE dur.group_and_sort_code != '0001'\n"
+						+ "GROUP BY dur.order_group\n" + "ORDER BY dur.order_group", schema, schema, schema, schema);
+				SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
+					.addScalar("group", StandardBasicTypes.STRING)
+					.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
+				getPicksPerHourQuery.setCacheable(true);
+				picksPerHour = getPicksPerHourQuery.list();
+			}
+			productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
+		} finally {
+			TenantPersistenceService.getInstance().commitTransaction(tenant);
 		}
-		ProductivitySummaryList productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
 		return productivitySummary;
 	}
 
@@ -181,8 +179,8 @@ public class OrderService implements IApiService {
 	 * This is initial work to get supported filters. Right now it is just a name, but is expected to become a set of objects.
 	 * This MAY converge with filters in codeshelf.filter somehow. 
 	 */
-	public Set<String> getFilterNames() {
-		return generateFilters().keySet();
+	public Set<String> getFilterNames(Session session) {
+		return generateFilters(session).keySet();
 		
 	}
 	
@@ -190,19 +188,18 @@ public class OrderService implements IApiService {
 	 * Early implementation that just uses shippers as an example and prepends an All.
 	 * Very specific to OrderHeaders to start
 	 */
-	private Map<String, String> generateFilters() {
+	private Map<String, String> generateFilters(Session session) {
 		LinkedHashMap<String, String> filters = new LinkedHashMap<>();
 		filters.put("All", "oh.active = true");
-		filters.putAll(generateShipperFilters());
+		filters.putAll(generateShipperFilters(session));
 		return Collections.<String, String>unmodifiableMap(filters);
 	}
 
 	/**
 	 * Quick way to pregenerate filters for each existing shipper
 	 */
-	private Map<String, String> generateShipperFilters() {
+	private Map<String, String> generateShipperFilters(Session session) {
 		Map<String, String> shipperFilters = new HashMap<>();
-		Session session = persistenceService.getSession();
 		Query query = session.createQuery("select distinct oh.shipperId from OrderHeader oh where active = true");
 		query.setCacheable(true);
 		@SuppressWarnings("unchecked")

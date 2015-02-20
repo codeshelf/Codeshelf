@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.EdiDocumentStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -49,11 +48,6 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	@Singleton
 	public static class EdiDocumentLocatorDao extends GenericDaoABC<EdiDocumentLocator> implements ITypedDao<EdiDocumentLocator> {
-		@Inject
-		public EdiDocumentLocatorDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-		
 		public final Class<EdiDocumentLocator> getDaoClass() {
 			return EdiDocumentLocator.class;
 		}

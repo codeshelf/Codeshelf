@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -41,11 +40,6 @@ public class Aisle extends Location {
 
 	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
-		@Inject
-		public AisleDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<Aisle> getDaoClass() {
 			return Aisle.class;
 		}

@@ -7,8 +7,6 @@ package com.codeshelf.edi;
 
 import java.util.concurrent.BlockingQueue;
 
-import lombok.Getter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,9 +34,6 @@ public final class EdiProcessor implements IEdiProcessor {
 	private boolean						mShouldRun;
 	private Thread						mProcessorThread;
 
-	@Getter
-	private TenantPersistenceService			tenantPersistenceService;
-
 	private ICsvOrderImporter			mCsvOrderImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
 	private ICsvInventoryImporter		mCsvInventoryImporter;
@@ -56,8 +51,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		final ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		final ICsvAislesFileImporter inCsvAislesFileImporter,
-		final ITypedDao<Facility> inFacilityDao,
-		final TenantPersistenceService tenantPersistenceService) {
+		final ITypedDao<Facility> inFacilityDao) {
 
 		mCsvOrderImporter = inCsvOrdersImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
@@ -69,9 +63,6 @@ public final class EdiProcessor implements IEdiProcessor {
 
 		mShouldRun = false;
 		mLastProcessMillis = 0;
-
-		this.tenantPersistenceService = tenantPersistenceService;
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -147,7 +138,7 @@ public final class EdiProcessor implements IEdiProcessor {
 		LOGGER.trace("Begin EDI process.");
 		final Timer.Context context = ediProcessingTimer.time();
 		try {
-			this.getTenantPersistenceService().beginTransaction();
+			TenantPersistenceService.getInstance().beginTransaction();
 
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
@@ -171,10 +162,10 @@ public final class EdiProcessor implements IEdiProcessor {
 					}
 				}
 			}
-			this.getTenantPersistenceService().commitTransaction();
+			TenantPersistenceService.getInstance().commitTransaction();
 			completed = true;
 		} catch (RuntimeException e) {
-			this.getTenantPersistenceService().rollbackTenantTransaction();
+			TenantPersistenceService.getInstance().rollbackTenantTransaction();
 			LOGGER.error("Unable to process edi", e);
 		} finally {
 			context.stop();

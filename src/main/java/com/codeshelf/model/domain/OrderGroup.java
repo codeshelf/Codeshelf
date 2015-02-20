@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -61,11 +60,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
-		@Inject
-		public OrderGroupDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<OrderGroup> getDaoClass() {
 			return OrderGroup.class;
 		}

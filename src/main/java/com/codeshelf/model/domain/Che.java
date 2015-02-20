@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -56,11 +55,6 @@ public class Che extends WirelessDeviceABC {
 
 	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
-		@Inject
-		public CheDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<Che> getDaoClass() {
 			return Che.class;
 		}

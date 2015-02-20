@@ -7,15 +7,14 @@ import org.apache.commons.lang.RandomStringUtils;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Facility.FacilityDao;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;
 
 public class DAOMaker {
 
-	public DAOMaker(TenantPersistenceService tenantPersistenceService) {
-		Facility.setDao(new FacilityDao(tenantPersistenceService));
+	public DAOMaker() {
+		Facility.setDao(new FacilityDao());
 	}
 
 	public static final Property<Facility, String>			facilityId			= newProperty();

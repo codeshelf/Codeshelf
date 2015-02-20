@@ -33,8 +33,6 @@ import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.codeshelf.model.domain.EdiDocumentLocator;
 import com.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
-import com.codeshelf.model.domain.EdiServiceABC;
-import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Facility.FacilityDao;
 import com.codeshelf.model.domain.IronMqService;
@@ -106,7 +104,6 @@ public abstract class DAOTestABC {
 	protected TierDao				mTierDao;
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
-	protected EdiServiceABCDao 		mEdiServiceABCDao;
 	protected EdiDocumentLocatorDao			mEdiDocumentLocatorDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
@@ -159,100 +156,97 @@ public abstract class DAOTestABC {
 		tenantPersistenceService = TenantPersistenceService.getInstance();
 		assertTrue(tenantPersistenceService.isRunning());
 
-		mFacilityDao = new FacilityDao(tenantPersistenceService);
+		mFacilityDao = new FacilityDao();
 		Facility.DAO = mFacilityDao;
 
-		mAisleDao = new AisleDao(tenantPersistenceService);
+		mAisleDao = new AisleDao();
 		Aisle.DAO = mAisleDao;
 
-		mBayDao = new BayDao(tenantPersistenceService);
+		mBayDao = new BayDao();
 		Bay.DAO = mBayDao;
 
-		mTierDao = new TierDao(tenantPersistenceService);
+		mTierDao = new TierDao();
 		Tier.DAO = mTierDao;
 
-		mSlotDao = new SlotDao(tenantPersistenceService);
+		mSlotDao = new SlotDao();
 		Slot.DAO = mSlotDao;
 
-		mPathDao = new PathDao(tenantPersistenceService);
+		mPathDao = new PathDao();
 		Path.DAO = mPathDao;
 
-		mPathSegmentDao = new PathSegmentDao(tenantPersistenceService);
+		mPathSegmentDao = new PathSegmentDao();
 		PathSegment.DAO = mPathSegmentDao;
 
-		mDropboxServiceDao = new DropboxServiceDao(tenantPersistenceService);
+		mDropboxServiceDao = new DropboxServiceDao();
 		DropboxService.DAO = mDropboxServiceDao;
 
-		mIronMqServiceDao = new IronMqServiceDao(tenantPersistenceService);
+		mIronMqServiceDao = new IronMqServiceDao();
 		IronMqService.DAO = mIronMqServiceDao;
 
-		mEdiServiceABCDao = new EdiServiceABCDao(tenantPersistenceService);
-		EdiServiceABC.DAO = mEdiServiceABCDao;
-		
-		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao(tenantPersistenceService);
+		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao();
 		EdiDocumentLocator.DAO = mEdiDocumentLocatorDao;
 		
-		mCodeshelfNetworkDao = new CodeshelfNetworkDao(tenantPersistenceService);
+		mCodeshelfNetworkDao = new CodeshelfNetworkDao();
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
-		mCheDao = new CheDao(tenantPersistenceService);
+		mCheDao = new CheDao();
 		Che.DAO = mCheDao;
 
-		mSiteControllerDao = new SiteControllerDao(tenantPersistenceService);
+		mSiteControllerDao = new SiteControllerDao();
 		SiteController.DAO = mSiteControllerDao;
 
-		mOrderGroupDao = new OrderGroupDao(tenantPersistenceService);
+		mOrderGroupDao = new OrderGroupDao();
 		OrderGroup.DAO = mOrderGroupDao;
 
-		mOrderHeaderDao = new OrderHeaderDao(tenantPersistenceService);
+		mOrderHeaderDao = new OrderHeaderDao();
 		OrderHeader.DAO = mOrderHeaderDao;
 
-		mOrderDetailDao = new OrderDetailDao(tenantPersistenceService);
+		mOrderDetailDao = new OrderDetailDao();
 		OrderDetail.DAO = mOrderDetailDao;
 
-		mOrderLocationDao = new OrderLocationDao(tenantPersistenceService);
+		mOrderLocationDao = new OrderLocationDao();
 		OrderLocation.DAO = mOrderLocationDao;
 
-		mContainerDao = new ContainerDao(tenantPersistenceService);
+		mContainerDao = new ContainerDao();
 		Container.DAO = mContainerDao;
 
-		mContainerKindDao = new ContainerKindDao(tenantPersistenceService);
+		mContainerKindDao = new ContainerKindDao();
 		ContainerKind.DAO = mContainerKindDao;
 
-		mContainerUseDao = new ContainerUseDao(tenantPersistenceService);
+		mContainerUseDao = new ContainerUseDao();
 		ContainerUse.DAO = mContainerUseDao;
 
-		mItemMasterDao = new ItemMasterDao(tenantPersistenceService);
+		mItemMasterDao = new ItemMasterDao();
 		ItemMaster.DAO = mItemMasterDao;
 
-		mItemDao = new ItemDao(tenantPersistenceService);
+		mItemDao = new ItemDao();
 		Item.DAO = mItemDao;
 		
-		mIronMqServiceDao = new IronMqServiceDao(tenantPersistenceService);
+		mIronMqServiceDao = new IronMqServiceDao();
 		IronMqService.DAO = mIronMqServiceDao;
 		
-		mUomMasterDao = new UomMasterDao(tenantPersistenceService);
+		mUomMasterDao = new UomMasterDao();
 		UomMaster.DAO = mUomMasterDao;
 
-		mUnspecifiedLocationDao = new UnspecifiedLocationDao(tenantPersistenceService);
+		mUnspecifiedLocationDao = new UnspecifiedLocationDao();
 		UnspecifiedLocation.DAO = mUnspecifiedLocationDao;
 		
-		mLedControllerDao = new LedControllerDao(tenantPersistenceService);
+		mLedControllerDao = new LedControllerDao();
 		LedController.DAO = mLedControllerDao;
 
-		mLocationAliasDao = new LocationAliasDao(tenantPersistenceService);
+		mLocationAliasDao = new LocationAliasDao();
 		LocationAlias.DAO = mLocationAliasDao;
 		
-		mVertexDao = new VertexDao(tenantPersistenceService);
+		mVertexDao = new VertexDao();
 		Vertex.DAO = mVertexDao;
 
-		mWorkAreaDao = new WorkAreaDao(tenantPersistenceService);
+		mWorkAreaDao = new WorkAreaDao();
 		WorkArea.DAO = mWorkAreaDao;
 
-		mWorkInstructionDao = new WorkInstructionDao(tenantPersistenceService);
+		mWorkInstructionDao = new WorkInstructionDao();
 		WorkInstruction.DAO = mWorkInstructionDao;
 
-		mWorkAreaDao = new WorkAreaDao(tenantPersistenceService);
+		mWorkAreaDao = new WorkAreaDao();
 		WorkArea.DAO = mWorkAreaDao;
 		
 		// make sure default properties are in the database

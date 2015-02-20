@@ -42,7 +42,6 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -73,11 +72,6 @@ public class Facility extends Location {
 
 	@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
-		@Inject
-		public FacilityDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		@Override
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;

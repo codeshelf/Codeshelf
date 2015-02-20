@@ -31,7 +31,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.google.inject.Binding;
@@ -186,8 +185,7 @@ public class CodeshelfApplicationTest {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			Facility.DAO,
-			TenantPersistenceService.getInstance());
+			Facility.DAO);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
 		WebApiServer adminServer = new WebApiServer();
@@ -196,7 +194,6 @@ public class CodeshelfApplicationTest {
 			ediProcessor,
 			pickDocumentGenerator,
 			adminServer,
-			TenantPersistenceService.getInstance(), 
 			TenantManagerService.getInstance());
 
 		final Result checkAppRunning = new Result();

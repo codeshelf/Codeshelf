@@ -26,10 +26,10 @@ public class OptimisticLockExceptionTest {
 	public final void setup() {
 		JvmProperties.load("test");
 		tenantPersistenceService = TenantPersistenceService.getInstance();
-		OrderHeader.DAO = new OrderHeaderDao(tenantPersistenceService);
-		OrderDetail.DAO = new OrderDetailDao(tenantPersistenceService);
-		Facility.DAO = new FacilityDao(tenantPersistenceService);
-		Facility.DAO = new FacilityDao(tenantPersistenceService);
+		OrderHeader.DAO = new OrderHeaderDao();
+		OrderDetail.DAO = new OrderDetailDao();
+		Facility.DAO = new FacilityDao();
+		Facility.DAO = new FacilityDao();
 	}
 
 	@Test

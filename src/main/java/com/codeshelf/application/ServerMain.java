@@ -47,8 +47,6 @@ import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.codeshelf.model.domain.EdiDocumentLocator;
 import com.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
-import com.codeshelf.model.domain.EdiServiceABC;
-import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 //import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Facility.FacilityDao;
@@ -97,7 +95,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.codeshelf.platform.multitenancy.ITenantManager;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.CodeshelfRealm;
@@ -171,7 +168,6 @@ public final class ServerMain {
 			protected void configure() {
 				bind(ITenantManager.class).toInstance(TenantManagerService.getInstance());
 				
-				bind(TenantPersistenceService.class).toInstance(TenantPersistenceService.getInstance());
 				bind(GuiceFilter.class);
 				
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
@@ -238,10 +234,6 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
 
-				requestStaticInjection(EdiServiceABC.class);
-				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
-				}).to(EdiServiceABCDao.class);
-
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
 				}).to(DropboxServiceDao.class);
@@ -269,11 +261,7 @@ public final class ServerMain {
 				requestStaticInjection(ItemDdcGroup.class);
 				bind(new TypeLiteral<ITypedDao<ItemDdcGroup>>() {
 				}).to(ItemDdcGroupDao.class);
-/*
-				requestStaticInjection(LocationABC.class);
-				bind(new TypeLiteral<ITypedDao<LocationABC>>() {
-				}).to(LocationABCDao.class);
-*/
+
 				requestStaticInjection(LocationAlias.class);
 				bind(new TypeLiteral<ITypedDao<LocationAlias>>() {
 				}).to(LocationAliasDao.class);

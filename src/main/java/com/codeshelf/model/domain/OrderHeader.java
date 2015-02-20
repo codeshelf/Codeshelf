@@ -40,7 +40,6 @@ import com.codeshelf.model.PickStrategyEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -68,11 +67,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class OrderHeaderDao extends GenericDaoABC<OrderHeader> implements ITypedDao<OrderHeader> {
-		@Inject
-		public OrderHeaderDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<OrderHeader> getDaoClass() {
 			return OrderHeader.class;
 		}
