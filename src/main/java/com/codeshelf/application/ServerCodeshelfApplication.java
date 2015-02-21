@@ -26,6 +26,7 @@ import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.server.ServerWatchdogThread;
 import com.codeshelf.ws.jetty.server.SessionManager;
 import com.google.inject.Inject;
@@ -45,7 +46,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	public ServerCodeshelfApplication(final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
-			final ITenantManager inTenantManager) {
+			final ITenantManager tenantManager,
+			final WorkService workService) {
 			
 		super(inWebApiServer);
 		
@@ -53,9 +55,10 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		
 		// if services already running e.g. in test, these will log an error and continue
-		this.registerService(inTenantManager);
+		this.registerService(tenantManager);
 		this.registerService(TenantPersistenceService.getMaybeRunningInstance()); 
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
+		this.registerService(workService);
 
 		// create and configure watch dog
 		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());

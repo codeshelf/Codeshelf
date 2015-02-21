@@ -33,6 +33,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
+import com.codeshelf.service.WorkService;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -194,7 +195,8 @@ public class CodeshelfApplicationTest {
 			ediProcessor,
 			pickDocumentGenerator,
 			adminServer,
-			TenantManagerService.getMaybeRunningInstance());
+			TenantManagerService.getMaybeRunningInstance(),
+			new WorkService());
 
 		final Result checkAppRunning = new Result();
 

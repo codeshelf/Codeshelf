@@ -328,9 +328,7 @@ public final class ServerMain {
 			@Singleton
 			public WorkService createWorkService() {
 				WorkService workService = new WorkService();
-				workService.start();
-				return workService;
-				
+				return workService;				
 			}
 		}, createGuiceServletModule());
 

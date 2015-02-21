@@ -373,8 +373,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Che theChe2 = theNetwork.getChe("CHE2");
 
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		mWorkService.setUpCheContainerFromString(theChe2, "12000");
-		List<WorkInstruction> wiList2 = mWorkService.getWorkInstructions(theChe2, ""); // This returns them in working order.
+		workService.setUpCheContainerFromString(theChe2, "12000");
+		List<WorkInstruction> wiList2 = workService.getWorkInstructions(theChe2, ""); // This returns them in working order.
 		logWiList(wiList2);
 		wi1 = wiList2.get(0);
 		wi5 = wiList2.get(4);
@@ -427,7 +427,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
 		LOGGER.info("Set up CHE for order 12000.");
-		WorkList workList = mWorkService.setUpCheContainerFromString(theChe, "12000");
+		WorkList workList = workService.setUpCheContainerFromString(theChe, "12000");
 		Integer theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
@@ -435,7 +435,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals((Integer) 2, theSize); // Infer 2 shorts in there
 
 		// Set up the CHE again. DEV-609. This should delete the previous 2 immediate shorts, then make 2 new ones
-		workList = mWorkService.setUpCheContainerFromString(theChe, "12000");
+		workList = workService.setUpCheContainerFromString(theChe, "12000");
 		theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts

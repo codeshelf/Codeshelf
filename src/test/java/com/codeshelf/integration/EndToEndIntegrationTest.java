@@ -8,7 +8,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 
@@ -42,7 +41,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -108,8 +106,8 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	}
 
 	@Override
-	public void doBefore() {
-		mWorkService = new WorkService().start();
+	public void doBefore() throws Exception {
+		super.doBefore();
 		
 		Injector websocketServerInjector = setupWSSInjector();
 		try { //Ideally this would be statically initialized once before all of the integration tests
@@ -212,7 +210,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	}
 
 	@Override
-	public void doAfter() throws TimeoutException {
+	public void doAfter() {
 		// roll back transaction if active
 		if (TenantPersistenceService.getInstance().hasAnyActiveTransactions()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");

@@ -7,7 +7,6 @@
 package com.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +27,6 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
-import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
@@ -50,7 +48,7 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	private Runnable			mShutdownRunnable;
 
 	private List<Service> services = new ArrayList<Service>(); // subclass must register services before starting app 
-	private ServiceManager	serviceManager;
+	private ServiceManager	serviceManager = null;
 
 	private WebApiServer apiServer;
 
@@ -83,6 +81,8 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	}
 
 	protected final void registerService(Service service) {
+		if(serviceManager != null)
+			throw new IllegalArgumentException("cannot register service, serviceManager is already up");
 		if(service == null)
 			throw new NullPointerException("null Service");
 		if(service.state().equals(Service.State.NEW)) {
@@ -127,39 +127,34 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	/**
 	 */
 	public final void stopApplication(ShutdownCleanupReq cleanup) {
+		switch (cleanup) {
+			case NONE:
+				break;
+			case DROP_SCHEMA:
+				TenantManagerService.getInstance().dropDefaultSchema();
+				break;
+			case DELETE_ORDERS_WIS:
+				TenantManagerService.getInstance().deleteDefaultOrdersWis();
+				break;
+			case DELETE_ORDERS_WIS_INVENTORY:
+				TenantManagerService.getInstance().deleteDefaultOrdersWisInventory();
+				break;
+			default:
+				break;
+
+		}
 
 		LOGGER.info("Stopping application");
 		
-		Tenant defaultTenant = TenantManagerService.getInstance().getDefaultTenant();
 		doShutdown();
 		
 		serviceManager.stopAsync();
 		try {
-			serviceManager.awaitStopped(10, TimeUnit.SECONDS);
+			serviceManager.awaitStopped(60, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
-			LOGGER.error("timeout stopping services",e);
-		}		
-
-		try {
-			switch (cleanup) {
-				case NONE:
-					break;
-				case DROP_SCHEMA:
-					TenantManagerService.dropSchema(defaultTenant);
-					break;
-				case DELETE_ORDERS_WIS:
-					TenantManagerService.deleteOrdersWis(defaultTenant);
-					break;
-				case DELETE_ORDERS_WIS_INVENTORY:
-					TenantManagerService.deleteOrdersWisInventory(defaultTenant);
-					break;
-				default:
-					break;
-
-			}
-		} catch (SQLException e) {
-			LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			throw new RuntimeException("failure stopping services");
 		}
+
 
 		mIsRunning = false;
 

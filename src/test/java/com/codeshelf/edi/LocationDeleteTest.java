@@ -336,14 +336,14 @@ public class LocationDeleteTest extends EdiTestABC {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		mPropertyService.turnOffHK(facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
-		mWorkService.setUpCheContainerFromString(theChe, "11");
+		workService.setUpCheContainerFromString(theChe, "11");
 
-		List<WorkInstruction> aList = mWorkService.getWorkInstructions(theChe, "");
+		List<WorkInstruction> aList = workService.getWorkInstructions(theChe, "");
 
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 
 		mPropertyService.restoreHKDefaults(facility);
 

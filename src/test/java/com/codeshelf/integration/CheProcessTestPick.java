@@ -48,7 +48,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Strings;
 
@@ -385,13 +384,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
-		mWorkService.setUpCheContainerFromString(che1, "12345");
+		workService.setUpCheContainerFromString(che1, "12345");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
-		List<WorkInstruction> aList = mWorkService.getWorkInstructions(che1, "");
+		List<WorkInstruction> aList = workService.getWorkInstructions(che1, "");
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
@@ -408,7 +407,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(che1, "D402");
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(che1, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Double posOf402 = locationD402.getPosAlongPath();
 		Double posOf403 = locationD403.getPosAlongPath();
@@ -430,7 +429,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		che1 = Che.DAO.reload(che1);
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(che1.getPersistentId(),
+		List<WiSetSummary> summaries = this.workService.workAssignedSummary(che1.getPersistentId(),
 			facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set.

@@ -18,20 +18,16 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.WorkService;
 
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
 	protected PropertyService mPropertyService = new PropertyService();
-	protected WorkService mWorkService;
 	
 	private EventProducer		mEventProducer	= new EventProducer();
 
 	@Override
 	public void doBefore() throws Exception {
 		super.doBefore();
-		
-		mWorkService = new WorkService().start();
 	}
 	
 	protected AislesFileCsvImporter createAisleFileImporter() {
@@ -52,7 +48,7 @@ public abstract class EdiTestABC extends DomainTestABC {
 
 	protected ICsvCrossBatchImporter createCrossBatchImporter() {
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mEventProducer,
-			mWorkService,
+			workService,
 			mOrderGroupDao,
 			mOrderHeaderDao,
 			mOrderDetailDao,
@@ -109,9 +105,9 @@ public abstract class EdiTestABC extends DomainTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe(cheName);
 	
-		mWorkService.setUpCheContainerFromString(theChe, containers);
+		workService.setUpCheContainerFromString(theChe, containers);
 	
-		List<WorkInstruction> wiList = mWorkService.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> wiList = workService.getWorkInstructions(theChe, ""); // This returns them in working order.
 		logWiList(wiList);
 		return wiList;
 	

@@ -73,10 +73,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
-public class WorkService implements IApiService {
+public class WorkService extends AbstractExecutionThreadService implements IApiService {
 
 	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
+	private static final String			SHUTDOWN_MESSAGE	= "*****SHTUDOWN*****";
 	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
 	private static Double				BAY_ALIGNMENT_FUDGE			= 0.25;
 
@@ -95,12 +97,7 @@ public class WorkService implements IApiService {
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-
-//	@Getter
-//	private TenantPersistenceService			tenantPersistenceService;
-
-	private WorkServiceThread			wsThread					= null;
-	private static boolean				aWorkServiceThreadExists	= false;
+	//private Thread	serviceThread = null;
 
 	@ToString
 	public static class Work {
@@ -135,77 +132,10 @@ public class WorkService implements IApiService {
 	}
 
 	private void init(IEdiExportServiceProvider exportServiceProvider) {
-//		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
 		this.capacity = DEFAULT_CAPACITY;
-	}
-
-	private class WorkServiceThread extends Thread {
-		public WorkServiceThread() {
-			super("WorkService Thread");
-		}
-
-		@Override
-		public void run() {
-			WorkService.aWorkServiceThreadExists = true;
-			try {
-				sendWorkInstructions();
-			} catch (Exception e) {
-				LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
-			}
-			WorkService.aWorkServiceThreadExists = false;
-		}
-	}
-
-	public WorkService start() {
-		if (WorkService.aWorkServiceThreadExists) {
-			LOGGER.error("Only one WorkService thread is allowed to run at once");
-		}
-		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
-		this.wsThread = new WorkServiceThread();
-		this.wsThread.start();
-		return this;
-	}
-
-	public void stop() {
-		this.wsThread.interrupt();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-		}
-		if (WorkService.aWorkServiceThreadExists) {
-			LOGGER.error("Failed to stop WorkServiceThread by interruption");
-		} else {
-			this.completedWorkInstructions = null;
-		}
-	}
-
-	private void sendWorkInstructions() throws InterruptedException {
-		while (!Thread.currentThread().isInterrupted()) {
-
-			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
-			try {
-				//transaction begun and closed after blocking call so that it is not held open
-				TenantPersistenceService.getInstance().beginTransaction();
-				boolean sent = false;
-				while (!sent) {
-					try {
-						IEdiService ediExportService = exportMessage.exportService;
-						ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
-						sent = true;
-					} catch (IOException e) {
-						LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
-						Thread.sleep(retryDelay);
-					}
-				}
-				TenantPersistenceService.getInstance().commitTransaction();
-			} catch (Exception e) {
-				TenantPersistenceService.getInstance().rollbackTransaction();
-				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1211,4 +1141,73 @@ public class WorkService implements IApiService {
 		return storedWi;
 	}
 
+	@Override
+	protected void run() throws Exception {
+		// run
+		//serviceThread = Thread.currentThread();
+		try {
+			boolean shutdownRequested = false;
+			while (isRunning() && !shutdownRequested) {
+				WIMessage exportMessage = null;
+				try {
+					exportMessage = completedWorkInstructions.take();
+				} catch (InterruptedException e1) {
+				}
+				if(exportMessage != null) {
+					if(exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
+						shutdownRequested=true;
+					} else {
+						processExportMessage(exportMessage);
+					}
+				}
+			}
+		} finally {
+			//serviceThread = null;
+			this.completedWorkInstructions = null;
+		}
+	}
+
+	private void processExportMessage(WIMessage exportMessage) {
+		TenantPersistenceService.getInstance().beginTransaction();
+		try {
+			//transaction begun and closed after blocking call so that it is not held open
+			boolean sent = false;
+			while (!sent) {
+				try {
+					IEdiService ediExportService = exportMessage.exportService;
+					ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
+					sent = true;
+				} catch (IOException e) {
+					LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
+					Thread.sleep(retryDelay);
+				}
+			}
+			TenantPersistenceService.getInstance().commitTransaction();
+		} catch (Exception e) {
+			TenantPersistenceService.getInstance().rollbackTransaction();
+			LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
+		}
+	}
+
+	@Override
+	protected String serviceName() {
+		return this.getClass().getSimpleName();
+	}
+
+	@Override
+	protected void triggerShutdown() {
+		super.triggerShutdown();
+		//if(this.serviceThread != null) {
+		//	this.serviceThread.interrupt();
+		//}
+		//this.completedWorkInstructions.clear();
+		this.completedWorkInstructions.offer(new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE));
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		super.startUp();
+		// initialize
+		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);		
+	}
 }

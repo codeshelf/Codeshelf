@@ -84,7 +84,10 @@ import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.WorkService;
+import com.google.common.collect.ImmutableCollection;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 
 public abstract class DAOTestABC {
@@ -116,10 +119,13 @@ public abstract class DAOTestABC {
 		}
 	}
 	
-	ServiceManager ephemeralServiceManager;
+	protected ServiceManager ephemeralServiceManager;
 	ITenantManager tenantManager;
 
 	public TenantPersistenceService tenantPersistenceService; // convenience
+	
+	// ephemeral services:
+	protected WorkService workService;
 	
 	Facility defaultFacility = null;
 	
@@ -181,14 +187,7 @@ public abstract class DAOTestABC {
 	}
 	
 	@Before
-	public final void setup() throws Exception {
-		// start ephemeral services. these will be stopped in @After
-		// must use new service objects (services cannot be restarted)
-		//List<Service> services = new ArrayList<Service>();
-		// services.add(new Service()); e.g. 
-		//this.ephemeralServiceManager = new ServiceManager(services);
-		//this.ephemeralServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
-		
+	public final void setup() throws Exception {		
 		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 		
 		mFacilityDao = new FacilityDao();
@@ -292,21 +291,55 @@ public abstract class DAOTestABC {
 		doBefore();
 	}
 	
+	protected void initializeEphemeralServiceManager() {
+		if(ephemeralServiceManager != null) {
+			//throw new RuntimeException("could not initialize ephemeralServiceManager (already started)");
+		} else {
+			// start ephemeral services. these will be stopped in @After
+			// must use new service objects (services cannot be restarted)
+			List<Service> services = new ArrayList<Service>();
+			// services.add(new Service()); e.g.
+			this.workService = this.generateWorkService();
+			if(this.workService != null)
+				services.add(this.workService);
+			this.ephemeralServiceManager = new ServiceManager(services);
+			try {
+				this.ephemeralServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
+			} catch (TimeoutException e) {
+				throw new RuntimeException("timeout starting ephemeralServiceManager",e);
+			}
+		}
+	}
+
+	protected WorkService generateWorkService() {
+		return new WorkService();
+	}
+
 	public void doBefore() throws Exception {
+		initializeEphemeralServiceManager();
 	}
 	
 	@After
-	public final void tearDown() throws TimeoutException {
+	public final void tearDown() {
 		doAfter();
 	}
 	
-	public void doAfter() throws TimeoutException {
+	public void doAfter() {
 		boolean hadActiveTransactions = this.tenantPersistenceService.rollbackAnyActiveTransactions();
 		
 		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
 		this.tenantPersistenceService.forgetInitialActions(getDefaultTenant());
-		//this.ephemeralServiceManager.stopAsync().awaitStopped(10, TimeUnit.SECONDS);
-		
+
+		if(this.ephemeralServiceManager != null) {
+			try {
+				this.ephemeralServiceManager.stopAsync().awaitStopped(30, TimeUnit.SECONDS);
+			} catch (TimeoutException e) {
+				throw new RuntimeException("timeout stopping ephemeralServiceManager",e);
+			}
+			ImmutableCollection<Service> failedServices = ephemeralServiceManager.servicesByState().get(State.FAILED);
+			Assert.assertTrue(failedServices == null || failedServices.isEmpty());
+		}
+
 		Assert.assertFalse(hadActiveTransactions);
 
 	}

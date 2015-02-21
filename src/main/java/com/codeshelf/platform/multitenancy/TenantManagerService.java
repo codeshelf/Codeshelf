@@ -30,10 +30,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	
 	@Getter
 	int defaultShardId = -1;
-	
-	@Deprecated
-	@Getter
-	int defaultTenantId = -1;
+	private Tenant defaultTenant = null;
 	
 	private TenantManagerService() {
 		super();
@@ -118,7 +115,6 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			
 			tenant = shard.createTenant(DEFAULT_TENANT_NAME, dbSchemaName, dbUsername, dbPassword);
 		}
-		this.defaultTenantId = tenant.getTenantId();
 		return tenant;
 	}
 
@@ -332,35 +328,63 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	public Tenant getDefaultTenant() {
-		return getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
+		if(this.defaultTenant == null)
+			this.defaultTenant = getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
+		if(this.defaultTenant != null) 
+			this.defaultTenant = ManagerPersistenceService.<Tenant>deproxify(this.defaultTenant);
+		return this.defaultTenant;
 	}
 
-	public static void deleteOrdersWis(Tenant tenant) throws SQLException {
-		String schemaName = tenant.getSchemaName();
-		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
-		tenant.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
-		tenant.executeSQL("DELETE FROM "+schemaName+".container_use");
-		tenant.executeSQL("DELETE FROM "+schemaName+".work_instruction");
-		tenant.executeSQL("DELETE FROM "+schemaName+".container");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_location");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_detail");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_header");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_group");
+	@Override
+	public void deleteDefaultOrdersWis() {
+		if(defaultTenant != null) {
+			try {
+				Tenant tenant = defaultTenant;
+				String schemaName = tenant.getSchemaName();
+				LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
+				tenant.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
+				tenant.executeSQL("DELETE FROM "+schemaName+".container_use");
+				tenant.executeSQL("DELETE FROM "+schemaName+".work_instruction");
+				tenant.executeSQL("DELETE FROM "+schemaName+".container");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_location");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_detail");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_header");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_group");
+			} catch(SQLException e) {
+				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			}
+		}
 	}
 	
-	public static void deleteOrdersWisInventory(Tenant tenant) throws SQLException {
-		String schemaName = tenant.getSchemaName();
-		TenantManagerService.deleteOrdersWis(tenant);
-		LOGGER.warn("Deleting itemMasters ");
-		tenant.executeSQL("DELETE FROM "+schemaName+".item");
-		tenant.executeSQL("DELETE FROM "+schemaName+".item_master");
+	@Override
+	public void deleteDefaultOrdersWisInventory() {
+		if(defaultTenant != null) {
+			try {
+				Tenant tenant = defaultTenant;
+				String schemaName = tenant.getSchemaName();
+				this.deleteDefaultOrdersWis();
+				LOGGER.warn("Deleting itemMasters ");
+				tenant.executeSQL("DELETE FROM "+schemaName+".item");
+				tenant.executeSQL("DELETE FROM "+schemaName+".item_master");
+			} catch (SQLException e) {
+				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			}
+		}
 	}
 
-	public static void dropSchema(Tenant tenant) throws SQLException {
-		String schemaName = tenant.getSchemaName();
-		LOGGER.warn("Deleting tenant schema "+schemaName);
-		tenant.executeSQL("DROP SCHEMA "+schemaName+
-			((tenant.getSQLSyntax()==DatabaseConnection.SQLSyntax.H2)?"":" CASCADE"));
+	@Override
+	public void dropDefaultSchema() {
+		if(defaultTenant != null) {
+			try {
+				Tenant tenant = defaultTenant;
+				String schemaName = tenant.getSchemaName();
+				LOGGER.warn("Deleting tenant schema "+schemaName);
+				tenant.executeSQL("DROP SCHEMA "+schemaName+
+					((tenant.getSQLSyntax()==DatabaseConnection.SQLSyntax.H2)?"":" CASCADE"));
+			} catch(SQLException e) {
+				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			}
+		}
 	}
 
 	@Override
@@ -371,5 +395,4 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	@Override
 	protected void shutDown() throws Exception {
 	}
-
 }

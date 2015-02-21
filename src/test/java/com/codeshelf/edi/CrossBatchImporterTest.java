@@ -28,7 +28,6 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.service.WorkService;
 
 /**
  * @author jeffw
@@ -39,8 +38,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	private UUID facilityId;
 	
 	@Override
-	public void doBefore() {
-		this.mWorkService = new WorkService().start();
+	public void doBefore() throws Exception {
+		super.doBefore();
 
 		this.getTenantPersistenceService().beginTransaction();
 

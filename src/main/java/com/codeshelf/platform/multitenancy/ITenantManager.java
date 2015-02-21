@@ -28,4 +28,10 @@ public interface ITenantManager extends Service {
 	Tenant createTenant(String name,int shardId,String dbUsername);
 	Tenant getDefaultTenant();
 	Collection<Tenant> getTenants();
+
+	// services for test/demo environments
+	// should only be performed during shutdown, may be executed after service is terminated 
+	void deleteDefaultOrdersWisInventory();
+	void deleteDefaultOrdersWis();
+	void dropDefaultSchema();
 }

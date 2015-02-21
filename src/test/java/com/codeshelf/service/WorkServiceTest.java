@@ -61,9 +61,22 @@ public class WorkServiceTest extends DAOTestABC {
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
+	
+	@Override
+	protected WorkService generateWorkService() {
+		return this.workService; // in this test, we set up the workService manually at the beginning of the test
+	}
+
+	@Override
+	public void doBefore() throws Exception {
+		// in this test, we do not initializeEphemeralServiceManager() until later
+	}
 
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
+		this.workService = new WorkService();
+		this.initializeEphemeralServiceManager();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
@@ -78,7 +91,6 @@ public class WorkServiceTest extends DAOTestABC {
 		OrderDetail priorOrderDetail = OrderDetail.DAO.findByPersistentId(detailId);
 		Assert.assertNotEquals(OrderStatusEnum.SHORT, priorOrderDetail.getStatus());
 
-		WorkService workService = new WorkService().start();
 		workService.completeWorkInstruction(cheId,	wiToRecord);
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -127,6 +139,9 @@ public class WorkServiceTest extends DAOTestABC {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
+		this.workService = new WorkService();
+		this.initializeEphemeralServiceManager();
+		
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = facilityGenerator.generateValid();
@@ -140,7 +155,6 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
-		WorkService workService = new WorkService().start();
 		UUID cheId = firstChe(facility);
 		List<WiSetSummary> workSummaries  = workService.workAssignedSummary(cheId, facility.getPersistentId());
 
@@ -153,7 +167,6 @@ public class WorkServiceTest extends DAOTestABC {
 			lastTimestamp = wiSetSummary.getAssignedTime();
 		}
 
-		workService.stop();
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -164,7 +177,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 		UUID cheId = UUID.randomUUID();
 
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
+		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
 		Che.DAO = mock(ITypedDao.class);
@@ -181,8 +194,7 @@ public class WorkServiceTest extends DAOTestABC {
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
-		
-		workService.stop();
+				
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -196,7 +208,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		IEdiService mockEdiExportService = mock(IEdiService.class);
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
 		Che.DAO = mock(ITypedDao.class);
@@ -217,7 +229,6 @@ public class WorkServiceTest extends DAOTestABC {
 		workService.completeWorkInstruction(cheId, wiToRecord);
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
-		workService.stop();
 	}
 
 	@Test
@@ -227,7 +238,7 @@ public class WorkServiceTest extends DAOTestABC {
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 
 		int total = 100;
-		WorkService workService = createWorkService(total+1, mockEdiExportService, 1L);
+		createWorkService(total+1, mockEdiExportService, 1L);
 		List<WorkInstruction> wiList = generateValidWorkInstructions(total);
 		for (WorkInstruction wi: wiList) {
 			workService.exportWorkInstruction(wi);
@@ -236,7 +247,6 @@ public class WorkServiceTest extends DAOTestABC {
 
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
-		workService.stop();
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -255,12 +265,11 @@ public class WorkServiceTest extends DAOTestABC {
 		doThrow(new IOException("second one")).
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(messageBody);
 
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi);
 
 		//Wait up to a second per invocation to verify
-		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
-		workService.stop();
+		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 5000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -288,7 +297,7 @@ public class WorkServiceTest extends DAOTestABC {
 			when(mockEdiExportService).sendWorkInstructionsToHost(testMessage);
 
 		long expectedRetryDelay = 2000;
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi);
 
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(testMessage));
@@ -298,8 +307,6 @@ public class WorkServiceTest extends DAOTestABC {
 			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff > expectedRetryDelay);
 		}
 
-		workService.stop();
-		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -315,7 +322,7 @@ public class WorkServiceTest extends DAOTestABC {
 		doThrow(new RuntimeException("test io")).
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi1);
 		workService.exportWorkInstruction(wi2);
 
@@ -343,7 +350,8 @@ public class WorkServiceTest extends DAOTestABC {
 		final IEdiService mockEdiExportService = createBlockingService(callBlocker);
 		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
-		final WorkService workService = spy(createWorkService(total +1, mockEdiExportService, 1L));
+		createWorkService(total +1, mockEdiExportService, 1L);
+		final WorkService workService = spy(this.workService);
 		doCallRealMethod().when(workService).exportWorkInstruction(any(WorkInstruction.class));
 
 		Facility facility = facilityGenerator.generateValid();
@@ -372,7 +380,7 @@ public class WorkServiceTest extends DAOTestABC {
 		Lock callBlocker = new ReentrantLock();
 		callBlocker.lock();
 		IEdiService blockingService = createBlockingService(callBlocker);
-		WorkService workService = createWorkService(capacity, blockingService, 1L);
+		createWorkService(capacity, blockingService, 1L);
 		int exportAttempts = 0;
 		for (WorkInstruction workInstruction : wiList) {
 			try {
@@ -386,22 +394,22 @@ public class WorkServiceTest extends DAOTestABC {
 
 			}
 		}
-		workService.stop();
+		callBlocker.unlock();
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	private WorkService createWorkService(int capacity, IEdiService ediService, long retryDelay) {
+	private void createWorkService(int capacity, IEdiService ediService, long retryDelay) {
+		
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
 		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
 
-		WorkService ws = new WorkService(provider);
-		ws.setCapacity(capacity);
-		ws.setRetryDelay(retryDelay);		
-		ws.start();
+		this.workService = new WorkService(provider);
+		this.workService.setCapacity(capacity);
+		this.workService.setRetryDelay(retryDelay);		
 		
-		return ws;
+		this.initializeEphemeralServiceManager();
 	}
-
+	
 	private class TimedExceptionAnswer extends ThrowsException {
 		private static final long	serialVersionUID	= 1L;
 		private List<Long> timestamps;

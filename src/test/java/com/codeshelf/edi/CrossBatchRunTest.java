@@ -291,7 +291,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 
 		mPropertyService.restoreHKDefaults(facility);
 
@@ -451,7 +451,7 @@ public class CrossBatchRunTest extends EdiTestABC {
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
 		mPropertyService.turnOffHK(facility);
-		mWorkService.setUpCheContainerFromString(theChe, "11,12,13");
+		workService.setUpCheContainerFromString(theChe, "11,12,13");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -504,7 +504,7 @@ public class CrossBatchRunTest extends EdiTestABC {
         facility = Facility.DAO.reload(facility);
         theChe = Che.DAO.reload(theChe);
 
-		mWorkService.setUpCheContainerFromString(theChe, "14");
+		workService.setUpCheContainerFromString(theChe, "14");
         this.getTenantPersistenceService().commitTransaction();
 
         this.getTenantPersistenceService().beginTransaction();
