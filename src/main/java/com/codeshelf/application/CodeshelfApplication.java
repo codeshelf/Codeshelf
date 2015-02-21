@@ -102,7 +102,9 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 
 		installShutdownHook();
-
+		if(services.isEmpty())
+			services.add(new DummyService());
+		
 		serviceManager = new ServiceManager(services);
 		serviceManager.startAsync();
 		try {
