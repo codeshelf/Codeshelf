@@ -516,4 +516,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return false;
 		}
 	}
+	
+	public boolean isPreferredDetail(){
+		return getPreferredLocation() != null && getWorkSequence() != null;
+	}
 }

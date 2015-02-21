@@ -529,8 +529,15 @@ public class WorkService implements IApiService {
 
 		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
 		if (startingPathPos == null) {
+			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
+			for (WorkInstruction instruction : completeRouteWiList) {
+				OrderDetail detail = instruction.getOrderDetail();
+				if (detail.isPreferredDetail()){
+					preferredInstructions.add(instruction);
+				}
+			}
 			// getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
-			return Lists.newArrayList();
+			return preferredInstructions;
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
@@ -899,8 +906,19 @@ public class WorkService implements IApiService {
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
-		// we can make the work instruction anyway. Not implemented yet.
-		if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
+		// we can make the work instruction anyway. 
+		if (inOrderDetail.isPreferredDetail()) {
+			Location location = inOrderDetail.getPreferredLocObject((Facility)defaultLocation);
+			location = location == null ? defaultLocation : location;
+			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+				WorkInstructionTypeEnum.PLAN,
+				inOrderDetail,
+				inContainer,
+				inChe,
+				location,
+				inTime);
+			resultWork.setInstruction(resultWi);
+		} else if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
 			// If there is no item in inventory for that uom (AT ALL) then create a PLANNED, SHORT WI for this order detail.
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?

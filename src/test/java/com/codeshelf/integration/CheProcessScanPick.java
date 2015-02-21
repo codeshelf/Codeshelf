@@ -740,8 +740,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		
 		// DEV-637 note. After that is implemented, we would get plans here even though LOCAPICK is off and we do not get any inventory.		
 		// Shouldn't we get work? We have supplied location, and sequence. 
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
-		// picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		//picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
 
 		/*
 		LOGGER.info("1d: in WorkSequence mode, we scan start again, instead of a location");
@@ -798,46 +798,41 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		
 		// Probably important. The case above yields some problems so that we hit LOCATION_SELECT_REVIEW state.
 		// Really should replicate this test case that is all clean so it goes to LOCATION_SELECT state.  The second START should work there also.
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		//picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
 				
 		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
-		Assert.assertEquals(3, scWiList.size());
+		//Assert.assertEquals(3, scWiList.size());
+		Assert.assertEquals(8, scWiList.size());
 		logWiList(scWiList);
 		
 		LOGGER.info("2e:work through it, making sure it matches the work sequence order.");
-		// 1122 at loc D401 had workSequence 3000; 1123-D301-4000, 1493-D302-4001
-		picker.scanSomething("1122");
+
+		//Expected sorted sequence 1522,1522,1523,1124,1555,1122,1123,1493,
+		tryPick(picker, "1522", "D601", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1522", "D601", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1523", "D602", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1124", "D603", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1555", "D604", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1122", "D401", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1123", "D301", CheStateEnum.SCAN_SOMETHING);
+		tryPick(picker, "1493", "D302", CheStateEnum.PICK_COMPLETE);
+		//picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker.logout();			
+	}
+	
+	private void tryPick(PickSimulator picker, String itemId, String excpectedLocation, CheStateEnum nextExpectedState){
+		picker.scanSomething(itemId);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());		
+		Assert.assertEquals(excpectedLocation, picker.getLastCheDisplayString());		
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
-		picker.scanSomething("1123");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("D301", picker.getLastCheDisplayString());		
-		wi = picker.nextActiveWi();
-		button = picker.buttonFor(wi);
-		quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
-		picker.scanSomething("1493");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("D302", picker.getLastCheDisplayString());		
-		wi = picker.nextActiveWi();
-		button = picker.buttonFor(wi);
-		quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
-		
-		picker.logout();			
+		picker.pick(button, quant);	
+		picker.waitForCheState(nextExpectedState, 4000);
 	}
-
 }
