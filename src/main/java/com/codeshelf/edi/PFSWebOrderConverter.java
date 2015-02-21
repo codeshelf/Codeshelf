@@ -9,8 +9,8 @@ public class PFSWebOrderConverter {
 	
 	public static void main(String[] args) {
 		// check command-line arguments
-		if (args.length!=3) {
-			System.out.println("Missing arguments.  Usage: PFSWebOrderConverter <inventory-file> <input-order-file> <output-order-file>");
+		if (args.length!=4) {
+			System.out.println("Missing arguments.  Usage: PFSWebOrderConverter <inventory-file> <sequence-mapping-file> <input-order-file> <output-order-file>");
 			return;
 		}
 		
@@ -40,9 +40,36 @@ public class PFSWebOrderConverter {
 			System.out.println("Failed to parse inventory file: "+e);
 			return;
 		}
+		
+		// process location to sequence mapping file and store content in map
+		String sequenceFile = args[1];
+		HashMap<String,String> sequenceMap = new HashMap<String,String>();
+		try {
+			System.out.println("Reading location file from "+sequenceFile);
+			BufferedReader br = new BufferedReader(new FileReader(sequenceFile));
+			String line=null;
+			while ((line = br.readLine()) != null) {
+				String[] columns = line.split(",",4);
+				if (columns.length==4) {
+					String sequenceNumber = columns[3];
+					//String desc = columns[1].replace(","," ");
+					sequenceMap.put(columns[0], sequenceNumber);
+					//System.out.println("Adding "+columns[0]+"="+desc);
+				}
+				else {
+					// skipping malformed line
+				}
+			}
+			br.close();
+			System.out.println(descriptionMap.size()+" locations found");
+		}
+		catch (Exception e) {
+			System.out.println("Failed to parse locations file: "+e);
+			return;
+		}
 		// process order input file
-		String orderInputFile = args[1];
-		String orderOutputFile = args[2];
+		String orderInputFile = args[2];
+		String orderOutputFile = args[3];
 		try {
 			System.out.println("Reading orders from "+orderInputFile);
 			BufferedReader br = new BufferedReader(new FileReader(orderInputFile));
@@ -65,10 +92,19 @@ public class PFSWebOrderConverter {
 					String itemId = columns[5];
 					String orderDetailId = columns[6];
 					String pickSequence = columns[7];
+					// look up item descriptions
 					String itemDescription = descriptionMap.get(itemId);
 					if (itemDescription==null) {
 						itemDescription="";
 					}
+					// look up sequence number if undefined
+					if (pickSequence==null || pickSequence.length()==0 || pickSequence.equals("00000") || pickSequence.equals("99999")) {
+						pickSequence = sequenceMap.get(locationId);
+						if (pickSequence==null) {
+							pickSequence = "0";
+						}
+					}
+					// write record to codeshelf order file
 					writer.println(containerId+","+orderDetailId+","+itemId+",\""+itemDescription+"\","+quantity+",each,"+locationId+","+containerId+","+pickSequence);
 					System.out.println("Adding item: "+quantity+"x "+itemDescription+"("+itemId+") from "+locationId+" to "+containerId);
 					numItems++;
