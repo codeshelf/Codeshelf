@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -63,11 +62,6 @@ public class Tier extends Location {
 
 	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
-		@Inject
-		public TierDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<Tier> getDaoClass() {
 			return Tier.class;
 		}

@@ -63,22 +63,15 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Inject
 	public static ITypedDao<EdiServiceABC>	DAO;
 
-	
 	@Singleton
-	public static class EdiServiceABCDao
-		extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
-		@Inject
-		public EdiServiceABCDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
+	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		public final Class<EdiServiceABC> getDaoClass() {
 			return EdiServiceABC.class;
 		}
 	}
-	 
 	
-	// The owning Facility.
+      
+   	// The owning Facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Getter
 	@Setter

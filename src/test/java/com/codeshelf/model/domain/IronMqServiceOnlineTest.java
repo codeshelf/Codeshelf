@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -43,7 +44,7 @@ public class IronMqServiceOnlineTest extends DomainTestABC {
 	}
 
 	@After
-	public void doAfter() {
+	public void doAfter() throws TimeoutException {
 		super.doAfter();
 		for (Entry<String, String> entry : tempPropertyRestore.entrySet()) {
 			if (entry.getValue() != null) {

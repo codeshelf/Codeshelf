@@ -31,10 +31,8 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
-import com.codeshelf.util.IConfiguration;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -167,7 +165,7 @@ public class CodeshelfApplicationTest {
 	 */
 	@Test
 	public void testStartStopApplication() {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 
 		Facility.DAO = new MockDao<Facility>();
 		Aisle.DAO = new MockDao<Aisle>();
@@ -175,7 +173,6 @@ public class CodeshelfApplicationTest {
 		Tier.DAO = new MockDao<Tier>();
 		Slot.DAO = new MockDao<Slot>();
 
-		IConfiguration config = mock(IConfiguration.class);
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
 		ICsvLocationAliasImporter locationAliasImporter = mock(ICsvLocationAliasImporter.class);
@@ -188,19 +185,16 @@ public class CodeshelfApplicationTest {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			Facility.DAO,
-			TenantPersistenceService.getInstance());
+			Facility.DAO);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
 		WebApiServer adminServer = new WebApiServer();
 		
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
-			config,
 			ediProcessor,
 			pickDocumentGenerator,
 			adminServer,
-			TenantPersistenceService.getInstance(), 
-			TenantManagerService.getInstance());
+			TenantManagerService.getMaybeRunningInstance());
 
 		final Result checkAppRunning = new Result();
 
@@ -230,7 +224,7 @@ public class CodeshelfApplicationTest {
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
 
-		application.stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
+		application.stopApplication(CodeshelfApplication.ShutdownCleanupReq.NONE);
 
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}

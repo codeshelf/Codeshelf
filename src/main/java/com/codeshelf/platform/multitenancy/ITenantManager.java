@@ -3,6 +3,7 @@ package com.codeshelf.platform.multitenancy;
 import java.util.Collection;
 
 import com.codeshelf.model.domain.UserType;
+import com.google.common.util.concurrent.Service;
 
 /**
  * API for Tenant Manager interface
@@ -10,10 +11,7 @@ import com.codeshelf.model.domain.UserType;
  * @author ivan
  *
  */
-public interface ITenantManager {
-	boolean connect();
-	void disconnect();
-
+public interface ITenantManager extends Service {
 	// shards
 	int getDefaultShardId();
 	

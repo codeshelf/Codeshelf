@@ -131,7 +131,7 @@ public class UserSession implements IDaoListener {
 					}
 					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction();
 					LOGGER.error("Unable to handle object add messages", e);
 				}
 			}
@@ -157,7 +157,7 @@ public class UserSession implements IDaoListener {
 					}
 					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction();
 					LOGGER.error("Unable to handle object update", e);
 				}
 			}
@@ -180,7 +180,7 @@ public class UserSession implements IDaoListener {
 					}
 					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction();
 					LOGGER.error("Unable to handle object delete", e);
 				}
 			}

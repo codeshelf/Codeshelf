@@ -28,4 +28,5 @@ lib/dist/.DS_Store
 /.gradle
 .classpath
 /local/*.properties
+/local/*.yml
 /.settings/org.eclipse.jdt.core.prefs

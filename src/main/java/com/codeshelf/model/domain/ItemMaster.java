@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
@@ -64,11 +63,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
-		@Inject
-		public ItemMasterDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<ItemMaster> getDaoClass() {
 			return ItemMaster.class;
 		}

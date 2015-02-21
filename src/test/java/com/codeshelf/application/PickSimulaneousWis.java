@@ -40,7 +40,7 @@ import com.codeshelf.platform.multitenancy.TenantManagerService;
 public class PickSimulaneousWis extends EdiTestABC {
 
 	static {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 	}
 
 	@SuppressWarnings({ "unused" })

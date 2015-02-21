@@ -26,7 +26,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 
@@ -39,7 +38,7 @@ public class EdiProcessorTest extends EdiTestABC {
 	@Test
 	public final void ediProcessThreadTest() {
 
-		ICsvOrderImporter orderImporter = 	generateFailingImporter();
+		ICsvOrderImporter orderImporter = generateFailingImporter();
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
 		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
 		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
@@ -52,16 +51,15 @@ public class EdiProcessorTest extends EdiTestABC {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			Facility.DAO,
-			this.getTenantPersistenceService());
+			Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
-		Thread foundThread=findEdiThread();
-		
+		Thread foundThread = findEdiThread();
+
 		Assert.assertFalse(foundThread == null);
 
-		for(int t=0;t<3;t++) {
+		for (int t = 0; t < 3; t++) {
 			ediProcessor.stopProcessor();
 			// That thread might be sleeping.
 			if (foundThread != null) {
@@ -71,14 +69,14 @@ public class EdiProcessorTest extends EdiTestABC {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
 			} // wait a moment for EDI processor thread to stop
-			if(findEdiThread()==null) {
+			if (findEdiThread() == null) {
 				break;
 			}
 		}
 
 		Assert.assertNull(findEdiThread());
 	}
-	
+
 	private final Thread findEdiThread() {
 		Thread foundThread = null;
 		for (Thread thread : Thread.getAllStackTraces().keySet()) {
@@ -93,8 +91,8 @@ public class EdiProcessorTest extends EdiTestABC {
 		private Facility	mFacility;
 
 		@Inject
-		public TestFacilityDao(final TenantPersistenceService tenantPersistenceService, final Facility inFacility) {
-			super(tenantPersistenceService);
+		public TestFacilityDao(final Facility inFacility) {
+			super();
 			mFacility = inFacility;
 		}
 
@@ -127,9 +125,9 @@ public class EdiProcessorTest extends EdiTestABC {
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F-EDI.1", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(), "F-EDI.1", "TEST", Point.getZeroPoint());
 
-		TestFacilityDao facilityDao = new TestFacilityDao(this.getTenantPersistenceService(), facility);
+		TestFacilityDao facilityDao = new TestFacilityDao(facility);
 		facilityDao.store(facility);
 
 		IEdiService ediServiceLinked = new IEdiService() {
@@ -167,7 +165,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void setParent(Facility inParent) {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
@@ -203,7 +201,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void setDomainId(String inId) {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
@@ -221,7 +219,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void setPersistentId(UUID inPersistentId) {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
@@ -283,7 +281,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void setParent(Facility inParent) {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
@@ -319,7 +317,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			@Override
 			public void setDomainId(String inId) {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
@@ -372,8 +370,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
-			facilityDao,
-			this.getTenantPersistenceService());
+			facilityDao);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessor.startProcessor(testBlockingQueue);
 
@@ -388,9 +385,13 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	private ICsvOrderImporter generateFailingImporter() {
 		return new ICsvOrderImporter() {
+			@Override
+			public int toInteger(final String inString) {
+				return 0;
+			}
 
 			@Override
 			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,

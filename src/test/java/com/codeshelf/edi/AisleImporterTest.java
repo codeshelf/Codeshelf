@@ -962,7 +962,37 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(bayA9B1); // ok, even with no tiers
 
 		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		// Check for missing data
+		// The bays and aisles should be created
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,,,,,\r\n" //
+				+ "Bay,B1,,,,,,\r\n" //
+				+ "Tier,T1,,,,,,\r\n"
+				+ "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
 
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		Aisle A512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(A512);
+		
+		Bay A51B12 = Bay.DAO.findByDomainId(A512, "B1");
+		Assert.assertNotNull(A51B12);
+		
+		Tier tierA51B1T12 = Tier.DAO.findByDomainId(A51B12, "T1");
+		Assert.assertNotNull(tierA51B1T12);
+		
+		Aisle A522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNotNull(A522);
+		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -2161,14 +2191,6 @@ public class AisleImporterTest extends EdiTestABC {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-		
-		// Improve this, or new test to do:
-		// Two or three clone lines in a row
-		// One clone line, then another fully defined bay, with its own clones.
-		// If it is a clone, complain (Warn) and do not allow change of controllerLED, or orientXorY fields.
-		// Your choice for depthCm. If you allow change in depth, respect it. Simplest to not allow that either.
-		// An Aisle clone line, followed by a bay line must be an error. After Aisle clone, you can only have another aisle, or the file ends.
-		
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -2362,10 +2384,154 @@ public class AisleImporterTest extends EdiTestABC {
 		Assert.assertNotNull(aisle544);
 		
 		this.getTenantPersistenceService().commitTransaction();
-		
-
 	}
+	
+	@Test
+	public final void testBadCloneAisle() {
+		// For DEV-618
+		this.getTenantPersistenceService().beginTransaction();
 
+		// Should not be able to clone A51 because its definition is incorrect
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		Aisle A52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNull(A52);
+	
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		// Should not be able to clone A51 because a bay definition inside is wrong
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		Aisle A512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(A512);
+		
+		Aisle A522 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNull(A522);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		// Should not be able to define and clone an aisle in the same line.
+		// There should be a warning for doing this. Check logs.
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A51,Clone(A51),,,,,12.85,48.45,X,120\r\n";
+
+		byte[] csvArray3 = csvString3.getBytes();
+
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		InputStreamReader reader3 = new InputStreamReader(stream3);
+
+		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+	}
+	
+	@Test
+	public final void testBadCloneAisle2() {
+		// For DEV-618
+		this.getTenantPersistenceService().beginTransaction();
+
+		// - Check if we can clone a bay after a bay creation has failed (should not be able to)
+		// - Check if we can clone an aisle that had definition errors (should not be able to)
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Bay,B3,115,,,,,\r\n" // Everything else in aisle should be discarded
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Bay,B2,Clone(B1),,,,,12.85,48.45,X,120\r\n" //
+				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; // Should not be able to clone.
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		Aisle A51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(A51);
+		
+		Aisle A52 = Aisle.DAO.findByDomainId(facility, "A52");
+		Assert.assertNull(A52);
+		
+		// Check what bays were created in A51
+		Bay A51B1 = Bay.DAO.findByDomainId(A51, "B1");
+		Assert.assertNotNull(A51B1);
+		
+		Bay A51B2 = Bay.DAO.findByDomainId(A51, "B2");
+		Assert.assertNull(A51B2);
+		
+		Bay A51B3 = Bay.DAO.findByDomainId(A51, "B3");
+		Assert.assertNull(A51B3);
+
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		// Check if we can clone an aisle that doesn't exist.
+		// This should produce useful error messages.
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B2,115,,,,,\r\n" //
+				+ "Tier,T1,,4,32,0,,\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,48.45,X,120\r\n"; //
+
+		byte[] csvArray2 = csvString2.getBytes();
+
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		
+		Aisle A512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(A512);
+		
+		Aisle A532 = Aisle.DAO.findByDomainId(facility, "A53");
+		Assert.assertNull(A532);
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
 	@Test
 	public final void testCloneAisleSlotCount() {
 		// For DEV-618
@@ -2537,6 +2703,92 @@ public class AisleImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
+	// FIXME
+	@Test
+	public final void testBadCloneBay() {
+		this.getTenantPersistenceService().beginTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B4,CLONE(B1),,,,,\r\n" // Everything after here should be dropped
+				+ "Bay,B2,CLONE(B4),,,,,\r\n"; //
+		
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+
+		// Get aisle A51 and check
+		Aisle aisle51 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisle51);
+		
+		Bay bayA51B4 = Bay.DAO.findByDomainId(aisle51, "B4");
+		Assert.assertNull(bayA51B4);
+		
+		Bay bayA51B2 = Bay.DAO.findByDomainId(aisle51, "B2");
+		Assert.assertNull(bayA51B2);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		// Check that we cannot clone nonexistent bays
+		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
+				+ "Bay,B3,CLONE(B4),,,,,\r\n";	//
+		
+		byte[] csvArray2 = csvString2.getBytes();
+		
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		reader = new InputStreamReader(stream2);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		Aisle aisleA512 = Aisle.DAO.findByDomainId(facility, "A51");
+		Assert.assertNotNull(aisleA512);
+		
+		Bay A512B3 = Bay.DAO.findByDomainId(aisleA512, "B3");
+		Assert.assertNull(A512B3);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		
+		// Check that we cannot define and clone the same bay in the same line.
+		// Check error logs for a warning about this. Nothing should be done.
+		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,115,,,,,\r\n" //
+				+ "Tier,T1,,1,32,0,,\r\n" //
+				+ "Tier,T2,,2,40,0,,\r\n" //
+				+ "Bay,B1,CLONE(B1),,,,,\r\n" //
+				+ "Bay,B2,CLONE(B1),,,,,\r\n";	//
+		
+		byte[] csvArray3 = csvString3.getBytes();
+		
+		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
+		reader = new InputStreamReader(stream3);
+
+		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+	}
 	@Test
 	public final void testCloneBayOrderings() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -2678,7 +2930,7 @@ public class AisleImporterTest extends EdiTestABC {
 		short firstLedB3T2 = tierA51B3T22.getFirstLedNumAlongPath();
 		short lastLedB3T2 = tierA51B3T22.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedB3T2 - firstLedB3T2) + 1);
-		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	@Test

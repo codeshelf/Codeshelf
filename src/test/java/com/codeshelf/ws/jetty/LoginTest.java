@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
@@ -19,10 +18,6 @@ import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LoginTest extends DomainTestABC {
-	
-	static {
-		Configuration.loadConfig("test");
-	}
 
 	private ServerMessageProcessor	processor;
 

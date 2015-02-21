@@ -16,6 +16,8 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
+import org.hibernate.Session;
+
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
@@ -40,7 +42,7 @@ import com.google.inject.Inject;
 
 public class FacilityResource {
 
-	private final TenantPersistenceService persistence;
+	private final TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 	private final OrderService orderService;
 	private final SessionManager sessionManager;
 
@@ -48,8 +50,7 @@ public class FacilityResource {
 	private UUIDParam mUUIDParam;
 
 	@Inject
-	public FacilityResource(TenantPersistenceService persistenceService, OrderService orderService, SessionManager sessionManager) {
-		this.persistence = persistenceService;
+	public FacilityResource(OrderService orderService, SessionManager sessionManager) {
 		this.orderService = orderService;
 		this.sessionManager = sessionManager;
 	}
@@ -64,15 +65,12 @@ public class FacilityResource {
 		}
 
 		try {
-			persistence.beginTransaction();
-			ProductivitySummaryList summary = orderService.getProductivitySummary(mUUIDParam.getUUID(), false);
+			ProductivitySummaryList summary = orderService.getProductivitySummary(persistence.getDefaultSchema(), mUUIDParam.getUUID(), false);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		} 
 	}
 
 	@GET
@@ -122,10 +120,10 @@ public class FacilityResource {
 	@Path("filters")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
-		persistence.beginTransaction();
-		Set<String> filterNames = orderService.getFilterNames();
+		Session session = persistence.getSessionWithTransaction();
+		Set<String> filterNames = orderService.getFilterNames(session);
+		persistence.commitTransaction();
 		return BaseResponse.buildResponse(filterNames);
-
 	}
 
 	@GET
@@ -137,8 +135,8 @@ public class FacilityResource {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
 		try {
-			persistence.beginTransaction();
-			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(aggregate, filterName);
+			Session session = persistence.getSessionWithTransaction();
+			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, aggregate, filterName);
 
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {

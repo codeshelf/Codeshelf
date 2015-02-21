@@ -97,15 +97,12 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.codeshelf.platform.multitenancy.ITenantManager;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
-import com.codeshelf.util.IConfiguration;
-import com.codeshelf.util.JVMSystemConfiguration;
 import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
@@ -133,7 +130,7 @@ public final class ServerMain {
 	
 	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Configuration.loadConfig("server");
+		JvmProperties.load("server");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ServerMain.class);
@@ -171,12 +168,10 @@ public final class ServerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(ITenantManager.class).toInstance(TenantManagerService.getInstance());
+				bind(ITenantManager.class).toInstance(TenantManagerService.getNonRunningInstance());
 				
-				bind(TenantPersistenceService.class).toInstance(TenantPersistenceService.getInstance());
 				bind(GuiceFilter.class);
 				
-				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
@@ -241,13 +236,13 @@ public final class ServerMain {
 				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
 				}).to(ContainerUseDao.class);
 
-				requestStaticInjection(EdiServiceABC.class);
-				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
-				}).to(EdiServiceABCDao.class);
-
 				requestStaticInjection(DropboxService.class);
 				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
 				}).to(DropboxServiceDao.class);
+
+				requestStaticInjection(EdiServiceABC.class);
+				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
+				}).to(EdiServiceABCDao.class);
 
 				requestStaticInjection(EdiDocumentLocator.class);
 				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {
@@ -272,11 +267,7 @@ public final class ServerMain {
 				requestStaticInjection(ItemDdcGroup.class);
 				bind(new TypeLiteral<ITypedDao<ItemDdcGroup>>() {
 				}).to(ItemDdcGroupDao.class);
-/*
-				requestStaticInjection(LocationABC.class);
-				bind(new TypeLiteral<ITypedDao<LocationABC>>() {
-				}).to(LocationABCDao.class);
-*/
+
 				requestStaticInjection(LocationAlias.class);
 				bind(new TypeLiteral<ITypedDao<LocationAlias>>() {
 				}).to(LocationAliasDao.class);

@@ -86,6 +86,9 @@ public class LoginCommand extends CommandABC {
 						String scanType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
 						response.setScanTypeValue(scanType);
 						
+						String sequenceKind = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+						response.setSequenceKind(sequenceKind);
+
 					} else {
 						response.setAutoShortValue(false); // not read by client. No need to look it up.
 					}

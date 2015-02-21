@@ -61,6 +61,7 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
 					deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
 					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
+					deviceManager.setSequenceKind(loginResponse.getSequenceKind());
 					// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
 					this.deviceManager.attached(network);
 				} else {

@@ -5,16 +5,19 @@
  *******************************************************************************/
 package com.codeshelf.model.dao;
 
-import static org.junit.Assert.assertTrue;
-
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Aisle.AisleDao;
 import com.codeshelf.model.domain.Bay;
@@ -33,8 +36,6 @@ import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.DropboxService.DropboxServiceDao;
 import com.codeshelf.model.domain.EdiDocumentLocator;
 import com.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
-import com.codeshelf.model.domain.EdiServiceABC;
-import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Facility.FacilityDao;
 import com.codeshelf.model.domain.IronMqService;
@@ -78,16 +79,36 @@ import com.codeshelf.model.domain.WorkArea;
 import com.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
 
 public abstract class DAOTestABC {
 	@Rule
 	public TestName testName = new TestName();
-	
+
+	static ServiceManager jvmServiceManager;
 	static {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
+		
+		// start singleton services here (i.e. per jvm, not per test)
+		// see below for ephemeral services
+		List<Service> services = new ArrayList<Service>();
+		services.add(TenantManagerService.getNonRunningInstance());
+		services.add(ManagerPersistenceService.getNonRunningInstance());
+		services.add(TenantPersistenceService.getNonRunningInstance());
+		jvmServiceManager = new ServiceManager(services);
+		try {
+			jvmServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
+		} catch (TimeoutException e1) {
+			throw new RuntimeException("Could not start unit test services",e1);
+		}
+		
+		// start h2 web service
 		try {
 			org.h2.tools.Server.createWebServer("-webPort", "8082").start();
 		} catch (SQLException e) {
@@ -95,7 +116,11 @@ public abstract class DAOTestABC {
 		}
 	}
 	
-	protected TenantPersistenceService tenantPersistenceService;
+	ServiceManager ephemeralServiceManager;
+	ITenantManager tenantManager;
+
+	public TenantPersistenceService tenantPersistenceService; // convenience
+	
 	Facility defaultFacility = null;
 	
 	protected FacilityDao			mFacilityDao;
@@ -106,7 +131,6 @@ public abstract class DAOTestABC {
 	protected TierDao				mTierDao;
 	protected SlotDao				mSlotDao;
 	protected DropboxServiceDao		mDropboxServiceDao;
-	protected EdiServiceABCDao 		mEdiServiceABCDao;
 	protected EdiDocumentLocatorDao			mEdiDocumentLocatorDao;
 	protected OrderGroupDao			mOrderGroupDao;
 	protected OrderHeaderDao		mOrderHeaderDao;
@@ -129,8 +153,12 @@ public abstract class DAOTestABC {
 	protected WorkInstructionDao	mWorkInstructionDao;
 	protected WorkAreaDao			mWorkAreaDao;
 
+	//@Inject
+	//public DAOTestABC(ITenantManager tenantManager) {
 	public DAOTestABC() {
 		super();
+		//this.tenantManager = tenantManager;
+		this.tenantManager = TenantManagerService.getMaybeRunningInstance();
 	}
 	
 	public Tenant getDefaultTenant() {
@@ -154,111 +182,112 @@ public abstract class DAOTestABC {
 	
 	@Before
 	public final void setup() throws Exception {
-		TenantManagerService.getInstance().connect();
+		// start ephemeral services. these will be stopped in @After
+		// must use new service objects (services cannot be restarted)
+		//List<Service> services = new ArrayList<Service>();
+		// services.add(new Service()); e.g. 
+		//this.ephemeralServiceManager = new ServiceManager(services);
+		//this.ephemeralServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
 		
-		tenantPersistenceService = TenantPersistenceService.getInstance();
-		assertTrue(tenantPersistenceService.isRunning());
-
-		mFacilityDao = new FacilityDao(tenantPersistenceService);
+		this.tenantPersistenceService = TenantPersistenceService.getInstance();
+		
+		mFacilityDao = new FacilityDao();
 		Facility.DAO = mFacilityDao;
 
-		mAisleDao = new AisleDao(tenantPersistenceService);
+		mAisleDao = new AisleDao();
 		Aisle.DAO = mAisleDao;
 
-		mBayDao = new BayDao(tenantPersistenceService);
+		mBayDao = new BayDao();
 		Bay.DAO = mBayDao;
 
-		mTierDao = new TierDao(tenantPersistenceService);
+		mTierDao = new TierDao();
 		Tier.DAO = mTierDao;
 
-		mSlotDao = new SlotDao(tenantPersistenceService);
+		mSlotDao = new SlotDao();
 		Slot.DAO = mSlotDao;
 
-		mPathDao = new PathDao(tenantPersistenceService);
+		mPathDao = new PathDao();
 		Path.DAO = mPathDao;
 
-		mPathSegmentDao = new PathSegmentDao(tenantPersistenceService);
+		mPathSegmentDao = new PathSegmentDao();
 		PathSegment.DAO = mPathSegmentDao;
 
-		mDropboxServiceDao = new DropboxServiceDao(tenantPersistenceService);
+		mDropboxServiceDao = new DropboxServiceDao();
 		DropboxService.DAO = mDropboxServiceDao;
 
-		mIronMqServiceDao = new IronMqServiceDao(tenantPersistenceService);
+		mIronMqServiceDao = new IronMqServiceDao();
 		IronMqService.DAO = mIronMqServiceDao;
 
-		mEdiServiceABCDao = new EdiServiceABCDao(tenantPersistenceService);
-		EdiServiceABC.DAO = mEdiServiceABCDao;
-		
-		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao(tenantPersistenceService);
+		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao();
 		EdiDocumentLocator.DAO = mEdiDocumentLocatorDao;
 		
-		mCodeshelfNetworkDao = new CodeshelfNetworkDao(tenantPersistenceService);
+		mCodeshelfNetworkDao = new CodeshelfNetworkDao();
 		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
 
-		mCheDao = new CheDao(tenantPersistenceService);
+		mCheDao = new CheDao();
 		Che.DAO = mCheDao;
 
-		mSiteControllerDao = new SiteControllerDao(tenantPersistenceService);
+		mSiteControllerDao = new SiteControllerDao();
 		SiteController.DAO = mSiteControllerDao;
 
-		mOrderGroupDao = new OrderGroupDao(tenantPersistenceService);
+		mOrderGroupDao = new OrderGroupDao();
 		OrderGroup.DAO = mOrderGroupDao;
 
-		mOrderHeaderDao = new OrderHeaderDao(tenantPersistenceService);
+		mOrderHeaderDao = new OrderHeaderDao();
 		OrderHeader.DAO = mOrderHeaderDao;
 
-		mOrderDetailDao = new OrderDetailDao(tenantPersistenceService);
+		mOrderDetailDao = new OrderDetailDao();
 		OrderDetail.DAO = mOrderDetailDao;
 
-		mOrderLocationDao = new OrderLocationDao(tenantPersistenceService);
+		mOrderLocationDao = new OrderLocationDao();
 		OrderLocation.DAO = mOrderLocationDao;
 
-		mContainerDao = new ContainerDao(tenantPersistenceService);
+		mContainerDao = new ContainerDao();
 		Container.DAO = mContainerDao;
 
-		mContainerKindDao = new ContainerKindDao(tenantPersistenceService);
+		mContainerKindDao = new ContainerKindDao();
 		ContainerKind.DAO = mContainerKindDao;
 
-		mContainerUseDao = new ContainerUseDao(tenantPersistenceService);
+		mContainerUseDao = new ContainerUseDao();
 		ContainerUse.DAO = mContainerUseDao;
 
-		mItemMasterDao = new ItemMasterDao(tenantPersistenceService);
+		mItemMasterDao = new ItemMasterDao();
 		ItemMaster.DAO = mItemMasterDao;
 
-		mItemDao = new ItemDao(tenantPersistenceService);
+		mItemDao = new ItemDao();
 		Item.DAO = mItemDao;
 		
-		mIronMqServiceDao = new IronMqServiceDao(tenantPersistenceService);
+		mIronMqServiceDao = new IronMqServiceDao();
 		IronMqService.DAO = mIronMqServiceDao;
 		
-		mUomMasterDao = new UomMasterDao(tenantPersistenceService);
+		mUomMasterDao = new UomMasterDao();
 		UomMaster.DAO = mUomMasterDao;
 
-		mUnspecifiedLocationDao = new UnspecifiedLocationDao(tenantPersistenceService);
+		mUnspecifiedLocationDao = new UnspecifiedLocationDao();
 		UnspecifiedLocation.DAO = mUnspecifiedLocationDao;
 		
-		mLedControllerDao = new LedControllerDao(tenantPersistenceService);
+		mLedControllerDao = new LedControllerDao();
 		LedController.DAO = mLedControllerDao;
 
-		mLocationAliasDao = new LocationAliasDao(tenantPersistenceService);
+		mLocationAliasDao = new LocationAliasDao();
 		LocationAlias.DAO = mLocationAliasDao;
 		
-		mVertexDao = new VertexDao(tenantPersistenceService);
+		mVertexDao = new VertexDao();
 		Vertex.DAO = mVertexDao;
 
-		mWorkAreaDao = new WorkAreaDao(tenantPersistenceService);
+		mWorkAreaDao = new WorkAreaDao();
 		WorkArea.DAO = mWorkAreaDao;
 
-		mWorkInstructionDao = new WorkInstructionDao(tenantPersistenceService);
+		mWorkInstructionDao = new WorkInstructionDao();
 		WorkInstruction.DAO = mWorkInstructionDao;
 
-		mWorkAreaDao = new WorkAreaDao(tenantPersistenceService);
+		mWorkAreaDao = new WorkAreaDao();
 		WorkArea.DAO = mWorkAreaDao;
 		
 		// make sure default properties are in the database
-		tenantPersistenceService.beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction();
         PropertyDao.getInstance().syncPropertyDefaults();
-        tenantPersistenceService.commitTransaction();
+        TenantPersistenceService.getInstance().commitTransaction();
 			
 		doBefore();
 	}
@@ -267,13 +296,19 @@ public abstract class DAOTestABC {
 	}
 	
 	@After
-	public final void tearDown() {
+	public final void tearDown() throws TimeoutException {
 		doAfter();
 	}
 	
-	public void doAfter() {
-		tenantPersistenceService.stop();
+	public void doAfter() throws TimeoutException {
+		boolean hadActiveTransactions = this.tenantPersistenceService.rollbackAnyActiveTransactions();
+		
 		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
+		this.tenantPersistenceService.forgetInitialActions(getDefaultTenant());
+		//this.ephemeralServiceManager.stopAsync().awaitStopped(10, TimeUnit.SECONDS);
+		
+		Assert.assertFalse(hadActiveTransactions);
+
 	}
 
 	protected String getTestName() {

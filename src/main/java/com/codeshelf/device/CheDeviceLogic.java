@@ -101,6 +101,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			NO_COMMAND								= "NO";
 	protected static final String			CLEAR_ERROR_COMMAND						= "CLEAR";
 
+	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
+	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
+	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
+	protected static final String			OR_SCAN_START							= cheLine("OR SCAN START");
+	protected static final String			OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
+
 	protected static final Integer			maxCountForPositionControllerDisplay	= 99;
 
 	// The CHE's current state.
@@ -134,16 +140,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Getter
 	protected List<WorkInstruction>			mActivePickWiList;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	boolean									mOkToStartWithoutLocation				= false;
+
 	private NetGuid							mLastLedControllerGuid;
-	private boolean							mMultipleLastLedControllerGuids;															// Could have a list, but this will be quite rare.
+	private boolean							mMultipleLastLedControllerGuids;
 
 	protected WorkInstruction				mShortPickWi;
 	protected Integer						mShortPickQty;
 
 	protected boolean						connectedToServer						= true;
-	private boolean							mInSetState								= false;
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	protected int							mSetStateStackCount						= 0;
 
-	protected ScanNeededToVerifyPick				mScanNeededToVerifyPick;
+	protected ScanNeededToVerifyPick		mScanNeededToVerifyPick;
 
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
@@ -155,15 +169,17 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		private ScanNeededToVerifyPick(String inString) {
 			mInternal = inString;
 		}
+
 		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
 			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
-			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
+			for (ScanNeededToVerifyPick onValue : ScanNeededToVerifyPick.values()) {
 				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
 					return onValue;
 			}
 			return returnValue;
 		}
-		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
+
+		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue) {
 			return inValue.mInternal;
 		}
 	}
@@ -175,7 +191,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
 		mScanNeededToVerifyPick = inValue;
 	}
-	public String getScanVerificationType(){
+
+	public String getScanVerificationType() {
 		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
 	}
 
@@ -184,8 +201,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String scanPickValue = mDeviceManager.getScanTypeValue();
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 		setScanNeededToVerifyPick(theEnum);
+
+		String mSequenceKind = mDeviceManager.getSequenceKind();
+		setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
+
 	}
-	
+
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -203,13 +224,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		return 180;
 	}
 
-	// See confluence Codeshelf software patterns page on setState.
-	protected void markInSetState(boolean inValue) {
-		mInSetState = inValue;
-	}
-
 	public boolean inSetState() {
-		return mInSetState;
+		return mSetStateStackCount > 0;
 	}
 
 	public String getDeviceType() {
@@ -404,7 +420,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * trying to have the fourth line only depend on the state. We might throw additional messaging here if necessary.
@@ -421,7 +437,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		}
 		return returnString;
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1163,6 +1178,5 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
 	}
-
 
 }

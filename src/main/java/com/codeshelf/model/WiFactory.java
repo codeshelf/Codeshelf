@@ -164,7 +164,9 @@ public class WiFactory {
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
-		if (locAlias != null) {
+		if (inOrderDetail.isPreferredDetail()){
+			resultWi.doSetPickInstruction(inOrderDetail.getPreferredLocation());
+		} else if (locAlias != null) {
 			resultWi.doSetPickInstruction(locAlias.getAlias());
 		} else {
 			resultWi.doSetPickInstruction(resultWi.getLocationId());

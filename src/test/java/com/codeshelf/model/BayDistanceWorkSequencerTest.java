@@ -38,7 +38,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 	}
 
 	@Test
-	public void testEdiBothPreferredSequence() throws IOException {
+	public void testEdiBothWorkSequence() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
@@ -148,7 +148,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 				+ "I4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvString);
 
-		String csvString2 = "orderId,orderGroupId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,preferredSequence\r\n"
+		String csvString2 = "orderId,orderGroupId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence\r\n"
 				+ "1,G1,1,101,I1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[0]+"\r\n"
 				+ "1,G1,1,102,I2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[1]+"\r\n"
 				+ "1,G1,1,103,I3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[2]+"\r\n"
@@ -185,10 +185,12 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		return instructions;
 	}
 	
+	@SuppressWarnings("unused")
 	private static class StubLocationComparator implements Comparator<Location> {
 
 		private Ordering<Location> ordering;
 		
+		@SuppressWarnings({ "unchecked" })
 		public StubLocationComparator(Location... locations) {
 			this.ordering = Ordering.explicit(Arrays.<Location>asList(locations));
 		}

@@ -15,14 +15,14 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
 import com.google.inject.Inject;
 
-public final class CsSiteControllerApplication extends ApplicationABC {
+public final class SiteControllerApplication extends CodeshelfApplication {
 
 	@Getter
 	private ICsDeviceManager	deviceManager;
 
 	
 	@Inject
-	public CsSiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer) {
+	public SiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer) {
 		super(inAdminServer);
 		deviceManager = inDeviceManager;
 	}

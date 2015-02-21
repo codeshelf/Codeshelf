@@ -15,11 +15,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.DropboxService;
-import com.codeshelf.model.domain.EdiServiceABC;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.OrderHeader;
@@ -41,9 +39,6 @@ public class DropboxRealTest extends EdiTestABC {
 	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
 
-	static {
-		Configuration.loadConfig("test");
-	}
 	// This obtained by jon Oct. 5 2014.  Pretty easy. Just run server normally. Dropbox link, etc.  Then later, pull this from the provider_credentials field in the database.
 	private final static String			TEST_CREDENTIALS3	= "rMS4NWXXc90AAAAAAAAAbXlihAPhBC7TafUSn3Tla4H3U43UauXCuWsFA7U3K-1U";
 
@@ -101,7 +96,7 @@ public class DropboxRealTest extends EdiTestABC {
 			dropboxService.setDomainId("DB");
 			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
 			dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
-			EdiServiceABC.DAO.store(dropboxService);
+			DropboxService.DAO.store(dropboxService);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
 		}
@@ -284,6 +279,10 @@ public class DropboxRealTest extends EdiTestABC {
 
 			// Provide a wrapper for CsvOrderImporter
 			ICsvOrderImporter testImporter = new ICsvOrderImporter() {
+				@Override
+				public int toInteger(final String inString) {
+					return 0;
+				}
 				@Override
 				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
 					Facility inFacility,

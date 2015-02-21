@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
@@ -43,10 +42,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestCrossBatch.class);
-
-	static {
-		Configuration.loadConfig("test");
-	}
 
 	public CheProcessTestCrossBatch() {
 

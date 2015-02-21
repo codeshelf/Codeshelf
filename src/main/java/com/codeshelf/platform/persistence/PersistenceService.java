@@ -1,7 +1,10 @@
 package com.codeshelf.platform.persistence;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.hibernate.Hibernate;
 import org.hibernate.HibernateException;
@@ -16,27 +19,29 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.Service;
-import com.codeshelf.platform.ServiceNotInitializedException;
+import com.google.common.util.concurrent.AbstractIdleService;
 
-public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Service {
+import edu.emory.mathcs.backport.java.util.Collections;
+
+public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends AbstractIdleService {
 	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
+	private static final int	MAX_INITIALIZE_WAIT_SECONDS	= 10;
 	
 	// define behavior of service
 	abstract public SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
-	abstract protected void performStartupActions(SCHEMA_TYPE schema); // actions to perform after initializing schema
+	abstract protected void initialize(SCHEMA_TYPE schema); // actions to perform after initializing schema
 	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // can be null
 
 	// stores the factories for different schemas
-	private Map<SCHEMA_TYPE,SessionFactory> factories = new HashMap<SCHEMA_TYPE, SessionFactory>();
+	private Map<SCHEMA_TYPE,SessionFactory> factories;
+	
+	// whether each schema has been initalized (factory might be created during service startup, but init will not happen)
+	private Set<SessionFactory> initializedFactories;
 
 	// store the event listener integrators
-	private Map<SCHEMA_TYPE,EventListenerIntegrator> listenerIntegrators = new HashMap<SCHEMA_TYPE, EventListenerIntegrator>();
+	private Map<SCHEMA_TYPE,EventListenerIntegrator> listenerIntegrators;
 
 	private SessionFactory createSessionFactory(SCHEMA_TYPE schema) {
-		if (this.isRunning()==false) {
-			throw new ServiceNotInitializedException();
-		}
         try {
 			schema.applyLiquibaseSchemaUpdates();
 
@@ -65,9 +70,6 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 	        // add to factory map
 			this.factories.put(schema, factory);
 	        
-	        // sync up property defaults (etc) 
-			this.performStartupActions(schema);
-
 	        return factory;
         } catch (Exception ex) {
         	LOGGER.error("SessionFactory creation for "+schema.getSchemaName()+" failed",ex);
@@ -78,7 +80,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
         	}
         }
 	}
-
+	
 	private final static Transaction beginTransaction(Session session) {
 		Transaction tx = session.getTransaction();
 		if (tx != null) {
@@ -91,13 +93,26 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
 	}
-
-	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
+	
+	private final synchronized SessionFactory getSessionFactoryWithoutInitialActions(SCHEMA_TYPE schema) {
 		SessionFactory fac = this.factories.get(schema);
 		if (fac==null) {
 			fac = createSessionFactory(schema);
 		}
 		return fac;
+	}
+
+	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
+		SessionFactory fac = getSessionFactoryWithoutInitialActions(schema);
+		if(initializedFactories.add(fac)) {
+	        // sync up property defaults (etc) 
+			this.initialize(schema);
+		}
+		return fac;
+	}
+
+	public void forgetInitialActions(SCHEMA_TYPE schema) {
+		initializedFactories.remove(schema);
 	}
 
 	public final Session getSession(SCHEMA_TYPE schema) {
@@ -138,17 +153,16 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		}
 	}
 
-	public final boolean hasActiveTransaction(SCHEMA_TYPE schema) {
-		if(this.isRunning() == false) {
-			return false;
-		} 
-		SessionFactory sf = this.factories.get(schema);
+	private boolean hasActiveTransaction(SessionFactory sf,boolean rollback) {
 		if(!sf.isClosed()) {
 			Session session = sf.getCurrentSession();
 			if(session != null) {
 				Transaction tx = session.getTransaction();
 				if(tx != null) {
 					if(tx.isActive()) {
+						if(rollback) {
+							tx.rollback();
+						}
 						return true;
 					}
 				}
@@ -156,8 +170,19 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		}
 		return false;
 	}
+	
+	public final boolean hasActiveTransaction(SCHEMA_TYPE schema) {
+		if(this.isRunning() == false) {
+			return false;
+		} 
+		SessionFactory sf = this.factories.get(schema);
+		if(hasActiveTransaction(sf,false)) {
+			return true;
+		} // else
+		return false;
+	}
 
-	public final boolean hasAnyActiveTransaction() {
+	public final boolean hasAnyActiveTransactions() {
 		if(this.isRunning() == false) {
 			return false;
 		} 
@@ -167,6 +192,23 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 			}
 		}
 		return false;
+	}
+	
+	public final boolean rollbackAnyActiveTransactions() {
+		if(this.isRunning() == false) {
+			throw new RuntimeException("tried to rollback transactions on non-running service "+this.serviceName());
+		}
+		
+		int rollback=0;
+		for(SessionFactory sf : this.factories.values()) {
+			if(hasActiveTransaction(sf,true))
+				rollback++;
+		}
+		if(rollback>0) {
+			LOGGER.warn("rolled back "+rollback+" active transactions");
+		}
+		
+		return (rollback>0);
 	}
 
 	public final static <T>T deproxify(T object) {
@@ -200,7 +242,7 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		commitTransaction(getDefaultSchema());
 	}
 	
-	public final void rollbackTenantTransaction() {
+	public final void rollbackTransaction() {
 		rollbackTransaction(getDefaultSchema());
 	}
 	
@@ -215,47 +257,42 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 	public final SessionFactory getSessionFactory() {
 		return getSessionFactory(getDefaultSchema());
 	}
-	
-	/* Service methods */
+
 	@Override
-	public final boolean start() {
-		if(this.isRunning()) {
-			LOGGER.error("Attempted to start "+this.getClass().getSimpleName()+" more than once");
-		} else {
-			LOGGER.debug("Starting "+this.getClass().getSimpleName());
-			this.setRunning(true);
-		}
-		return true;
+	protected void startUp() throws Exception {
+		// stores the factories for different schemas
+		factories = new ConcurrentHashMap<SCHEMA_TYPE, SessionFactory>();
+		
+		// notes whether each schema has been initalized (factory might be created during service startup but init will not happen)
+		@SuppressWarnings("unchecked")
+		Set<SessionFactory> set = Collections.newSetFromMap(new ConcurrentHashMap<SessionFactory,Boolean>());
+		initializedFactories = set;
+
+		// store the event listener integrators
+		listenerIntegrators = new ConcurrentHashMap<SCHEMA_TYPE, EventListenerIntegrator>();
+		
+		// to confirm started service, successfully create a transaction with default tenant
+		SCHEMA_TYPE defaultSchema = this.getDefaultSchema();
+		SessionFactory fac = this.getSessionFactoryWithoutInitialActions(defaultSchema);
+		Session session = fac.getCurrentSession();
+		Transaction tx = session.beginTransaction();
+		tx.commit();
+		
 	}
-
 	@Override
-	public final boolean stop() {
-		LOGGER.info("Stopping "+this.getClass().getSimpleName());
-		
-		int rollback=0;
-		for(SessionFactory sf : this.factories.values()) {
-			if(!sf.isClosed()) {
-				Session session = sf.getCurrentSession();
-				if(session != null) {
-					Transaction tx = session.getTransaction();
-					if(tx != null) {
-						if(tx.isActive()) {
-							tx.rollback();
-							rollback++;
-						}
-					}
-					//session.close();
-				}
-				//sf.close();
-			}
+	protected void shutDown() throws Exception {
+		factories = null;
+		initializedFactories = null;
+		listenerIntegrators = null;
+	}
+	@Override
+	abstract protected String serviceName();
+	
+	public void awaitRunningOrThrow() {
+		try {
+			this.awaitRunning(MAX_INITIALIZE_WAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new IllegalStateException("timeout initializing "+serviceName(),e);
 		}
-		if(rollback>0) {
-			LOGGER.warn("rolled back "+rollback+" active transactions while stopping persistence");
-		}
-
-		//this.factories = new HashMap<Tenant, SessionFactory>(); // unlink session factories
-		
-		this.setRunning(false);
-		return true;
 	}
 }

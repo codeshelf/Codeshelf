@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
@@ -58,10 +57,6 @@ public class InventoryImporterTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
 	UUID facilityForVirtualSlottingId;
-	
-	static {
-		Configuration.loadConfig("test");
-	}
 
 	@Override
 	public void doBefore() {
@@ -530,7 +525,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Let's find our CHE
 		// this.getPersistenceService().beginTransaction();
-		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransaction());
+		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransactions());
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");

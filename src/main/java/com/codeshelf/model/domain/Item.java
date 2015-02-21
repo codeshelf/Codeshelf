@@ -28,7 +28,6 @@ import com.codeshelf.model.LedRange;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.ErrorCode;
@@ -61,11 +60,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
-		@Inject
-		public ItemDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<Item> getDaoClass() {
 			return Item.class;
 		}

@@ -15,12 +15,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 
 public class ImportPerformanceTest {
 	
 	static {
-		Configuration.loadConfig("server");
+		JvmProperties.load("server");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ImportPerformanceTest.class);

@@ -96,8 +96,8 @@ public class WorkService implements IApiService {
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
 
-	@Getter
-	private TenantPersistenceService			tenantPersistenceService;
+//	@Getter
+//	private TenantPersistenceService			tenantPersistenceService;
 
 	private WorkServiceThread			wsThread					= null;
 	private static boolean				aWorkServiceThreadExists	= false;
@@ -135,7 +135,7 @@ public class WorkService implements IApiService {
 	}
 
 	private void init(IEdiExportServiceProvider exportServiceProvider) {
-		this.tenantPersistenceService = TenantPersistenceService.getInstance();
+//		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
@@ -188,7 +188,7 @@ public class WorkService implements IApiService {
 			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
 			try {
 				//transaction begun and closed after blocking call so that it is not held open
-				tenantPersistenceService.beginTransaction();
+				TenantPersistenceService.getInstance().beginTransaction();
 				boolean sent = false;
 				while (!sent) {
 					try {
@@ -200,9 +200,9 @@ public class WorkService implements IApiService {
 						Thread.sleep(retryDelay);
 					}
 				}
-				tenantPersistenceService.commitTransaction();
+				TenantPersistenceService.getInstance().commitTransaction();
 			} catch (Exception e) {
-				tenantPersistenceService.rollbackTenantTransaction();
+				TenantPersistenceService.getInstance().rollbackTransaction();
 				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 			}
 		}
@@ -529,8 +529,15 @@ public class WorkService implements IApiService {
 
 		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
 		if (startingPathPos == null) {
+			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
+			for (WorkInstruction instruction : completeRouteWiList) {
+				OrderDetail detail = instruction.getOrderDetail();
+				if (detail.isPreferredDetail()){
+					preferredInstructions.add(instruction);
+				}
+			}
 			// getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
-			return Lists.newArrayList();
+			return preferredInstructions;
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
@@ -755,6 +762,9 @@ public class WorkService implements IApiService {
 			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 				boolean orderDetailChanged = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					if (!orderDetail.getActive()) {
+						continue;
+					}
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
 						count++;
@@ -895,7 +905,20 @@ public class WorkService implements IApiService {
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
-		if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
+		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
+		// we can make the work instruction anyway. 
+		if (inOrderDetail.isPreferredDetail()) {
+			Location location = inOrderDetail.getPreferredLocObject((Facility)defaultLocation);
+			location = location == null ? defaultLocation : location;
+			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+				WorkInstructionTypeEnum.PLAN,
+				inOrderDetail,
+				inContainer,
+				inChe,
+				location,
+				inTime);
+			resultWork.setInstruction(resultWi);
+		} else if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
 			// If there is no item in inventory for that uom (AT ALL) then create a PLANNED, SHORT WI for this order detail.
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?

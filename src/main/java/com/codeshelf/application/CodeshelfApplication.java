@@ -8,9 +8,12 @@ package com.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +31,11 @@ import com.codeshelf.metrics.OpenTsdbReporter;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
-public abstract class ApplicationABC implements ICodeshelfApplication {
+public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	public enum ShutdownCleanupReq {
 		NONE , 
 		DROP_SCHEMA , 
@@ -38,16 +43,19 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		DELETE_ORDERS_WIS_INVENTORY
 		};
 		
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CodeshelfApplication.class);
 
 	private boolean				mIsRunning	= true;
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
+	private List<Service> services = new ArrayList<Service>(); // subclass must register services before starting app 
+	private ServiceManager	serviceManager;
+
 	private WebApiServer apiServer;
 
 	@Inject
-	public ApplicationABC(WebApiServer apiServer) {
+	public CodeshelfApplication(WebApiServer apiServer) {
 		this.apiServer = apiServer;
 	}
 
@@ -58,7 +66,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	protected abstract void doLoadLibraries();
 
 	protected abstract void doInitializeApplicationData();
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Setup the JVM environment.
@@ -74,6 +82,15 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		doLoadLibraries();
 	}
 
+	protected final void registerService(Service service) {
+		if(service == null)
+			throw new NullPointerException("null Service");
+		if(service.state().equals(Service.State.NEW)) {
+			this.services.add(service);
+		} else {
+			LOGGER.error("cannot register service that has already been started");
+		}
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -86,13 +103,24 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 
 		installShutdownHook();
 
+		serviceManager = new ServiceManager(services);
+		serviceManager.startAsync();
+		try {
+			serviceManager.awaitHealthy(30,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			LOGGER.error("timeout starting services", e);
+		}
+
+		// TODO: other services like this
+
 		doStartup();
 
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		doInitializeApplicationData();
 		
-		LOGGER.debug("------------------------------------------------------------");
-		LOGGER.info("Started app version {} - process info {} ",Configuration.getVersionString(),processName);
+		//Need the following line to know at a glance when startup is complete
+		LOGGER.info("------------------------------------------------------------");
+		LOGGER.info("Started app version {} - process info {} ",JvmProperties.getVersionString(),processName);
 	}
 
 	// --------------------------------------------------------------------------
@@ -104,6 +132,13 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		
 		Tenant defaultTenant = TenantManagerService.getInstance().getDefaultTenant();
 		doShutdown();
+		
+		serviceManager.stopAsync();
+		try {
+			serviceManager.awaitStopped(10, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			LOGGER.error("timeout stopping services",e);
+		}		
 
 		try {
 			switch (cleanup) {
@@ -159,7 +194,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 				// Only execute this hook if the application is still running at (external) shutdown.
 				// (This is to help where the shutdown is done externally and not through our own means.)
 				if (mIsRunning) {
-					stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
+					stopApplication(CodeshelfApplication.ShutdownCleanupReq.NONE);
 				}
 			}
 		};

@@ -6,14 +6,10 @@
 
 package com.codeshelf.application;
 
-import java.lang.management.ManagementFactory;
 import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import lombok.Getter;
-
-import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,51 +21,46 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
-import com.codeshelf.util.IConfiguration;
 import com.codeshelf.ws.jetty.server.ServerWatchdogThread;
 import com.codeshelf.ws.jetty.server.SessionManager;
 import com.google.inject.Inject;
 
-public final class ServerCodeshelfApplication extends ApplicationABC {
+public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private IEdiProcessor			mEdiProcessor;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
-
-	@Getter
-	private TenantPersistenceService		tenantPersistenceService;
 	
-	@Getter
-	private ITenantManager			tenantManager;
-
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
 	private final ServerWatchdogThread watchdog;
-
+	
 	@Inject
-	public ServerCodeshelfApplication(final IConfiguration configuration,
-			final IEdiProcessor inEdiProcessor,
+	public ServerCodeshelfApplication(final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
-			final TenantPersistenceService tenantPersistenceService,
 			final ITenantManager inTenantManager) {
 			
 		super(inWebApiServer);
 		
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		this.tenantPersistenceService = tenantPersistenceService;
-		this.tenantManager = inTenantManager;
-			
+		
+		// if services already running e.g. in test, these will log an error and continue
+		this.registerService(inTenantManager);
+		this.registerService(TenantPersistenceService.getMaybeRunningInstance()); 
+		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
+
 		// create and configure watch dog
 		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
-		boolean suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive");
-		boolean killIdle = configuration.getBoolean("websocket.idle.kill");
+		boolean suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
+		boolean killIdle = Boolean.getBoolean("websocket.idle.kill");
 		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
 		this.watchdog.setKillIdle(killIdle);
 
@@ -88,20 +79,6 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 	 */
 	protected void doStartup() throws Exception {
 
-		if(!TenantManagerService.getInstance().connect()) {
-			LOGGER.error("Failed to initialize Tenant Manager. Server is shutting down.");
-			Thread.sleep(3000);
-			System.exit(1);
-		}
-		try {
-			this.getTenantPersistenceService().beginTransaction();
-			this.getTenantPersistenceService().commitTransaction();
-		} catch (HibernateException e) {
-			LOGGER.error("Failed to initialize Hibernate. Server is shutting down.", e);
-			Thread.sleep(3000);
-			System.exit(1);
-		}
-
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
 		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
@@ -114,7 +91,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		registerSystemMetrics();
 
 		// create server-specific health checks
-		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck(tenantPersistenceService);
+		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck();
 		MetricsService.registerHealthCheck(dbCheck);
 
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
@@ -136,9 +113,7 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
 		this.stopApiServer();
-		this.tenantPersistenceService.stop();
-		TenantManagerService.getInstance().disconnect();
-		LOGGER.info("Application terminated normally");
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -150,18 +125,19 @@ public final class ServerCodeshelfApplication extends ApplicationABC {
 		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
 		for(Tenant tenant : tenants) {
 			try {
-				this.getTenantPersistenceService().beginTransaction(tenant);
+				TenantPersistenceService.getInstance().beginTransaction(tenant);
 				for (Facility facility : Facility.DAO.getAll()) {
 					for (Path path : facility.getPaths()) {
 						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 						facility.recomputeLocationPathDistances(path);
 					}
 				}
-				this.getTenantPersistenceService().commitTransaction(tenant);
+				TenantPersistenceService.getInstance().commitTransaction(tenant);
 			} catch(Exception e) {
-				this.getTenantPersistenceService().rollbackTransaction(tenant);
+				TenantPersistenceService.getInstance().rollbackTransaction(tenant);
 				throw e;
 			}
 		}
 	}
+
 }

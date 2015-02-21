@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 
@@ -16,9 +17,9 @@ import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.ApplicationABC;
-import com.codeshelf.application.CsSiteControllerApplication;
+import com.codeshelf.application.CodeshelfApplication;
 import com.codeshelf.application.CsSiteControllerMain;
+import com.codeshelf.application.SiteControllerApplication;
 import com.codeshelf.application.WebApiServer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CsDeviceManager;
@@ -42,8 +43,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.util.IConfiguration;
-import com.codeshelf.util.JVMSystemConfiguration;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
@@ -74,7 +73,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	protected static NetGuid cheGuid2 = new NetGuid("0x00009992");
 
 	@Getter
-	CsSiteControllerApplication siteController;
+	SiteControllerApplication siteController;
 
 	@Getter
 	CsDeviceManager deviceManager;
@@ -100,7 +99,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 				bind(SessionManager.class).toInstance(SessionManager.getInstance());
 				// jetty websocket
 				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
@@ -109,7 +107,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		return injector;
 	}
 
-	@SuppressWarnings("unused")
 	@Override
 	public void doBefore() {
 		mWorkService = new WorkService().start();
@@ -125,7 +122,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			LOGGER.debug("CsServerEndpoint already setup (NORMAL): " + e.toString());
 		}
 
-		IConfiguration configuration = websocketServerInjector.getInstance(IConfiguration.class);
 		LOGGER.debug("-------------- Creating environment before running test case");
 		//The client WSS needs the self-signed certificate to be trusted
 		
@@ -216,11 +212,11 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	}
 
 	@Override
-	public void doAfter() {
+	public void doAfter() throws TimeoutException {
 		// roll back transaction if active
-		if (TenantPersistenceService.getInstance().hasAnyActiveTransaction()) {
+		if (TenantPersistenceService.getInstance().hasAnyActiveTransactions()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");
-			TenantPersistenceService.getInstance().rollbackTenantTransaction();
+			TenantPersistenceService.getInstance().rollbackTransaction();
 		}
 		// tear down server and site controller
 		stop();
@@ -232,7 +228,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	private void stop() {
 		LOGGER.debug("-------------- Cleaning up after running test case");
 		try {
-			siteController.stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
+			siteController.stopApplication(CodeshelfApplication.ShutdownCleanupReq.NONE);
 		}
 		catch (Exception e) {
 			LOGGER.error("Failed to stop site controller",e);

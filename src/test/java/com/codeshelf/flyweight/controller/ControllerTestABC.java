@@ -21,8 +21,10 @@ import com.codeshelf.flyweight.command.NetEndpoint;
 public abstract class ControllerTestABC {
 
 	//private static final byte			TEST_ENDPOINT_NUM	= 0x01;
+	@SuppressWarnings("unused")
 	private static final byte	SRS_BYTE	= 0x00;
 	//private static final NetEndpoint	TEST_ENDPOINT		= new NetEndpoint(TEST_ENDPOINT_NUM);
+	@SuppressWarnings("unused")
 	private static final String	TEST_ID		= "12345678";
 
 	private static final String	TEST_MSG1	= "TEST1";

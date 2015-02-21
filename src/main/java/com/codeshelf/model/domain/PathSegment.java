@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -61,15 +60,9 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
-		@Inject
-		public PathSegmentDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<PathSegment> getDaoClass() {
 			return PathSegment.class;
 		}
-
 	}
 
 	public static final String	DOMAIN_PREFIX	= "SEG";

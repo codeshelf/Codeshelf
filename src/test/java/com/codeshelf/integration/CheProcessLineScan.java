@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.AislesFileCsvImporter;
@@ -47,10 +46,6 @@ import com.codeshelf.util.ThreadUtils;
 public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessLineScan.class);
-
-	static {
-		Configuration.loadConfig("test");
-	}
 
 	public CheProcessLineScan() {
 

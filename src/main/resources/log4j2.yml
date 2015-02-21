@@ -116,7 +116,7 @@ configuration:
     - name: org.eclipse.jetty.util.log
       level: warn # don't log init
 
-    - name: com.codeshelf.application.Configuration
+    - name: com.codeshelf.application.JvmProperties
       level: warn # info to show logging subsystems initialize
       
     - name: org.apache.flume.sink.FailoverSinkProcessor

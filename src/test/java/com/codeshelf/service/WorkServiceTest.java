@@ -30,7 +30,6 @@ import org.mockito.internal.stubbing.answers.DoesNothing;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.mockito.invocation.InvocationOnMock;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.generators.FacilityGenerator;
@@ -59,10 +58,6 @@ import com.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends DAOTestABC {
-	
-	static {
-		Configuration.loadConfig("test");
-	}
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
@@ -123,7 +118,8 @@ public class WorkServiceTest extends DAOTestABC {
 		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
-	
+		this.getTenantPersistenceService().commitTransaction();
+
 	}
 	
 	
