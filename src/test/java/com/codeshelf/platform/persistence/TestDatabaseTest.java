@@ -34,7 +34,7 @@ public class TestDatabaseTest extends DomainTestABC {
 		
 		LOGGER.info("Test Database sequence #"+TestDatabaseTest.sequence_static);
 		
-		assertFalse(this.getTenantPersistenceService().hasAnyActiveTransaction());
+		assertFalse(this.getTenantPersistenceService().hasAnyActiveTransactions());
 		this.getTenantPersistenceService().beginTransaction();
 
 		if(TestDatabaseTest.sequence_static == 1) {
@@ -56,8 +56,8 @@ public class TestDatabaseTest extends DomainTestABC {
 			Facility.DAO.store(fac);			
 			
 			// rollback and new transaction
-			this.getTenantPersistenceService().rollbackTenantTransaction();
-			assertFalse(this.getTenantPersistenceService().hasAnyActiveTransaction());
+			this.getTenantPersistenceService().rollbackTransaction();
+			assertFalse(this.getTenantPersistenceService().hasAnyActiveTransactions());
 			this.getTenantPersistenceService().beginTransaction();
 
 			// last step rolled back new org, so it should not exist
@@ -74,7 +74,8 @@ public class TestDatabaseTest extends DomainTestABC {
 		this.sequence_member++;
 		TestDatabaseTest.sequence_static++;
 		
-		// NOT closing transaction at end of test, framework should automatically stop persistence service anyhow.		
+		// ensure tenant persistence service can find and roll back the transaction left open above
+		this.tenantPersistenceService.rollbackAnyActiveTransactions();
 	}
 	
 	@Test

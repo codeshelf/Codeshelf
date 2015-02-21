@@ -118,7 +118,8 @@ public class WorkServiceTest extends DAOTestABC {
 		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
-	
+		this.getTenantPersistenceService().commitTransaction();
+
 	}
 	
 	

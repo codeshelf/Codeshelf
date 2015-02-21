@@ -168,7 +168,7 @@ public final class ServerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(ITenantManager.class).toInstance(TenantManagerService.getInstance());
+				bind(ITenantManager.class).toInstance(TenantManagerService.getNonRunningInstance());
 				
 				bind(GuiceFilter.class);
 				

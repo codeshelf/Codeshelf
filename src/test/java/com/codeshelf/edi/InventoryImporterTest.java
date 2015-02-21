@@ -525,7 +525,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Let's find our CHE
 		// this.getPersistenceService().beginTransaction();
-		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransaction());
+		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransactions());
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");

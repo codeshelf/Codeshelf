@@ -5,11 +5,14 @@
  *******************************************************************************/
 package com.codeshelf.model.dao;
 
-import static org.junit.Assert.assertTrue;
-
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -76,16 +79,36 @@ import com.codeshelf.model.domain.WorkArea;
 import com.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
 
 public abstract class DAOTestABC {
 	@Rule
 	public TestName testName = new TestName();
-	
+
+	static ServiceManager jvmServiceManager;
 	static {
 		JvmProperties.load("test");
+		
+		// start singleton services here (i.e. per jvm, not per test)
+		// see below for ephemeral services
+		List<Service> services = new ArrayList<Service>();
+		services.add(TenantManagerService.getNonRunningInstance());
+		services.add(ManagerPersistenceService.getNonRunningInstance());
+		services.add(TenantPersistenceService.getNonRunningInstance());
+		jvmServiceManager = new ServiceManager(services);
+		try {
+			jvmServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
+		} catch (TimeoutException e1) {
+			throw new RuntimeException("Could not start unit test services",e1);
+		}
+		
+		// start h2 web service
 		try {
 			org.h2.tools.Server.createWebServer("-webPort", "8082").start();
 		} catch (SQLException e) {
@@ -93,7 +116,11 @@ public abstract class DAOTestABC {
 		}
 	}
 	
-	protected TenantPersistenceService tenantPersistenceService;
+	ServiceManager ephemeralServiceManager;
+	ITenantManager tenantManager;
+
+	public TenantPersistenceService tenantPersistenceService; // convenience
+	
 	Facility defaultFacility = null;
 	
 	protected FacilityDao			mFacilityDao;
@@ -126,8 +153,12 @@ public abstract class DAOTestABC {
 	protected WorkInstructionDao	mWorkInstructionDao;
 	protected WorkAreaDao			mWorkAreaDao;
 
+	//@Inject
+	//public DAOTestABC(ITenantManager tenantManager) {
 	public DAOTestABC() {
 		super();
+		//this.tenantManager = tenantManager;
+		this.tenantManager = TenantManagerService.getMaybeRunningInstance();
 	}
 	
 	public Tenant getDefaultTenant() {
@@ -151,11 +182,15 @@ public abstract class DAOTestABC {
 	
 	@Before
 	public final void setup() throws Exception {
-		TenantManagerService.getInstance().connect();
+		// start ephemeral services. these will be stopped in @After
+		// must use new service objects (services cannot be restarted)
+		//List<Service> services = new ArrayList<Service>();
+		// services.add(new Service()); e.g. 
+		//this.ephemeralServiceManager = new ServiceManager(services);
+		//this.ephemeralServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
 		
-		tenantPersistenceService = TenantPersistenceService.getInstance();
-		assertTrue(tenantPersistenceService.isRunning());
-
+		this.tenantPersistenceService = TenantPersistenceService.getInstance();
+		
 		mFacilityDao = new FacilityDao();
 		Facility.DAO = mFacilityDao;
 
@@ -250,9 +285,9 @@ public abstract class DAOTestABC {
 		WorkArea.DAO = mWorkAreaDao;
 		
 		// make sure default properties are in the database
-		tenantPersistenceService.beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction();
         PropertyDao.getInstance().syncPropertyDefaults();
-        tenantPersistenceService.commitTransaction();
+        TenantPersistenceService.getInstance().commitTransaction();
 			
 		doBefore();
 	}
@@ -261,13 +296,19 @@ public abstract class DAOTestABC {
 	}
 	
 	@After
-	public final void tearDown() {
+	public final void tearDown() throws TimeoutException {
 		doAfter();
 	}
 	
-	public void doAfter() {
-		tenantPersistenceService.stop();
+	public void doAfter() throws TimeoutException {
+		boolean hadActiveTransactions = this.tenantPersistenceService.rollbackAnyActiveTransactions();
+		
 		TenantManagerService.getInstance().resetTenant(getDefaultTenant());
+		this.tenantPersistenceService.forgetInitialActions(getDefaultTenant());
+		//this.ephemeralServiceManager.stopAsync().awaitStopped(10, TimeUnit.SECONDS);
+		
+		Assert.assertFalse(hadActiveTransactions);
+
 	}
 
 	protected String getTestName() {

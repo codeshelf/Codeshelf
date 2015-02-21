@@ -76,15 +76,17 @@ public class ServerMessageProcessor extends MessageProcessor {
 	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
 	
 	private ServiceFactory	serviceFactory;
-	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 	private ConvertUtilsBean	converter;
 
 	@Inject
 	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
-		this.objectChangeBroadcaster = TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
 		this.converter = converter;
+	}
+	
+	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
+		return TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
 	}
 	
 	@Override
@@ -101,7 +103,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession, loginRequest, objectChangeBroadcaster);
+				command = new LoginCommand(csSession, loginRequest, getObjectChangeBroadcaster());
 				loginCounter.inc();
 				applicationRequestCounter.inc();
 			}
@@ -160,7 +162,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof RegisterFilterRequest) {
-				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, objectChangeBroadcaster);
+				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, getObjectChangeBroadcaster());
 				objectFilterCounter.inc();
 				applicationRequestCounter.inc();
 			}			

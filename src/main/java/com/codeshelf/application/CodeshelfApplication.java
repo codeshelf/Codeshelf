@@ -8,9 +8,12 @@ package com.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +31,8 @@ import com.codeshelf.metrics.OpenTsdbReporter;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
 public abstract class CodeshelfApplication implements ICodeshelfApplication {
@@ -44,6 +49,9 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	private Thread				mShutdownHookThread;
 	private Runnable			mShutdownRunnable;
 
+	private List<Service> services = new ArrayList<Service>(); // subclass must register services before starting app 
+	private ServiceManager	serviceManager;
+
 	private WebApiServer apiServer;
 
 	@Inject
@@ -58,7 +66,7 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	protected abstract void doLoadLibraries();
 
 	protected abstract void doInitializeApplicationData();
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Setup the JVM environment.
@@ -74,6 +82,15 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		doLoadLibraries();
 	}
 
+	protected final void registerService(Service service) {
+		if(service == null)
+			throw new NullPointerException("null Service");
+		if(service.state().equals(Service.State.NEW)) {
+			this.services.add(service);
+		} else {
+			LOGGER.error("cannot register service that has already been started");
+		}
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -85,6 +102,16 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		String processName = ManagementFactory.getRuntimeMXBean().getName();
 
 		installShutdownHook();
+
+		serviceManager = new ServiceManager(services);
+		serviceManager.startAsync();
+		try {
+			serviceManager.awaitHealthy(30,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			LOGGER.error("timeout starting services", e);
+		}
+
+		// TODO: other services like this
 
 		doStartup();
 
@@ -105,6 +132,13 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		
 		Tenant defaultTenant = TenantManagerService.getInstance().getDefaultTenant();
 		doShutdown();
+		
+		serviceManager.stopAsync();
+		try {
+			serviceManager.awaitStopped(10, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			LOGGER.error("timeout stopping services",e);
+		}		
 
 		try {
 			switch (cleanup) {

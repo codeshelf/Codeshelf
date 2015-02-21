@@ -42,8 +42,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
 
-	private TenantPersistenceService tenantPersistenceService = TenantPersistenceService.getInstance();
-
 	private ConvertUtilsBean converter;
 
 	@Inject
@@ -52,7 +50,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 	
 	protected Session getCurrentSession() {
-		Session session = tenantPersistenceService.getSession(); 
+		Session session = TenantPersistenceService.getInstance().getSession(); 
 		return session;
 	}
 

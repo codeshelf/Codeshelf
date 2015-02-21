@@ -194,7 +194,7 @@ public class CodeshelfApplicationTest {
 			ediProcessor,
 			pickDocumentGenerator,
 			adminServer,
-			TenantManagerService.getInstance());
+			TenantManagerService.getMaybeRunningInstance());
 
 		final Result checkAppRunning = new Result();
 

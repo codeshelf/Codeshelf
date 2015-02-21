@@ -22,25 +22,34 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 		super();
 	}
 
-	public final synchronized static TenantPersistenceService getInstance() {
+	/**
+	 * singleton service: any method attempting to access before service 
+	 * is initialized will block; only the service manager can start service 
+	 */
+	public final synchronized static TenantPersistenceService getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantPersistenceService();
-			theInstance.start();
-		}
-		else if (!theInstance.isRunning()) {
-			theInstance.start();
-			LOGGER.info("PersistanceService was stopped and restarted");
 		}
 		return theInstance;
 	}
-
+	public final synchronized static TenantPersistenceService getNonRunningInstance() {
+		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
+			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
+		}
+		return theInstance;
+	}
+	public final static TenantPersistenceService getInstance() {
+		getMaybeRunningInstance().awaitRunningOrThrow();		
+		return theInstance;
+	}
+	
 	@Override
 	public Tenant getDefaultSchema() {
 		return TenantManagerService.getInstance().getDefaultTenant();
 	}
 
 	@Override
-	protected void performStartupActions(Tenant schema) {
+	protected void initialize(Tenant schema) {
 		Transaction t = this.beginTransaction(schema);
 		PropertyDao.getInstance().syncPropertyDefaults();
         t.commit();		
@@ -70,5 +79,10 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 		}
 		// not a domain object
 		return null;
+	}
+
+	@Override
+	protected String serviceName() {
+		return this.getClass().getSimpleName();
 	}
 }

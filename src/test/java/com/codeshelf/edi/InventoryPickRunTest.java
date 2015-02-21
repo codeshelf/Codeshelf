@@ -509,8 +509,6 @@ public class InventoryPickRunTest extends EdiTestABC {
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
 		this.getTenantPersistenceService().beginTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
 		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);

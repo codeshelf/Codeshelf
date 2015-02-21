@@ -96,7 +96,7 @@ public class CsServerEndPoint {
         	}
 			this.getTenantPersistenceService().commitTransaction();
 		} catch (RuntimeException e) {
-			this.getTenantPersistenceService().rollbackTenantTransaction();
+			this.getTenantPersistenceService().rollbackTransaction();
 			LOGGER.error("Unable to persist during message handling: " + message, e);
 		}
     	finally {

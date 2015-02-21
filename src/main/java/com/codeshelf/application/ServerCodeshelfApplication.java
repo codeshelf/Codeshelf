@@ -10,8 +10,6 @@ import java.util.Collection;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import lombok.Getter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +21,7 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
@@ -38,13 +37,10 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private IEdiProcessor			mEdiProcessor;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
-	@Getter
-	private ITenantManager			tenantManager;
-
 	private BlockingQueue<String>	mEdiProcessSignalQueue;
 
 	private final ServerWatchdogThread watchdog;
-
+	
 	@Inject
 	public ServerCodeshelfApplication(final IEdiProcessor inEdiProcessor,
 			final IPickDocumentGenerator inPickDocumentGenerator,
@@ -55,8 +51,12 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		
 		mEdiProcessor = inEdiProcessor;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		this.tenantManager = inTenantManager;
-			
+		
+		// if services already running e.g. in test, these will log an error and continue
+		this.registerService(inTenantManager);
+		this.registerService(TenantPersistenceService.getMaybeRunningInstance()); 
+		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
+
 		// create and configure watch dog
 		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
 		boolean suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
@@ -78,12 +78,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	/**
 	 */
 	protected void doStartup() throws Exception {
-
-		if(!TenantManagerService.getInstance().connect()) {
-			LOGGER.error("Failed to initialize Tenant Manager. Server is shutting down.");
-			Thread.sleep(3000);
-			System.exit(1);
-		}
 
 		// Start the EDI process.
 		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
@@ -119,9 +113,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
 		this.stopApiServer();
-		TenantPersistenceService.getInstance().stop();
-		TenantManagerService.getInstance().disconnect();
-		LOGGER.info("Application terminated normally");
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -147,4 +139,5 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			}
 		}
 	}
+
 }
