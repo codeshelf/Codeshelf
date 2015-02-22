@@ -106,7 +106,7 @@ public abstract class DAOTestABC {
 		services.add(TenantPersistenceService.getNonRunningInstance());
 		jvmServiceManager = new ServiceManager(services);
 		try {
-			jvmServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
+			jvmServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
 		} catch (TimeoutException e1) {
 			throw new RuntimeException("Could not start unit test services",e1);
 		}

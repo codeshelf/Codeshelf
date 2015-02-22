@@ -59,7 +59,6 @@ public class JettyWebSocketClient {
 		
         // create and configure WS endpoint                 
         endpoint = new CsClientEndpoint(this);
-        endpoint.setSessionManager(SessionManager.getInstance());
         endpoint.setMessageProcessor(responseProcessor);
      
         messageCoordinator = new MessageCoordinator(); 

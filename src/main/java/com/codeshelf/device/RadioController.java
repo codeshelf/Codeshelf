@@ -130,10 +130,6 @@ public class RadioController implements IRadioController {
 	private final Counter										packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
 																								"packets.sent");
 
-	// --------------------------------------------------------------------------
-	/**
-	 *  @param inSessionManager   The session manager for this controller.
-	 */
 	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
 		gatewayInterface = inGatewayInterface;

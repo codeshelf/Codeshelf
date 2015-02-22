@@ -46,10 +46,6 @@ public class CsClientEndpoint {
 
 	@Getter
 	@Setter
-	private SessionManager			sessionManager;
-
-	@Getter
-	@Setter
 	private MessageCoordinator		messageCoordinator;
 
 	private JettyWebSocketClient	client;
@@ -71,21 +67,14 @@ public class CsClientEndpoint {
 		client.messageReceived();
 		if (message instanceof ResponseABC) {
 			ResponseABC response = (ResponseABC) message;
-			// check CS session
-			UserSession csSession = sessionManager.getSession(session);
-			if (csSession == null) {
-				LOGGER.warn("No matching CS session found for session " + session.getId());
-			}
-			// null session ok here?
-			messageProcessor.handleResponse(csSession, response);
+			messageProcessor.handleResponse(null,response);
 			this.messageCoordinator.unregisterRequest(response);
 
 		} else if (message instanceof RequestABC) {
 			RequestABC request = (RequestABC) message;
 			LOGGER.debug("Request received: " + request);
 			// pass request to processor to execute command
-			UserSession csSession = sessionManager.getSession(session);
-			ResponseABC response = messageProcessor.handleRequest(csSession, request);
+			ResponseABC response = messageProcessor.handleRequest(null, request);
 			if (response != null) {
 				// send response to client
 				LOGGER.debug("Sending response " + response + " for request " + request);
@@ -95,12 +84,7 @@ public class CsClientEndpoint {
 			}
 		} else if (!(message instanceof KeepAlive)) {
 			LOGGER.debug("Other message received: " + message);
-			UserSession csSession = sessionManager.getSession(session);
-			if (csSession == null) {
-				LOGGER.warn("No matching CS session found for session " + session.getId());
-			}
-			// null session ok here?
-			messageProcessor.handleMessage(csSession, message);
+			messageProcessor.handleMessage(null, message);
 		}
 	}
 
