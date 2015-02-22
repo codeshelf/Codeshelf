@@ -23,6 +23,7 @@ import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -192,6 +193,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
+		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		
 		return getFacility();
 	}
 
