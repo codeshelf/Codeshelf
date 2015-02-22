@@ -36,7 +36,6 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
-import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -78,21 +77,11 @@ public class CsDeviceManager implements
 	private String										password;
 
 	/* Device Manager owns websocket configuration too */
-	@Getter
-	private URI											mUri;
-
-	@Getter
-	@Setter
-	boolean												suppressKeepAlive			= false;
-
-	@Getter
-	@Setter
-	boolean												idleKill					= false;
+//	@Getter
+//	private URI											mUri;
 
 	@Getter
 	private JettyWebSocketClient						client;
-
-	private ConnectionManagerThread						connectionManagerThread;
 
 	@Getter
 	private long										lastNetworkUpdate			= 0;
@@ -122,9 +111,6 @@ public class CsDeviceManager implements
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController, final WebSocketContainer inWebSocketContainer) {
 		// fetch properties from config file
-		mUri = URI.create(System.getProperty("websocket.uri"));
-		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
-		idleKill = Boolean.getBoolean("websocket.idle.kill");
 
 		this.webSocketContainer = inWebSocketContainer;
 
@@ -143,12 +129,16 @@ public class CsDeviceManager implements
 			// listen for packets
 			radioController.getGatewayInterface().setPacketListener(this);
 		}
+		
+		// create response processor and register it with WS client
+		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
+		URI uri = URI.create(System.getProperty("websocket.uri"));
+		this.client = new JettyWebSocketClient(webSocketContainer, uri, responseProcessor, this);
+		responseProcessor.setWebClient(client);
 	}
 
 	@Override
 	public final void start() {
-		startWebSocketClient();
-
 	}
 
 	private boolean isRadioEnabled() {
@@ -202,28 +192,9 @@ public class CsDeviceManager implements
 		return aList;
 	}
 
-	public final void startWebSocketClient() {
-		// create response processor and register it with WS client
-		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
-		client = new JettyWebSocketClient(webSocketContainer, mUri, responseProcessor, this);
-		responseProcessor.setWebClient(client);
-		connectionManagerThread = new ConnectionManagerThread(this);
-		connectionManagerThread.start();
-	}
-
 	@Override
 	public final void stop() {
 		radioController.stopController();
-		connectionManagerThread.setExit(true);
-		while (connectionManagerThread.isAlive()) {
-			LOGGER.debug("Waiting for connection manager thread to exit...");
-			ThreadUtils.sleep(2000);
-		}
-		try {
-			client.disconnect();
-		} catch (IOException e) {
-			LOGGER.error("Failed to disconnect from server", e);
-		}
 	}
 
 	// --------------------------------------------------------------------------

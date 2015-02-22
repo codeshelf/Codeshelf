@@ -867,7 +867,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.DO_PICK);
 
 			} else {
-				LOGGER.info("errorStr "); // TODO get this to the CHE display
+				LOGGER.info("errorStr = {}",errorStr); // TODO get this to the CHE display
 				invalidScanMsg(mCheStateEnum);
 			}
 

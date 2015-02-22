@@ -8,6 +8,7 @@ package com.codeshelf.application;
 
 import lombok.Getter;
 
+import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.ICsDeviceManager;
 import com.codeshelf.metrics.AssociatedRadioHealthCheck;
 import com.codeshelf.metrics.ConnectedToServerHealthCheck;
@@ -25,6 +26,8 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 	public SiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer) {
 		super(inAdminServer);
 		deviceManager = inDeviceManager;
+		
+		this.registerService(new ClientConnectionManagerService(deviceManager.getClient()));
 	}
 
 	// --------------------------------------------------------------------------

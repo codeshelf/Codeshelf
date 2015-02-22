@@ -49,8 +49,11 @@ public class JettyWebSocketClient {
 	@Getter @Setter
 	long lastMessageReceived = 0;
 	
-	public JettyWebSocketClient(WebSocketContainer webSocketContainer, URI uri, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
-		this.uri = uri;
+	public JettyWebSocketClient(WebSocketContainer webSocketContainer, 
+				URI uri,
+				MessageProcessor responseProcessor, 
+				WebSocketEventListener eventListener) {
+		this.uri = uri; 
 		this.eventListener = eventListener;
 		this.responseProcessor = responseProcessor;
 		

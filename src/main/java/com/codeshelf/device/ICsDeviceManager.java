@@ -76,4 +76,6 @@ public interface ICsDeviceManager {
 	String getSequenceKind();
 
 	INetworkDevice updateOneDevice(UUID theUuid, NetGuid theGuid, String newProcessType);
+
+	JettyWebSocketClient getClient();
 }

@@ -25,7 +25,7 @@ import edu.emory.mathcs.backport.java.util.Collections;
 
 public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends AbstractIdleService {
 	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
-	private static final int	MAX_INITIALIZE_WAIT_SECONDS	= 10;
+	private static final int	MAX_INITIALIZE_WAIT_SECONDS	= 60;
 	
 	// define behavior of service
 	abstract public SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
