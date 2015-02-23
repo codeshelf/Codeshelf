@@ -189,7 +189,8 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 						LOGGER.error("", e);
 					}
 				}
-
+			} else {
+				LOGGER.warn("Unknown container '{}'", containerId);
 			}
 		}
 
