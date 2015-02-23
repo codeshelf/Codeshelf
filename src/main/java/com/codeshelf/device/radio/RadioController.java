@@ -84,19 +84,19 @@ public class RadioController implements IRadioController {
 	private static final long										CTRL_START_DELAY_MILLIS			= 5;
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 20;
+	private static final long										ACK_TIMEOUT_MILLIS				= 60;
 	private static final int										ACK_SEND_RETRY_COUNT			= 20;
-	private static final long										MAX_PACKET_AGE_MILLIS			= 5000;
+	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
 	// The background service delay is reduced to the packet read rate of 1ms to
 	// minimize the amount of time a packet is
 	// queued before before being sent
-	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 1;
+	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 60;
 
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
-	private static final long										PACKET_SPACING_MILLIS			= 15;
+	private static final long										PACKET_SPACING_MILLIS			= 60;
 	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter
