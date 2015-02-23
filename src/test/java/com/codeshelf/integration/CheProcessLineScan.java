@@ -833,32 +833,6 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
-		
-		// A small side trip. The enumeration for scan verification values is private. The only way to unit test odd values is here.
-		// see these logged in the console. The picker has the ancestor CheDeviceLogic. No interface to get this private field from SetupOrderDeviceLogic
-		// Will see 4 in a row to NO_SCAN_TO_VERIFY
-		manager.setScanTypeValue("UPC");
-		picker.forceDeviceToMatchManagerConfiguration();
-		Assert.assertEquals("UPC", picker.getCheDeviceLogic().getScanVerificationType());
-		manager.setScanTypeValue("Disabled");
-		picker.forceDeviceToMatchManagerConfiguration();
-		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
-		manager.setScanTypeValue("");
-		picker.forceDeviceToMatchManagerConfiguration();
-		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
-		manager.setScanTypeValue(null);
-		picker.forceDeviceToMatchManagerConfiguration();
-		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
-		manager.setScanTypeValue("xxxx");
-		picker.forceDeviceToMatchManagerConfiguration();
-		Assert.assertEquals("disabled", picker.getCheDeviceLogic().getScanVerificationType());
-		manager.setScanTypeValue("LPN");
-		picker.forceDeviceToMatchManagerConfiguration();
-		Assert.assertEquals("LPN", picker.getCheDeviceLogic().getScanVerificationType());
-		// Now set as we want it for this test
-		manager.setScanTypeValue("SKU");
-		picker.forceDeviceToMatchManagerConfiguration();	
-		Assert.assertEquals("SKU", picker.getCheDeviceLogic().getScanVerificationType());
 
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
@@ -986,6 +960,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	 * Login, scan a valid order detail ID, see the job.
 	 * LOCAPICK is false, so no attempt at inventory creation.
 	 * SCANPICK is set to SKU.
+	 * Do some bad scans to make sure we handle those correctly
 	 */
 	@Test
 	public final void testLineScanPickBadScans() throws IOException {
@@ -1036,7 +1011,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 6000);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		
 		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
 		WorkInstruction wi = picker.getActivePick();
