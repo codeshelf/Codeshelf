@@ -48,6 +48,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
+		updateConfigurationFromManager();
 		setLastScanedDetailId("");
 		setReadyMsg("");
 	}
@@ -114,7 +115,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case SHORT_PICK_CONFIRM:
 				processPickStateScan(inScanPrefixStr, inContent);
 				break;
-
+			case SCAN_SOMETHING:
+				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
+				processVerifyScan(inScanPrefixStr, inContent);
+				break;
 			default:
 				break;
 		}
@@ -235,13 +239,21 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("LineScanDeviceLogic.assignWork(): Already completed");
 				setState(CheStateEnum.READY);
 			} else {
-				LOGGER.info("LineScanDeviceLogic.assignWork(): transitioning to DO_PICK");
+				
 
 				mActivePickWiList.clear();
 				mAllPicksWiList.clear();
 				mActivePickWiList.add(wi);
-				LOGGER.info("calling set state DO_PICK in assignWork");
-				setState(CheStateEnum.DO_PICK);
+
+				if (isScanNeededToVerifyPick()){
+					LOGGER.info("LineScanDeviceLogic.assignWork(): transitioning to SCAN_SOMETHING");
+					LOGGER.info("calling set state SCAN_SOMETHING in assignWork");
+					setState(CheStateEnum.SCAN_SOMETHING); // This will cause showActivePicks();
+				} else {
+					LOGGER.info("LineScanDeviceLogic.assignWork(): transitioning to DO_PICK");
+					LOGGER.info("calling set state DO_PICK in assignWork");
+					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
+				}
 			}
 		} else {
 			// if 0 or more than 1, we want to transition back to ready, but with a message
@@ -287,7 +299,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				// however, call the setState as it forces the CHE update out, which actually clears the message.
 				setState(currentState);
 				break;
-
+			case SCAN_SOMETHING:
+				setState(currentState);
+				break;
 			default:
 				break;
 		}
@@ -310,7 +324,12 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 			case DO_PICK:
 				setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
+				break;
 
+			case SCAN_SOMETHING:
+				setState(CheStateEnum.SCAN_SOMETHING_SHORT); 
+				break;
+				
 			default:
 				setReadyMsg("No job to short");
 				break;
@@ -346,6 +365,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case SHORT_PICK_CONFIRM:
 				confirmShortPick(inScanStr);
 				break;
+			
+			case SCAN_SOMETHING_SHORT:
+				confirmSomethingShortPick(inScanStr);
+				break;
 
 			default:
 				break;
@@ -372,6 +395,31 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		} else {
 			// NO will go back to the job, with the full count again
 			setState(CheStateEnum.DO_PICK);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * YES or NO confirm the short pick from the SCAN_SOMETHING state.
+	 * @param inScanStr
+	 */
+	protected void confirmSomethingShortPick(final String inScanStr) {
+		if (inScanStr.equals(YES_COMMAND)) {
+			List<WorkInstruction> wiList = this.getActivePickWiList();
+			WorkInstruction wi = null;
+			if (wiList.size() > 0)
+				wi = wiList.get(0);
+	
+			if (wi != null) {
+				doShortTransaction(wi, 0);
+			}
+			
+			clearLedControllersForWi(wi);
+			setReadyMsg("");
+			setState(CheStateEnum.READY);
+		} else {
+			// Just return to showing the active picks.
+			setState(CheStateEnum.SCAN_SOMETHING);
 		}
 	}
 
@@ -430,6 +478,24 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
 
+		// The point is, let's check our state
+		switch (mCheStateEnum) {
+			case DO_PICK:
+			case SHORT_PICK:
+				break;
+				
+			case SCAN_SOMETHING:
+				// Do not allow button press in this state. We did display the count on poscon. User might get confused.
+				setState(mCheStateEnum);			
+				return;
+			default: {
+				// We want to ignore the button press, but force out starting poscon situation again.
+				setState(mCheStateEnum);
+				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
+				return;
+			}
+		}
+		
 		WorkInstruction wi = getActiveWorkInstruction();
 		if (wi == null) {
 			// Simply ignore button presses when there is no work instruction.
@@ -559,6 +625,20 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(ABANDON_CHECK_MSG, YES_NO_MSG);
 					break;
 
+				case SCAN_SOMETHING:
+					if (isSameState || previousState == CheStateEnum.GET_WORK) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					showActivePicks(); // change this? DEV-653
+					break;
+					
+				case SCAN_SOMETHING_SHORT: // this is like a short confirm.
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					break;
+					
 				default:
 					break;
 			}
@@ -570,5 +650,28 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	private void showTheActivePick() {
 		showActivePicks(); // ancestor method works
 	}
+	
+	protected void invalidScanMsg(final CheStateEnum inCheState) {
+		mCheStateEnum = inCheState;
 
+		switch (inCheState) {
+			case IDLE:
+				sendDisplayCommand(SCAN_USERID_MSG, INVALID_SCAN_MSG);
+				break;
+
+			case DO_PICK:
+				/* New attempts, but left as the default.  Test cases
+				 * Short a housekeeping work instruction. (All E's is bad.)
+				 * Yes or No on a normal pick
+				 */
+
+				// positionControllerToSendTo =  just the one, if we can figure it out. Or
+				// sendPositionControllerInstructions = false;
+				break;
+
+			default:
+				break;
+		}
+		sendErrorCodeToAllPosCons();
+	}
 }

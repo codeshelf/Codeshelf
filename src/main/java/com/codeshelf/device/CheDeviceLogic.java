@@ -185,7 +185,12 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	protected boolean isScanNeededToVerifyPick() {
-		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		WorkInstruction wi = this.getOneActiveWorkInstruction();
+		
+		if ( wi.isHousekeeping() )
+			return false;
+		else 
+			return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
 	}
 
 	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
@@ -1177,6 +1182,73 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
+
+		String returnString = "";
+
+		String wiVerifyValue = "";
+		switch (mScanNeededToVerifyPick) {
+			case SKU_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId();
+				break;
+
+			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
+			case UPC_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
+				break;
+
+			case LPN_SCAN_TO_VERIFY: // not implemented
+				LOGGER.error("LPN scan not implemented yet");
+				break;
+
+			default:
+
+		}
+		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
+			returnString = "Data error in WI"; // try to keep to 20 characters
+		else if (!wiVerifyValue.equals(inScanStr))
+			returnString = "Scan mismatch";
+
+		return returnString;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	protected void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		if (inScanPrefixStr.isEmpty()) {
+
+			WorkInstruction wi = getOneActiveWorkInstruction();
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr.isEmpty()) {
+				// clear usually not needed. Only after correcting a bad scan
+				clearAllPositionControllers();
+				setState(CheStateEnum.DO_PICK);
+
+			} else {
+				LOGGER.info("errorStr = {}",errorStr); // TODO get this to the CHE display
+				invalidScanMsg(mCheStateEnum);
+			}
+
+		} else {
+			// Want some feedback here. Tell the user to scan something
+			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
+			invalidScanMsg(mCheStateEnum);
+		}
 	}
 
 }
