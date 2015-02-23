@@ -9,12 +9,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.integration.EndToEndIntegrationTest;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.PropertyService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
@@ -30,7 +32,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		String prefferences[] = {"","","",""};
 		List<WorkInstruction> instructions = common(facility, prefferences);
 
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(WorkInstructionSequencerType.BayDistance);
+		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(2), instructions.get(1), instructions.get(0), instructions.get(3)), sorted);
@@ -45,12 +47,18 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		Facility facility = setUpSimpleNoSlotFacility();
 		String prefferences[] = {"1","2","3","4"};
 		List<WorkInstruction> instructions = common(facility, prefferences);
-
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(WorkInstructionSequencerType.BayDistance);
+		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(0), instructions.get(1), instructions.get(2), instructions.get(3)), sorted);
 		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	private WorkInstructionSequencerABC getWorkSequenceSequencer(Facility facility) {
+		PropertyService propertyService = new PropertyService();
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
+		return sequencer;
 	}
 	
 	@Test
@@ -62,7 +70,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		String prefferences[] = {"","","","2"};
 		List<WorkInstruction> instructions = common(facility, prefferences);
 
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(WorkInstructionSequencerType.BayDistance);
+		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(3), instructions.get(2), instructions.get(1), instructions.get(0)), sorted);
@@ -83,7 +91,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		instructions.get(2).setLocation(null);
 		instructions.get(3).setLocation(null);
 
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(WorkInstructionSequencerType.BayDistance);
+		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(0), instructions.get(1), instructions.get(2), instructions.get(3)), sorted);
@@ -104,7 +112,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		instructions.get(2).setLocation(null);
 		instructions.get(3).setLocation(null);
 
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(WorkInstructionSequencerType.BayDistance);
+		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(1), instructions.get(3)), sorted);
@@ -123,9 +131,12 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 		List<Path> paths = facility.getPaths();
 		for (Path path : paths) {
 			facility.removePath(path.getDomainId());
+			path.deleteThisPath();
 		}
-
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(WorkInstructionSequencerType.BayDistance);
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		Facility.DAO.reload(facility);
+		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 	
 		Assert.assertEquals(ImmutableList.of(instructions.get(0), instructions.get(2)), sorted);

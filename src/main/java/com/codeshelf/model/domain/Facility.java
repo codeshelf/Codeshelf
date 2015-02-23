@@ -19,10 +19,8 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.persistence.Transient;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.hibernate.Hibernate;
 import org.postgresql.util.PSQLException;
@@ -35,7 +33,6 @@ import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -129,22 +126,6 @@ public class Facility extends Location {
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<WorkInstruction>			workInstructions	= new ArrayList<WorkInstruction>();
-
-	@Transient
-	// for now installation specific.  property needs to be exposed as a configuration parameter.
-	@Getter
-	@Setter
-	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
-	
-	// TODO: replace with configuration via database table
-	static {
-		String sequencerConfig = System.getProperty("facility.sequencer");
-		if ("BayDistance".equalsIgnoreCase(sequencerConfig)) {
-			sequencerType = WorkInstructionSequencerType.BayDistance;
-		} else if ("BayDistanceTopLast".equalsIgnoreCase(sequencerConfig)) {
-			sequencerType = WorkInstructionSequencerType.BayDistanceTopLast;
-		}
-	}
 
 	public Facility() {
 		super();

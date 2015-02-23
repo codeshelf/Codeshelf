@@ -922,7 +922,9 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		//This will sort and also FILTER out WI's that have no location (i.e. SHORTS)
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
-		List<WorkInstruction> sortedWIResults = getSequencer().sort(facility, allWIs);
+		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
+
+		List<WorkInstruction> sortedWIResults = sequencer.sort(facility, allWIs);
 
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
@@ -977,10 +979,6 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 			this.exportService = exportService;
 			this.messageBody = messageBody;
 		}
-	}
-
-	private WorkInstructionSequencerABC getSequencer() {
-		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {

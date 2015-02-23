@@ -193,7 +193,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		mPropertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		
 		return getFacility();
 	}

@@ -69,18 +69,6 @@ public class HousekeepingInjector {
 		}
 	}
 
-
-
-	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
-		if (type == WorkInstructionSequencerType.BayDistance) {
-			return new BayDistanceWorkInstructionSequencer();
-		} else if (type == WorkInstructionSequencerType.BayDistanceTopLast) {
-			return new BayDistanceTopLastWorkInstructionSequencer();
-		}
-		LOGGER.error("Sequencer type " + type + " is not supported");
-		return null;
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Helper function. Adds to existing list, or creates the list if null

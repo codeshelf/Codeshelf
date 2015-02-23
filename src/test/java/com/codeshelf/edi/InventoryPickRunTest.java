@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -41,8 +42,8 @@ import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
 
 /**
- * 
- * 
+ *
+ *
  */
 public class InventoryPickRunTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryPickRunTest.class);
@@ -182,13 +183,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 	}
 
 	private void readInventoryWithoutTop(Facility inFacility) throws IOException {
-		// A1.B1.T2 is D-26.  
+		// A1.B1.T2 is D-26.
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
 
-		// A1.B2.T2 is D-28		
+		// A1.B2.T2 is D-28
 		// In D-28, left to right are SKUs 1522,1525,1523,1524
 
-		// A1.B1.T1 is D-27.  
+		// A1.B1.T1 is D-27.
 		// In D-27, left to right are SKUs  1831, 1830
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -214,19 +215,19 @@ public class InventoryPickRunTest extends EdiTestABC {
 	}
 
 	private void readInventoryWithTop(Facility inFacility) throws IOException {
-		// A1.B1.T2 is D-26.  
+		// A1.B1.T2 is D-26.
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
 
-		// A1.B2.T2 is D-28		
+		// A1.B2.T2 is D-28
 		// In D-28, left to right are SKUs 1522,1525
 
-		// A1.B1.T3 is D-71		
+		// A1.B1.T3 is D-71
 		// In D-71, left to right are SKUs 1523
 
-		// A1.B2.T3 is D-72		
+		// A1.B2.T3 is D-72
 		// In D-72, left to right are SKUs 1524
 
-		// A1.B1.T1 is D-27.  
+		// A1.B1.T1 is D-27.
 		// In D-27, left to right are SKUs  1831, 1830
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -264,7 +265,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertNotNull(tierA1B1T1.getLedController());
 		Tier tierA1B2T1 = (Tier) facility.findSubLocationById("A1.B2.T1");
 		Assert.assertNotNull(tierA1B1T1.getLedController());
-		// Check the path direction	
+		// Check the path direction
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
@@ -282,7 +283,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		readOrdersForA1(facility);
 
 		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 
@@ -291,18 +292,6 @@ public class InventoryPickRunTest extends EdiTestABC {
 		WorkInstruction wi1 = wiList.get(0);
 		WorkInstruction wi5 = wiList.get(4);
 		WorkInstruction wi10 = wiList.get(9);
-		Assert.assertEquals("1124", wi1.getItemId());
-		Assert.assertEquals("1831", wi5.getItemId());
-		Assert.assertEquals("1524", wi10.getItemId());
-
-		// Check again with the Accu sequencer
-		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		List<WorkInstruction> wiList2 = startWorkFromBeginning(facility, "CHE2", "12000");
-		wi1 = wiList2.get(0);
-		wi5 = wiList2.get(4);
-		wi10 = wiList2.get(9);
-		// All wrong!
 		Assert.assertEquals("1124", wi1.getItemId());
 		Assert.assertEquals("1831", wi5.getItemId());
 		Assert.assertEquals("1524", wi10.getItemId());
@@ -327,7 +316,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Tier tierA1B2T1 = (Tier) facility.findSubLocationById("A1.B2.T1");
 		Assert.assertNotNull(tierA1B1T1.getLedController());
 
-		// Check the path direction	
+		// Check the path direction
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
@@ -356,8 +345,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Che theChe = theNetwork.getChe("CHE1");
 
 		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 10, theSize);
@@ -367,22 +356,6 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1523", wi1.getItemId());
 		Assert.assertEquals("1125", wi5.getItemId());
 		Assert.assertEquals("1525", wi10.getItemId());
-
-		// Check again with the Accu sequencer
-		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
-		Che theChe2 = theNetwork.getChe("CHE2");
-
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		workService.setUpCheContainerFromString(theChe2, "12000");
-		List<WorkInstruction> wiList2 = workService.getWorkInstructions(theChe2, ""); // This returns them in working order.
-		logWiList(wiList2);
-		wi1 = wiList2.get(0);
-		wi5 = wiList2.get(4);
-		wi10 = wiList2.get(9);
-		// All wrong!
-		Assert.assertEquals("1124", wi1.getItemId());
-		Assert.assertEquals("1831", wi5.getItemId());
-		Assert.assertEquals("1524", wi10.getItemId());
 
 		mPropertyService.restoreHKDefaults(facility);
 
@@ -425,7 +398,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Che theChe = theNetwork.getChe("CHE1");
 
 		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000.");
 		WorkList workList = workService.setUpCheContainerFromString(theChe, "12000");
 		Integer theSize = workList.getInstructions().size();
@@ -441,7 +414,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// Let's find and count the immediate shorts
 		theSize = workList.getDetails().size();
 		Assert.assertEquals((Integer) 2, theSize); // Before DEV-609, this had 12
-		
+
 		mPropertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -489,8 +462,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 3, theSize);
@@ -511,7 +484,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
@@ -532,7 +505,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 
 		facility = Facility.DAO.reload(facility);
 		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
