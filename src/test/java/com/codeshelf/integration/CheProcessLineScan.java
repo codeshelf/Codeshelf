@@ -257,7 +257,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
-		final long maxTimeToWaitMillis = 5000;
+		final long maxTimeToWaitMillis = 15000;
 		String existingType = "";
 		int count = 0;
 		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
