@@ -8,6 +8,7 @@ package com.codeshelf.integration;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -77,7 +78,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Facility facility = organization.getFacility(fName);
 		*/
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+		String csvAisles = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
@@ -100,14 +101,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
@@ -131,7 +127,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
 
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
 				+ "A1.B2, D400\r\n" //
 				+ "A1.B3, D500\r\n" //
@@ -145,14 +141,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
+		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
+		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
@@ -205,7 +196,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// Order 12345 has 2 modeled locations and one not.
 		// Order 11111 has 4 unmodeled locations and one modeled.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,3,each, D601"
@@ -215,20 +206,15 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D604";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 	
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
 		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.3,1522,Butterfly Yoyo,3,each, D601"
@@ -238,14 +224,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 
@@ -257,7 +238,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
-		final long maxTimeToWaitMillis = 15000;
+		final long maxTimeToWaitMillis = 5000;
 		String existingType = "";
 		int count = 0;
 		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
@@ -270,8 +251,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 			}
 			ThreadUtils.sleep(100); // retry every 100ms
 		}
-		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is "
-				+ existingType);
+		Assert.fail(String.format("Process type %s not encounter in %dms after %d checks. Process type is %s", inProcessType, maxTimeToWaitMillis, count, existingType));
 		return null;
 	}
 

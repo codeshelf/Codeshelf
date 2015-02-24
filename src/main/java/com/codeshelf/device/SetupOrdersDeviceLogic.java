@@ -219,7 +219,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case STARTWORK_COMMAND:
-				startWorkCommandReceived();
+			case REVERSE_COMMAND:
+				startWorkCommandReceived(inScanStr);
 				break;
 
 			case SHORT_COMMAND:
@@ -788,12 +789,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**
 	 * Factor this out as it is called from two places. The normal processLocationScan, and skipping the location scan if just going by sequence.
+	 * WARNING: The parameter is the scanned location, or "START", or "REVERSE"
 	 * @param inLocationStr
 	 */
 	private void requestWorkAndSetGetWorkState(final String inLocationStr) {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
-		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr);
+		
+		// Ilya: temporary: Better to just let it go through and deal with it in the backend.  REVERSE_COMMAND is the "REVERSE
+		if (STARTWORK_COMMAND.equals(inLocationStr))
+			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), "");
+		else 
+			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr);
 		setState(CheStateEnum.GET_WORK);
 	}
 
@@ -1099,7 +1106,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * 
 	 */
-	private void startWorkCommandReceived() {
+	private void startWorkCommandReceived(final String inScanStr) {
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -1112,7 +1119,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case CONTAINER_POSITION:
-				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
+				processContainerPosition(COMMAND_PREFIX, inScanStr);
 				break;
 
 			case LOCATION_SELECT:
@@ -1121,10 +1128,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
 				if (isOkToStartWithoutLocation()) {
 					LOGGER.info("starting without a start location");
-					requestWorkAndSetGetWorkState("");
+					requestWorkAndSetGetWorkState(inScanStr);
 				} else { // do as we did before
 					if (mPositionToContainerMap.values().size() > 0) {
-						startWork();
+						startWork(inScanStr);
 					} else {
 						setState(CheStateEnum.NO_CONTAINERS_SETUP);
 					}
@@ -1135,7 +1142,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {
-					startWork();
+					startWork(inScanStr);
 				} else {
 					setState(CheStateEnum.NO_CONTAINERS_SETUP);
 				}
@@ -1146,10 +1153,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The start work command simply tells the user to select a starting location.
-	 * It's a psychological step that makes more sense.
+	 * Parameters currently are the string literals REVERSE_COMMAND or START_COMMAND
+	 * Tricky process from here. Send the container/order list to server to compute work instructions.
+	 * This goes to COMPUTE_WORK state which basically just waits for the server response.
+	 * I think for this, we always want to computeCheWork uniformly, in the forward direction. Will get reversed later.
 	 */
-	private void startWork() {
+	private void startWork(final String inScanStr) {
+		boolean isReverse = inScanStr.equals(REVERSE_COMMAND);
+		
 		clearAllPositionControllers();
 		mContainerInSetup = "";
 		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());

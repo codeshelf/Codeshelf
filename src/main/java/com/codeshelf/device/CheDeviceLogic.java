@@ -94,6 +94,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
 
 	protected static final String			STARTWORK_COMMAND						= "START";
+	protected static final String			REVERSE_COMMAND							= "REVERSE";
 	protected static final String			SETUP_COMMAND							= "SETUP";
 	protected static final String			SHORT_COMMAND							= "SHORT";
 	protected static final String			LOGOUT_COMMAND							= "LOGOUT";
@@ -189,10 +190,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	protected boolean isScanNeededToVerifyPick() {
 		WorkInstruction wi = this.getOneActiveWorkInstruction();
-		
-		if ( wi.isHousekeeping() )
+
+		if (wi.isHousekeeping())
 			return false;
-		else 
+		else
 			return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
 	}
 
@@ -1186,7 +1187,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param insScanPrefixStr
@@ -1250,7 +1251,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 				setState(CheStateEnum.DO_PICK);
 
 			} else {
-				LOGGER.info("errorStr = {}",errorStr); // TODO get this to the CHE display
+				LOGGER.info("errorStr = {}", errorStr); // TODO get this to the CHE display
 				invalidScanMsg(mCheStateEnum);
 			}
 

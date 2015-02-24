@@ -277,7 +277,8 @@ public class PickSimulator {
 			}
 		}
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
-		String theProblem = "Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState;
+		String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s, currentState: %s", 
+				state, timeoutInMillis, existingState,  cheDeviceLogic.inSetState(), cheDeviceLogic.getCheStateEnum());
 		LOGGER.error(theProblem);
 		Assert.fail(theProblem);
 	}
