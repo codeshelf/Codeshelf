@@ -84,19 +84,18 @@ public class RadioController implements IRadioController {
 	private static final long										CTRL_START_DELAY_MILLIS			= 5;
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 60;
+	private static final long										ACK_TIMEOUT_MILLIS				= 20;
 	private static final int										ACK_SEND_RETRY_COUNT			= 20;
 	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
 	// The background service delay is reduced to the packet read rate of 1ms to
-	// minimize the amount of time a packet is
-	// queued before before being sent
-	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 60;
+	// minimize the amount of time a packet is queued before before being sent
+	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
 
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
-	private static final long										PACKET_SPACING_MILLIS			= 60;
+	private static final long										PACKET_SPACING_MILLIS			= 20;
 	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter
@@ -1089,8 +1088,14 @@ public class RadioController implements IRadioController {
 						differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
 					}
 
-					// Write out the packet
-					packetIOService.handleOutboundPacket(inPacket);
+					if (inPacket.getAckState() != AckStateEnum.SUCCEEDED) {
+						// Write out the packet
+						packetIOService.handleOutboundPacket(inPacket);
+					} else {
+						//It is possible for BG Thread to submit a packet to be sent, then whilst waiting for the lock, we receive an ACK.
+						//If thats the case just return without updating the lastSentTimestamp. The lock will be released since it's in a finally block.
+						return;
+					}
 
 					// Upate the timestamp
 					lastPacketSentTimestampMs.set(inPacket.getSentTimeMillis());

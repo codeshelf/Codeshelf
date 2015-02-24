@@ -57,21 +57,21 @@ import com.codeshelf.flyweight.bitfields.NBitInteger;
 
 public final class Packet implements IPacket {
 
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(Packet.class);
+	private static final Logger		LOGGER			= LoggerFactory.getLogger(Packet.class);
 
-	private PacketVersion		mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
-	private NBitInteger			mPacketType;
-	private NBitInteger			mReservedHeaderBits;
-	private NetworkId			mNetworkId;
-	private NetAddress			mSrcAddr;
-	private NetAddress			mDstAddr;
-	private ICommand			mCommand;
-	private long				mCreateTimeMillis;
-	private long				mSentTimeMillis;
-	private int					mSendCount;
-	private byte				mAckId;
-	private AckStateEnum		mAckState;
-	private byte[]				mAckData;
+	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
+	private NBitInteger				mPacketType;
+	private NBitInteger				mReservedHeaderBits;
+	private NetworkId				mNetworkId;
+	private NetAddress				mSrcAddr;
+	private NetAddress				mDstAddr;
+	private ICommand				mCommand;
+	private long					mCreateTimeMillis;
+	private long					mSentTimeMillis;
+	private int						mSendCount;
+	private byte					mAckId;
+	private volatile AckStateEnum	mAckState;
+	private byte[]					mAckData;
 
 	// --------------------------------------------------------------------------
 	/**
