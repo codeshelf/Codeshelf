@@ -9,8 +9,10 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -683,28 +685,45 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 	 * Simple test of Setup_Orders with SCANPICK. DEV-653 is the SCANPICK enhancement
 	 */
 	@Test
-	public final void testPfswebPicks() throws IOException {
+	public void workSequencePickForward() throws IOException {
+		String[][] sortedItemLocs = { //the forward direction
+				{"1522", "D601"},
+				{"1522", "D601"},
+				{"1523", "D602"},
+				{"1124", "D603"},
+				{"1555", "D604"},
+				{"1122", "D401"},
+				{"1123", "D301"},
+				{"1493", "D302"}
+		};
+		testPfswebWorkSequencePicks("START", sortedItemLocs);
+	}
+	
+	/**
+	 * Simple test of Setup_Orders with SCANPICK. DEV-653 is the SCANPICK enhancement but in reverse
+	 */
+	//@Test
+	public void workSequencePickReverse() throws IOException {
+		String[][] sortedItemLocs = { //the forward direction
+				{"1522", "D601"},
+				{"1522", "D601"},
+				{"1523", "D602"},
+				{"1124", "D603"},
+				{"1555", "D604"},
+				{"1122", "D401"},
+				{"1123", "D301"},
+				{"1493", "D302"}
+		};
+		//reverse it here
+		ArrayUtils.reverse(sortedItemLocs);
+		testPfswebWorkSequencePicks("STARTR", sortedItemLocs);
+	}
+	
 
+	private final void testPfswebWorkSequencePicks(String scanDirection, String[][] sortedItemLocs) throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-	
-		// a diversion to test the importer toInteger() function
-		// Data in this test has workSequence as " 4000" which uses to yield null.
-		ICsvOrderImporter importer3 = createOrderImporter();
-		Assert.assertEquals(0, importer3.toInteger("0"));
-		Assert.assertEquals(0, importer3.toInteger("000"));
-		Assert.assertEquals(0, importer3.toInteger(" 0"));
-		Assert.assertEquals(0, importer3.toInteger(" 00 "));
-		Assert.assertEquals(3, importer3.toInteger(" 3 "));
-		Assert.assertEquals(3, importer3.toInteger(" 003 "));
-
 		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		Assert.assertNotNull(facility);
-
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
@@ -713,25 +732,15 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 		
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
+
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
-		if (locapickProperty != null) {
-			locapickProperty.setValue(false);
-			PropertyDao.getInstance().store(locapickProperty);
-		}
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}
-		DomainObjectProperty seqrProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.WORKSEQR);
-		if (seqrProperty != null) {
-			seqrProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(seqrProperty);
-		}	
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+
 		mPropertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
 		
@@ -739,8 +748,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		Assert.assertNotNull(manager);
 		
 		// We would rather have the device manager know from parameter updates, but that does not happen yet in the integration test.
-		manager.setSequenceKind("WorkSequence");
-		Assert.assertEquals("WorkSequence", manager.getSequenceKind());
+		manager.setSequenceKind(WorkInstructionSequencerType.WorkSequence.toString());
+		Assert.assertEquals(WorkInstructionSequencerType.WorkSequence.toString(), manager.getSequenceKind());
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
@@ -761,30 +770,6 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		//picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
 
-		/*
-		LOGGER.info("1d: in WorkSequence mode, we scan start again, instead of a location");
-		picker.scanCommand("START");
-
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
-		List<WorkInstruction> scWiList = picker.getAllPicksList();
-		Assert.assertEquals(3, scWiList.size());
-		logWiList(scWiList);
-		
-		LOGGER.info("1e: scan the SKU. This data has 1493");
-		picker.scanSomething("1493");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
-		LOGGER.info("1f: the button press works");
-		WorkInstruction wi = picker.nextActiveWi();
-		int button = picker.buttonFor(wi);
-		int quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		Assert.assertEquals(2, picker.countRemainingJobs()); 
-
-		*/
-
 		// logout back to idle state.
 		picker.logout();
 		
@@ -792,12 +777,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
-		if (locapickProperty != null) {
-			locapickProperty.setValue(true);
-			PropertyDao.getInstance().store(locapickProperty);
-		}
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 		this.getTenantPersistenceService().commitTransaction();
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		this.setUpOrdersWithCntrAndSequence(facility);
@@ -820,7 +802,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
 				
 		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
-		picker.scanCommand("START");
+		
+		picker.scanCommand(scanDirection);
+		
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
@@ -830,19 +814,15 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		
 		LOGGER.info("2e:work through it, making sure it matches the work sequence order.");
 
-		//Expected sorted sequence 1522,1522,1523,1124,1555,1122,1123,1493,
-		tryPick(picker, "1522", "D601", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1522", "D601", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1523", "D602", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1124", "D603", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1555", "D604", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1122", "D401", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1123", "D301", CheStateEnum.SCAN_SOMETHING);
-		tryPick(picker, "1493", "D302", CheStateEnum.PICK_COMPLETE);
-		//picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		for(int i = 0; i < sortedItemLocs.length; i++) {
+			String item = sortedItemLocs[i][0];
+			String loc = sortedItemLocs[i][1];
+			boolean last = (i == sortedItemLocs.length -1); 
+			tryPick(picker, item, loc, (!last) ? CheStateEnum.SCAN_SOMETHING : CheStateEnum.PICK_COMPLETE);
+		}
 		picker.logout();			
 	}
-	
+
 	private void tryPick(PickSimulator picker, String itemId, String excpectedLocation, CheStateEnum nextExpectedState){
 		picker.scanSomething(itemId);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
