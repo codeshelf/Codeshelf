@@ -20,7 +20,7 @@ import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LoginCommand extends CommandABC {
@@ -30,11 +30,14 @@ public class LoginCommand extends CommandABC {
 	private LoginRequest			loginRequest;
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
+	
+	private SessionManagerService sessionManager;
 
-	public LoginCommand(UserSession session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster) {
+	public LoginCommand(UserSession session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, SessionManagerService sessionManager) {
 		super(session);
 		this.loginRequest = loginRequest;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
+		this.sessionManager = sessionManager;
 	}
 
 	@Override
@@ -63,7 +66,7 @@ public class LoginCommand extends CommandABC {
 					} // else regular user session
 
 					// update session counters
-					SessionManager.getInstance().updateCounters();
+					this.sessionManager.updateCounters();
 
 					// generate login response
 					response.setUser(authUser);

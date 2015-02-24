@@ -127,8 +127,7 @@ public class RadioController implements IRadioController {
 
 	private boolean												mRunning;
 
-	private final Counter										packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
-																								"packets.sent");
+	private Counter										packetsSentCounter = null;
 
 	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
@@ -184,6 +183,8 @@ public class RadioController implements IRadioController {
 		mRunning = true;
 		mPreferredChannel = inPreferredChannel;
 
+		packetsSentCounter = MetricsService.getInstance().createCounter(MetricsGroup.Radio,"packets.sent");
+		
 		LOGGER.info("--------------------------------------------");
 		LOGGER.info("Starting radio controller on network: " + mNetworkId);
 		LOGGER.info("--------------------------------------------");
@@ -1012,7 +1013,8 @@ public class RadioController implements IRadioController {
 					LOGGER.warn("ACKed, but did not process a packet that we acked before; {}", packet);
 				}
 			}
-			this.packetsSentCounter.inc();
+			if(packetsSentCounter != null)
+				this.packetsSentCounter.inc();
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -1060,7 +1062,9 @@ public class RadioController implements IRadioController {
 				inPacket.incrementSendCount();
 				mLastPacketSentMillis = System.currentTimeMillis();
 				gatewayInterface.sendPacket(inPacket);
-				this.packetsSentCounter.inc();
+				
+				if(packetsSentCounter != null)
+					this.packetsSentCounter.inc();
 
 			} else {
 				Thread.sleep(CTRL_START_DELAY_MILLIS);

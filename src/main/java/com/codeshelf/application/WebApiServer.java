@@ -127,17 +127,22 @@ public class WebApiServer {
 		contextHandler.setContextPath("/adm");
 		
 		// add metrics servlet
-		MetricRegistry metricsRegistry = MetricsService.getRegistry();
-		contextHandler.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
-		contextHandler.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
+		MetricRegistry metricsRegistry = MetricsService.getInstance().getMetricsRegistry();
+		if(metricsRegistry != null) { // skip if using dummy metrics service
+			contextHandler.setAttribute(MetricsServlet.METRICS_REGISTRY, metricsRegistry);
+			contextHandler.addServlet(new ServletHolder(new MetricsServlet()),"/metrics");
+		}
 
 		// add health check servlet
-		HealthCheckRegistry hcReg = MetricsService.getHealthCheckRegistry();
-		contextHandler.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
-		contextHandler.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
+		HealthCheckRegistry hcReg = MetricsService.getInstance().getHealthCheckRegistry();
+		if(hcReg != null) { // skip if using dummy metrics service
+			contextHandler.setAttribute(HealthCheckServlet.HEALTH_CHECK_REGISTRY, hcReg);
+			contextHandler.addServlet(new ServletHolder(new HealthCheckServlet()),"/healthchecks");
+		}
+
 		// + default app service health check
 		ServiceStatusHealthCheck svcCheck = new ServiceStatusHealthCheck();
-		MetricsService.registerHealthCheck(svcCheck);
+		MetricsService.getInstance().registerHealthCheck(svcCheck);
 
 		// add ping servlet
 		contextHandler.addServlet(new ServletHolder(new PingServlet()),"/ping");

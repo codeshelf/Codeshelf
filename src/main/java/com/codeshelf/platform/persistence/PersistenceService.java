@@ -285,8 +285,6 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		initializedFactories = null;
 		listenerIntegrators = null;
 	}
-	@Override
-	abstract protected String serviceName();
 	
 	public void awaitRunningOrThrow() {
 		try {

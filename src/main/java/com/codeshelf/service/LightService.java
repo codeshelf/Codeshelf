@@ -31,7 +31,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -45,7 +45,7 @@ public class LightService implements IApiService {
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
 
 	private final PropertyService			propertyService;
-	private final SessionManager			sessionManager;
+	private final SessionManagerService			sessionManagerService;
 	private final ScheduledExecutorService	mExecutorService;
 	private Future<Void>					mLastChaserFuture;
 
@@ -58,13 +58,13 @@ public class LightService implements IApiService {
 	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
-	public LightService(PropertyService propertyService) {
-		this(propertyService, SessionManager.getInstance(), Executors.newSingleThreadScheduledExecutor());
+	public LightService(PropertyService propertyService,SessionManagerService sessionManagerService) {
+		this(propertyService, sessionManagerService, Executors.newSingleThreadScheduledExecutor());
 	}
 
-	LightService(PropertyService propertyService, SessionManager sessionManager, ScheduledExecutorService executorService) {
+	LightService(PropertyService propertyService, SessionManagerService sessionManagerService, ScheduledExecutorService executorService) {
 		this.propertyService = propertyService;
-		this.sessionManager = sessionManager;
+		this.sessionManagerService = sessionManagerService;
 		this.mExecutorService = executorService;
 	}
 
@@ -189,7 +189,7 @@ public class LightService implements IApiService {
 					terminate();
 				} else {
 					for (LightLedsMessage message : messageSet) { //send "all at once" -> quick succession for now
-						sessionManager.sendMessage(siteControllerUsers, message);
+						sessionManagerService.sendMessage(siteControllerUsers, message);
 					}
 				}
 			}
@@ -198,7 +198,7 @@ public class LightService implements IApiService {
 	}
 
 	private int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
-		return this.sessionManager.sendMessage(users, message);
+		return this.sessionManagerService.sendMessage(users, message);
 	}
 
 	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {

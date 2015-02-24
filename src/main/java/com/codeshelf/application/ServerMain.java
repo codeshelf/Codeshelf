@@ -16,18 +16,18 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
-import com.codeshelf.edi.EdiProcessor;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.edi.IEdiProcessor;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.metrics.IMetricsService;
+import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Aisle.AisleDao;
@@ -103,10 +103,10 @@ import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -148,9 +148,14 @@ public final class ServerMain {
 
 		// Create and start the application.
 		Injector dynamicInjector = setupInjector();
+		
 		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
-		CsServerEndPoint.setSessionManager(dynamicInjector.getInstance(SessionManager.class));
+
+		application.startServices();
+
+		CsServerEndPoint.setSessionManagerService(dynamicInjector.getInstance(SessionManagerService.class));
 		CsServerEndPoint.setMessageProcessor(dynamicInjector.getInstance(ServerMessageProcessor.class));
+		
 		application.startApplication();
 
 		// Handle events until the application exits.
@@ -170,10 +175,14 @@ public final class ServerMain {
 			protected void configure() {
 				bind(ITenantManager.class).toInstance(TenantManagerService.getNonRunningInstance());
 				
+				requestStaticInjection(MetricsService.class);
+				bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
+
+				//bind(EdiProcessor.class).to(EdiProcessor.class).in(Singleton.class);
+
 				bind(GuiceFilter.class);
 				
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
-				bind(IEdiProcessor.class).to(EdiProcessor.class);
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
 				bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
@@ -182,12 +191,10 @@ public final class ServerMain {
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
-				bind(SessionManager.class).toInstance(SessionManager.getInstance());
-				
 				bind(PropertyService.class).toInstance(new PropertyService());
 				
 				// jetty websocket
-				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
+				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				
 				bind(ConvertUtilsBean.class).toProvider(ConverterProvider.class);
 				
@@ -329,6 +336,13 @@ public final class ServerMain {
 			public WorkService createWorkService() {
 				WorkService workService = new WorkService();
 				return workService;				
+			}
+
+			@Provides
+			@Singleton
+			public SessionManagerService createSessionManagerService() {
+				SessionManagerService sessionManagerService = new SessionManagerService();
+				return sessionManagerService;				
 			}
 		}, createGuiceServletModule());
 

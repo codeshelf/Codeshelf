@@ -27,7 +27,7 @@ public class LoginTest extends DomainTestABC {
 	public void doBefore() throws Exception {
 		// TODO Auto-generated method stub
 		super.doBefore();
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 
 	}
 

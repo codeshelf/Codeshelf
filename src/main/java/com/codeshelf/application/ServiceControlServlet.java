@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.codeshelf.platform.multitenancy.TenantManagerService;
+
 @SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {
 	private static final String CONTENT_TYPE_TEXT = "text/html";
@@ -55,18 +57,18 @@ public class ServiceControlServlet extends HttpServlet {
         if(action!=null) {
             if(action.equals("stop")) {
             	out.println("APP SERVER SHUTDOWN. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            	stop(CodeshelfApplication.ShutdownCleanupReq.NONE);
+            	stop(TenantManagerService.ShutdownCleanupReq.NONE);
             } else if(enableSchemaManagement) {
             	// schema actions
             	if(action.equals("dropschema")) {
                 	out.println("DROP SCHEMA. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(CodeshelfApplication.ShutdownCleanupReq.DROP_SCHEMA);
+            		stop(TenantManagerService.ShutdownCleanupReq.DROP_SCHEMA);
             	} else if(action.equals("deleteorderswis")) {
                 	out.println("DELETE ORDERS AND WORK INSTRUCTIONS. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(CodeshelfApplication.ShutdownCleanupReq.DELETE_ORDERS_WIS);
+            		stop(TenantManagerService.ShutdownCleanupReq.DELETE_ORDERS_WIS);
             	} else if(action.equals("deleteorderswisinventory")) {
                 	out.println("DELETE ORDERS AND WORK INSTRUCTIONS AND INVENTORY. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(CodeshelfApplication.ShutdownCleanupReq.DELETE_ORDERS_WIS_INVENTORY);
+            		stop(TenantManagerService.ShutdownCleanupReq.DELETE_ORDERS_WIS_INVENTORY);
             	} else {
             		out.println("Invalid command.");
             	}
@@ -87,10 +89,11 @@ public class ServiceControlServlet extends HttpServlet {
         out.println("</body></html>");        
     }
 
-    private void stop(final CodeshelfApplication.ShutdownCleanupReq cleanup) {
+    private void stop(final TenantManagerService.ShutdownCleanupReq cleanup) {
     	Runnable stopper = new Runnable() {
     		public void run() {
-    			application.stopApplication(cleanup);
+    			TenantManagerService.getInstance().setShutdownCleanupRequest(cleanup);
+    			application.stopApplication();
     		}
     	};
     	

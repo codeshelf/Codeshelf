@@ -98,7 +98,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
 	//private Thread	serviceThread = null;
-
+	
 	@ToString
 	public static class Work {
 		@Getter
@@ -513,7 +513,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		if (wrapComputeDurationMs > 2000) {
 			LOGGER.warn("GetWork() took {}; totalWis={};", wrapComputeDurationMs, wrappedRouteWiList.size());
 		}
-		Timer timer = MetricsService.addTimer(MetricsGroup.WSS, "cheWorkFromLocation");
+		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
 		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
 
 		return wrappedRouteWiList;
@@ -1186,11 +1186,6 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 			TenantPersistenceService.getInstance().rollbackTransaction();
 			LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 		}
-	}
-
-	@Override
-	protected String serviceName() {
-		return this.getClass().getSimpleName();
 	}
 
 	@Override

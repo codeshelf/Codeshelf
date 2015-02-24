@@ -8,7 +8,7 @@ import javax.websocket.ContainerProvider;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.client.LogResponseProcessor;
 import com.codeshelf.ws.jetty.io.CompressedJsonMessage;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 
@@ -21,7 +21,7 @@ public class JettyTestClient {
 		
 		try {
     		// create WS client
-        	MessageProcessor responseProcessor = new LogResponseProcessor();
+        	IMessageProcessor responseProcessor = new LogResponseProcessor();
         	JettyWebSocketClient client = new JettyWebSocketClient(ContainerProvider.getWebSocketContainer(), URI.create("ws://localhost:"+Integer.getInteger("api.port")+"/ws/"),responseProcessor,null);
         	client.connect();
         	//Message that shouldn't compress

@@ -12,6 +12,7 @@ import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.ICsDeviceManager;
 import com.codeshelf.metrics.AssociatedRadioHealthCheck;
 import com.codeshelf.metrics.ConnectedToServerHealthCheck;
+import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
 import com.google.inject.Inject;
@@ -23,11 +24,14 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 
 	
 	@Inject
-	public SiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer) {
+	public SiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer,
+			IMetricsService metricsService) {
 		super(inAdminServer);
 		deviceManager = inDeviceManager;
 		
 		this.registerService(new ClientConnectionManagerService(deviceManager.getClient()));
+		this.registerService(metricsService);
+		
 	}
 
 	// --------------------------------------------------------------------------
@@ -55,13 +59,13 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 
 		// create and register site controller specific health checks
 		RadioOnHealthCheck radioCheck = new RadioOnHealthCheck(this.deviceManager);
-		MetricsService.registerHealthCheck(radioCheck);
+		MetricsService.getInstance().registerHealthCheck(radioCheck);
 		
 		ConnectedToServerHealthCheck serverConnectionCheck = new ConnectedToServerHealthCheck(this.deviceManager);
-		MetricsService.registerHealthCheck(serverConnectionCheck);
+		MetricsService.getInstance().registerHealthCheck(serverConnectionCheck);
 		
 		AssociatedRadioHealthCheck associateCheck = new AssociatedRadioHealthCheck(this.deviceManager);
-		MetricsService.registerHealthCheck(associateCheck);
+		MetricsService.getInstance().registerHealthCheck(associateCheck);
 	}
 
 	// --------------------------------------------------------------------------

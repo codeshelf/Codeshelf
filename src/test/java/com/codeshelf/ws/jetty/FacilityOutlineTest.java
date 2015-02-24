@@ -79,7 +79,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 		} catch (EncodeException e) {
 		}		
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
@@ -125,7 +125,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 			Assert.fail("Failed to seriaize request");
 		}
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);

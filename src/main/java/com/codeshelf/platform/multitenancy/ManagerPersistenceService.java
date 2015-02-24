@@ -43,9 +43,4 @@ public class ManagerPersistenceService extends PersistenceService<ManagerSchema>
 	protected EventListenerIntegrator generateEventListenerIntegrator() {
 		return null;
 	}
-
-	@Override
-	protected String serviceName() {
-		return this.getClass().getSimpleName();
-	}
 }

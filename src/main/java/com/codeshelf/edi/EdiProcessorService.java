@@ -5,7 +5,12 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,21 +23,18 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-public final class EdiProcessor implements IEdiProcessor {
+public final class EdiProcessorService extends AbstractScheduledService {
 
-	public static final long			PROCESS_INTERVAL_MILLIS	= 1 * 30 * 1000;
+	int periodSeconds = 30;
 
-	private static final Logger			LOGGER					= LoggerFactory.getLogger(EdiProcessor.class);
-
-	private long						mLastProcessMillis;
-	private boolean						mShouldRun;
-	private Thread						mProcessorThread;
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(EdiProcessorService.class);
 
 	private ICsvOrderImporter			mCsvOrderImporter;
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
@@ -40,12 +42,18 @@ public final class EdiProcessor implements IEdiProcessor {
 	private ICsvLocationAliasImporter	mCsvLocationAliasImporter;
 	private ICsvAislesFileImporter		mCsvAislesFileImporter;
 	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
+
 	private ITypedDao<Facility>			mFacilityDao;
 
-	private final Timer					ediProcessingTimer		= MetricsService.addTimer(MetricsGroup.EDI, "processing-time");
+	private Timer					ediProcessingTimer;
+	private Thread ediSignalThread = null;
+	
+	@Getter
+	@Setter
+	BlockingQueue<String> ediSignalQueue = null;
 
 	@Inject
-	public EdiProcessor(final ICsvOrderImporter inCsvOrdersImporter,
+	public EdiProcessorService(final ICsvOrderImporter inCsvOrdersImporter,
 		final ICsvInventoryImporter inCsvInventoryImporter,
 		final ICsvLocationAliasImporter inCsvLocationsImporter,
 		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -60,78 +68,21 @@ public final class EdiProcessor implements IEdiProcessor {
 		mCsvAislesFileImporter = inCsvAislesFileImporter;
 		mCsvCrossBatchImporter = inCsvCrossBatchImporter;
 		mFacilityDao = inFacilityDao;
-
-		mShouldRun = false;
-		mLastProcessMillis = 0;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public void startProcessor(final BlockingQueue<String> inEdiSignalQueue) {
-		mShouldRun = true;
-		try {
-			Thread.sleep(Integer.getInteger("service.edi.init.delay"));
-		} catch (Exception e) {
+	@Override
+	protected void startUp() throws Exception {
+		if(this.ediSignalQueue == null) 
+		{
+			this.ediSignalQueue = new ArrayBlockingQueue<>(100);
+			//throw new NullPointerException("couldn't start EDI processer, signal queue is null");
 		}
-		mProcessorThread = new Thread(new Runnable() {
-			public void run() {
-				//ContextLogging.setUser("SYSTEM");
-				process(inEdiSignalQueue);
-			}
-		}, EDIPROCESSOR_THREAD_NAME);
-		mProcessorThread.setDaemon(true);
-		mProcessorThread.setPriority(Thread.MIN_PRIORITY);
-		mProcessorThread.start();
+		ediProcessingTimer		= MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
+		
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	public void stopProcessor() {
-		mShouldRun = false;
-		if (mProcessorThread != null) {
-			mProcessorThread.interrupt();
-			long timeout = 5000;
-			try {
-				mProcessorThread.join(timeout);
-			} catch (InterruptedException e) {
-				LOGGER.error("EdiProcessor thread did not stop within " + timeout, e);
-			}
-		} else {
-			LOGGER.warn("EdiProcessor has not been started");
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	private void process(final BlockingQueue<String> inEdiSignalQueue) {
-		while (mShouldRun) {
-			try {
-				if (System.currentTimeMillis() > (mLastProcessMillis + PROCESS_INTERVAL_MILLIS)) {
-					// Time to check EDI.
-					checkEdiServices(inEdiSignalQueue);
-					mLastProcessMillis = System.currentTimeMillis();
-				}
-
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
-				}
-			} catch (Exception e) {
-				// We don't want the thread to exit on some weird, uncaught errors in the processor.
-				LOGGER.error("", e);
-				mLastProcessMillis = System.currentTimeMillis();
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
-	private void checkEdiServices(BlockingQueue<String> inEdiSignalQueue) {
+	@Override
+	protected void runOneIteration() throws Exception {
 		boolean completed = false;
 		int numChecked = 0;
 
@@ -154,9 +105,12 @@ public final class EdiProcessor implements IEdiProcessor {
 							numChecked ++;
 							// Signal other threads that we've just processed new EDI.
 							try {
-								inEdiSignalQueue.put(ediService.getServiceName());
+								ediSignalThread = Thread.currentThread();
+								ediSignalQueue.put(ediService.getServiceName());
 							} catch (InterruptedException e) {
 								LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
+							} finally {
+								ediSignalThread = null;
 							}
 						}
 					}
@@ -168,7 +122,9 @@ public final class EdiProcessor implements IEdiProcessor {
 			TenantPersistenceService.getInstance().rollbackTransaction();
 			LOGGER.error("Unable to process edi", e);
 		} finally {
-			context.stop();
+			if(context != null) 
+				context.stop();
+			
 			if(completed) {
 				LOGGER.info("Checked for updates from "+numChecked+" EDI services");
 			} else {
@@ -176,5 +132,16 @@ public final class EdiProcessor implements IEdiProcessor {
 			}
 		}
 
+	}
+
+	@Override
+	protected void shutDown() throws Exception {
+		if(ediSignalThread != null) 
+			ediSignalThread.interrupt();
+	}
+
+	@Override
+	protected Scheduler scheduler() {
+		return Scheduler.newFixedDelaySchedule(Integer.getInteger("service.edi.init.delay"), this.periodSeconds, TimeUnit.SECONDS);
 	}
 }

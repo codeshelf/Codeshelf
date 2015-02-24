@@ -60,7 +60,9 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	private UUID				facilityId;
 
 	@Before
-	public void initTest() {
+	public void doBefore() throws Exception {
+		super.doBefore();
+
 		this.getTenantPersistenceService().beginTransaction();
 
 		importer = createOrderImporter();

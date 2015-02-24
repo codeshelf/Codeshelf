@@ -56,11 +56,6 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 	}
 
 	@Override
-	protected String serviceName() {
-		return this.getClass().getSimpleName();
-	}
-
-	@Override
 	protected void startUp() throws Exception {
 		LOGGER.info("WS connection manager thread is starting");
 		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
@@ -76,7 +71,7 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 				wsClient.connect();
 			}
 		} catch (Exception e) {
-			LOGGER.warn("unexpected exception connecting websocket client (continuing)", e);
+			LOGGER.debug("exception connecting websocket client (continuing)", e); // session onError should log reason
 		}
 
 		try {
@@ -119,7 +114,7 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 
 	@Override
 	protected Scheduler scheduler() {
-		return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
+		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 	}
 
 	private UserSession.State determineSessionState() {

@@ -21,8 +21,8 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
@@ -34,13 +34,13 @@ public class CsServerEndPoint {
 	@Getter
 	private final TenantPersistenceService tenantPersistenceService;
 
-	private static final Counter messageCounter = MetricsService.addCounter(MetricsGroup.WSS,"messages.received");
+	private static Counter messageCounter;
 
 	//These are singletons injected at startup. 
 	//  This allows us to avoid trying to hook Guice into the object creation  process of javax.websocket/Jetty
 	//     but allow Guice to control object creation for these singletons
-	private static MessageProcessor messageProcessor;
-	private static SessionManager sessionManager;
+	private static IMessageProcessor iMessageProcessor;
+	private static SessionManagerService sessionManagerService;
 	
 	// time to close session after mins of inactivity
 	int idleTimeOut = 60;
@@ -48,15 +48,17 @@ public class CsServerEndPoint {
 	
 	public CsServerEndPoint() {
 		tenantPersistenceService = TenantPersistenceService.getInstance();
+		messageCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"messages.received");
+
 	}
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
-		ContextLogging.setSession(sessionManager.getSession(session));
+		ContextLogging.setSession(sessionManagerService.getSession(session));
 		try {
 			session.setMaxIdleTimeout(1000*60*idleTimeOut);
 			LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
-			sessionManager.sessionStarted(session);
+			sessionManagerService.sessionStarted(session);
 		} finally {
 			ContextLogging.clearSession();
 		}
@@ -67,19 +69,19 @@ public class CsServerEndPoint {
     	messageCounter.inc();
     	try{
         	this.getTenantPersistenceService().beginTransaction();
-        	UserSession csSession = sessionManager.getSession(session);
+        	UserSession csSession = sessionManagerService.getSession(session);
     		ContextLogging.setSession(csSession);
-    		sessionManager.messageReceived(session);
+    		sessionManagerService.messageReceived(session);
         	if (message instanceof ResponseABC) {
         		ResponseABC response = (ResponseABC) message;
                 LOGGER.debug("Received response on session "+csSession+": " + response);
-                messageProcessor.handleResponse(csSession, response);
+                iMessageProcessor.handleResponse(csSession, response);
         	}
         	else if (message instanceof RequestABC) {
         		RequestABC request = (RequestABC) message;
                 LOGGER.debug("Received request on session "+csSession+": " + request);
                // pass request to processor to execute command
-                ResponseABC response = messageProcessor.handleRequest(csSession, request);
+                ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
                 if (response!=null) {
                 	// send response to client
                 	LOGGER.debug("Sending response "+response+" for request "+request);
@@ -92,7 +94,7 @@ public class CsServerEndPoint {
         	else {
         		// handle all other messages
             	LOGGER.debug("Received message on session "+csSession+": "+message);
-            	messageProcessor.handleMessage(csSession, message);
+            	iMessageProcessor.handleMessage(csSession, message);
         	}
 			this.getTenantPersistenceService().commitTransaction();
 		} catch (RuntimeException e) {
@@ -106,10 +108,10 @@ public class CsServerEndPoint {
     
 	@OnClose
     public void onClose(Session session, CloseReason reason) {
-		ContextLogging.setSession(sessionManager.getSession(session));
+		ContextLogging.setSession(sessionManagerService.getSession(session));
 		try {
 	    	LOGGER.info(String.format("WS Session %s closed because of %s", session.getId(), reason));
-			sessionManager.sessionEnded(session);		
+			sessionManagerService.sessionEnded(session);		
 		} finally {
 			ContextLogging.clearSession();
 		}
@@ -117,25 +119,25 @@ public class CsServerEndPoint {
     
     @OnError
     public void onError(Session session, Throwable cause) {
-    	ContextLogging.setSession(sessionManager.getSession(session));
+    	ContextLogging.setSession(sessionManagerService.getSession(session));
     	LOGGER.error("WebSocket error", cause);
     	ContextLogging.clearSession();
     }
 
     //Injected see ServerMain
-	public static void setSessionManager(SessionManager instance) {
-		if (sessionManager != null) {
+	public static void setSessionManagerService(SessionManagerService instance) {
+		if (sessionManagerService != null) {
 			throw new IllegalArgumentException("SessionManager should only be initialized once");
 		}
-		sessionManager = instance;
+		sessionManagerService = instance;
 	}
 
 	//Injected see ServerMain
 	public static void setMessageProcessor(ServerMessageProcessor instance) {
-		if (messageProcessor != null) {
+		if (iMessageProcessor != null) {
 			throw new IllegalArgumentException("MessageProcessor should only be initialized once");
 		}
-		messageProcessor = instance;
+		iMessageProcessor = instance;
 	}
 
 

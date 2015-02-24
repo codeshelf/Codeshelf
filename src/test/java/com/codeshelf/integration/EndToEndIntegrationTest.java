@@ -16,7 +16,6 @@ import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.CodeshelfApplication;
 import com.codeshelf.application.CsSiteControllerMain;
 import com.codeshelf.application.SiteControllerApplication;
 import com.codeshelf.application.WebApiServer;
@@ -43,15 +42,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
-import com.codeshelf.ws.jetty.server.CsServerEndPoint;
-import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.SessionManager;
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Singleton;
 
 @Ignore
 public abstract class EndToEndIntegrationTest extends EdiTestABC {
@@ -93,35 +84,11 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	int connectionTimeOut = 30 * 1000;
 
-	public static Injector setupWSSInjector() {
-		Injector injector = Guice.createInjector(new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(SessionManager.class).toInstance(SessionManager.getInstance());
-				// jetty websocket
-				bind(MessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
-			}
-		});
-		return injector;
-	}
-
 	@Override
 	public void doBefore() throws Exception {
 		super.doBefore();
 		
-		Injector websocketServerInjector = setupWSSInjector();
-		try { //Ideally this would be statically initialized once before all of the integration tests
-			// Burying the exception allows the normal mode for the design to raise issue,
-			//  but in testing assume that it got setup once the first time this is called
-			CsServerEndPoint.setSessionManager(websocketServerInjector.getInstance(SessionManager.class));
-			CsServerEndPoint.setMessageProcessor(websocketServerInjector.getInstance(ServerMessageProcessor.class));
-		}
-		catch(RuntimeException e) {
-			LOGGER.debug("CsServerEndpoint already setup (NORMAL): " + e.toString());
-		}
-
 		LOGGER.debug("-------------- Creating environment before running test case");
-		//The client WSS needs the self-signed certificate to be trusted
 		
 		this.getTenantPersistenceService().beginTransaction();
 		// ensure facility, network exist in database before booting up site controller
@@ -166,6 +133,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 		siteController = CsSiteControllerMain.createApplication(integrationTestModule);
 		try {
+			siteController.startServices();
 			siteController.startApplication();
 		} catch (Exception e) {
 			LOGGER.error("Failed to start site controller", e);
@@ -226,7 +194,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 	private void stop() {
 		LOGGER.debug("-------------- Cleaning up after running test case");
 		try {
-			siteController.stopApplication(CodeshelfApplication.ShutdownCleanupReq.NONE);
+			siteController.stopApplication();
 		}
 		catch (Exception e) {
 			LOGGER.error("Failed to stop site controller",e);

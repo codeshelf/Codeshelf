@@ -80,9 +80,4 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 		// not a domain object
 		return null;
 	}
-
-	@Override
-	protected String serviceName() {
-		return this.getClass().getSimpleName();
-	}
 }

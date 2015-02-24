@@ -11,9 +11,9 @@ import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.codeshelf.ws.jetty.protocol.command.PingCommand;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
@@ -27,7 +27,7 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.UserSession;
 
-public class SiteControllerMessageProcessor extends MessageProcessor {
+public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(SiteControllerMessageProcessor.class);
 
