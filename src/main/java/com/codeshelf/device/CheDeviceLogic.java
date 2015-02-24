@@ -93,8 +93,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
 	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
 
-	protected static final String			STARTWORK_COMMAND						= "START";
-	protected static final String			REVERSE_COMMAND							= "REVERSE";
+	public    static final String			STARTWORK_COMMAND						= "START";
+	public 	  static final String			REVERSE_COMMAND							= "REVERSE";
 	protected static final String			SETUP_COMMAND							= "SETUP";
 	protected static final String			SHORT_COMMAND							= "SHORT";
 	protected static final String			LOGOUT_COMMAND							= "LOGOUT";

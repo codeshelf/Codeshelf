@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.metrics.MetricsGroup;
@@ -442,6 +443,9 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
+		
+		boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
+		boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
 		//Get current complete list of WIs
 		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0);
@@ -457,8 +461,12 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				wiIter.remove();
 			}
 		}
-
-		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
+		
+		//Scanning "start" used to send a "" location here, to getWorkInstructions().
+		//Now, we pass "start" or "reverse", instead, but still need to pass "" to the getStartingPathDistance() function below.
+		String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
+		Double startingPathPos = getStartingPathDistance(facility, locationIdCleaned);
+		
 		if (startingPathPos == null) {
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
 			for (WorkInstruction instruction : completeRouteWiList) {
@@ -467,7 +475,14 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 					preferredInstructions.add(instruction);
 				}
 			}
-			// getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
+			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
+			if (reverse) {
+				preferredInstructions = Lists.reverse(preferredInstructions);
+			}
+			if (preferredInstructions.size() > 0) {
+				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
+			}
+
 			return preferredInstructions;
 		}
 
@@ -477,6 +492,10 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
+		
+		if (reverse) {
+			wiListFromStartLocation = Lists.reverse(wiListFromStartLocation);
+		}
 
 		List<WorkInstruction> wrappedRouteWiList = null;
 		if (wiListFromStartLocation.size() == completeRouteWiList.size()) {

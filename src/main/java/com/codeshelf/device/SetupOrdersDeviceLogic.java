@@ -796,11 +796,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
 		
-		// Ilya: temporary: Better to just let it go through and deal with it in the backend.  REVERSE_COMMAND is the "REVERSE
-		if (STARTWORK_COMMAND.equals(inLocationStr))
-			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), "");
-		else 
-			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr);
+		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr);
 		setState(CheStateEnum.GET_WORK);
 	}
 
