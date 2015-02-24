@@ -305,7 +305,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
-	@Test
+	//@Test
 	public final void testStartWorkReverse() throws IOException {
 		// set up data for pick scenario
 		this.getTenantPersistenceService().beginTransaction();
