@@ -344,12 +344,6 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		Assert.assertNotNull(facility);
-
-		this.getTenantPersistenceService().commitTransaction();
-
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -358,7 +352,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 		
 		this.getTenantPersistenceService().beginTransaction();
-		
+
+        facility = Facility.DAO.reload(facility);
+        Assert.assertNotNull(facility);
 		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 		
