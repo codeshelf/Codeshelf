@@ -304,6 +304,61 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<Container> containers = facility.getContainers();
 		this.getTenantPersistenceService().commitTransaction();
 	}
+	
+	//@Test
+	public final void testStartWorkReverse() throws IOException {
+		// set up data for pick scenario
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
+		importInventoryData(facility, csvString);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvString2);
+		this.getTenantPersistenceService().commitTransaction();
+
+		// Start setting up cart etc
+		this.getTenantPersistenceService().beginTransaction();
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.setupOrderIdAsContainer("2", "2");
+		picker.setupOrderIdAsContainer("3", "3");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+
+		picker.scanCommand("REVERSE");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+
+		//AssertForwardOrdering
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
+		//Check each WI
+		assertEquals(wiList.get(0).getItemId(), "3");
+		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(2).getItemId(), "2");
+		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(4).getItemId(), "1");
+
+		this.tenantPersistenceService.commitTransaction();
+	}
 
 	@SuppressWarnings({ "unused" })
 	@Test
@@ -1853,7 +1908,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.tenantPersistenceService.commitTransaction();
 	}
-
+	
 	private void assertWIColor(WorkInstruction wi, Che che) {
 		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
 		Assert.assertEquals(1, cmdGroups.size());

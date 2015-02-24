@@ -5,9 +5,8 @@
  *******************************************************************************/
 package com.codeshelf.integration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -25,7 +24,6 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -35,7 +33,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ThreadUtils;
 
 /**
@@ -99,14 +96,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvString), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
@@ -130,7 +122,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
 
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
 				+ "A1.B2, D400\r\n" //
 				+ "A1.B3, D500\r\n" //
@@ -144,14 +136,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
+		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
+		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
@@ -206,7 +193,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		// Order 12345 has 2 modeled locations and one not.
 		// Order 11111 has 4 unmodeled locations and one modeled.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,3,each, D601"
@@ -216,20 +203,15 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D604";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 	
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
 		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.3,1522,Butterfly Yoyo,3,each, D601"
@@ -239,20 +221,15 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 	private void setUpOrdersWithCntrAndSequence(Facility inFacility) throws IOException {
 		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301, 4000"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.2,1493,PARK RANGER Doll,1,each, D302, 4001"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.3,1522,Butterfly Yoyo,3,each, D601, 2000"
@@ -262,14 +239,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603, 2002"
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604, 2003";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 
@@ -327,11 +299,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+
 		setUpLineScanOrdersWithCntr(facility);
 		mPropertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
@@ -375,12 +344,6 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		Assert.assertNotNull(facility);
-
-		this.getTenantPersistenceService().commitTransaction();
-
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -389,18 +352,11 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		Assert.assertNotNull(facility);
-		DomainObjectProperty locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
-		if (locapickProperty != null) {
-			locapickProperty.setValue(true);
-			PropertyDao.getInstance().store(locapickProperty);
-		}
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}
+
+        facility = Facility.DAO.reload(facility);
+        Assert.assertNotNull(facility);
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 		
 		setUpLineScanOrdersWithCntr(facility);
 		mPropertyService.turnOffHK(facility);
@@ -629,17 +585,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty locapickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
-		if (locapickProperty != null) {
-			locapickProperty.setValue(true);
-			PropertyDao.getInstance().store(locapickProperty);
-		}
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}
-		
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+
 		setUpLineScanOrdersWithCntr(facility);
 		mPropertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
@@ -718,7 +666,6 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		testPfswebWorkSequencePicks("REVERSE", sortedItemLocs);
 	}
 	
-
 	private final void testPfswebWorkSequencePicks(String scanDirection, String[][] sortedItemLocs) throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
