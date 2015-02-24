@@ -107,6 +107,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
 	protected static final String			OR_SCAN_START							= cheLine("OR SCAN START");
 	protected static final String			OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
+	
+	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
+	protected static final String			SCAN_SKIP								= "SCANSKIP";
 
 	protected static final Integer			maxCountForPositionControllerDisplay	= 99;
 
@@ -1193,6 +1196,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
 
 		String returnString = "";
+		
+		// If the user scanned SCANSKIP return true
+		if (inScanStr.equals(SCAN_SKIP)){
+			// TODO need better warning message here. Get orderId and pickerId?
+			LOGGER.warn("SCANSKIP for work instruction");
+			return returnString;
+		}
 
 		String wiVerifyValue = "";
 		switch (mScanNeededToVerifyPick) {

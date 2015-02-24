@@ -591,6 +591,21 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		LOGGER.info("5c: logout from this confirm screen");
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		
+		LOGGER.info("6a: setup again. Checking if scanskip works");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.setupContainer("11111", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);	
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);		
+		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker.scanSomething("SCANSKIP");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("6b: logout from this confirm screen");
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 
 	}
