@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -702,7 +701,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 	/**
 	 * Simple test of Setup_Orders with SCANPICK. DEV-653 is the SCANPICK enhancement but in reverse
 	 */
-	//@Test
+	@Test
 	public void workSequencePickReverse() throws IOException {
 		String[][] sortedItemLocs = { //the forward direction
 				{"1522", "D601"},
@@ -716,7 +715,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		};
 		//reverse it here
 		ArrayUtils.reverse(sortedItemLocs);
-		testPfswebWorkSequencePicks("STARTR", sortedItemLocs);
+		testPfswebWorkSequencePicks("REVERSE", sortedItemLocs);
 	}
 	
 
