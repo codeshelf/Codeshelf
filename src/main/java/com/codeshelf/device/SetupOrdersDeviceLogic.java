@@ -1128,7 +1128,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
 				if (isOkToStartWithoutLocation()) {
 					LOGGER.info("starting without a start location");
-					requestWorkAndSetGetWorkState("inScanStr");
+					requestWorkAndSetGetWorkState(inScanStr);
 				} else { // do as we did before
 					if (mPositionToContainerMap.values().size() > 0) {
 						startWork(inScanStr);
