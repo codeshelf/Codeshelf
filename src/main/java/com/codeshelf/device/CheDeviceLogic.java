@@ -147,7 +147,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	boolean									mOkToStartWithoutLocation				= false;
+	boolean									mOkToStartWithoutLocation				= true;
 
 	private NetGuid							mLastLedControllerGuid;
 	private boolean							mMultipleLastLedControllerGuids;
@@ -212,7 +212,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		setScanNeededToVerifyPick(theEnum);
 
 		String mSequenceKind = mDeviceManager.getSequenceKind();
-		setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
+		//setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
+		//As part of DEV-670 work, we are always enabling scanning of "start" or "reverse" on the "scan location" screen
+		setOkToStartWithoutLocation(true);
 
 	}
 

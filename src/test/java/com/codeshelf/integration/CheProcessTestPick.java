@@ -284,12 +284,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
-	//@Test
+	@Test
 	public final void testStartWorkReverse() throws IOException {
 		// set up data for pick scenario
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
+
 		this.getTenantPersistenceService().commitTransaction();
 		
 		//For this data set
@@ -425,7 +426,6 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTransaction();
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		picker.login("Picker #1");
@@ -436,12 +436,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 
 		picker.scanCommand("REVERSE");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		//AssertForwardOrdering
 		List<WorkInstruction> wiList = picker.getAllPicksList();
 		//Check Total WI size
-		assertTrue(wiList.size() == 5);
+		assertEquals(5, wiList.size());
 		//Check each WI
 		assertEquals(wiList.get(0).getItemId(), "1");
 		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
