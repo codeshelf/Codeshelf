@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.websocket.ContainerProvider;
+import javax.websocket.WebSocketContainer;
+
 import lombok.Getter;
 
 import org.junit.Assert;
@@ -17,10 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.CsSiteControllerMain;
+import com.codeshelf.application.ICodeshelfApplication;
 import com.codeshelf.application.SiteControllerApplication;
 import com.codeshelf.application.WebApiServer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CsDeviceManager;
+import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.RadioController;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -29,7 +35,11 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.TcpServerInterface;
+import com.codeshelf.metrics.DummyMetricsService;
+import com.codeshelf.metrics.IMetricsService;
+import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -42,7 +52,9 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.Singleton;
 
 @Ignore
 public abstract class EndToEndIntegrationTest extends EdiTestABC {
@@ -121,13 +133,23 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		apiServer.start(Integer.getInteger("api.port"), null, null, false, "./");
 		ThreadUtils.sleep(2000);
 
+		
 		// start site controller
 		//Use a different IGateway implementation instead of disableRadio
-		Module integrationTestModule = new CsSiteControllerMain.BaseModule() {
+		Module integrationTestModule = new AbstractModule() {
 			@Override
 			protected void configure() {
-				super.configure();
+
+				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
+
+				bind(ICodeshelfApplication.class).to(SiteControllerApplication.class);
+				bind(IRadioController.class).to(RadioController.class);
+				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
+
 				bind(IGatewayInterface.class).to(TcpServerInterface.class);
+				
+				requestStaticInjection(MetricsService.class);
+				bind(IMetricsService.class).toInstance(MetricsService.getInstance());
 			}
 		};
 
@@ -179,6 +201,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 	@Override
 	public void doAfter() {
+		super.doAfter();
 		// roll back transaction if active
 		if (TenantPersistenceService.getInstance().hasAnyActiveTransactions()) {
 			LOGGER.error("Active transaction found after executing unit test. Please make sure transactions are terminated on exit.");
@@ -188,7 +211,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		stop();
 		// reset
 		siteController = null;
-		super.doAfter();
 	}
 
 	private void stop() {
