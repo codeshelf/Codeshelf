@@ -114,7 +114,7 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		LOGGER.info("About to start application services: {}",serviceManager.servicesByState().toString());
 		serviceManager.startAsync();
 		try {
-			serviceManager.awaitHealthy(30,TimeUnit.SECONDS);
+			serviceManager.awaitHealthy(60,TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			LOGGER.error("timeout starting services", e);
 		}

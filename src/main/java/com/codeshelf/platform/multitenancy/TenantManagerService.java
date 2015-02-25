@@ -33,7 +33,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
-	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 15;
+	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 60;
 	private static TenantManagerService theInstance = null;
 	
 	//@Getter
