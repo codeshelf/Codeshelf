@@ -42,7 +42,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
-		this.mFacilityDao.store(facility);
+		Facility.DAO.store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Facility");

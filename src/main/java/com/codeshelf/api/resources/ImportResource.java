@@ -22,6 +22,8 @@ import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
@@ -34,7 +36,7 @@ public class ImportResource {
 
 	@Context
 	private ResourceContext resourceContext;	
-	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+	private PersistenceService<Tenant> persistence = TenantPersistenceService.getInstance();
 	private AislesFileCsvImporter	aislesFileCsvImporter;
 	//private OrderLocationCsvImporter orderLocationImporter;
 	private LocationAliasCsvImporter locationAliasImporter;

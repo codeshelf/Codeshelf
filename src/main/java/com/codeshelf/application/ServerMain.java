@@ -111,6 +111,7 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
@@ -183,7 +184,9 @@ public final class ServerMain {
 				bind(GuiceFilter.class);
 				
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
+	
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
+				
 				bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
@@ -204,6 +207,30 @@ public final class ServerMain {
 				bind(HashedCredentialsMatcher.class);
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 				
+			}
+			
+			@Provides
+			@Singleton
+			public WorkService createWorkService() {
+				WorkService workService = new WorkService();
+				return workService;				
+			}
+
+			@Provides
+			@Singleton
+			public SessionManagerService createSessionManagerService() {
+				SessionManagerService sessionManagerService = new SessionManagerService();
+				return sessionManagerService;				
+			}
+		}, createGuiceServletModule(), createDaoBindingModule());
+
+		return injector;
+	}
+	
+	public static Module createDaoBindingModule() {
+		return new AbstractModule() {
+			@Override
+			protected void configure() {
 				// Register the DAOs (statically as a singleton).
 				
 
@@ -318,6 +345,7 @@ public final class ServerMain {
 				requestStaticInjection(UomMaster.class);
 				bind(new TypeLiteral<ITypedDao<UomMaster>>() {
 				}).to(UomMasterDao.class);
+
 				requestStaticInjection(Vertex.class);
 				bind(new TypeLiteral<ITypedDao<Vertex>>() {
 				}).to(VertexDao.class);
@@ -329,24 +357,9 @@ public final class ServerMain {
 				requestStaticInjection(WorkInstruction.class);
 				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
 				}).to(WorkInstructionDao.class);
-			}
-			
-			@Provides
-			@Singleton
-			public WorkService createWorkService() {
-				WorkService workService = new WorkService();
-				return workService;				
-			}
 
-			@Provides
-			@Singleton
-			public SessionManagerService createSessionManagerService() {
-				SessionManagerService sessionManagerService = new SessionManagerService();
-				return sessionManagerService;				
 			}
-		}, createGuiceServletModule());
-
-		return injector;
+		};
 	}
 	
 	private static ServletModule createGuiceServletModule() {

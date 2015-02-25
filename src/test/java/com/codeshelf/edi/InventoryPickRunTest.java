@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;

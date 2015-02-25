@@ -1,7 +1,5 @@
 package com.codeshelf.metrics;
 
-import org.mockito.Mockito;
-
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
@@ -25,12 +23,12 @@ public class DummyMetricsService extends AbstractIdleService implements IMetrics
 
 	@Override
 	public Counter createCounter(MetricsGroup group, String metricName) {
-		return Mockito.mock(Counter.class);
+		return new Counter();
 	}
 
 	@Override
 	public Timer createTimer(MetricsGroup group, String metricName) {
-		return Mockito.mock(Timer.class);
+		return new Timer();
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package com.codeshelf.platform.persistence;
 import java.lang.reflect.Field;
 
 import org.hibernate.Transaction;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,10 +14,10 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 
-public class TenantPersistenceService extends PersistenceService<Tenant> {
+public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
-	private static TenantPersistenceService theInstance = null;
+	private static PersistenceService<Tenant> theInstance = null;
 
 	private TenantPersistenceService() {
 		super();
@@ -26,21 +27,27 @@ public class TenantPersistenceService extends PersistenceService<Tenant> {
 	 * singleton service: any method attempting to access before service 
 	 * is initialized will block; only the service manager can start service 
 	 */
-	public final synchronized static TenantPersistenceService getMaybeRunningInstance() {
+	public final synchronized static PersistenceService<Tenant> getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantPersistenceService();
 		}
 		return theInstance;
 	}
-	public final synchronized static TenantPersistenceService getNonRunningInstance() {
+	public final synchronized static PersistenceService<Tenant> getNonRunningInstance() {
 		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
 			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
 	}
-	public final static TenantPersistenceService getInstance() {
+	public final static PersistenceService<Tenant> getInstance() {
 		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
+	}
+	@SuppressWarnings("unchecked")
+	public final static void dummyIfNotStarted() {
+		if(theInstance == null) {
+			theInstance = Mockito.mock(PersistenceService.class);
+		}
 	}
 	
 	@Override

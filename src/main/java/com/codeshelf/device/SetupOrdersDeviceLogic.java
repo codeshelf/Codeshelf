@@ -1155,6 +1155,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * I think for this, we always want to computeCheWork uniformly, in the forward direction. Will get reversed later.
 	 */
 	private void startWork(final String inScanStr) {
+		@SuppressWarnings("unused")
 		boolean isReverse = inScanStr.equals(REVERSE_COMMAND);
 		
 		clearAllPositionControllers();

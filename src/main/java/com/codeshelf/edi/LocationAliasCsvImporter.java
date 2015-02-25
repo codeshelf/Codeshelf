@@ -18,7 +18,6 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
@@ -36,12 +35,9 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
 
-	private final ITypedDao<LocationAlias>	mLocationAliasDao;
-
 	@Inject
-	public LocationAliasCsvImporter(final EventProducer inProducer, final ITypedDao<LocationAlias> inLocationAliasDao) {
+	public LocationAliasCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
-		mLocationAliasDao = inLocationAliasDao;
 	}
 
 	// --------------------------------------------------------------------------
@@ -93,7 +89,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			if (!locationAlias.getUpdated().equals(inProcessTime)) {
 				LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
 				locationAlias.setActive(false);
-				mLocationAliasDao.store(locationAlias);
+				LocationAlias.DAO.store(locationAlias);
 			}
 		}
 	}
@@ -160,7 +156,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			mLocationAliasDao.store(result);
+			LocationAlias.DAO.store(result);
 		}
 		return result;
 	}

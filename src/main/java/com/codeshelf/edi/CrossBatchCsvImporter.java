@@ -23,7 +23,6 @@ import com.codeshelf.event.EventTag;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.ContainerUse;
@@ -51,32 +50,13 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
-	private ITypedDao<OrderGroup>	mOrderGroupDao;
-	private ITypedDao<OrderHeader>	mOrderHeaderDao;
-	private ITypedDao<OrderDetail>	mOrderDetailDao;
-	private ITypedDao<Container>	mContainerDao;
-	private ITypedDao<ContainerUse>	mContainerUseDao;
-	private ITypedDao<UomMaster>	mUomMasterDao;
-
 	private WorkService	mWorkService;
 
 	@Inject
 	public CrossBatchCsvImporter(final EventProducer inProducer,
-		final WorkService inWorkService,
-		final ITypedDao<OrderGroup> inOrderGroupDao,
-		final ITypedDao<OrderHeader> inOrderHeaderDao,
-		final ITypedDao<OrderDetail> inOrderDetailDao,
-		final ITypedDao<Container> inContainerDao,
-		final ITypedDao<ContainerUse> inContainerUseDao,
-		final ITypedDao<UomMaster> inUomMasterDao) {
+		final WorkService inWorkService) {
 
 		super(inProducer);
-		mOrderGroupDao = inOrderGroupDao;
-		mOrderHeaderDao = inOrderHeaderDao;
-		mOrderDetailDao = inOrderDetailDao;
-		mContainerDao = inContainerDao;
-		mContainerUseDao = inContainerUseDao;
-		mUomMasterDao = inUomMasterDao;
 		mWorkService = inWorkService;
 	}
 
@@ -145,7 +125,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 							} else {
 								LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
 								orderDetail.setActive(false);
-								mOrderDetailDao.store(orderDetail);
+								OrderDetail.DAO.store(orderDetail);
 							}
 						}
 					}
@@ -157,12 +137,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 					try {
 
 						order.setActive(false);
-						mOrderHeaderDao.store(order);
+						OrderHeader.DAO.store(order);
 
 						ContainerUse containerUse = order.getContainerUse();
 						if (containerUse != null) {
 							containerUse.setActive(false);
-							mContainerUseDao.store(containerUse);
+							ContainerUse.DAO.store(containerUse);
 						}
 					} catch (PersistenceException e) {
 						LOGGER.error("Caught exception archiving order or containerUse in archiveCheckCrossBatches", e);
@@ -214,13 +194,13 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				@SuppressWarnings("unused")
 				OrderDetail detail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, itemMaster, uomMaster);
 				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-				//mOrderHeaderDao.commitTransaction();
+				//OrderHeader.DAO.commitTransaction();
 				return container;
 			}
 		} catch (Exception e) {
 			errors.reject(ErrorCode.GENERAL, e.toString());
 		} finally {
-			//mOrderHeaderDao.endTransaction();
+			//OrderHeader.DAO.endTransaction();
 		}
 		throw new InputValidationException(errors);
 	}
@@ -250,7 +230,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mOrderGroupDao.store(result);
+				OrderGroup.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -297,7 +277,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			mOrderHeaderDao.store(result);
+			OrderHeader.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -346,7 +326,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		}
 
 		try {
-			mOrderDetailDao.store(result);
+			OrderDetail.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -380,7 +360,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			result.setUpdated(inEdiProcessTime);
 			result.setActive(true);
 			try {
-				mContainerDao.store(result);
+				Container.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -409,9 +389,9 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			use.setUpdated(inEdiProcessTime);
 
 			try {
-				mContainerUseDao.store(use);
+				ContainerUse.DAO.store(use);
 				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
-				mOrderHeaderDao.store(inOrder);
+				OrderHeader.DAO.store(inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -439,7 +419,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			inFacility.addUomMaster(result);
 
 			try {
-				mUomMasterDao.store(result);
+				UomMaster.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}

@@ -19,12 +19,14 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
 public class CheResource {
-	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+	private PersistenceService<Tenant> persistence = TenantPersistenceService.getInstance();
 
 	@Setter
 	private UUIDParam mUUIDParam;

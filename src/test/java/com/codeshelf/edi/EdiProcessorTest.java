@@ -20,27 +20,52 @@ import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.JvmProperties;
+import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
-import com.codeshelf.model.domain.Point;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
-import com.google.inject.Inject;
 
 /**
  * @author jeffw
  *
  */
-public class EdiProcessorTest extends EdiTestABC {
+public class EdiProcessorTest /* extends EdiTestABC */{
+	private final Logger LOGGER = LoggerFactory.getLogger(EdiProcessorTest.class);
+	static {
+		JvmProperties.load("test");
+	}
+
+	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
+		List<Facility> list = new ArrayList<Facility>(1);
+
+		public TestFacilityDao(final Facility facility) {
+			super();
+			list.add(facility);
+		}
+
+		public final Class<Facility> getDaoClass() {
+			return Facility.class;
+		}
+
+		public final List<Facility> getAll() {
+			return list;
+		}
+	}
 
 	@Test
 	public final void ediProcessThreadTest() {
+		LOGGER.info("starting ediProcessThreadTest");
 
 		ICsvOrderImporter orderImporter = generateFailingImporter();
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
@@ -54,8 +79,7 @@ public class EdiProcessorTest extends EdiTestABC {
 			locationImporter,
 			orderLocationImporter,
 			crossBatchImporter,
-			aislesFileImporter,
-			Facility.DAO);
+			aislesFileImporter);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
 		
@@ -76,29 +100,9 @@ public class EdiProcessorTest extends EdiTestABC {
 		}
 	}
 
-	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
-		private Facility	mFacility;
-
-		@Inject
-		public TestFacilityDao(final Facility inFacility) {
-			super();
-			mFacility = inFacility;
-		}
-
-		public final Class<Facility> getDaoClass() {
-			return Facility.class;
-		}
-
-		public final List<Facility> getAll() {
-			List<Facility> list = new ArrayList<Facility>();
-			list.add(mFacility);
-			return list;
-		}
-	}
-
 	@Test
 	public final void ediProcessorTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		LOGGER.info("starting ediProcessorTest");
 
 		final class Result {
 			public boolean	processed	= false;
@@ -114,10 +118,13 @@ public class EdiProcessorTest extends EdiTestABC {
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(), "F-EDI.1", "TEST", Point.getZeroPoint());
+		Facility facility = new Facility();
+		facility.setDomainId("FTEST");
 
-		TestFacilityDao facilityDao = new TestFacilityDao(facility);
-		facilityDao.store(facility);
+		Facility.DAO = new TestFacilityDao(facility);
+
+		MetricsService.dummyIfNotStarted();
+		TenantPersistenceService.dummyIfNotStarted();
 
 		IEdiService ediServiceLinked = new IEdiService() {
 
@@ -358,11 +365,13 @@ public class EdiProcessorTest extends EdiTestABC {
 			locationImporter,
 			orderLocationImporter,
 			crossBatchImporter,
-			aislesFileImporter,
-			facilityDao);
+			aislesFileImporter);
 
 		ArrayList<Service> services = new ArrayList<Service>();
 		services.add(ediProcessorService);
+		if(!MetricsService.getMaybeRunningInstance().isRunning()) { // TODO: this sort of setup goes in an abstract class
+			services.add(MetricsService.getMaybeRunningInstance());
+		}
 		ServiceManager serviceManager = new ServiceManager(services);
 		try {
 			serviceManager.startAsync().awaitHealthy(30, TimeUnit.SECONDS);
@@ -384,8 +393,6 @@ public class EdiProcessorTest extends EdiTestABC {
 		} catch (TimeoutException e) {
 			Assert.fail(e.getMessage());
 		}
-
-		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	private ICsvOrderImporter generateFailingImporter() {

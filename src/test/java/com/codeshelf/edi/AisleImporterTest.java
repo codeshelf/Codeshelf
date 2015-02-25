@@ -342,7 +342,7 @@ public class AisleImporterTest extends EdiTestABC {
 
 		// Reread. We had a last bay and last aisle vertices bug on re-read
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		// AislesFileCsvImporter importer2 = new AislesFileCsvImporter(mAisleDao, mBayDao, mTierDao, mSlotDao);
+		// AislesFileCsvImporter importer2 = new AislesFileCsvImporter(Aisle.DAO, Bay.DAO, Tier.DAO, Slot.DAO);
 		// new reader, because cannot reset the old reader without handling a possible exception. Same stream, though.
 		InputStreamReader reader2 = new InputStreamReader(stream);
 		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);

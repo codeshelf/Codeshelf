@@ -18,6 +18,8 @@ import com.codahale.metrics.Counter;
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
@@ -32,7 +34,7 @@ public class CsServerEndPoint {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsServerEndPoint.class);
 
 	@Getter
-	private final TenantPersistenceService tenantPersistenceService;
+	private final PersistenceService<Tenant> tenantPersistenceService;
 
 	private static Counter messageCounter;
 

@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -19,7 +20,6 @@ import com.codahale.metrics.Timer;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
@@ -43,8 +43,6 @@ public final class EdiProcessorService extends AbstractScheduledService {
 	private ICsvAislesFileImporter		mCsvAislesFileImporter;
 	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
 
-	private ITypedDao<Facility>			mFacilityDao;
-
 	private Timer					ediProcessingTimer;
 	private Thread ediSignalThread = null;
 	
@@ -58,8 +56,7 @@ public final class EdiProcessorService extends AbstractScheduledService {
 		final ICsvLocationAliasImporter inCsvLocationsImporter,
 		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		final ICsvCrossBatchImporter inCsvCrossBatchImporter,
-		final ICsvAislesFileImporter inCsvAislesFileImporter,
-		final ITypedDao<Facility> inFacilityDao) {
+		final ICsvAislesFileImporter inCsvAislesFileImporter) {
 
 		mCsvOrderImporter = inCsvOrdersImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
@@ -67,7 +64,10 @@ public final class EdiProcessorService extends AbstractScheduledService {
 		mCsvLocationAliasImporter = inCsvLocationsImporter;
 		mCsvAislesFileImporter = inCsvAislesFileImporter;
 		mCsvCrossBatchImporter = inCsvCrossBatchImporter;
-		mFacilityDao = inFacilityDao;
+	}
+	
+	List<Facility> getFacilities() {
+		return Facility.DAO.getAll();
 	}
 
 	@Override
@@ -79,6 +79,12 @@ public final class EdiProcessorService extends AbstractScheduledService {
 		}
 		ediProcessingTimer		= MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
 		
+		TenantPersistenceService.getInstance().beginTransaction();
+		try {
+			LOGGER.info("starting ediProcessorService with default tenant and currently {} facilities", getFacilities().size());
+		} finally {
+			TenantPersistenceService.getInstance().commitTransaction();
+		}
 	}
 
 	@Override
@@ -93,7 +99,7 @@ public final class EdiProcessorService extends AbstractScheduledService {
 
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
-			for (Facility facility : mFacilityDao.getAll()) {
+			for (Facility facility : this.getFacilities()) {
 				for (IEdiService ediService : facility.getEdiServices()) {
 					if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
 						if (ediService.getUpdatesFromHost(mCsvOrderImporter,
@@ -142,6 +148,6 @@ public final class EdiProcessorService extends AbstractScheduledService {
 
 	@Override
 	protected Scheduler scheduler() {
-		return Scheduler.newFixedDelaySchedule(Integer.getInteger("service.edi.init.delay"), this.periodSeconds, TimeUnit.SECONDS);
+		return Scheduler.newFixedDelaySchedule(Integer.getInteger("service.edi.init.delay",0), this.periodSeconds, TimeUnit.SECONDS);
 	}
 }

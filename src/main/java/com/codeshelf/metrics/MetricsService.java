@@ -23,7 +23,7 @@ public class MetricsService extends AbstractIdleService implements IMetricsServi
 
 	@Inject
 	private static IMetricsService theInstance;
-
+	
 	@Getter
 	private String						hostName;
 
@@ -54,9 +54,10 @@ public class MetricsService extends AbstractIdleService implements IMetricsServi
 		}
 		return theInstance;
 	}
-	public final static void setInstance(IMetricsService metricsService) {
-		// for testing (normally injected)
-		MetricsService.theInstance = metricsService;
+	public final static void dummyIfNotStarted() { 
+		// for testing
+		if(theInstance == null) 
+			theInstance = new DummyMetricsService();
 	}
 	
 	private static String getFullName(MetricsGroup group, String metricName) {

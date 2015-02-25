@@ -37,7 +37,6 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.TcpServerInterface;
-import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.Aisle;
@@ -54,7 +53,6 @@ import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.Singleton;
 
 @Ignore
 public abstract class EndToEndIntegrationTest extends EdiTestABC {
@@ -104,12 +102,12 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		
 		this.getTenantPersistenceService().beginTransaction();
 		// ensure facility, network exist in database before booting up site controller
-		Facility facility = mFacilityDao.findByDomainId(null, facilityId);
+		Facility facility = Facility.DAO.findByDomainId(null, facilityId);
 		if (facility==null) {
 			// create organization object
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
 			facility=Facility.createFacility(getDefaultTenant(),facilityId,"",Point.getZeroPoint());
-			mFacilityDao.store(facility);
+			Facility.DAO.store(facility);
 
 			// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.
 		}

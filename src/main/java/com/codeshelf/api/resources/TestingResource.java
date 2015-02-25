@@ -25,25 +25,19 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Item;
-import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LocationAlias;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderGroup;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
 @Path("/test")
 public class TestingResource {
-	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+	private PersistenceService<Tenant> persistence = TenantPersistenceService.getInstance();
 	private WorkService workService;
 	
 	@Inject
@@ -144,7 +138,7 @@ public class TestingResource {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis()); 
-		ICsvInventoryImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+		ICsvInventoryImporter importer = new InventoryCsvImporter(new EventProducer());
 		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);		
 	}
 	
@@ -171,7 +165,7 @@ public class TestingResource {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(new EventProducer(), OrderGroup.DAO, OrderHeader.DAO, OrderDetail.DAO, Container.DAO, ContainerUse.DAO, ItemMaster.DAO, UomMaster.DAO);
+		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(new EventProducer());
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 	}
 }

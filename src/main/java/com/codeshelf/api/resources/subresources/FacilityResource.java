@@ -28,7 +28,9 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
@@ -42,7 +44,7 @@ import com.google.inject.Inject;
 
 public class FacilityResource {
 
-	private final TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+	private final PersistenceService<Tenant> persistence = TenantPersistenceService.getInstance(); // convenience
 	private final OrderService orderService;
 	private final SessionManagerService sessionManagerService;
 

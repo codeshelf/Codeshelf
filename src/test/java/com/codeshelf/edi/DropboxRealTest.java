@@ -146,13 +146,13 @@ public class DropboxRealTest extends EdiTestABC {
 			InputStreamReader reader2 = new InputStreamReader(stream2);
 
 			Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-			ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(mOrderGroupDao,
-				mOrderHeaderDao,
-				mOrderDetailDao,
-				mContainerDao,
-				mContainerUseDao,
-				mItemMasterDao,
-				mUomMasterDao);
+			ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(OrderGroup.DAO,
+				OrderHeader.DAO,
+				OrderDetail.DAO,
+				Container.DAO,
+				ContainerUse.DAO,
+				ItemMaster.DAO,
+				UomMaster.DAO);
 
 			LOGGER.info("start simulated orders read");
 			importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
