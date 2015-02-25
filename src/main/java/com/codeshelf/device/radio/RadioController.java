@@ -88,8 +88,7 @@ public class RadioController implements IRadioController {
 	private static final int										ACK_SEND_RETRY_COUNT			= 20;
 	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
-	// The background service delay is reduced to the packet read rate of 1ms to
-	// minimize the amount of time a packet is queued before before being sent
+	// The background service delay is reduced to the packet read rate of 1ms to minimize the amount of time a packet is queued before before being sent
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
 
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
@@ -105,14 +104,11 @@ public class RadioController implements IRadioController {
 
 	private final NetAddress										mServerAddress					= new NetAddress(IPacket.GATEWAY_ADDRESS);
 
-	// We iterate over this list often, but write almost never. It needs to be
-	// thread-safe so we chose to make writes slow and reads lock-free.
+	// We iterate over this list often, but write almost never. It needs to be thread-safe so we chose to make writes slow and reads lock-free.
 	private final List<IRadioControllerEventListener>				mEventListeners					= new CopyOnWriteArrayList<>();
 
-	// This does not need to be synchronized because it is only ever used by a
-	// single thread in the packet handler service
-	// processNetworkCheckCommand only accesses this array for the broadcast
-	// network address.
+	// This does not need to be synchronized because it is only ever used by a single thread in the packet handler service
+	// processNetworkCheckCommand only accesses this array for the broadcast network address.
 	private final ChannelInfo[]										mChannelInfo					= new ChannelInfo[MAX_CHANNELS];
 
 	// This 3 variables are only every modified in a synchronized method
@@ -142,13 +138,9 @@ public class RadioController implements IRadioController {
 	private final ConcurrentMap<NetAddress, AtomicLong>				mLastPacketSentTimestampMsMap	= Maps.newConcurrentMap();
 
 	/**
-	 * We use a read-write lock to prevent any threads from sending out packets
-	 * when we want to send a packet out on the broadcast address (i.e. to all
-	 * devices). All normal packets will aquire a read lock (which will only be
-	 * possible if there are no writers). Furthermore, aquiring a write lock
-	 * means all read locks have been released. This way we can send the
-	 * broadcast packet out and update all the lastSentTimestamps for every
-	 * destination addr before resuming.
+	 * We use a read-write lock to prevent any threads from sending out packets when we want to send a packet out on the broadcast address (i.e. to alldevices). 
+	 * All normal packets will aquire a read lock (which will only be possible if there are no writers). Furthermore, aquiring a write lock means all read locks 
+	 * have been released. This way we can send the broadcast packet out and update all the lastSentTimestamps for every destination addr before resuming.
 	 */
 	private final ReadWriteLock										broadcastReadWriteLock			= new ReentrantReadWriteLock();
 
@@ -1094,6 +1086,7 @@ public class RadioController implements IRadioController {
 					} else {
 						//It is possible for BG Thread to submit a packet to be sent, then whilst waiting for the lock, we receive an ACK.
 						//If thats the case just return without updating the lastSentTimestamp. The lock will be released since it's in a finally block.
+						LOGGER.info("Not Sending Packet={} that was ACKED", inPacket);
 						return;
 					}
 
