@@ -23,6 +23,8 @@ import javax.persistence.OneToMany;
 import lombok.Getter;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +94,7 @@ public class Facility extends Location {
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
 

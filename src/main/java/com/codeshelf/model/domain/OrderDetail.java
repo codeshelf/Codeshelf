@@ -153,8 +153,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private String							preferredLocation;
 
-	@OneToMany(mappedBy = "orderDetail")
 	@Getter
+	@OneToMany(mappedBy = "orderDetail")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
 	@Column(nullable = true, name = "work_sequence")
