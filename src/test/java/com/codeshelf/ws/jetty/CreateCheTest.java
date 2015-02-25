@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.hibernate.Hibernate;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -35,9 +36,10 @@ public class CreateCheTest extends DAOTestABC {
 	
 	private ServerMessageProcessor	processor;
 
-
-	public void doBefore() {
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+	@Before
+	public void doBefore() throws Exception {
+		super.doBefore();
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 	}
 
 	

@@ -15,14 +15,16 @@ import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.edi.EdiProcessor;
+import com.codeshelf.edi.EdiProcessorService;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.edi.IEdiProcessor;
+import com.codeshelf.metrics.DummyMetricsService;
+import com.codeshelf.metrics.IMetricsService;
+import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.MockDao;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.model.domain.Aisle;
@@ -34,6 +36,7 @@ import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.service.WorkService;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -49,7 +52,7 @@ import com.google.inject.spi.TypeConverterBinding;
  *
  */
 public class CodeshelfApplicationTest {
-
+/*
 	public class MockInjector implements Injector {
 
 		@Override
@@ -160,7 +163,7 @@ public class CodeshelfApplicationTest {
 			return null;
 		}
 	}
-
+*/
 	/**
 	 * Test method for {@link com.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
@@ -180,7 +183,7 @@ public class CodeshelfApplicationTest {
 		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
 		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
 		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
+		EdiProcessorService ediProcessorService = new EdiProcessorService(orderImporter,
 			inventoryImporter,
 			locationAliasImporter,
 			orderLocationImporter,
@@ -189,20 +192,28 @@ public class CodeshelfApplicationTest {
 			Facility.DAO);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
-		WebApiServer adminServer = new WebApiServer();
+		// if there's already a metrics service defined in JVM, use that one
+		// but if this is first/only test running, need to generate one
+		if(MetricsService.getMaybeRunningInstance() == null) {
+			MetricsService.setInstance(new DummyMetricsService()); // normally this is done with static injection
+		}
 		
+		WebApiServer adminServer = new WebApiServer();
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
-			ediProcessor,
+			ediProcessorService,
 			pickDocumentGenerator,
 			adminServer,
 			TenantManagerService.getMaybeRunningInstance(),
-			new WorkService());
+			new WorkService(),
+			MetricsService.getMaybeRunningInstance(),
+			new SessionManagerService());
 
 		final Result checkAppRunning = new Result();
 
 		Thread appThread = new Thread(new Runnable() {
 			public void run() {
 				try {
+					application.startServices();
 					application.startApplication();
 					Assert.assertTrue(true);
 					checkAppRunning.result = true;
@@ -226,7 +237,13 @@ public class CodeshelfApplicationTest {
 		// Yes, I know it's terrible to have dependent unit tests.
 		// I don't know how to fix this.  WIll consult with someone.
 
-		application.stopApplication(CodeshelfApplication.ShutdownCleanupReq.NONE);
+		application.stopApplication();
+		try {
+			appThread.join(60000, 0);
+		} catch (InterruptedException e) {
+			Assert.fail("interrupted waiting for main app thread to terminate");
+		}
+		Assert.assertFalse("app thread hung at shutdown",appThread.isAlive());
 
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}

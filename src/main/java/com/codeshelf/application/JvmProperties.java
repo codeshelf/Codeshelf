@@ -68,6 +68,7 @@ public final class JvmProperties {
 		org.slf4j.Logger slf4j_logger = org.slf4j.LoggerFactory.getLogger(JvmProperties.class.getName()+".slf4j");
 		slf4j_logger.info("logging: slf4j");
 		
+		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 		java.util.logging.Logger jul_logger = java.util.logging.Logger.getLogger(JvmProperties.class.getName()+".jul");
 		jul_logger.log(java.util.logging.Level.INFO, "logging: java.util.logging");
 		

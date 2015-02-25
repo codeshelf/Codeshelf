@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -64,7 +65,10 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	
 	private DateFormat timestampFormat = new SimpleDateFormat(TIME_FORMAT);
 	
-	public void doBefore() {
+	@Before
+	public void doBefore() throws Exception {
+		super.doBefore();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.createFacility(getDefaultTenant(),this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
 		exporter  = new WorkInstructionCSVExporter();

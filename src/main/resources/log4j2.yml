@@ -4,7 +4,7 @@ configuration:
       name: console
       target: SYSTEM_OUT
       patternlayout:
-        pattern: '%d{ISO8601} %m%n %c [%p] "%X{user}" [%X{netguid}]%n'
+        pattern: '${sys:log.format}'
 
     Routing:
     - name: console_route
@@ -23,7 +23,7 @@ configuration:
             fileName: "${sys:log.file.location}/${sys:log.file.basename}.log"
             filePattern: "${sys:log.file.location}/${sys:log.file.basename}-%d{yyyy-MM-dd-HH}-%i.log.zip"
             patternlayout:
-              pattern: '%d{ISO8601} %m [%p] (%c) "%X{user}" [%X{netguid}]%n'
+              pattern: '${sys:log.format}'
             TimeBasedTriggeringPolicy:
               interval: 24
               modulate: true

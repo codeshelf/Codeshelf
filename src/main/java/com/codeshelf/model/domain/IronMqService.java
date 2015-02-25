@@ -84,7 +84,7 @@ public class IronMqService extends EdiServiceABC {
 
 
 	@Transient
-	private Counter exportCounter = MetricsService.addCounter(MetricsGroup.WSS,"exports.ironmq");
+	private Counter exportCounter;
 
 	@Transient
 	private ClientProvider	clientProvider;
@@ -133,6 +133,8 @@ public class IronMqService extends EdiServiceABC {
 
 	IronMqService(ClientProvider clientProvider) {
 		this.clientProvider = clientProvider;
+		exportCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"exports.ironmq");
+
 	}
 
 	@SuppressWarnings("unchecked")

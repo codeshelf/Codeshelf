@@ -35,7 +35,7 @@ import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -44,15 +44,15 @@ public class FacilityResource {
 
 	private final TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 	private final OrderService orderService;
-	private final SessionManager sessionManager;
+	private final SessionManagerService sessionManagerService;
 
 	@Setter
 	private UUIDParam mUUIDParam;
 
 	@Inject
-	public FacilityResource(OrderService orderService, SessionManager sessionManager) {
+	public FacilityResource(OrderService orderService, SessionManagerService sessionManagerService) {
 		this.orderService = orderService;
-		this.sessionManager = sessionManager;
+		this.sessionManagerService = sessionManagerService;
 	}
 
 	@GET
@@ -173,12 +173,12 @@ public class FacilityResource {
 			
 			LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
 			LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
-			sessionManager.sendMessage(users, lightMessage);
+			sessionManagerService.sendMessage(users, lightMessage);
 			
 			//CHE MESSAGES
 			for (CheDisplayRequest cheReq : req.getCheMessages()) {
 				CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
-				sessionManager.sendMessage(users, cheMessage);
+				sessionManagerService.sendMessage(users, cheMessage);
 			}
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {

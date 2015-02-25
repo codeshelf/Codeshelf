@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,6 +29,8 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
 /**
@@ -45,7 +49,7 @@ public class EdiProcessorTest extends EdiTestABC {
 		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
 		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
 
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
+		EdiProcessorService ediProcessorService = new EdiProcessorService(orderImporter,
 			inventoryImporter,
 			locationImporter,
 			orderLocationImporter,
@@ -53,38 +57,23 @@ public class EdiProcessorTest extends EdiTestABC {
 			aislesFileImporter,
 			Facility.DAO);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
-		ediProcessor.startProcessor(testBlockingQueue);
+		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
+		
+		ArrayList<Service> services = new ArrayList<Service>();
+		services.add(ediProcessorService);
+		ServiceManager serviceManager = new ServiceManager(services);
 
-		Thread foundThread = findEdiThread();
+		try {
+			serviceManager.startAsync().awaitHealthy(10,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			Assert.fail(e.getMessage());
+		} 
 
-		Assert.assertFalse(foundThread == null);
-
-		for (int t = 0; t < 3; t++) {
-			ediProcessor.stopProcessor();
-			// That thread might be sleeping.
-			if (foundThread != null) {
-				foundThread.interrupt();
-			}
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-			} // wait a moment for EDI processor thread to stop
-			if (findEdiThread() == null) {
-				break;
-			}
+		try {
+			serviceManager.stopAsync().awaitStopped(10,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			Assert.fail(e.getMessage());
 		}
-
-		Assert.assertNull(findEdiThread());
-	}
-
-	private final Thread findEdiThread() {
-		Thread foundThread = null;
-		for (Thread thread : Thread.getAllStackTraces().keySet()) {
-			if (thread.getName().equals(IEdiProcessor.EDIPROCESSOR_THREAD_NAME)) {
-				foundThread = thread;
-			}
-		}
-		return foundThread;
 	}
 
 	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
@@ -364,15 +353,22 @@ public class EdiProcessorTest extends EdiTestABC {
 		facility.addEdiService(ediServiceUnlinked);
 		facility.addEdiService(ediServiceLinked);
 
-		IEdiProcessor ediProcessor = new EdiProcessor(orderImporter,
+		EdiProcessorService ediProcessorService = new EdiProcessorService(orderImporter,
 			inventoryImporter,
 			locationImporter,
 			orderLocationImporter,
 			crossBatchImporter,
 			aislesFileImporter,
 			facilityDao);
-		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
-		ediProcessor.startProcessor(testBlockingQueue);
+
+		ArrayList<Service> services = new ArrayList<Service>();
+		services.add(ediProcessorService);
+		ServiceManager serviceManager = new ServiceManager(services);
+		try {
+			serviceManager.startAsync().awaitHealthy(30, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			Assert.fail(e.getMessage());
+		}
 
 		try {
 			// Sleep will switch us to the EdiProcessor thread.
@@ -382,6 +378,12 @@ public class EdiProcessorTest extends EdiTestABC {
 
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
+		
+		try {
+			serviceManager.stopAsync().awaitStopped(30, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			Assert.fail(e.getMessage());
+		}
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

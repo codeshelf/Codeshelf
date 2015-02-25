@@ -93,7 +93,7 @@ public class UserSession implements IDaoListener {
 				this.messageSent();
 			}
 		} catch (Exception e) {
-			LOGGER.error("Failed to send message", e);
+			LOGGER.warn("Failed to send message: {}", e.getMessage());
 		} finally {
 			ContextLogging.clearSession();
 		}
@@ -224,15 +224,21 @@ public class UserSession implements IDaoListener {
 			}
 			this.wsSession = null;
 		}
-		//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-		TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
+
+		// don't try to unregister listeners if we are shutting down
+		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(com.google.common.util.concurrent.Service.State.RUNNING)) {
+			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
+			TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
+			
+		}
 	}
 
 	public void authenticated(User user) {
 		this.user = user;
 		if (isSiteController()) {
-			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
+			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}
+
 	}
 
 	public void pongReceived(long startTime) {

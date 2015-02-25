@@ -79,7 +79,7 @@ public class ObjectMethodCommandTest extends DomainTestABC {
 		} catch (EncodeException e) {
 		}
 
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 

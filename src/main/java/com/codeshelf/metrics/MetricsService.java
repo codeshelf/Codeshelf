@@ -1,6 +1,8 @@
 package com.codeshelf.metrics;
 
 import java.net.InetAddress;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 
@@ -8,87 +10,123 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.inject.Inject;
 
-public class MetricsService {
+public class MetricsService extends AbstractIdleService implements IMetricsService {
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(MetricsService.class);
 
-	@Getter
-	final private static MetricsService	instance		= new MetricsService();
+	@Inject
+	private static IMetricsService theInstance;
 
 	@Getter
-	private String						hostName		= "";
+	private String						hostName;
 
 	@Getter
-	private MetricRegistry				metricsRegistry	= new MetricRegistry();
+	private MetricRegistry				metricsRegistry;
 
 	@Getter
-	private HealthCheckRegistry			healthRegistry	= new HealthCheckRegistry();
+	private HealthCheckRegistry			healthCheckRegistry;
 
+	@Inject
 	private MetricsService() {
-		try {
-			this.hostName = InetAddress.getLocalHost().getHostName();
-		} catch (Exception e) {
-			LOGGER.error("Failed to determine host name: " + e.getMessage() + ".  Trying to fall back on host address.");
-			try {
-				this.hostName = InetAddress.getLocalHost().getHostAddress() + " ";
-			} catch (Exception ex) {
-				LOGGER.error("Failed to determine host address: " + e.getMessage());
-				this.hostName = "unknown";
-			}
+	}
+
+	public final static IMetricsService getMaybeRunningInstance() {
+		return theInstance;
+	}
+	public final static IMetricsService getNonRunningInstance() {
+		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
+			throw new RuntimeException("Can't get non-running instance of already-started metrics service");
 		}
+		return theInstance;
 	}
-
-	public static void registerHealthCheck(CodeshelfHealthCheck healthCheck) {
-		getHealthCheckRegistry().register(healthCheck.getName(), healthCheck);
-		LOGGER.info("Registered Healthcheck " + healthCheck);
-	}
-
-	public static <T> void registerMetric(MetricsGroup group, String metricName, Metric metric) {
-		String fullName = getFullName(group, metricName);
+	public final static IMetricsService getInstance() {
 		try {
-			getRegistry().register(fullName, metric);
+			getMaybeRunningInstance().awaitRunning(60,TimeUnit.SECONDS); // TODO: configurable settings for all await* calls
+		} catch (TimeoutException e) {
+			throw new IllegalStateException("Timeout contacting metrics service",e);
+		}
+		return theInstance;
+	}
+	public final static void setInstance(IMetricsService metricsService) {
+		// for testing (normally injected)
+		MetricsService.theInstance = metricsService;
+	}
+	
+	private static String getFullName(MetricsGroup group, String metricName) {
+		return group.getName() + "-" + metricName;
+	}
+
+	@Override
+	public void registerMetric(MetricsGroup group, String metricName, Metric metric) {
+		String fullName = MetricsService.getFullName(group, metricName);
+		try {
+			getMetricsRegistry().register(fullName, metric);
 		} catch (IllegalArgumentException e) {
 			LOGGER.warn("Failed to register " + metricName + "usually because already registered in same JVM");
 		}
 	}
 
-	private static String getFullName(MetricsGroup group, String metricName) {
-		return group.getName() + "-" + metricName;
+	@Override
+	public void registerHealthCheck(CodeshelfHealthCheck healthCheck) {
+		getHealthCheckRegistry().register(healthCheck.getName(), healthCheck);
+		LOGGER.info("Registered Healthcheck " + healthCheck);
 	}
 
-	public static MetricRegistry getRegistry() {
-		return instance.getMetricsRegistry();
-	}
-
-	public static HealthCheckRegistry getHealthCheckRegistry() {
-		return instance.healthRegistry;
-	}
-
-	// <T extends Metric> T
-	public static Counter addCounter(MetricsGroup group, String metricName) {
+	@Override
+	public Counter createCounter(MetricsGroup group, String metricName) {
 		String fullName = getFullName(group, metricName);
 		try {
-			Counter counter = getRegistry().getCounters().get(fullName);
+			Counter counter = getMetricsRegistry().getCounters().get(fullName);
 			if (counter != null) {
 				// return existing metric
-				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				//LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
 				return counter;
 			}
 			// create and register new metric
-			counter = getRegistry().counter(fullName);
+			counter = getMetricsRegistry().counter(fullName);
 			LOGGER.debug("Added counter " + fullName);
 			return counter;
 		} catch (Exception e) {
 			LOGGER.error("Failed to add counter " + fullName, e);
 		}
 		return null;
+	}
+
+	@Override
+	public Timer createTimer(MetricsGroup group, String metricName) {
+		String fullName = getFullName(group, metricName);
+		try {
+			Timer timer = getMetricsRegistry().getTimers().get(fullName);
+			if (timer != null) {
+				// return existing metric
+				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				return timer;
+			}
+			// create and register new metric
+			timer = getMetricsRegistry().timer(fullName);
+			LOGGER.debug("Added timer " + fullName);
+			return timer;
+		} catch (Exception e) {
+			LOGGER.error("Failed to add meter " + fullName, e);
+		}
+		return null;
+	}
+	// static convenience methods, may block until initialized
+	
+	/*
+	public static MetricRegistry getRegistry() {
+		return getInstance().getMetricsRegistry();
+	}
+
+	public static HealthCheckRegistry getHealthCheckRegistry() {
+		return getInstance().getHealthRegistry();
 	}
 
 	public static Meter addMeter(MetricsGroup group, String metricName) {
@@ -110,25 +148,8 @@ public class MetricsService {
 		return null;
 	}
 
-	public static Timer addTimer(MetricsGroup group, String metricName) {
-		String fullName = getFullName(group, metricName);
-		try {
-			Timer timer = getRegistry().getTimers().get(fullName);
-			if (timer != null) {
-				// return existing metric
-				// LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
-				return timer;
-			}
-			// create and register new metric
-			timer = getRegistry().timer(fullName);
-			LOGGER.debug("Added timer " + fullName);
-			return timer;
-		} catch (Exception e) {
-			LOGGER.error("Failed to add meter " + fullName, e);
-		}
-		return null;
-	}
-
+	*/
+	/*
 	public static Histogram addHistogram(MetricsGroup group, String metricName) {
 		String fullName = getFullName(group, metricName);
 		try {
@@ -146,5 +167,29 @@ public class MetricsService {
 			LOGGER.error("Failed to add histogram " + fullName, e);
 		}
 		return null;
+	}
+	*/
+
+	@Override
+	protected void startUp() throws Exception {
+		metricsRegistry	= new MetricRegistry();
+		healthCheckRegistry	= new HealthCheckRegistry();
+		try {
+			this.hostName = InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			LOGGER.error("Failed to determine host name: " + e.getMessage() + ".  Trying to fall back on host address.");
+			try {
+				this.hostName = InetAddress.getLocalHost().getHostAddress() + " ";
+			} catch (Exception ex) {
+				LOGGER.error("Failed to determine host address: " + e.getMessage());
+				this.hostName = "unknown";
+			}
+		}
+	}
+
+	@Override
+	protected void shutDown() throws Exception {
+		//metricsRegistry.removeMatching(MetricFilter.ALL);
+		// other cleanup?
 	}
 }

@@ -49,7 +49,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
@@ -68,8 +68,8 @@ public class WorkServiceTest extends DAOTestABC {
 	}
 
 	@Override
-	public void doBefore() throws Exception {
-		// in this test, we do not initializeEphemeralServiceManager() until later
+	protected boolean ephemeralServicesShouldStartAutomatically() {
+		return false; // in this test, we start services manually after defining the work service to start
 	}
 
 	@Test
@@ -114,7 +114,7 @@ public class WorkServiceTest extends DAOTestABC {
 		WorkService workService = mock(WorkService.class);
 		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(PropertyService.class), mock(UiUpdateService.class));
-		MessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get());
+		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
@@ -126,7 +126,7 @@ public class WorkServiceTest extends DAOTestABC {
 		WorkService workService2 = mock(WorkService.class);
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(PropertyService.class), mock(UiUpdateService.class));
-		MessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get());
+		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());

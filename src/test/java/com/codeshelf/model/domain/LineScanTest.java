@@ -41,7 +41,7 @@ public class LineScanTest extends EdiTestABC {
 		Facility facility = createFacility(); 
 		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null);
 		//processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
-		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get());
+		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get(), this.sessionManagerService);
 		
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"

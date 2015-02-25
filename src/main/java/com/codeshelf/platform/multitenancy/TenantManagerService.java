@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import lombok.Getter;
+import lombok.Setter;
 
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
@@ -19,18 +19,30 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.DatabaseConnection;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.util.concurrent.AbstractIdleService;
 
 public class TenantManagerService extends AbstractIdleService implements ITenantManager {
+	public enum ShutdownCleanupReq {
+	NONE , 
+	DROP_SCHEMA , 
+	DELETE_ORDERS_WIS ,
+	DELETE_ORDERS_WIS_INVENTORY
+	}
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
-	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 15;
+	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 60;
 	private static TenantManagerService theInstance = null;
 	
-	@Getter
-	int defaultShardId = -1;
+	//@Getter
+	//int defaultShardId = -1;
+	
 	private Tenant defaultTenant = null;
+
+	@Setter
+	ShutdownCleanupReq shutdownCleanupRequest = ShutdownCleanupReq.NONE;
 	
 	private TenantManagerService() {
 		super();
@@ -76,14 +88,8 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			shard.setUsername(System.getProperty("shard.default.db.admin_username"));
 			shard.setPassword(System.getProperty("shard.default.db.admin_password"));
 			session.save(shard);
-
-			this.defaultShardId = shard.getShardId();
-			
 			tenant = initDefaultTenant(session,shard);
-		} else if(listShard.size() == 1) {
-			// use existing
-			this.defaultShardId = listShard.get(0).getShardId();
-		} else {
+		} else if(listShard.size() > 1) {
 			LOGGER.error("got more than one default shard, cannot initialize");
 		}
 		managerPersistenceService.commitTransaction();
@@ -104,7 +110,6 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	}
 
-	@Deprecated
 	private Tenant initDefaultTenant(Session session,Shard shard) {
 		// must be called within active transaction
 		Tenant tenant = shard.getTenant(DEFAULT_TENANT_NAME);
@@ -291,7 +296,34 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	}
 
 	@Override
-	public Tenant createTenant(String name, int shardId, String dbUsername) {
+	public Shard getDefaultShard() {
+		return this.getShardByName(TenantManagerService.DEFAULT_SHARD_NAME);
+	}
+	
+	private Shard getShardByName(String name) {
+		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+
+		Shard result = null;
+		
+		try {
+			Session session = managerPersistenceService.getSessionWithTransaction();
+			Criteria criteria = session.createCriteria(Shard.class);
+			criteria.add(Restrictions.eq("name", name));
+			
+			@SuppressWarnings("unchecked")
+			List<Shard> shardList = criteria.list();
+			
+			if(shardList != null && shardList.size() == 1) {
+				result = shardList.get(0);
+			}
+		} finally {
+			managerPersistenceService.commitTransaction();
+		}		
+		return result;
+	}
+
+	@Override
+	public Tenant createTenant(String name, String shardName, String dbUsername) {
 		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		// use username as schemaname when creating tenant
@@ -299,12 +331,15 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		
 		Tenant result = null;
 
-		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
-			Shard shard = (Shard) session.get(Shard.class, shardId);
-			result = shard.createTenant(name,schemaName,dbUsername,null);
-		} finally {
-			managerPersistenceService.commitTransaction();
+		Shard shard = this.getShardByName(shardName);
+		if(shard == null) {
+			LOGGER.error("failed to create tenant because couldn't find shard {}",shardName);
+		} else {
+			try {
+				result = shard.createTenant(name,schemaName,dbUsername,null);
+			} finally {
+				managerPersistenceService.commitTransaction();
+			}
 		}
 		return result;
 	}
@@ -334,9 +369,8 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			this.defaultTenant = ManagerPersistenceService.<Tenant>deproxify(this.defaultTenant);
 		return this.defaultTenant;
 	}
-
-	@Override
-	public void deleteDefaultOrdersWis() {
+	
+	private void deleteDefaultOrdersWis() {
 		if(defaultTenant != null) {
 			try {
 				Tenant tenant = defaultTenant;
@@ -356,8 +390,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		}
 	}
 	
-	@Override
-	public void deleteDefaultOrdersWisInventory() {
+	private void deleteDefaultOrdersWisInventory() {
 		if(defaultTenant != null) {
 			try {
 				Tenant tenant = defaultTenant;
@@ -372,8 +405,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		}
 	}
 
-	@Override
-	public void dropDefaultSchema() {
+	private void dropDefaultSchema() {
 		if(defaultTenant != null) {
 			try {
 				Tenant tenant = defaultTenant;
@@ -394,5 +426,26 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	protected void shutDown() throws Exception {
+		if(!this.shutdownCleanupRequest.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
+			try {
+				TenantPersistenceService.getInstance().awaitTerminated(30, TimeUnit.SECONDS);
+			} catch (TimeoutException e) {
+				LOGGER.error("timeout waiting for tenant persistence to shut down, cannot perform cleanup", e);
+				this.shutdownCleanupRequest = TenantManagerService.ShutdownCleanupReq.NONE;
+			}
+			switch (shutdownCleanupRequest) {
+				case DROP_SCHEMA:
+					dropDefaultSchema();
+					break;
+				case DELETE_ORDERS_WIS:
+					deleteDefaultOrdersWis();
+					break;
+				case DELETE_ORDERS_WIS_INVENTORY:
+					deleteDefaultOrdersWisInventory();
+					break;
+				default:
+					break;
+			}
+		}
 	}
 }

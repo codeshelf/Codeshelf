@@ -7,17 +7,15 @@
 package com.codeshelf.application;
 
 import java.util.Collection;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.IEdiProcessor;
+import com.codeshelf.edi.EdiProcessorService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
-import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.platform.multitenancy.ITenantManager;
@@ -27,45 +25,43 @@ import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.jetty.server.ServerWatchdogThread;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
-	private IEdiProcessor			mEdiProcessor;
+	private EdiProcessorService			ediProcessorService;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
-	private BlockingQueue<String>	mEdiProcessSignalQueue;
-
-	private final ServerWatchdogThread watchdog;
+	private SessionManagerService sessionManager;
+	private IMetricsService metricsService;
 	
 	@Inject
-	public ServerCodeshelfApplication(final IEdiProcessor inEdiProcessor,
+	public ServerCodeshelfApplication(final EdiProcessorService inEdiProcessorService,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
 			final ITenantManager tenantManager,
-			final WorkService workService) {
+			final WorkService workService,
+			final IMetricsService metricsService,
+			final SessionManagerService sessionManagerService) {
 			
 		super(inWebApiServer);
-		
-		mEdiProcessor = inEdiProcessor;
+	
+		ediProcessorService = inEdiProcessorService;
 		mPickDocumentGenerator = inPickDocumentGenerator;
+		sessionManager = sessionManagerService;
+		this.metricsService = metricsService;
 		
 		// if services already running e.g. in test, these will log an error and continue
 		this.registerService(tenantManager);
 		this.registerService(TenantPersistenceService.getMaybeRunningInstance()); 
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
 		this.registerService(workService);
-
-		// create and configure watch dog
-		this.watchdog = new ServerWatchdogThread(SessionManager.getInstance());
-		boolean suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
-		boolean killIdle = Boolean.getBoolean("websocket.idle.kill");
-		this.watchdog.setSuppressKeepAlive(suppressKeepAlive);
-		this.watchdog.setKillIdle(killIdle);
+		this.registerService(metricsService);
+		this.registerService(sessionManagerService);
+		this.registerService(ediProcessorService);
 
 	}
 
@@ -82,12 +78,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	 */
 	protected void doStartup() throws Exception {
 
-		// Start the EDI process.
-		mEdiProcessSignalQueue = new ArrayBlockingQueue<>(100);
-		mEdiProcessor.startProcessor(mEdiProcessSignalQueue);
-
 		// Start the pick document generator process;
-		mPickDocumentGenerator.startProcessor(mEdiProcessSignalQueue);
+		mPickDocumentGenerator.startProcessor(this.ediProcessorService.getEdiSignalQueue());
 
 		startApiServer(null,Integer.getInteger("api.port"));
 		startTsdbReporter();
@@ -95,16 +87,13 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 		// create server-specific health checks
 		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck();
-		MetricsService.registerHealthCheck(dbCheck);
+		metricsService.registerHealthCheck(dbCheck);
 
-		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck();
-		MetricsService.registerHealthCheck(sessionCheck);
+		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck(this.sessionManager);
+		metricsService.registerHealthCheck(sessionCheck);
 
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
-		MetricsService.registerHealthCheck(dbxCheck);
-
-		// start server watchdog
-		watchdog.start();        
+		metricsService.registerHealthCheck(dbxCheck);
 	}
 
 	// --------------------------------------------------------------------------
@@ -112,8 +101,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	 */
 	protected void doShutdown() {
 		LOGGER.info("Stopping application");
-		watchdog.setExit(true);
-		mEdiProcessor.stopProcessor();
 		mPickDocumentGenerator.stopProcessor();
 		this.stopApiServer();
 

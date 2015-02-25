@@ -51,7 +51,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 
@@ -94,7 +94,7 @@ public class LightServiceTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		SessionManager sessionManager = mock(SessionManager.class);
+		SessionManagerService sessionManagerService = mock(SessionManagerService.class);
 		PropertyService mockProp = mock(PropertyService.class);
 		
 		when(mockProp.getPropertyAsColor(any(IDomainObject.class), anyString(), any(ColorEnum.class))).then(new Answer<ColorEnum>() {
@@ -105,7 +105,7 @@ public class LightServiceTest extends EdiTestABC {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService(mockProp, sessionManager, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(mockProp, sessionManagerService, Executors.newSingleThreadScheduledExecutor());
 
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
@@ -120,7 +120,7 @@ public class LightServiceTest extends EdiTestABC {
 		LOGGER.info("7: ArgumentCaptor");
 
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(sessionManager, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(sessionManagerService, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
 		
 		LOGGER.info("8: assertWillLightItem() from messagesCaptor.getAllValues");
 		List<MessageABC> messages = messagesCaptor.getAllValues();
@@ -268,15 +268,15 @@ public class LightServiceTest extends EdiTestABC {
 	@SuppressWarnings("unchecked")
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent, int expectedTotal) throws InterruptedException, ExecutionException {
 		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
-		SessionManager sessionManager = mock(SessionManager.class);
+		SessionManagerService sessionManagerService = mock(SessionManagerService.class);
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService(mock(PropertyService.class),  sessionManager, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(mock(PropertyService.class),  sessionManagerService, Executors.newSingleThreadScheduledExecutor());
 		Future<Void> complete = lightService.lightChildLocations(facility, parent, color);
 		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(sessionManager, times(expectedTotal)).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(sessionManagerService, times(expectedTotal)).sendMessage(any(Set.class), messagesCaptor.capture());
 		
 		List<MessageABC> messages = messagesCaptor.getAllValues();
 		return messages;
