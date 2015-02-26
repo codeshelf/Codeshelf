@@ -735,6 +735,7 @@ public class Facility extends Location {
 
 	private Location createUnspecifiedLocation(String domainId) {
 		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
+		location.setFirstLedNumAlongPath((short)0);
 		this.addLocation(location);
 		UnspecifiedLocation.DAO.store(location);
 		return location;

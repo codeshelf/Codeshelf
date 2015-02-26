@@ -467,15 +467,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return theGroup.getDomainId();
 	}
 
-	public Location getPreferredLocObject(final Facility inFacility) {
-		String whereString = getPreferredLocation();
-		if (whereString == null || whereString.isEmpty())
+	public Location getPreferredLocObject() {
+		Facility facility = getParent().getFacility();
+		String preferredLocationString = getPreferredLocation();
+		if (preferredLocationString == null || preferredLocationString.isEmpty()) {
 			return null;
-		Location foundLocation = inFacility.findLocationById(whereString);
-		if (foundLocation == null || !foundLocation.isActive())
-			return null;
-		else
-			return foundLocation;
+		}
+		Location foundLocation = facility.findLocationById(preferredLocationString);
+		return foundLocation;
 	}
 
 	/**

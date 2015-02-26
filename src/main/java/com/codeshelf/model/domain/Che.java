@@ -7,6 +7,7 @@ package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import javax.persistence.Cacheable;
@@ -23,10 +24,14 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -149,6 +154,40 @@ public class Che extends WirelessDeviceABC {
 		} else {
 			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getPersistentId() + " from " + this.getDomainId()
 					+ " because it isn't found in children", new Exception());
+		}
+	}
+	
+	public void clearChe() {
+		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
+
+		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
+		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
+		wiTypes.add(WorkInstructionTypeEnum.PLAN);
+		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
+
+		// Delete any planned WIs for this CHE.
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("assignedChe.persistentId", getPersistentId()));
+		filterParams.add(Restrictions.in("type", wiTypes));
+		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		for (WorkInstruction wi : wis) {
+			try {
+
+				Che assignedChe = wi.getAssignedChe();
+				if (assignedChe != null) {
+					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
+				}
+				OrderDetail owningDetail = wi.getOrderDetail();
+				// detail is optional from v5
+				if (owningDetail != null) {
+					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
+					owningDetail.reevaluateStatus();
+				}
+				WorkInstruction.DAO.delete(wi);
+			} catch (DaoException e) {
+				LOGGER.error("failed to delete prior work instruction for CHE", e);
+			}
 		}
 	}
 

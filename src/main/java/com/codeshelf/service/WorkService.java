@@ -40,6 +40,7 @@ import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WiSummarizer;
 import com.codeshelf.model.WorkInstructionSequencerABC;
 import com.codeshelf.model.WorkInstructionSequencerFactory;
+import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -47,6 +48,7 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
@@ -154,7 +156,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		clearChe(inChe);
+		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
 		// DEV-492 identify previous container uses
@@ -240,40 +242,6 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		return theTime;
 	}
 
-	private void clearChe(final Che inChe) {
-
-		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
-
-		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
-		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
-		wiTypes.add(WorkInstructionTypeEnum.PLAN);
-		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
-
-		// Delete any planned WIs for this CHE.
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
-		filterParams.add(Restrictions.in("type", wiTypes));
-		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
-		for (WorkInstruction wi : wis) {
-			try {
-
-				Che assignedChe = wi.getAssignedChe();
-				if (assignedChe != null) {
-					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
-				}
-				OrderDetail owningDetail = wi.getOrderDetail();
-				// detail is optional from v5
-				if (owningDetail != null) {
-					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-					owningDetail.reevaluateStatus();
-				}
-				WorkInstruction.DAO.delete(wi);
-			} catch (DaoException e) {
-				LOGGER.error("failed to delete prior work instruction for CHE", e);
-			}
-		}
-	}
 
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
@@ -400,7 +368,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		}
 
 		OrderDetail orderDetail = orderDetails.get(0);
-		clearChe(inChe);
+		inChe.clearChe();
 		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
@@ -719,14 +687,13 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 					if (orderDetail.getQuantity() > 0) {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
-						Location defaultLocation = facility;
 						try {
 							// Pass facility as the default location of a short WI..
 							SingleWorkItem workItem = makeWIForOutbound(orderDetail,
 								inChe,
 								container,
 								inTime,
-								defaultLocation,
+								facility,
 								facility.getPaths()); // Could be normal WI, or a short WI
 							if (workItem.getDetail() != null) {
 								uncompletedDetails.add(workItem.getDetail());
@@ -750,7 +717,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 							}
 						}
 						catch(DaoException e) {
-							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}, location: {} ", inChe, orderDetail, container, defaultLocation, e);
+							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}", inChe, orderDetail, container, e);
 						}
 					}
 					if (orderDetailChanged) {
@@ -848,7 +815,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime,
-		final Location defaultLocation,
+		final Facility inFacility,
 		final List<Path> paths) throws DaoException {
 
 		WorkInstruction resultWi = null;
@@ -857,19 +824,41 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
 		// we can make the work instruction anyway. 
-		if (inOrderDetail.isPreferredDetail()) {
-			Location location = inOrderDetail.getPreferredLocObject((Facility)defaultLocation);
-			location = location == null ? defaultLocation : location;
-			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-				WorkInstructionTypeEnum.PLAN,
-				inOrderDetail,
-				inContainer,
-				inChe,
-				location,
-				inTime);
-			resultWork.setInstruction(resultWi);
-		} else if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
-			// If there is no item in inventory for that uom (AT ALL) then create a PLANNED, SHORT WI for this order detail.
+		Location location = null;
+		String workSeqr = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
+			if (inOrderDetail.getWorkSequence() != null) {
+				location = inOrderDetail.getPreferredLocObject();
+				if (location == null) {
+					location = inFacility.getUnspecifiedLocation();
+				} else if (!location.isActive()){
+					LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
+					location = inFacility.getUnspecifiedLocation();
+				}
+			}
+		} else { //Bay Distance
+			Location preferredLocation = inOrderDetail.getPreferredLocObject();
+			if (preferredLocation != null 
+				&& preferredLocation.getAssociatedPathSegment() != null
+				&& preferredLocation.getAssociatedPathSegment().getParent() != null) {
+				location = preferredLocation;
+			} else {
+				for (Path path : paths) {
+					String uomStr = inOrderDetail.getUomMasterId();
+					Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+
+					if (item != null) {
+						Location itemLocation = item.getStoredLocation();
+						location = itemLocation;
+						break;
+					}
+				}
+			}
+		}
+		
+		
+		if (location == null) {
+			
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
@@ -877,12 +866,13 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list
 			if (doAutoShortInstructions()) {
+				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
 				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
 					inOrderDetail,
 					inContainer,
 					inChe,
-					defaultLocation,
+					inFacility,
 					inTime);
 				if (resultWi != null) {
 					resultWi.setPlanQuantity(0);
@@ -895,29 +885,15 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				resultWork.setDetail(inOrderDetail);
 			}
 		} else {
-			for (Path path : paths) {
-				boolean foundOne = false;
-				String uomStr = inOrderDetail.getUomMasterId();
-				Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
-
-				if (item != null) {
-					resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-						WorkInstructionTypeEnum.PLAN,
-						inOrderDetail,
-						inContainer,
-						inChe,
-						item.getStoredLocation(),
-						inTime);
-					if (resultWi != null){
-						foundOne = true;
-						resultWork.setInstruction(resultWi);
-					}
-				}
-				// We only want one work instruction made, not one per path.
-				if (foundOne)
-					break;
-				// Bug remains, sort of. If cases exist on several paths, we would like to choose more intelligently which area to pick from.
-			}
+			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+				WorkInstructionTypeEnum.PLAN,
+				inOrderDetail,
+				inContainer,
+				inChe,
+				location,
+				inTime);
+				resultWork.setInstruction(resultWi);
+			
 		}
 		return resultWork;
 	}

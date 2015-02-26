@@ -208,6 +208,20 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 	
+	private void setUpOrdersItemsOnSamePath(Facility inFacility) throws IOException {
+		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
+
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
+				+ "\r\n,USF314,COSTCO,123,123,123.1,1122,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
+				+ "\r\n,USF314,COSTCO,456,456,456.1,1122,12/16 oz Bowl Lids -PLA Compostable,1,each, D302"
+				+ "\r\n,USF314,COSTCO,789,789,789.1,1122,12/16 oz Bowl Lids -PLA Compostable,1,each, D303";
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+	}
+
+	
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
 		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
 
@@ -628,6 +642,51 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 	}
 	
+	@Test
+	public void preferredLocationGetsSecondItemInPath() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		this.getTenantPersistenceService().commitTransaction();
+
+		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		this.setUpOrdersItemsOnSamePath(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+
+		picker.setupContainer("456", "2"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+
+		LOGGER.info("2c: START. Should get some work");
+		picker.scanCommand("START");
+		
+		// Probably important. The case above yields some problems so that we hit LOCATION_SELECT_REVIEW state.
+		// Really should replicate this test case that is all clean so it goes to LOCATION_SELECT state.  The second START should work there also.
+		//picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+				
+		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
+		
+		picker.scanLocation("");
+		
+
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000); //scan sku is off
+
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+
+		logWiList(scWiList);
+		Assert.assertEquals(1, scWiList.size());
+		Assert.assertEquals("D302", scWiList.get(0).getPickInstruction());
+
+	
+	}
 	/**
 	 * Simple test of Setup_Orders with SCANPICK. DEV-653 is the SCANPICK enhancement
 	 */
@@ -699,6 +758,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
+
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
@@ -710,14 +770,16 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		
+
+
 		// DEV-637 note. After that is implemented, we would get plans here even though LOCAPICK is off and we do not get any inventory.		
 		// Shouldn't we get work? We have supplied location, and sequence. 
 		//picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
-
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 6000);
+		
 		// logout back to idle state.
 		picker.logout();
+		
 		
 		LOGGER.info("2a: Redo, but with LOCAPICK on. SCANPICK, WORKSEQR as in case 1");
 		this.getTenantPersistenceService().beginTransaction();
@@ -754,9 +816,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
-		//Assert.assertEquals(3, scWiList.size());
-		Assert.assertEquals(8, scWiList.size());
+
 		logWiList(scWiList);
+		Assert.assertEquals(sortedItemLocs.length, scWiList.size());
 		
 		LOGGER.info("2e:work through it, making sure it matches the work sequence order.");
 

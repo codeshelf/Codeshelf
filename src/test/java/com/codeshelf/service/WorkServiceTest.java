@@ -42,11 +42,16 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.service.WorkService.Work;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
@@ -57,7 +62,7 @@ import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.collect.ImmutableList;
 
-public class WorkServiceTest extends DAOTestABC {
+public class WorkServiceTest extends DomainTestABC {
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
@@ -71,7 +76,60 @@ public class WorkServiceTest extends DAOTestABC {
 	protected boolean ephemeralServicesShouldStartAutomatically() {
 		return false; // in this test, we start services manually after defining the work service to start
 	}
+	/*
+	@Test
+	public void workLocationConflictPreferredDoesNotExist() {
+		this.workService = new WorkService();
+		this.initializeEphemeralServiceManager();
 
+		Facility facility = Mockito.mock(Facility.class);//facilityModels.setupSimpleNotSlottedFacility();
+//		Facility facility = mock(facility)
+		Che che = Mockito.mock(Che.class);
+		when(che.getFacility()).thenReturn(facility);
+		
+		ItemMaster itemMaster = mock(ItemMaster.class);
+		
+		String itemLocation = "Loc1";
+		Item item = mock(Item.class); 
+		when(item.getItemLocationAlias()).thenReturn(itemLocation);
+		when(item.getParent()).thenReturn(itemMaster);
+		
+
+		String preferredLocation = "LocX";
+		
+		OrderDetail orderDetail = mock(OrderDetail.class);
+		when(orderDetail.getPreferredLocation()).thenReturn(preferredLocation);
+		when(orderDetail.getItemMaster()).thenReturn(itemMaster);
+		
+		String containerId = "CONT1";
+		
+		//this.getTenantPersistenceService().beginTransaction();// TEMP
+		WorkList workList = this.workService.computeWorkInstructions(che, ImmutableList.of(containerId));
+		Assert.assertEquals(preferredLocation, workList.getInstructions().get(0).getLocationId());
+
+		//this.getTenantPersistenceService().commitTransaction();// TEMP
+	}*/
+/*
+	@Test
+	public void workLocationConflictPreferredNoItem() {
+		Facility facility = facilityModels.setupSimpleNotSlottedFacility();
+		Che che = facilityModels.getAnyChe(facility);
+
+		String itemLocation = "Loc1";
+		Assert.assertNotNull(facility.findLocation(itemLocation));
+		Item item = createItem("Loc1"); 
+
+		String preferredLocation = "Loc2";
+		Assert.assertNotNull(facility.findLocation(preferredLocation));
+		
+		Assert.assertNull(facility.findItem(preferredLocation));
+		
+		OrderDetail orderDetail = createOrderDetail(item, preferredLocation);
+		
+		WorkList workList = workService.computeWorkInstructions(che, ImmutableList.of(orderDetail.getParent().getContainerId()));
+		Assert.assertEquals(preferredLocation, workList.getInstructions().get(0).getLocationId());
+	}*/
+	
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
 		this.workService = new WorkService();
