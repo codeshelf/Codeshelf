@@ -179,6 +179,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
+	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
 	private Map<String, OrderDetail>	orderDetails	= new HashMap<String, OrderDetail>();
 
 	@OneToMany(mappedBy = "parent")

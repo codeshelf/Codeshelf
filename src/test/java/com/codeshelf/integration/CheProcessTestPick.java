@@ -527,7 +527,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -550,7 +550,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.restoreHKDefaults(facility); // set it back
+		propertyService.restoreHKDefaults(facility); // set it back
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -672,7 +672,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for order 12345, which will generate work instructions
@@ -683,7 +683,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
@@ -732,7 +732,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// perform pick operations
@@ -972,7 +972,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(shortAheadWi.getAssigned(), userShortWi.getAssigned());
 		//Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -999,7 +999,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap.
 		picker.startAndSkipReview("D301", 5000, 3000);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte) 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -1242,7 +1242,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "\r\n1,USF314,COSTCO,a6,a6,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1390,7 +1390,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
 		this.getTenantPersistenceService().beginTransaction();
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -1422,7 +1422,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "\r\n1,USF314,COSTCO,1,1,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1477,7 +1477,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -1523,7 +1523,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
@@ -1701,7 +1701,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -1738,7 +1738,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
@@ -1761,7 +1761,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 	}
@@ -1799,7 +1799,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
@@ -1907,7 +1907,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

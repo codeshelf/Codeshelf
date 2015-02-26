@@ -63,7 +63,7 @@ import com.google.common.collect.Ordering;
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Cacheable
-@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class Location extends DomainObjectTreeABC<Location> {
 
@@ -169,6 +169,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	@Setter
 	private Map<String, Location>		locations			= new HashMap<String, Location>();

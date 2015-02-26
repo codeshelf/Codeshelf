@@ -304,7 +304,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
 
-		Container container = mContainerDao.findByDomainId(facility, "CONTAINER1");
+		Container container = Container.DAO.findByDomainId(facility, "CONTAINER1");
 		Assert.assertNotNull(container);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -835,13 +835,13 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
-		foundFacility = mFacilityDao.findByPersistentId(facilityId);
+		foundFacility = Facility.DAO.findByPersistentId(facilityId);
 
 		//The large set creates the initial sets of orders
 		BatchResult<?> result = importOrdersResource(foundFacility, "largeset/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
-		foundFacility = mFacilityDao.findByPersistentId(facilityId);
+		foundFacility = Facility.DAO.findByPersistentId(facilityId);
 
 		//The subset triggers all but one of the details to be active = false
 		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
@@ -850,7 +850,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		//Simulate a cache trim between the uploads
 		// Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
 
-		foundFacility = mFacilityDao.findByPersistentId(facilityId);
+		foundFacility = Facility.DAO.findByPersistentId(facilityId);
 
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
@@ -1068,7 +1068,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(0, items.size()); // No inventory created
 
 		// Now set up for next case.
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
@@ -1108,7 +1108,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		loadSmallAislesAndLocations(facility);
 
 		LOGGER.info("2: Set LOCAPICK = true");
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);

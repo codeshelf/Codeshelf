@@ -28,7 +28,6 @@ import com.codeshelf.event.EventTag;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -67,11 +66,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	private static int				maxSlotForTier	= 30;
 
 	private static final Logger		LOGGER			= LoggerFactory.getLogger(AislesFileCsvImporter.class);
-
-	private ITypedDao<Aisle>		mAisleDao;
-	private ITypedDao<Bay>			mBayDao;
-	private ITypedDao<Tier>			mTierDao;
-	private ITypedDao<Slot>			mSlotDao;
 
 	private Facility				mFacility;
 	// keep track of the file read. This instead of a state machine and other structures
@@ -113,20 +107,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	}
 
 	@Inject
-	public AislesFileCsvImporter(final EventProducer inProducer, 
-		final ITypedDao<Aisle> inAisleDao,
-		final ITypedDao<Bay> inBayDao,
-		final ITypedDao<Tier> inTierDao,
-		final ITypedDao<Slot> inSlotDao) {
+	public AislesFileCsvImporter(final EventProducer inProducer) {
 		
 		super(inProducer);
 		
-		// facility needed? but not facilityDao
-		mAisleDao = inAisleDao;
-		mBayDao = inBayDao;
-		mTierDao = inTierDao;
-		mSlotDao = inSlotDao;
-
 		mLastReadAisle = null;
 		mLastReadBay = null;
 		mLastReadBayForVertices = null;
@@ -457,7 +441,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
 			thisSlot.setLowerLedNearAnchor(inSlotLedsIncrease);
 			// transaction?
-			mSlotDao.store(thisSlot);
+			Slot.DAO.store(thisSlot);
 
 			lastSlotEndingLed = thisSlotEndLed;
 		}
@@ -481,7 +465,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		if (ledCount == 0) {
 			inTier.setFirstLedNumAlongPath((short) 0);
 			inTier.setLastLedNumAlongPath((short) 0);
-			mTierDao.store(inTier);
+			Tier.DAO.store(inTier);
 			returnValue = inLastLedNumber;
 			// Odd case: setting a null tier that a cable skips to next tier.
 			// Common case-pick: no leds installed, so just set zeros.
@@ -491,7 +475,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			inTier.setLastLedNumAlongPath(thisTierEndLed);
 			inTier.setLowerLedNearAnchor(inTier.isMTransientLedsIncrease());
 			// transaction?
-			mTierDao.store(inTier);
+			Tier.DAO.store(inTier);
 			returnValue = (short) (inLastLedNumber + ledCount);
 		}
 		// Now the tricky bit of setting the slot leds
@@ -597,7 +581,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aislePickEndX, aislePickEndY, 0.0);
 		inAisle.setPickFaceEndPoint(pickFacePoint);
 		// transaction?
-		mAisleDao.store(inAisle);
+		Aisle.DAO.store(inAisle);
 
 		// do not call getNewBoundaryPoint (inAisle) because that does a translation against the anchor. Correct (for now) for bays, but not for aisle.
 		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, boundaryPointX, boundaryPointY, 0.0);
@@ -793,7 +777,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
 
-		Slot slot = mSlotDao.findByDomainId(inParentTier, slotId);
+		Slot slot = Slot.DAO.findByDomainId(inParentTier, slotId);
 		if (slot == null) {
 			slot = inParentTier.createSlot(slotId, anchorPoint, pickFaceEndPoint);
 		} else {
@@ -815,7 +799,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		try {
 			// transaction?
-			mSlotDao.store(slot);
+			Slot.DAO.store(slot);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the slot update.");
@@ -858,7 +842,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);
 
 		// create or update
-		Tier tier = mTierDao.findByDomainId(mLastReadBay, inTierId);
+		Tier tier = Tier.DAO.findByDomainId(mLastReadBay, inTierId);
 		if (tier == null) {
 			tier = mLastReadBay.createTier(inTierId, anchorPoint, pickFaceEndPoint);
 		} else {
@@ -880,7 +864,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		try {
 			// transaction?
-			mTierDao.store(tier);
+			Tier.DAO.store(tier);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the tier update.");
@@ -945,7 +929,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
 
 		// Create the bay if it doesn't already exist. Easy case.
-		Bay bay = mBayDao.findByDomainId(mLastReadAisle, inBayId);
+		Bay bay = Bay.DAO.findByDomainId(mLastReadAisle, inBayId);
 		if (bay == null) {
 			bay = mLastReadAisle.createBay(inBayId, anchorPoint, pickFaceEndPoint);
 		} else {
@@ -966,7 +950,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		}
 		try {
 			// transaction?
-			mBayDao.store(bay);
+			Bay.DAO.store(bay);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the bay update.");
@@ -1016,7 +1000,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			LOGGER.error("Seeing this???");
 
 		// Create the aisle if it doesn't already exist.
-		Aisle aisle = mAisleDao.findByDomainId(mFacility, inAisleId);
+		Aisle aisle = Aisle.DAO.findByDomainId(mFacility, inAisleId);
 		if (aisle == null) {
 			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 			aisle = mFacility.createAisle(inAisleId, inAnchorPoint, pickFaceEndPoint);
@@ -1050,7 +1034,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		try {
 			// if we had added the aisle to mAisleLocationsMapThatMayBecomeInactive, we would remove it here.
 			// transaction?
-			mAisleDao.store(aisle);
+			Aisle.DAO.store(aisle);
 
 		} catch (DaoException e) {
 			LOGGER.error("editOrCreateOneAisle", e);

@@ -534,7 +534,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -559,7 +559,7 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D403");
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!

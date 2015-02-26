@@ -268,7 +268,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -289,7 +289,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
 		picker.scanLocation("D-36");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
@@ -330,7 +330,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -351,7 +351,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.setupContainer("11", "6"); // Good one gives two work instruction
 
 		picker.startAndSkipReview("D-36", 5000, 3000);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(3, picker.countRemainingJobs());
 		LOGGER.info("List the work instructions as the server sees them");

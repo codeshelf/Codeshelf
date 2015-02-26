@@ -23,6 +23,8 @@ import javax.persistence.OneToMany;
 import lombok.Getter;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +94,7 @@ public class Facility extends Location {
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
 
@@ -732,6 +735,7 @@ public class Facility extends Location {
 
 	private Location createUnspecifiedLocation(String domainId) {
 		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
+		location.setFirstLedNumAlongPath((short)0);
 		this.addLocation(location);
 		UnspecifiedLocation.DAO.store(location);
 		return location;
@@ -1083,7 +1087,7 @@ public class Facility extends Location {
 	@JsonProperty("hasCrossBatchOrders")
 	public boolean hasCrossBatchOrders() {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
-		String theValue = PropertyService.getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		String theValue = PropertyService.getInstance().getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}

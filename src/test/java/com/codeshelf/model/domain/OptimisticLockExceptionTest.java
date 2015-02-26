@@ -16,11 +16,12 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Facility.FacilityDao;
 import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class OptimisticLockExceptionTest {
 	@Getter
-	TenantPersistenceService tenantPersistenceService;
+	ITenantPersistenceService tenantPersistenceService;
 
 	@Before
 	public final void setup() {

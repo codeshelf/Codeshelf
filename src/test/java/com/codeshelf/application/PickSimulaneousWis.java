@@ -247,7 +247,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
 		workService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
 		this.getTenantPersistenceService().commitTransaction();
@@ -268,7 +268,7 @@ public class PickSimulaneousWis extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		Integer wiCountAfterScan = wiListAfterScan.size();

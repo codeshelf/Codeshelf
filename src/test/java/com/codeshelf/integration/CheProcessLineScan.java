@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.integration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
@@ -713,11 +711,11 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2"); 
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
-		LOGGER.info("2c: START. Still no work, because no inventory. (and LOCAPICK was off, so not made).");
+		LOGGER.info("2c: START. Work because location is resolvable even without inventory. (LOCAPICK was off, so not made).");
 		// This is important. We could in principle make these work instructions as a special case of location-based pick. 
 		// No inventory, but the order detail preferred location is resolvable, so we could do it
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 	
 		// logout back to idle state.
 		picker.logout();
@@ -727,13 +725,13 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
 		}
 		setUpLineScanOrdersWithCntr(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -790,7 +788,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
@@ -962,7 +960,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
@@ -1083,7 +1081,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);

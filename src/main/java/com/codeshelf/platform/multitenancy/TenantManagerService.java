@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.DatabaseConnection;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.util.concurrent.AbstractIdleService;
 
@@ -70,7 +71,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	}
 	
 	private void initDefaultShard() {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		Criteria criteria = session.createCriteria(Shard.class);
@@ -161,7 +162,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	
 	@Override
 	public boolean canCreateUser(String username) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 		// for UI
 		boolean result = false;
 		try {
@@ -175,7 +176,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	
 	@Override
 	public User createUser(Tenant tenant,String username,String password,UserType type) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		User result=null;
 		
@@ -202,7 +203,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	public void resetTenant(Tenant tenant) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		LOGGER.warn("Resetting schema and users for "+tenant.toString());
 		try {
@@ -236,7 +237,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	
 	@Override
 	public User getUser(String username) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		User result = null;
 		
@@ -256,7 +257,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	public Tenant getTenantByUsername(String username) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		Tenant result = null;
 		
@@ -274,7 +275,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	public Tenant getTenantByName(String name) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		Tenant result = null;
 		
@@ -301,7 +302,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	}
 	
 	private Shard getShardByName(String name) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		Shard result = null;
 		
@@ -324,7 +325,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	public Tenant createTenant(String name, String shardName, String dbUsername) {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		// use username as schemaname when creating tenant
 		String schemaName = dbUsername;
@@ -347,7 +348,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	@SuppressWarnings("unchecked")
 	@Override
 	public Collection<Tenant> getTenants() {
-		ManagerPersistenceService managerPersistenceService=ManagerPersistenceService.getInstance();
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		Collection<Tenant> results = null;
 		

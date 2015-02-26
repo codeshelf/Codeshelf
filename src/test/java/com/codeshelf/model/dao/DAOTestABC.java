@@ -20,75 +20,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.JvmProperties;
+import com.codeshelf.application.ServerMain;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Aisle.AisleDao;
-import com.codeshelf.model.domain.Bay;
-import com.codeshelf.model.domain.Bay.BayDao;
-import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Che.CheDao;
-import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.CodeshelfNetwork.CodeshelfNetworkDao;
-import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.Container.ContainerDao;
-import com.codeshelf.model.domain.ContainerKind;
-import com.codeshelf.model.domain.ContainerKind.ContainerKindDao;
-import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.ContainerUse.ContainerUseDao;
-import com.codeshelf.model.domain.DropboxService;
-import com.codeshelf.model.domain.DropboxService.DropboxServiceDao;
-import com.codeshelf.model.domain.EdiDocumentLocator;
-import com.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Facility.FacilityDao;
-import com.codeshelf.model.domain.IronMqService;
-import com.codeshelf.model.domain.IronMqService.IronMqServiceDao;
-import com.codeshelf.model.domain.Item;
-import com.codeshelf.model.domain.Item.ItemDao;
-import com.codeshelf.model.domain.ItemMaster;
-import com.codeshelf.model.domain.ItemMaster.ItemMasterDao;
-import com.codeshelf.model.domain.LedController;
-import com.codeshelf.model.domain.LedController.LedControllerDao;
-//import com.codeshelf.model.domain.LocationABC.LocationABCDao;
-import com.codeshelf.model.domain.LocationAlias;
-import com.codeshelf.model.domain.LocationAlias.LocationAliasDao;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
-import com.codeshelf.model.domain.OrderGroup;
-import com.codeshelf.model.domain.OrderGroup.OrderGroupDao;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.codeshelf.model.domain.OrderLocation;
-import com.codeshelf.model.domain.OrderLocation.OrderLocationDao;
-import com.codeshelf.model.domain.Path;
-import com.codeshelf.model.domain.Path.PathDao;
-import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.PathSegment.PathSegmentDao;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.model.domain.SiteController.SiteControllerDao;
-import com.codeshelf.model.domain.Slot;
-import com.codeshelf.model.domain.Slot.SlotDao;
-//import com.codeshelf.model.domain.SubLocationABC.SubLocationDao;
-import com.codeshelf.model.domain.Tier;
-import com.codeshelf.model.domain.Tier.TierDao;
-import com.codeshelf.model.domain.UnspecifiedLocation;
-import com.codeshelf.model.domain.UnspecifiedLocation.UnspecifiedLocationDao;
-import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.model.domain.UomMaster.UomMasterDao;
-import com.codeshelf.model.domain.Vertex;
-import com.codeshelf.model.domain.Vertex.VertexDao;
-import com.codeshelf.model.domain.WorkArea;
-import com.codeshelf.model.domain.WorkArea.WorkAreaDao;
-import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.codeshelf.platform.multitenancy.ITenantManager;
 import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
@@ -103,6 +48,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+//import com.codeshelf.model.domain.LocationABC.LocationABCDao;
+//import com.codeshelf.model.domain.SubLocationABC.SubLocationDao;
 
 public abstract class DAOTestABC {
 	private static Logger LOGGER;
@@ -111,7 +58,11 @@ public abstract class DAOTestABC {
 	public TestName testName = new TestName();
 
 	static ServiceManager jvmServiceManager;
-	static SessionManagerService	staticSessionManagerService; // one per jvm..
+	private static SessionManagerService staticSessionManagerService; // one per jvm..
+	private static IPropertyService staticPropertyService;
+	private static IMetricsService	staticMetricsService;
+	private static ITenantPersistenceService staticTenantPersistenceService;
+	
 	public static Injector setupInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
@@ -119,8 +70,14 @@ public abstract class DAOTestABC {
 				// jetty websocket
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				
+				requestStaticInjection(TenantPersistenceService.class);
+				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+				
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(DummyMetricsService.class).in(Singleton.class);
+
+				requestStaticInjection(PropertyService.class);
+				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
 			}
 			
 			
@@ -138,19 +95,27 @@ public abstract class DAOTestABC {
 	static {
 		JvmProperties.load("test");
 		LOGGER	= LoggerFactory.getLogger(DAOTestABC.class);
-
+		
 		Injector injector = setupInjector();
 
+		// always keep a handle on these per-jvm services
 		DAOTestABC.staticSessionManagerService = injector.getInstance(SessionManagerService.class);
-
-		// start singleton services here (i.e. per jvm, not per test)
-		// see below for ephemeral services
+		DAOTestABC.staticMetricsService = injector.getInstance(IMetricsService.class);
+		DAOTestABC.staticPropertyService = injector.getInstance(IPropertyService.class);
+		DAOTestABC.staticTenantPersistenceService = injector.getInstance(ITenantPersistenceService.class);
+		
+		// start singleton services here, per jvm, not per test
 		List<Service> services = new ArrayList<Service>();
-		services.add(TenantManagerService.getNonRunningInstance());
-		services.add(ManagerPersistenceService.getNonRunningInstance());
-		services.add(TenantPersistenceService.getNonRunningInstance());
-		services.add(injector.getInstance(IMetricsService.class));
-		services.add(staticSessionManagerService);
+		
+		services.add(TenantManagerService.getNonRunningInstance()); // self-creating
+		services.add(ManagerPersistenceService.getNonRunningInstance()); // self-creating
+		services.add(TenantPersistenceService.getNonRunningInstance()); // self-creating
+		
+		services.add(staticSessionManagerService); // provider injected
+		services.add(staticMetricsService); // static injected singleton
+		services.add(staticPropertyService); // static injected singleton
+		// see doBefore() for ephemeral service manager
+		
 		jvmServiceManager = new ServiceManager(services);
 		try {
 			jvmServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
@@ -180,48 +145,19 @@ public abstract class DAOTestABC {
 	protected ServiceManager ephemeralServiceManager;
 	ITenantManager tenantManager;
 
-	public TenantPersistenceService tenantPersistenceService; // convenience
 	
 	// ephemeral services that might be generated by subclasses
 	protected WorkService workService;
 	
+	// long-lived services, as they were originally injected, for resetting
+	public ITenantPersistenceService tenantPersistenceService = DAOTestABC.staticTenantPersistenceService; 
 	protected final SessionManagerService sessionManagerService = DAOTestABC.staticSessionManagerService;
+	protected final IPropertyService propertyService = DAOTestABC.staticPropertyService;
+	protected final IMetricsService metricsService = DAOTestABC.staticMetricsService;
 	
 	Facility defaultFacility = null;
-	
-	protected FacilityDao			mFacilityDao;
-	protected PathDao				mPathDao;
-	protected PathSegmentDao		mPathSegmentDao;
-	protected AisleDao				mAisleDao;
-	protected BayDao				mBayDao;
-	protected TierDao				mTierDao;
-	protected SlotDao				mSlotDao;
-	protected DropboxServiceDao		mDropboxServiceDao;
-	protected EdiDocumentLocatorDao			mEdiDocumentLocatorDao;
-	protected OrderGroupDao			mOrderGroupDao;
-	protected OrderHeaderDao		mOrderHeaderDao;
-	protected OrderDetailDao		mOrderDetailDao;
-	protected OrderLocationDao		mOrderLocationDao;
-	protected CodeshelfNetworkDao	mCodeshelfNetworkDao;
-	protected ITypedDao<Che>				mCheDao;
-	protected SiteControllerDao		mSiteControllerDao; 
-	protected ContainerDao			mContainerDao;
-	protected ContainerKindDao		mContainerKindDao;
-	protected ContainerUseDao		mContainerUseDao;
-	protected ItemMasterDao			mItemMasterDao;
-	protected ItemDao				mItemDao;
-	protected UnspecifiedLocationDao mUnspecifiedLocationDao;
-	protected UomMasterDao			mUomMasterDao;
-	protected IronMqServiceDao		mIronMqServiceDao;
-	protected LedControllerDao		mLedControllerDao;
-	protected LocationAliasDao		mLocationAliasDao;
-	protected VertexDao				mVertexDao;
-	protected WorkInstructionDao	mWorkInstructionDao;
-	protected WorkAreaDao			mWorkAreaDao;
 
 
-	//@Inject
-	//public DAOTestABC(ITenantManager tenantManager) {
 	public DAOTestABC() {
 		super();
 		//this.tenantManager = tenantManager;
@@ -232,7 +168,7 @@ public abstract class DAOTestABC {
 		return TenantManagerService.getInstance().getDefaultTenant();
 	}
 
-	public TenantPersistenceService getTenantPersistenceService() {
+	public ITenantPersistenceService getTenantPersistenceService() {
 		return TenantPersistenceService.getInstance();
 	}
 	
@@ -250,105 +186,24 @@ public abstract class DAOTestABC {
 	@Before
 	public void doBefore() throws Exception {	
 		this.tenantPersistenceService = TenantPersistenceService.getInstance();
-		
-		mFacilityDao = new FacilityDao();
-		Facility.DAO = mFacilityDao;
 
-		mAisleDao = new AisleDao();
-		Aisle.DAO = mAisleDao;
+		TenantPersistenceService.setInstance(staticTenantPersistenceService);
+		PropertyService.setInstance(staticPropertyService); //OrderDetail currently depends on work service having a property service early
+ 
+		// this will cause DAOs to get statically reinjected, in case they were messed with
+		@SuppressWarnings("unused")
+		Injector injector = Guice.createInjector(ServerMain.createDaoBindingModule());
 
-		mBayDao = new BayDao();
-		Bay.DAO = mBayDao;
-
-		mTierDao = new TierDao();
-		Tier.DAO = mTierDao;
-
-		mSlotDao = new SlotDao();
-		Slot.DAO = mSlotDao;
-
-		mPathDao = new PathDao();
-		Path.DAO = mPathDao;
-
-		mPathSegmentDao = new PathSegmentDao();
-		PathSegment.DAO = mPathSegmentDao;
-
-		mDropboxServiceDao = new DropboxServiceDao();
-		DropboxService.DAO = mDropboxServiceDao;
-
-		mIronMqServiceDao = new IronMqServiceDao();
-		IronMqService.DAO = mIronMqServiceDao;
-
-		mEdiDocumentLocatorDao = new EdiDocumentLocatorDao();
-		EdiDocumentLocator.DAO = mEdiDocumentLocatorDao;
-		
-		mCodeshelfNetworkDao = new CodeshelfNetworkDao();
-		CodeshelfNetwork.DAO = mCodeshelfNetworkDao;
-
-		mCheDao = new CheDao();
-		Che.DAO = mCheDao;
-
-		mSiteControllerDao = new SiteControllerDao();
-		SiteController.DAO = mSiteControllerDao;
-
-		mOrderGroupDao = new OrderGroupDao();
-		OrderGroup.DAO = mOrderGroupDao;
-
-		mOrderHeaderDao = new OrderHeaderDao();
-		OrderHeader.DAO = mOrderHeaderDao;
-
-		mOrderDetailDao = new OrderDetailDao();
-		OrderDetail.DAO = mOrderDetailDao;
-
-		mOrderLocationDao = new OrderLocationDao();
-		OrderLocation.DAO = mOrderLocationDao;
-
-		mContainerDao = new ContainerDao();
-		Container.DAO = mContainerDao;
-
-		mContainerKindDao = new ContainerKindDao();
-		ContainerKind.DAO = mContainerKindDao;
-
-		mContainerUseDao = new ContainerUseDao();
-		ContainerUse.DAO = mContainerUseDao;
-
-		mItemMasterDao = new ItemMasterDao();
-		ItemMaster.DAO = mItemMasterDao;
-
-		mItemDao = new ItemDao();
-		Item.DAO = mItemDao;
-		
-		mIronMqServiceDao = new IronMqServiceDao();
-		IronMqService.DAO = mIronMqServiceDao;
-		
-		mUomMasterDao = new UomMasterDao();
-		UomMaster.DAO = mUomMasterDao;
-
-		mUnspecifiedLocationDao = new UnspecifiedLocationDao();
-		UnspecifiedLocation.DAO = mUnspecifiedLocationDao;
-		
-		mLedControllerDao = new LedControllerDao();
-		LedController.DAO = mLedControllerDao;
-
-		mLocationAliasDao = new LocationAliasDao();
-		LocationAlias.DAO = mLocationAliasDao;
-		
-		mVertexDao = new VertexDao();
-		Vertex.DAO = mVertexDao;
-
-		mWorkAreaDao = new WorkAreaDao();
-		WorkArea.DAO = mWorkAreaDao;
-
-		mWorkInstructionDao = new WorkInstructionDao();
-		WorkInstruction.DAO = mWorkInstructionDao;
-
-		mWorkAreaDao = new WorkAreaDao();
-		WorkArea.DAO = mWorkAreaDao;
+		// reset long-lived singleton instances, in case they were messed with
+		MetricsService.setInstance(staticMetricsService);
+		// sessionManager is not statically accessible and basically not mockable, so no worries
 		
 		// make sure default properties are in the database
 		TenantPersistenceService.getInstance().beginTransaction();
         PropertyDao.getInstance().syncPropertyDefaults();
         TenantPersistenceService.getInstance().commitTransaction();
 			
+        // subclasses may override ephemeralServicesShouldStartAutomatically, if service start needs to be delayed
         if(ephemeralServicesShouldStartAutomatically())
         	initializeEphemeralServiceManager();
 	}

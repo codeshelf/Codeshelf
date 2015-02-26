@@ -110,6 +110,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	
 	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
 	protected static final String			SCAN_SKIP								= "SCANSKIP";
+	protected static final String			SKIP_SCAN								= "SKIPSCAN";
 
 	protected static final Integer			maxCountForPositionControllerDisplay	= 99;
 
@@ -214,6 +215,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 		setScanNeededToVerifyPick(theEnum);
 
+		@SuppressWarnings("unused")
 		String mSequenceKind = mDeviceManager.getSequenceKind();
 		//setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
 		//As part of DEV-670 work, we are always enabling scanning of "start" or "reverse" on the "scan location" screen
@@ -1203,7 +1205,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String returnString = "";
 		
 		// If the user scanned SCANSKIP return true
-		if (inScanStr.equals(SCAN_SKIP)){
+		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)){
 			// TODO need better warning message here. Get orderId and pickerId?
 			LOGGER.warn("SCANSKIP for work instruction");
 			return returnString;

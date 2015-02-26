@@ -55,8 +55,7 @@ public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
 	}
 
 	private WorkInstructionSequencerABC getWorkSequenceSequencer(Facility facility) {
-		PropertyService propertyService = new PropertyService();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
 		return sequencer;
 	}

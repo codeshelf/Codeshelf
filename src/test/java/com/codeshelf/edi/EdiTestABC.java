@@ -17,11 +17,9 @@ import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
-	protected PropertyService mPropertyService = new PropertyService();
 	
 	private EventProducer		mEventProducer	= new EventProducer();
 
@@ -31,45 +29,32 @@ public abstract class EdiTestABC extends DomainTestABC {
 	}
 	
 	protected AislesFileCsvImporter createAisleFileImporter() {
-		return new AislesFileCsvImporter(mEventProducer, mAisleDao, mBayDao, mTierDao, mSlotDao);
+		return new AislesFileCsvImporter(mEventProducer);
 	}
 
 	protected ICsvOrderImporter createOrderImporter() {
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mEventProducer,
-			mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mEventProducer);
 		return orderImporter;
 	}
 
 	protected ICsvCrossBatchImporter createCrossBatchImporter() {
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mEventProducer,
-			workService,
-			mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
+			workService);
 		return importer;
 	}
 
 	protected ICsvLocationAliasImporter createLocationAliasImporter() {
-		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mEventProducer, mLocationAliasDao);
+		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mEventProducer);
 		return importer2;
 	}
 
 	protected ICsvOrderLocationImporter createOrderLocationImporter() {
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mEventProducer, mOrderLocationDao);
+		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mEventProducer);
 		return importer;
 	}
 
 	protected ICsvInventoryImporter createInventoryImporter() {
-		return new InventoryCsvImporter(mEventProducer, mItemMasterDao, mItemDao, mUomMasterDao);
+		return new InventoryCsvImporter(mEventProducer);
 	}
 
 	private  String padRight(String s, int n) {

@@ -79,7 +79,7 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 		
-		mPropertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		
 		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n" + 
 				"Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,0\r\n" + 
@@ -107,8 +107,7 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 				"1,1,348,12/03/14 12:00,12/31/14 12:00,Item9,,11,a,Group1,,\r\n" + 
 				"1,1,349,12/03/14 12:00,12/31/14 12:00,Item2,,22,a,Group1,,\r\n" + 
 				"1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\r\n" + 
-				"1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,5,LocX24\r\n" + 
-				"1,1,352,12/03/14 12:00,12/31/14 12:00,Item6,,33,a,Group1,3,LocX26\r\n" + 
+				"1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,5,LocX24\r\n" +  
 				"2,2,353,12/03/14 12:00,12/31/14 12:00,Item3,,44,a,Group1,,\r\n" + 
 				"2,2,354,12/03/14 12:00,12/31/14 12:00,Item15,,55,a,Group1,,\r\n" + 
 				"2,2,355,12/03/14 12:00,12/31/14 12:00,Item2,,66,a,Group1,,\r\n" + 
@@ -157,11 +156,11 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
 		
 		CsDeviceManager manager = this.getDeviceManager();
@@ -178,7 +177,7 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	}
 	
 	private void compareList(List<WorkInstruction> instructions, String[] expectations) {
-		Assert.assertEquals(instructions.size(), expectations.length);
+		Assert.assertEquals(expectations.length, instructions.size());
 		for (int i = 0; i < expectations.length; i++) {
 			WorkInstruction instruction = instructions.get(i);
 			Assert.assertEquals(String.format("Mismatch in item %d. Expected list %s, got [%s]", i, Arrays.toString(expectations), printInstructionsList(instructions)),

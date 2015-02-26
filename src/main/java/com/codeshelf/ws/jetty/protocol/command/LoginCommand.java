@@ -15,6 +15,7 @@ import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
@@ -76,20 +77,22 @@ public class LoginCommand extends CommandABC {
 
 					// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
 					if (network != null) {
+						IPropertyService properties = PropertyService.getInstance();
+						
 						Facility facility = network.getParent();
-						String valueStr = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
+						String valueStr = properties.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
 						response.setAutoShortValue(Boolean.parseBoolean(valueStr));
 
-						String pickInfo = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
+						String pickInfo = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
 						response.setPickInfoValue(pickInfo);
 
-						String containerType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
+						String containerType = properties.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
 						response.setContainerTypeValue(containerType);
 						
-						String scanType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+						String scanType = properties.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
 						response.setScanTypeValue(scanType);
 						
-						String sequenceKind = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+						String sequenceKind = properties.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
 						response.setSequenceKind(sequenceKind);
 
 					} else {

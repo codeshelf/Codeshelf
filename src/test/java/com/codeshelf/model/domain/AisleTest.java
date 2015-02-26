@@ -43,7 +43,7 @@ public class AisleTest extends DomainTestABC {
 		Short testChannel = 8;
 		aisle.setControllerChannel(controller1.getPersistentId().toString(), testChannel.toString());
 		
-		Aisle storedAisle = mAisleDao.findByPersistentId(aisle.getPersistentId());
+		Aisle storedAisle = Aisle.DAO.findByPersistentId(aisle.getPersistentId());
 		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
 		assertEquals(testChannel, storedAisle.getLedChannel());
 

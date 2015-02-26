@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -40,6 +39,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.service.WorkService;
 
 /**
  *
@@ -181,6 +181,30 @@ public class InventoryPickRunTest extends EdiTestABC {
 		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
+	
+	private void readOrdersForBayDistance(Facility inFacility) throws IOException {
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// SKU 1123 needed for 12000
+		// SKU 1123 needed for 12010
+		// Each product needed for 12345
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDetailId,locationId"
+				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each,101,D-27"	// Should get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1830,Shorts-large,1,each,102"			// Should not get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each,103"
+				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"
+				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
+				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
+
+		byte[] csvArray2 = csvString2.getBytes();
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+
+	}
 
 	private void readInventoryWithoutTop(Facility inFacility) throws IOException {
 		// A1.B1.T2 is D-26.
@@ -251,6 +275,44 @@ public class InventoryPickRunTest extends EdiTestABC {
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
+	
+	private void readInventoryBayDistance(Facility inFacility) throws IOException {
+		// A1.B1.T2 is D-26.
+		// In D-26, left to right are SKUs 1124,1126,1123,1125
+
+		// A1.B2.T2 is D-28
+		// In D-28, left to right are SKUs 1522,1525
+
+		// A1.B1.T3 is D-71
+		// In D-71, left to right are SKUs 1523
+
+		// A1.B2.T3 is D-72
+		// In D-72, left to right are SKUs 1524
+
+		// A1.B1.T1 is D-27.
+		// In D-27, left to right are SKUs  1831, 1830
+
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
+				+ "1124,D-26,12 oz Bowl Lids,0,ea,6/25/14 12:00,8\r\n" //
+				+ "1125,D-26,16 oz Bowl Lids,,each,6/25/14 12:00,185\r\n" //
+				+ "1126,D-26,24 oz Bowl Lids,80,each,6/25/14 12:00,55\r\n" //
+				+ "1522,D-28,Tshirt-small,,ea,,3\r\n" //
+				+ "1523,D-71,Tshirt-med,,ea,,190\r\n" //
+				+ "1524,D-72,Tshirt-large,0,ea,6/25/14 12:00,214\r\n" //
+				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1831,,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1830,,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+	}
 
 	@SuppressWarnings("unused")
 	@Test
@@ -282,8 +344,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// Orders
 		readOrdersForA1(facility);
 
-		mPropertyService.turnOffHK(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 
@@ -296,7 +358,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1831", wi5.getItemId());
 		Assert.assertEquals("1524", wi10.getItemId());
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		// Need more cases for BayDistanceTopLast.
 
@@ -344,8 +406,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		mPropertyService.turnOffHK(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 		Integer theSize = wiList.size();
@@ -357,7 +419,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Assert.assertEquals("1125", wi5.getItemId());
 		Assert.assertEquals("1525", wi10.getItemId());
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -397,8 +459,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		mPropertyService.turnOffHK(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000.");
 		WorkList workList = workService.setUpCheContainerFromString(theChe, "12000");
 		Integer theSize = workList.getInstructions().size();
@@ -415,7 +477,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		theSize = workList.getDetails().size();
 		Assert.assertEquals((Integer) 2, theSize); // Before DEV-609, this had 12
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -433,7 +495,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Assert.assertNotNull(facility);
 
 		LOGGER.info("1: Set LOCAPICK = true.  Leave EACHMULT = false");
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
@@ -461,8 +523,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		Integer theSize = wiList.size();
@@ -483,8 +545,8 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
@@ -504,14 +566,62 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
 		this.getTenantPersistenceService().commitTransaction();
 
+	}
+
+	//@Test
+	public final void testBayDistance() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+		OrderDetail.workService = workService;
+
+		
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
+		
+		LOGGER.info("1: Set WORKSEQR = BayDistance.");
+		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "BayDistance");
+		
+		// Inventory
+		readInventoryBayDistance(facility);
+
+		// Orders
+		readOrdersForBayDistance(facility);
+		
+		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		Assert.assertNotNull(orderHeader);
+		
+		// 101 item does not have an inventory location
+		// 101 has a preferred location that is on a path
+		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
+		Assert.assertNotNull(orderDetail);
+	
+		Assert.assertTrue(orderDetail.willProduceWi());
+		
+		// 102 items does not have an inventory location
+		// 102 does not have a preferred location
+		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
+		Assert.assertNotNull(orderDetail2);
+	
+		Assert.assertFalse(orderDetail2.willProduceWi());
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
+	@Test
+	public final void testWorkSequence() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
+		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 }

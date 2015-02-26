@@ -50,7 +50,7 @@ public class UiUpdateService implements IApiService {
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
 
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
-		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer());
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, facility);
 
 		ItemMaster itemMaster = facility.getItemMaster(itemId);

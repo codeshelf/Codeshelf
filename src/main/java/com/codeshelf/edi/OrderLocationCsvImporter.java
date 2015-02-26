@@ -20,7 +20,6 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderHeader;
@@ -39,13 +38,9 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImporter.class);
 
-	private ITypedDao<OrderLocation>	mOrderLocationDao;
-
 	@Inject
-	public OrderLocationCsvImporter(final EventProducer inProducer, final ITypedDao<OrderLocation> inOrderLocationDao) {
+	public OrderLocationCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
-
-		mOrderLocationDao = inOrderLocationDao;
 	}
 /*
 	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage) {
@@ -104,7 +99,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 					if (!orderLocation.getUpdated().equals(inProcessTime)) {
 						LOGGER.debug("Archive old orderLocation: " + orderLocation.getDomainId());
 						orderLocation.setActive(false);
-						mOrderLocationDao.store(orderLocation);
+						OrderLocation.DAO.store(orderLocation);
 					}
 				}
 			}
@@ -197,7 +192,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				result.setLocation(mappedLocation);
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mOrderLocationDao.store(result);
+				OrderLocation.DAO.store(result);
 			}
 
 		}
@@ -220,7 +215,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			while (iter.hasNext()) {
 				OrderLocation orderLocation = iter.next();
 				order.removeOrderLocation(orderLocation);
-				mOrderLocationDao.delete(orderLocation);
+				OrderLocation.DAO.delete(orderLocation);
 			}
 		}
 	}
@@ -242,7 +237,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				OrderLocation orderLocation = iter.next();
 				if (orderLocation.getLocation().equals(location)) {
 					order.removeOrderLocation(orderLocation);
-					mOrderLocationDao.delete(orderLocation);
+					OrderLocation.DAO.delete(orderLocation);
 				}
 			}
 		}

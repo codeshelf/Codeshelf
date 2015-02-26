@@ -12,7 +12,7 @@ public class WorkInstructionSequencerFactory {
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkInstructionSequencerFactory.class);
 
 	public static WorkInstructionSequencerABC createSequencer(Facility facility) {
-		String sequenceKind = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 		LOGGER.info("Using " + sequenceKindEnum + " sequencer");
 

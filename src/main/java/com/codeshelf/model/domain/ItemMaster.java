@@ -357,7 +357,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		String thisUomId = inUom.getUomMasterId();
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		Facility facility = inLocation.getFacility();
-		boolean eachMult = PropertyService.getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
+		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
 		if (thisItemEach && !eachMult) {
 			for (Item item : getItems()) {
 				if (UomNormalizer.isEach(item.getUomMasterId()))

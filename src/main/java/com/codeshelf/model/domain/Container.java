@@ -86,6 +86,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 

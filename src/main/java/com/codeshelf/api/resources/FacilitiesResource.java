@@ -16,6 +16,7 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.sun.jersey.api.core.ResourceContext;
 
@@ -24,7 +25,7 @@ public class FacilitiesResource {
 	@Context
 	private ResourceContext resourceContext;
 	
-	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+	private ITenantPersistenceService persistence = TenantPersistenceService.getInstance();
 	
 	@Path("{id}")
 	public FacilityResource getManufacturer(@PathParam("id") UUIDParam uuidParam) throws Exception {

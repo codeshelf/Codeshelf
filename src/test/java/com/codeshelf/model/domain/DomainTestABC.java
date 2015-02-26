@@ -32,7 +32,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	protected Facility createTestFacility() {
 		String defaultDomainId = testName.getMethodName();
 		
-		Facility resultFacility = mFacilityDao.findByDomainId(null, defaultDomainId);
+		Facility resultFacility = Facility.DAO.findByDomainId(null, defaultDomainId);
 		if(resultFacility == null) {
 			resultFacility = Facility.createFacility(getDefaultTenant(),defaultDomainId, "test", new Point(PositionTypeEnum.GPS, -120.0, 30.0, 0.0));
 			resultFacility.store();
@@ -45,29 +45,29 @@ public abstract class DomainTestABC extends DAOTestABC {
 	}
 
 	protected Aisle getDefaultAisle(Facility facility, String inDomainId, Point anchorPoint, Point pickFaceEndPoint) {
-		Aisle aisle = mAisleDao.findByDomainId(facility, inDomainId);
+		Aisle aisle = Aisle.DAO.findByDomainId(facility, inDomainId);
 		if (aisle == null) {
 			aisle = facility.createAisle(inDomainId, anchorPoint, pickFaceEndPoint);
-			mAisleDao.store(aisle);
+			Aisle.DAO.store(aisle);
 		}
 		return aisle;
 	}
 
 	
 	protected Bay getDefaultBay(Aisle aisle, String inDomainId) {
-		Bay bay  = mBayDao.findByDomainId(aisle, inDomainId);
+		Bay bay  = Bay.DAO.findByDomainId(aisle, inDomainId);
 		if (bay == null) {
 			bay = aisle.createBay(inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
-			mBayDao.store(bay);
+			Bay.DAO.store(bay);
 		}
 		return bay;
 	}
 
 	protected Tier getDefaultTier(Bay bay, String inDomainId) {
-		Tier tier  = mTierDao.findByDomainId(bay, inDomainId);
+		Tier tier  = Tier.DAO.findByDomainId(bay, inDomainId);
 		if (tier == null) {
 			tier = bay.createTier(inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
-			mTierDao.store(tier);
+			Tier.DAO.store(tier);
 		}
 		return tier;
 	}
@@ -77,7 +77,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		if (segment == null) {
 			segment = path.createPathSegment(inOrder,  anyPoint(), anyPoint());
 			// createPathSegment() does the store
-			// mPathSegmentDao.store(segment);
+			// PathSegment.DAO.store(segment);
 		}
 		return segment;
 	}
@@ -86,7 +86,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		Path path = facility.getPath(inPathId);
 		if (path == null) {
 			path = facility.createPath(inPathId);
-			mPathDao.store(path);
+			Path.DAO.store(path);
 			// looks wrong. Does not add to facility
 		}
 		return path;
@@ -95,7 +95,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 	protected LedController getDefaultController(CodeshelfNetwork network, final String inControllerDomainId) {
 		LedController controller = network.findOrCreateLedController(inControllerDomainId, new NetGuid(inControllerDomainId));
 		controller.setDomainId(inControllerDomainId);
-		mLedControllerDao.store(controller);
+		LedController.DAO.store(controller);
 		return controller;
 	}
 	
@@ -142,14 +142,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		baya1b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya1b1);
 		baya1b1.setLedChannel(channel1);
-		mBayDao.store(baya1b1);
+		Bay.DAO.store(baya1b1);
 
 		Bay baya1b2 = aisle1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya1b2.setFirstLedNumAlongPath((short) 0);
 		baya1b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya1b2);
 		baya1b2.setLedChannel(channel1);
-		mBayDao.store(baya1b2);
+		Bay.DAO.store(baya1b2);
 
 		Aisle aisle2 = getDefaultAisle(resultFacility, "A2");
 
@@ -158,31 +158,31 @@ public abstract class DomainTestABC extends DAOTestABC {
 		baya2b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya2b1);
 		baya2b1.setLedChannel(channel1);
-		mBayDao.store(baya2b1);
+		Bay.DAO.store(baya2b1);
 
 		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya2b2.setFirstLedNumAlongPath((short) 0);
 		baya2b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya2b2);
 		baya2b2.setLedChannel(channel1);
-		mBayDao.store(baya2b2);
+		Bay.DAO.store(baya2b2);
 
 		Path path = new Path();
 		path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
 		path.setParent(resultFacility);
 		path.setTravelDir(TravelDirectionEnum.FORWARD);
-		mPathDao.store(path);
+		Path.DAO.store(path);
 		resultFacility.addPath(path);
 
 		Point startPoint1 = Point.getZeroPoint().add(5.0,0.0);
 		PathSegment pathSegment1 = path.createPathSegment(0, startPoint1, Point.getZeroPoint());
-		mPathSegmentDao.store(pathSegment1);
+		PathSegment.DAO.store(pathSegment1);
 
 		aisle1.setPathSegment(pathSegment1);
-		mAisleDao.store(aisle1);
+		Aisle.DAO.store(aisle1);
 
 		aisle2.setPathSegment(pathSegment1);
-		mAisleDao.store(aisle2);
+		Aisle.DAO.store(aisle2);
 
 		Aisle aisle3 = getDefaultAisle(resultFacility, "A3");
 
@@ -191,14 +191,14 @@ public abstract class DomainTestABC extends DAOTestABC {
 		baya3b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya3b1);
 		baya3b1.setLedChannel(channel1);
-		mBayDao.store(baya3b1);
+		Bay.DAO.store(baya3b1);
 
 		Bay baya3b2 = aisle3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya3b2.setFirstLedNumAlongPath((short) 0);
 		baya3b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya3b2);
 		baya3b2.setLedChannel(channel1);
-		mBayDao.store(baya3b2);
+		Bay.DAO.store(baya3b2);
 
 		Aisle aisle4 = getDefaultAisle(resultFacility, "A4");
 
@@ -207,23 +207,23 @@ public abstract class DomainTestABC extends DAOTestABC {
 		baya4b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya4b1);
 		baya4b1.setLedChannel(channel1);
-		mBayDao.store(baya4b1);
+		Bay.DAO.store(baya4b1);
 
 		Bay baya4b2 = aisle4.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya4b2.setFirstLedNumAlongPath((short) 0);
 		baya4b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya4b2);
 		baya4b2.setLedChannel(channel1);
-		mBayDao.store(baya4b2);
+		Bay.DAO.store(baya4b2);
 
 		PathSegment pathSegment2 = path.createPathSegment(1, Point.getZeroPoint(), Point.getZeroPoint());
-		mPathSegmentDao.store(pathSegment2);
+		PathSegment.DAO.store(pathSegment2);
 
 		aisle3.setPathSegment(pathSegment2);
-		mAisleDao.store(aisle3);
+		Aisle.DAO.store(aisle3);
 
 		aisle4.setPathSegment(pathSegment2);
-		mAisleDao.store(aisle4);
+		Aisle.DAO.store(aisle4);
 
 		resultFacility.recomputeLocationPathDistances(path);
 
@@ -324,7 +324,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId(inUom);
 		uomMaster.setParent(inFacility);
-		mUomMasterDao.store(uomMaster);
+		UomMaster.DAO.store(uomMaster);
 		inFacility.addUomMaster(uomMaster);
 		return uomMaster;
 	}
@@ -347,7 +347,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		
 		inFacility.addContainer(result);
 		
-		mContainerDao.store(result);
+		Container.DAO.store(result);
 
 		return result;
 	}
@@ -376,8 +376,8 @@ public abstract class DomainTestABC extends DAOTestABC {
 		inContainer.addContainerUse(result);
 		
 		// This one-to-one relationship needs both persisted
-		mContainerUseDao.store(result);
-		mOrderHeaderDao.store(inOrderHeader);
+		ContainerUse.DAO.store(result);
+		OrderHeader.DAO.store(inOrderHeader);
 		
 		return result;
 	}
@@ -396,7 +396,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addOrderGroup(result);
-		mOrderGroupDao.store(result);
+		OrderGroup.DAO.store(result);
 		
 		
 		return result;
@@ -421,7 +421,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setDueDate(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mOrderHeaderDao.store(result);
+		OrderHeader.DAO.store(result);
 		inFacility.addOrderHeader(result);
 		if (inOrderGroup != null) {
 			inOrderGroup.addOrderHeader(result);
@@ -449,7 +449,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		
 		inOrderHeader.addOrderDetail(result);
-		mOrderDetailDao.store(result);
+		OrderDetail.DAO.store(result);
 
 		return result;
 	}
@@ -465,7 +465,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addItemMaster(result);
-		mItemMasterDao.store(result);
+		ItemMaster.DAO.store(result);
 
 		return result;
 	}
@@ -479,7 +479,7 @@ public abstract class DomainTestABC extends DAOTestABC {
 		result.setLocation(inLocation);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mOrderLocationDao.store(result);
+		OrderLocation.DAO.store(result);
 		inOrderHeader.addOrderLocation(result);
 
 		return result;

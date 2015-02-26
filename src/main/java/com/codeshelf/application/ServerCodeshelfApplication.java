@@ -24,6 +24,7 @@ import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
+import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.inject.Inject;
@@ -45,7 +46,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final ITenantManager tenantManager,
 			final WorkService workService,
 			final IMetricsService metricsService,
-			final SessionManagerService sessionManagerService) {
+			final SessionManagerService sessionManagerService,
+			final IPropertyService propertyService) {
 			
 		super(inWebApiServer);
 	
@@ -61,6 +63,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(workService);
 		this.registerService(metricsService);
 		this.registerService(sessionManagerService);
+		this.registerService(propertyService);
+
 		this.registerService(ediProcessorService);
 
 	}
