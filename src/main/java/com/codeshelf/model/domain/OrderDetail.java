@@ -390,31 +390,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
 	 */
 	public boolean willProduceWi() {
-		OrderTypeEnum myParentType = getParentOrderType();
-		if (myParentType != OrderTypeEnum.OUTBOUND)
-			return false;
-
-		// Need to know if this is a simple outbound pick order, or linked to crossbatch.
-		OrderDetail matchingCrossDetail = outboundDetailToMatchingCrossDetail();
-		if (matchingCrossDetail != null) { // Then we only need the outbound order to have a location on the path
-			OrderHeader myParent = getParent();
-			List<OrderLocation> locations = myParent.getOrderLocations();
-			if (locations.size() == 0)
-				return false;
-			// should check non-deleted locations, on path. Not initially.
-			return true;
-
-		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
-			// Should refactor getItemLocations() rather than use the string here.
-			String inventoryLocs = getItemLocations();
-			if (!inventoryLocs.isEmpty())
-				return true;
-		}
-
-		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
-
-		return false;
-
+		return workService.willOrderDetailGetWi(this);
 	}
 
 	// --------------------------------------------------------------------------

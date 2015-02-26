@@ -1199,4 +1199,82 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		// initialize
 		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);		
 	}
+	
+	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
+		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
+
+		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();
+		if (myParentType != OrderTypeEnum.OUTBOUND)
+			return false;
+
+		// Need to know if this is a simple outbound pick order, or linked to crossbatch.
+		OrderDetail matchingCrossDetail = inOrderDetail.outboundDetailToMatchingCrossDetail();
+		if (matchingCrossDetail != null) { // Then we only need the outbound order to have a location on the path
+			OrderHeader myParent = inOrderDetail.getParent();
+			List<OrderLocation> locations = myParent.getOrderLocations();
+			if (locations.size() == 0)
+				return false;
+			// should check non-deleted locations, on path. Not initially.
+			return true;
+
+		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
+			String inventoryLocs = inOrderDetail.getItemLocations();
+	
+			if (inOrderDetail.getPreferredLocation() != null &&
+					!inOrderDetail.getPreferredLocation().isEmpty()) {
+				
+				if ( sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
+					// If preferred location is set but it is not modeled return false
+					// We need to the location to be modeled to compute bay distance
+					Location preferredLocation = inOrderDetail.getPreferredLocObject();
+					
+					if ( preferredLocation != null
+							&& ( preferredLocation.getPathSegment() != null
+								|| preferredLocation.getParent().getPathSegment() != null
+								|| preferredLocation.getParent().getParent().getPathSegment() != null )
+							) {
+						return true;
+					} else {
+						// Check if item is on any valid path
+						List<Path> allPaths = inOrderDetail.getFacility().getPaths();
+						ItemMaster itemMaster = inOrderDetail.getItemMaster();
+						List<Location> itemLocations = new ArrayList<Location>();
+						
+						for(Path p : allPaths){
+							String uomStr = inOrderDetail.getUomMasterId();
+							Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(p, uomStr);
+						
+							if (item != null){
+								Location itemLocation = item.getStoredLocation();
+								itemLocations.add(itemLocation);
+								break;
+							}
+						}
+
+						if (!itemLocations.isEmpty()){
+							return true;
+						} else {
+							return false;
+						}
+					}
+					
+				} else if ( sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
+					if ( inOrderDetail.getWorkSequence() != null ) {
+						return true;
+					} else {
+						return false;
+					}
+				}
+			}
+			
+			if (!inventoryLocs.isEmpty()) {
+				return true;
+			}
+		}
+
+		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
+
+		return false;
+	}
 }
