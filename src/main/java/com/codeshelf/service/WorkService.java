@@ -839,8 +839,11 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		} else { //Bay Distance
 			Location preferredLocation = inOrderDetail.getPreferredLocObject();
 			if (preferredLocation != null 
-				&& preferredLocation.getAssociatedPathSegment() != null
-				&& preferredLocation.getAssociatedPathSegment().getParent() != null) {
+				&& 	(	preferredLocation.getAssociatedPathSegment() != null
+					|| 	preferredLocation.getParent().getAssociatedPathSegment() != null
+					|| 	preferredLocation.getParent().getParent().getAssociatedPathSegment() != null )
+					) 
+			{
 				location = preferredLocation;
 			} else {
 				for (Path path : paths) {
