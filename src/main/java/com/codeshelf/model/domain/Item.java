@@ -437,7 +437,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public boolean isLightable() {
 		Location itemLocation = getStoredLocation();
-		return (itemLocation != null && itemLocation.isLightable());
+		return (itemLocation != null && itemLocation.isLightableAisleController());
 	}
 
 	public String toLogString() {
