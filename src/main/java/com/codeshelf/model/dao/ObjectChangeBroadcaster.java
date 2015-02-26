@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.IDomainObject;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -17,7 +18,8 @@ public class ObjectChangeBroadcaster {
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(ObjectChangeBroadcaster.class);
 
-	private SetMultimap<Class<? extends IDomainObject>, IDaoListener> mListeners = HashMultimap.create();
+	private SetMultimap<Class<? extends IDomainObject>, IDaoListener> mListeners 
+		= Multimaps.synchronizedSetMultimap(HashMultimap.<Class<? extends IDomainObject>, IDaoListener>create());
 
 	@Inject
 	public ObjectChangeBroadcaster() {
@@ -28,8 +30,11 @@ public class ObjectChangeBroadcaster {
 	 * @param inDomainObject
 	 */
 	public void broadcastAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
-		for (final IDaoListener daoListener : mListeners.get(domainClass)) {
-			daoListener.objectAdded(domainClass, domainPersistentId);
+		Set<IDaoListener> listeners = mListeners.get(domainClass);
+		synchronized(this.mListeners) {
+			for (final IDaoListener daoListener : listeners) {
+				daoListener.objectAdded(domainClass, domainPersistentId);
+			}
 		}
 	}
 

@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +67,7 @@ public class SessionManagerService extends AbstractScheduledService {
 	@Getter @Setter
 	int pingInterval = 60*1000;
 	
-	private HashMap<String,UserSession> activeSessions; 
+	private ConcurrentMap<String,UserSession> activeSessions; 
 	private ExecutorService	sharedExecutor;
 
 	private Counter activeSessionsCounter;
@@ -312,7 +314,7 @@ public class SessionManagerService extends AbstractScheduledService {
 		ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
 		builder.setNameFormat("UserSession %s");
 		this.sharedExecutor = Executors.newCachedThreadPool(builder.build());
-		this.activeSessions = Maps.newHashMap();
+		this.activeSessions = Maps.newConcurrentMap();
 		
 		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
 		killIdle = Boolean.getBoolean("websocket.idle.kill");

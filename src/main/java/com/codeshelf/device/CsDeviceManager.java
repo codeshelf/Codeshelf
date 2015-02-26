@@ -325,6 +325,11 @@ public class CsDeviceManager implements
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
 			}
 		}
+		try {
+			client.disconnect();
+		} catch (IOException e) {
+			LOGGER.error("failed to disconnect client", e);
+		}
 	}
 
 	@Override
