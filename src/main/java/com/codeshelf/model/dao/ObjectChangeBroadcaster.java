@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.IDomainObject;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -17,7 +18,9 @@ public class ObjectChangeBroadcaster {
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(ObjectChangeBroadcaster.class);
 
-	private SetMultimap<Class<? extends IDomainObject>, IDaoListener> mListeners = HashMultimap.create();
+	private SetMultimap<Class<? extends IDomainObject>, IDaoListener> mListeners
+		= HashMultimap.create();
+	//	= Multimaps.synchronizedSetMultimap(HashMultimap.<Class<? extends IDomainObject>, IDaoListener>create());
 
 	@Inject
 	public ObjectChangeBroadcaster() {
@@ -27,9 +30,12 @@ public class ObjectChangeBroadcaster {
 	/**
 	 * @param inDomainObject
 	 */
-	public void broadcastAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
-		for (final IDaoListener daoListener : mListeners.get(domainClass)) {
-			daoListener.objectAdded(domainClass, domainPersistentId);
+	public synchronized void broadcastAdd(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		Set<IDaoListener> listeners = mListeners.get(domainClass);
+		if(listeners != null) {
+			for (final IDaoListener daoListener : listeners) {
+				daoListener.objectAdded(domainClass, domainPersistentId);
+			}
 		}
 	}
 
@@ -37,15 +43,16 @@ public class ObjectChangeBroadcaster {
 	/**
 	 * @param inDomainObject
 	 */
-	public void broadcastUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, final Set<String> inChangedProperties) {
-		Set<Class<? extends IDomainObject>> keys = mListeners.keySet();
-		for (Class<? extends IDomainObject> keyClass : keys) {
+	public synchronized void broadcastUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, final Set<String> inChangedProperties) {
+		Set<Class<? extends IDomainObject>> listenClasses = mListeners.keySet();
+		for (Class<? extends IDomainObject> keyClass : listenClasses) {
 			if (keyClass.isAssignableFrom(domainClass)) {
 				
 				Set<IDaoListener> listenersForClass = mListeners.get(keyClass);
 				for (final IDaoListener daoListener : listenersForClass) {
 					daoListener.objectUpdated(domainClass, domainPersistentId, inChangedProperties);
-				}			}
+				}			
+			}
 		}
 	}
 
@@ -53,9 +60,12 @@ public class ObjectChangeBroadcaster {
 	/**
 	 * @param inDomainObject
 	 */
-	public void broadcastDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
-		for (final IDaoListener daoListener : mListeners.get(domainClass)) {
-			daoListener.objectDeleted(domainClass, domainPersistentId);
+	public synchronized void broadcastDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		Set<IDaoListener> listeners = mListeners.get(domainClass);
+		if(listeners != null) {
+			for (final IDaoListener daoListener : listeners) {
+				daoListener.objectDeleted(domainClass, domainPersistentId);
+			}
 		}
 	}
 
@@ -65,7 +75,7 @@ public class ObjectChangeBroadcaster {
 	 * 
 	 * @see com.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
-	public final void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
+	public final synchronized void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
 		mListeners.put(daoClass, inListener);
 	}
 
@@ -75,15 +85,23 @@ public class ObjectChangeBroadcaster {
 	 * 
 	 * @see com.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
-	public final void unregisterDAOListener(IDaoListener inListener) {
-		//Copy on write
+	public final synchronized void unregisterDAOListener(IDaoListener inListener) {
 		SetMultimap<Class<? extends IDomainObject>, IDaoListener> newMap = HashMultimap.create();
-		for (Class<? extends IDomainObject> key : mListeners.keySet()) {
+		Set<Class<? extends IDomainObject>> listenClasses = mListeners.keySet();
+		for (Class<? extends IDomainObject> key : listenClasses) {				
 			Set<IDaoListener> newSet = Sets.newHashSet(mListeners.get(key));
 			newSet.remove(inListener);
 			newMap.putAll(key, newSet);
 		}
 		mListeners = newMap;
+
+		/*
+		Set<Class<? extends IDomainObject>> listenClasses = mListeners.keySet();
+		for (Class<? extends IDomainObject> key : listenClasses) {				
+			Set<IDaoListener> listeners = mListeners.get(key);
+			listeners.remove(inListener);
+		}
+		*/
 	}
 
 	/*
@@ -92,7 +110,7 @@ public class ObjectChangeBroadcaster {
 	 * 
 	 * @see com.codeshelf.model.dao.ISystemDAO#unRegisterDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
-	public final void removeDAOListeners() {
+	public final synchronized void removeDAOListeners() {
 		mListeners.clear();
 	}
 

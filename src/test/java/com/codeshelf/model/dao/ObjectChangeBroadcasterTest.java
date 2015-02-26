@@ -101,6 +101,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(updatedDesc,foundFacility.getDescription());
 			this.getTenantPersistenceService().commitTransaction();
+			Thread.sleep(1000); //shame on me
 		} finally {
 			broadcaster.unregisterDAOListener(l);
 		}
