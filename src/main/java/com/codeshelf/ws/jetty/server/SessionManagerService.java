@@ -88,9 +88,12 @@ public class SessionManagerService extends AbstractScheduledService {
 	}
 */
 	public synchronized UserSession sessionStarted(Session session) {
-		if(this.state() != State.RUNNING) {
+		if(this.activeSessions == null) {
+			LOGGER.warn("sessionStarted called while service is uninitialized or resetting for test");
+			return null; // this should only happen in tests
+		} else if(this.state() != State.RUNNING) {
 			LOGGER.warn("sessionStarted called while service state is {}",this.state().toString());
-			return null; // called while shutting down or resetting - this should only happen in tests
+			return null; // called while shutting down - this should only happen in tests or maybe not at all
 		}
 
 		String sessionId = session.getId();
@@ -306,7 +309,7 @@ public class SessionManagerService extends AbstractScheduledService {
 	}
 	
 	@Override
-	protected void startUp() throws Exception {
+	protected synchronized void startUp() throws Exception {
 		activeSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.active");
 		activeSiteControllerSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.sitecontrollers");
 		totalSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.total");
@@ -322,10 +325,11 @@ public class SessionManagerService extends AbstractScheduledService {
 	}
 
 	@Override
-	protected void shutDown() throws Exception {
+	protected synchronized void shutDown() throws Exception {
 		LOGGER.info("shutting down session manager with {} active sessions",this.activeSessions.size());
-		for(UserSession session : this.activeSessions.values()) {
-			session.disconnect(new CloseReason(CloseCodes.GOING_AWAY,""));
+		Collection<UserSession> sessions = this.activeSessions.values();
+		for(UserSession session : sessions) {
+			session.getWsSession().close(new CloseReason(CloseCodes.GOING_AWAY,""));
 		}
 		this.activeSessions = null;
 		this.sharedExecutor.shutdown();
@@ -335,10 +339,10 @@ public class SessionManagerService extends AbstractScheduledService {
 	}
 
 	@Override
-	protected void runOneIteration() throws Exception {
+	protected synchronized void runOneIteration() throws Exception {
 		
 		try {
-			if(this.activeSessions != null) { // service is not shutting down
+			if(this.activeSessions != null) { // service is not shutting down or resetting
 				int pings = 0;
 				// check status, send keepalive etc on all sessions
 				Collection<UserSession> sessions = this.getSessions();

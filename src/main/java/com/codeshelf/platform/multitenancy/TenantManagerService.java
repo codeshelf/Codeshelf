@@ -429,7 +429,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	protected void shutDown() throws Exception {
 		if(!this.shutdownCleanupRequest.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
 			try {
-				TenantPersistenceService.getInstance().awaitTerminated(30, TimeUnit.SECONDS);
+				TenantPersistenceService.getMaybeRunningInstance().awaitTerminated(30, TimeUnit.SECONDS);
 			} catch (TimeoutException e) {
 				LOGGER.error("timeout waiting for tenant persistence to shut down, cannot perform cleanup", e);
 				this.shutdownCleanupRequest = TenantManagerService.ShutdownCleanupReq.NONE;
