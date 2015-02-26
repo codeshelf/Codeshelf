@@ -8,9 +8,12 @@ package com.codeshelf.model.dao;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.hibernate.LazyInitializationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -263,7 +266,24 @@ public abstract class DAOTestABC {
 		this.sessionManagerService.reset();
 
 		Assert.assertFalse(hadActiveTransactions);
-
+		
+		// TODO: reenable! fails because we aren't cleaning up client threads
+		//inspectThreads();
+	
+	}
+	
+	protected void inspectThreads() {
+		Map<Thread, StackTraceElement[]> traces = Thread.getAllStackTraces();
+		Set<Thread> threads = traces.keySet();
+		int wsThreads=0;
+		for(Thread thread : threads) {
+			if(thread.getName().startsWith("WebSocketClient")) {
+				wsThreads++;
+			}
+		}
+		if(wsThreads>10) {
+			Assert.fail(""+wsThreads+" websocketclients"); 
+		}
 	}
 
 	protected String getTestName() {
