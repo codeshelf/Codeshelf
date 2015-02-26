@@ -39,6 +39,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.service.WorkService;
 
 /**
  *
@@ -180,6 +181,30 @@ public class InventoryPickRunTest extends EdiTestABC {
 		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
+	
+	private void readOrdersForBayDistance(Facility inFacility) throws IOException {
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// SKU 1123 needed for 12000
+		// SKU 1123 needed for 12010
+		// Each product needed for 12345
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDetailId,locationId"
+				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each,101,D-27"	// Should get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1830,Shorts-large,1,each,102"			// Should not get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each,103"
+				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"
+				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
+				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
+
+		byte[] csvArray2 = csvString2.getBytes();
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+
+	}
 
 	private void readInventoryWithoutTop(Facility inFacility) throws IOException {
 		// A1.B1.T2 is D-26.
@@ -240,6 +265,44 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1831,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1830,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+	}
+	
+	private void readInventoryBayDistance(Facility inFacility) throws IOException {
+		// A1.B1.T2 is D-26.
+		// In D-26, left to right are SKUs 1124,1126,1123,1125
+
+		// A1.B2.T2 is D-28
+		// In D-28, left to right are SKUs 1522,1525
+
+		// A1.B1.T3 is D-71
+		// In D-71, left to right are SKUs 1523
+
+		// A1.B2.T3 is D-72
+		// In D-72, left to right are SKUs 1524
+
+		// A1.B1.T1 is D-27.
+		// In D-27, left to right are SKUs  1831, 1830
+
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
+				+ "1124,D-26,12 oz Bowl Lids,0,ea,6/25/14 12:00,8\r\n" //
+				+ "1125,D-26,16 oz Bowl Lids,,each,6/25/14 12:00,185\r\n" //
+				+ "1126,D-26,24 oz Bowl Lids,80,each,6/25/14 12:00,55\r\n" //
+				+ "1522,D-28,Tshirt-small,,ea,,3\r\n" //
+				+ "1523,D-71,Tshirt-med,,ea,,190\r\n" //
+				+ "1524,D-72,Tshirt-large,0,ea,6/25/14 12:00,214\r\n" //
+				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1831,,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1830,,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -511,6 +574,63 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		Assert.assertEquals((Integer) 4, theSize);
 		this.getTenantPersistenceService().commitTransaction();
 
+	}
+	
+	@Test
+	public final void testBayDistance() throws IOException {
+		// Paul - this test is for you!
+		// Note: I'm not sure if I did the workservice correctly. Please check below.
+		this.getTenantPersistenceService().beginTransaction();
+
+		
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
+		
+		LOGGER.info("1: Set WORKSEQR = BayDistance.");
+		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("BayDistance");
+			PropertyDao.getInstance().store(theProperty);
+		}
+		
+		// Inventory
+		readInventoryBayDistance(facility);
+
+		// Orders
+		readOrdersForBayDistance(facility);
+		
+		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		Assert.assertNotNull(orderHeader);
+		
+		// 101 item does not have an inventory location
+		// 101 has a preferred location that is on a path
+		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
+		Assert.assertNotNull(orderDetail);
+		// FIXME - Is this correct?
+		orderDetail.workService = workService;
+		
+		Assert.assertTrue(orderDetail.willProduceWi());
+		
+		// 102 items does not have an inventory location
+		// 102 does not have a preferred location
+		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
+		Assert.assertNotNull(orderDetail2);
+		// FIXME - Ist this correct?
+		orderDetail2.workService = workService;
+		
+		Assert.assertFalse(orderDetail2.willProduceWi());
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
+	@Test
+	public final void testWorkSequence() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
+		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 }
