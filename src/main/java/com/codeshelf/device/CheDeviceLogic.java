@@ -110,6 +110,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	
 	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
 	protected static final String			SCAN_SKIP								= "SCANSKIP";
+	protected static final String			SKIP_SCAN								= "SKIPSCAN";
 
 	protected static final Integer			maxCountForPositionControllerDisplay	= 99;
 
@@ -1201,7 +1202,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		String returnString = "";
 		
 		// If the user scanned SCANSKIP return true
-		if (inScanStr.equals(SCAN_SKIP)){
+		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)){
 			// TODO need better warning message here. Get orderId and pickerId?
 			LOGGER.warn("SCANSKIP for work instruction");
 			return returnString;
