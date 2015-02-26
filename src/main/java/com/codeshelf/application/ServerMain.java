@@ -97,9 +97,12 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
 import com.codeshelf.platform.multitenancy.ITenantManager;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.CodeshelfRealm;
+import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
@@ -176,8 +179,14 @@ public final class ServerMain {
 			protected void configure() {
 				bind(ITenantManager.class).toInstance(TenantManagerService.getNonRunningInstance());
 				
+				requestStaticInjection(TenantPersistenceService.class);
+				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
+
+				requestStaticInjection(PropertyService.class);
+				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
 
 				//bind(EdiProcessor.class).to(EdiProcessor.class).in(Singleton.class);
 
@@ -194,8 +203,6 @@ public final class ServerMain {
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 
-				bind(PropertyService.class).toInstance(new PropertyService());
-				
 				// jetty websocket
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 				
@@ -222,6 +229,7 @@ public final class ServerMain {
 				SessionManagerService sessionManagerService = new SessionManagerService();
 				return sessionManagerService;				
 			}
+			
 		}, createGuiceServletModule(), createDaoBindingModule());
 
 		return injector;

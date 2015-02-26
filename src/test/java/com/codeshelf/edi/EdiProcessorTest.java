@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.JvmProperties;
+import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -31,6 +32,7 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.util.concurrent.Service;
@@ -123,8 +125,9 @@ public class EdiProcessorTest /* extends EdiTestABC */{
 
 		Facility.DAO = new TestFacilityDao(facility);
 
-		MetricsService.dummyIfNotStarted();
-		TenantPersistenceService.dummyIfNotStarted();
+		MetricsService.setInstance(new DummyMetricsService());
+		ITenantPersistenceService mock = mock(ITenantPersistenceService.class);
+		TenantPersistenceService.setInstance(mock);
 
 		IEdiService ediServiceLinked = new IEdiService() {
 

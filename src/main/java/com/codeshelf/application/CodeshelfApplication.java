@@ -29,6 +29,7 @@ import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
@@ -76,11 +77,16 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		if(service == null) {
 			LOGGER.warn("not registering null Service");
 		} else {
-			if(service.state().equals(Service.State.NEW)) {
-				this.services.add(service);
+			State state = service.state();
+			if(state == null) {
+				LOGGER.warn("not registering apparent mock service {}",service.getClass().getSimpleName());
 			} else {
-				LOGGER.warn("not registering service that has already been started ({})",service.getClass().getSimpleName());
-			}	
+				if(state.equals(Service.State.NEW)) {
+					this.services.add(service);
+				} else {
+					LOGGER.warn("not registering service that has already been started ({})",service.getClass().getSimpleName());
+				}	
+			}
 		}
 	}
 	// --------------------------------------------------------------------------

@@ -1086,7 +1086,7 @@ public class Facility extends Location {
 	@JsonProperty("hasCrossBatchOrders")
 	public boolean hasCrossBatchOrders() {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
-		String theValue = PropertyService.getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		String theValue = PropertyService.getInstance().getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}

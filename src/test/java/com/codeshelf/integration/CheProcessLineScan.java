@@ -725,13 +725,13 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
 		}
 		setUpLineScanOrdersWithCntr(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -788,7 +788,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
@@ -960,7 +960,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
@@ -1081,7 +1081,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.DAO.store(che1);
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.SCANPICK);
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);

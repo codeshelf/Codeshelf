@@ -10,7 +10,7 @@ public class ServiceFactory {
 	private HashMap<Class<? extends IApiService>, IApiService>	mServices;
 
 	@Inject
-	public ServiceFactory(WorkService workService, LightService lightService, PropertyService propertyService, UiUpdateService uiUpdateService) {
+	public ServiceFactory(WorkService workService, LightService lightService, IPropertyService propertyService, UiUpdateService uiUpdateService) {
 		mServices = Maps.newHashMap();
 		mServices.put(WorkService.class, workService);
 		mServices.put(LightService.class, lightService);

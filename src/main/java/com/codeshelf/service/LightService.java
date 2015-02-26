@@ -44,7 +44,6 @@ public class LightService implements IApiService {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
 
-	private final PropertyService			propertyService;
 	private final SessionManagerService			sessionManagerService;
 	private final ScheduledExecutorService	mExecutorService;
 	private Future<Void>					mLastChaserFuture;
@@ -58,12 +57,11 @@ public class LightService implements IApiService {
 	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
-	public LightService(PropertyService propertyService,SessionManagerService sessionManagerService) {
-		this(propertyService, sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+	public LightService(SessionManagerService sessionManagerService) {
+		this(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
 	}
 
-	LightService(PropertyService propertyService, SessionManagerService sessionManagerService, ScheduledExecutorService executorService) {
-		this.propertyService = propertyService;
+	LightService(SessionManagerService sessionManagerService, ScheduledExecutorService executorService) {
 		this.sessionManagerService = sessionManagerService;
 		this.mExecutorService = executorService;
 	}
@@ -75,7 +73,7 @@ public class LightService implements IApiService {
 	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
 		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
 		Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = this.propertyService.getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
 		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
@@ -94,7 +92,7 @@ public class LightService implements IApiService {
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 
 		Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = this.propertyService.getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 		if (theLocation.getActiveChildren().isEmpty()) {
@@ -106,7 +104,7 @@ public class LightService implements IApiService {
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
 		Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = this.propertyService.getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 
@@ -133,7 +131,7 @@ public class LightService implements IApiService {
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
 	private void lightOneLocation(final Facility facility, final Location theLocation) {
-		ColorEnum color = this.propertyService.getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		if (theLocation.isLightable()) {
 			LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, theLocation);
@@ -258,7 +256,7 @@ public class LightService implements IApiService {
 		final ColorEnum inColor,
 		Location inLocation,
 		final LedRange ledRange) {
-		int lightDuration = this.propertyService.getPropertyAsInt(facility,
+		int lightDuration = PropertyService.getInstance().getPropertyAsInt(facility,
 			DomainObjectProperty.LIGHTSEC,
 			defaultLightDurationSeconds);
 

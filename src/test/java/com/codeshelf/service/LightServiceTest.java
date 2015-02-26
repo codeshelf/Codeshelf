@@ -10,16 +10,20 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
@@ -54,13 +58,15 @@ import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.ServiceManager;
 
 public class LightServiceTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LightServiceTest.class);
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException {
+	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		
 		LOGGER.info("0: Starting test:  getting facility");
 		this.getTenantPersistenceService().beginTransaction();
@@ -95,7 +101,12 @@ public class LightServiceTest extends EdiTestABC {
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
 		SessionManagerService sessionManagerService = mock(SessionManagerService.class);
-		PropertyService mockProp = mock(PropertyService.class);
+		IPropertyService mockProp = Mockito.spy(new DummyPropertyService());
+		ArrayList<Service> services = new ArrayList<Service>(1);
+		services.add(mockProp);
+		ServiceManager serviceManager = new ServiceManager(services); // todo: shortcut method to start/destroy service for single test
+		serviceManager.startAsync().awaitHealthy();
+		PropertyService.setInstance(mockProp);
 		
 		when(mockProp.getPropertyAsColor(any(IDomainObject.class), anyString(), any(ColorEnum.class))).then(new Answer<ColorEnum>() {
 		    @Override
@@ -105,7 +116,7 @@ public class LightServiceTest extends EdiTestABC {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService(mockProp, sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
 
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
@@ -129,6 +140,8 @@ public class LightServiceTest extends EdiTestABC {
 			LightLedsMessage message = (LightLedsMessage) messageABC;
 			assertWillLightItem(itemIterator.next(), message);
 		}
+		
+		serviceManager.stopAsync().awaitStopped();
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -271,7 +284,7 @@ public class LightServiceTest extends EdiTestABC {
 		SessionManagerService sessionManagerService = mock(SessionManagerService.class);
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService(mock(PropertyService.class),  sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
 		Future<Void> complete = lightService.lightChildLocations(facility, parent, color);
 		complete.get(); //wait for completion
 		

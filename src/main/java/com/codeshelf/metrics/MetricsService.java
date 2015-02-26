@@ -54,10 +54,9 @@ public class MetricsService extends AbstractIdleService implements IMetricsServi
 		}
 		return theInstance;
 	}
-	public final static void dummyIfNotStarted() { 
-		// for testing
-		if(theInstance == null) 
-			theInstance = new DummyMetricsService();
+	public final static void setInstance(IMetricsService instance) { 
+		// for testing only!
+		theInstance = instance;
 	}
 	
 	private static String getFullName(MetricsGroup group, String metricName) {

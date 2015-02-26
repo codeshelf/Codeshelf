@@ -84,7 +84,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final Facility inFacility,
 		Timestamp inProcessTime) {
 		// Get our LOCAPICK configuration value. It will not change during importing one file.
-		boolean locapickValue = PropertyService.getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.LOCAPICK);
+		boolean locapickValue = PropertyService.getInstance().getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.LOCAPICK);
 		setLocapickValue(locapickValue);
 		mEvaluationList.clear();
 

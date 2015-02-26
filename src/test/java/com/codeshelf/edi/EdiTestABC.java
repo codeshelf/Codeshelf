@@ -17,11 +17,9 @@ import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
-	protected PropertyService mPropertyService = new PropertyService();
 	
 	private EventProducer		mEventProducer	= new EventProducer();
 

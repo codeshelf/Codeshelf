@@ -3,7 +3,6 @@ package com.codeshelf.platform.persistence;
 import java.lang.reflect.Field;
 
 import org.hibernate.Transaction;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,41 +12,39 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.google.inject.Inject;
 
-public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> {
+public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
-	private static PersistenceService<Tenant> theInstance = null;
+	@Inject
+	private static ITenantPersistenceService theInstance;
 
+	@Inject
 	private TenantPersistenceService() {
 		super();
 	}
 
-	/**
-	 * singleton service: any method attempting to access before service 
-	 * is initialized will block; only the service manager can start service 
-	 */
-	public final synchronized static PersistenceService<Tenant> getMaybeRunningInstance() {
-		if (theInstance == null) {
-			theInstance = new TenantPersistenceService();
-		}
+	public final synchronized static ITenantPersistenceService getMaybeRunningInstance() {
 		return theInstance;
 	}
-	public final synchronized static PersistenceService<Tenant> getNonRunningInstance() {
+	public final synchronized static ITenantPersistenceService getNonRunningInstance() {
 		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
 			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
 	}
-	public final static PersistenceService<Tenant> getInstance() {
+	/**
+	 * singleton service: access before service is initialized will block; 
+	 * only the service manager should start service 
+	 */
+	public final static ITenantPersistenceService getInstance() {
 		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
 	}
-	@SuppressWarnings("unchecked")
-	public final static void dummyIfNotStarted() {
-		if(theInstance == null) {
-			theInstance = Mockito.mock(PersistenceService.class);
-		}
+	public final static void setInstance(ITenantPersistenceService instance) {
+		// for testing only!
+		theInstance = instance;
 	}
 	
 	@Override

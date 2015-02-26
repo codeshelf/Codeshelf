@@ -26,9 +26,8 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 
 /**
  * @author jeffw
@@ -226,7 +225,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
-		PersistenceService<Tenant> tenantPersistenceService=this.getTenantPersistenceService();
+		ITenantPersistenceService tenantPersistenceService=this.getTenantPersistenceService();
 		tenantPersistenceService.beginTransaction();
 
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);

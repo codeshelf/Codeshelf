@@ -181,7 +181,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
-		mPropertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		
 		return getFacility();
 	}
@@ -299,10 +299,10 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersWithCntr(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -355,11 +355,11 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
         facility = Facility.DAO.reload(facility);
         Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 		
 		setUpLineScanOrdersWithCntr(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		
@@ -585,11 +585,11 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 
 		setUpLineScanOrdersWithCntr(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
 		
 		CsDeviceManager manager = this.getDeviceManager();
@@ -683,11 +683,11 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
 		
 		CsDeviceManager manager = this.getDeviceManager();
@@ -723,7 +723,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();

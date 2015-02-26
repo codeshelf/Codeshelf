@@ -1068,7 +1068,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		Assert.assertEquals(0, items.size()); // No inventory created
 
 		// Now set up for next case.
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
@@ -1108,7 +1108,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 		loadSmallAislesAndLocations(facility);
 
 		LOGGER.info("2: Set LOCAPICK = true");
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);

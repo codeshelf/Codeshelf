@@ -165,9 +165,9 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		Assert.assertEquals((Integer) 4, detailCount);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "12345");
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);
