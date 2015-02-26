@@ -101,9 +101,6 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-	//private Thread	serviceThread = null;
-	
-	private final IPropertyService propertyService;
 	
 	@ToString
 	public static class Work {
@@ -134,7 +131,6 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	}
 
 	public WorkService(IEdiExportServiceProvider exportServiceProvider) {
-		this.propertyService = PropertyService.getInstance();
 		init(exportServiceProvider);
 	}
 
@@ -829,7 +825,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
 		// we can make the work instruction anyway. 
 		Location location = null;
-		String workSeqr = propertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
 		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
 			if (inOrderDetail.getWorkSequence() != null) {
 				location = inOrderDetail.getPreferredLocObject();
