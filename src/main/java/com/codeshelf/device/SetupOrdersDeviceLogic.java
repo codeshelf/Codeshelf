@@ -792,11 +792,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * WARNING: The parameter is the scanned location, or "START", or "REVERSE"
 	 * @param inLocationStr
 	 */
-	private void requestWorkAndSetGetWorkState(final String inLocationStr) {
+	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
 		
-		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr);
+		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr, getMReversePickOrder(), reverseOrderFromLastTime);
 		setState(CheStateEnum.GET_WORK);
 	}
 
@@ -807,7 +807,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			requestWorkAndSetGetWorkState(inScanStr);
+			requestWorkAndSetGetWorkState(inScanStr, false);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
 			invalidScanMsg(mCheStateEnum);
@@ -860,6 +860,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SCAN_SOMETHING:
+				// At any time during the pick we can change locations.
+				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
+					processLocationScan(inScanPrefixStr, inContent);
+				}
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
@@ -1103,6 +1107,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * 
 	 */
 	private void startWorkCommandReceived(final String inScanStr) {
+		boolean reverse = REVERSE_COMMAND.equalsIgnoreCase(inScanStr);
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -1111,7 +1116,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do nothing. Only a "Clear Error" will get you out
+				//Do nothing. Only a "Clear Error" will get you out 
 				break;
 
 			case CONTAINER_POSITION:
@@ -1124,7 +1129,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
 				if (isOkToStartWithoutLocation()) {
 					LOGGER.info("starting without a start location");
-					requestWorkAndSetGetWorkState(inScanStr);
+					boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
+					//Remember the selected pick direction
+					setMReversePickOrder(reverse);
+					requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
 				} else { // do as we did before
 					if (mPositionToContainerMap.values().size() > 0) {
 						startWork(inScanStr);
@@ -1139,6 +1147,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {
 					startWork(inScanStr);
+					//Remember the selected pick direction
+					setMReversePickOrder(reverse);
 				} else {
 					setState(CheStateEnum.NO_CONTAINERS_SETUP);
 				}
@@ -1154,13 +1164,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * This goes to COMPUTE_WORK state which basically just waits for the server response.
 	 * I think for this, we always want to computeCheWork uniformly, in the forward direction. Will get reversed later.
 	 */
-	private void startWork(final String inScanStr) {
-		boolean isReverse = inScanStr.equals(REVERSE_COMMAND);
+	private void startWork(final String inScanedPickDirections) {
+		boolean isReverse = inScanedPickDirections.equals(REVERSE_COMMAND);
 		
 		clearAllPositionControllers();
 		mContainerInSetup = "";
 		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
-		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList, isReverse);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
 

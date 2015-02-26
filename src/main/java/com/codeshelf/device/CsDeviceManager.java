@@ -246,14 +246,14 @@ public class CsDeviceManager implements
 	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
+	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList, final Boolean reverse) {
 		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, inContainerIdList);
 		String cheId = inPersistentId.toString();
 		LinkedList<String> containerIds = new LinkedList<String>();
 		for (String containerId : inContainerIdList) {
 			containerIds.add(containerId);
 		}
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds, reverse);
 		client.sendMessage(req);
 	}
 
@@ -270,10 +270,10 @@ public class CsDeviceManager implements
 	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
+	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId);
+		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
 		client.sendMessage(req);
 	}
 

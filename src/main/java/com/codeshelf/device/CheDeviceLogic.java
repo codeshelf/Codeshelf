@@ -162,6 +162,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected int							mSetStateStackCount						= 0;
 
 	protected ScanNeededToVerifyPick		mScanNeededToVerifyPick;
+	
+	@Getter @Setter
+	protected Boolean						mReversePickOrder = false;
 
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),

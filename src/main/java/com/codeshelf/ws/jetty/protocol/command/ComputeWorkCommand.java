@@ -41,7 +41,7 @@ public class ComputeWorkCommand extends CommandABC {
 		if (che != null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			// Get the work instructions for this CHE at this location for the given containers.
-			WorkList workList = workService.computeWorkInstructions(che, request.getContainerIds());
+			WorkList workList = workService.computeWorkInstructions(che, request.getContainerIds(), request.getReversePick());
 
 			//Get the counts
 			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList);

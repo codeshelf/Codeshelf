@@ -152,6 +152,10 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	 * @return
 	 */
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+		return computeWorkInstructions(inChe, inContainerIdList, false);
+	}
+	
+	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
 		clearChe(inChe);
@@ -227,7 +231,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		//sortAndSaveActionableWIs(facility, wiResultList);
-		sortAndSaveActionableWIs(facility, workList.getInstructions());
+		sortAndSaveActionableWIs(facility, workList.getInstructions(), reverse);
 
 		LOGGER.info("TOTAL WIs {}", workList.getInstructions());
 
@@ -441,14 +445,18 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
+		return getWorkInstructions(inChe, inScannedLocationId, false, false);
+	}
+	
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 		
-		boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
-		boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
+		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
+		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
 		//Get current complete list of WIs
-		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0);
+		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -464,8 +472,8 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		
 		//Scanning "start" used to send a "" location here, to getWorkInstructions().
 		//Now, we pass "start" or "reverse", instead, but still need to pass "" to the getStartingPathDistance() function below.
-		String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
-		Double startingPathPos = getStartingPathDistance(facility, locationIdCleaned);
+		//String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
+		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
 		
 		if (startingPathPos == null) {
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
@@ -476,7 +484,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				}
 			}
 			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
-			if (reverse) {
+			if (reverseOrderFromLastTime) {
 				preferredInstructions = Lists.reverse(preferredInstructions);
 			}
 			if (preferredInstructions.size() > 0) {
@@ -487,16 +495,12 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
-		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos);
+		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos, reversePickOrder);
 
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
 		
-		if (reverse) {
-			wiListFromStartLocation = Lists.reverse(wiListFromStartLocation);
-		}
-
 		List<WorkInstruction> wrappedRouteWiList = null;
 		if (wiListFromStartLocation.size() == completeRouteWiList.size()) {
 			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
@@ -522,6 +526,9 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 			}
 		}
 
+		if (reverseOrderFromLastTime) {
+			wrappedRouteWiList = Lists.reverse(wrappedRouteWiList);
+		}
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
@@ -926,7 +933,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		return false;
 	}
 
-	private void sortAndSaveActionableWIs(Facility facility, List<WorkInstruction> allWIs) {
+	private void sortAndSaveActionableWIs(Facility facility, List<WorkInstruction> allWIs, Boolean reverse) {
 		//Create a copy of the list to prevent unintended side effects from filtering
 		allWIs = Lists.newArrayList(allWIs);
 		//Now we want to filer/sort and save the work instructions that are actionable
@@ -945,6 +952,9 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
 
 		List<WorkInstruction> sortedWIResults = sequencer.sort(facility, allWIs);
+		if (reverse) {
+			sortedWIResults = Lists.reverse(sortedWIResults);
+		}
 
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
@@ -1078,7 +1088,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	 * @param inWiList
 	 * May return empty list, but never null
 	 */
-	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition) {
+	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition, final Boolean getBeforePosition) {
 		List<WorkInstruction> cheWorkInstructions = new ArrayList<>();
 		if (inChe == null || inFromStartingPosition == null) {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
@@ -1094,7 +1104,11 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe", inChe));
 		filterParams.add(Restrictions.in("type", wiTypes));
-		filterParams.add(Restrictions.ge("posAlongPath", inFromStartingPosition));
+		if (getBeforePosition) {
+			filterParams.add(Restrictions.le("posAlongPath", inFromStartingPosition));
+		} else {
+			filterParams.add(Restrictions.ge("posAlongPath", inFromStartingPosition));
+		}
 
 		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
