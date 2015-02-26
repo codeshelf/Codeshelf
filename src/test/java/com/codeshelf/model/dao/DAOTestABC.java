@@ -187,14 +187,15 @@ public abstract class DAOTestABC {
 	public void doBefore() throws Exception {	
 		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 
+		TenantPersistenceService.setInstance(staticTenantPersistenceService);
+		PropertyService.setInstance(staticPropertyService); //OrderDetail currently depends on work service having a property service early
+ 
 		// this will cause DAOs to get statically reinjected, in case they were messed with
 		@SuppressWarnings("unused")
 		Injector injector = Guice.createInjector(ServerMain.createDaoBindingModule());
 
 		// reset long-lived singleton instances, in case they were messed with
 		MetricsService.setInstance(staticMetricsService);
-		PropertyService.setInstance(staticPropertyService);
-		TenantPersistenceService.setInstance(staticTenantPersistenceService);
 		// sessionManager is not statically accessible and basically not mockable, so no worries
 		
 		// make sure default properties are in the database

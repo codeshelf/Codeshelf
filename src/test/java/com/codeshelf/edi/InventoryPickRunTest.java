@@ -575,23 +575,18 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		this.getTenantPersistenceService().commitTransaction();
 
 	}
-/*	
-	@Test
+
+	//@Test
 	public final void testBayDistance() throws IOException {
-		// Paul - this test is for you!
-		// Note: I'm not sure if I did the workservice correctly. Please check below.
 		this.getTenantPersistenceService().beginTransaction();
+		OrderDetail.workService = workService;
 
 		
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
 		
 		LOGGER.info("1: Set WORKSEQR = BayDistance.");
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("BayDistance");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "BayDistance");
 		
 		// Inventory
 		readInventoryBayDistance(facility);
@@ -606,18 +601,14 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		// 101 has a preferred location that is on a path
 		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
 		Assert.assertNotNull(orderDetail);
-		// FIXME - Is this correct?
-		orderDetail.workService = workService;
-		
+	
 		Assert.assertTrue(orderDetail.willProduceWi());
 		
 		// 102 items does not have an inventory location
 		// 102 does not have a preferred location
 		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
 		Assert.assertNotNull(orderDetail2);
-		// FIXME - Ist this correct?
-		orderDetail2.workService = workService;
-		
+	
 		Assert.assertFalse(orderDetail2.willProduceWi());
 		
 		this.getTenantPersistenceService().commitTransaction();
@@ -632,5 +623,5 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
-*/
+
 }

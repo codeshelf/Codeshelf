@@ -711,11 +711,11 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2"); 
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
-		LOGGER.info("2c: START. Still no work, because no inventory. (and LOCAPICK was off, so not made).");
+		LOGGER.info("2c: START. Work because location is resolvable even without inventory. (LOCAPICK was off, so not made).");
 		// This is important. We could in principle make these work instructions as a special case of location-based pick. 
 		// No inventory, but the order detail preferred location is resolvable, so we could do it
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 	
 		// logout back to idle state.
 		picker.logout();

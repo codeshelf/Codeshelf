@@ -652,7 +652,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		mPropertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 		this.setUpOrdersItemsOnSamePath(facility);
 		this.getTenantPersistenceService().commitTransaction();
 

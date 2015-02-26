@@ -77,6 +77,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Inject;
 
 public class WorkService extends AbstractExecutionThreadService implements IApiService {
 
@@ -102,6 +103,8 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	private WorkInstructionCSVExporter	wiCSVExporter;
 	//private Thread	serviceThread = null;
 	
+	private final IPropertyService propertyService;
+	
 	@ToString
 	public static class Work {
 		@Getter
@@ -122,7 +125,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	}
 
 	public WorkService() {
-		init(new IEdiExportServiceProvider() {
+		this(new IEdiExportServiceProvider() {
 			@Override
 			public IEdiService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
@@ -131,6 +134,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	}
 
 	public WorkService(IEdiExportServiceProvider exportServiceProvider) {
+		this.propertyService = PropertyService.getInstance();
 		init(exportServiceProvider);
 	}
 
@@ -825,7 +829,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
 		// we can make the work instruction anyway. 
 		Location location = null;
-		String workSeqr = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = propertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
 		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
 			if (inOrderDetail.getWorkSequence() != null) {
 				location = inOrderDetail.getPreferredLocObject();
