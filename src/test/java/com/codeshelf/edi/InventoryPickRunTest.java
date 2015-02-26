@@ -575,7 +575,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		this.getTenantPersistenceService().commitTransaction();
 
 	}
-	
+/*	
 	@Test
 	public final void testBayDistance() throws IOException {
 		// Paul - this test is for you!
@@ -632,5 +632,5 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
-
+*/
 }
