@@ -37,6 +37,7 @@ import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -66,6 +67,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	@Inject
 	public static ITypedDao<OrderDetail>	DAO;
+	
+	@Inject
+	public static WorkService	workService;
 
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
