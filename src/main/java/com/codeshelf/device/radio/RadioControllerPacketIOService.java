@@ -68,7 +68,7 @@ public class RadioControllerPacketIOService {
 		}
 
 		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-			LOGGER.info("Outbound packet={}", packet);
+			LOGGER.debug("Outbound packet={}", packet);
 		}
 	}
 
@@ -89,7 +89,7 @@ public class RadioControllerPacketIOService {
 						if (packet != null) {
 							// Hand packet off to handler service
 							boolean success = packetHandlerService.handleInboundPacket(packet);
-							LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
+							LOGGER.debug("Inbound packet={}; didGetHandled={}", packet, success);
 							if (!success) {
 
 								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
