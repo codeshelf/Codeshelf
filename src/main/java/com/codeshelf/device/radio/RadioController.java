@@ -202,10 +202,6 @@ public class RadioController implements IRadioController {
 		mControllerThread.start();
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *	
-	 */
 	@Override
 	public final void stopController() {
 		backgroundService.shutdown();
@@ -222,7 +218,6 @@ public class RadioController implements IRadioController {
 	}
 
 	/*
-	 * --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * 
 	 * @see java.lang.Runnable#run()
@@ -275,7 +270,6 @@ public class RadioController implements IRadioController {
 	}
 
 	/*
-	 * --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * 
 	 * @see com.gadgetworks.flyweight.controller.IController#getChannel()
@@ -286,7 +280,6 @@ public class RadioController implements IRadioController {
 	}
 
 	/*
-	 * --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * 
 	 * @see com.gadgetworks.flyweight.controller.IController#setChannel(byte)
@@ -301,8 +294,7 @@ public class RadioController implements IRadioController {
 			mRadioChannel = inChannel;
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
 			if (gatewayInterface instanceof FTDIInterface) {
-				// Net mgmt commands only get sent to the FTDI-controlled radio
-				// network.
+				// Net mgmt commands only get sent to the FTDI-controlled radio network.
 				sendCommand(netSetupCmd, broadcastService.getBroadcastAddress(), false);
 			}
 			LOGGER.info("Radio channel={}", inChannel);
@@ -315,16 +307,11 @@ public class RadioController implements IRadioController {
 	 */
 	private void processEvents() {
 
-		// The controller should process events continuously until the
-		// application wants to quit/exit.
+		// The controller should process events continuously until the application wants to quit/exit.
 		if (mShouldRun) {
 			try {
-				// Check if there are any pending ACK packets that need
-				// resending.
-				// Also consider the case where there is more than one packet
-				// destined for a remote.
-				// (Only re-send one packet per network device, so that packets
-				// arrive in order.)
+				// Check if there are any pending ACK packets that need resending. Also consider the case where there is more than one packet
+				// destined for a remote. (Only re-send one packet per network device, so that packets arrive in order.)
 				if (mPendingAcksMap.size() > 0) {
 					for (BlockingQueue<IPacket> queue : mPendingAcksMap.values()) {
 						// Look at the next packet in the queue.
@@ -335,18 +322,15 @@ public class RadioController implements IRadioController {
 								ContextLogging.setNetGuid(device.getGuid());
 							}
 							try {
-								// If we've timed out waiting for an ACK then
-								// resend the command.
+								// If we've timed out waiting for an ACK then resend the command.
 								if (System.currentTimeMillis() - packet.getSentTimeMillis() > ACK_TIMEOUT_MILLIS) {
 									if ((packet.getSendCount() < ACK_SEND_RETRY_COUNT)
 											&& ((System.currentTimeMillis() - packet.getCreateTimeMillis() < MAX_PACKET_AGE_MILLIS))) {
-
+										//Resend packet
 										sendSpacedPacket(packet);
 									} else {
-										// If we've exceeded the retry time then
-										// remove the packet.
-										// We should probably mark the device
-										// lost and clear the queue.
+										// If we've exceeded the retry time then remove the packet.
+										// We should probably mark the device lost and clear the queue.
 										packet.setAckState(AckStateEnum.NO_RESPONSE);
 										queue.remove();
 										LOGGER.info("Packet acked NO_RESPONSE {}. QueueSize={}", packet, queue.size());
@@ -556,8 +540,7 @@ public class RadioController implements IRadioController {
 				packet.setAckId((byte) nextAckId);
 				packet.setAckState(AckStateEnum.PENDING);
 
-				// Add the command to the pending ACKs map, and increment the
-				// command ID counter.
+				// Add the command to the pending ACKs map, and increment the command ID counter.
 				BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
 				if (queue == null) {
 					queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
@@ -570,10 +553,8 @@ public class RadioController implements IRadioController {
 				// If the ACK queue is too full then pause.
 				boolean success = queue.offer(packet);
 				while (!success) {
-					// Given an ACK timeout of 20ms and a read frequency of 1ms.
-					// If the max queue size is over 20 (and it should be)
-					// then we can drop the earlier packets since they should be
-					// timed out anyway.
+					// Given an ACK timeout of 20ms and a read frequency of 20ms. If the max queue size is over 20 (and it should be)
+					// then we can drop the earlier packets since they should be timed out anyway.
 					IPacket packetToDrop = queue.poll();
 					LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}",
 						queue.size(),
@@ -968,7 +949,8 @@ public class RadioController implements IRadioController {
 			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 
 			device.setLastAckId(inAckId);
-			CommandAssocAck ackCmd = new CommandAssocAck(device.getGuid().getHexStringNoPrefix(),
+			//device.getGuid().getHexStringNoPrefix()
+			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
 				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
 			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
@@ -1000,7 +982,7 @@ public class RadioController implements IRadioController {
 
 				// A concurrentHashMap will never throw
 				// ConcurrentModificationException. Concurrent modications
-				// could happen since below, we (potentially) modify this map
+				// could happen since further below, we (potentially) modify this map
 				// before obtaining a read lock. In that scenario,
 				// we would send a broadcast to that addrr and potentially fail
 				// to set its lastSentTimestamp as it may
@@ -1015,8 +997,7 @@ public class RadioController implements IRadioController {
 
 				long differenceMs = System.currentTimeMillis() - maxLastPacketSentTimestampMs;
 
-				// Sleep if needed to ensure all device are ready to read our
-				// packet.
+				// Sleep if needed to ensure all device are ready to read our packet.
 				// We use a while loop here because sleep is not gaurunteed to
 				// sleep for even at least the specified time.
 				while (differenceMs < PACKET_SPACING_MILLIS) {
@@ -1031,7 +1012,8 @@ public class RadioController implements IRadioController {
 				// Send the broadcast packet
 				packetIOService.handleOutboundPacket(inPacket);
 
-				// Update everybody's last sent timestamp
+				// Update everybody's last sent timestamp. Similar race conditions could occur here (as described above) that would result in
+				//potential non-fatally spaced packets for new devices.
 				for (AtomicLong lastPacketSentTimestamp : mLastPacketSentTimestampMsMap.values()) {
 					lastPacketSentTimestamp.set(inPacket.getSentTimeMillis());
 				}
