@@ -2,8 +2,8 @@ package com.codeshelf.device.radio;
 
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +18,6 @@ import com.codeshelf.metrics.MetricsService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
- * This class handles IO for the radio controller with two threads.
- * 
- * TODO Maybe Make IO Single Threaded, This requires changes to the gateway
- * interface
  * 
  * @author saba
  *
@@ -29,9 +25,10 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerPacketIOService {
 	private static final Logger							LOGGER						= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
-	private final Counter								packetsSentCounter			= MetricsService.addCounter(MetricsGroup.Radio,
-																						"packets.sent");
-	private final ScheduledExecutorService				executorService				= Executors.newScheduledThreadPool(2,
+	private final Counter								packetsSentCounter			= MetricsService.getInstance()
+																						.createCounter(MetricsGroup.Radio,
+																							"packets.sent");
+	private final ExecutorService						executorService				= Executors.newFixedThreadPool(1,
 																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																							.setPriority(Thread.MAX_PRIORITY)
 																							.build());
@@ -52,8 +49,6 @@ public class RadioControllerPacketIOService {
 
 	public void start() {
 		executorService.submit(new PacketReader());
-		// executorService.scheduleWithFixedDelay(new PacketWriter(), 0, 20,
-		// TimeUnit.MILLISECONDS);
 	}
 
 	public void stop() {
@@ -67,12 +62,16 @@ public class RadioControllerPacketIOService {
 	 */
 	public synchronized void handleOutboundPacket(IPacket packet) {
 		// Send packet
-		packet.setSentTimeMillis(System.currentTimeMillis());
 		packet.incrementSendCount();
 		gatewayInterface.sendPacket(packet);
-		packetsSentCounter.inc();
+		packet.setSentTimeMillis(System.currentTimeMillis());
+
+		if (packetsSentCounter != null) {
+			packetsSentCounter.inc();
+		}
+
 		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-			LOGGER.info("OUTBOUND PACKET={}", packet);
+			LOGGER.debug("OUTBOUND PACKET={}", packet);
 		}
 	}
 
@@ -96,7 +95,7 @@ public class RadioControllerPacketIOService {
 							LOGGER.info("INBOUND PACKET={}; didGetHandled={}", packet, success);
 							if (!success) {
 
-								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry packet. Packet={}",
+								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
 									packet);
 								// We will stop reading and try to handle this
 								// packet with an exponential backoff of up to
@@ -135,39 +134,12 @@ public class RadioControllerPacketIOService {
 						sleepTimeMs,
 						packet);
 				} else {
-					break;
+					return;
 				}
 			}
 
 			if (!success) {
 				LOGGER.error("PacketHandlerService failed to accept packet after retries. Dropping packet={}", packet);
-			}
-		}
-
-	}
-
-	private final class PacketWriter implements Runnable {
-
-		@Override
-		public void run() {
-			try {
-				if (gatewayInterface.isStarted()) {
-
-					// Non-busy block and wait for packet to send.
-					IPacket packet = packetsPendingWrite.take();
-					packet.setSentTimeMillis(System.currentTimeMillis());
-					packet.incrementSendCount();
-
-					// Send packet
-					gatewayInterface.sendPacket(packet);
-					packetsSentCounter.inc();
-					if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-						LOGGER.info("OUTBOUND PACKET={}", packet);
-					}
-
-				}
-			} catch (Exception e) {
-				LOGGER.error("Packet Writer Error ", e);
 			}
 		}
 

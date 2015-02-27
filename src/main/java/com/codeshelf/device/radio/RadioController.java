@@ -88,7 +88,6 @@ public class RadioController implements IRadioController {
 	private static final int										ACK_SEND_RETRY_COUNT			= 20;
 	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
-	// The background service delay is reduced to the packet read rate of 1ms to minimize the amount of time a packet is queued before before being sent
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
 
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
@@ -111,10 +110,10 @@ public class RadioController implements IRadioController {
 	// processNetworkCheckCommand only accesses this array for the broadcast network address.
 	private final ChannelInfo[]										mChannelInfo					= new ChannelInfo[MAX_CHANNELS];
 
-	// This 3 variables are only every modified in a synchronized method
-	private boolean													mChannelSelected				= false;
-	private byte													mPreferredChannel;
-	private byte													mRadioChannel					= 0;
+	// This 3 variables are only every modified in a synchronized method but we make volatile so it is visable to other threads.
+	private volatile boolean										mChannelSelected				= false;
+	private volatile byte											mPreferredChannel;
+	private volatile byte											mRadioChannel					= 0;
 
 	private Thread													mControllerThread;
 
@@ -144,7 +143,6 @@ public class RadioController implements IRadioController {
 	 */
 	private final ReadWriteLock										broadcastReadWriteLock			= new ReentrantReadWriteLock();
 
-	// --------------------------------------------------------------------------
 	/**
 	 * @param inSessionManager
 	 *            The session manager for this controller.
@@ -157,8 +155,6 @@ public class RadioController implements IRadioController {
 			mChannelInfo[channel] = new ChannelInfo();
 			mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
 		}
-
-		mRadioChannel = 0;
 
 		// Create Services
 		this.packetHandlerService = new RadioControllerPacketHandlerService(this);
@@ -178,7 +174,6 @@ public class RadioController implements IRadioController {
 
 	}
 
-	// --------------------------------------------------------------------------
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -200,8 +195,6 @@ public class RadioController implements IRadioController {
 		mRunning = true;
 		mPreferredChannel = inPreferredChannel;
 
-		packetsSentCounter = MetricsService.getInstance().createCounter(MetricsGroup.Radio,"packets.sent");
-		
 		LOGGER.info("--------------------------------------------");
 		LOGGER.info("Starting radio controller on network {}", packetIOService.getNetworkId());
 		LOGGER.info("--------------------------------------------");

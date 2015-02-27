@@ -16,6 +16,11 @@ import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+/**
+ * Broadcasts NetChecks at a fixed rate.
+ * @author saba
+ *
+ */
 public class RadioControllerBroadcastService {
 	private static final Logger				LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 

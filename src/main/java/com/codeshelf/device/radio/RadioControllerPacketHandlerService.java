@@ -17,7 +17,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 /**
  * The packet handler service is thread-safe and allows multiple threads to call
  * handle. The handle method will add the packet to a queue to be processed. If
- * that queue is full, the handle method will throw an exception. Each submitted
+ * that queue is full, the handle method will return false. Each submitted
  * packed is processed in order by the SourceAddr and in parallel across
  * different SourceAddres. The parallelism of this service defaults to the
  * number of available cores*2
