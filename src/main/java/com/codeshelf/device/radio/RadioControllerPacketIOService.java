@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerPacketIOService {
 	private static final Logger							LOGGER			= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 
-	private final Counter								packetsSentCounter;
+	private Counter										packetsSentCounter;
 	private final ExecutorService						executorService	= Executors.newFixedThreadPool(1,
 																			new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																				.setPriority(Thread.MAX_PRIORITY)
@@ -41,11 +41,11 @@ public class RadioControllerPacketIOService {
 		super();
 		this.gatewayInterface = gatewayInterface;
 		this.packetHandlerService = packetHandlerService;
-		this.packetHandlerService = MetricsService.getInstance().createCounter(MetricsGroup.Radio, "packets.sent");
 	}
 
 	public void start() {
 		executorService.submit(new PacketReader());
+		this.packetsSentCounter = MetricsService.getInstance().createCounter(MetricsGroup.Radio, "packets.sent");
 	}
 
 	public void stop() {
@@ -68,7 +68,7 @@ public class RadioControllerPacketIOService {
 		}
 
 		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-			LOGGER.debug("OUTBOUND PACKET={}", packet);
+			LOGGER.info("Outbound packet={}", packet);
 		}
 	}
 
@@ -89,7 +89,7 @@ public class RadioControllerPacketIOService {
 						if (packet != null) {
 							// Hand packet off to handler service
 							boolean success = packetHandlerService.handleInboundPacket(packet);
-							LOGGER.info("INBOUND PACKET={}; didGetHandled={}", packet, success);
+							LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
 							if (!success) {
 
 								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
