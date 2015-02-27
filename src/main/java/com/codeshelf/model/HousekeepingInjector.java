@@ -37,7 +37,7 @@ public class HousekeepingInjector {
 	}
 
 	public static RepeatPosChoice getRepeatPosChoice(Facility inFacility) {
-		String repeatValue = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.RPEATPOS);		
+		String repeatValue = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.RPEATPOS);		
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
 		if (repeatValue.equals("None"))
 			return RepeatPosChoice.RepeatPosNone;
@@ -53,7 +53,7 @@ public class HousekeepingInjector {
 
 
 	public static BayChangeChoice getBayChangeChoice(Facility inFacility) {
-		String bayValue = PropertyService.getPropertyFromConfig(inFacility, DomainObjectProperty.BAYCHANG);
+		String bayValue = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.BAYCHANG);
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
 		if (bayValue.equals("None"))
 			return BayChangeChoice.BayChangeNone;
@@ -67,18 +67,6 @@ public class HousekeepingInjector {
 			LOGGER.error("unexpected value in getBayChangeChoice");
 			return BayChangeChoice.BayChangeNone;
 		}
-	}
-
-
-
-	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
-		if (type == WorkInstructionSequencerType.BayDistance) {
-			return new BayDistanceWorkInstructionSequencer();
-		} else if (type == WorkInstructionSequencerType.BayDistanceTopLast) {
-			return new BayDistanceTopLastWorkInstructionSequencer();
-		}
-		LOGGER.error("Sequencer type " + type + " is not supported");
-		return null;
 	}
 
 	// --------------------------------------------------------------------------

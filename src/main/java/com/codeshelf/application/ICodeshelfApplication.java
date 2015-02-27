@@ -12,6 +12,6 @@ package com.codeshelf.application;
 public interface ICodeshelfApplication {
 
 	void startApplication() throws Exception;
-
+	void startServices();
 	void handleEvents();
 }

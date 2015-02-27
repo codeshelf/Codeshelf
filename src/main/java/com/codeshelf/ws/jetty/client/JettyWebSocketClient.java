@@ -15,10 +15,9 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
-import com.codeshelf.ws.jetty.server.SessionManager;
 
 public class JettyWebSocketClient {
 	
@@ -28,11 +27,11 @@ public class JettyWebSocketClient {
 	
 	Session session;
 	
-	MessageProcessor responseProcessor = null;
+	IMessageProcessor responseProcessor = null;
 	
 	MessageCoordinator messageCoordinator = null;
 	
-	CsClientEndpoint endpoint = null;
+//	CsClientEndpoint endpoint = null;
 
 	private WebSocketEventListener	eventListener;
 	
@@ -49,28 +48,32 @@ public class JettyWebSocketClient {
 	@Getter @Setter
 	long lastMessageReceived = 0;
 	
-	public JettyWebSocketClient(WebSocketContainer webSocketContainer, URI uri, MessageProcessor responseProcessor, WebSocketEventListener eventListener) {
-		this.uri = uri;
+	public JettyWebSocketClient(WebSocketContainer webSocketContainer, 
+				URI uri,
+				IMessageProcessor responseProcessor, 
+				WebSocketEventListener eventListener) {
+		this.uri = uri; 
 		this.eventListener = eventListener;
 		this.responseProcessor = responseProcessor;
 		
-        // create and configure WS endpoint                 
-        endpoint = new CsClientEndpoint(this);
-        endpoint.setSessionManager(SessionManager.getInstance());
-        endpoint.setMessageProcessor(responseProcessor);
+        // create and configure WS endpoint        
+  //      endpoint = new CsClientEndpoint(this);
+
+        CsClientEndpoint.setJettyWebsocketClient(this);
+        CsClientEndpoint.setMessageProcessor(responseProcessor);
      
         messageCoordinator = new MessageCoordinator(); 
-        endpoint.setMessageCoordinator(messageCoordinator);
-        responseProcessor.setMessageCoordinator(messageCoordinator);
+        CsClientEndpoint.setMessageCoordinator(messageCoordinator);
+        //responseProcessor.setMessageCoordinator(messageCoordinator);
         container = webSocketContainer;
 	}
 	
     public void connect() throws DeploymentException, IOException {    			
     	LOGGER.info("Connecting to WS server at "+ uri);
         // connect to the server
-        Session session = container.connectToServer(endpoint,uri);
+        Session session = container.connectToServer(CsClientEndpoint.class,uri);
         if (session.isOpen()) {
-        	LOGGER.info("Connected to WS server");
+        	LOGGER.debug("Connected to WS server");
         }
         else {
         	LOGGER.warn("Failed to start session on "+ uri);

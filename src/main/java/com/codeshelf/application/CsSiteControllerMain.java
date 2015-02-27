@@ -21,16 +21,16 @@ import com.codeshelf.device.radio.RadioController;
 import com.codeshelf.flyweight.controller.FTDIInterface;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
-import com.codeshelf.util.IConfiguration;
-import com.codeshelf.util.JVMSystemConfiguration;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -40,7 +40,7 @@ public final class CsSiteControllerMain {
 
 	// pre-main static load configuration and set up logging (see Configuration.java)
 	static {
-		Configuration.loadConfig("sitecontroller");
+		JvmProperties.load("sitecontroller");
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
@@ -59,6 +59,7 @@ public final class CsSiteControllerMain {
 
 		// Create and start the application.
 		ICodeshelfApplication application = createApplication(new DefaultModule());
+		application.startServices();
 		application.startApplication();
 		
 		// public metrics to opentsdb
@@ -69,7 +70,7 @@ public final class CsSiteControllerMain {
 			int interval = Integer.parseInt(intervalStr);
 			
 			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
-			MetricRegistry registry = MetricsService.getRegistry();
+			MetricRegistry registry = MetricsService.getInstance().getMetricsRegistry();
 			String hostName = MetricsService.getInstance().getHostName();
 			OpenTsdbReporter.forRegistry(registry)
 			      .prefixedWith("")
@@ -90,9 +91,9 @@ public final class CsSiteControllerMain {
 
 	// --------------------------------------------------------------------------
 	
-	public static CsSiteControllerApplication createApplication(Module guiceModule) {
+	public static SiteControllerApplication createApplication(Module guiceModule) {
 		Injector injector = Guice.createInjector(guiceModule);
-		return injector.getInstance(CsSiteControllerApplication.class); 
+		return injector.getInstance(SiteControllerApplication.class); 
 	}
 	
 	public static class BaseModule extends AbstractModule {
@@ -100,9 +101,12 @@ public final class CsSiteControllerMain {
 		@Override
 		protected void configure() {
 			bind(WebSocketContainer.class).toInstance(websocketContainer);
-			bind(ICodeshelfApplication.class).to(CsSiteControllerApplication.class);
+
+			requestStaticInjection(MetricsService.class);
+			bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
+
+			bind(ICodeshelfApplication.class).to(SiteControllerApplication.class);
 			bind(IRadioController.class).to(RadioController.class);
-			bind(IConfiguration.class).to(JVMSystemConfiguration.class);
 			bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 		}
 		

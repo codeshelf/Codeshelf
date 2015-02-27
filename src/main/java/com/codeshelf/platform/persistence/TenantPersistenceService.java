@@ -12,35 +12,48 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.google.inject.Inject;
 
-public class TenantPersistenceService extends PersistenceService<Tenant> {
+public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
-	private static TenantPersistenceService theInstance = null;
+	@Inject
+	private static ITenantPersistenceService theInstance;
 
+	@Inject
 	private TenantPersistenceService() {
 		super();
 	}
 
-	public final synchronized static TenantPersistenceService getInstance() {
-		if (theInstance == null) {
-			theInstance = new TenantPersistenceService();
-			theInstance.start();
-		}
-		else if (!theInstance.isRunning()) {
-			theInstance.start();
-			LOGGER.info("PersistanceService was stopped and restarted");
+	public final synchronized static ITenantPersistenceService getMaybeRunningInstance() {
+		return theInstance;
+	}
+	public final synchronized static ITenantPersistenceService getNonRunningInstance() {
+		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
+			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
 	}
-
+	/**
+	 * singleton service: access before service is initialized will block; 
+	 * only the service manager should start service 
+	 */
+	public final static ITenantPersistenceService getInstance() {
+		getMaybeRunningInstance().awaitRunningOrThrow();		
+		return theInstance;
+	}
+	public final static void setInstance(ITenantPersistenceService instance) {
+		// for testing only!
+		theInstance = instance;
+	}
+	
 	@Override
 	public Tenant getDefaultSchema() {
 		return TenantManagerService.getInstance().getDefaultTenant();
 	}
 
 	@Override
-	protected void performStartupActions(Tenant schema) {
+	protected void initialize(Tenant schema) {
 		Transaction t = this.beginTransaction(schema);
 		PropertyDao.getInstance().syncPropertyDefaults();
         t.commit();		

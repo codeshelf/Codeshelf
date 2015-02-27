@@ -1,0 +1,94 @@
+# sample developer local logging configuration w/ simplified appender setup
+# copy this to log4j2.yml or [test|server|sitecontroller].log4j.yml to use
+# note: this setup ignores some config properties e.g. log.file.enable
+
+configuration:
+  appenders:
+    Console:
+      name: console
+      target: SYSTEM_OUT
+      patternlayout:
+        pattern: '%d{ISO8601} %m [%p] (%c) "%X{user}"%n'
+
+    RollingRandomAccessFile:
+      name: file
+      fileName: "${sys:log.file.location}/${sys:log.file.basename}.log"
+      filePattern: "${sys:log.file.location}/${sys:log.file.basename}-%d{yyyy-MM-dd-HH}-%i.log.zip"
+      patternlayout:
+        pattern: '%d{ISO8601} %m [%p] (%c) "%X{user}" [%X{netguid}]%n'
+      TimeBasedTriggeringPolicy:
+        interval: 24
+        modulate: true
+      DefaultRolloverStrategy:
+        max: 10
+        fileIndex: 'min'
+
+  loggers:
+    root:
+      level: info
+      appenderref:
+      - ref: console
+      - ref: file 
+
+    logger:
+# your custom logger configs
+    - name: com.codeshelf.application.Configuration
+      level: debug
+
+# behavior for other loggers, copied from default configuration:
+    - name: org.hibernate
+      level: warn
+      
+    - name: com.sun
+      level: warn
+
+    - name: javax
+      level: warn
+
+    - name: org.apache
+      level: warn
+
+    - name: com.mchange
+      level: warn
+
+    - name: com.google
+      level: warn
+
+    - name: com.dropbox
+      level: warn
+      
+    - name: com.codeshelf.edi
+      level: info # this is a convenient server log 'heartbeat'
+      
+    - name: org.eclipse.jetty.util.log
+      level: warn # don't log init
+      
+    - name: org.apache.flume.sink.FailoverSinkProcessor
+      level: info # show failover messages
+
+    - name: com.codeshelf.metrics.MetricsService
+      level: warn
+      
+    - name: org.eclipse.jetty.server.NetworkTrafficServerConnector
+      level: warn
+      
+    - name: org.eclipse.jetty.server.Server
+      level: warn
+    
+    - name: com.codeshelf.ws.jetty.server.ServerWatchdogThread
+      level: info # 
+    
+    - name: org.hibernate.engine.internal.StatefulPersistenceContext
+      level: error # don't log about "Narrowing proxy to class"
+
+    - name: org.hibernate.cache.ehcache.AbstractEhcacheRegionFactory
+      level: error # don't log individual object caches being configured with default settings
+
+    - name: org.hibernate.tool.hbm2ddl.SchemaExport
+      level: 'off' # don't log anything from hbm2ddl schema export (not used in production)
+
+    # configs for turning SQL logging on/off
+    - name: org.hibernate.type
+      level: info
+    - name: org.hibernate.SQL
+      level: info

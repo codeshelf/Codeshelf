@@ -5,9 +5,8 @@
  *******************************************************************************/
 package com.codeshelf.integration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -16,7 +15,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.AislesFileCsvImporter;
@@ -48,10 +46,6 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessLineScan.class);
 
-	static {
-		Configuration.loadConfig("test");
-	}
-
 	public CheProcessLineScan() {
 
 	}
@@ -82,7 +76,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Facility facility = organization.getFacility(fName);
 		*/
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+		String csvAisles = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n" //
@@ -105,14 +99,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
@@ -136,7 +125,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
 
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
 				+ "A1.B2, D400\r\n" //
 				+ "A1.B3, D500\r\n" //
@@ -150,14 +139,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
+		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
+		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
@@ -210,7 +194,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		// Order 12345 has 2 modeled locations and one not.
 		// Order 11111 has 4 unmodeled locations and one modeled.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,3,each, D601"
@@ -220,20 +204,15 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D604";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 	
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
 		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.3,1522,Butterfly Yoyo,3,each, D601"
@@ -243,14 +222,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 
@@ -275,8 +249,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 			}
 			ThreadUtils.sleep(100); // retry every 100ms
 		}
-		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is "
-				+ existingType);
+		Assert.fail(String.format("Process type %s not encounter in %dms after %d checks. Process type is %s", inProcessType, maxTimeToWaitMillis, count, existingType));
 		return null;
 	}
 
@@ -738,11 +711,11 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2"); 
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
-		LOGGER.info("2c: START. Still no work, because no inventory. (and LOCAPICK was off, so not made).");
+		LOGGER.info("2c: START. Work because location is resolvable even without inventory. (LOCAPICK was off, so not made).");
 		// This is important. We could in principle make these work instructions as a special case of location-based pick. 
 		// No inventory, but the order detail preferred location is resolvable, so we could do it
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 	
 		// logout back to idle state.
 		picker.logout();
@@ -752,13 +725,13 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
 		}
 		setUpLineScanOrdersWithCntr(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -788,6 +761,380 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
+	}
+	
+	/**
+	 * Login, scan a valid order detail ID, see the job.
+	 * LOCAPICK is false, so no attempt at inventory creation.
+	 * SCANPICK is set to SKU.
+	 */
+	@Test
+	public final void testLineScanPick() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE1");
+		Assert.assertNotNull(che1);
+		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.DAO.store(che1);
+		
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+		
+		String scanPickValue = manager.getScanTypeValue();
+		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
+		 // kludgy! Somewhat simulates restarting site controller
+		manager.setScanTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		picker.forceDeviceToMatchManagerConfiguration();
+
+		LOGGER.info("1a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+
+		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		WorkInstruction wi2 = picker.nextActiveWi();
+		Assert.assertEquals(wi, wi2);
+		
+		LOGGER.info("1d: scan the SKU. This data has 1522");
+		picker.scanSomething("1522");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("1e: now the button press works");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.READY, 4000);
+		
+		// logout back to idle state.
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		
+		LOGGER.info("2: test shorting before scanning upc");
+		LOGGER.info("2a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+		
+		LOGGER.info("2b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.1"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("2c: scan short command");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		
+		LOGGER.info("2d: scan yes and go back to ready state");
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.READY, 2000);
+
+		LOGGER.info("2e: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.1"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("2f: make sure need quant is still the same");
+		wi = picker.getActivePick();
+		quant = wi.getPlanQuantity();
+		Assert.assertEquals(1,quant);
+		
+		LOGGER.info("2g: scan SKU, should go to DO_PICK state");
+		picker.scanSomething("1123");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("2h: press button to confirm pickup");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.READY, 4000);
+		
+		// logout back to idle state.
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		
+		LOGGER.info("3: test shorting after scanning upc");
+		LOGGER.info("3a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+		
+		LOGGER.info("3b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("11111.5"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("3c: make sure need quant is correct");
+		wi = picker.getActivePick();
+		quant = wi.getPlanQuantity();
+		Assert.assertEquals(2,quant);
+		
+		LOGGER.info("3d: scan SKU, should go to DO_PICK state");
+		picker.scanSomething("1555");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("3e: scan SHORT");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
+		
+		LOGGER.info("3f: submit 0");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 2000);
+
+		LOGGER.info("3g: scan YES, so we should be back on job");
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.READY, 2000);
+
+		LOGGER.info("3h: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("11111.5"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("3i: make sure need quant is correct");
+		wi = picker.getActivePick();
+		quant = wi.getPlanQuantity();
+		Assert.assertEquals(1,quant);
+		
+		LOGGER.info("3j: scan SKU, should go to DO_PICK state");
+		picker.scanSomething("1555");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("2h: press button to confirm pickup");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.READY, 4000);
+		
+	}
+	
+	/**
+	 * Login, scan a valid order detail ID, see the job.
+	 * LOCAPICK is false, so no attempt at inventory creation.
+	 * SCANPICK is set to SKU.
+	 * Do some bad scans to make sure we handle those correctly
+	 */
+	@Test
+	public final void testLineScanPickBadScans() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE1");
+		Assert.assertNotNull(che1);
+		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.DAO.store(che1);
+		
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+		
+		String scanPickValue = manager.getScanTypeValue();
+		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
+		 // kludgy! Somewhat simulates restarting site controller
+		manager.setScanTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		picker.forceDeviceToMatchManagerConfiguration();
+
+		LOGGER.info("1a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+
+		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		WorkInstruction wi2 = picker.nextActiveWi();
+		Assert.assertEquals(wi, wi2);
+		
+		LOGGER.info("1d: scan the wrong SKU. This data has 1522");
+		picker.scanSomething("8888");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("1e: see if we can logout from SCAN_SOMETHING state");
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		
+		LOGGER.info("2a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+
+		LOGGER.info("2b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("2c: scan SKU. This data has 1522");
+		picker.scanSomething("1522");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
+		
+		LOGGER.info("2d: see that normal short process works from this point");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+		
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+		
+		LOGGER.info("3a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+
+		LOGGER.info("3b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("3c: No product present. Worker's only choice is to scan short");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
+
+		LOGGER.info("3d: Scan NO on the confirm message");
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("3e: Worker decides to complete the short.");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
+		
+		LOGGER.info("3f: Scan YES on the confirm message");
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.READY, 4000);
+		picker.logout();
+		picker.waitForCheState(CheStateEnum.IDLE, 2000);
+	}
+	
+	/**
+	 * Login, scan a valid order detail ID, see the job.
+	 * LOCAPICK is false, so no attempt at inventory creation.
+	 * SCANPICK is set to SKU.
+	 */
+	@Test
+	public final void testLineScanPickSkipScan() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE1");
+		Assert.assertNotNull(che1);
+		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.DAO.store(che1);
+		
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+		
+		String scanPickValue = manager.getScanTypeValue();
+		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
+		 // kludgy! Somewhat simulates restarting site controller
+		manager.setScanTypeValue("SKU");
+		Assert.assertEquals("SKU", manager.getScanTypeValue());
+		picker.forceDeviceToMatchManagerConfiguration();
+
+		LOGGER.info("1a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
+
+		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
+		
+		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		WorkInstruction wi2 = picker.nextActiveWi();
+		Assert.assertEquals(wi, wi2);
+		
+		LOGGER.info("1d: scan SCANPICK. This data has 1522");
+		picker.scanSomething("SCANSKIP");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("1e: now the button press works");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.READY, 4000);
+		
+		LOGGER.info("1f: scan same order, should go to READY state");
+		picker.scanOrderDetailId("12345.3"); // does not add "%"
+		picker.waitForCheState(CheStateEnum.READY, 5000);
 	}
 
 }

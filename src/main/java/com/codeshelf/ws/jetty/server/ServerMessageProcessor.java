@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
@@ -28,9 +29,9 @@ import com.codeshelf.ws.jetty.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.jetty.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.jetty.protocol.command.ServiceMethodCommand;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -53,38 +54,64 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ServerMessageProcessor extends MessageProcessor {
+public class ServerMessageProcessor implements IMessageProcessor {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServerMessageProcessor.class);
 	
-	private final Counter requestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.processed");
-	private final Counter responseCounter = MetricsService.addCounter(MetricsGroup.WSS,"responses.processed");
-	private final Counter loginCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.logins");
-	private final Counter missingResponseCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.missing-responses");
-	private final Counter echoCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.echo");
-	private final Counter completeWiCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.complete-workinstruction");
-	private final Counter computeWorkCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.compute-work");
-	private final Counter getWorkCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.get-work");
-	private final Counter objectGetCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-get");
-	private final Counter objectUpdateCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-update");
-	private final Counter objectDeleteCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-delete");
-	private final Counter objectPropertiesCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.object-properties");
-	private final Counter objectFilterCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.register-filter");
-	private final Counter keepAliveCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.keep-alive");
-	private final Counter applicationRequestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.application");
-	private final Counter systemRequestCounter = MetricsService.addCounter(MetricsGroup.WSS,"requests.system");
-	private final Timer requestProcessingTimer = MetricsService.addTimer(MetricsGroup.WSS,"requests.processing-time");
+	private final Counter requestCounter;
+	private final Counter responseCounter;
+	private final Counter loginCounter;
+	private final Counter missingResponseCounter;
+	private final Counter echoCounter;
+	private final Counter completeWiCounter;
+	private final Counter computeWorkCounter;
+	private final Counter getWorkCounter;
+	private final Counter objectGetCounter;
+	private final Counter objectUpdateCounter;
+	private final Counter objectDeleteCounter;
+	private final Counter objectPropertiesCounter;
+	private final Counter objectFilterCounter;
+	private final Counter keepAliveCounter;
+	private final Counter applicationRequestCounter;
+	private final Counter systemRequestCounter;
+	private final Timer requestProcessingTimer;
 	
 	private ServiceFactory	serviceFactory;
-	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 	private ConvertUtilsBean	converter;
 
+	private SessionManagerService	sessionManager;
+
 	@Inject
-	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter) {
+	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter, SessionManagerService sessionManager) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
-		this.objectChangeBroadcaster = TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
 		this.converter = converter;
+		this.sessionManager = sessionManager;
+		
+		IMetricsService metricsService = MetricsService.getInstance();
+		
+		requestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.processed");
+		responseCounter = metricsService.createCounter(MetricsGroup.WSS,"responses.processed");
+		loginCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.logins");
+		missingResponseCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.missing-responses");
+		echoCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.echo");
+		completeWiCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.complete-workinstruction");
+		computeWorkCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.compute-work");
+		getWorkCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.get-work");
+		objectGetCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-get");
+		objectUpdateCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-update");
+		objectDeleteCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-delete");
+		objectPropertiesCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-properties");
+		objectFilterCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.register-filter");
+		keepAliveCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.keep-alive");
+		applicationRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.application");
+		systemRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.system");
+		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS,"requests.processing-time");
+		
+	}
+	
+	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
+		return TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
 	}
 	
 	@Override
@@ -95,13 +122,13 @@ public class ServerMessageProcessor extends MessageProcessor {
 		ResponseABC response = null;
 		
         // process message...
-    	final Timer.Context context = requestProcessingTimer.time();
+    	final Timer.Context timerContext = requestProcessingTimer.time();
 
     	try {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession, loginRequest, objectChangeBroadcaster);
+				command = new LoginCommand(csSession, loginRequest, getObjectChangeBroadcaster(), this.sessionManager);
 				loginCounter.inc();
 				applicationRequestCounter.inc();
 			}
@@ -160,7 +187,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof RegisterFilterRequest) {
-				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, objectChangeBroadcaster);
+				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, getObjectChangeBroadcaster());
 				objectFilterCounter.inc();
 				applicationRequestCounter.inc();
 			}			
@@ -172,7 +199,7 @@ public class ServerMessageProcessor extends MessageProcessor {
 			// check if matching command was found
 			if (command==null) {
 				LOGGER.warn("Unable to find matching command for request "+request+". Ignoring request.");
-		        context.stop();
+		        timerContext.stop();
 			} else {
 				// execute command and generate response to be sent to client
 				response = command.exec();
@@ -193,7 +220,8 @@ public class ServerMessageProcessor extends MessageProcessor {
     			((FailureResponse)response).setCheId(cheId);
     		}
 	    } finally {
-	        context.stop();
+	    	if(timerContext != null)
+	    		timerContext.stop();
 	    }
 	    // ...and return the response
 		return response;

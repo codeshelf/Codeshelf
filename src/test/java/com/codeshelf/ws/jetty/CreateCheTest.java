@@ -1,9 +1,11 @@
 package com.codeshelf.ws.jetty;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 import org.hibernate.Hibernate;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -25,7 +27,6 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
-import com.eaio.uuid.UUID;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
@@ -35,10 +36,52 @@ public class CreateCheTest extends DAOTestABC {
 	
 	private ServerMessageProcessor	processor;
 
-
-	public void doBefore() {
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+	@Before
+	public void doBefore() throws Exception {
+		super.doBefore();
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 	}
+
+	
+	@Test
+	// TODO: create proper mock daoProvider / set up injector /?
+	public final void testCreateChe() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = createFacility();
+		Facility.DAO.store(facility);		
+		
+		UiUpdateService service = new UiUpdateService();
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = Che.DAO.findByPersistentId(cheid);
+		Assert.assertEquals(che.getDomainId(), "Test Device");
+		Assert.assertEquals(che.getDescription(), "Updated Description");
+		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
+		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
+		Assert.assertEquals(che.getProcessMode(), ProcessMode.SETUP_ORDERS);
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	@Test
+	public final void testDeleteChe() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = createFacility();
+		Facility.DAO.store(facility);		
+		
+		UiUpdateService service = new UiUpdateService();
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		service.deleteChe(cheid.toString());
+
+		Che che = Che.DAO.findByPersistentId(cheid);
+		Assert.assertNull(che);
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
 	
 	@Test
 	// TODO: create proper mock daoProvider / set up injector /?
@@ -107,7 +150,7 @@ public class CreateCheTest extends DAOTestABC {
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
-		req.setPersistentId(new UUID().toString());
+		req.setPersistentId(UUID.randomUUID().toString());
 		
 		HashMap<String,Object> properties = new HashMap<String,Object>();
 		properties.put("description", description2);
@@ -238,7 +281,7 @@ public class CreateCheTest extends DAOTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000002");
 		UiUpdateService service = new UiUpdateService();
-		service.updateCheEdits(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -259,21 +302,21 @@ public class CreateCheTest extends DAOTestABC {
 		UiUpdateService service = new UiUpdateService();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		//Fail to update name
-		service.updateCheEdits(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		service.updateCheEdits(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		service.updateCheEdits(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		service.updateCheEdits(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		//Fail to update process mode
-		service.updateCheEdits(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
+		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
 		this.getTenantPersistenceService().commitTransaction();

@@ -34,10 +34,8 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.util.IConfiguration;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
-import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
@@ -79,30 +77,16 @@ public class CsDeviceManager implements
 	private String										password;
 
 	/* Device Manager owns websocket configuration too */
-	@Getter
-	private URI											mUri;
-
-	@Getter
-	@Setter
-	boolean												suppressKeepAlive			= false;
-
-	@Getter
-	@Setter
-	boolean												idleKill					= false;
+//	@Getter
+//	private URI											mUri;
 
 	@Getter
 	private JettyWebSocketClient						client;
-
-	private ConnectionManagerThread						connectionManagerThread;
 
 	@Getter
 	private long										lastNetworkUpdate			= 0;
 
 	private boolean										isAttachedToServer			= false;
-
-	@Getter
-	@Setter
-	boolean												radioEnabled				= true;
 
 	private boolean										autoShortValue				= true;											// getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
 
@@ -117,42 +101,49 @@ public class CsDeviceManager implements
 	@Getter
 	@Setter
 	private String										scanTypeValue				= "Disabled";
-	
+
+	@Getter
+	@Setter
+	private String										sequenceKind				= "BayDistance";
+
 	private WebSocketContainer							webSocketContainer;
 
 	@Inject
-	public CsDeviceManager(final IRadioController inRadioController,
-		final IConfiguration configuration,
-		final WebSocketContainer inWebSocketContainer) {
+	public CsDeviceManager(final IRadioController inRadioController, final WebSocketContainer inWebSocketContainer) {
 		// fetch properties from config file
-		radioEnabled = configuration.getBoolean("radio.enabled", true);
-		mUri = URI.create(configuration.getString("websocket.uri"));
-		suppressKeepAlive = configuration.getBoolean("websocket.idle.suppresskeepalive", false);
-		idleKill = configuration.getBoolean("websocket.idle.kill", false);
 
 		this.webSocketContainer = inWebSocketContainer;
 
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
-		username = configuration.getString("websocket.username");
-		password = configuration.getString("websocket.password");
+		username = System.getProperty("websocket.username");
+		password = System.getProperty("websocket.password");
 
-		if (configuration.getBoolean("pcapbuffer.enable", false)) {
+		if (Boolean.getBoolean("pcapbuffer.enable")) {
 			// set up ring buffer
-			int pcSize = configuration.getInt("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
-			int pcSlack = configuration.getInt("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);
+			int pcSize = Integer.getInteger("pcapbuffer.size", PcapRingBuffer.DEFAULT_SIZE);
+			int pcSlack = Integer.getInteger("pcapbuffer.slack", PcapRingBuffer.DEFAULT_SLACK);
 			this.pcapBuffer = new PcapRingBuffer(pcSize, pcSlack);
 
 			// listen for packets
 			radioController.getGatewayInterface().setPacketListener(this);
 		}
+		
+		// create response processor and register it with WS client
+		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
+		URI uri = URI.create(System.getProperty("websocket.uri"));
+		this.client = new JettyWebSocketClient(webSocketContainer, uri, responseProcessor, this);
+		responseProcessor.setWebClient(client);
 	}
 
 	@Override
 	public final void start() {
-		startWebSocketClient();
+	}
 
+	private boolean isRadioEnabled() {
+		// leaving as a function for now. But currently, no known use case for CsDeviceManager that does not have a radio
+		return true;
 	}
 
 	@Override
@@ -168,7 +159,7 @@ public class CsDeviceManager implements
 	private final void startRadio(CodeshelfNetwork network) {
 		if (radioController.isRunning()) {
 			LOGGER.warn("Radio controller is already running, cannot start again");
-		} else if (this.radioEnabled) {
+		} else if (this.isRadioEnabled()) {
 			// start radio controller
 			NetworkId networkId = new NetworkId(network.getNetworkNum().byteValue());
 			radioController.setNetworkId(networkId);
@@ -201,28 +192,9 @@ public class CsDeviceManager implements
 		return aList;
 	}
 
-	public final void startWebSocketClient() {
-		// create response processor and register it with WS client
-		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
-		client = new JettyWebSocketClient(webSocketContainer, mUri, responseProcessor, this);
-		responseProcessor.setWebClient(client);
-		connectionManagerThread = new ConnectionManagerThread(this);
-		connectionManagerThread.start();
-	}
-
 	@Override
 	public final void stop() {
 		radioController.stopController();
-		connectionManagerThread.setExit(true);
-		while (connectionManagerThread.isAlive()) {
-			LOGGER.debug("Waiting for connection manager thread to exit...");
-			ThreadUtils.sleep(2000);
-		}
-		try {
-			client.disconnect();
-		} catch (IOException e) {
-			LOGGER.error("Failed to disconnect from server", e);
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -274,14 +246,14 @@ public class CsDeviceManager implements
 	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList) {
+	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList, final Boolean reverse) {
 		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, inContainerIdList);
 		String cheId = inPersistentId.toString();
 		LinkedList<String> containerIds = new LinkedList<String>();
 		for (String containerId : inContainerIdList) {
 			containerIds.add(containerId);
 		}
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds, reverse);
 		client.sendMessage(req);
 	}
 
@@ -298,10 +270,10 @@ public class CsDeviceManager implements
 	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	@Override
-	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId) {
+	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId);
+		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
 		client.sendMessage(req);
 	}
 
@@ -352,6 +324,11 @@ public class CsDeviceManager implements
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
 			}
+		}
+		try {
+			client.disconnect();
+		} catch (IOException e) {
+			LOGGER.error("failed to disconnect client", e);
 		}
 	}
 
@@ -512,7 +489,7 @@ public class CsDeviceManager implements
 		if (existingDevice == null || !deviceGuid.equals(existingDevice.getGuid())) {
 			LOGGER.error("misuse of updateOneDevice()");
 			return existingDevice;
-		}			
+		}
 		doCreateUpdateNetDevice(persistentId, deviceGuid, newProcessType);
 		INetworkDevice newDevice = mDeviceMap.get(persistentId);
 		return newDevice;
@@ -612,7 +589,7 @@ public class CsDeviceManager implements
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
-	
+
 	public void processFailureResponse(FailureResponse failure) {
 		String cheGuidStr = failure.getCheId();
 		if (cheGuidStr != null) {
@@ -620,7 +597,7 @@ public class CsDeviceManager implements
 			CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheGuid);
 			if (cheDevice != null) {
 				String message = failure.getStatusMessage();
-				cheDevice.sendDisplayCommand("Server Error", message==null?"":message);
+				cheDevice.sendDisplayCommand("Server Error", message == null ? "" : message);
 			} else {
 				LOGGER.warn("Unable to process failure response for CHE id={} CHE not found", cheGuid);
 			}
@@ -631,7 +608,7 @@ public class CsDeviceManager implements
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
 		if (cheDevice != null) {
 			LOGGER.info("processDisplayCheMessage calling cheDevice.sendDisplayCommand()");
-			cheDevice.sendDisplayCommand(line1, line2, line3, line4);			
+			cheDevice.sendDisplayCommand(line1, line2, line3, line4);
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}

@@ -29,11 +29,10 @@ public class ProductivityReportingTest extends DomainTestABC {
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	private OrderService	orderService;
 
-
 	@Override
 	public void doBefore() throws Exception {
 		super.doBefore();
-		orderService = new OrderService(this.getTenantPersistenceService());
+		orderService = new OrderService();
 	}
 
 	@Test
@@ -43,8 +42,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(facilityId, true);
+		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(this.getTenantPersistenceService().getDefaultSchema(),facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
 		Assert.assertEquals(groups.size(), 3);
@@ -53,7 +51,6 @@ public class ProductivityReportingTest extends DomainTestABC {
 			String groupName = groupNames.next();
 			Assert.assertTrue(OrderGroup.UNDEFINED.equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
 		}
-		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
@@ -93,6 +90,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		}
 
 		Assert.assertEquals(withoutHK.size(), summary.getTotal());
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test

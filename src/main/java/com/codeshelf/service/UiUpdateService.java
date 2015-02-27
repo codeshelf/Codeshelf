@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -27,6 +28,7 @@ import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
+
 // --------------------------------------------------------------------------
 /**
  * This is a relatively unstructured collection of update methods that the UI may call.
@@ -40,16 +42,22 @@ public class UiUpdateService implements IApiService {
 	public UiUpdateService() {
 	}
 
-	public Item storeItem(String facilityId, String itemId, String storedLocationId, String cmDistanceFromLeft, String quantity, String inUomId, String orderDetailId) {
+	public Item storeItem(String facilityId,
+		String itemId,
+		String storedLocationId,
+		String cmDistanceFromLeft,
+		String quantity,
+		String inUomId,
+		String orderDetailId) {
 		Facility facility = Facility.DAO.findByPersistentId(facilityId);
 		if (facility == null) {
 			throw new InputValidationException("Facility {0} not found", facilityId);
 		}
-		
+
 		storedLocationId = Strings.nullToEmpty(storedLocationId);
 
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
-		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(), ItemMaster.DAO, Item.DAO, UomMaster.DAO);
+		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer());
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, facility);
 
 		ItemMaster itemMaster = facility.getItemMaster(itemId);
@@ -66,13 +74,13 @@ public class UiUpdateService implements IApiService {
 			throw new InputValidationException(errors);
 		}
 
- 		Item returnItem = importer.updateSlottedItem(false,
+		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,
 			new Timestamp(System.currentTimeMillis()),
 			itemMaster,
 			uomMaster);
-		
+
 		if (orderDetailId != null && !orderDetailId.isEmpty()) {
 			OrderDetail detail = OrderDetail.DAO.findByPersistentId(orderDetailId);
 			if (detail != null) {
@@ -83,13 +91,66 @@ public class UiUpdateService implements IApiService {
 		return returnItem;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
+	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
+	 */
+	public UUID addChe(final String facilityPersistentId,
+		final String domainId,
+		final String description,
+		final String colorStr,
+		final String controllerId,
+		final String processModeStr) {
+		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		Che che = new Che();
+		che.setParent(facility.getNetworks().get(0));
+		ProcessMode processMode = ProcessMode.getMode(processModeStr);
+		if (processMode == null) {
+			LOGGER.error("Provide a valid processMode [SETUP_ORDERS,LINE_SCAN]");
+			return null;
+		}
+		try {
+			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
+			che.setColor(color);
+		} catch (Exception e) {
+		}
+		if (domainId != null && !domainId.isEmpty()) {
+			che.setDomainId(domainId);
+		}
+		if (description != null) {
+			che.setDescription(description);
+		}
+		che.setProcessMode(processMode);
+		try {
+			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
+			NetGuid currentGuid = che.getDeviceNetGuid();
+			NetGuid newGuid = new NetGuid(controllerId);
+			if (newGuid == null || currentGuid.equals(newGuid)) {
+				return null;
+			}
+			che.setDeviceNetGuid(newGuid);
+			//Che.DAO.store(this);
+		} catch (Exception e) {
+			// Need to fix this. What kind of exception? Presumably, bad controller ID that leads to invalid GUID
+			LOGGER.error("Failed to set controller ID", e);
+		}
+
+		Che.DAO.store(che);
+		return che.getPersistentId();
+	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
-	public void updateCheEdits(final String cheId, final String domainId, final String description, final String colorStr, final String controllerId, final String processModeStr) {
+	public void updateChe(final String cheId,
+		final String domainId,
+		final String description,
+		final String colorStr,
+		final String controllerId,
+		final String processModeStr) {
 		Che che = Che.DAO.findByPersistentId(cheId);
 
 		if (che == null) {
@@ -104,15 +165,22 @@ public class UiUpdateService implements IApiService {
 		try {
 			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
 			che.setColor(color);
-		} catch (Exception e) {}
-		if (domainId != null && !domainId.isEmpty()) {che.setDomainId(domainId);}
-		if (description != null){che.setDescription(description);}
+		} catch (Exception e) {
+		}
+		if (domainId != null && !domainId.isEmpty()) {
+			che.setDomainId(domainId);
+		}
+		if (description != null) {
+			che.setDescription(description);
+		}
 		che.setProcessMode(processMode);
 		try {
 			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 			NetGuid currentGuid = che.getDeviceNetGuid();
 			NetGuid newGuid = new NetGuid(controllerId);
-			if (newGuid == null || currentGuid.equals(newGuid)) {return;}
+			if (newGuid == null || currentGuid.equals(newGuid)) {
+				return;
+			}
 			che.setDeviceNetGuid(newGuid);
 			//Che.DAO.store(this);
 		} catch (Exception e) {
@@ -122,8 +190,23 @@ public class UiUpdateService implements IApiService {
 
 		Che.DAO.store(che);
 	}
-	
-	public ProcessMode getDefaultProcessMode(String cheId){
+
+	public void deleteChe(final String cheId) {
+		Che che = Che.DAO.findByPersistentId(cheId);
+
+		if (che == null) {
+			LOGGER.error("Could not find che {0}", cheId);
+			return;
+		}
+		Che.DAO.delete(che);
+	}
+
+	public ProcessMode getDefaultProcessMode(String cheId) {
+		// an artifact of new CHE dialog is we want the process type before we have a persistent ID
+		if (cheId == null || cheId.isEmpty()) {
+			return ProcessMode.SETUP_ORDERS;
+		}
+
 		Che che = Che.DAO.findByPersistentId(cheId);
 		if (che == null) {
 			LOGGER.error("Could not find Che " + cheId);
@@ -133,6 +216,6 @@ public class UiUpdateService implements IApiService {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
 		List<Aisle> aisled = Aisle.DAO.findByFilter(filterParams);
-		return (aisled.isEmpty())? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
+		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
 	}
 }

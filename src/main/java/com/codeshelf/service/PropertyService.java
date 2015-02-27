@@ -1,11 +1,11 @@
 package com.codeshelf.service;
 
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.flyweight.command.ColorEnum;
-import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
-import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -13,14 +13,32 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
+import com.google.inject.Inject;
 
-public class PropertyService implements IApiService {
-
+public class PropertyService extends AbstractPropertyService {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyService.class);
+	
+	@Inject
+	private static IPropertyService theInstance;
 
+	@Inject
 	public PropertyService() {
 	}
-
+	
+	public static IPropertyService getInstance() {
+		// not self initializing, better static inject it first...
+		try {
+			theInstance.awaitRunning(60, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new IllegalStateException("Timeout waiting for PropertyService",e);
+		}
+		return theInstance;
+	}
+	public static void setInstance(IPropertyService instance) {
+		// for testing only!
+		theInstance = instance;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * API to update one property from the UI. Add user login for logability?.
@@ -36,13 +54,33 @@ public class PropertyService implements IApiService {
 			throw new InputValidationException(errors);
 		}
 		changePropertyValue(facility, inPropertyName, inNewStringValue);
+	}	
+	
+	@Override
+	public DomainObjectProperty getProperty(IDomainObject object, String name) {
+		if(object == null) {
+			LOGGER.error("getProperty object was null");
+			return null;
+		}
+		PropertyDao theDao = PropertyDao.getInstance();
+		if (theDao == null) {
+			LOGGER.error("getPropertyObject called before DAO exists");
+			return null;
+		}
+		DomainObjectProperty prop = theDao.getPropertyWithDefault(object, name);
+		if (prop == null) {
+			LOGGER.error("Unknown property {} in getPropertyObject()",name);
+			return null;
+		}
+		return prop;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
+	 * Internal API to update one property. 
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
+	@Override
 	public void changePropertyValue(final Facility inFacility, final String inPropertyName, final String inNewStringValue) {		
 		PropertyDao theDao = PropertyDao.getInstance();
 
@@ -68,115 +106,6 @@ public class PropertyService implements IApiService {
 		// storing the string version, so type does not matter. We assume all validation happened so the value is ok to go to the database.
 		theProperty.setValue(canonicalForm);
 		theDao.store(theProperty);
-	}
-
-	/**
-	 * Necessary convenience APIs to change Housekeeping config values. Should the be on the HousekeepingService? Does not seem right.
-	 */
-	public void setBayChangeChoice(Facility inFacility, BayChangeChoice inBayChangeChoice) {
-		switch(inBayChangeChoice){
-			case BayChangeNone:
-				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "None");
-				break;
-			case BayChangeBayChange:
-				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "BayChange");
-				break;
-			case BayChangePathSegmentChange:
-				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "PathSegmentChange");
-				break;
-			case BayChangeExceptSamePathDistance:
-				changePropertyValue(inFacility, DomainObjectProperty.BAYCHANG, "BayChangeExceptAcrossAisle");
-				break;
-			default:
-				LOGGER.error("unknown value in setBayChangeChoice");
-		}
-	}
-	
-	public void setRepeatPosChoice(Facility inFacility, RepeatPosChoice inRepeatPosChoice) {
-		switch(inRepeatPosChoice){
-			case RepeatPosNone:
-				changePropertyValue(inFacility, DomainObjectProperty.RPEATPOS, "None");
-				break;
-			case RepeatPosContainerOnly:
-				changePropertyValue(inFacility, DomainObjectProperty.RPEATPOS, "ContainerOnly");
-				break;
-			case RepeatPosContainerAndCount:
-				changePropertyValue(inFacility, DomainObjectProperty.RPEATPOS, "ContainerAndCount");
-				break;
-			default:
-				LOGGER.error("unknown value in setRepeatPosChoice");
-		}
-	}
-
-	public void restoreHKDefaults(Facility inFacility) {
-		setRepeatPosChoice(inFacility, RepeatPosChoice.RepeatPosContainerOnly);
-		setBayChangeChoice(inFacility, BayChangeChoice.BayChangeBayChange);
-	}
-	public void turnOffHK(Facility inFacility) {
-		setRepeatPosChoice(inFacility, RepeatPosChoice.RepeatPosNone);
-		setBayChangeChoice(inFacility, BayChangeChoice.BayChangeNone);
-
-	}
-
-	/**
-	 * Convenient API for application code.
-	 */
-	public static String getPropertyFromConfig(final Facility inFacility, final String inPropertyName) {
-		DomainObjectProperty theProperty = getPropertyObject(inFacility, inPropertyName);
-		if (theProperty == null) {
-			LOGGER.error("Unknown property in getPropertyFromConfig()");
-			return null;
-		}
-		// the toCanonicalForm() call here ensures that small typos in the liquidbase xml get rectified to the coded canonical forms.
-		return theProperty.toCanonicalForm(theProperty.getValue());
-	}
-
-	public static boolean getBooleanPropertyFromConfig(final Facility inFacility, final String inPropertyName) {
-		DomainObjectProperty theProperty = getPropertyObject(inFacility, inPropertyName);
-		if (theProperty == null) {
-			LOGGER.error("Unknown property in getPropertyFromConfig()");
-			return false;
-		}
-		return theProperty.getBooleanValue();
-	}
-	/**
-	 * Helper to avoid cloning.
-	 */
-	public static DomainObjectProperty getPropertyObject(final Facility inFacility, final String inPropertyName) {
-		PropertyDao theDao = PropertyDao.getInstance();
-		if (theDao == null || inFacility == null) {
-			LOGGER.error("getPropertyObject called before DAO or facility exists");
-			return null;
-		}
-		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
-		if (theProperty == null) {
-			LOGGER.error("Unknown property in getPropertyObject()");
-			return null;
-		}
-		return theProperty;
-	}
-
-
-	public DomainObjectProperty getProperty(IDomainObject object, String name) {
-		PropertyDao theDao = PropertyDao.getInstance();
-		DomainObjectProperty prop = theDao.getPropertyWithDefault(object, name);
-		return prop;
-	}
-
-	public ColorEnum getPropertyAsColor(IDomainObject object, String name, ColorEnum defaultColor) {
-		DomainObjectProperty prop = getProperty(object, name);
-		if (prop == null) {
-			return defaultColor;
-		}
-		return prop.getColorValue();
-	}
-
-	public int getPropertyAsInt(IDomainObject object, String name, int defaultValue) {
-		DomainObjectProperty prop = getProperty(object, name);
-		if (prop == null) {
-			return defaultValue;
-		}
-		return prop.getIntValue();
 	}
 
 }

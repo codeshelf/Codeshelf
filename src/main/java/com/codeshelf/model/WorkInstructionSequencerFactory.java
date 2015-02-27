@@ -3,20 +3,26 @@ package com.codeshelf.model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.service.PropertyService;
+
 public class WorkInstructionSequencerFactory {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(WorkInstructionSequencerFactory.class);
 
-	public static WorkInstructionSequencerABC createSequencer(WorkInstructionSequencerType type) {
-		LOGGER.info("Using " + type.toString() + " sequencer");
+	public static WorkInstructionSequencerABC createSequencer(Facility facility) {
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
+		LOGGER.info("Using " + sequenceKindEnum + " sequencer");
 
-		if (type==WorkInstructionSequencerType.BayDistance) {
+		if (WorkInstructionSequencerType.BayDistance.equals(sequenceKindEnum)) {
 			return new BayDistanceWorkInstructionSequencer();
 		}
-		else if (type==WorkInstructionSequencerType.BayDistanceTopLast) {
-			return new BayDistanceTopLastWorkInstructionSequencer();
+		else if (WorkInstructionSequencerType.WorkSequence.equals(sequenceKindEnum)) {
+			return new WorkSequenceWorkInstructionSequencer();
 		}
-		LOGGER.error("Sequencer type "+type+" is not supported");
+		LOGGER.error("Sequencer type "+sequenceKindEnum +" is not supported");
 		return null;
 	}
 }

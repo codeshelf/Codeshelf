@@ -8,20 +8,24 @@ package com.codeshelf.model.domain;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -45,11 +49,6 @@ public class LedController extends WirelessDeviceABC {
 
 	@Singleton
 	public static class LedControllerDao extends GenericDaoABC<LedController> implements ITypedDao<LedController> {
-		@Inject
-		public LedControllerDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<LedController> getDaoClass() {
 			return LedController.class;
 		}
@@ -61,9 +60,21 @@ public class LedController extends WirelessDeviceABC {
 	@OneToMany(targetEntity=Location.class, mappedBy = "ledController")
 	@Getter
 	private List<Location> locations	= new ArrayList<Location>();
+	
+	@Setter
+	@Enumerated(EnumType.STRING)
+	@Column(length=20, name="device_type")
+	DeviceType deviceType = DeviceType.Lights;
 
 	public LedController() {
-
+	}
+	
+	public DeviceType getDeviceType() {
+		if (this.deviceType==null) {
+			// return lights as default to make it backwards compatible
+			return DeviceType.Lights;
+		}
+		return deviceType;
 	}
 
 	@SuppressWarnings("unchecked")

@@ -7,10 +7,12 @@
 package com.codeshelf.application;
 
 import java.lang.management.ManagementFactory;
-import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,29 +27,24 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Service.State;
+import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
-public abstract class ApplicationABC implements ICodeshelfApplication {
-	public enum ShutdownCleanupReq {
-		NONE , 
-		DROP_SCHEMA , 
-		DELETE_ORDERS_WIS ,
-		DELETE_ORDERS_WIS_INVENTORY
-		};
-		
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(ApplicationABC.class);
+public abstract class CodeshelfApplication implements ICodeshelfApplication {
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CodeshelfApplication.class);
 
 	private boolean				mIsRunning	= true;
-	private Thread				mShutdownHookThread;
-	private Runnable			mShutdownRunnable;
+
+	private List<Service> services = new ArrayList<Service>(); // subclass must register services before starting app 
+	private ServiceManager	serviceManager = null;
 
 	private WebApiServer apiServer;
 
 	@Inject
-	public ApplicationABC(WebApiServer apiServer) {
+	public CodeshelfApplication(WebApiServer apiServer) {
 		this.apiServer = apiServer;
 	}
 
@@ -58,13 +55,12 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	protected abstract void doLoadLibraries();
 
 	protected abstract void doInitializeApplicationData();
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Setup the JVM environment.
 	 */
 	private void setupLibraries() {
-		LOGGER.info("Codeshelf version: " + Configuration.getVersionString());
 		LOGGER.trace("user.dir = " + System.getProperty("user.dir"));
 		LOGGER.trace("java.class.path = " + System.getProperty("java.class.path"));
 		LOGGER.trace("java.library.path = " + System.getProperty("java.library.path"));
@@ -75,63 +71,81 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		doLoadLibraries();
 	}
 
+	protected final void registerService(Service service) {
+		if(serviceManager != null)
+			throw new IllegalArgumentException("cannot register service, serviceManager is already up");
+		if(service == null) {
+			LOGGER.warn("not registering null Service");
+		} else {
+			State state = service.state();
+			if(state == null) {
+				LOGGER.warn("not registering apparent mock service {}",service.getClass().getSimpleName());
+			} else {
+				if(state.equals(Service.State.NEW)) {
+					this.services.add(service);
+				} else {
+					LOGGER.warn("not registering service that has already been started ({})",service.getClass().getSimpleName());
+				}	
+			}
+		}
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 */
 	public final void startApplication() throws Exception {
+		if(serviceManager == null) {
+			throw new RuntimeException("application cannot start, need to startServices first");
+		}
+		LOGGER.debug("startApplication() beginning");
 
 		setupLibraries();
-
-		String processName = ManagementFactory.getRuntimeMXBean().getName();
-		LOGGER.trace("------------------------------------------------------------");
-		LOGGER.trace("Process info: " + processName);
-
-		installShutdownHook();
 
 		doStartup();
 
 		// Some persistent objects need some of their fields set to a base/start state when the system restarts.
 		doInitializeApplicationData();
 		
+		//Need the following line to know at a glance when startup is complete
 		LOGGER.info("------------------------------------------------------------");
-		LOGGER.info("startApplication() DONE");
+		String processName = ManagementFactory.getRuntimeMXBean().getName();
+		LOGGER.info("Started app version {} - process info {} ",JvmProperties.getVersionString(),processName);
+	}
+	
+	public final void startServices() {
+		installShutdownHook();
+		if(services.isEmpty())
+			services.add(new DummyService());
+		
+		serviceManager = new ServiceManager(services);
+		LOGGER.info("About to start application services: {}",serviceManager.servicesByState().toString());
+		serviceManager.startAsync();
+		try {
+			serviceManager.awaitHealthy(60,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			LOGGER.error("timeout starting services", e);
+		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public final void stopApplication(ShutdownCleanupReq cleanup) {
+	public final void stopApplication() {
 
-		LOGGER.info("Stopping application");
+		LOGGER.info("Stopping application. Services are: {}",this.serviceManager.servicesByState().toString());
 		
-		Tenant defaultTenant = TenantManagerService.getInstance().getDefaultTenant();
 		doShutdown();
-
+		
+		serviceManager.stopAsync();
 		try {
-			switch (cleanup) {
-				case NONE:
-					break;
-				case DROP_SCHEMA:
-					TenantManagerService.dropSchema(defaultTenant);
-					break;
-				case DELETE_ORDERS_WIS:
-					TenantManagerService.deleteOrdersWis(defaultTenant);
-					break;
-				case DELETE_ORDERS_WIS_INVENTORY:
-					TenantManagerService.deleteOrdersWisInventory(defaultTenant);
-					break;
-				default:
-					break;
-
-			}
-		} catch (SQLException e) {
-			LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			serviceManager.awaitStopped(60, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new RuntimeException("failure stopping services");
 		}
+
 
 		mIsRunning = false;
 
 		LOGGER.info("Application terminated normally");
-
 	}
 
 	/* --------------------------------------------------------------------------
@@ -155,31 +169,11 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 	/**
 	 */
 	private void installShutdownHook() {
-		// Prepare the shutdown hook.
-		mShutdownRunnable = new Runnable() {
-			public void run() {
-				// Only execute this hook if the application is still running at (external) shutdown.
-				// (This is to help where the shutdown is done externally and not through our own means.)
-				if (mIsRunning) {
-					stopApplication(ApplicationABC.ShutdownCleanupReq.NONE);
-				}
-			}
-		};
-		mShutdownHookThread = new Thread() {
+		Thread mShutdownHookThread = new Thread() {
 			public void run() {
 				try {
 					LOGGER.info("Shutdown signal received");
-					// Start the shutdown thread to cleanup and shutdown everything in an orderly manner.
-					Thread shutdownThread = new Thread(mShutdownRunnable);
-					// Set the class loader for this thread, so we can get stuff out of our own JARs.
-					//shutdownThread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-					shutdownThread.start();
-					long time = System.currentTimeMillis();
-					// Wait until the shutdown thread succeeds, but not more than 20 sec.
-					while ((mIsRunning) && ((System.currentTimeMillis() - time) < 20000)) {
-						Thread.sleep(1000);
-					}
-					//System.out.println("Shutdown signal handled");
+					stopApplication();
 				} catch (Exception e) {
 					System.out.println("Shutdown signal exception:" + e);
 					e.printStackTrace();
@@ -213,7 +207,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 			int interval = Integer.parseInt(intervalStr);
 
 			LOGGER.info("Starting OpenTSDB Reporter writing to "+metricsServerUrl+" in "+interval+" sec intervals");
-			MetricRegistry registry = MetricsService.getRegistry();
+			MetricRegistry registry = MetricsService.getInstance().getMetricsRegistry();
 			String hostName = MetricsService.getInstance().getHostName();
 			OpenTsdbReporter.forRegistry(registry)
 			      .prefixedWith("")
@@ -223,7 +217,7 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 			      .start(interval, TimeUnit.SECONDS);
 		}
 		else {
-			LOGGER.info("Metrics reporter is not enabled");
+			LOGGER.debug("Metrics reporter is not enabled");
 		}
 
 	}
@@ -233,17 +227,17 @@ public abstract class ApplicationABC implements ICodeshelfApplication {
 		MemoryUsageGaugeSet memoryUsage = new MemoryUsageGaugeSet();
 		Map<String, Metric> metrics  = memoryUsage.getMetrics();
 		for (Entry<String, Metric> entry : metrics.entrySet()) {
-			MetricsService.registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
+			MetricsService.getInstance().registerMetric(MetricsGroup.JVM,"memory."+entry.getKey(), entry.getValue());
 		}
 		ThreadStatesGaugeSet threadStateMetrics = new ThreadStatesGaugeSet();
 		metrics  = threadStateMetrics.getMetrics();
 		for (Entry<String, Metric> entry : metrics.entrySet()) {
-			MetricsService.registerMetric(MetricsGroup.JVM,"thread."+entry.getKey(), entry.getValue());
+			MetricsService.getInstance().registerMetric(MetricsGroup.JVM,"thread."+entry.getKey(), entry.getValue());
 		}
 		GarbageCollectorMetricSet gcMetrics = new GarbageCollectorMetricSet();
 		metrics  = gcMetrics.getMetrics();
 		for (Entry<String, Metric> entry : metrics.entrySet()) {
-			MetricsService.registerMetric(MetricsGroup.JVM,"gc."+entry.getKey(), entry.getValue());
+			MetricsService.getInstance().registerMetric(MetricsGroup.JVM,"gc."+entry.getKey(), entry.getValue());
 		}
 	}
 }

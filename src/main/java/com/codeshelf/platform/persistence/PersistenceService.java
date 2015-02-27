@@ -1,85 +1,52 @@
 package com.codeshelf.platform.persistence;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import org.hibernate.Hibernate;
-import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.cfg.Configuration;
-import org.hibernate.jpa.event.spi.JpaIntegrator;
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.Service;
-import com.codeshelf.platform.ServiceNotInitializedException;
+import com.google.common.util.concurrent.AbstractIdleService;
 
-public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Service {
-	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
-	
+public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends AbstractIdleService implements IPersistenceService<SCHEMA_TYPE> {
+	private static final int MAX_INITIALIZE_WAIT_SECONDS	= 60;
+	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceServiceImpl.class);
+
 	// define behavior of service
-	abstract public SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
-	abstract protected void performStartupActions(SCHEMA_TYPE schema); // actions to perform after initializing schema
-	abstract protected EventListenerIntegrator generateEventListenerIntegrator(); // can be null
+	@Override
+	public abstract SCHEMA_TYPE getDefaultSchema(); // default (or single) tenant definition
 
-	// stores the factories for different schemas
-	private Map<SCHEMA_TYPE,SessionFactory> factories = new HashMap<SCHEMA_TYPE, SessionFactory>();
+	// methods for specified schema
+	@Override
+	public abstract Session getSession(SCHEMA_TYPE schema);
+	@Override
+	public abstract SessionFactory getSessionFactory(SCHEMA_TYPE schema);
+	@Override
+	public abstract EventListenerIntegrator getEventListenerIntegrator(SCHEMA_TYPE schema);
+	@Override
+	public abstract void forgetInitialActions(SCHEMA_TYPE schema);
+	@Override
+	public abstract boolean hasActiveTransaction(SCHEMA_TYPE schema);
 
-	// store the event listener integrators
-	private Map<SCHEMA_TYPE,EventListenerIntegrator> listenerIntegrators = new HashMap<SCHEMA_TYPE, EventListenerIntegrator>();
+	// methods that affect all sessions
+	@Override
+	public abstract boolean hasAnyActiveTransactions();
+	@Override
+	public abstract boolean rollbackAnyActiveTransactions();
 
-	private SessionFactory createSessionFactory(SCHEMA_TYPE schema) {
-		if (this.isRunning()==false) {
-			throw new ServiceNotInitializedException();
-		}
-        try {
-			schema.applyLiquibaseSchemaUpdates();
-
-			LOGGER.info("Creating session factory for "+schema.getSchemaName());
-			Configuration configuration = schema.getHibernateConfiguration();
-        	
-        	BootstrapServiceRegistryBuilder bootstrapBuilder = new BootstrapServiceRegistryBuilder()
-        			.with(new JpaIntegrator()); // support for JPA annotations e.g. @PrePersist
-
-        	// use subclass definition to attach optional custom hibernate integrator if desired
-        	EventListenerIntegrator integrator = this.generateEventListenerIntegrator();
-        	if(integrator != null) { 
-        		bootstrapBuilder.with(integrator);
-        		this.listenerIntegrators.put(schema, integrator);
-        	}
-
-			// initialize hibernate session factory
-        	StandardServiceRegistryBuilder ssrb = 
-	        		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
-	        			.applySettings(configuration.getProperties());
-	        SessionFactory factory = configuration.buildSessionFactory(ssrb.build());
-	        
-	        // enable statistics
-	        factory.getStatistics().setStatisticsEnabled(true);
-	        			
-	        // add to factory map
-			this.factories.put(schema, factory);
-	        
-	        // sync up property defaults (etc) 
-			this.performStartupActions(schema);
-
-	        return factory;
-        } catch (Exception ex) {
-        	LOGGER.error("SessionFactory creation for "+schema.getSchemaName()+" failed",ex);
-        	if(ex instanceof HibernateException) {
-        		throw ex;
-        	} else {
-                throw new RuntimeException(ex);
-        	}
-        }
+	// implemented methods below
+	@Override
+	public String serviceName() {
+		return this.getClass().getSimpleName();
 	}
 
-	private final static Transaction beginTransaction(Session session) {
+	protected final static Transaction beginTransaction(Session session) {
+		if(session==null)
+			return null;
+		
 		Transaction tx = session.getTransaction();
 		if (tx != null) {
 			// check for already active transaction
@@ -91,171 +58,89 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Ser
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
 	}
-
-	public final SessionFactory getSessionFactory(SCHEMA_TYPE schema) {
-		SessionFactory fac = this.factories.get(schema);
-		if (fac==null) {
-			fac = createSessionFactory(schema);
-		}
-		return fac;
-	}
-
-	public final Session getSession(SCHEMA_TYPE schema) {
-		SessionFactory fac = this.getSessionFactory(schema);
-		Session session = fac.getCurrentSession();
-
-		return session;
-	}
-
+	
+	@Override
 	public final Session getSessionWithTransaction(SCHEMA_TYPE schema) {
 		Session session = getSession(schema);
-		PersistenceService.beginTransaction(session);
+		beginTransaction(session);
 		return session;
 	}
 
+	@Override
 	public final Transaction beginTransaction(SCHEMA_TYPE schema) {
 		Session session = getSession(schema);
-		return PersistenceService.beginTransaction(session);
+		return beginTransaction(session);
 	}
 	
+	@Override
 	public final void commitTransaction(SCHEMA_TYPE schema) {
 		Session session = getSession(schema);
-		Transaction tx = session.getTransaction();
-		if (tx.isActive()) {
-			tx.commit();
-		} else {
-			LOGGER.error("tried to close inactive Tenant transaction");
+		if(session != null) {
+			Transaction tx = session.getTransaction();
+			if (tx.isActive()) {
+				tx.commit();
+			} else {
+				LOGGER.error("tried to close inactive Tenant transaction");
+			}
 		}
 	}
 
+	@Override
 	public final void rollbackTransaction(SCHEMA_TYPE schema) {
 		Session session = getSession(schema);
-		Transaction tx = session.getTransaction();
-		if (tx.isActive()) {
-			tx.rollback();
-		} else {
-			LOGGER.error("tried to roll back inactive Tenant transaction");
-		}
-	}
-
-	public final boolean hasActiveTransaction(SCHEMA_TYPE schema) {
-		if(this.isRunning() == false) {
-			return false;
-		} 
-		SessionFactory sf = this.factories.get(schema);
-		if(!sf.isClosed()) {
-			Session session = sf.getCurrentSession();
-			if(session != null) {
-				Transaction tx = session.getTransaction();
-				if(tx != null) {
-					if(tx.isActive()) {
-						return true;
-					}
-				}
+		if(session != null) {
+			Transaction tx = session.getTransaction();
+			if (tx.isActive()) {
+				tx.rollback();
+			} else {
+				LOGGER.error("tried to roll back inactive Tenant transaction");
 			}
 		}
-		return false;
 	}
 
-	public final boolean hasAnyActiveTransaction() {
-		if(this.isRunning() == false) {
-			return false;
-		} 
-		for(SCHEMA_TYPE schema : this.factories.keySet()) {
-			if(hasActiveTransaction(schema)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	public final static <T>T deproxify(T object) {
-		if (object==null) {
-			return null;
-		} if (object instanceof HibernateProxy) {
-	        Hibernate.initialize(object);
-	        @SuppressWarnings("unchecked")
-			T realDomainObject = (T) ((HibernateProxy) object)
-	                  .getHibernateLazyInitializer()
-	                  .getImplementation();
-	        return (T)realDomainObject;
-	    }
-		return object;
-	}
-	
-	private final EventListenerIntegrator getEventListenerIntegrator(SCHEMA_TYPE schema) {
-		getSessionFactory(schema); // ensure this schema has been initialized
-		return this.listenerIntegrators.get(schema);
-	}
-	public final EventListenerIntegrator getEventListenerIntegrator() {
-		return getEventListenerIntegrator(getDefaultSchema());
-	}
-	
 	/* Methods for using default schema */
+	@Override
 	public final Transaction beginTransaction() {
 		return beginTransaction(getDefaultSchema());
 	}
-	
+	@Override
 	public final void commitTransaction() {
 		commitTransaction(getDefaultSchema());
 	}
-	
-	public final void rollbackTenantTransaction() {
+	@Override
+	public final void rollbackTransaction() {
 		rollbackTransaction(getDefaultSchema());
-	}
-	
+	}	
+	@Override
 	public final Session getSession() {
 		return getSession(getDefaultSchema());
 	}
-	
+	@Override
 	public final Session getSessionWithTransaction() {
 		return getSessionWithTransaction(getDefaultSchema());
 	}
-	
+	@Override
 	public final SessionFactory getSessionFactory() {
 		return getSessionFactory(getDefaultSchema());
 	}
-	
-	/* Service methods */
 	@Override
-	public final boolean start() {
-		if(this.isRunning()) {
-			LOGGER.error("Attempted to start "+this.getClass().getSimpleName()+" more than once");
-		} else {
-			LOGGER.info("Starting "+this.getClass().getSimpleName());
-			this.setRunning(true);
-		}
-		return true;
+	public final EventListenerIntegrator getEventListenerIntegrator() {
+		return getEventListenerIntegrator(getDefaultSchema());
 	}
-
+	void forgetInitialActions() {
+		forgetInitialActions(getDefaultSchema());
+	}
+	boolean hasActiveTransaction() {
+		return hasActiveTransaction(getDefaultSchema());
+	}
+	
+	// service methods
 	@Override
-	public final boolean stop() {
-		LOGGER.info("Stopping "+this.getClass().getSimpleName());
-		
-		int rollback=0;
-		for(SessionFactory sf : this.factories.values()) {
-			if(!sf.isClosed()) {
-				Session session = sf.getCurrentSession();
-				if(session != null) {
-					Transaction tx = session.getTransaction();
-					if(tx != null) {
-						if(tx.isActive()) {
-							tx.rollback();
-							rollback++;
-						}
-					}
-					//session.close();
-				}
-				//sf.close();
-			}
+	public void awaitRunningOrThrow() {
+		try {
+			this.awaitRunning(MAX_INITIALIZE_WAIT_SECONDS, TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new IllegalStateException("timeout initializing "+serviceName(),e);
 		}
-		if(rollback>0) {
-			LOGGER.warn("rolled back "+rollback+" active transactions while stopping persistence");
-		}
-
-		//this.factories = new HashMap<Tenant, SessionFactory>(); // unlink session factories
-		
-		this.setRunning(false);
-		return true;
 	}
 }

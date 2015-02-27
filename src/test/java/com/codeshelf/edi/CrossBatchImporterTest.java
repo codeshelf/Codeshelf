@@ -27,8 +27,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 
 /**
  * @author jeffw
@@ -39,8 +38,8 @@ public class CrossBatchImporterTest extends EdiTestABC {
 	private UUID facilityId;
 	
 	@Override
-	public void doBefore() {
-		this.mWorkService = new WorkService().start();
+	public void doBefore() throws Exception {
+		super.doBefore();
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -60,7 +59,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 			uomMaster = new UomMaster();
 			uomMaster.setUomMasterId(inUom);
 			uomMaster.setParent(inFacility);
-			mUomMasterDao.store(uomMaster);
+			UomMaster.DAO.store(uomMaster);
 			inFacility.addUomMaster(uomMaster);
 		}
 
@@ -70,7 +69,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addItemMaster(result);
-		mItemMasterDao.store(result);
+		ItemMaster.DAO.store(result);
 
 		return result;
 	}
@@ -226,7 +225,7 @@ public class CrossBatchImporterTest extends EdiTestABC {
 
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
-		TenantPersistenceService tenantPersistenceService=this.getTenantPersistenceService();
+		ITenantPersistenceService tenantPersistenceService=this.getTenantPersistenceService();
 		tenantPersistenceService.beginTransaction();
 
 		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);

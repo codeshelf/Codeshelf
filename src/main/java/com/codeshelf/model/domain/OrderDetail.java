@@ -37,7 +37,7 @@ import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -67,14 +67,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	@Inject
 	public static ITypedDao<OrderDetail>	DAO;
+	
+	@Inject
+	public static WorkService	workService;
 
 	@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
-		@Inject
-		public OrderDetailDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<OrderDetail> getDaoClass() {
 			return OrderDetail.class;
 		}
@@ -159,15 +157,16 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private String							preferredLocation;
 
-	@OneToMany(mappedBy = "orderDetail")
 	@Getter
+	@OneToMany(mappedBy = "orderDetail")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
-	@Column(nullable = true, name = "preferred_sequence")
+	@Column(nullable = true, name = "work_sequence")
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer							preferredSequence;
+	private Integer							workSequence;
 
 	public OrderDetail() {
 		this(null, true);
@@ -391,31 +390,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
 	 */
 	public boolean willProduceWi() {
-		OrderTypeEnum myParentType = getParentOrderType();
-		if (myParentType != OrderTypeEnum.OUTBOUND)
-			return false;
-
-		// Need to know if this is a simple outbound pick order, or linked to crossbatch.
-		OrderDetail matchingCrossDetail = outboundDetailToMatchingCrossDetail();
-		if (matchingCrossDetail != null) { // Then we only need the outbound order to have a location on the path
-			OrderHeader myParent = getParent();
-			List<OrderLocation> locations = myParent.getOrderLocations();
-			if (locations.size() == 0)
-				return false;
-			// should check non-deleted locations, on path. Not initially.
-			return true;
-
-		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
-			// Should refactor getItemLocations() rather than use the string here.
-			String inventoryLocs = getItemLocations();
-			if (!inventoryLocs.isEmpty())
-				return true;
-		}
-
-		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
-
-		return false;
-
+		return workService.willOrderDetailGetWi(this);
 	}
 
 	// --------------------------------------------------------------------------
@@ -468,15 +443,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return theGroup.getDomainId();
 	}
 
-	public Location getPreferredLocObject(final Facility inFacility) {
-		String whereString = getPreferredLocation();
-		if (whereString == null || whereString.isEmpty())
+	public Location getPreferredLocObject() {
+		Facility facility = getParent().getFacility();
+		String preferredLocationString = getPreferredLocation();
+		if (preferredLocationString == null || preferredLocationString.isEmpty()) {
 			return null;
-		Location foundLocation = inFacility.findLocationById(whereString);
-		if (foundLocation == null || !foundLocation.isActive())
-			return null;
-		else
-			return foundLocation;
+		}
+		Location foundLocation = facility.findLocationById(preferredLocationString);
+		return foundLocation;
 	}
 
 	/**
@@ -521,5 +495,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		} else {
 			return false;
 		}
+	}
+	
+	public boolean isPreferredDetail(){
+		return getPreferredLocation() != null && getWorkSequence() != null;
 	}
 }

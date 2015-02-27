@@ -3,6 +3,7 @@ package com.codeshelf.platform.multitenancy;
 import java.util.Collection;
 
 import com.codeshelf.model.domain.UserType;
+import com.google.common.util.concurrent.Service;
 
 /**
  * API for Tenant Manager interface
@@ -10,12 +11,9 @@ import com.codeshelf.model.domain.UserType;
  * @author ivan
  *
  */
-public interface ITenantManager {
-	boolean connect();
-	void disconnect();
-
+public interface ITenantManager extends Service {
 	// shards
-	int getDefaultShardId();
+	Shard getDefaultShard();
 	
 	// users
 	boolean canCreateUser(String username);	
@@ -27,7 +25,10 @@ public interface ITenantManager {
 	void resetTenant(Tenant tenant);
 	Tenant getTenantByUsername(String username);
 	Tenant getTenantByName(String name);
-	Tenant createTenant(String name,int shardId,String dbUsername);
+	Tenant createTenant(String name,String shardName,String dbUsername);
 	Tenant getDefaultTenant();
 	Collection<Tenant> getTenants();
+
+	// misc
+	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
 }

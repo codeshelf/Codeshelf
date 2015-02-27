@@ -46,7 +46,7 @@ public class EventListenerIntegrator implements Integrator {
         //eventListenerRegistry.prependListeners( EventType.DELETE, EventListener.class);
         //     3) This form adds the specified listener(s) to the end of the listener chain
         //eventListenerRegistry.appendListeners( EventType.AUTO_FLUSH, myListenersToBeCalledLast );
-        LOGGER.info("Event listeners registered");
+        LOGGER.debug("Event listeners registered");
         
 	}
 

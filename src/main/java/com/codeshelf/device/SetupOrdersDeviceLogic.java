@@ -55,31 +55,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	private String								mLocationId;
 
-	private ScanNeededToVerifyPick				mScanNeededToVerifyPick;
-
-	private enum ScanNeededToVerifyPick {
-		NO_SCAN_TO_VERIFY("disabled"),
-		UPC_SCAN_TO_VERIFY("UPC"),
-		SKU_SCAN_TO_VERIFY("SKU"),
-		LPN_SCAN_TO_VERIFY("LPN");
-		private String	mInternal;
-
-		private ScanNeededToVerifyPick(String inString) {
-			mInternal = inString;
-		}
-		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
-			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
-			for (ScanNeededToVerifyPick onValue:ScanNeededToVerifyPick.values()){
-				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
-					return onValue;
-			}
-			return returnValue;
-		}
-		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue){
-			return inValue.mInternal;
-		}
-	}
-
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final ICsDeviceManager inDeviceManager,
@@ -91,25 +66,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		updateConfigurationFromManager();
 	}
 
-	private boolean isScanNeededToVerifyPick() {
-		return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
-	}
-
-	private void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
-		mScanNeededToVerifyPick = inValue;
-	}
-	public String getScanVerificationType(){
-		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
-	}
-
-	public void updateConfigurationFromManager() {
-		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
-		String scanPickValue = mDeviceManager.getScanTypeValue();
-		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
-		setScanNeededToVerifyPick(theEnum);		// String resolvedPickString = ScanNeededToVerifyPick.scanPickEnumToString(theEnum);
-		LOGGER.info("Update scan verification value to " + theEnum);
-	}
-
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
 	}
@@ -118,8 +74,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	protected void setState(final CheStateEnum inCheState) {
+		int priorCount = getSetStateStackCount();
 		try {
-			markInSetState(true);
+			// This is tricky. setState() may have side effects that call setState. So even as the internal setState is done, the first one may not be done.
+			// Therefore, a counter instead of a boolean.
+			setSetStateStackCount(priorCount + 1);
 			CheStateEnum previousState = mCheStateEnum;
 			boolean isSameState = previousState == inCheState;
 			mCheStateEnum = inCheState;
@@ -139,12 +98,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case LOCATION_SELECT:
-					sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
+					if (isOkToStartWithoutLocation())
+						sendDisplayCommand(SCAN_LOCATION_MSG, OR_SCAN_START, EMPTY_MSG, SHOWING_WI_COUNTS);
+					else
+						sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 
 				case LOCATION_SELECT_REVIEW:
-					sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
+					if (isOkToStartWithoutLocation())
+						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1, OR_SCAN_LOCATION, OR_SCAN_START, SHOWING_WI_COUNTS);
+					else
+						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
 						LOCATION_SELECT_REVIEW_MSG_LINE_2,
 						LOCATION_SELECT_REVIEW_MSG_LINE_3,
 						SHOWING_WI_COUNTS);
@@ -233,7 +198,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 			}
 		} finally {
-			markInSetState(false);
+			setSetStateStackCount(priorCount);
 		}
 	}
 
@@ -254,7 +219,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case STARTWORK_COMMAND:
-				startWorkCommandReceived();
+			case REVERSE_COMMAND:
+				startWorkCommandReceived(inScanStr);
 				break;
 
 			case SHORT_COMMAND:
@@ -747,6 +713,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerSelectScan(COMMAND_PREFIX, SHORT_COMMAND);
 				break;
 
+			case SCAN_SOMETHING:
+				setState(CheStateEnum.SCAN_SOMETHING_SHORT);
+				break;
+
 			//Anywhere else we can start work if there's anything setup
 			default:
 				WorkInstruction wi = getOneActiveWorkInstruction();
@@ -818,80 +788,28 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Factor this out as it is called from two places. The normal processLocationScan, and skipping the location scan if just going by sequence.
+	 * WARNING: The parameter is the scanned location, or "START", or "REVERSE"
+	 * @param inLocationStr
+	 */
+	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
+		clearAllPositionControllers();
+		this.mLocationId = inLocationStr;
+		
+		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr, getMReversePickOrder(), reverseOrderFromLastTime);
+		setState(CheStateEnum.GET_WORK);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param insScanPrefixStr
 	 * @param inScanStr
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			clearAllPositionControllers();
-
-			this.mLocationId = inScanStr;
-			mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
-
-			setState(CheStateEnum.GET_WORK);
-
+			requestWorkAndSetGetWorkState(inScanStr, false);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
-			invalidScanMsg(mCheStateEnum);
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param insScanPrefixStr
-	 * @param inScanStr
-	 */
-	private String verifyWiField(final WorkInstruction inWi, String inScanStr) {
-
-		String returnString = "";
-		
-		String wiVerifyValue = "";
-		switch (mScanNeededToVerifyPick) {
-			case SKU_SCAN_TO_VERIFY:
-				wiVerifyValue = inWi.getItemId();
-				break;
-				
-			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
-			case UPC_SCAN_TO_VERIFY:
-				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
-				break;
-				
-			default:
-				
-		}
-		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
-			returnString = "Data error in WI"; // try to keep to 20 characters
-		else if (!wiVerifyValue.equals(inScanStr))
-			returnString = "Scan mismatch"; 
-		
-		return returnString;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param insScanPrefixStr
-	 * @param inScanStr
-	 */
-	private void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
-		if (inScanPrefixStr.isEmpty()) {
-
-			WorkInstruction wi = getOneActiveWorkInstruction();
-			if (wi == null) {
-				LOGGER.error("unanticipated no active WI in processVerifyScan");
-				invalidScanMsg(mCheStateEnum);
-				return;
-			}
-			String errorStr = verifyWiField(wi, inScanStr);
-			if (errorStr.isEmpty()) {
-				setState(CheStateEnum.DO_PICK);
-			} else {
-				LOGGER.info("errorStr "); // TODO get this to the CHE display
-				invalidScanMsg(mCheStateEnum);
-			}
-
-		} else {
-			// Want some feedback here. Tell the user to scan something
-			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
 			invalidScanMsg(mCheStateEnum);
 		}
 	}
@@ -942,6 +860,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SCAN_SOMETHING:
+				// At any time during the pick we can change locations.
+				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
+					processLocationScan(inScanPrefixStr, inContent);
+				}
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
@@ -1078,7 +1000,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					PosControllerInstr.BITENCODED_LED_DASH,
 					PosControllerInstr.SOLID_FREQ.byteValue(),
 					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-				LOGGER.info("Position {} has unknwon container id", position);
+				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
 				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
@@ -1184,7 +1106,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * 
 	 */
-	private void startWorkCommandReceived() {
+	private void startWorkCommandReceived(final String inScanStr) {
+		boolean reverse = REVERSE_COMMAND.equalsIgnoreCase(inScanStr);
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -1193,18 +1116,39 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do nothing. Only a "Clear Error" will get you out
+				//Do nothing. Only a "Clear Error" will get you out 
 				break;
 
 			case CONTAINER_POSITION:
-				processContainerPosition(COMMAND_PREFIX, STARTWORK_COMMAND);
+				processContainerPosition(COMMAND_PREFIX, inScanStr);
+				break;
+
+			case LOCATION_SELECT:
+			case LOCATION_SELECT_REVIEW:
+				// Normally, start work here would hit the default case below, calling start work() which queries to server again
+				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
+				if (isOkToStartWithoutLocation()) {
+					LOGGER.info("starting without a start location");
+					boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
+					//Remember the selected pick direction
+					setMReversePickOrder(reverse);
+					requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
+				} else { // do as we did before
+					if (mPositionToContainerMap.values().size() > 0) {
+						startWork(inScanStr);
+					} else {
+						setState(CheStateEnum.NO_CONTAINERS_SETUP);
+					}
+				}
 				break;
 
 			//Anywhere else we can start work if there's anything setup
 			case CONTAINER_SELECT:
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {
-					startWork();
+					startWork(inScanStr);
+					//Remember the selected pick direction
+					setMReversePickOrder(reverse);
 				} else {
 					setState(CheStateEnum.NO_CONTAINERS_SETUP);
 				}
@@ -1215,14 +1159,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The start work command simply tells the user to select a starting location.
-	 * It's a psychological step that makes more sense.
+	 * Parameters currently are the string literals REVERSE_COMMAND or START_COMMAND
+	 * Tricky process from here. Send the container/order list to server to compute work instructions.
+	 * This goes to COMPUTE_WORK state which basically just waits for the server response.
+	 * I think for this, we always want to computeCheWork uniformly, in the forward direction. Will get reversed later.
 	 */
-	private void startWork() {
+	private void startWork(final String inScanedPickDirections) {
+		boolean isReverse = inScanedPickDirections.equals(REVERSE_COMMAND);
+		
 		clearAllPositionControllers();
 		mContainerInSetup = "";
 		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
-		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList);
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList, isReverse);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
 
@@ -1330,6 +1278,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param buttonPosition 
 	 */
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
+		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
+
+		// The point is, let's check our state
+		switch (mCheStateEnum) {
+			case DO_PICK:
+			case SHORT_PICK:
+				break;
+
+			case SCAN_SOMETHING:
+				// Do not allow button press in this state. We did display the count on poscon. User might get confused.
+				setState(mCheStateEnum);
+				return;
+			default: {
+				// We want to ignore the button press, but force out starting poscon situation again.
+				setState(mCheStateEnum);
+				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
+				return;
+			}
+		}
+
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.

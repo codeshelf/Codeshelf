@@ -39,10 +39,11 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.service.WorkService;
 
 /**
- * 
- * 
+ *
+ *
  */
 public class InventoryPickRunTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryPickRunTest.class);
@@ -166,10 +167,34 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each"
 				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each"
-				+ "\r\n,USF314,TARGET,12000,12000,1522,Tshirt-small,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,TARGET,12000,12000,1523,Tshirt-med,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,TARGET,12000,12000,1524,Tshirt-large,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n,USF314,TARGET,12000,12000,1525,Tshirt-xl,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\n";
+				+ "\r\n,USF314,TARGET,12000,12000,1522,Tshirt-small,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
+				+ "\r\n,USF314,TARGET,12000,12000,1523,Tshirt-med,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
+				+ "\r\n,USF314,TARGET,12000,12000,1524,Tshirt-large,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
+				+ "\r\n,USF314,TARGET,12000,12000,1525,Tshirt-xl,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03" + "\n";
+
+		byte[] csvArray2 = csvString2.getBytes();
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+
+	}
+	
+	private void readOrdersForBayDistance(Facility inFacility) throws IOException {
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// SKU 1123 needed for 12000
+		// SKU 1123 needed for 12010
+		// Each product needed for 12345
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDetailId,locationId"
+				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each,101,D-27"	// Should get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1830,Shorts-large,1,each,102"			// Should not get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each,103"
+				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"
+				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
+				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
 
 		byte[] csvArray2 = csvString2.getBytes();
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
@@ -182,13 +207,13 @@ public class InventoryPickRunTest extends EdiTestABC {
 	}
 
 	private void readInventoryWithoutTop(Facility inFacility) throws IOException {
-		// A1.B1.T2 is D-26.  
+		// A1.B1.T2 is D-26.
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
 
-		// A1.B2.T2 is D-28		
+		// A1.B2.T2 is D-28
 		// In D-28, left to right are SKUs 1522,1525,1523,1524
 
-		// A1.B1.T1 is D-27.  
+		// A1.B1.T1 is D-27.
 		// In D-27, left to right are SKUs  1831, 1830
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -214,19 +239,19 @@ public class InventoryPickRunTest extends EdiTestABC {
 	}
 
 	private void readInventoryWithTop(Facility inFacility) throws IOException {
-		// A1.B1.T2 is D-26.  
+		// A1.B1.T2 is D-26.
 		// In D-26, left to right are SKUs 1124,1126,1123,1125
 
-		// A1.B2.T2 is D-28		
+		// A1.B2.T2 is D-28
 		// In D-28, left to right are SKUs 1522,1525
 
-		// A1.B1.T3 is D-71		
+		// A1.B1.T3 is D-71
 		// In D-71, left to right are SKUs 1523
 
-		// A1.B2.T3 is D-72		
+		// A1.B2.T3 is D-72
 		// In D-72, left to right are SKUs 1524
 
-		// A1.B1.T1 is D-27.  
+		// A1.B1.T1 is D-27.
 		// In D-27, left to right are SKUs  1831, 1830
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -240,6 +265,44 @@ public class InventoryPickRunTest extends EdiTestABC {
 				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1831,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1830,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
+
+		byte[] csvArray = csvString.getBytes();
+
+		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
+		InputStreamReader reader = new InputStreamReader(stream);
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+	}
+	
+	private void readInventoryBayDistance(Facility inFacility) throws IOException {
+		// A1.B1.T2 is D-26.
+		// In D-26, left to right are SKUs 1124,1126,1123,1125
+
+		// A1.B2.T2 is D-28
+		// In D-28, left to right are SKUs 1522,1525
+
+		// A1.B1.T3 is D-71
+		// In D-71, left to right are SKUs 1523
+
+		// A1.B2.T3 is D-72
+		// In D-72, left to right are SKUs 1524
+
+		// A1.B1.T1 is D-27.
+		// In D-27, left to right are SKUs  1831, 1830
+
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
+				+ "1124,D-26,12 oz Bowl Lids,0,ea,6/25/14 12:00,8\r\n" //
+				+ "1125,D-26,16 oz Bowl Lids,,each,6/25/14 12:00,185\r\n" //
+				+ "1126,D-26,24 oz Bowl Lids,80,each,6/25/14 12:00,55\r\n" //
+				+ "1522,D-28,Tshirt-small,,ea,,3\r\n" //
+				+ "1523,D-71,Tshirt-med,,ea,,190\r\n" //
+				+ "1524,D-72,Tshirt-large,0,ea,6/25/14 12:00,214\r\n" //
+				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1831,,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
+				+ "1830,,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
 
 		byte[] csvArray = csvString.getBytes();
 
@@ -264,7 +327,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertNotNull(tierA1B1T1.getLedController());
 		Tier tierA1B2T1 = (Tier) facility.findSubLocationById("A1.B2.T1");
 		Assert.assertNotNull(tierA1B1T1.getLedController());
-		// Check the path direction	
+		// Check the path direction
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
@@ -281,8 +344,8 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// Orders
 		readOrdersForA1(facility);
 
-		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 
@@ -295,19 +358,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1831", wi5.getItemId());
 		Assert.assertEquals("1524", wi10.getItemId());
 
-		// Check again with the Accu sequencer
-		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		List<WorkInstruction> wiList2 = startWorkFromBeginning(facility, "CHE2", "12000");
-		wi1 = wiList2.get(0);
-		wi5 = wiList2.get(4);
-		wi10 = wiList2.get(9);
-		// All wrong!
-		Assert.assertEquals("1124", wi1.getItemId());
-		Assert.assertEquals("1831", wi5.getItemId());
-		Assert.assertEquals("1524", wi10.getItemId());
-
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		// Need more cases for BayDistanceTopLast.
 
@@ -327,7 +378,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Tier tierA1B2T1 = (Tier) facility.findSubLocationById("A1.B2.T1");
 		Assert.assertNotNull(tierA1B1T1.getLedController());
 
-		// Check the path direction	
+		// Check the path direction
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
@@ -355,9 +406,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 10, theSize);
@@ -368,23 +419,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals("1125", wi5.getItemId());
 		Assert.assertEquals("1525", wi10.getItemId());
 
-		// Check again with the Accu sequencer
-		// ebeans bug? Cannot immediately setup the CHE again. Try different CHE
-		Che theChe2 = theNetwork.getChe("CHE2");
-
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistanceTopLast);
-		mWorkService.setUpCheContainerFromString(theChe2, "12000");
-		List<WorkInstruction> wiList2 = mWorkService.getWorkInstructions(theChe2, ""); // This returns them in working order.
-		logWiList(wiList2);
-		wi1 = wiList2.get(0);
-		wi5 = wiList2.get(4);
-		wi10 = wiList2.get(9);
-		// All wrong!
-		Assert.assertEquals("1124", wi1.getItemId());
-		Assert.assertEquals("1831", wi5.getItemId());
-		Assert.assertEquals("1524", wi10.getItemId());
-
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -424,10 +459,10 @@ public class InventoryPickRunTest extends EdiTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000.");
-		WorkList workList = mWorkService.setUpCheContainerFromString(theChe, "12000");
+		WorkList workList = workService.setUpCheContainerFromString(theChe, "12000");
 		Integer theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
@@ -435,14 +470,14 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertEquals((Integer) 2, theSize); // Infer 2 shorts in there
 
 		// Set up the CHE again. DEV-609. This should delete the previous 2 immediate shorts, then make 2 new ones
-		workList = mWorkService.setUpCheContainerFromString(theChe, "12000");
+		workList = workService.setUpCheContainerFromString(theChe, "12000");
 		theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
 		theSize = workList.getDetails().size();
 		Assert.assertEquals((Integer) 2, theSize); // Before DEV-609, this had 12
-		
-		mPropertyService.restoreHKDefaults(facility);
+
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -460,7 +495,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		Assert.assertNotNull(facility);
 
 		LOGGER.info("1: Set LOCAPICK = true.  Leave EACHMULT = false");
-		DomainObjectProperty theProperty = PropertyService.getPropertyObject(facility, DomainObjectProperty.LOCAPICK);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
@@ -488,9 +523,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
-		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 3, theSize);
@@ -509,11 +544,9 @@ public class InventoryPickRunTest extends EdiTestABC {
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
 		this.getTenantPersistenceService().beginTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
@@ -533,14 +566,62 @@ public class InventoryPickRunTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
-		Facility.setSequencerType(WorkInstructionSequencerType.BayDistance);
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
 		Assert.assertEquals((Integer) 4, theSize);
 		this.getTenantPersistenceService().commitTransaction();
 
+	}
+
+	//@Test
+	public final void testBayDistance() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+		OrderDetail.workService = workService;
+
+		
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
+		
+		LOGGER.info("1: Set WORKSEQR = BayDistance.");
+		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "BayDistance");
+		
+		// Inventory
+		readInventoryBayDistance(facility);
+
+		// Orders
+		readOrdersForBayDistance(facility);
+		
+		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		Assert.assertNotNull(orderHeader);
+		
+		// 101 item does not have an inventory location
+		// 101 has a preferred location that is on a path
+		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
+		Assert.assertNotNull(orderDetail);
+	
+		Assert.assertTrue(orderDetail.willProduceWi());
+		
+		// 102 items does not have an inventory location
+		// 102 does not have a preferred location
+		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
+		Assert.assertNotNull(orderDetail2);
+	
+		Assert.assertFalse(orderDetail2.willProduceWi());
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
+	@Test
+	public final void testWorkSequence() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
+		Assert.assertNotNull(facility);
+		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 }

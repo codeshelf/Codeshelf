@@ -3,8 +3,10 @@ package com.codeshelf.platform.multitenancy;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import lombok.Getter;
+import lombok.Setter;
 
 import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
@@ -16,63 +18,61 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.Service;
 import com.codeshelf.platform.persistence.DatabaseConnection;
-import com.google.inject.Singleton;
+import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.google.common.util.concurrent.AbstractIdleService;
 
-@Singleton
-public class TenantManagerService extends Service implements ITenantManager {
+public class TenantManagerService extends AbstractIdleService implements ITenantManager {
+	public enum ShutdownCleanupReq {
+	NONE , 
+	DROP_SCHEMA , 
+	DELETE_ORDERS_WIS ,
+	DELETE_ORDERS_WIS_INVENTORY
+	}
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
+	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 60;
 	private static TenantManagerService theInstance = null;
 	
-	ManagerPersistenceService managerPersistenceService;
+	//@Getter
+	//int defaultShardId = -1;
 	
-	@Getter
-	int defaultShardId = -1;
-	
-	@Deprecated
-	@Getter
-	int defaultTenantId = -1;
+	private Tenant defaultTenant = null;
+
+	@Setter
+	ShutdownCleanupReq shutdownCleanupRequest = ShutdownCleanupReq.NONE;
 	
 	private TenantManagerService() {
 		super();
-		setInstance();
 	}
 	
-	private void setInstance() {
-		TenantManagerService.theInstance = this;
-	}
-	
-	public final synchronized static ITenantManager getInstance() {
+	public final synchronized static ITenantManager getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantManagerService();
-			theInstance.start();
-			//LOGGER.warn("Unless this is a test, PersistanceService should have been initialized already but was not!");
-		}
-		else if (!theInstance.isRunning()) {
-			theInstance.start();
-			LOGGER.info("PersistanceService was stopped and restarted");
 		}
 		return theInstance;
 	}
-
-	@Override
-	public boolean start() {
-		if(isRunning()) {
-			LOGGER.error("tried to start TenantManagerService but was already running");
-			return false;
-		} // else
-		managerPersistenceService=ManagerPersistenceService.getInstance();
-		
-		initDefaultShard();
-		
-		this.setRunning(true);
-		return true;
+	public final static ITenantManager getNonRunningInstance() {
+		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
+			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
+		}
+		return theInstance;
+	}
+	public final static ITenantManager getInstance() {
+		try {
+			getMaybeRunningInstance().awaitRunning(MAX_TENANT_MANAGER_WAIT_SECS,TimeUnit.SECONDS);
+		} catch (TimeoutException e) {
+			throw new IllegalStateException("Timeout contacting tenant manager",e);
+		}
+		return theInstance;
 	}
 	
 	private void initDefaultShard() {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		Criteria criteria = session.createCriteria(Shard.class);
 		criteria.add(Restrictions.eq("name", DEFAULT_SHARD_NAME));
@@ -89,14 +89,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 			shard.setUsername(System.getProperty("shard.default.db.admin_username"));
 			shard.setPassword(System.getProperty("shard.default.db.admin_password"));
 			session.save(shard);
-
-			this.defaultShardId = shard.getShardId();
-			
 			tenant = initDefaultTenant(session,shard);
-		} else if(listShard.size() == 1) {
-			// use existing
-			this.defaultShardId = listShard.get(0).getShardId();
-		} else {
+		} else if(listShard.size() > 1) {
 			LOGGER.error("got more than one default shard, cannot initialize");
 		}
 		managerPersistenceService.commitTransaction();
@@ -117,7 +111,6 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	}
 
-	@Deprecated
 	private Tenant initDefaultTenant(Session session,Shard shard) {
 		// must be called within active transaction
 		Tenant tenant = shard.getTenant(DEFAULT_TENANT_NAME);
@@ -128,21 +121,9 @@ public class TenantManagerService extends Service implements ITenantManager {
 			
 			tenant = shard.createTenant(DEFAULT_TENANT_NAME, dbSchemaName, dbUsername, dbPassword);
 		}
-		this.defaultTenantId = tenant.getTenantId();
 		return tenant;
 	}
 
-	@Override
-	public boolean stop() {
-		if(isRunning()) {
-			managerPersistenceService.stop();
-			this.setRunning(false);
-			return true;
-		} // else
-		LOGGER.error("Tried to stop TenantManagerService but was not running");
-		return false;
-	}
-	
 	@SuppressWarnings("unchecked")
 	private User getUser(Session session,String username) {
 		User result = null;
@@ -177,25 +158,11 @@ public class TenantManagerService extends Service implements ITenantManager {
 		return (user == null);
 	}
 	
-	@Override
-	public boolean connect() {
-		if(!isRunning()) {
-			start();
-		}
-		return true;
-	}
-
-	@Override
-	public void disconnect() {
-		if(isRunning()) {
-			stop();
-		}
-	}
-	
 	//////////////////////////// Manager Service API ////////////////////////////////
 	
 	@Override
 	public boolean canCreateUser(String username) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 		// for UI
 		boolean result = false;
 		try {
@@ -209,6 +176,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 	
 	@Override
 	public User createUser(Tenant tenant,String username,String password,UserType type) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		User result=null;
 		
 		try {
@@ -234,6 +203,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public void resetTenant(Tenant tenant) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		LOGGER.warn("Resetting schema and users for "+tenant.toString());
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
@@ -266,6 +237,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 	
 	@Override
 	public User getUser(String username) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		User result = null;
 		
 		try {
@@ -284,6 +257,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public Tenant getTenantByUsername(String username) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Tenant result = null;
 		
 		try {
@@ -300,6 +275,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public Tenant getTenantByName(String name) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Tenant result = null;
 		
 		try {
@@ -320,18 +297,50 @@ public class TenantManagerService extends Service implements ITenantManager {
 	}
 
 	@Override
-	public Tenant createTenant(String name, int shardId, String dbUsername) {
+	public Shard getDefaultShard() {
+		return this.getShardByName(TenantManagerService.DEFAULT_SHARD_NAME);
+	}
+	
+	private Shard getShardByName(String name) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
+		Shard result = null;
+		
+		try {
+			Session session = managerPersistenceService.getSessionWithTransaction();
+			Criteria criteria = session.createCriteria(Shard.class);
+			criteria.add(Restrictions.eq("name", name));
+			
+			@SuppressWarnings("unchecked")
+			List<Shard> shardList = criteria.list();
+			
+			if(shardList != null && shardList.size() == 1) {
+				result = shardList.get(0);
+			}
+		} finally {
+			managerPersistenceService.commitTransaction();
+		}		
+		return result;
+	}
+
+	@Override
+	public Tenant createTenant(String name, String shardName, String dbUsername) {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		// use username as schemaname when creating tenant
 		String schemaName = dbUsername;
 		
 		Tenant result = null;
 
-		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
-			Shard shard = (Shard) session.get(Shard.class, shardId);
-			result = shard.createTenant(name,schemaName,dbUsername,null);
-		} finally {
-			managerPersistenceService.commitTransaction();
+		Shard shard = this.getShardByName(shardName);
+		if(shard == null) {
+			LOGGER.error("failed to create tenant because couldn't find shard {}",shardName);
+		} else {
+			try {
+				result = shard.createTenant(name,schemaName,dbUsername,null);
+			} finally {
+				managerPersistenceService.commitTransaction();
+			}
 		}
 		return result;
 	}
@@ -339,6 +348,8 @@ public class TenantManagerService extends Service implements ITenantManager {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Collection<Tenant> getTenants() {
+		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
+
 		Collection<Tenant> results = null;
 		
 		try {
@@ -353,35 +364,89 @@ public class TenantManagerService extends Service implements ITenantManager {
 
 	@Override
 	public Tenant getDefaultTenant() {
-		return getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
-	}
-
-	public static void deleteOrdersWis(Tenant tenant) throws SQLException {
-		String schemaName = tenant.getSchemaName();
-		LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
-		tenant.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
-		tenant.executeSQL("DELETE FROM "+schemaName+".container_use");
-		tenant.executeSQL("DELETE FROM "+schemaName+".work_instruction");
-		tenant.executeSQL("DELETE FROM "+schemaName+".container");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_location");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_detail");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_header");
-		tenant.executeSQL("DELETE FROM "+schemaName+".order_group");
+		if(this.defaultTenant == null)
+			this.defaultTenant = getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
+		if(this.defaultTenant != null) 
+			this.defaultTenant = ManagerPersistenceService.<Tenant>deproxify(this.defaultTenant);
+		return this.defaultTenant;
 	}
 	
-	public static void deleteOrdersWisInventory(Tenant tenant) throws SQLException {
-		String schemaName = tenant.getSchemaName();
-		TenantManagerService.deleteOrdersWis(tenant);
-		LOGGER.warn("Deleting itemMasters ");
-		tenant.executeSQL("DELETE FROM "+schemaName+".item");
-		tenant.executeSQL("DELETE FROM "+schemaName+".item_master");
+	private void deleteDefaultOrdersWis() {
+		if(defaultTenant != null) {
+			try {
+				Tenant tenant = defaultTenant;
+				String schemaName = tenant.getSchemaName();
+				LOGGER.warn("Deleting all orders and work instructions from schema "+schemaName);
+				tenant.executeSQL("UPDATE "+schemaName+".order_header SET container_use_persistentid=null");
+				tenant.executeSQL("DELETE FROM "+schemaName+".container_use");
+				tenant.executeSQL("DELETE FROM "+schemaName+".work_instruction");
+				tenant.executeSQL("DELETE FROM "+schemaName+".container");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_location");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_detail");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_header");
+				tenant.executeSQL("DELETE FROM "+schemaName+".order_group");
+			} catch(SQLException e) {
+				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			}
+		}
+	}
+	
+	private void deleteDefaultOrdersWisInventory() {
+		if(defaultTenant != null) {
+			try {
+				Tenant tenant = defaultTenant;
+				String schemaName = tenant.getSchemaName();
+				this.deleteDefaultOrdersWis();
+				LOGGER.warn("Deleting itemMasters ");
+				tenant.executeSQL("DELETE FROM "+schemaName+".item");
+				tenant.executeSQL("DELETE FROM "+schemaName+".item_master");
+			} catch (SQLException e) {
+				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			}
+		}
 	}
 
-	public static void dropSchema(Tenant tenant) throws SQLException {
-		String schemaName = tenant.getSchemaName();
-		LOGGER.warn("Deleting tenant schema "+schemaName);
-		tenant.executeSQL("DROP SCHEMA "+schemaName+
-			((tenant.getSQLSyntax()==DatabaseConnection.SQLSyntax.H2)?"":" CASCADE"));
+	private void dropDefaultSchema() {
+		if(defaultTenant != null) {
+			try {
+				Tenant tenant = defaultTenant;
+				String schemaName = tenant.getSchemaName();
+				LOGGER.warn("Deleting tenant schema "+schemaName);
+				tenant.executeSQL("DROP SCHEMA "+schemaName+
+					((tenant.getSQLSyntax()==DatabaseConnection.SQLSyntax.H2)?"":" CASCADE"));
+			} catch(SQLException e) {
+				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
+			}
+		}
 	}
 
+	@Override
+	protected void startUp() throws Exception {
+		initDefaultShard();
+	}
+
+	@Override
+	protected void shutDown() throws Exception {
+		if(!this.shutdownCleanupRequest.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
+			try {
+				TenantPersistenceService.getMaybeRunningInstance().awaitTerminated(30, TimeUnit.SECONDS);
+			} catch (TimeoutException e) {
+				LOGGER.error("timeout waiting for tenant persistence to shut down, cannot perform cleanup", e);
+				this.shutdownCleanupRequest = TenantManagerService.ShutdownCleanupReq.NONE;
+			}
+			switch (shutdownCleanupRequest) {
+				case DROP_SCHEMA:
+					dropDefaultSchema();
+					break;
+				case DELETE_ORDERS_WIS:
+					deleteDefaultOrdersWis();
+					break;
+				case DELETE_ORDERS_WIS_INVENTORY:
+					deleteDefaultOrdersWisInventory();
+					break;
+				default:
+					break;
+			}
+		}
+	}
 }

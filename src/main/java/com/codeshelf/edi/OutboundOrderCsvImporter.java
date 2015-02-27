@@ -27,7 +27,6 @@ import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.ContainerUse;
@@ -55,13 +54,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(OutboundOrderCsvImporter.class);
 
-	private ITypedDao<OrderGroup>	mOrderGroupDao;
-	private ITypedDao<OrderHeader>	mOrderHeaderDao;
-	private ITypedDao<OrderDetail>	mOrderDetailDao;
-	private ITypedDao<Container>	mContainerDao;
-	private ITypedDao<ContainerUse>	mContainerUseDao;
-	private ITypedDao<ItemMaster>	mItemMasterDao;
-	private ITypedDao<UomMaster>	mUomMasterDao;
 	DateTimeParser					mDateTimeParser;
 
 	@Getter
@@ -75,24 +67,10 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	private ArrayList<Item>			mEvaluationList;
 
 	@Inject
-	public OutboundOrderCsvImporter(final EventProducer inProducer,
-		final ITypedDao<OrderGroup> inOrderGroupDao,
-		final ITypedDao<OrderHeader> inOrderHeaderDao,
-		final ITypedDao<OrderDetail> inOrderDetailDao,
-		final ITypedDao<Container> inContainerDao,
-		final ITypedDao<ContainerUse> inContainerUseDao,
-		final ITypedDao<ItemMaster> inItemMasterDao,
-		final ITypedDao<UomMaster> inUomMaster) {
+	public OutboundOrderCsvImporter(final EventProducer inProducer) {
 
 		super(inProducer);
 
-		mOrderGroupDao = inOrderGroupDao;
-		mOrderHeaderDao = inOrderHeaderDao;
-		mOrderDetailDao = inOrderDetailDao;
-		mContainerDao = inContainerDao;
-		mContainerUseDao = inContainerUseDao;
-		mItemMasterDao = inItemMasterDao;
-		mUomMasterDao = inUomMaster;
 		mDateTimeParser = new DateTimeParser();
 
 		mEvaluationList = new ArrayList<Item>();
@@ -106,7 +84,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final Facility inFacility,
 		Timestamp inProcessTime) {
 		// Get our LOCAPICK configuration value. It will not change during importing one file.
-		boolean locapickValue = PropertyService.getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.LOCAPICK);
+		boolean locapickValue = PropertyService.getInstance().getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.LOCAPICK);
 		setLocapickValue(locapickValue);
 		mEvaluationList.clear();
 
@@ -165,7 +143,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				//orderDetail.setQuantity(0);
 				//orderDetail.setMinQuantity(0);
 				//orderDetail.setMaxQuantity(0);
-				mOrderDetailDao.store(orderDetail);
+				OrderDetail.DAO.store(orderDetail);
 			}
 		}
 	}
@@ -200,7 +178,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 								// orderDetail.setQuantity(0);
 								// orderDetail.setMinQuantity(0);
 								// orderDetail.setMaxQuantity(0);
-								mOrderDetailDao.store(orderDetail);
+								OrderDetail.DAO.store(orderDetail);
 							}
 						} catch (RuntimeException e) {
 							LOGGER.warn("Unable to archive order detail: " + orderDetail, e);
@@ -211,7 +189,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					if (!orderHeaderIsActive) {
 						LOGGER.trace("Archive old order header: " + order.getOrderId());
 						order.setActive(false);
-						mOrderHeaderDao.store(order);
+						OrderHeader.DAO.store(order);
 					}
 				}
 			} catch (RuntimeException e) {
@@ -244,7 +222,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			}
 			if (archiveGroup) {
 				group.setActive(false);
-				mOrderGroupDao.store(group);
+				OrderGroup.DAO.store(group);
 			}
 		}
 	}
@@ -268,7 +246,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					shouldInactivateContainer = false; // Should the container be inactivated? If this is the only use for the container, perhaps.
 					// neglect this case for now.
 					containerUse.setActive(false);
-					mContainerUseDao.store(containerUse);
+					ContainerUse.DAO.store(containerUse);
 				} else if (!header.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 					shouldInactivateContainer = false;
 				} else {
@@ -276,14 +254,14 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 						shouldInactivateContainer = false;
 					} else {
 						containerUse.setActive(false);
-						mContainerUseDao.store(containerUse);
+						ContainerUse.DAO.store(containerUse);
 					}
 				}
 			}
 
 			if (shouldInactivateContainer) {
 				container.setActive(false);
-				mContainerDao.store(container);
+				Container.DAO.store(container);
 			}
 		}
 
@@ -436,10 +414,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
 			if (locationValue != null && !locationValue.isEmpty()) {
 				// somewhat cloned from UiUpdateService.upsertItem(); Could refactor
-				InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer(),
-					ItemMaster.DAO,
-					Item.DAO,
-					UomMaster.DAO);
+				InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer());
 
 				InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
 				itemBean.setItemId(itemId);
@@ -461,6 +436,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 					if (thisDetailHadOldDifferentPreferredLocation) {
 						// We need to find the item at the old location. Then determine if a new item was made at the new location. If so, add the old item to a list for investigation.
 						Location oldLocation = inFacility.findSubLocationById(oldStr);
+						// DEV-635 note  if location is not resolved, but order detail will be ok with preferred location and sequence, then we can make inventory if we wish at facility. Only if LOCAPICK is true.
 						if (oldLocation != null) {
 							// we would normally expect the old location to have an inventory item there.
 							LOGGER.info("Old location for changing orderdetail was " + oldStr);
@@ -521,7 +497,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result.setUpdated(inEdiProcessTime);
 			inFacility.addOrderGroup(result);
 			try {
-				mOrderGroupDao.store(result);
+				OrderGroup.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateOptionalOrderGroup storing new orderGroup", e);
 			}
@@ -531,7 +507,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mOrderGroupDao.store(result);
+				OrderGroup.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateOptionalOrderGroup", e);
 			}
@@ -568,7 +544,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result.setUpdated(inEdiProcessTime);
 			result.setActive(true);
 			try {
-				mContainerDao.store(result);
+				Container.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateContainer storing Container", e);
 			}
@@ -597,9 +573,9 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			use.setUpdated(inEdiProcessTime);
 
 			try {
-				mContainerUseDao.store(use);
+				ContainerUse.DAO.store(use);
 				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
-				mOrderHeaderDao.store(inOrder);
+				OrderHeader.DAO.store(inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("updateContainer storing ContainerUse", e);
 			}
@@ -682,7 +658,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		try {
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			mOrderHeaderDao.store(result);
+			OrderHeader.DAO.store(result);
 		} catch (DaoException e) {
 			LOGGER.error("updateOrderHeader", e);
 		}
@@ -706,7 +682,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
+		result = ItemMaster.DAO.findByDomainId(inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
@@ -721,7 +697,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mItemMasterDao.store(result);
+				ItemMaster.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateItemMaster", e);
 			}
@@ -746,7 +722,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			inFacility.addUomMaster(result);
 
 			try {
-				mUomMasterDao.store(result);
+				UomMaster.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateUomMaster", e);
 			}
@@ -823,20 +799,20 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
 		
+		String workSeq = inCsvBean.getWorkSequence();
 		try  {
-			String prefSeq = inCsvBean.getPreferredSequence();
-			if (prefSeq != null) {
-				result.setPreferredSequence(Integer.valueOf(prefSeq));
+			if (workSeq != null) {
+				result.setWorkSequence(toInteger((workSeq)));
 			}
 		} catch (NumberFormatException e) {
 			LOGGER.warn("prefered sequence could not be coerced to integer, setting to null: " + inCsvBean);
-			result.setPreferredSequence(null);
+			result.setWorkSequence(null);
 		}
 
 		int quantities = 0;
 		try {
 			if (!Strings.isNullOrEmpty(inCsvBean.getQuantity())) {
-				quantities = Integer.valueOf(inCsvBean.getQuantity());
+				quantities = toInteger(inCsvBean.getQuantity());
 			}
 		} catch (NumberFormatException e) {
 			LOGGER.warn("quantity could not be coerced to integer, setting to zero: " + inCsvBean);
@@ -846,7 +822,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMinQuantity() != null) {
-				Integer minVal = Integer.valueOf(inCsvBean.getMinQuantity());
+				Integer minVal = toInteger(inCsvBean.getMinQuantity());
 				if (minVal > result.getQuantity())
 					LOGGER.warn("minQuantity may not be higher than quantity");
 				else
@@ -855,7 +831,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 
 			// Override the max quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMaxQuantity() != null) {
-				Integer maxVal = Integer.valueOf(inCsvBean.getMaxQuantity());
+				Integer maxVal = toInteger(inCsvBean.getMaxQuantity());
 				if (maxVal < result.getQuantity())
 					LOGGER.warn("maxQuantity may not be lower than quantity");
 				else
@@ -873,7 +849,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			inOrder.removeOrderDetail(oldDetailId);
 		}
 		inOrder.addOrderDetail(result);
-		mOrderDetailDao.store(result);
+		OrderDetail.DAO.store(result);
 		return result;
 	}
 	

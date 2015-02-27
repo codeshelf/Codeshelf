@@ -44,7 +44,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Facility facility = createFacility();
 			facility.setDomainId("LOADBY-TEST");
 			facility.setDescription(desc);
-			mFacilityDao.store(facility);		
+			Facility.DAO.store(facility);		
 			UUID id = facility.getPersistentId();
 			t.commit();
 			Thread.sleep(1000); //shame on me
@@ -73,18 +73,18 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Facility facility = new Facility();
 			facility.setDomainId("DELETE-TEST");
 			facility.setDescription(orgDesc);
-			mFacilityDao.store(facility);
+			Facility.DAO.store(facility);
 			UUID id = facility.getPersistentId();
 			this.getTenantPersistenceService().commitTransaction();
 
 			// make sure org exists and then update it
 			this.getTenantPersistenceService().beginTransaction();
 			
-			Facility foundFacility = mFacilityDao.findByPersistentId(id);
+			Facility foundFacility = Facility.DAO.findByPersistentId(id);
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(orgDesc,foundFacility.getDescription());
 			foundFacility.setDescription(updatedDesc);
-			mFacilityDao.store(foundFacility);
+			Facility.DAO.store(foundFacility);
 			this.getTenantPersistenceService().commitTransaction();
 
 			Thread.sleep(1000); //shame on me
@@ -97,10 +97,11 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 
 			// make sure org exists and then update it
 			this.getTenantPersistenceService().beginTransaction();
-			foundFacility= mFacilityDao.findByPersistentId(id);
+			foundFacility= Facility.DAO.findByPersistentId(id);
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(updatedDesc,foundFacility.getDescription());
 			this.getTenantPersistenceService().commitTransaction();
+			Thread.sleep(1000); //shame on me
 		} finally {
 			broadcaster.unregisterDAOListener(l);
 		}
@@ -120,7 +121,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Facility facility = new Facility();
 			facility.setDomainId("DELETE-TEST");
 			facility.setDescription("DELETE-TEST");
-			mFacilityDao.store(facility);
+			Facility.DAO.store(facility);
 			UUID id = facility.getPersistentId();
 			t.commit();
 			Thread.sleep(1000); //shame on me
@@ -128,9 +129,9 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			// make sure org exists and then delete it
 			session = tenantPersistenceService.getSession();
 			t = session.beginTransaction();
-			Facility foundOrganization = mFacilityDao.findByPersistentId(id);
+			Facility foundOrganization = Facility.DAO.findByPersistentId(id);
 			Assert.assertNotNull(foundOrganization);
-			mFacilityDao.delete(foundOrganization);
+			Facility.DAO.delete(foundOrganization);
 			t.commit();
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(1, l.getObjectsDeleted());
@@ -138,7 +139,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			// now try to reload it again
 			session = tenantPersistenceService.getSession();
 			t = session.beginTransaction();
-			foundOrganization = mFacilityDao.findByPersistentId(id);
+			foundOrganization = Facility.DAO.findByPersistentId(id);
 			Assert.assertNull(foundOrganization);
 			t.commit();
 		} finally {

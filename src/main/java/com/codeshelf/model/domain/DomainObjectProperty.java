@@ -245,7 +245,7 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		else if (myName.equals(RPEATPOS))
 			return "None, ContainerOnly, ContainerAndCount";
 		else if (myName.equals(WORKSEQR))
-			return "BayDistance";
+			return "BayDistance, WorkSequence";
 		else if (myName.equals(LIGHTSEC))
 			return "number between 2 and 30";
 		else if (myName.equals(LIGHTCLR))
@@ -397,9 +397,12 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 		// We had a "bay distance top tier last" for Accu, but then they decided not to use it. We thought it was a bad idea.
 		// Still, there will certainly be other work sequences in the future.
 		final String bayDistanceStr = "BayDistance";
+		final String workSequencesStr = "WorkSequence";
 		String returnStr = inValue;
 		if (returnStr.equalsIgnoreCase(bayDistanceStr))
 			return bayDistanceStr;
+		else if (returnStr.equalsIgnoreCase(workSequencesStr))
+			return workSequencesStr;
 		else
 			return null;
 	}

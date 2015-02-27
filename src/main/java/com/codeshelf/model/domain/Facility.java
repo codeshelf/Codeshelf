@@ -19,12 +19,12 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.persistence.Transient;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,14 +35,12 @@ import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -73,11 +71,6 @@ public class Facility extends Location {
 
 	@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
-		@Inject
-		public FacilityDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		@Override
 		public final Class<Facility> getDaoClass() {
 			return Facility.class;
@@ -101,6 +94,7 @@ public class Facility extends Location {
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
 	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
 
@@ -135,22 +129,6 @@ public class Facility extends Location {
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<WorkInstruction>			workInstructions	= new ArrayList<WorkInstruction>();
-
-	@Transient
-	// for now installation specific.  property needs to be exposed as a configuration parameter.
-	@Getter
-	@Setter
-	static WorkInstructionSequencerType		sequencerType		= WorkInstructionSequencerType.BayDistance;
-	
-	// TODO: replace with configuration via database table
-	static {
-		String sequencerConfig = System.getProperty("facility.sequencer");
-		if ("BayDistance".equalsIgnoreCase(sequencerConfig)) {
-			sequencerType = WorkInstructionSequencerType.BayDistance;
-		} else if ("BayDistanceTopLast".equalsIgnoreCase(sequencerConfig)) {
-			sequencerType = WorkInstructionSequencerType.BayDistanceTopLast;
-		}
-	}
 
 	public Facility() {
 		super();
@@ -757,6 +735,7 @@ public class Facility extends Location {
 
 	private Location createUnspecifiedLocation(String domainId) {
 		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
+		location.setFirstLedNumAlongPath((short)0);
 		this.addLocation(location);
 		UnspecifiedLocation.DAO.store(location);
 		return location;
@@ -1108,7 +1087,7 @@ public class Facility extends Location {
 	@JsonProperty("hasCrossBatchOrders")
 	public boolean hasCrossBatchOrders() {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
-		String theValue = PropertyService.getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		String theValue = PropertyService.getInstance().getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}

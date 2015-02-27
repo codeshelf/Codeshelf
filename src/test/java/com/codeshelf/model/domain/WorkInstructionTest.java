@@ -90,20 +90,20 @@ public class WorkInstructionTest extends DomainTestABC {
 		Facility facility = Facility.createFacility(getDefaultTenant(), "F1", "test", Point.getZeroPoint());
 
 		Aisle aisle1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		mAisleDao.store(aisle1);
+		Aisle.DAO.store(aisle1);
 
 		Bay baya1b1 = aisle1.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mBayDao.store(baya1b1);
+		Bay.DAO.store(baya1b1);
 		Bay baya1b2 = aisle1.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mBayDao.store(baya1b2);
+		Bay.DAO.store(baya1b2);
 
 		Aisle aisle2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		mAisleDao.store(aisle2);
+		Aisle.DAO.store(aisle2);
 
 		Bay baya2b1 = aisle2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		mBayDao.store(baya2b1);
+		Bay.DAO.store(baya2b1);
 		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		mBayDao.store(baya2b2);
+		Bay.DAO.store(baya2b2);
 
 		Container container = new Container();
 		container.setDomainId("C1");
@@ -111,12 +111,12 @@ public class WorkInstructionTest extends DomainTestABC {
 		container.setKind(facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		container.setActive(true);
 		container.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mContainerDao.store(container);
+		Container.DAO.store(container);
 
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId("EA");
 		uomMaster.setParent(facility);
-		mUomMasterDao.store(uomMaster);
+		UomMaster.DAO.store(uomMaster);
 		facility.addUomMaster(uomMaster);
 
 		ItemMaster itemMaster = new ItemMaster();
@@ -125,7 +125,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		itemMaster.setStandardUom(uomMaster);
 		itemMaster.setActive(true);
 		itemMaster.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mItemMasterDao.store(itemMaster);
+		ItemMaster.DAO.store(itemMaster);
 
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -135,7 +135,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		mOrderHeaderDao.store(order1);
+		OrderHeader.DAO.store(order1);
 
 		OrderDetail orderDetail = createOrderDetail(order1, itemMaster);
 
@@ -163,7 +163,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		wi.setPlanMaxQuantity(5);
 		wi.setActualQuantity(0);
 		wi.setAssigned(new Timestamp(System.currentTimeMillis()));
-		mWorkInstructionDao.store(wi);
+		WorkInstruction.DAO.store(wi);
 
 		// Check if the work instruction is contained by the facility, aisle and bay
 		Assert.assertTrue(wi.isContainedByLocation(facility));

@@ -33,7 +33,6 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -79,11 +78,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
-		@Inject
-		public WorkInstructionDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
 		}
@@ -572,10 +566,10 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	}
 
 	@JsonIgnore
-	public Integer getPreferredSequence() {
+	public Integer getWorkSequence() {
 		OrderDetail detail = getOrderDetail();
 		if (detail != null) {
-			return detail.getPreferredSequence();
+			return detail.getWorkSequence();
 		} else {
 			return null;
 		}

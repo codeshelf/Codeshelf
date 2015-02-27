@@ -34,7 +34,6 @@ import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -63,22 +62,15 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@Inject
 	public static ITypedDao<EdiServiceABC>	DAO;
 
-	
 	@Singleton
-	public static class EdiServiceABCDao
-		extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
-		@Inject
-		public EdiServiceABCDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
+	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		public final Class<EdiServiceABC> getDaoClass() {
 			return EdiServiceABC.class;
 		}
 	}
-	 
 	
-	// The owning Facility.
+      
+   	// The owning Facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Getter
 	@Setter

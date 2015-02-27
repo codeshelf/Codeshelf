@@ -15,7 +15,6 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.Facility;
@@ -76,14 +75,7 @@ public class WorkInstructionGenerator {
 		facility.addContainer(container);
 		Container.DAO.store(container);
 
-		CodeshelfNetwork network = new CodeshelfNetwork();
-		network.setDomainId("TEST");
-		facility.addNetwork(network);
-		CodeshelfNetwork.DAO.store(network);
-		
-		Che che1 = new Che("CHE1");
-		network.addChe(che1);
-		Che.DAO.store(che1);
+		Che che1 = Che.DAO.findByDomainId(null, "CHE1");
 		
 		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
 		

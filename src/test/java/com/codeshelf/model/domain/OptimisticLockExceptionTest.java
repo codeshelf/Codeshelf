@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
@@ -16,20 +16,21 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Facility.FacilityDao;
 import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 
 public class OptimisticLockExceptionTest {
 	@Getter
-	TenantPersistenceService tenantPersistenceService;
+	ITenantPersistenceService tenantPersistenceService;
 
 	@Before
 	public final void setup() {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 		tenantPersistenceService = TenantPersistenceService.getInstance();
-		OrderHeader.DAO = new OrderHeaderDao(tenantPersistenceService);
-		OrderDetail.DAO = new OrderDetailDao(tenantPersistenceService);
-		Facility.DAO = new FacilityDao(tenantPersistenceService);
-		Facility.DAO = new FacilityDao(tenantPersistenceService);
+		OrderHeader.DAO = new OrderHeaderDao();
+		OrderDetail.DAO = new OrderDetailDao();
+		Facility.DAO = new FacilityDao();
+		Facility.DAO = new FacilityDao();
 	}
 
 	@Test

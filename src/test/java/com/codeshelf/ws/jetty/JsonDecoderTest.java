@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.PathSegment;
@@ -29,7 +29,7 @@ public class JsonDecoderTest  {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JsonDecoderTest.class);
 
 	static {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 	}
 	
 	/**

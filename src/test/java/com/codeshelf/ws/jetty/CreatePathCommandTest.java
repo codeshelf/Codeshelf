@@ -88,7 +88,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 			UserSession requestSession = new UserSession(mock(Session.class), Executors.newSingleThreadExecutor());
 			requestSession.setSessionId("test-session");
 			
-			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get());
+			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.sessionManagerService);
 			ResponseABC response = processor.handleRequest(requestSession, request);
 			Assert.assertTrue(response instanceof CreatePathResponse);
 		}
@@ -126,7 +126,7 @@ public class CreatePathCommandTest extends DomainTestABC {
 		session.setSessionId("test-session");
 
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get());
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.sessionManagerService);
 
 		ResponseABC response = processor.handleRequest(session, request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);

@@ -17,7 +17,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
@@ -43,10 +42,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestCrossBatch.class);
-
-	static {
-		Configuration.loadConfig("test");
-	}
 
 	public CheProcessTestCrossBatch() {
 
@@ -273,7 +268,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -294,7 +289,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
 		picker.scanLocation("D-36");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
@@ -335,7 +330,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -356,7 +351,7 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		picker.setupContainer("11", "6"); // Good one gives two work instruction
 
 		picker.startAndSkipReview("D-36", 5000, 3000);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(3, picker.countRemainingJobs());
 		LOGGER.info("List the work instructions as the server sees them");

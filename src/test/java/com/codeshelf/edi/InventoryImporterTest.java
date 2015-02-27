@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
@@ -42,7 +41,6 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
@@ -58,14 +56,10 @@ public class InventoryImporterTest extends EdiTestABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
 	UUID facilityForVirtualSlottingId;
-	
-	static {
-		Configuration.loadConfig("test");
-	}
 
 	@Override
-	public void doBefore() {
-		this.mWorkService = new WorkService().start();
+	public void doBefore() throws Exception {
+		super.doBefore();
 		this.getTenantPersistenceService().beginTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
@@ -530,7 +524,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		// Let's find our CHE
 		// this.getPersistenceService().beginTransaction();
-		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransaction());
+		Assert.assertTrue(this.getTenantPersistenceService().hasAnyActiveTransactions());
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -540,32 +534,32 @@ public class InventoryImporterTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		theChe = Che.DAO.reload(theChe);
-		List<WorkInstruction> wiListBeginningOfPath = mWorkService.getWorkInstructions(theChe, "");
+		List<WorkInstruction> wiListBeginningOfPath = workService.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		theChe = Che.DAO.reload(theChe);
 		// Set up a cart for order 12345, which will generate work instructions
-		mWorkService.setUpCheContainerFromString(theChe, "12345");
+		workService.setUpCheContainerFromString(theChe, "12345");
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
 
-		List<WorkInstruction> wiListBeginningOfPathAfterSetup = mWorkService.getWorkInstructions(theChe, "");
+		List<WorkInstruction> wiListBeginningOfPathAfterSetup = workService.getWorkInstructions(theChe, "");
 
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPathAfterSetup, 2, wiListBeginningOfPathAfterSetup.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 		//Auto-shorting functionality disabled 02/03/2015
 		//assertAutoShort(theChe, wiListBeginningOfPathAfterSetup.get(0).getAssigned()); //get any for assigned time)
 
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D403");
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D403");
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!
@@ -596,10 +590,10 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(facility, TenantPersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
 		
 		// Complete one of the jobs
-		mWorkService.fakeCompleteWi(wi2.getPersistentId().toString(), "COMPLETE");
+		workService.fakeCompleteWi(wi2.getPersistentId().toString(), "COMPLETE");
 
 		//Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(theChe.getPersistentId(),
+		List<WiSetSummary> summaries = workService.workAssignedSummary(theChe.getPersistentId(),
 			facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
@@ -614,7 +608,7 @@ public class InventoryImporterTest extends EdiTestABC {
 		Assert.assertEquals(1, completes);
 		Assert.assertEquals(1, actives);
 
-		List<WiSetSummary> summaries2 = new WorkService().start().workCompletedSummary(theChe.getPersistentId(),
+		List<WiSetSummary> summaries2 = workService.workCompletedSummary(theChe.getPersistentId(),
 			facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set. But we have 3. How?
@@ -710,14 +704,14 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
 		// Set up a cart for the three orders, which will generate work instructions
-		mWorkService.setUpCheContainerFromString(theChe, "12000,12010,12345");
+		workService.setUpCheContainerFromString(theChe, "12000,12010,12345");
 		//Che.DAO.store(theChe);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
 		theChe = Che.DAO.findByPersistentId(theChe.getPersistentId());
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, ""); // get all in working order
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, ""); // get all in working order
 		
 		for (WorkInstruction wi : wiListAfterScan) {
 			LOGGER.info("WI LIST CONTAINS: " + wi.toString());

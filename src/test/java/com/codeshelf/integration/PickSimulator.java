@@ -233,6 +233,22 @@ public class PickSimulator {
 	}
 
 	/**
+	 * Careful: returns the actual list from the cheDeviceLogic. 
+	 * This is intended to return all NEW and INPROGRESS instructions that will appear on the che
+	 */
+	public List<WorkInstruction> getRemainingPicksWiList() {
+		List<WorkInstruction> fullList = cheDeviceLogic.getAllPicksWiList();
+		List<WorkInstruction> remainingInstructions = new ArrayList<>();
+		for (WorkInstruction instruction : fullList) {
+			WorkInstructionStatusEnum status = instruction.getStatus();
+			if (status == WorkInstructionStatusEnum.NEW || status == WorkInstructionStatusEnum.INPROGRESS) {
+				remainingInstructions.add(instruction);
+			}
+		}
+		return remainingInstructions;
+	}
+
+	/**
 	 * Returns the new list with each work instruction fetched from the DAO. Should represent how the server sees it.
 	 */
 	public List<WorkInstruction> getServerVersionAllPicksList() {
@@ -277,7 +293,8 @@ public class PickSimulator {
 			}
 		}
 		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
-		String theProblem = "Che state " + state + " not encountered in " + timeoutInMillis + "ms. State is " + existingState;
+		String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s, currentState: %s", 
+				state, timeoutInMillis, existingState,  cheDeviceLogic.inSetState(), cheDeviceLogic.getCheStateEnum());
 		LOGGER.error(theProblem);
 		Assert.fail(theProblem);
 	}

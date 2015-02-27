@@ -1,10 +1,14 @@
 package com.codeshelf.ws.jetty.server;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -75,14 +79,13 @@ public class UserSession implements IDaoListener {
 
 	private Timer								pingTimer					= null;
 
-	private Map<String, ObjectEventListener>	eventListeners				= new ConcurrentHashMap<String, ObjectEventListener>();
+	private ConcurrentMap<String, ObjectEventListener>	eventListeners				= new ConcurrentHashMap<String, ObjectEventListener>();
 
 	private ExecutorService						executorService;
 
 	public UserSession(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
 		this.executorService = sharedExecutor;
-
 	}
 
 	public void sendMessage(final MessageABC message) {
@@ -93,7 +96,7 @@ public class UserSession implements IDaoListener {
 				this.messageSent();
 			}
 		} catch (Exception e) {
-			LOGGER.error("Failed to send message", e);
+			LOGGER.warn("Failed to send message: {}", e.getMessage());
 		} finally {
 			ContextLogging.clearSession();
 		}
@@ -117,21 +120,32 @@ public class UserSession implements IDaoListener {
 
 	@Override
 	public void objectAdded(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		if(executorService.isShutdown()) {
+			LOGGER.warn("objectAdded called after executorService shutdown");
+			return;
+		}
 		this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					TenantPersistenceService.getInstance().beginTransaction();
-					for (ObjectEventListener listener : eventListeners.values()) {
-						MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
-						if (response != null) {
-							sendMessage(response);
+					List<MessageABC> responses = new ArrayList<MessageABC>();
+					synchronized(eventListeners) {
+						Collection<ObjectEventListener> listeners = eventListeners.values();
+						for (ObjectEventListener listener : listeners) {
+							MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
+							if (response != null) {
+								responses.add(response);
+							}
 						}
+					}
+					for(MessageABC response : responses) {
+						sendMessage(response);
 					}
 					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction();
 					LOGGER.error("Unable to handle object add messages", e);
 				}
 			}
@@ -142,22 +156,34 @@ public class UserSession implements IDaoListener {
 	public void objectUpdated(final Class<? extends IDomainObject> domainClass,
 		final UUID domainPersistentId,
 		final Set<String> inChangedProperties) {
+
+		if(executorService.isShutdown()) {
+			LOGGER.warn("objectUpdated called after executorService shutdown");
+			return;
+		}
 		this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					TenantPersistenceService.getInstance().beginTransaction();
-					for (ObjectEventListener listener : eventListeners.values()) {
-						MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
-						if (response != null) {
-							sendMessage(response);
-						}
+					List<MessageABC> responses = new ArrayList<MessageABC>();
+					synchronized(eventListeners) {
+						Collection<ObjectEventListener> listeners = eventListeners.values();
+						for (ObjectEventListener listener : listeners) {
+							MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
+							if (response != null) {
+								responses.add(response);
+							}
 
+						}
+					}
+					for(MessageABC response : responses) {
+						sendMessage(response);						
 					}
 					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction();
 					LOGGER.error("Unable to handle object update", e);
 				}
 			}
@@ -166,21 +192,32 @@ public class UserSession implements IDaoListener {
 
 	@Override
 	public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		if(executorService.isShutdown()) {
+			LOGGER.warn("objectDeleted called after executorService shutdown");
+			return;
+		}
 		this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
 					TenantPersistenceService.getInstance().beginTransaction();
-					for (ObjectEventListener listener : eventListeners.values()) {
-						MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
-						if (response != null) {
-							sendMessage(response);
+					List<MessageABC> responses = new ArrayList<MessageABC>();
+					synchronized(eventListeners) {
+						Collection<ObjectEventListener> listeners = eventListeners.values();
+						for (ObjectEventListener listener : listeners) {
+							MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
+							if (response != null) {
+								responses.add(response);
+							}
 						}
+					}
+					for(MessageABC response : responses) {
+						sendMessage(response);
 					}
 					TenantPersistenceService.getInstance().commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTenantTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction();
 					LOGGER.error("Unable to handle object delete", e);
 				}
 			}
@@ -189,6 +226,10 @@ public class UserSession implements IDaoListener {
 	}
 
 	public void registerObjectEventListener(ObjectEventListener listener) {
+		if(executorService.isShutdown()) {
+			LOGGER.warn("registerObjectEventListener called after executorService shutdown");
+			return;
+		}
 		String listenerId = listener.getId();
 		if (this.eventListeners.containsKey(listenerId)) {
 			LOGGER.warn("Event listener " + listenerId + " already registered");
@@ -211,6 +252,16 @@ public class UserSession implements IDaoListener {
 	}
 
 	public void disconnect(CloseReason reason) {
+		/*
+		List<Runnable> executorPendingTasks = this.executorService.shutdownNow();
+		LOGGER.warn("when stopping UserSession executor, tasks were pending: ",executorPendingTasks.toString());
+		try {
+			this.executorService.awaitTermination(30, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+			LOGGER.error("timeout trying to stop UserSession executor");
+		}
+		*/
+
 		this.lastState = State.CLOSED;
 		if (this.user != null)
 			this.user = null;
@@ -224,15 +275,20 @@ public class UserSession implements IDaoListener {
 			}
 			this.wsSession = null;
 		}
-		//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-		TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
+		// don't try to unregister listeners if we are shutting down
+		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(com.google.common.util.concurrent.Service.State.RUNNING)) {
+			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
+			TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
+			
+		}
 	}
 
 	public void authenticated(User user) {
 		this.user = user;
 		if (isSiteController()) {
-			this.pingTimer = MetricsService.addTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
+			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}
+
 	}
 
 	public void pongReceived(long startTime) {

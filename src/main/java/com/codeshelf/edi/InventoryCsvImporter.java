@@ -18,7 +18,6 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
@@ -40,21 +39,11 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
 
-	private ITypedDao<ItemMaster>	mItemMasterDao;
-	private ITypedDao<Item>			mItemDao;
-	private ITypedDao<UomMaster>	mUomMasterDao;
-
 	@Inject
-	public InventoryCsvImporter(final EventProducer inProducer,
-		final ITypedDao<ItemMaster> inItemMasterDao,
-		final ITypedDao<Item> inItemDao,
-		final ITypedDao<UomMaster> inUomMaster) {
+	public InventoryCsvImporter(final EventProducer inProducer) {
 
 		super(inProducer);
 
-		mItemMasterDao = inItemMasterDao;
-		mItemDao = inItemDao;
-		mUomMasterDao = inUomMaster;
 	}
 
 	//WHEN RENABLED SPLIT TO ITS OWN IMPORTER
@@ -175,7 +164,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			if (!itemMasterIsActive) {
 				LOGGER.info("Archive old item master: " + itemMaster.getItemId());
 				itemMaster.setActive(false);
-				mItemMasterDao.store(itemMaster);
+				ItemMaster.DAO.store(itemMaster);
 			}
 		}
 
@@ -206,7 +195,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			itemMaster.setDescription(inCsvBean.getDescription());
 
 			try {
-				mItemMasterDao.store(itemMaster);
+				ItemMaster.DAO.store(itemMaster);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -285,7 +274,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = mItemMasterDao.findByDomainId(inFacility, inItemId);
+		result = ItemMaster.DAO.findByDomainId(inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
@@ -300,7 +289,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				mItemMasterDao.store(result);
+				ItemMaster.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateItemMaster", e);
 			}
@@ -331,7 +320,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			inFacility.addUomMaster(result);
 
 			try {
-				mUomMasterDao.store(result);
+				UomMaster.DAO.store(result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertUomMaster save", e);
 			}
@@ -454,7 +443,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 
-		mItemDao.store(result);
+		Item.DAO.store(result);
 		return result;
 	}
 

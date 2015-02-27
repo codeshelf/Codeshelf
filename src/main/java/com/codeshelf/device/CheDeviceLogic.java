@@ -93,13 +93,24 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
 	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
 
-	protected static final String			STARTWORK_COMMAND						= "START";
+	public    static final String			STARTWORK_COMMAND						= "START";
+	public 	  static final String			REVERSE_COMMAND							= "REVERSE";
 	protected static final String			SETUP_COMMAND							= "SETUP";
 	protected static final String			SHORT_COMMAND							= "SHORT";
 	protected static final String			LOGOUT_COMMAND							= "LOGOUT";
 	protected static final String			YES_COMMAND								= "YES";
 	protected static final String			NO_COMMAND								= "NO";
 	protected static final String			CLEAR_ERROR_COMMAND						= "CLEAR";
+
+	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
+	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
+	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
+	protected static final String			OR_SCAN_START							= cheLine("OR SCAN START");
+	protected static final String			OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
+	
+	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
+	protected static final String			SCAN_SKIP								= "SCANSKIP";
+	protected static final String			SKIP_SCAN								= "SKIPSCAN";
 
 	protected static final Integer			maxCountForPositionControllerDisplay	= 99;
 
@@ -134,14 +145,83 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Getter
 	protected List<WorkInstruction>			mActivePickWiList;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	boolean									mOkToStartWithoutLocation				= true;
+
 	private NetGuid							mLastLedControllerGuid;
-	private boolean							mMultipleLastLedControllerGuids;															// Could have a list, but this will be quite rare.
+	private boolean							mMultipleLastLedControllerGuids;
 
 	protected WorkInstruction				mShortPickWi;
 	protected Integer						mShortPickQty;
 
 	protected boolean						connectedToServer						= true;
-	private boolean							mInSetState								= false;
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	protected int							mSetStateStackCount						= 0;
+
+	protected ScanNeededToVerifyPick		mScanNeededToVerifyPick;
+	
+	@Getter @Setter
+	protected Boolean						mReversePickOrder = false;
+
+	protected enum ScanNeededToVerifyPick {
+		NO_SCAN_TO_VERIFY("disabled"),
+		UPC_SCAN_TO_VERIFY("UPC"),
+		SKU_SCAN_TO_VERIFY("SKU"),
+		LPN_SCAN_TO_VERIFY("LPN");
+		private String	mInternal;
+
+		private ScanNeededToVerifyPick(String inString) {
+			mInternal = inString;
+		}
+
+		public static ScanNeededToVerifyPick stringToScanPickEnum(String inScanPickValue) {
+			ScanNeededToVerifyPick returnValue = NO_SCAN_TO_VERIFY;
+			for (ScanNeededToVerifyPick onValue : ScanNeededToVerifyPick.values()) {
+				if (onValue.mInternal.equalsIgnoreCase(inScanPickValue))
+					return onValue;
+			}
+			return returnValue;
+		}
+
+		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue) {
+			return inValue.mInternal;
+		}
+	}
+
+	protected boolean isScanNeededToVerifyPick() {
+		WorkInstruction wi = this.getOneActiveWorkInstruction();
+
+		if (wi.isHousekeeping())
+			return false;
+		else
+			return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+	}
+
+	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
+		mScanNeededToVerifyPick = inValue;
+	}
+
+	public String getScanVerificationType() {
+		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
+	}
+
+	public void updateConfigurationFromManager() {
+		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		String scanPickValue = mDeviceManager.getScanTypeValue();
+		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
+		setScanNeededToVerifyPick(theEnum);
+
+		@SuppressWarnings("unused")
+		String mSequenceKind = mDeviceManager.getSequenceKind();
+		//setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
+		//As part of DEV-670 work, we are always enabling scanning of "start" or "reverse" on the "scan location" screen
+		setOkToStartWithoutLocation(true);
+
+	}
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -160,13 +240,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		return 180;
 	}
 
-	// See confluence Codeshelf software patterns page on setState.
-	protected void markInSetState(boolean inValue) {
-		mInSetState = inValue;
-	}
-
 	public boolean inSetState() {
-		return mInSetState;
+		return mSetStateStackCount > 0;
 	}
 
 	public String getDeviceType() {
@@ -348,10 +423,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			pickInfoLines[1] = quantity;
 		}
 
-		//Override last line if short is needed
-		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
-			pickInfoLines[2] = "DECREMENT POSITION";
-		}
+		// get "DECREMENT POSITION" or other instruction
+		pickInfoLines[2] = getFourthLineDisplay();
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		// GoodEggs many locations orders hitting too long case
@@ -362,6 +435,23 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * trying to have the fourth line only depend on the state. We might throw additional messaging here if necessary.
+	 */
+	protected String getFourthLineDisplay() {
+		String returnString = "";
+		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
+			returnString = "DECREMENT POSITION";
+		}
+		// kind of funny. States are uniformly defined, so this works even from wrong object
+		else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
+			returnString = "SCAN UPC NEEDED";
+			// TODO: UPC or LPN or SKU
+		}
+		return returnString;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1105,8 +1195,78 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		LOGGER.error("doPosConDisplaysforWi() needs override");
 	}
 
-	public void updateConfigurationFromManager() {
-		// stub may be overridden
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
+
+		String returnString = "";
+		
+		// If the user scanned SCANSKIP return true
+		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)){
+			// TODO need better warning message here. Get orderId and pickerId?
+			LOGGER.warn("SCANSKIP for work instruction");
+			return returnString;
+		}
+
+		String wiVerifyValue = "";
+		switch (mScanNeededToVerifyPick) {
+			case SKU_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId();
+				break;
+
+			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
+			case UPC_SCAN_TO_VERIFY:
+				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
+				break;
+
+			case LPN_SCAN_TO_VERIFY: // not implemented
+				LOGGER.error("LPN scan not implemented yet");
+				break;
+
+			default:
+
+		}
+		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
+			returnString = "Data error in WI"; // try to keep to 20 characters
+		else if (!wiVerifyValue.equals(inScanStr))
+			returnString = "Scan mismatch";
+
+		return returnString;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param insScanPrefixStr
+	 * @param inScanStr
+	 */
+	protected void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		if (inScanPrefixStr.isEmpty()) {
+
+			WorkInstruction wi = getOneActiveWorkInstruction();
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr.isEmpty()) {
+				// clear usually not needed. Only after correcting a bad scan
+				clearAllPositionControllers();
+				setState(CheStateEnum.DO_PICK);
+
+			} else {
+				LOGGER.info("errorStr = {}", errorStr); // TODO get this to the CHE display
+				invalidScanMsg(mCheStateEnum);
+			}
+
+		} else {
+			// Want some feedback here. Tell the user to scan something
+			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
+			invalidScanMsg(mCheStateEnum);
+		}
 	}
 
 }

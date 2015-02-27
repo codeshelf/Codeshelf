@@ -9,70 +9,92 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
 
-import org.apache.log4j.PropertyConfigurator;
-
-public final class Configuration {
-	private static Boolean mainConfigDone = null;
+public final class JvmProperties {
+	private static Boolean loaded = null;
 
 	/**
-	 * prepare to run application by configuring system properties + logging subsystems. should be called from static block before main() and injection.
-	 * @param appName the name of the app running (sitecontroller or server)  
+	 * prepare to run application by configuring system properties + logging subsystems. 
+	 * should be called from static block before main() and injection.
+	 * 
+	 * @param appName the name of the app running (sitecontroller or server or test)  
 	 */
-	public static synchronized void loadConfig(String appName) {		
-		if (mainConfigDone!=null) {
+	public static synchronized void load(String appName) {		
+		if (loaded!=null) {
 			return;
 		}
-		mainConfigDone=true;
+		loaded=true;
 
-		String appDataDir = Configuration.getApplicationDataDirPath();
-		System.setProperty("app.data.dir", appDataDir);
-		ensureFolderExists(appDataDir);
-		
-		String appLogPath = Configuration.getApplicationLogDirPath();
-		System.setProperty("app.log.dir", appLogPath);
-		ensureFolderExists(appLogPath);
+		// set path for local log file automatically, if not configured
+		System.setProperty("log.file.location", JvmProperties.getApplicationLogDirPath());
+		System.setProperty("log.file.basename", appName);
 
+		// load app configuration from various places
 		loadSystemPropertiesNamed("common.config.properties");
-				
-		// Load properties config file(s) from defined locations/names
 		loadSystemPropertiesNamed(appName+".config.properties");
+		
+		// configure logging
+		prepareLog4j2(appName);
+	}
 
-		// main log file
-		String mainLogName = System.getProperty("cs.logfile.name");
-		String mainLogPathName = System.getProperty("app.log.dir") + System.getProperty("file.separator") + mainLogName;
-		System.setProperty("codeshelf.logfile", mainLogPathName);
-		System.out.println("Log file = "+ mainLogPathName);
-
-		// Currently, when PropertyConfigurator.configure(URL) is called, the log4j system will initialize itself
-		// searching for the DEFAULT configuration file always at "log4j.properties" no matter what URL
-		// we pass in. Then, it will initialize from our URL.
-		//
-		// This does not seem to be documented behavior, but it happens nonetheless. So here we do
-		// explicitly (re)load the default file in case that behavior changes in the future.
-
-		Properties log4jProps = loadAllPropertiesFilesNamed("log4j.properties");
-		if(log4jProps!=null) {
-			PropertyConfigurator.configure(log4jProps);
+	private static void prepareLog4j2(String appName) {
+		String key = "log4j.configurationFile";
+		String localSpecificConfig = "local/log4j2-"+appName+".yml";
+		String localGeneralConfig = "local/log4j2.yml";
+		// similar to automatic log4j2 initialization behavior - log4j2-test.yml is checked first if testing
+		String defaultSpecificConfig = "log4j2-"+appName+".yml";
+		String defaultGeneralConfig = "log4j2.yml";
+		
+		if(canReadFileOrResource(localSpecificConfig)) {
+			System.out.println("log4j configuration from "+localSpecificConfig);
+			System.setProperty(key, localSpecificConfig);
+		} else if(canReadFileOrResource(localGeneralConfig)) {
+			System.out.println("log4j configuration from "+localGeneralConfig);
+			System.setProperty(key, localGeneralConfig);
+		} else if(canReadFileOrResource(defaultSpecificConfig)) {
+			System.out.println("log4j configuration from "+defaultSpecificConfig);
+			System.setProperty(key, defaultSpecificConfig);
+		} else if(canReadFileOrResource(defaultGeneralConfig)) {
+			System.out.println("log4j configuration from "+defaultGeneralConfig);
+			System.setProperty(key, defaultGeneralConfig);
 		} else {
-			System.err.println("Failed to initialize log4j");
-			//System.exit(1);	
+			System.out.println("Cannot find log4j configuration, shutting down");
+			System.exit(1);
 		}
-
-		URL javaUtilLoggingjURL = ClassLoader.getSystemClassLoader().getResource("logging.properties");
-		if (javaUtilLoggingjURL != null) {
-			//System.out.println("java.util.logging props file:" + javaUtilLoggingjURL.toString());
+		
+		// initialize logging + all supported APIs
+		org.apache.logging.log4j.Logger log4j2_logger = org.apache.logging.log4j.LogManager.getLogger(JvmProperties.class.getName()+".log4j2");
+		log4j2_logger.info("logging: log4j (v2)");
+		
+		org.slf4j.Logger slf4j_logger = org.slf4j.LoggerFactory.getLogger(JvmProperties.class.getName()+".slf4j");
+		slf4j_logger.info("logging: slf4j");
+		
+		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
+		java.util.logging.Logger jul_logger = java.util.logging.Logger.getLogger(JvmProperties.class.getName()+".jul");
+		jul_logger.log(java.util.logging.Level.INFO, "logging: java.util.logging");
+		
+		org.apache.commons.logging.Log commons_logger = org.apache.commons.logging.LogFactory.getLog(JvmProperties.class.getName()+".commons");
+		commons_logger.info("logging: commons");
+		
+		org.apache.log4j.Logger log4j12_logger = org.apache.log4j.LogManager.getLogger(JvmProperties.class.getName()+".log4j12");
+		log4j12_logger.info("logging: log4j (v1.2)");
+		
+		org.jboss.logging.Logger jboss_logger = org.jboss.logging.Logger.getLogger(JvmProperties.class.getName()+".jboss");
+		jboss_logger.info("logging: jboss");
+		
+		org.eclipse.jetty.util.log.Logger jetty_logger = org.eclipse.jetty.util.log.Log.getLogger(JvmProperties.class.getName()+".jetty");
+		jetty_logger.info("logging: jetty");
+	}
+		
+	private static boolean canReadFileOrResource(String name) {
+		InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream(name);
+		if(stream == null) {
 			try {
-				java.util.logging.LogManager.getLogManager().readConfiguration(javaUtilLoggingjURL.openStream());
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
+				stream = new FileInputStream(name);
+			} catch (FileNotFoundException e) {
 			}
-		} else {
-			System.out.println("Failed to init java.util.logging properties");
-			//System.exit(1);
 		}
-		System.out.println("Configuration done");
+		
+		return stream != null;
 	}
 
 	private static void ensureFolderExists(String appFolder) {
@@ -169,7 +191,7 @@ public final class Configuration {
 	/**
 	 *  @return
 	 */
-	public static String getApplicationDataDirPath() {
+	private static String getApplicationDataDirPath() {
 		String result = "";
 	
 		// Setup the data directory for this application.
@@ -187,6 +209,7 @@ public final class Configuration {
 			System.exit(1);
 		}
 	
+		ensureFolderExists(result);
 		return result;
 	}
 
@@ -194,12 +217,13 @@ public final class Configuration {
 	/**
 	 * @return
 	 */
-	public static String getApplicationLogDirPath() {
+	private static String getApplicationLogDirPath() {
 		String result = "";
 	
 		// Setup the data directory for this application.
 		result = getApplicationDataDirPath() + System.getProperty("file.separator") + "logs";
-	
+
+		ensureFolderExists(result);
 		return result;
 	}
 
@@ -253,65 +277,5 @@ public final class Configuration {
 		result += "." + versionProps.getProperty("version.revision");
 		return result;
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	
-	public static Cipher getCipher(int inMode, char[] inPassword) throws Exception {
-	
-		int saltBytes = 8;
-		byte[] salt = new byte[saltBytes];
-		int count = 20;
-	
-		// First let's get the salt from the .salt file.
-		// NB: The salt is not secret - it's just meant to protect against dictionary attacks on the PBE algol for various keys.
-		File file = new File(getApplicationDataDirPath() + File.separatorChar + ".salt");
-		if (!file.exists()) {
-			// The salt file didn't exist, so let's create one, and populate it with a new, random salt.
-	
-			// First let's create a new, random salt.
-			Random randomBytes = new SecureRandom();
-			randomBytes.nextBytes(salt);
-	
-			// Now store that new salt value in the file.
-			try {
-				file.createNewFile();
-			} catch (IOException e) {
-				System.err.println("FATAL: Unable to create salt file "+file.getName());
-				Util.exitSystem();
-			}
-			FileOutputStream outputStream = new FileOutputStream(file);
-			outputStream.write(salt, 0, saltBytes);
-			outputStream.close();
-		} else {
-			FileInputStream inputStream = new FileInputStream(file);
-			int bytesRead = inputStream.read(salt, 0, saltBytes);
-			if (bytesRead == 0) {
-				System.err.println("FATAL: Unable to read salt value from "+file.getName());
-				Util.exitSystem();
-			}
-			inputStream.close();
-		}
-	
-		PBEParameterSpec pbeParamSpec = new PBEParameterSpec(salt, count);
-		PBEKeySpec pbeKeySpec = new PBEKeySpec(inPassword);
-		SecretKeyFactory keyFac = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-		SecretKey pbeKey = keyFac.generateSecret(pbeKeySpec);
-		Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-	
-		switch (inMode) {
-			case Cipher.ENCRYPT_MODE:
-				pbeCipher.init(Cipher.ENCRYPT_MODE, pbeKey, pbeParamSpec);
-				break;
-			case Cipher.DECRYPT_MODE:
-				pbeCipher.init(Cipher.DECRYPT_MODE, pbeKey, pbeParamSpec);
-				break;
-			default:
-				assert (false);
-		}
-	
-		return pbeCipher;
-	}
-	*/
 }
 

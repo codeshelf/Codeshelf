@@ -17,7 +17,6 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.service.ServiceFactory;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
@@ -32,7 +31,6 @@ import com.codeshelf.ws.jetty.server.UserSession;
 public class LineScanTest extends EdiTestABC {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
-	private WorkService mService = new WorkService().start();
 	private ICsvOrderImporter importer;
 	private ServerMessageProcessor	processor;
 
@@ -41,9 +39,9 @@ public class LineScanTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		importer = createOrderImporter();
 		Facility facility = createFacility(); 
-		ServiceFactory serviceFactory = new ServiceFactory(mService, null, null, null);
+		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null);
 		//processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
-		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get());
+		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get(), this.sessionManagerService);
 		
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D34,30"
@@ -60,7 +58,7 @@ public class LineScanTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.DAO.getAll().get(0);
 
-		GetOrderDetailWorkResponse response = mService.getWorkInstructionsForOrderDetail(che, "11.1");
+		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(che, "11.1");
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getDescription(), "Spoon 6in.");
@@ -120,9 +118,9 @@ public class LineScanTest extends EdiTestABC {
 		instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 		instruction.setType(WorkInstructionTypeEnum.ACTUAL);
 		instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
-		mService.completeWorkInstruction(che.getPersistentId(), instruction);
+		workService.completeWorkInstruction(che.getPersistentId(), instruction);
 
-		response = mService.getWorkInstructionsForOrderDetail(che, "11.1"); 
+		response = workService.getWorkInstructionsForOrderDetail(che, "11.1"); 
 		instructions = response.getWorkInstructions();
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
 		this.getTenantPersistenceService().commitTransaction();

@@ -164,7 +164,9 @@ public class WiFactory {
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
-		if (locAlias != null) {
+		if (inOrderDetail.isPreferredDetail()){
+			resultWi.doSetPickInstruction(inOrderDetail.getPreferredLocation());
+		} else if (locAlias != null) {
 			resultWi.doSetPickInstruction(locAlias.getAlias());
 		} else {
 			resultWi.doSetPickInstruction(resultWi.getLocationId());
@@ -206,10 +208,11 @@ public class WiFactory {
 				}
 			}
 		}
-
-		if (inLocation.isFacility())
+		Facility facility = inOrderDetail.getParent().getFacility();
+		if (inLocation.isFacility() || facility.getUnspecifiedLocation().equals(inLocation)) {
+			//consider inLocation.getPathSegment() == null ; Note that the getWork by location queries for > posAlongPath
 			resultWi.setPosAlongPath(0.0);
-		else {
+		} else {
 			if (isInventoryPickInstruction) {
 				// do nothing as it was set with the leds
 			} else {
@@ -396,18 +399,21 @@ public class WiFactory {
 		}
 
 		// We expect to find an inventory item at the location. Be sure to get item and set posAlongPath always, before bailing out on the led command.
+		Double posAlongPath = null;
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
-			LOGGER.error("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem");
-			return;
+			LOGGER.warn("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem using location" );
+			posAlongPath = inLocation.getPosAlongPath();
+			//return;
+		} else {
+			// Set the pos along path using item as it may be an unslotted item
+			posAlongPath = theItem.getPosAlongPath();
 		}
 
-		// Set the pos along path
-		Double posAlongPath = theItem.getPosAlongPath();
 		inWi.setPosAlongPath(posAlongPath);
 
 		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
-		if (inLocation.getFirstLedNumAlongPath() == 0)
+		if (inLocation.getFirstLedNumAlongPath() == null || inLocation.getFirstLedNumAlongPath() == 0)
 			return;
 
 		// if the location does not have controller associated, we would NPE below. Might as well check now.

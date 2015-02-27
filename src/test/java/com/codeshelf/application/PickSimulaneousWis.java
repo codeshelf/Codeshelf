@@ -40,7 +40,7 @@ import com.codeshelf.platform.multitenancy.TenantManagerService;
 public class PickSimulaneousWis extends EdiTestABC {
 
 	static {
-		Configuration.loadConfig("test");
+		JvmProperties.load("test");
 	}
 
 	@SuppressWarnings({ "unused" })
@@ -247,16 +247,16 @@ public class PickSimulaneousWis extends EdiTestABC {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
-		mWorkService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
+		workService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		theChe = Che.DAO.reload(theChe);
 
-		List<WorkInstruction> aList = mWorkService.getWorkInstructions(theChe, "");
+		List<WorkInstruction> aList = workService.getWorkInstructions(theChe, "");
 
 
 		int wiCount = aList.size();
@@ -264,11 +264,11 @@ public class PickSimulaneousWis extends EdiTestABC {
 
 		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value.
 		// Therefore, all 8 will be in the result of starting from D402
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(theChe, "D402");
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D402");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		Integer wiCountAfterScan = wiListAfterScan.size();

@@ -22,8 +22,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 	
 	private static PropertyDao theInstance = null;
 	
-	private PropertyDao(TenantPersistenceService instance) {
-		super(instance);
+	private PropertyDao() {
+		super();
 		setInstance();
 	}
 
@@ -33,7 +33,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements 
 
 	public final synchronized static PropertyDao getInstance() {
 		if (theInstance == null) {
-			theInstance = new PropertyDao(TenantPersistenceService.getInstance());
+			theInstance = new PropertyDao();
 		}
 		return theInstance;
 	}

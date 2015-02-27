@@ -3,7 +3,7 @@ package com.codeshelf.metrics;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 
-import com.codeshelf.application.Configuration;
+import com.codeshelf.application.JvmProperties;
 
 public class ServiceStatusHealthCheck extends CodeshelfHealthCheck {
 
@@ -17,7 +17,7 @@ public class ServiceStatusHealthCheck extends CodeshelfHealthCheck {
 		long jvmUpTimeMillis = runtimeMX.getUptime();
 		String jvmVersion = runtimeMX.getSpecVersion()+"-"+runtimeMX.getVmVersion();
 		
-		return Result.healthy("App v" + Configuration.getVersionStringShort() 
+		return Result.healthy("App v" + JvmProperties.getVersionStringShort() 
 			+ " / JVM " + jvmVersion
 			+ " / uptime " + jvmUpTimeMillis/1000 + "s");
 	}

@@ -17,63 +17,44 @@ import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.WorkService;
 
 public abstract class EdiTestABC extends DomainTestABC {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(EdiTestABC.class);
-	protected PropertyService mPropertyService = new PropertyService();
-	protected WorkService mWorkService;
 	
 	private EventProducer		mEventProducer	= new EventProducer();
 
 	@Override
 	public void doBefore() throws Exception {
 		super.doBefore();
-		
-		mWorkService = new WorkService().start();
 	}
 	
 	protected AislesFileCsvImporter createAisleFileImporter() {
-		return new AislesFileCsvImporter(mEventProducer, mAisleDao, mBayDao, mTierDao, mSlotDao);
+		return new AislesFileCsvImporter(mEventProducer);
 	}
 
 	protected ICsvOrderImporter createOrderImporter() {
-		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mEventProducer,
-			mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mItemMasterDao,
-			mUomMasterDao);
+		ICsvOrderImporter orderImporter = new OutboundOrderCsvImporter(mEventProducer);
 		return orderImporter;
 	}
 
 	protected ICsvCrossBatchImporter createCrossBatchImporter() {
 		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(mEventProducer,
-			mWorkService,
-			mOrderGroupDao,
-			mOrderHeaderDao,
-			mOrderDetailDao,
-			mContainerDao,
-			mContainerUseDao,
-			mUomMasterDao);
+			workService);
 		return importer;
 	}
 
 	protected ICsvLocationAliasImporter createLocationAliasImporter() {
-		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mEventProducer, mLocationAliasDao);
+		ICsvLocationAliasImporter importer2 = new LocationAliasCsvImporter(mEventProducer);
 		return importer2;
 	}
 
 	protected ICsvOrderLocationImporter createOrderLocationImporter() {
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mEventProducer, mOrderLocationDao);
+		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(mEventProducer);
 		return importer;
 	}
 
 	protected ICsvInventoryImporter createInventoryImporter() {
-		return new InventoryCsvImporter(mEventProducer, mItemMasterDao, mItemDao, mUomMasterDao);
+		return new InventoryCsvImporter(mEventProducer);
 	}
 
 	private  String padRight(String s, int n) {
@@ -109,9 +90,9 @@ public abstract class EdiTestABC extends DomainTestABC {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe(cheName);
 	
-		mWorkService.setUpCheContainerFromString(theChe, containers);
+		workService.setUpCheContainerFromString(theChe, containers);
 	
-		List<WorkInstruction> wiList = mWorkService.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> wiList = workService.getWorkInstructions(theChe, ""); // This returns them in working order.
 		logWiList(wiList);
 		return wiList;
 	

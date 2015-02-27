@@ -200,6 +200,8 @@ public class RadioController implements IRadioController {
 		mRunning = true;
 		mPreferredChannel = inPreferredChannel;
 
+		packetsSentCounter = MetricsService.getInstance().createCounter(MetricsGroup.Radio,"packets.sent");
+		
 		LOGGER.info("--------------------------------------------");
 		LOGGER.info("Starting radio controller on network {}", packetIOService.getNetworkId());
 		LOGGER.info("--------------------------------------------");

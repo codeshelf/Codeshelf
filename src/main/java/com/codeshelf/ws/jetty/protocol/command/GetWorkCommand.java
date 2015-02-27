@@ -34,7 +34,7 @@ public class GetWorkCommand extends CommandABC {
 			// Figure out the CHE's work area by its scanned location.
 			// Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
-			List<WorkInstruction> wiList = workService.getWorkInstructions(che, locationId);
+			List<WorkInstruction> wiList = workService.getWorkInstructions(che, locationId, request.getReversePickOrder(), request.getReverseOrderFromLastTime());
 			// ~bhe: check for null/empty list + handle exception?
 			response.setWorkInstructions(wiList);
 			response.setNetworkGuid(networkGuid);

@@ -8,9 +8,7 @@ package com.codeshelf.integration;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -22,16 +20,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
-import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -52,7 +47,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Strings;
 
@@ -64,159 +58,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
 
-	static {
-		Configuration.loadConfig("test");
-	}
-
 	public CheProcessTestPick() {
 
-	}
-
-	private Facility setUpSimpleNoSlotFacility() {
-		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
-		//   With location alias for first baytier only, not second.
-		// The organization will get "O-" prepended to the name. Facility F-
-		// Caller must use a different organization name each time this is used
-		// Valid tier names: A1.B1.T1 = D101, and A1.B2.T1
-		// Also, A1.B1 has alias D100
-		// Just for variance, bay3 has 4 slots
-		// Aisle 2 associated to same path segment. But with aisle controller on the other side
-		// Aisle 3 will be on a separate path.
-		// All tiers have controllers associated.
-		// There are two CHE called CHE1 and CHE2
-
-		/*
-		Organization organization = new Organization();
-		String oName = "O-" + inOrganizationName;
-		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
-		*/
-
-		/*
-		String fName = "F-" + inOrganizationName;
-		organization.createFacility(fName, "TEST", Point.getZeroPoint());
-		Facility facility = organization.getFacility(fName);
-		*/
-
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
-				+ "Bay,B1,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n" //
-				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,80,,\r\n" //
-				+ "Bay,B3,230,,,,,\r\n" //
-				+ "Tier,T1,,4,80,160,,\r\n" //
-				+ "Aisle,A2,,,,,tierNotB1S1Side,12.85,55.45,X,120,Y\r\n" //
-				+ "Bay,B1,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"//
-				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,80,,\r\n" //
-				+ "Bay,B3,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,160,,\r\n" //
-				+ "Aisle,A3,,,,,tierNotB1S1Side,12.85,65.45,X,120,Y\r\n" //
-				+ "Bay,B1,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,0,,\r\n"//
-				+ "Bay,B2,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,80,,\r\n" //
-				+ "Bay,B3,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,160,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
-
-		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
-		Assert.assertNotNull(aisle1);
-
-		Path aPath = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
-
-		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
-
-		Aisle aisle2 = Aisle.DAO.findByDomainId(getFacility(), "A2");
-		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
-
-		Path path2 = createPathForTest(getFacility());
-		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
-
-		Aisle aisle3 = Aisle.DAO.findByDomainId(getFacility(), "A3");
-		Assert.assertNotNull(aisle3);
-		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr2);
-
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
-				+ "A1.B1, D300\r\n" //
-				+ "A1.B2, D400\r\n" //
-				+ "A1.B3, D500\r\n" //
-				+ "A1.B1.T1, D301\r\n" //
-				+ "A1.B2.T1, D302\r\n" //
-				+ "A1.B3.T1, D303\r\n" //
-				+ "A2.B1.T1, D401\r\n" //
-				+ "A2.B2.T1, D402\r\n" //
-				+ "A2.B3.T1, D403\r\n"//
-				+ "A3.B1.T1, D501\r\n" //
-				+ "A3.B2.T1, D502\r\n" //
-				+ "A3.B3.T1, D503\r\n";//
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
-
-		CodeshelfNetwork network = getNetwork();
-
-		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController("3", new NetGuid("0x00000013"));
-
-		Short channel1 = 1;
-		Location tier = getFacility().findSubLocationById("A1.B1.T1");
-		controller1.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-		// Make sure we also got the alias
-		String tierName = tier.getPrimaryAliasId();
-		if (!tierName.equals("D301"))
-			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
-
-		tier = getFacility().findSubLocationById("A1.B2.T1");
-		controller1.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A1.B3.T1");
-		controller1.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B1.T1");
-		controller2.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B2.T1");
-		controller2.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B1.T1");
-		controller3.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B2.T1");
-		controller3.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-
-		return getFacility();
 	}
 
 	@SuppressWarnings("unused")
@@ -224,7 +67,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
 		// This is the zigzag/cross-batch portion of the MAT as of v10
 
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+		String csvAisles = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,116,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,\r\n" //
@@ -252,14 +95,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "Tier,T4,,5,32,60,\r\n" //
 				+ "Tier,T5,,5,32,80,\r\n";//
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
@@ -275,7 +113,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
-		String csvString2 = "mappedLocationId,locationAlias\r\n" //
+		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T1.S1,D-96\r\n" + "A1.B1.T1.S2,D-97\r\n" + "A1.B1.T1.S3,D-98\r\n"
 				+ "A1.B1.T1.S4,D-99\r\n"
 				+ "A1.B1.T1.S5,D-100\r\n" + "A1.B1.T2.S1,D-91\r\n" + "A1.B1.T2.S2,D-92\r\n"
@@ -329,14 +167,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				*/
 				+ "A2.B2.T5.S5	D-1\r\n";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
@@ -361,7 +194,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
 		// One case item, just as part of our immediate short scenario
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1122,D302,8 oz Bowl Lids -PLA Compostable,,ea,6/25/14 12:00,80\r\n" //
 				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,,EA,6/25/14 12:00,135\r\n" //
 				+ "1124,D303,8 oz Bowls -PLA Compostable,,ea,6/25/14 12:00,55\r\n" //
@@ -369,15 +202,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "1522,D302,Butterfly Yoyo,,ea,6/25/14 12:00,3\r\n" //
 				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,3\r\n"//
 				+ "1555,D502,paper towel, ,cs,6/25/14 12:00,18\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+		importInventoryData(inFacility, csvInventory);
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -385,7 +210,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Item 1522 exists in case and each.
 		// Item 1555 exists in case only, so will short on each
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,12345,12345,1522,Butterfly Yoyo,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -394,16 +219,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,11111,11111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,11111,11111,1555,paper towel,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
-
+		importOrdersData(inFacility, csvOrders);
 	}
 
 	@SuppressWarnings("unused")
@@ -412,21 +228,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// Outbound orders
 
-		String csvString2 = "orderGroupId,orderId,itemId,description,quantity,uom\r\n" //
+		String csvOrders = "orderGroupId,orderId,itemId,description,quantity,uom\r\n" //
 				+ "5/26/14,1001dry,53a8a03ab38e3c0200000330,vitalvittles Organic Flax-Seed Oat Bread,2,loaf\r\n" //
 				+ "5/26/14,1003dry,539f2da2622fcc0200001009,sayhayfarms Organic Sungold Cherry Tomatoes,4,pint\r\n" //
 				+ "5/26/14,1006dry,5266bd1e4d5eed0200000155,firebrand Pretzel Croutons,7,bag\r\n" //
 				+ "5/26/14,1007dry,5266bd1e4d5eed0200000155,firebrand Pretzel Croutons,8,bag\r\n" //
 				+ "5/26/14,1016dry,50916c6dd136890200000311,blackjet Crack*a*Roons,17,cookies\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+		importOrdersData(inFacility, csvOrders);
 
 		OrderHeader order = inFacility.getOrderHeader("1001dry");
 		Assert.assertNotNull(order);
@@ -434,37 +242,27 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals((Integer) 1, detailCount);
 
 		// Slotting
-		String csvString3 = "orderId,locationId\r\n" //
+		String csvSlotting = "orderId,locationId\r\n" //
 				+ "1001dry,D-26\r\n" + "1001dry,D-27\r\n" + "1001dry,D-28\r\n" + "1001dry,D-29\r\n"
 				+ "1001dry,D-30\r\n"
 				+ "1001dry,D-31\r\n" + "1001dry,D-32\r\n" + "1001dry,D-33\r\n" + "1001dry,D-34\r\n"
 				+ "1001dry,D-35\r\n"
 				+ "1003dry,D-22\r\n" + "1006dry,D-100\r\n" + "1016dry,D-76\r\n" + "1007dry,D-99\r\n";
 
-		byte[] csvArray3 = csvString3.getBytes();
-
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-
-		boolean result = importer.importOrderLocationsFromCsvStream(reader3, inFacility, ediProcessTime);
+		boolean result = importer.importOrderLocationsFromCsvStream(new StringReader(csvSlotting), inFacility, ediProcessTime);
 
 		// Batches file. Only containers 2,3,7,11
-		String csvString4 = "itemId,orderGroupId,containerId,description,quantity,uom\r\n" //
+		String csvBatch = "itemId,orderGroupId,containerId,description,quantity,uom\r\n" //
 				+ "539f2da2622fcc0200001009,5/26/14,2,sayhayfarms Organic Sungold Cherry Tomatoes,1,pint\r\n" //
 				+ "53a8a03ab38e3c0200000330,5/26/14,3,vitalvittles Organic Flax-Seed Oat Bread,1,loaf\r\n" //
 				+ "50916c6dd136890200000311,5/26/14,7,blackjet Crack*a*Roons,2,cookies\r\n" //
 				+ "5266bd1e4d5eed0200000155,5/26/14,11,firebrand Pretzel Croutons,7,bag\r\n";//
 
-		byte[] csvArray4 = csvString4.getBytes();
-
-		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray4);
-		InputStreamReader reader4 = new InputStreamReader(stream4);
-
 		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer4 = createCrossBatchImporter();
-		importer4.importCrossBatchesFromCsvStream(reader4, inFacility, thirdEdiProcessTime);
+		ICsvCrossBatchImporter batchImporter = createCrossBatchImporter();
+		batchImporter.importCrossBatchesFromCsvStream(new StringReader(csvBatch), inFacility, thirdEdiProcessTime);
 
 	}
 
@@ -485,7 +283,177 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		List<Container> containers = facility.getContainers();
 		this.getTenantPersistenceService().commitTransaction();
 	}
+	
+	@Test
+	public final void testStartWorkReverse() throws IOException {
+		// set up data for pick scenario
+		this.getTenantPersistenceService().beginTransaction();
 
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		this.getTenantPersistenceService().commitTransaction();
+		
+		//For this data set
+		//Forward ordering is 3,2,1
+		// Reverse ordering is 1,2,3
+		startReverseWork(facility);
+	}
+	
+	//@Test
+	public final void testStartWorkReverseSkipToLocation() throws IOException {
+		// set up data for pick scenario
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		this.getTenantPersistenceService().commitTransaction();
+
+		PickSimulator picker = 		startReverseWork(facility);
+		
+		//Then skip to location
+		picker.scanLocation("D302");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+
+		//For this data set
+		//Forward ordering is 3,2,1
+		// Reverse ordering is 1,2,3
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
+		//Check each WI
+		assertEquals(wiList.get(0).getItemId(), "2");
+		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(2).getItemId(), "3");
+		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(4).getItemId(), "1");
+
+		
+		this.tenantPersistenceService.commitTransaction();
+	}	
+	
+	@Test //work items appear to be in the wrong order on normal forward
+	public final void testStartWorkForwardSkipToLocation() throws IOException {
+		// set up data for pick scenario
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = setUpSimpleNoSlotFacility();
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
+		importInventoryData(facility, csvInventory);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
+		this.getTenantPersistenceService().commitTransaction();
+
+		// Start setting up cart etc
+		this.getTenantPersistenceService().beginTransaction();
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.setupOrderIdAsContainer("2", "2");
+		picker.setupOrderIdAsContainer("3", "3");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+
+		//Scan at item 1
+		picker.scanLocation("");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
+
+
+		//Check each WI
+
+		assertEquals( "3"                                    ,wiList.get(0).getItemId());
+		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(1).getType());
+		assertEquals( "2"                                    ,wiList.get(2).getItemId());
+		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(3).getType());
+		assertEquals( "1"                                    ,wiList.get(4).getItemId());
+		
+		//Start at item 2
+		picker.scanLocation("D302");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		wiList = picker.getAllPicksList();
+
+		//Check Total WI size
+		assertTrue(wiList.size() == 5);
+		//Check each WI
+		assertEquals( "2"                                    ,wiList.get(0).getItemId());
+		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(1).getType());
+		assertEquals( "1"                                    ,wiList.get(2).getItemId());
+		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(3).getType());
+		assertEquals( "3"                                    ,wiList.get(4).getItemId());
+
+		this.tenantPersistenceService.commitTransaction();
+	}
+
+
+	private PickSimulator startReverseWork(Facility facility) throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
+		importInventoryData(facility, csvString);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvString2);
+		this.getTenantPersistenceService().commitTransaction();
+
+		// Start setting up cart etc
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.setupOrderIdAsContainer("2", "2");
+		picker.setupOrderIdAsContainer("3", "3");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+
+		picker.scanCommand("REVERSE");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		//AssertForwardOrdering
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		//Check Total WI size
+		assertEquals(5, wiList.size());
+		//Check each WI
+		assertEquals(wiList.get(0).getItemId(), "1");
+		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(2).getItemId(), "2");
+		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		assertEquals(wiList.get(4).getItemId(), "3");
+		this.tenantPersistenceService.commitTransaction();
+
+		return picker;
+
+	}
+	
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPick() throws IOException {
@@ -499,22 +467,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n" //
 				+ "1123,D502,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8\r\n" //
 				+ "1123,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n" //
 				+ "1493,D502,PARK RANGER Doll,2,case,6/25/14 12:00,66\r\n" //
 				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -537,14 +497,11 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Item 1493 exists in case only. Order for each should short.
 		// Item 1522 exists in case and each.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -570,19 +527,19 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
-		mWorkService.setUpCheContainerFromString(che1, "12345");
+		workService.setUpCheContainerFromString(che1, "12345");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
-		List<WorkInstruction> aList = mWorkService.getWorkInstructions(che1, "");
+		List<WorkInstruction> aList = workService.getWorkInstructions(che1, "");
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
@@ -593,13 +550,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.restoreHKDefaults(facility); // set it back
+		propertyService.restoreHKDefaults(facility); // set it back
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		che1 = Che.DAO.reload(che1);
-		List<WorkInstruction> wiListAfterScan = mWorkService.getWorkInstructions(che1, "D402");
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(che1, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Double posOf402 = locationD402.getPosAlongPath();
 		Double posOf403 = locationD403.getPosAlongPath();
@@ -621,7 +578,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		this.getTenantPersistenceService().beginTransaction();
 		che1 = Che.DAO.reload(che1);
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = new WorkService().start().workAssignedSummary(che1.getPersistentId(),
+		List<WiSetSummary> summaries = this.workService.workAssignedSummary(che1.getPersistentId(),
 			facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set.
@@ -654,22 +611,14 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n" //
 				+ "1123,D502,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8\r\n" //
 				+ "1123,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55\r\n" //
 				+ "1493,D502,PARK RANGER Doll,2,case,6/25/14 12:00,66\r\n" //
 				+ "1522,D503,SJJ BPP,1,case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -692,19 +641,11 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Item 1493 exists in case only. Order for each should short.
 		// Item 1522 exists in case and each.
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -731,7 +672,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for order 12345, which will generate work instructions
@@ -742,7 +683,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
@@ -791,7 +732,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// perform pick operations
@@ -1031,7 +972,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(shortAheadWi.getAssigned(), userShortWi.getAssigned());
 		//Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -1058,7 +999,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap.
 		picker.startAndSkipReview("D301", 5000, 3000);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte) 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -1275,21 +1216,13 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		UUID facId = facility.getPersistentId();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1299,7 +1232,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
 		// Order 44444 has an immediate short (Item 5 which is out of stock)
 		// Order 55555 has a each pick for an item that only has a case (Item 6)
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,a1111,a1111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,a1111,a1111,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1307,17 +1240,9 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,9,5,6,Test Item 6,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,a6,a6,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);// Outbound order. No group. Using 5 digit order number and preassigned container number.
-
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1465,7 +1390,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
 		this.getTenantPersistenceService().beginTransaction();
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -1479,41 +1404,25 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 1 has two items in stock (Item 1 and Item 2)
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,1,1,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1568,7 +1477,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -1593,44 +1502,28 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
@@ -1808,7 +1701,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -1824,44 +1717,28 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
@@ -1884,7 +1761,7 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 	}
@@ -1900,45 +1777,29 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
-		mPropertyService.turnOffHK(facility);
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
@@ -2046,119 +1907,12 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
-		mPropertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@Test
-	public final void testScanNewLocation() throws IOException {
-		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
-
-		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
-				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
-				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
-				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-
-		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-
-		this.getTenantPersistenceService().commitTransaction();
-
-		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTransaction();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
-
-		picker.login("Picker #1");
-		picker.setupOrderIdAsContainer("1", "1");
-		picker.setupOrderIdAsContainer("2", "2");
-		picker.setupOrderIdAsContainer("3", "3");
-		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
-
-		//Start at item 2
-		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		List<WorkInstruction> wiList = picker.getAllPicksList();
-
-		//Check Total WI size
-		assertTrue(wiList.size() == 5);
-		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "2");
-		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "1");
-		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(4).getItemId(), "3");
-
-		//Scan at item 1
-		picker.scanLocation("D301");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		wiList = picker.getAllPicksList();
-
-		//Check Total WI size
-		assertTrue(wiList.size() == 5);
-
-		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "1");
-		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "2");
-		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(4).getItemId(), "3");
-
-		//Repeat the test except now we do a pick
-		picker.pick(1, 1);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-
-		//Rescan location
-		//Scan at item 2
-		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		wiList = picker.getAllPicksList();
-
-		//Check Total WI size -- should only have 3 as we just manually did the BC HK Instruction
-		assertTrue(wiList.size() == 3);
-
-		//Check each WI
-		assertEquals(wiList.get(0).getItemId(), "2");
-		assertEquals(wiList.get(1).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		assertEquals(wiList.get(2).getItemId(), "3");
-
-		this.tenantPersistenceService.commitTransaction();
-	}
-
+	
 	private void assertWIColor(WorkInstruction wi, Che che) {
 		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
 		Assert.assertEquals(1, cmdGroups.size());
@@ -2175,6 +1929,5 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerMaxQty(position) == PosControllerInstr.BITENCODED_LED_BLANK);
 		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
-	}
-
+	}	
 }

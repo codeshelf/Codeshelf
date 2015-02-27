@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -54,11 +53,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class ContainerDao extends GenericDaoABC<Container> implements ITypedDao<Container> {
-		@Inject
-		public ContainerDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<Container> getDaoClass() {
 			return Container.class;
 		}
@@ -92,6 +86,7 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
 

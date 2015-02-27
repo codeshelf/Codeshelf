@@ -34,7 +34,7 @@ public interface ICsDeviceManager {
 	 * @param inPersistentId	The CHE's persistent ID
 	 * @param inContainerIdList	The containers on the CHE when it requested the work.
 	 */
-	void computeCheWork(String inCheId, UUID inPersistentId, List<String> inContainerIdList);
+	void computeCheWork(String inCheId, UUID inPersistentId, List<String> inContainerIdList, Boolean reverse);
 	
 	void computeCheWork(String inCheId, UUID inPersistentId, String orderDetailId);
 
@@ -45,7 +45,7 @@ public interface ICsDeviceManager {
 	 * @param inPersistentId	The CHE's persistent ID
 	 * @param inStartLocationId	The location where the CHE is when it requested the work.
 	 */
-	void getCheWork(String inCheId, UUID inPersistentId, String inStartLocationId);
+	void getCheWork(String inCheId, UUID inPersistentId, String inStartLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -73,5 +73,9 @@ public interface ICsDeviceManager {
 	
 	String getScanTypeValue();
 
+	String getSequenceKind();
+
 	INetworkDevice updateOneDevice(UUID theUuid, NetGuid theGuid, String newProcessType);
+
+	JettyWebSocketClient getClient();
 }

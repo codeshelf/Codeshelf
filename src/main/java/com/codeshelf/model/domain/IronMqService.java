@@ -37,7 +37,6 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -63,11 +62,6 @@ public class IronMqService extends EdiServiceABC {
 
 	@Singleton
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
-		@Inject
-		public IronMqServiceDao(TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<IronMqService> getDaoClass() {
 			return IronMqService.class;
 		}
@@ -90,7 +84,7 @@ public class IronMqService extends EdiServiceABC {
 
 
 	@Transient
-	private Counter exportCounter = MetricsService.addCounter(MetricsGroup.WSS,"exports.ironmq");
+	private Counter exportCounter;
 
 	@Transient
 	private ClientProvider	clientProvider;
@@ -139,6 +133,8 @@ public class IronMqService extends EdiServiceABC {
 
 	IronMqService(ClientProvider clientProvider) {
 		this.clientProvider = clientProvider;
+		exportCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"exports.ironmq");
+
 	}
 
 	@SuppressWarnings("unchecked")

@@ -15,12 +15,13 @@ import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.codeshelf.ws.jetty.server.UserSession;
 
 public class LoginCommand extends CommandABC {
@@ -30,11 +31,14 @@ public class LoginCommand extends CommandABC {
 	private LoginRequest			loginRequest;
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
+	
+	private SessionManagerService sessionManager;
 
-	public LoginCommand(UserSession session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster) {
+	public LoginCommand(UserSession session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, SessionManagerService sessionManager) {
 		super(session);
 		this.loginRequest = loginRequest;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
+		this.sessionManager = sessionManager;
 	}
 
 	@Override
@@ -63,7 +67,7 @@ public class LoginCommand extends CommandABC {
 					} // else regular user session
 
 					// update session counters
-					SessionManager.getInstance().updateCounters();
+					this.sessionManager.updateCounters();
 
 					// generate login response
 					response.setUser(authUser);
@@ -73,19 +77,24 @@ public class LoginCommand extends CommandABC {
 
 					// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
 					if (network != null) {
+						IPropertyService properties = PropertyService.getInstance();
+						
 						Facility facility = network.getParent();
-						String valueStr = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
+						String valueStr = properties.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
 						response.setAutoShortValue(Boolean.parseBoolean(valueStr));
 
-						String pickInfo = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
+						String pickInfo = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
 						response.setPickInfoValue(pickInfo);
 
-						String containerType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
+						String containerType = properties.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
 						response.setContainerTypeValue(containerType);
 						
-						String scanType = PropertyService.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+						String scanType = properties.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
 						response.setScanTypeValue(scanType);
 						
+						String sequenceKind = properties.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+						response.setSequenceKind(sequenceKind);
+
 					} else {
 						response.setAutoShortValue(false); // not read by client. No need to look it up.
 					}

@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -47,11 +46,6 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {
-		@Inject
-		public UomMasterDao(final TenantPersistenceService tenantPersistenceService) {
-			super(tenantPersistenceService);
-		}
-
 		public final Class<UomMaster> getDaoClass() {
 			return UomMaster.class;
 		}

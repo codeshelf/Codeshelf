@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import com.codeshelf.platform.multitenancy.TenantManagerService;
 
 @SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {
@@ -21,11 +24,10 @@ public class ServiceControlServlet extends HttpServlet {
     private static final ScheduledExecutorService worker = 
     		  Executors.newSingleThreadScheduledExecutor();
     
-	private ApplicationABC	application;
+	private CodeshelfApplication	application;
 	boolean enableSchemaManagement;
-//	private SchemaManager schemaManager = null;
 
-    public ServiceControlServlet(ApplicationABC application, boolean enableSchemaManagement) {
+    public ServiceControlServlet(CodeshelfApplication application, boolean enableSchemaManagement) {
     	this.application = application;
     	this.enableSchemaManagement = enableSchemaManagement;
     }
@@ -55,18 +57,18 @@ public class ServiceControlServlet extends HttpServlet {
         if(action!=null) {
             if(action.equals("stop")) {
             	out.println("APP SERVER SHUTDOWN. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            	stop(ApplicationABC.ShutdownCleanupReq.NONE);
+            	stop(TenantManagerService.ShutdownCleanupReq.NONE);
             } else if(enableSchemaManagement) {
             	// schema actions
             	if(action.equals("dropschema")) {
                 	out.println("DROP SCHEMA. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(ApplicationABC.ShutdownCleanupReq.DROP_SCHEMA);
+            		stop(TenantManagerService.ShutdownCleanupReq.DROP_SCHEMA);
             	} else if(action.equals("deleteorderswis")) {
                 	out.println("DELETE ORDERS AND WORK INSTRUCTIONS. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(ApplicationABC.ShutdownCleanupReq.DELETE_ORDERS_WIS);
+            		stop(TenantManagerService.ShutdownCleanupReq.DELETE_ORDERS_WIS);
             	} else if(action.equals("deleteorderswisinventory")) {
                 	out.println("DELETE ORDERS AND WORK INSTRUCTIONS AND INVENTORY. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(ApplicationABC.ShutdownCleanupReq.DELETE_ORDERS_WIS_INVENTORY);
+            		stop(TenantManagerService.ShutdownCleanupReq.DELETE_ORDERS_WIS_INVENTORY);
             	} else {
             		out.println("Invalid command.");
             	}
@@ -87,14 +89,17 @@ public class ServiceControlServlet extends HttpServlet {
         out.println("</body></html>");        
     }
 
-    private void stop(final ApplicationABC.ShutdownCleanupReq cleanup) {
+    private void stop(final TenantManagerService.ShutdownCleanupReq cleanup) {
     	Runnable stopper = new Runnable() {
     		public void run() {
-    			application.stopApplication(cleanup);
+    			if(!cleanup.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
+    				TenantManagerService.getInstance().setShutdownCleanupRequest(cleanup);
+    			}
+    			application.stopApplication();
     		}
     	};
     	
-		worker.schedule(stopper, ACTION_DELAY_SECONDS, TimeUnit.SECONDS);		
+    	worker.schedule(stopper, ACTION_DELAY_SECONDS, TimeUnit.SECONDS);		
     }
 }
 

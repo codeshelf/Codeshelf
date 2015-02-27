@@ -24,7 +24,7 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 
 	private boolean					mShouldRun;
 	private Thread					mProcessorThread;
-	private BlockingQueue<String>	mSignalQueue;
+	private BlockingQueue<String>	mSignalQueue = null;
 
 	@Inject
 	public PickDocumentGenerator() {
@@ -37,8 +37,8 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 	public final void startProcessor(final BlockingQueue<String> inEdiSignalQueue) {
 		mShouldRun = true;
 		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
+			Thread.sleep(Integer.getInteger("service.pickdocgen.init.delay"));
+		} catch (Exception e) {
 		}
 		mSignalQueue = inEdiSignalQueue;
 		mProcessorThread = new Thread(new Runnable() {
@@ -58,7 +58,8 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 		mShouldRun = false;
 		try {
 			// Send a shutdown signal to the queue so that it loops and exits its thread.
-			mSignalQueue.put(SHUTDOWN);
+			if(mSignalQueue != null) 
+				mSignalQueue.put(SHUTDOWN);
 		} catch (InterruptedException e) {
 			LOGGER.error("", e);
 		}
@@ -72,10 +73,12 @@ public class PickDocumentGenerator implements IPickDocumentGenerator {
 			try {
 				String signalName = mSignalQueue.take();
 
-				if (!signalName.equals(SHUTDOWN)) {
+				if (signalName.equals(SHUTDOWN)) {
+					mShouldRun = false;
+				} else {
 					LOGGER.debug("Pick doc generator received signal from: " + signalName);
 					//createDocuments();
-				}
+				} 
 
 			} catch (Exception e) {
 				// We don't want the thread to exit on some weird, uncaught errors in the processor.

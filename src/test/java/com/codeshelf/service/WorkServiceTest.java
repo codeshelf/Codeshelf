@@ -30,7 +30,6 @@ import org.mockito.internal.stubbing.answers.DoesNothing;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.mockito.invocation.InvocationOnMock;
 
-import com.codeshelf.application.Configuration;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.generators.FacilityGenerator;
@@ -43,14 +42,19 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.service.WorkService.Work;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
@@ -58,17 +62,79 @@ import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.collect.ImmutableList;
 
-public class WorkServiceTest extends DAOTestABC {
-	
-	static {
-		Configuration.loadConfig("test");
-	}
+public class WorkServiceTest extends DomainTestABC {
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
+	
+	@Override
+	protected WorkService generateWorkService() {
+		return this.workService; // in this test, we set up the workService manually at the beginning of the test
+	}
 
+	@Override
+	protected boolean ephemeralServicesShouldStartAutomatically() {
+		return false; // in this test, we start services manually after defining the work service to start
+	}
+	/*
+	@Test
+	public void workLocationConflictPreferredDoesNotExist() {
+		this.workService = new WorkService();
+		this.initializeEphemeralServiceManager();
+
+		Facility facility = Mockito.mock(Facility.class);//facilityModels.setupSimpleNotSlottedFacility();
+//		Facility facility = mock(facility)
+		Che che = Mockito.mock(Che.class);
+		when(che.getFacility()).thenReturn(facility);
+		
+		ItemMaster itemMaster = mock(ItemMaster.class);
+		
+		String itemLocation = "Loc1";
+		Item item = mock(Item.class); 
+		when(item.getItemLocationAlias()).thenReturn(itemLocation);
+		when(item.getParent()).thenReturn(itemMaster);
+		
+
+		String preferredLocation = "LocX";
+		
+		OrderDetail orderDetail = mock(OrderDetail.class);
+		when(orderDetail.getPreferredLocation()).thenReturn(preferredLocation);
+		when(orderDetail.getItemMaster()).thenReturn(itemMaster);
+		
+		String containerId = "CONT1";
+		
+		//this.getTenantPersistenceService().beginTransaction();// TEMP
+		WorkList workList = this.workService.computeWorkInstructions(che, ImmutableList.of(containerId));
+		Assert.assertEquals(preferredLocation, workList.getInstructions().get(0).getLocationId());
+
+		//this.getTenantPersistenceService().commitTransaction();// TEMP
+	}*/
+/*
+	@Test
+	public void workLocationConflictPreferredNoItem() {
+		Facility facility = facilityModels.setupSimpleNotSlottedFacility();
+		Che che = facilityModels.getAnyChe(facility);
+
+		String itemLocation = "Loc1";
+		Assert.assertNotNull(facility.findLocation(itemLocation));
+		Item item = createItem("Loc1"); 
+
+		String preferredLocation = "Loc2";
+		Assert.assertNotNull(facility.findLocation(preferredLocation));
+		
+		Assert.assertNull(facility.findItem(preferredLocation));
+		
+		OrderDetail orderDetail = createOrderDetail(item, preferredLocation);
+		
+		WorkList workList = workService.computeWorkInstructions(che, ImmutableList.of(orderDetail.getParent().getContainerId()));
+		Assert.assertEquals(preferredLocation, workList.getInstructions().get(0).getLocationId());
+	}*/
+	
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
+		this.workService = new WorkService();
+		this.initializeEphemeralServiceManager();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
@@ -83,7 +149,6 @@ public class WorkServiceTest extends DAOTestABC {
 		OrderDetail priorOrderDetail = OrderDetail.DAO.findByPersistentId(detailId);
 		Assert.assertNotEquals(OrderStatusEnum.SHORT, priorOrderDetail.getStatus());
 
-		WorkService workService = new WorkService().start();
 		workService.completeWorkInstruction(cheId,	wiToRecord);
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -106,8 +171,8 @@ public class WorkServiceTest extends DAOTestABC {
 		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService = mock(WorkService.class);
 		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
-		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(PropertyService.class), mock(UiUpdateService.class));
-		MessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get());
+		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class));
+		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
@@ -118,12 +183,13 @@ public class WorkServiceTest extends DAOTestABC {
 		request2.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService2 = mock(WorkService.class);
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
-		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(PropertyService.class), mock(UiUpdateService.class));
-		MessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get());
+		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class));
+		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.sessionManagerService);
 		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
-	
+		this.getTenantPersistenceService().commitTransaction();
+
 	}
 	
 	
@@ -131,6 +197,9 @@ public class WorkServiceTest extends DAOTestABC {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
+		this.workService = new WorkService();
+		this.initializeEphemeralServiceManager();
+		
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = facilityGenerator.generateValid();
@@ -144,7 +213,6 @@ public class WorkServiceTest extends DAOTestABC {
 		}
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
-		WorkService workService = new WorkService().start();
 		UUID cheId = firstChe(facility);
 		List<WiSetSummary> workSummaries  = workService.workAssignedSummary(cheId, facility.getPersistentId());
 
@@ -157,7 +225,6 @@ public class WorkServiceTest extends DAOTestABC {
 			lastTimestamp = wiSetSummary.getAssignedTime();
 		}
 
-		workService.stop();
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -168,7 +235,7 @@ public class WorkServiceTest extends DAOTestABC {
 
 		UUID cheId = UUID.randomUUID();
 
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
+		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
 		Che.DAO = mock(ITypedDao.class);
@@ -185,8 +252,7 @@ public class WorkServiceTest extends DAOTestABC {
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
 		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
-		
-		workService.stop();
+				
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -200,7 +266,7 @@ public class WorkServiceTest extends DAOTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		IEdiService mockEdiExportService = mock(IEdiService.class);
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
 		Che.DAO = mock(ITypedDao.class);
@@ -221,7 +287,6 @@ public class WorkServiceTest extends DAOTestABC {
 		workService.completeWorkInstruction(cheId, wiToRecord);
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
-		workService.stop();
 	}
 
 	@Test
@@ -231,7 +296,7 @@ public class WorkServiceTest extends DAOTestABC {
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 
 		int total = 100;
-		WorkService workService = createWorkService(total+1, mockEdiExportService, 1L);
+		createWorkService(total+1, mockEdiExportService, 1L);
 		List<WorkInstruction> wiList = generateValidWorkInstructions(total);
 		for (WorkInstruction wi: wiList) {
 			workService.exportWorkInstruction(wi);
@@ -240,7 +305,6 @@ public class WorkServiceTest extends DAOTestABC {
 
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
-		workService.stop();
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -259,12 +323,11 @@ public class WorkServiceTest extends DAOTestABC {
 		doThrow(new IOException("second one")).
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(messageBody);
 
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi);
 
 		//Wait up to a second per invocation to verify
-		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
-		workService.stop();
+		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 5000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -292,7 +355,7 @@ public class WorkServiceTest extends DAOTestABC {
 			when(mockEdiExportService).sendWorkInstructionsToHost(testMessage);
 
 		long expectedRetryDelay = 2000;
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi);
 
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(testMessage));
@@ -302,8 +365,6 @@ public class WorkServiceTest extends DAOTestABC {
 			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff > expectedRetryDelay);
 		}
 
-		workService.stop();
-		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -319,7 +380,7 @@ public class WorkServiceTest extends DAOTestABC {
 		doThrow(new RuntimeException("test io")).
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
-		WorkService workService = createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
+		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
 		workService.exportWorkInstruction(wi1);
 		workService.exportWorkInstruction(wi2);
 
@@ -347,7 +408,8 @@ public class WorkServiceTest extends DAOTestABC {
 		final IEdiService mockEdiExportService = createBlockingService(callBlocker);
 		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
-		final WorkService workService = spy(createWorkService(total +1, mockEdiExportService, 1L));
+		createWorkService(total +1, mockEdiExportService, 1L);
+		final WorkService workService = spy(this.workService);
 		doCallRealMethod().when(workService).exportWorkInstruction(any(WorkInstruction.class));
 
 		Facility facility = facilityGenerator.generateValid();
@@ -376,7 +438,7 @@ public class WorkServiceTest extends DAOTestABC {
 		Lock callBlocker = new ReentrantLock();
 		callBlocker.lock();
 		IEdiService blockingService = createBlockingService(callBlocker);
-		WorkService workService = createWorkService(capacity, blockingService, 1L);
+		createWorkService(capacity, blockingService, 1L);
 		int exportAttempts = 0;
 		for (WorkInstruction workInstruction : wiList) {
 			try {
@@ -390,22 +452,22 @@ public class WorkServiceTest extends DAOTestABC {
 
 			}
 		}
-		workService.stop();
+		callBlocker.unlock();
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	private WorkService createWorkService(int capacity, IEdiService ediService, long retryDelay) {
+	private void createWorkService(int capacity, IEdiService ediService, long retryDelay) {
+		
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
 		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
 
-		WorkService ws = new WorkService(provider);
-		ws.setCapacity(capacity);
-		ws.setRetryDelay(retryDelay);		
-		ws.start();
+		this.workService = new WorkService(provider);
+		this.workService.setCapacity(capacity);
+		this.workService.setRetryDelay(retryDelay);		
 		
-		return ws;
+		this.initializeEphemeralServiceManager();
 	}
-
+	
 	private class TimedExceptionAnswer extends ThrowsException {
 		private static final long	serialVersionUID	= 1L;
 		private List<Long> timestamps;

@@ -11,9 +11,9 @@ import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.codeshelf.ws.jetty.protocol.command.PingCommand;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.protocol.message.MessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
@@ -27,7 +27,7 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.UserSession;
 
-public class SiteControllerMessageProcessor extends MessageProcessor {
+public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(SiteControllerMessageProcessor.class);
 
@@ -55,15 +55,18 @@ public class SiteControllerMessageProcessor extends MessageProcessor {
 				if (network != null) {
 					LOGGER.info("Attached to network " + network.getDomainId());
 					attached = true;
+					
+					// DEV-582 hook up to AUTOSHRT parameter
+					deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
+					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
+					deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
+					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
+					deviceManager.setSequenceKind(loginResponse.getSequenceKind());
+					// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
 					this.deviceManager.attached(network);
 				} else {
 					LOGGER.error("loginResponse has no network");
 				}
-				// DEV-582 hook up to AUTOSHRT parameter
-				deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
-				deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
-				deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
-				deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 			}
 			if (!attached) {
 				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());

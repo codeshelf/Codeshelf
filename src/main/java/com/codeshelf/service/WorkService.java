@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.metrics.MetricsGroup;
@@ -39,6 +40,7 @@ import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WiSummarizer;
 import com.codeshelf.model.WorkInstructionSequencerABC;
 import com.codeshelf.model.WorkInstructionSequencerFactory;
+import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -46,6 +48,7 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
@@ -73,10 +76,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.inject.Inject;
 
-public class WorkService implements IApiService {
+public class WorkService extends AbstractExecutionThreadService implements IApiService {
 
 	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
+	private static final String			SHUTDOWN_MESSAGE	= "*****SHTUDOWN*****";
 	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
 	private static Double				BAY_ALIGNMENT_FUDGE			= 0.25;
 
@@ -95,13 +101,7 @@ public class WorkService implements IApiService {
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-
-	@Getter
-	private TenantPersistenceService			tenantPersistenceService;
-
-	private WorkServiceThread			wsThread					= null;
-	private static boolean				aWorkServiceThreadExists	= false;
-
+	
 	@ToString
 	public static class Work {
 		@Getter
@@ -122,7 +122,7 @@ public class WorkService implements IApiService {
 	}
 
 	public WorkService() {
-		init(new IEdiExportServiceProvider() {
+		this(new IEdiExportServiceProvider() {
 			@Override
 			public IEdiService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
@@ -135,77 +135,10 @@ public class WorkService implements IApiService {
 	}
 
 	private void init(IEdiExportServiceProvider exportServiceProvider) {
-		this.tenantPersistenceService = TenantPersistenceService.getInstance();
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
 		this.capacity = DEFAULT_CAPACITY;
-	}
-
-	private class WorkServiceThread extends Thread {
-		public WorkServiceThread() {
-			super("WorkService Thread");
-		}
-
-		@Override
-		public void run() {
-			WorkService.aWorkServiceThreadExists = true;
-			try {
-				sendWorkInstructions();
-			} catch (Exception e) {
-				LOGGER.error("Work instruction exporter interrupted waiting for completed work instructions. Shutting down.", e);
-			}
-			WorkService.aWorkServiceThreadExists = false;
-		}
-	}
-
-	public WorkService start() {
-		if (WorkService.aWorkServiceThreadExists) {
-			LOGGER.error("Only one WorkService thread is allowed to run at once");
-		}
-		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
-		this.wsThread = new WorkServiceThread();
-		this.wsThread.start();
-		return this;
-	}
-
-	public void stop() {
-		this.wsThread.interrupt();
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-		}
-		if (WorkService.aWorkServiceThreadExists) {
-			LOGGER.error("Failed to stop WorkServiceThread by interruption");
-		} else {
-			this.completedWorkInstructions = null;
-		}
-	}
-
-	private void sendWorkInstructions() throws InterruptedException {
-		while (!Thread.currentThread().isInterrupted()) {
-
-			WIMessage exportMessage = completedWorkInstructions.take(); //blocking
-			try {
-				//transaction begun and closed after blocking call so that it is not held open
-				tenantPersistenceService.beginTransaction();
-				boolean sent = false;
-				while (!sent) {
-					try {
-						IEdiService ediExportService = exportMessage.exportService;
-						ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
-						sent = true;
-					} catch (IOException e) {
-						LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
-						Thread.sleep(retryDelay);
-					}
-				}
-				tenantPersistenceService.commitTransaction();
-			} catch (Exception e) {
-				tenantPersistenceService.rollbackTenantTransaction();
-				LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -221,9 +154,13 @@ public class WorkService implements IApiService {
 	 * @return
 	 */
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+		return computeWorkInstructions(inChe, inContainerIdList, false);
+	}
+	
+	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		clearChe(inChe);
+		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
 		// DEV-492 identify previous container uses
@@ -259,7 +196,8 @@ public class WorkService implements IApiService {
 						LOGGER.error("", e);
 					}
 				}
-
+			} else {
+				LOGGER.warn("Unknown container '{}'", containerId);
 			}
 		}
 
@@ -295,7 +233,7 @@ public class WorkService implements IApiService {
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		//sortAndSaveActionableWIs(facility, wiResultList);
-		sortAndSaveActionableWIs(facility, workList.getInstructions());
+		sortAndSaveActionableWIs(facility, workList.getInstructions(), reverse);
 
 		LOGGER.info("TOTAL WIs {}", workList.getInstructions());
 
@@ -308,40 +246,6 @@ public class WorkService implements IApiService {
 		return theTime;
 	}
 
-	private void clearChe(final Che inChe) {
-
-		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
-
-		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
-		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
-		wiTypes.add(WorkInstructionTypeEnum.PLAN);
-		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
-
-		// Delete any planned WIs for this CHE.
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
-		filterParams.add(Restrictions.in("type", wiTypes));
-		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
-		for (WorkInstruction wi : wis) {
-			try {
-
-				Che assignedChe = wi.getAssignedChe();
-				if (assignedChe != null) {
-					assignedChe.removeWorkInstruction(wi); // necessary? new from v3
-				}
-				OrderDetail owningDetail = wi.getOrderDetail();
-				// detail is optional from v5
-				if (owningDetail != null) {
-					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-					owningDetail.reevaluateStatus();
-				}
-				WorkInstruction.DAO.delete(wi);
-			} catch (DaoException e) {
-				LOGGER.error("failed to delete prior work instruction for CHE", e);
-			}
-		}
-	}
 
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
@@ -468,7 +372,7 @@ public class WorkService implements IApiService {
 		}
 
 		OrderDetail orderDetail = orderDetails.get(0);
-		clearChe(inChe);
+		inChe.clearChe();
 		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
@@ -509,11 +413,18 @@ public class WorkService implements IApiService {
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
+		return getWorkInstructions(inChe, inScannedLocationId, false, false);
+	}
+	
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
+		
+		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
+		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
 		//Get current complete list of WIs
-		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0);
+		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -526,20 +437,38 @@ public class WorkService implements IApiService {
 				wiIter.remove();
 			}
 		}
-
+		
+		//Scanning "start" used to send a "" location here, to getWorkInstructions().
+		//Now, we pass "start" or "reverse", instead, but still need to pass "" to the getStartingPathDistance() function below.
+		//String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
 		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
+		
 		if (startingPathPos == null) {
-			// getStartingPathDistance logged the errors, so we do not need to. Just return the empty list.
-			return Lists.newArrayList();
+			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
+			for (WorkInstruction instruction : completeRouteWiList) {
+				OrderDetail detail = instruction.getOrderDetail();
+				if (detail.isPreferredDetail()){
+					preferredInstructions.add(instruction);
+				}
+			}
+			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
+			if (reverseOrderFromLastTime) {
+				preferredInstructions = Lists.reverse(preferredInstructions);
+			}
+			if (preferredInstructions.size() > 0) {
+				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
+			}
+
+			return preferredInstructions;
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
-		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos);
+		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos, reversePickOrder);
 
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
-
+		
 		List<WorkInstruction> wrappedRouteWiList = null;
 		if (wiListFromStartLocation.size() == completeRouteWiList.size()) {
 			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
@@ -565,6 +494,9 @@ public class WorkService implements IApiService {
 			}
 		}
 
+		if (reverseOrderFromLastTime) {
+			wrappedRouteWiList = Lists.reverse(wrappedRouteWiList);
+		}
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
@@ -575,7 +507,7 @@ public class WorkService implements IApiService {
 		if (wrapComputeDurationMs > 2000) {
 			LOGGER.warn("GetWork() took {}; totalWis={};", wrapComputeDurationMs, wrappedRouteWiList.size());
 		}
-		Timer timer = MetricsService.addTimer(MetricsGroup.WSS, "cheWorkFromLocation");
+		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
 		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
 
 		return wrappedRouteWiList;
@@ -755,18 +687,20 @@ public class WorkService implements IApiService {
 			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
 				boolean orderDetailChanged = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					if (!orderDetail.getActive()) {
+						continue;
+					}
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
 						count++;
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
-						Location defaultLocation = facility;
 						try {
 							// Pass facility as the default location of a short WI..
 							SingleWorkItem workItem = makeWIForOutbound(orderDetail,
 								inChe,
 								container,
 								inTime,
-								defaultLocation,
+								facility,
 								facility.getPaths()); // Could be normal WI, or a short WI
 							if (workItem.getDetail() != null) {
 								uncompletedDetails.add(workItem.getDetail());
@@ -790,7 +724,7 @@ public class WorkService implements IApiService {
 							}
 						}
 						catch(DaoException e) {
-							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}, location: {} ", inChe, orderDetail, container, defaultLocation, e);
+							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}", inChe, orderDetail, container, e);
 						}
 					}
 					if (orderDetailChanged) {
@@ -888,15 +822,53 @@ public class WorkService implements IApiService {
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime,
-		final Location defaultLocation,
+		final Facility inFacility,
 		final List<Path> paths) throws DaoException {
 
 		WorkInstruction resultWi = null;
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
-		if (itemMaster.getItemsOfUom(inOrderDetail.getUomMasterId()).size() == 0) {
-			// If there is no item in inventory for that uom (AT ALL) then create a PLANNED, SHORT WI for this order detail.
+		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
+		// we can make the work instruction anyway. 
+		Location location = null;
+		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
+			if (inOrderDetail.getWorkSequence() != null) {
+				location = inOrderDetail.getPreferredLocObject();
+				if (location == null) {
+					location = inFacility.getUnspecifiedLocation();
+				} else if (!location.isActive()){
+					LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
+					location = inFacility.getUnspecifiedLocation();
+				}
+			}
+		} else { //Bay Distance
+			Location preferredLocation = inOrderDetail.getPreferredLocObject();
+			if (preferredLocation != null 
+				&& 	(	preferredLocation.getAssociatedPathSegment() != null
+					|| 	preferredLocation.getParent().getAssociatedPathSegment() != null
+					|| 	preferredLocation.getParent().getParent().getAssociatedPathSegment() != null )
+					) 
+			{
+				location = preferredLocation;
+			} else {
+				for (Path path : paths) {
+					String uomStr = inOrderDetail.getUomMasterId();
+					Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
+
+					if (item != null) {
+						Location itemLocation = item.getStoredLocation();
+						location = itemLocation;
+						break;
+					}
+				}
+			}
+		}
+		
+		
+		if (location == null) {
+			
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
@@ -904,12 +876,13 @@ public class WorkService implements IApiService {
 
 			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list
 			if (doAutoShortInstructions()) {
+				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
 				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
 					inOrderDetail,
 					inContainer,
 					inChe,
-					defaultLocation,
+					inFacility,
 					inTime);
 				if (resultWi != null) {
 					resultWi.setPlanQuantity(0);
@@ -922,29 +895,15 @@ public class WorkService implements IApiService {
 				resultWork.setDetail(inOrderDetail);
 			}
 		} else {
-			for (Path path : paths) {
-				boolean foundOne = false;
-				String uomStr = inOrderDetail.getUomMasterId();
-				Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
-
-				if (item != null) {
-					resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-						WorkInstructionTypeEnum.PLAN,
-						inOrderDetail,
-						inContainer,
-						inChe,
-						item.getStoredLocation(),
-						inTime);
-					if (resultWi != null){
-						foundOne = true;
-						resultWork.setInstruction(resultWi);
-					}
-				}
-				// We only want one work instruction made, not one per path.
-				if (foundOne)
-					break;
-				// Bug remains, sort of. If cases exist on several paths, we would like to choose more intelligently which area to pick from.
-			}
+			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+				WorkInstructionTypeEnum.PLAN,
+				inOrderDetail,
+				inContainer,
+				inChe,
+				location,
+				inTime);
+				resultWork.setInstruction(resultWi);
+			
 		}
 		return resultWork;
 	}
@@ -953,7 +912,7 @@ public class WorkService implements IApiService {
 		return false;
 	}
 
-	private void sortAndSaveActionableWIs(Facility facility, List<WorkInstruction> allWIs) {
+	private void sortAndSaveActionableWIs(Facility facility, List<WorkInstruction> allWIs, Boolean reverse) {
 		//Create a copy of the list to prevent unintended side effects from filtering
 		allWIs = Lists.newArrayList(allWIs);
 		//Now we want to filer/sort and save the work instructions that are actionable
@@ -969,7 +928,12 @@ public class WorkService implements IApiService {
 		//This will sort and also FILTER out WI's that have no location (i.e. SHORTS)
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
-		List<WorkInstruction> sortedWIResults = getSequencer().sort(facility, allWIs);
+		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
+
+		List<WorkInstruction> sortedWIResults = sequencer.sort(facility, allWIs);
+		if (reverse) {
+			sortedWIResults = Lists.reverse(sortedWIResults);
+		}
 
 		//Save sort
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
@@ -1024,10 +988,6 @@ public class WorkService implements IApiService {
 			this.exportService = exportService;
 			this.messageBody = messageBody;
 		}
-	}
-
-	private WorkInstructionSequencerABC getSequencer() {
-		return WorkInstructionSequencerFactory.createSequencer(Facility.getSequencerType());
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
@@ -1107,7 +1067,7 @@ public class WorkService implements IApiService {
 	 * @param inWiList
 	 * May return empty list, but never null
 	 */
-	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition) {
+	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition, final Boolean getBeforePosition) {
 		List<WorkInstruction> cheWorkInstructions = new ArrayList<>();
 		if (inChe == null || inFromStartingPosition == null) {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
@@ -1123,7 +1083,11 @@ public class WorkService implements IApiService {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe", inChe));
 		filterParams.add(Restrictions.in("type", wiTypes));
-		filterParams.add(Restrictions.ge("posAlongPath", inFromStartingPosition));
+		if (getBeforePosition) {
+			filterParams.add(Restrictions.le("posAlongPath", inFromStartingPosition));
+		} else {
+			filterParams.add(Restrictions.ge("posAlongPath", inFromStartingPosition));
+		}
 
 		//String filter = "(assignedChe.persistentId = :chePersistentId) and (typeEnum = :type) and (posAlongPath >= :pos)";
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
@@ -1188,4 +1152,146 @@ public class WorkService implements IApiService {
 		return storedWi;
 	}
 
+	@Override
+	protected void run() throws Exception {
+		// run
+		//serviceThread = Thread.currentThread();
+		try {
+			boolean shutdownRequested = false;
+			while (isRunning() && !shutdownRequested) {
+				WIMessage exportMessage = null;
+				try {
+					exportMessage = completedWorkInstructions.take();
+				} catch (InterruptedException e1) {
+				}
+				if(exportMessage != null) {
+					if(exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
+						shutdownRequested=true;
+					} else {
+						processExportMessage(exportMessage);
+					}
+				}
+			}
+		} finally {
+			//serviceThread = null;
+			this.completedWorkInstructions = null;
+		}
+	}
+
+	private void processExportMessage(WIMessage exportMessage) {
+		TenantPersistenceService.getInstance().beginTransaction();
+		try {
+			//transaction begun and closed after blocking call so that it is not held open
+			boolean sent = false;
+			while (!sent) {
+				try {
+					IEdiService ediExportService = exportMessage.exportService;
+					ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
+					sent = true;
+				} catch (IOException e) {
+					LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
+					Thread.sleep(retryDelay);
+				}
+			}
+			TenantPersistenceService.getInstance().commitTransaction();
+		} catch (Exception e) {
+			TenantPersistenceService.getInstance().rollbackTransaction();
+			LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
+		}
+	}
+
+	@Override
+	protected void triggerShutdown() {
+		super.triggerShutdown();
+		//if(this.serviceThread != null) {
+		//	this.serviceThread.interrupt();
+		//}
+		//this.completedWorkInstructions.clear();
+		this.completedWorkInstructions.offer(new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE));
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		super.startUp();
+		// initialize
+		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);		
+	}
+	
+	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
+		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
+
+		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();
+		if (myParentType != OrderTypeEnum.OUTBOUND)
+			return false;
+
+		// Need to know if this is a simple outbound pick order, or linked to crossbatch.
+		OrderDetail matchingCrossDetail = inOrderDetail.outboundDetailToMatchingCrossDetail();
+		if (matchingCrossDetail != null) { // Then we only need the outbound order to have a location on the path
+			OrderHeader myParent = inOrderDetail.getParent();
+			List<OrderLocation> locations = myParent.getOrderLocations();
+			if (locations.size() == 0)
+				return false;
+			// should check non-deleted locations, on path. Not initially.
+			return true;
+
+		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
+			String inventoryLocs = inOrderDetail.getItemLocations();
+	
+			if (inOrderDetail.getPreferredLocation() != null &&
+					!inOrderDetail.getPreferredLocation().isEmpty()) {
+				
+				if ( sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
+					// If preferred location is set but it is not modeled return false
+					// We need to the location to be modeled to compute bay distance
+					Location preferredLocation = inOrderDetail.getPreferredLocObject();
+					
+					if ( preferredLocation != null
+							&& ( preferredLocation.getPathSegment() != null
+								|| preferredLocation.getParent().getPathSegment() != null
+								|| preferredLocation.getParent().getParent().getPathSegment() != null )
+							) {
+						return true;
+					} else {
+						// Check if item is on any valid path
+						List<Path> allPaths = inOrderDetail.getFacility().getPaths();
+						ItemMaster itemMaster = inOrderDetail.getItemMaster();
+						List<Location> itemLocations = new ArrayList<Location>();
+						
+						for(Path p : allPaths){
+							String uomStr = inOrderDetail.getUomMasterId();
+							Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(p, uomStr);
+						
+							if (item != null){
+								Location itemLocation = item.getStoredLocation();
+								itemLocations.add(itemLocation);
+								break;
+							}
+						}
+
+						if (!itemLocations.isEmpty()){
+							return true;
+						} else {
+							return false;
+						}
+					}
+					
+				} else if ( sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
+					if ( inOrderDetail.getWorkSequence() != null ) {
+						return true;
+					} else {
+						return false;
+					}
+				}
+			}
+			
+			if (!inventoryLocs.isEmpty()) {
+				return true;
+			}
+		}
+
+		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
+
+		return false;
+	}
 }

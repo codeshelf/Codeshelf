@@ -2,17 +2,29 @@
 # copy to test.config.properties
 
 #api.port=8181
-
-# Database connection
-#db.hibernateconfig=hibernate.test.xmlx
-#db.connectionurl=jdbc:h2:mem:database;DB_CLOSE_DELAY=0;MVCC=TRUE
-#db.userid=codeshelf
-#db.password=codeshelf
-
-# possible to disable radio for integration tests (???)
-#radio.enabled=true
+#sitecontroller.port=8182
 
 # Server to connect to
 #websocket.uri=ws://127.0.0.1:8181/ws/
 #websocket.username=5000
 #websocket.password=0.6910096026612129
+
+# manager db
+#manager.db.url=jdbc:h2:mem:database;DB_CLOSE_DELAY=0;MVCC=TRUE;INIT=CREATE SCHEMA IF NOT EXISTS manager;
+#manager.db.schema=manager
+#manager.db.username=sa
+#manager.db.password=
+
+# default shard db
+#shard.default.db.url=jdbc:h2:mem:database;DB_CLOSE_DELAY=0;MVCC=TRUE
+#shard.default.db.admin_username=sa
+#shard.default.db.admin_password=
+
+# default tenant
+#tenant.default.schema=codeshelf
+#tenant.default.username=codeshelf
+#tenant.default.password=codeshelf
+
+# possible to disable radio for integration tests (???)
+#radio.enabled=true
+

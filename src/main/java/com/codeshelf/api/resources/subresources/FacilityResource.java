@@ -16,10 +16,12 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
+import org.hibernate.Session;
+
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
@@ -27,31 +29,31 @@ import com.codeshelf.device.LedSample;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManager;
+import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 public class FacilityResource {
 
-	private final TenantPersistenceService persistence;
+	private final ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 	private final OrderService orderService;
-	private final SessionManager sessionManager;
+	private final SessionManagerService sessionManagerService;
 
 	@Setter
 	private UUIDParam mUUIDParam;
 
 	@Inject
-	public FacilityResource(TenantPersistenceService persistenceService, OrderService orderService, SessionManager sessionManager) {
-		this.persistence = persistenceService;
+	public FacilityResource(OrderService orderService, SessionManagerService sessionManagerService) {
 		this.orderService = orderService;
-		this.sessionManager = sessionManager;
+		this.sessionManagerService = sessionManagerService;
 	}
 
 	@GET
@@ -64,15 +66,12 @@ public class FacilityResource {
 		}
 
 		try {
-			persistence.beginTransaction();
-			ProductivitySummaryList summary = orderService.getProductivitySummary(mUUIDParam.getUUID(), false);
+			ProductivitySummaryList summary = orderService.getProductivitySummary(persistence.getDefaultSchema(), mUUIDParam.getUUID(), false);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		} 
 	}
 
 	@GET
@@ -122,10 +121,10 @@ public class FacilityResource {
 	@Path("filters")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
-		persistence.beginTransaction();
-		Set<String> filterNames = orderService.getFilterNames();
+		Session session = persistence.getSessionWithTransaction();
+		Set<String> filterNames = orderService.getFilterNames(session);
+		persistence.commitTransaction();
 		return BaseResponse.buildResponse(filterNames);
-
 	}
 
 	@GET
@@ -137,8 +136,8 @@ public class FacilityResource {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
 		try {
-			persistence.beginTransaction();
-			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(aggregate, filterName);
+			Session session = persistence.getSessionWithTransaction();
+			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, aggregate, filterName);
 
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
@@ -175,12 +174,12 @@ public class FacilityResource {
 			
 			LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
 			LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
-			sessionManager.sendMessage(users, lightMessage);
+			sessionManagerService.sendMessage(users, lightMessage);
 			
 			//CHE MESSAGES
 			for (CheDisplayRequest cheReq : req.getCheMessages()) {
 				CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
-				sessionManager.sendMessage(users, cheMessage);
+				sessionManagerService.sendMessage(users, cheMessage);
 			}
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {

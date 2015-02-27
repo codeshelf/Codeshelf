@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdPath;
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -63,7 +64,7 @@ import com.google.common.collect.Ordering;
 @Table(name = "location")
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Cacheable
-@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class Location extends DomainObjectTreeABC<Location> {
 
@@ -169,6 +170,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	@Setter
 	private Map<String, Location>		locations			= new HashMap<String, Location>();
@@ -197,7 +199,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Column(nullable = true, name = "lower_led_near_anchor")
 	@Getter
 	@Setter
-	private Boolean						lowerLedNearAnchor;
+	private Boolean	lowerLedNearAnchor;
 
 	// Is this location active?
 	@Column(nullable = false)
@@ -238,10 +240,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private Double				pickFaceEndPosZ;
+	
+	@Getter @Setter
+	@JsonProperty
+	@Column(name="poscon_index")
+	private Integer posconIndex = null;
 
 	public Location() {
 		active = true;
-
 		this.setAnchorPoint(Point.getZeroPoint());
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
@@ -1096,10 +1102,29 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	@JsonIgnore
-	public boolean isLightable() {
+	public boolean isLightablePoscon() {
 		LedController controller = this.getEffectiveLedController();
 		Short controllerChannel = this.getEffectiveLedChannel();
 		if (controller == null || controllerChannel == null) {
+			return false;
+		}
+		if (controller.getDeviceType()!=DeviceType.Poscon) {
+			return false;
+		}
+		if (this.posconIndex!=null && this.posconIndex>0) {
+			return true;
+		}
+		return false;
+	}
+	
+	@JsonIgnore
+	public boolean isLightableAisleController() {
+		LedController controller = this.getEffectiveLedController();
+		Short controllerChannel = this.getEffectiveLedChannel();
+		if (controller == null || controllerChannel == null) {
+			return false;
+		}
+		if (controller.getDeviceType()!=DeviceType.Lights) {
 			return false;
 		}
 		Short firstLocLed = getFirstLedNumAlongPath();
