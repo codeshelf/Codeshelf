@@ -63,7 +63,7 @@ public class LedController extends WirelessDeviceABC {
 	
 	@Setter
 	@Enumerated(EnumType.STRING)
-	@Column(length=20)
+	@Column(length=20, name="device_type")
 	DeviceType deviceType = DeviceType.Lights;
 
 	public LedController() {

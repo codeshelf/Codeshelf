@@ -133,7 +133,7 @@ public class LightService implements IApiService {
 	private void lightOneLocation(final Facility facility, final Location theLocation) {
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
-		if (theLocation.isLightable()) {
+		if (theLocation.isLightableAisleController()) {
 			LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, theLocation);
 			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
 		} else {
@@ -161,7 +161,7 @@ public class LightService implements IApiService {
 						// this will light each controller that may be spanning a bay (e.g. Accu Logistics)
 						ledMessages.add(lightAllAtOnce(facility, defaultLedsToLight, color, child.getChildrenInWorkingOrder()));
 					} else {
-						if (child.isLightable()) {
+						if (child.isLightableAisleController()) {
 							ledMessages.add(ImmutableSet.of(toLedsMessage(facility, defaultLedsToLight, color, child)));
 						}
 					}
@@ -203,7 +203,7 @@ public class LightService implements IApiService {
 		// Use our utility function to get the leds for the item
 		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
 		Location itemLocation = inItem.getStoredLocation();
-		if (itemLocation.isLightable()) {
+		if (itemLocation.isLightableAisleController()) {
 			LightLedsMessage message = getLedCmdGroupListForRange(facility, inColor, itemLocation, theRange);
 			return message;
 		} else {
@@ -221,7 +221,7 @@ public class LightService implements IApiService {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
 		for (Location child : children) {
 			try {
-				if (child.isLightable()) {
+				if (child.isLightableAisleController()) {
 					LightLedsMessage ledMessage = toLedsMessage(facility, numLeds, diagnosticColor, child);
 					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
 
