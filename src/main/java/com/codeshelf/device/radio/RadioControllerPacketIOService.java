@@ -1,7 +1,5 @@
 package com.codeshelf.device.radio;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,21 +21,20 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  *
  */
 public class RadioControllerPacketIOService {
-	private static final Logger							LOGGER						= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
-	private static final int							MAX_PACKET_WRITE_QUEUE_SIZE	= 50;
-	private final Counter								packetsSentCounter			= MetricsService.getInstance()
-																						.createCounter(MetricsGroup.Radio,
-																							"packets.sent");
-	private final ExecutorService						executorService				= Executors.newFixedThreadPool(1,
-																						new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
-																							.setPriority(Thread.MAX_PRIORITY)
-																							.build());
-	private final BlockingQueue<IPacket>				packetsPendingWrite			= new ArrayBlockingQueue<>(MAX_PACKET_WRITE_QUEUE_SIZE);
+	private static final Logger							LOGGER				= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
+
+	private final Counter								packetsSentCounter	= MetricsService.getInstance()
+																				.createCounter(MetricsGroup.Radio, "packets.sent");
+	private final ExecutorService						executorService		= Executors.newFixedThreadPool(1,
+																				new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
+																					.setPriority(Thread.MAX_PRIORITY)
+																					.build());
+
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerPacketHandlerService	packetHandlerService;
 
 	private NetworkId									networkId;
-	private volatile boolean							isShutdown					= false;
+	private volatile boolean							isShutdown			= false;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
 		RadioControllerPacketHandlerService packetHandlerService,
