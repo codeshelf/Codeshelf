@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletException;
@@ -25,7 +26,6 @@ public class ServiceControlServlet extends HttpServlet {
     
 	private CodeshelfApplication	application;
 	boolean enableSchemaManagement;
-//	private SchemaManager schemaManager = null;
 
     public ServiceControlServlet(CodeshelfApplication application, boolean enableSchemaManagement) {
     	this.application = application;
@@ -92,12 +92,14 @@ public class ServiceControlServlet extends HttpServlet {
     private void stop(final TenantManagerService.ShutdownCleanupReq cleanup) {
     	Runnable stopper = new Runnable() {
     		public void run() {
-    			TenantManagerService.getInstance().setShutdownCleanupRequest(cleanup);
+    			if(!cleanup.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
+    				TenantManagerService.getInstance().setShutdownCleanupRequest(cleanup);
+    			}
     			application.stopApplication();
     		}
     	};
     	
-		worker.schedule(stopper, ACTION_DELAY_SECONDS, TimeUnit.SECONDS);		
+    	worker.schedule(stopper, ACTION_DELAY_SECONDS, TimeUnit.SECONDS);		
     }
 }
 

@@ -252,6 +252,7 @@ public class UserSession implements IDaoListener {
 	}
 
 	public void disconnect(CloseReason reason) {
+		/*
 		List<Runnable> executorPendingTasks = this.executorService.shutdownNow();
 		LOGGER.warn("when stopping UserSession executor, tasks were pending: ",executorPendingTasks.toString());
 		try {
@@ -259,6 +260,7 @@ public class UserSession implements IDaoListener {
 		} catch (InterruptedException e) {
 			LOGGER.error("timeout trying to stop UserSession executor");
 		}
+		*/
 
 		this.lastState = State.CLOSED;
 		if (this.user != null)
