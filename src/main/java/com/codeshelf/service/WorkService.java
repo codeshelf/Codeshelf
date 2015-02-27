@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
-import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.metrics.MetricsGroup;
@@ -73,11 +72,11 @@ import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import com.google.inject.Inject;
 
 public class WorkService extends AbstractExecutionThreadService implements IApiService {
 
@@ -101,7 +100,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
-	
+
 	@ToString
 	public static class Work {
 		@Getter
@@ -156,7 +155,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
 		return computeWorkInstructions(inChe, inContainerIdList, false);
 	}
-	
+
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
@@ -415,11 +414,11 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
 		return getWorkInstructions(inChe, inScannedLocationId, false, false);
 	}
-	
+
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
-		
+
 		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
 		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
@@ -437,12 +436,12 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				wiIter.remove();
 			}
 		}
-		
+
 		//Scanning "start" used to send a "" location here, to getWorkInstructions().
 		//Now, we pass "start" or "reverse", instead, but still need to pass "" to the getStartingPathDistance() function below.
 		//String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
 		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
-		
+
 		if (startingPathPos == null) {
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
 			for (WorkInstruction instruction : completeRouteWiList) {
@@ -468,7 +467,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
-		
+
 		List<WorkInstruction> wrappedRouteWiList = null;
 		if (wiListFromStartLocation.size() == completeRouteWiList.size()) {
 			// just use what we had This also covers the case of wiCountCompleteRoute == 0.
@@ -829,28 +828,28 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
-		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence, 
-		// we can make the work instruction anyway. 
+		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence,
+		// we can make the work instruction anyway.
 		Location location = null;
 		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
 		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
 			if (inOrderDetail.getWorkSequence() != null) {
-				location = inOrderDetail.getPreferredLocObject();
-				if (location == null) {
-					location = inFacility.getUnspecifiedLocation();
-				} else if (!location.isActive()){
-					LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
-					location = inFacility.getUnspecifiedLocation();
+				String preferredLocationStr = inOrderDetail.getPreferredLocation();
+				if (!Strings.isNullOrEmpty(preferredLocationStr)) {
+					location = inFacility.findLocationById(preferredLocationStr);
+					if (location == null) {
+						location = inFacility.getUnspecifiedLocation();
+					} else if (!location.isActive()){
+						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
+						location = inFacility.getUnspecifiedLocation();
+					}					
+				} else {
+					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
 				}
 			}
 		} else { //Bay Distance
 			Location preferredLocation = inOrderDetail.getPreferredLocObject();
-			if (preferredLocation != null 
-				&& 	(	preferredLocation.getAssociatedPathSegment() != null
-					|| 	preferredLocation.getParent().getAssociatedPathSegment() != null
-					|| 	preferredLocation.getParent().getParent().getAssociatedPathSegment() != null )
-					) 
-			{
+			if (preferredLocation != null && preferredLocation.getAssociatedPathSegment() != null) {
 				location = preferredLocation;
 			} else {
 				for (Path path : paths) {
@@ -865,10 +864,10 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				}
 			}
 		}
-		
-		
+
+
 		if (location == null) {
-			
+
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
@@ -903,7 +902,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				location,
 				inTime);
 				resultWork.setInstruction(resultWi);
-			
+
 		}
 		return resultWork;
 	}
@@ -1214,9 +1213,9 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	protected void startUp() throws Exception {
 		super.startUp();
 		// initialize
-		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);		
+		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
 	}
-	
+
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
 		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
@@ -1237,15 +1236,15 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
 			String inventoryLocs = inOrderDetail.getItemLocations();
-	
+
 			if (inOrderDetail.getPreferredLocation() != null &&
 					!inOrderDetail.getPreferredLocation().isEmpty()) {
-				
+
 				if ( sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
 					// If preferred location is set but it is not modeled return false
 					// We need to the location to be modeled to compute bay distance
 					Location preferredLocation = inOrderDetail.getPreferredLocObject();
-					
+
 					if ( preferredLocation != null
 							&& ( preferredLocation.getPathSegment() != null
 								|| preferredLocation.getParent().getPathSegment() != null
@@ -1257,11 +1256,11 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 						List<Path> allPaths = inOrderDetail.getFacility().getPaths();
 						ItemMaster itemMaster = inOrderDetail.getItemMaster();
 						List<Location> itemLocations = new ArrayList<Location>();
-						
+
 						for(Path p : allPaths){
 							String uomStr = inOrderDetail.getUomMasterId();
 							Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(p, uomStr);
-						
+
 							if (item != null){
 								Location itemLocation = item.getStoredLocation();
 								itemLocations.add(itemLocation);
@@ -1275,7 +1274,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 							return false;
 						}
 					}
-					
+
 				} else if ( sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
 					if ( inOrderDetail.getWorkSequence() != null ) {
 						return true;
@@ -1284,7 +1283,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 					}
 				}
 			}
-			
+
 			if (!inventoryLocs.isEmpty()) {
 				return true;
 			}
