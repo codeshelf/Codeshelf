@@ -103,10 +103,8 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.flyweight.controller.INetworkDevice#isAckIdNew(byte)
-	 */
-	@Override
+	/* 
+	*/
 	public boolean isAckIdNew(byte inAckId) {
 		int unsignedAckId = inAckId & 0xFF;
 		int unsignedLastAckId = mLastAckId & 0xFF;
