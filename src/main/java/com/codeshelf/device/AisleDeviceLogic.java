@@ -57,7 +57,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		}
 	}
 
-	private Map<NetGuid, List<LedCmd>>	mDeviceLedPosMap	= new HashMap<NetGuid, List<LedCmd>>();
+	private long						mExpectedExpireMilliseconds	= 0;
+
+	private Map<NetGuid, List<LedCmd>>	mDeviceLedPosMap			= new HashMap<NetGuid, List<LedCmd>>();
 
 	public AisleDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -71,7 +73,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	}
 
 	@Override
-	public String getDeviceType(){
+	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_LED;
 	}
 
@@ -249,19 +251,44 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		return thisGuidStr;
 	}
 
+	private void setExpectedLastExpiration(long inMilliseconds) {
+		// Don't let a shorter timer set back after a longer one.
+		if (inMilliseconds > mExpectedExpireMilliseconds)
+			mExpectedExpireMilliseconds = inMilliseconds;
+	}
+
+	private void clearLightsIfThisLooksLikeLastExpiry() {
+		// This is flawed. Therefore not referenced.
+		long currentMillis = System.currentTimeMillis();
+		if (currentMillis > mExpectedExpireMilliseconds) {
+			LOGGER.info("clearLightsIfThisLooksLikeLastExpiry fired.");
+			clearExtraLedsFromMap();
+			updateLeds();
+		}
+		else { // temporary
+			LOGGER.info("clearLightsIfThisLooksLikeLastExpiry  does not look like last.");	
+		}
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * This should fire once after the input duration seconds. On firing, clear out extra LED lights and refresh the aisle lights.
 	 */
 	private void setLightsExpireTimer(int inSeconds) {
+		long currentMillis = System.currentTimeMillis();
+		long inputMillis = inSeconds * 1000;
+		setExpectedLastExpiration(currentMillis + inputMillis);
+		// Probably change to ScheduledExecutorService
 		Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
+				LOGGER.info("AisleDeviceLogic expire timer fired.");
+				// clearLightsIfThisLooksLikeLastExpiry();
 				clearExtraLedsFromMap();
 				updateLeds();
 			}
-		}, inSeconds * 1000);
+		}, inputMillis);
 	}
 
 	// --------------------------------------------------------------------------
@@ -352,65 +379,62 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
 		// New to V9. split commands up by color.
-//		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
-//			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
-//			mRadioController.sendCommand(command, getAddress(), true);
-//		} else {
-			int partialCount = 0;
-			List<LedSample> partialSamples = new ArrayList<LedSample>();
-			final int blackColorValue = 6; // ColorNum.BLACK;// BLACK	= 6;
-			int previousColorValue = blackColorValue;
-			for (LedSample theSample : samples) {
-				int thisColorValue = theSample.getColor().getValue();
-				// Are we changing color on this sample  in this set of samples. Do not count the first change from black.
-				boolean colorChanged = thisColorValue != blackColorValue && thisColorValue != previousColorValue;
+		//		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
+		//			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
+		//			mRadioController.sendCommand(command, getAddress(), true);
+		//		} else {
+		int partialCount = 0;
+		List<LedSample> partialSamples = new ArrayList<LedSample>();
+		final int blackColorValue = 6; // ColorNum.BLACK;// BLACK	= 6;
+		int previousColorValue = blackColorValue;
+		for (LedSample theSample : samples) {
+			int thisColorValue = theSample.getColor().getValue();
+			// Are we changing color on this sample  in this set of samples. Do not count the first change from black.
+			boolean colorChanged = thisColorValue != blackColorValue && thisColorValue != previousColorValue;
 
-				if (colorChanged || partialCount == kMaxLedCmdSendAtATime) {
-					logSampleSend(partialSamples);
-					ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT,
-						channel,
-						EffectEnum.FLASH,
-						partialSamples);
-					mRadioController.sendCommand(command, getAddress(), true);
-
-					partialCount = 0;
-					// we have to leave the old reference to partialSamples as that is floating off in a command.
-					// New list to accumulate more samples
-					partialSamples = new ArrayList<LedSample>();
-
-					// experiment. Set to 30 for v7
-					if (kDelayMillisBetweenPartialSends > 0)
-						try { // Not sure this helps. I hate to starve this thread at all. Definitely cuts down on useless sends to aisle controller that cannot receive yet.
-							Thread.sleep(kDelayMillisBetweenPartialSends);
-						} catch (InterruptedException e) {
-							LOGGER.error("updateLeds delay exeption", e);
-						}
-				}
-				previousColorValue = thisColorValue;
-				partialCount++;
-				partialSamples.add(theSample);
-
-			}
-			if (partialCount > 0) { // send the final leftovers
+			if (colorChanged || partialCount == kMaxLedCmdSendAtATime) {
 				logSampleSend(partialSamples);
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
 				mRadioController.sendCommand(command, getAddress(), true);
 
-				// same as above. Wait after last partial
+				partialCount = 0;
+				// we have to leave the old reference to partialSamples as that is floating off in a command.
+				// New list to accumulate more samples
+				partialSamples = new ArrayList<LedSample>();
+
+				// experiment. Set to 30 for v7
 				if (kDelayMillisBetweenPartialSends > 0)
-					try { // Not sure this helps. Might need to throw in another thread and modify the protocol a bit.
+					try { // Not sure this helps. I hate to starve this thread at all. Definitely cuts down on useless sends to aisle controller that cannot receive yet.
 						Thread.sleep(kDelayMillisBetweenPartialSends);
 					} catch (InterruptedException e) {
 						LOGGER.error("updateLeds delay exeption", e);
 					}
-
 			}
-//
-//		}
-//
+			previousColorValue = thisColorValue;
+			partialCount++;
+			partialSamples.add(theSample);
+
+		}
+		if (partialCount > 0) { // send the final leftovers
+			logSampleSend(partialSamples);
+			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
+			mRadioController.sendCommand(command, getAddress(), true);
+
+			// same as above. Wait after last partial
+			if (kDelayMillisBetweenPartialSends > 0)
+				try { // Not sure this helps. Might need to throw in another thread and modify the protocol a bit.
+					Thread.sleep(kDelayMillisBetweenPartialSends);
+				} catch (InterruptedException e) {
+					LOGGER.error("updateLeds delay exeption", e);
+				}
+
+		}
+		//
+		//		}
+		//
 	}
 
-	void logSampleSend(List<LedSample> inSamples){
+	void logSampleSend(List<LedSample> inSamples) {
 		String sampleSummary = "";
 		for (LedSample sample : inSamples) {
 			sampleSummary += sample.getPosition().toString();
@@ -418,6 +442,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			sampleSummary += ColorEnum.getLogCodeOf(sample.getColor());
 			sampleSummary += ";";
 		}
-		LOGGER.info("sent to aisles controller:" + sampleSummary);;
+		LOGGER.info("sent to aisles controller:" + sampleSummary);
+		;
 	}
 }
