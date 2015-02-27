@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.JvmProperties;
 import com.codeshelf.metrics.DummyMetricsService;
+import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -85,8 +86,20 @@ public class EdiProcessorTest /* extends EdiTestABC */{
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
 		
+		Facility facility = new Facility();
+		facility.setDomainId("FTEST");
+
+		Facility.DAO = new TestFacilityDao(facility);
+
+		IMetricsService metrics = new DummyMetricsService();
+		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
+
+		ITenantPersistenceService mock = mock(ITenantPersistenceService.class);
+		TenantPersistenceService.setInstance(mock);
+
 		ArrayList<Service> services = new ArrayList<Service>();
 		services.add(ediProcessorService);
+		services.add(metrics);
 		ServiceManager serviceManager = new ServiceManager(services);
 
 		try {
@@ -124,10 +137,6 @@ public class EdiProcessorTest /* extends EdiTestABC */{
 		facility.setDomainId("FTEST");
 
 		Facility.DAO = new TestFacilityDao(facility);
-
-		MetricsService.setInstance(new DummyMetricsService());
-		ITenantPersistenceService mock = mock(ITenantPersistenceService.class);
-		TenantPersistenceService.setInstance(mock);
 
 		IEdiService ediServiceLinked = new IEdiService() {
 
@@ -370,11 +379,15 @@ public class EdiProcessorTest /* extends EdiTestABC */{
 			crossBatchImporter,
 			aislesFileImporter);
 
+		IMetricsService metrics = new DummyMetricsService();
+		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
+
+		ITenantPersistenceService mock = mock(ITenantPersistenceService.class);
+		TenantPersistenceService.setInstance(mock);
+
 		ArrayList<Service> services = new ArrayList<Service>();
 		services.add(ediProcessorService);
-		if(!MetricsService.getMaybeRunningInstance().isRunning()) { // TODO: this sort of setup goes in an abstract class
-			services.add(MetricsService.getMaybeRunningInstance());
-		}
+		services.add(metrics);
 		ServiceManager serviceManager = new ServiceManager(services);
 		try {
 			serviceManager.startAsync().awaitHealthy(30, TimeUnit.SECONDS);
