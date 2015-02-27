@@ -21,20 +21,19 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  *
  */
 public class RadioControllerPacketIOService {
-	private static final Logger							LOGGER				= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
+	private static final Logger							LOGGER			= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 
-	private final Counter								packetsSentCounter	= MetricsService.getInstance()
-																				.createCounter(MetricsGroup.Radio, "packets.sent");
-	private final ExecutorService						executorService		= Executors.newFixedThreadPool(1,
-																				new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
-																					.setPriority(Thread.MAX_PRIORITY)
-																					.build());
+	private final Counter								packetsSentCounter;
+	private final ExecutorService						executorService	= Executors.newFixedThreadPool(1,
+																			new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
+																				.setPriority(Thread.MAX_PRIORITY)
+																				.build());
 
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerPacketHandlerService	packetHandlerService;
 
 	private NetworkId									networkId;
-	private volatile boolean							isShutdown			= false;
+	private volatile boolean							isShutdown		= false;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
 		RadioControllerPacketHandlerService packetHandlerService,
@@ -42,6 +41,7 @@ public class RadioControllerPacketIOService {
 		super();
 		this.gatewayInterface = gatewayInterface;
 		this.packetHandlerService = packetHandlerService;
+		this.packetHandlerService = MetricsService.getInstance().createCounter(MetricsGroup.Radio, "packets.sent");
 	}
 
 	public void start() {
