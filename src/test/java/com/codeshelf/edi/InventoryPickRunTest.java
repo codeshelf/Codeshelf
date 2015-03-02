@@ -189,10 +189,34 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// Each product needed for 12345
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDetailId,locationId"
-				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each,101,D-27"	// Should get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each,101,D-27"		// Should get work instruction
 				+ "\r\n,USF314,TARGET,12000,12000,1830,Shorts-large,1,each,102"			// Should not get work instruction
-				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each,103"
-				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"
+				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each,103, F-67" // Should not get a work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"		// Should get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
+				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
+
+		byte[] csvArray2 = csvString2.getBytes();
+		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
+		InputStreamReader reader2 = new InputStreamReader(stream2);
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer2 = createOrderImporter();
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
+
+	}
+	
+	private void readOrdersForWorkSequence(Facility inFacility) throws IOException {
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// SKU 1123 needed for 12000
+		// SKU 1123 needed for 12010
+		// Each product needed for 12345
+
+		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDetailId,locationId,workSequence"
+				+ "\r\n,USF314,TARGET,12000,12000,1831,Shorts-xl,1,each,101,D-27,1" // no item location, has preferred, has sequence, should get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1830,Shorts-large,1,each,102,D-27" // no item location, no workSequence, should not get work instruction
+				+ "\r\n,USF314,TARGET,12000,12000,1123,8 oz Bowl Lids,1,each,103, F-67, 2" // has item location, has bad preferred, has sequence, should get wi
+				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"	// item has location, no workSequence, no preferred, should not get wi
 				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
 				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
 
@@ -293,7 +317,7 @@ public class InventoryPickRunTest extends EdiTestABC {
 		// In D-27, left to right are SKUs  1831, 1830
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
-				+ "1123,D-26,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
+				+ "1123,,8 oz Bowl Lids,6,EA,6/25/14 12:00,135\r\n" //
 				+ "1124,D-26,12 oz Bowl Lids,0,ea,6/25/14 12:00,8\r\n" //
 				+ "1125,D-26,16 oz Bowl Lids,,each,6/25/14 12:00,185\r\n" //
 				+ "1126,D-26,24 oz Bowl Lids,80,each,6/25/14 12:00,55\r\n" //
@@ -576,7 +600,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 
 	}
 
-	//@Test
+	@Test
 	public final void testBayDistance() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		OrderDetail.workService = workService;
@@ -585,7 +609,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
 		
-		LOGGER.info("1: Set WORKSEQR = BayDistance.");
+		LOGGER.info("0. Set WORKSEQR = BayDistance.");
 		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "BayDistance");
 		
 		// Inventory
@@ -597,19 +621,26 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		OrderHeader orderHeader = facility.getOrderHeader("12000");
 		Assert.assertNotNull(orderHeader);
 		
-		// 101 item does not have an inventory location
-		// 101 has a preferred location that is on a path
+		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location");
 		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
 		Assert.assertNotNull(orderDetail);
-	
 		Assert.assertTrue(orderDetail.willProduceWi());
 		
-		// 102 items does not have an inventory location
-		// 102 does not have a preferred location
+		LOGGER.info("2. OrderDetail 102 does not have an inventory location, does not have preferred location");
 		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
 		Assert.assertNotNull(orderDetail2);
 	
 		Assert.assertFalse(orderDetail2.willProduceWi());
+		
+		LOGGER.info("3. OrderDetail 103 does not have an inventory location, has bad preferred location");
+		OrderDetail orderDetail3 = orderHeader.getOrderDetail("103");
+		Assert.assertNotNull(orderDetail3);
+		Assert.assertFalse(orderDetail3.willProduceWi());
+		
+		LOGGER.info("4. OrderDetail 104 does have an inventory location, has bad preferred location");
+		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
+		Assert.assertNotNull(orderDetail4);
+		Assert.assertTrue(orderDetail4.willProduceWi());
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -620,6 +651,40 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
+		
+		LOGGER.info("1: Set WORKSEQR = WorkSequence.");
+		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		
+		// Inventory
+		readInventoryBayDistance(facility);
+
+		// Orders
+		readOrdersForWorkSequence(facility);
+		
+		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		Assert.assertNotNull(orderHeader);
+		
+		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location, has sequence");
+		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
+		Assert.assertNotNull(orderDetail);
+		Assert.assertTrue(orderDetail.willProduceWi());
+		
+		LOGGER.info("2. OrderDetail 102 does not have an inventory location, does not have preferred location, no sequence");
+		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
+		Assert.assertNotNull(orderDetail2);
+	
+		Assert.assertFalse(orderDetail2.willProduceWi());
+		
+		LOGGER.info("3. OrderDetail 103 does not have an inventory location, has bad preferred location, has sequence");
+		OrderDetail orderDetail3 = orderHeader.getOrderDetail("103");
+		Assert.assertNotNull(orderDetail3);
+		Assert.assertTrue(orderDetail3.willProduceWi());
+		
+		LOGGER.info("4. OrderDetail 104 does have an inventory location, has bad preferred location, no sequence");
+		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
+		Assert.assertNotNull(orderDetail4);
+		Assert.assertTrue(orderDetail4.willProduceWi());
+		
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}

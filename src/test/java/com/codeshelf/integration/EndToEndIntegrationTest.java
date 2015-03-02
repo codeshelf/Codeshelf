@@ -26,7 +26,7 @@ import com.codeshelf.application.WebApiServer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.ICsDeviceManager;
-import com.codeshelf.device.RadioController;
+import com.codeshelf.device.radio.RadioController;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -57,62 +57,62 @@ import com.google.inject.Module;
 @Ignore
 public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(EndToEndIntegrationTest.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(EndToEndIntegrationTest.class);
 
 	// id of the organization has to match site controller configuration
-	protected static String organizationId = "TestOrg";
+	protected static String		organizationId		= "TestOrg";
 
-	protected static String facilityId = "F1";
-	protected static String networkId = CodeshelfNetwork.DEFAULT_NETWORK_NAME;
-	protected static String cheId1 = "CHE1";
+	protected static String		facilityId			= "F1";
+	protected static String		networkId			= CodeshelfNetwork.DEFAULT_NETWORK_NAME;
+	protected static String		cheId1				= "CHE1";
 	@Getter
-	protected static NetGuid cheGuid1 = new NetGuid("0x00009991");
-	protected static String cheId2 = "CHE2";
+	protected static NetGuid	cheGuid1			= new NetGuid("0x00009991");
+	protected static String		cheId2				= "CHE2";
 	@Getter
-	protected static NetGuid cheGuid2 = new NetGuid("0x00009992");
-
-	@Getter
-	SiteControllerApplication siteController;
+	protected static NetGuid	cheGuid2			= new NetGuid("0x00009992");
 
 	@Getter
-	CsDeviceManager deviceManager;
+	SiteControllerApplication	siteController;
 
 	@Getter
-	WebApiServer apiServer;
+	CsDeviceManager				deviceManager;
 
 	@Getter
-	UUID facilityPersistentId;
+	WebApiServer				apiServer;
 
 	@Getter
-	UUID networkPersistentId;
+	UUID						facilityPersistentId;
 
 	@Getter
-	UUID che1PersistentId;
+	UUID						networkPersistentId;
 
 	@Getter
-	UUID che2PersistentId;
+	UUID						che1PersistentId;
 
-	int connectionTimeOut = 30 * 1000;
+	@Getter
+	UUID						che2PersistentId;
+
+	int							connectionTimeOut	= 30 * 1000;
 
 	@Override
 	public void doBefore() throws Exception {
 		super.doBefore();
-		
+
 		LOGGER.debug("-------------- Creating environment before running test case");
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		// ensure facility, network exist in database before booting up site controller
 		Facility facility = Facility.DAO.findByDomainId(null, facilityId);
-		if (facility==null) {
+		if (facility == null) {
 			// create organization object
 			// facility = organization.createFacility(facilityId, "Integration Test Facility", Point.getZeroPoint());
-			facility=Facility.createFacility(getDefaultTenant(),facilityId,"",Point.getZeroPoint());
+			facility = Facility.createFacility(getDefaultTenant(), facilityId, "", Point.getZeroPoint());
 			Facility.DAO.store(facility);
 
 			// facility.recomputeDdcPositions(); remove this call at v10 hibernate. DDc is not compliant with hibernate patterns.
 		}
-		this.facilityPersistentId=facility.getPersistentId();
-		
+		this.facilityPersistentId = facility.getPersistentId();
+
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		this.networkPersistentId = network.getPersistentId();
 
@@ -131,7 +131,6 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		apiServer.start(Integer.getInteger("api.port"), null, null, false, "./");
 		ThreadUtils.sleep(2000);
 
-		
 		// start site controller
 		//Use a different IGateway implementation instead of disableRadio
 		Module integrationTestModule = new AbstractModule() {
@@ -145,7 +144,7 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 				bind(ICsDeviceManager.class).to(CsDeviceManager.class);
 
 				bind(IGatewayInterface.class).to(TcpServerInterface.class);
-				
+
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).toInstance(MetricsService.getInstance());
 			}
@@ -171,28 +170,28 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 			ThreadUtils.sleep(1000);
 			connected = client.isConnected();
 			long elapsed = System.currentTimeMillis() - start;
-			if (elapsed>connectionTimeOut) {
+			if (elapsed > connectionTimeOut) {
 				stop();
 				throw new RuntimeException("Failed to establish connection between embedded site controller and server");
 			}
 		}
 		long lastNetworkUpdate = deviceManager.getLastNetworkUpdate();
-		while (lastNetworkUpdate==0) {
+		while (lastNetworkUpdate == 0) {
 			LOGGER.debug("Embedded site controller has not yet received a network update");
 			ThreadUtils.sleep(1000);
 			lastNetworkUpdate = deviceManager.getLastNetworkUpdate();
 			long elapsed = System.currentTimeMillis() - start;
-			if (elapsed>connectionTimeOut) {
+			if (elapsed > connectionTimeOut) {
 				stop();
 				throw new RuntimeException("Failed to receive network update in allowed time");
 			}
 		}
-		
+
 		// verify that che is in site controller's device list
 		CheDeviceLogic cheDeviceLogic1 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid1);
-		Assert.assertNotNull("Che-1 device logic not found",cheDeviceLogic1);
+		Assert.assertNotNull("Che-1 device logic not found", cheDeviceLogic1);
 		CheDeviceLogic cheDeviceLogic2 = (CheDeviceLogic) this.siteController.getDeviceManager().getDeviceByGuid(cheGuid2);
-		Assert.assertNotNull("Che-2 device logic not found",cheDeviceLogic2);
+		Assert.assertNotNull("Che-2 device logic not found", cheDeviceLogic2);
 		LOGGER.debug("Embedded site controller and server connected");
 		LOGGER.debug("-------------- Environment created");
 	}
@@ -215,27 +214,26 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 		LOGGER.debug("-------------- Cleaning up after running test case");
 		try {
 			siteController.stopApplication();
-		}
-		catch (Exception e) {
-			LOGGER.error("Failed to stop site controller",e);
+		} catch (Exception e) {
+			LOGGER.error("Failed to stop site controller", e);
 		}
 		try {
 			apiServer.stop();
 		} catch (Exception e) {
 			LOGGER.error("Failed to stop WebSocket server", e);
 		}
-		
+
 		LOGGER.debug("-------------- Clean up completed");
 	}
-	
+
 	Facility getFacility() {
 		return Facility.DAO.findByPersistentId(this.facilityPersistentId);
 	}
-	
+
 	CodeshelfNetwork getNetwork() {
 		return CodeshelfNetwork.DAO.findByPersistentId(this.networkPersistentId);
 	}
-	
+
 	protected Facility setUpSimpleNoSlotFacility() {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -382,13 +380,13 @@ public abstract class EndToEndIntegrationTest extends EdiTestABC {
 
 		return getFacility();
 	}
-	
+
 	protected void importInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
 		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
-	
+
 	protected void importOrdersData(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = createOrderImporter();

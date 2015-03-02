@@ -643,6 +643,52 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 	}
 	
 	@Test
+	public void missingLocationIdShouldHaveNoWork() throws IOException {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, , 4000";
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime);
+
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.DAO.reload(facility);
+		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+
+		propertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();	
+		
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+
+		CsDeviceManager manager = this.getDeviceManager();
+		Assert.assertNotNull(manager);
+
+		
+		// We would rather have the device manager know from parameter updates, but that does not happen yet in the integration test.
+		manager.setSequenceKind(WorkInstructionSequencerType.WorkSequence.toString());
+		Assert.assertEquals(WorkInstructionSequencerType.WorkSequence.toString(), manager.getSequenceKind());
+		picker.forceDeviceToMatchManagerConfiguration();
+
+		
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+
+		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1"); 
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+
+		
+	}
+	
+	@Test
 	public void preferredLocationGetsSecondItemInPath() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
