@@ -20,6 +20,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -80,6 +81,10 @@ public class GtinMap extends DomainObjectTreeABC<ItemMaster> {
 	@Getter
 	@Setter
 	private UomMaster			uomMaster;
+	
+	@OneToOne(mappedBy = "gtinMap")
+	@Getter
+	private Item				item;
 	
 	public GtinMap() { }
 	

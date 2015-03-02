@@ -24,13 +24,22 @@
             </column>
         </createTable>
     </changeSet>
-    <changeSet author="default (generated)" id="1425075670907-6">
+    <changeSet author="huffa (generated)" id="1425075670907-6">
         <addPrimaryKey columnNames="persistentid" constraintName="gtin_mapPK" tableName="gtin_map"/>
     </changeSet>
-    <changeSet author="default (generated)" id="1425075670907-7">
+    <changeSet author="huffa (generated)" id="1425075670907-7">
         <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="gtin_map" constraintName="FK_9a5ee165ivsbjl8o3pt7bk4mt" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="item_master"/>
     </changeSet>
-    <changeSet author="default (generated)" id="1425075670907-8">
+    <changeSet author="huffa (generated)" id="1425075670907-8">
         <addForeignKeyConstraint baseColumnNames="uom_master_persistentid" baseTableName="gtin_map" constraintName="FK_tl85npkhc8s772qsocjs2shjq" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="uom_master"/>
+    </changeSet>
+    
+    <changeSet author="huffa (generated)" id="1425322871181-3">
+        <addColumn tableName="item">
+            <column name="gtinmap_persistentid" type="UUID"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="huffa (generated)" id="1425322871181-4">
+        <addForeignKeyConstraint baseColumnNames="gtinmap_persistentid" baseTableName="item" constraintName="FK_p933sl9lhrimeyasjsmt3rgh" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="gtin_map"/>
     </changeSet>
 </databaseChangeLog>

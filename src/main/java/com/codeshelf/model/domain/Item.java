@@ -13,6 +13,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -78,6 +79,13 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@JoinColumn(name = "stored_location_persistentid")
 	@Getter
 	private Location			storedLocation;
+	
+	// The Gtin value
+	@OneToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "gtinmap_presistentid")
+	@Getter
+	@Setter
+	private GtinMap	gtinMap;
 
 	// Quantity.
 	@Column(nullable = false)
