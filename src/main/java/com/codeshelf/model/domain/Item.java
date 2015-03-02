@@ -82,7 +82,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	
 	// The Gtin value
 	@OneToOne(optional = true, fetch = FetchType.LAZY)
-	@JoinColumn(name = "gtinmap_presistentid")
 	@Getter
 	@Setter
 	private GtinMap	gtinMap;

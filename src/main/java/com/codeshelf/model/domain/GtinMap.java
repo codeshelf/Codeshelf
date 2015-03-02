@@ -82,10 +82,6 @@ public class GtinMap extends DomainObjectTreeABC<ItemMaster> {
 	@Setter
 	private UomMaster			uomMaster;
 	
-	@OneToOne(mappedBy = "gtinMap")
-	@Getter
-	private Item				item;
-	
 	public GtinMap() { }
 	
 	public void setGtin(final String inGtin) {
