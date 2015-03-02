@@ -22,6 +22,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -244,6 +245,43 @@ public class Tier extends Location {
 			}
 		}
 	}
+
+	public void setPoscons(LedController ledController, int startingIndex) {
+		setPoscons(ledController, startingIndex, false);
+	}
+	
+	public void setPoscons(LedController ledController, int startingIndex, boolean reverseOrder) {
+		if (ledController.getDeviceType()!=DeviceType.Poscon) {
+			LOGGER.warn("Failed to set poscons. LedController "+ledController+" is not of device type Poscon.");
+			return;
+		}
+		
+		List<Slot> slotList = this.getActiveChildrenAtLevel(Slot.class);
+		if (slotList.size() == 0) {
+			return;
+		}
+		
+		// We definitely have to sort these. Not guaranteed to come in order.
+		Collections.sort(slotList, new SlotIDComparator());
+		
+		// reverse slot list, if required
+		if (reverseOrder) {
+			Collections.reverse(slotList);
+		}
+				
+		// set position controller index and led controller
+		ListIterator<Slot> li = null;
+		li = slotList.listIterator();
+		int posconIndex = startingIndex;
+		while (li.hasNext()) {
+			Slot slot = (Slot) li.next();
+			slot.setLedController(ledController);
+			slot.setPosconIndex(posconIndex);
+			Slot.DAO.store(slot);
+			posconIndex++;	
+		}
+	}
+	
 	public static void setDao(TierDao inTierDao) {
 		Tier.DAO = inTierDao;
 	}
