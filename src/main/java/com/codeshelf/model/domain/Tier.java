@@ -251,7 +251,7 @@ public class Tier extends Location {
 	}
 	
 	public void setPoscons(LedController ledController, int startingIndex, boolean reverseOrder) {
-		if (ledController.getDeviceType()!=DeviceType.Poscon) {
+		if (ledController.getDeviceType()!=DeviceType.Poscons) {
 			LOGGER.warn("Failed to set poscons. LedController "+ledController+" is not of device type Poscon.");
 			return;
 		}

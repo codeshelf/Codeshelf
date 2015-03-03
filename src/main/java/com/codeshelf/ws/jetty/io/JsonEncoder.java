@@ -33,7 +33,7 @@ public class JsonEncoder implements Encoder.Text<MessageABC> {
 			mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 			jsonString = mapper.writeValueAsString(message);
 			
-			LOGGER.debug("Encoding message: "+jsonString);
+			LOGGER.info("Encoding message: "+jsonString);
 			
 			if(jsonString.length() >= JSON_COMPRESS_THRESHOLD ) {
 				// Note: When triggered, compression will momentarily use ~3x the size of the message in RAM, 

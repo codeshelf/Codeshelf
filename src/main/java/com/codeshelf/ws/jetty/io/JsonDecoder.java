@@ -34,7 +34,7 @@ public class JsonDecoder implements Decoder.Text<MessageABC> {
 		String decompressedMessage = new CompressedJsonMessage(rawMessage,true).getUncompressed();
 
 		try {
-			LOGGER.debug("Decoding message: "+decompressedMessage);
+			LOGGER.info("Decoding message: "+decompressedMessage);
 			ObjectMapper mapper = new ObjectMapper(); // TODO: should reuse and share globally per jackson documentation -ic
 			mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
 
