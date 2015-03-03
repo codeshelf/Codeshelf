@@ -26,6 +26,7 @@ import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.User;
@@ -36,6 +37,7 @@ import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -181,6 +183,53 @@ public class FacilityResource {
 				CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
 				sessionManagerService.sendMessage(users, cheMessage);
 			}
+			return BaseResponse.buildResponse("Commands Sent");
+		} catch (Exception e) {
+			errors.processException(e);
+			return errors.buildResponse();
+		} finally {
+			persistence.commitTransaction();
+		}		
+	}
+	
+	@PUT
+	@Path("hardware_aggr_wall")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response performHardwareAggrWallAction(HardwareRequest req) {
+		ErrorResponse errors = new ErrorResponse();
+		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
+			return errors.buildResponse();
+		}
+		if (!req.isValid(errors)){
+			return errors.buildResponse();
+		}
+		try {
+			persistence.beginTransaction();
+			Facility facility = Facility.DAO.findByPersistentId(mUUIDParam.getUUID());
+			Set<User> users = facility.getSiteControllerUsers();
+			
+			PosControllerInstr instruction = new PosControllerInstr((byte)1, (byte)5, (byte)5, (byte)5, PosControllerInstr.BLINK_FREQ, PosControllerInstr.BRIGHT_DUTYCYCLE);
+			PosConControllerMessage message = new PosConControllerMessage("0000002D", instruction);
+			sessionManagerService.sendMessage(users, message);
+			/*
+			//LIGHTS
+			List<LedSample> ledSamples = new ArrayList<LedSample>();
+			
+			for (LightRequest light :req.getLights()){
+				ledSamples.add(new LedSample(light.getPosition(), light.getColor()));				
+			}
+			
+			LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
+			LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+			sessionManagerService.sendMessage(users, lightMessage);
+			
+			//CHE MESSAGES
+			for (CheDisplayRequest cheReq : req.getCheMessages()) {
+				CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
+				sessionManagerService.sendMessage(users, cheMessage);
+			}
+			*/
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {
 			errors.processException(e);

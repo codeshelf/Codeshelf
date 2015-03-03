@@ -128,5 +128,16 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	public final boolean isDeviceAssociated() {
 		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
 	}
-
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function. Should be promoted, and get a cached value.
+	 */
+	protected String getMyGuidStr() {
+		String thisGuidStr = "";
+		NetGuid thisGuid = this.getGuid();
+		if (thisGuid != null)
+			thisGuidStr = thisGuid.getHexStringNoPrefix();
+		return thisGuidStr;
+	}
 }
