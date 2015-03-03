@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
 import com.codeshelf.flyweight.command.ICommand;
-import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetChannelValue;
 import com.codeshelf.flyweight.command.NetworkId;
@@ -26,14 +25,19 @@ public class RadioControllerBroadcastService {
 
 	private final ScheduledExecutorService	scheduleExecutorService	= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-broadcast-thread")
 																		.build());
-	private final NetworkId					broadcastNetworkId		= new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-	private final NetAddress				broadcastAddress		= new NetAddress(IPacket.BROADCAST_ADDRESS);
 
+	private final NetworkId					broadcastNetworkId;
+	private final NetAddress				broadcastAddress;
 	private final IRadioController			radioController;
 	private final long						broadcastRateMs;
 
-	public RadioControllerBroadcastService(IRadioController radioController, long broadcastRateMs) {
+	public RadioControllerBroadcastService(NetworkId broadcastNetworkId,
+		NetAddress broadcastAddress,
+		IRadioController radioController,
+		long broadcastRateMs) {
 		super();
+		this.broadcastNetworkId = broadcastNetworkId;
+		this.broadcastAddress = broadcastAddress;
 		this.radioController = radioController;
 		this.broadcastRateMs = broadcastRateMs;
 	}
