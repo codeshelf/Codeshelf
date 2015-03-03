@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	logicalFilePath="db.changelog-v14.1.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="huffa (generated)" id="1425075670907-5">
+        <createTable tableName="gtin_map">
+            <column name="persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="uom_master_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="huffa (generated)" id="1425075670907-6">
+        <addPrimaryKey columnNames="persistentid" constraintName="gtin_mapPK" tableName="gtin_map"/>
+    </changeSet>
+    <changeSet author="huffa (generated)" id="1425075670907-7">
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="gtin_map" constraintName="FK_9a5ee165ivsbjl8o3pt7bk4mt" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="item_master"/>
+    </changeSet>
+    <changeSet author="huffa (generated)" id="1425075670907-8">
+        <addForeignKeyConstraint baseColumnNames="uom_master_persistentid" baseTableName="gtin_map" constraintName="FK_tl85npkhc8s772qsocjs2shjq" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="uom_master"/>
+    </changeSet>
+    
+    <changeSet author="huffa (generated)" id="1425322871181-3">
+        <addColumn tableName="item">
+            <column name="gtinmap_persistentid" type="UUID"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="huffa (generated)" id="1425322871181-4">
+        <addForeignKeyConstraint baseColumnNames="gtinmap_persistentid" baseTableName="item" constraintName="FK_p933sl9lhrimeyasjsmt3rgh" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="gtin_map"/>
+    </changeSet>
+</databaseChangeLog>
