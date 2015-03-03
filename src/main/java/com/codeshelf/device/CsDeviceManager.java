@@ -240,6 +240,12 @@ public class CsDeviceManager implements
 			} else {
 				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
+		} else if (inNetworkDevice instanceof PosManagerDeviceLogic){
+			if (isAttachedToServer) {
+				((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}			
 		}
 
 	}
@@ -317,6 +323,9 @@ public class CsDeviceManager implements
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).connectedToServer();
 			}
+			if (networkDevice instanceof PosManagerDeviceLogic) {
+				((PosManagerDeviceLogic) networkDevice).connectedToServer();
+			}
 		}
 	}
 
@@ -326,6 +335,9 @@ public class CsDeviceManager implements
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
+			}
+			if (networkDevice instanceof PosManagerDeviceLogic) {
+				((PosManagerDeviceLogic) networkDevice).disconnectedFromServer();
 			}
 		}
 		try {
@@ -539,7 +551,7 @@ public class CsDeviceManager implements
 			try {
 				UUID id = ledController.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-				if (ledController.getDeviceType() == DeviceType.Poscon){
+				if (ledController.getDeviceType() == DeviceType.Poscons){
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_POS_CON_CTRL);
 				} else {
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);

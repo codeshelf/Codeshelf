@@ -94,6 +94,8 @@ public class PosControllerInstr {
 	@Expose
 	private byte				mDutyCycle;
 
+	public PosControllerInstr() {}
+	
 	public PosControllerInstr(final byte inPosition,
 		final byte inReqQty,
 		final byte inMinQty,

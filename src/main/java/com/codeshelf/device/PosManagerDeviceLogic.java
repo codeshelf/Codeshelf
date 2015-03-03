@@ -11,6 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 
@@ -24,6 +27,16 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		ICsDeviceManager inDeviceManager,
 		IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
+	}
+	
+	public void connectedToServer(){
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,"PosCon Controller","Connected","","");
+		mRadioController.sendCommand(command, getAddress(), true);
+	}
+	
+	public void disconnectedFromServer(){
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,"PosCon Controller","Disconnected","","");
+		mRadioController.sendCommand(command, getAddress(), true);		
 	}
 	
 	@Override

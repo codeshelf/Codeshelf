@@ -154,6 +154,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
 		} else if (message instanceof PosConControllerMessage) {
 			PosConControllerMessage msg = (PosConControllerMessage)message;
+			this.deviceManager.processPosConControllerMessage(msg);
 		}
 	}
 
