@@ -81,7 +81,7 @@ public class PutwallTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		ledController = tier.getLedController();
-		ledController.setDeviceType(DeviceType.Poscon);
+		ledController.setDeviceType(DeviceType.Poscons);
 		LedController.DAO.store(ledController);
 		tier.setPoscons(ledController, 5);
 		this.getTenantPersistenceService().commitTransaction();
