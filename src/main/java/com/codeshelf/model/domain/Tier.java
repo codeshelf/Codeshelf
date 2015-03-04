@@ -246,13 +246,18 @@ public class Tier extends Location {
 		}
 	}
 
-	public void setPoscons(LedController ledController, int startingIndex) {
-		setPoscons(ledController, startingIndex, false);
+	public void setPoscons(int startingIndex) {
+		setPoscons(startingIndex, false);
 	}
 	
-	public void setPoscons(LedController ledController, int startingIndex, boolean reverseOrder) {
+	public void setPoscons(int startingIndex, boolean reverseOrder) {
+		LedController ledController = this.getLedController();
+		if (ledController==null) {
+			LOGGER.warn("Failed to set poscons on "+this+": Tier has no LedController.");
+			return;
+		}
 		if (ledController.getDeviceType()!=DeviceType.Poscons) {
-			LOGGER.warn("Failed to set poscons. LedController "+ledController+" is not of device type Poscon.");
+			LOGGER.warn("Failed to set poscons on "+this+": LedController "+ledController+" is not of device type Poscon.");
 			return;
 		}
 		

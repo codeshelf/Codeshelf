@@ -83,7 +83,7 @@ public class PutwallTest extends EdiTestABC {
 		ledController = tier.getLedController();
 		ledController.setDeviceType(DeviceType.Poscons);
 		LedController.DAO.store(ledController);
-		tier.setPoscons(ledController, 5);
+		tier.setPoscons(5);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		// check controller, tier and slots
