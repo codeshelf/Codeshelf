@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.IDomainObject;
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;

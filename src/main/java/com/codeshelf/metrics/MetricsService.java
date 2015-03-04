@@ -58,6 +58,9 @@ public class MetricsService extends AbstractIdleService implements IMetricsServi
 		// for testing only!
 		theInstance = instance;
 	}
+	public final static boolean exists() {
+		return (theInstance != null);
+	}
 	
 	private static String getFullName(MetricsGroup group, String metricName) {
 		return group.getName() + "-" + metricName;

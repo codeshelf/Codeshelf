@@ -56,7 +56,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	private static final long		serialVersionUID	= -2776468192822374495L;
 
 	@Inject
-	public static PathSegmentDao	DAO;
+	public static ITypedDao<PathSegment>	DAO;
 
 	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v14.2.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	
+	<changeSet author="huffa (generated)" id="1425428049470-9">
+		<dropForeignKeyConstraint baseTableName="item" constraintName="FK_p933sl9lhrimeyasjsmt3rgh"/>
+	</changeSet>
+	
+	<changeSet author="huffa (generated)" id="1425428049470-10">
+		<dropForeignKeyConstraint baseTableName="gtin_map" constraintName="FK_9a5ee165ivsbjl8o3pt7bk4mt"/>
+	</changeSet>
+	<changeSet author="huffa (generated)" id="1425428049470-11">
+		<dropForeignKeyConstraint baseTableName="gtin_map" constraintName="FK_tl85npkhc8s772qsocjs2shjq"/>
+	</changeSet>
+	<changeSet author="huffa"  id="1425428049470-12">
+		<dropPrimaryKey tableName="gtin_map" constraintName="gtin_mapPK" />
+	</changeSet>
+	
+	<changeSet author="huffa" id="1425428049470-13">
+	    <renameTable
+	            newTableName="gtin"
+	            oldTableName="gtin_map"/>
+	</changeSet>
+	
+	 <changeSet author="huffa (generated)" id="1425428049470-14">
+        <addPrimaryKey columnNames="persistentid" constraintName="gtinPK" tableName="gtin"/>
+    </changeSet>
+	<changeSet author="huffa (generated)" id="1425428049470-15">
+		<addForeignKeyConstraint baseColumnNames="uom_master_persistentid" baseTableName="gtin" constraintName="FK_6iow36q0v5add4dpijgee5k9t" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="uom_master"/>
+	</changeSet>
+	<changeSet author="huffa (generated)" id="1425428049470-16">
+		<addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="gtin" constraintName="FK_d491j5sodc43adpa1l4jmem9o" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="item_master"/>
+	</changeSet>
+	
+    <changeSet author="huffa" id="1425428049470-17">
+    <renameColumn
+            newColumnName="gtin_persistentid"
+            oldColumnName="gtinmap_persistentid"
+            tableName="item"/>
+	</changeSet>
+	<changeSet author="huffa (generated)" id="1425428049470-18">
+        <addForeignKeyConstraint baseColumnNames="gtin_persistentid" baseTableName="item" constraintName="FK_lsfjsa8dl1kwk5sou8wk6p3hp" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="gtin"/>
+    </changeSet>
+	
+</databaseChangeLog>

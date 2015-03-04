@@ -17,21 +17,22 @@ import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.util.ThreadUtils;
 
 public class PickSimulator {
 
-	EndToEndIntegrationTest		test;
+	IntegrationTest		test;
 
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
-	public PickSimulator(EndToEndIntegrationTest test, NetGuid cheGuid) {
+	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
 		this.test = test;
 		// verify that che is in site controller's device list
-		cheDeviceLogic = (CheDeviceLogic) test.getSiteController().getDeviceManager().getDeviceByGuid(cheGuid);
+		cheDeviceLogic = (CheDeviceLogic) test.getDeviceManager().getDeviceByGuid(cheGuid);
 		Assert.assertNotNull(cheDeviceLogic);
 	}
 

@@ -27,9 +27,11 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.IntegrationTest;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 
-public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
+public class CheProcessScanPickReversable extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessScanPickReversable.class);
 	private static final int WAIT_TIME = 4000;
 
@@ -71,7 +73,7 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -117,7 +119,7 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 		return getFacility();
 	}
 	
-	private PickSimulator waitAndGetPickerForProcessType(EndToEndIntegrationTest test, NetGuid cheGuid, String inProcessType) {
+	private PickSimulator waitAndGetPickerForProcessType(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
 		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
@@ -210,6 +212,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testForwardForward() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -233,6 +237,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testReverseReverse() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -256,6 +262,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testForwardReverse() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -279,6 +287,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testReverseForward() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -301,6 +311,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testMultipleDoubleStarts() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -338,6 +350,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testForwardAndLocation() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -361,6 +375,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testReverseAndLocation() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
@@ -384,6 +400,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testForwardForwardThenJump() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		//Double-forward, then jump
@@ -435,6 +453,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testReverseReverseThenJump() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		//Double-reverse, then jump
@@ -485,6 +505,8 @@ public class CheProcessScanPickReversable extends EndToEndIntegrationTest{
 	 */
 	@Test
 	public void testForwardForwardPickReversePickForward() throws IOException{
+		this.startSitecon();
+
 		PickSimulator picker = setupTestPicker();
 		
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);

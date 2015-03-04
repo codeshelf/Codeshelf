@@ -2,13 +2,13 @@ package com.codeshelf.metrics;
 
 import com.codeshelf.device.AisleDeviceLogic;
 import com.codeshelf.device.CheDeviceLogic;
-import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.CsDeviceManager;
 
 public class AssociatedRadioHealthCheck extends CodeshelfHealthCheck {
 
-	ICsDeviceManager	mDeviceManager;
+	CsDeviceManager	mDeviceManager;
 
-	public AssociatedRadioHealthCheck(ICsDeviceManager deviceManager) {
+	public AssociatedRadioHealthCheck(CsDeviceManager deviceManager) {
 		super("Associated Radios");
 		this.mDeviceManager = deviceManager;
 	}

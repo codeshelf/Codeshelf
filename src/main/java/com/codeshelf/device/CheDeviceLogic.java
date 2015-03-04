@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.codeshelf.flyweight.command.CommandControlButton;
-import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
-import com.codeshelf.flyweight.command.CommandControlSetPosController;
 import com.codeshelf.flyweight.command.EffectEnum;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
@@ -45,7 +42,7 @@ import com.google.common.collect.Lists;
  * CheDeviceLogic is now an abstract base class for CHE programs with different state machines.
  * See SetupOrdersDeviceLogic to get what CheDeviceLogic used to be all by itself.
  */
-public class CheDeviceLogic extends DeviceLogicABC {
+public class CheDeviceLogic extends PosConDeviceABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
@@ -128,11 +125,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	protected List<WorkInstruction>			mAllPicksWiList;
-
-	//Container Position to last SetInstruction Map
-	@Accessors(prefix = "m")
-	@Getter
-	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
 
 	// Remember the first string in last display message sent
 	@Accessors(prefix = "m")
@@ -225,14 +217,13 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
-		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
 	}
 
 	@Override
@@ -452,31 +443,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			// TODO: UPC or LPN or SKU
 		}
 		return returnString;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Send a command to set update the position controller
-	 * Common Use: Send a pick request command to the CHE to light a position
-	 * 
-	 * @param inPos
-	 * @param inReqQty
-	 * @param inMinQty
-	 * @param inMaxQty
-	 */
-	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
-		//Update the last sent posControllerInstr for the position 
-		for (PosControllerInstr instr : inInstructions) {
-			if (PosControllerInstr.POSITION_ALL.equals(instr.getPosition())) {
-				//A POS_ALL instruction overrides all previous instructions
-				mPosToLastSetIntrMap.clear();
-			}
-			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
-		}
-
-		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, inInstructions);
-		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
 	// --------------------------------------------------------------------------
@@ -770,7 +736,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected void logout() {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
-		mPosToLastSetIntrMap.clear();
+		clearAllPositionControllers();
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
@@ -784,7 +750,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 */
 	protected void setupChe() {
 		clearAllPositionControllers();
-		mPosToLastSetIntrMap.clear();
+		clearAllPositionControllers();
 		setState(CheStateEnum.CONTAINER_SELECT);
 	}
 
@@ -957,19 +923,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		mShortPickQty = inQuantity;
 	}
 
-	protected void clearOnePositionController(Byte inPosition) {
-		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
-
-		//Remove lastSent Set Instr from map to indicate the clear
-		if (PosControllerInstr.POSITION_ALL.equals(inPosition)) {
-			mPosToLastSetIntrMap.clear();
-		} else {
-			mPosToLastSetIntrMap.remove(inPosition);
-		}
-
-		mRadioController.sendCommand(command, getAddress(), true);
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * @param totalWorkInstructionCount
@@ -1006,11 +959,6 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 */
-	protected void clearAllPositionControllers() {
-		clearOnePositionController(PosControllerInstr.POSITION_ALL);
-	}
 
 	@Override
 	public String toString() {

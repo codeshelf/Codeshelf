@@ -108,6 +108,8 @@ public class ObjectMethodCommand extends CommandABC {
 			signatureClasses.add(classType);
 			if (Double.class.isAssignableFrom(classType)){
 					argumentValue = Double.valueOf(argumentValue.toString());
+			} else if (int.class.isAssignableFrom(classType)){
+				argumentValue = Integer.valueOf(argumentValue.toString());
 			}
 			cookedArguments.add(argumentValue);		
 		}

@@ -44,7 +44,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 

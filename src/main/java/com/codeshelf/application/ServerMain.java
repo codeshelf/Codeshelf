@@ -52,6 +52,8 @@ import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 //import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Facility.FacilityDao;
+import com.codeshelf.model.domain.Gtin;
+import com.codeshelf.model.domain.Gtin.GtinMapDao;
 import com.codeshelf.model.domain.IronMqService;
 import com.codeshelf.model.domain.IronMqService.IronMqServiceDao;
 import com.codeshelf.model.domain.Item;
@@ -240,7 +242,6 @@ public final class ServerMain {
 			@Override
 			protected void configure() {
 				// Register the DAOs (statically as a singleton).
-				
 
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {
@@ -365,6 +366,10 @@ public final class ServerMain {
 				requestStaticInjection(WorkInstruction.class);
 				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
 				}).to(WorkInstructionDao.class);
+				
+				requestStaticInjection(Gtin.class);
+				bind(new TypeLiteral<ITypedDao<Gtin>>() {
+				}).to(GtinMapDao.class);
 
 			}
 		};

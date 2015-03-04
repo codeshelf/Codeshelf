@@ -1,5 +1,6 @@
 package com.codeshelf.device;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
@@ -8,7 +9,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.util.concurrent.AbstractScheduledService;
@@ -17,6 +18,8 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(ClientConnectionManagerService.class);
 
+	boolean						requestConnected		= true; // establish/stay connected
+	
 	@Getter
 	@Setter
 	int							periodSeconds			= 1;
@@ -49,10 +52,11 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 	@Setter
 	UserSession.State			lastState				= UserSession.State.INACTIVE;
 
-	JettyWebSocketClient		wsClient;
+	@Getter
+	CsClientEndpoint			clientEndpoint;
 
-	public ClientConnectionManagerService(JettyWebSocketClient client) {
-		this.wsClient = client;
+	public ClientConnectionManagerService(CsClientEndpoint clientEndpoint) {
+		this.clientEndpoint = clientEndpoint;
 	}
 
 	@Override
@@ -65,39 +69,34 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 
 	@Override
 	protected void runOneIteration() throws Exception {
-		try {
-			if (!wsClient.isConnected()) {
-				LOGGER.debug("Not connected to server.  Trying to connect.");
-				wsClient.connect();
-			}
-		} catch (Exception e) {
-			LOGGER.debug("exception connecting websocket client (continuing)", e); // session onError should log reason
-		}
+		connect();
 
 		try {
-			if (wsClient.isConnected()) {
-				long timeSinceLastSent = System.currentTimeMillis() - wsClient.getLastMessageSent();
-				if (!isSuppressKeepAlive()) {
-					if (timeSinceLastSent > keepAliveInterval) {
-						// DEV-598 ideally, might log once every 10 or saying each keepalive had been sent.
-						// For now, just suppress the normal.
-						if (timeSinceLastSent > 2 * keepAliveInterval)
-							LOGGER.warn("Late: sending keep alive from the site controller " + timeSinceLastSent
-									+ " ms after last send.");
-						else
-							LOGGER.debug("Sending keep alive from the site controller");
-						wsClient.sendMessage(new KeepAlive());
+			if (clientEndpoint.isConnected()) {
+				if(requestConnected) {
+					long timeSinceLastSent = System.currentTimeMillis() - clientEndpoint.getLastMessageSent();
+					if (!isSuppressKeepAlive()) {
+						if (timeSinceLastSent > keepAliveInterval) {
+							// DEV-598 ideally, might log once every 10 or saying each keepalive had been sent.
+							// For now, just suppress the normal.
+							if (timeSinceLastSent > 2 * keepAliveInterval)
+								LOGGER.warn("Late: sending keep alive from the site controller " + timeSinceLastSent
+										+ " ms after last send.");
+							else
+								LOGGER.debug("Sending keep alive from the site controller");
+							clientEndpoint.sendMessage(new KeepAlive());
+						}
 					}
-				}
 
-				UserSession.State newSessionState = determineSessionState();
-				if (newSessionState != this.getLastState()) {
-					LOGGER.info("Session state changed from " + getLastState().toString() + " to " + newSessionState.toString());
-					setLastState(newSessionState);
+					UserSession.State newSessionState = determineSessionState();
+					if (newSessionState != this.getLastState()) {
+						LOGGER.info("Session state changed from " + getLastState().toString() + " to " + newSessionState.toString());
+						setLastState(newSessionState);
 
-					if (isIdleKill() && newSessionState == UserSession.State.INACTIVE) {
-						LOGGER.warn("Server connection timed out.  Restarting session.");
-						wsClient.disconnect();
+						if (isIdleKill() && newSessionState == UserSession.State.INACTIVE) {
+							LOGGER.warn("Server connection timed out.  Restarting session.");
+							clientEndpoint.disconnect();
+						}
 					}
 				}
 			}
@@ -106,9 +105,23 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 		}
 	}
 
+	private void connect() {
+		if(!requestConnected)
+			return;
+		
+		try {
+			if (!clientEndpoint.isConnected()) {
+				LOGGER.warn("Not connected to server.  Trying to connect.");
+				clientEndpoint.connect();
+			}
+		} catch (Exception e) {
+			LOGGER.warn("exception connecting websocket client (continuing)", e); 
+		}
+	}
+
 	@Override
 	protected void shutDown() throws Exception {
-		wsClient.disconnect();
+		clientEndpoint.disconnect();
 		LOGGER.info("WS connection manager thread is stopping");
 	}
 
@@ -116,9 +129,27 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 	protected Scheduler scheduler() {
 		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 	}
+	
+	public void setDisconnected() {
+		this.requestConnected = false;
+		if(this.isRunning()) {
+			try {
+				clientEndpoint.disconnect();
+			} catch (IOException e) {
+				LOGGER.warn("error trying to disconnect client", e);
+			}
+		}
+	}
+	
+	public void setConnected() {
+		this.requestConnected = true; // this is the default state
+		if(this.isRunning()) {
+			connect();
+		}
+	}
 
 	private UserSession.State determineSessionState() {
-		long timeSinceLastReceived = System.currentTimeMillis() - wsClient.getLastMessageReceived();
+		long timeSinceLastReceived = System.currentTimeMillis() - clientEndpoint.getLastMessageReceived();
 
 		if (timeSinceLastReceived > siteControllerTimeout) {
 			return UserSession.State.INACTIVE;

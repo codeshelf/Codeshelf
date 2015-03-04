@@ -23,10 +23,10 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
-import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -64,6 +64,7 @@ public class LedController extends WirelessDeviceABC {
 	@Setter
 	@Enumerated(EnumType.STRING)
 	@Column(length=20, name="device_type")
+	@JsonProperty
 	DeviceType deviceType = DeviceType.Lights;
 
 	public LedController() {
@@ -108,27 +109,36 @@ public class LedController extends WirelessDeviceABC {
 	//  Called from the UI, so really should return any persistence error.
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 	// Therefore, see  and consider declone from Che::changeControllerId()
-	public void changeLedControllerId(String inNewControllerId) {
+	public void updateFromUI(String inNewControllerId, String inNewDeviceType) {
 		NetGuid currentGuid = this.getDeviceNetGuid();
 		NetGuid newGuid = null;
+		boolean modified = false;
 		try {
+			// update controller id
 			newGuid = new NetGuid(inNewControllerId);
-			if (currentGuid.equals(newGuid))
-				return;
-		}
-
-		catch (Exception e) {
-
-		}
-		if (newGuid != null) {
-			try {
-				this.setDeviceNetGuid(newGuid);
-				String newName = newGuid.getHexStringNoPrefix();
-				this.setDomainId(newName);
-				LedController.DAO.store(this);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
+			if (!currentGuid.equals(newGuid)) {
+				if (newGuid != null) {
+					modified = true;
+					this.setDeviceNetGuid(newGuid);
+					String newName = newGuid.getHexStringNoPrefix();
+					this.setDomainId(newName);
+				}
 			}
+			// update 
+			if (inNewDeviceType!=null) {
+				DeviceType deviceType = DeviceType.valueOf(inNewDeviceType);
+				if (deviceType!=null && !deviceType.equals(this.deviceType)) {
+					modified = true;
+					this.setDeviceType(deviceType);
+				}
+			}
+			// persist, if changed
+			if (modified) {
+				LedController.DAO.store(this);
+			}
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to update LedController",e);
 		}
 	}
 

@@ -13,7 +13,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.hibernate.LazyInitializationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -72,9 +71,11 @@ public abstract class DAOTestABC {
 			protected void configure() {
 				// jetty websocket
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
-				
-				requestStaticInjection(TenantPersistenceService.class);
-				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+
+				if(!TenantPersistenceService.exists()) {
+					requestStaticInjection(TenantPersistenceService.class);
+					bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+				}
 				
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(DummyMetricsService.class).in(Singleton.class);
@@ -105,18 +106,24 @@ public abstract class DAOTestABC {
 		DAOTestABC.staticSessionManagerService = injector.getInstance(SessionManagerService.class);
 		DAOTestABC.staticMetricsService = injector.getInstance(IMetricsService.class);
 		DAOTestABC.staticPropertyService = injector.getInstance(IPropertyService.class);
-		DAOTestABC.staticTenantPersistenceService = injector.getInstance(ITenantPersistenceService.class);
+		DAOTestABC.staticTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
 		
 		// start singleton services here, per jvm, not per test
 		List<Service> services = new ArrayList<Service>();
+
+		if(!TenantManagerService.getMaybeRunningInstance().isRunning())
+			services.add(TenantManagerService.getMaybeRunningInstance()); 
+			
+		if(!ManagerPersistenceService.getMaybeRunningInstance().isRunning())
+			services.add(ManagerPersistenceService.getMaybeRunningInstance());
+
+		TenantPersistenceService.setInstance(DAOTestABC.staticTenantPersistenceService);
+		if(!DAOTestABC.staticTenantPersistenceService.isRunning())
+			services.add(DAOTestABC.staticTenantPersistenceService); 
 		
-		services.add(TenantManagerService.getNonRunningInstance()); // self-creating
-		services.add(ManagerPersistenceService.getNonRunningInstance()); // self-creating
-		services.add(TenantPersistenceService.getNonRunningInstance()); // self-creating
-		
-		services.add(staticSessionManagerService); // provider injected
-		services.add(staticMetricsService); // static injected singleton
-		services.add(staticPropertyService); // static injected singleton
+		services.add(staticSessionManagerService); 
+		services.add(staticMetricsService); 
+		services.add(staticPropertyService);
 		// see doBefore() for ephemeral service manager
 		
 		jvmServiceManager = new ServiceManager(services);

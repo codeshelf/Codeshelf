@@ -39,7 +39,6 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.WorkService;
 
 /**
  *

@@ -41,8 +41,13 @@ public class InventorySlottedCsvBean extends ImportCsvBeanABC {
 	@NotNull
 	@Size(min = 1)
 	protected String	locationId;
-	protected String	cmFromLeft;	
+	protected String	cmFromLeft;
+	protected String	gtin;
 
+	public final String getGtin() {
+		return strip(gtin);
+	}
+	
 	public final String getItemId() {
 		return strip(itemId);
 	}

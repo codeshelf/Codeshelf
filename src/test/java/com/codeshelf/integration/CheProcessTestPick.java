@@ -47,6 +47,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Strings;
 
@@ -54,7 +55,7 @@ import com.google.common.base.Strings;
  * @author jon ranstrom
  *
  */
-public class CheProcessTestPick extends EndToEndIntegrationTest {
+public class CheProcessTestPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
 
@@ -293,6 +294,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		
+		this.startSitecon();
+		
 		//For this data set
 		//Forward ordering is 3,2,1
 		// Reverse ordering is 1,2,3
@@ -307,6 +310,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		PickSimulator picker = 		startReverseWork(facility);
 		
 		//Then skip to location
@@ -337,6 +342,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSitecon();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -462,6 +469,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
@@ -606,6 +615,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 
@@ -724,6 +735,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		UUID facId = facility.getPersistentId();
@@ -985,6 +998,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		setUpSmallInventoryAndOrders(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
@@ -1060,6 +1075,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		setUpBatchOrdersForZigzag(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
@@ -1140,6 +1157,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		setUpBatchOrdersForZigzag(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
@@ -1225,6 +1244,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
@@ -1413,6 +1434,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
@@ -1497,6 +1520,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		UUID facId = facility.getPersistentId();
 		facility = Facility.DAO.reload(facility);
@@ -1713,6 +1738,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1773,6 +1800,8 @@ public class CheProcessTestPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.

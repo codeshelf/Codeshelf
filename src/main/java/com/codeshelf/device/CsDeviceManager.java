@@ -6,7 +6,6 @@
 package com.codeshelf.device;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -14,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
-import javax.websocket.WebSocketContainer;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -29,6 +26,7 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
 import com.codeshelf.flyweight.controller.PacketCaptureListener;
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -37,8 +35,9 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
-import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
+import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -53,7 +52,6 @@ import com.google.inject.Inject;
  *
  */
 public class CsDeviceManager implements
-	ICsDeviceManager,
 	IRadioControllerEventListener,
 	WebSocketEventListener,
 	PacketCaptureListener {
@@ -62,6 +60,7 @@ public class CsDeviceManager implements
 
 	static final String									DEVICETYPE_CHE				= "CHE";
 	static final String									DEVICETYPE_LED				= "LED Controller";
+	static final String									DEVICETYPE_POS_CON_CTRL		= "PosCon Controller";
 	static final String									DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 
@@ -81,14 +80,11 @@ public class CsDeviceManager implements
 //	private URI											mUri;
 
 	@Getter
-	private JettyWebSocketClient						client;
-
-	@Getter
 	private long										lastNetworkUpdate			= 0;
 
 	private boolean										isAttachedToServer			= false;
 
-	private boolean										autoShortValue				= true;											// getter needed to be in the interface. Cannot use lomboc getter. Want to log on the set
+	private boolean										autoShortValue				= true;	// log on set (below)
 
 	@Getter
 	@Setter
@@ -106,13 +102,13 @@ public class CsDeviceManager implements
 	@Setter
 	private String										sequenceKind				= "BayDistance";
 
-	private WebSocketContainer							webSocketContainer;
-
+	@Getter
+	CsClientEndpoint clientEndpoint;
+	
 	@Inject
-	public CsDeviceManager(final IRadioController inRadioController, final WebSocketContainer inWebSocketContainer) {
-		// fetch properties from config file
-
-		this.webSocketContainer = inWebSocketContainer;
+	public CsDeviceManager(final IRadioController inRadioController, final CsClientEndpoint clientEndpoint) {
+		this.clientEndpoint = clientEndpoint;
+		CsClientEndpoint.setEventListener(this);
 
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
@@ -129,16 +125,6 @@ public class CsDeviceManager implements
 			// listen for packets
 			radioController.getGatewayInterface().setPacketListener(this);
 		}
-		
-		// create response processor and register it with WS client
-		SiteControllerMessageProcessor responseProcessor = new SiteControllerMessageProcessor(this);
-		URI uri = URI.create(System.getProperty("websocket.uri"));
-		this.client = new JettyWebSocketClient(webSocketContainer, uri, responseProcessor, this);
-		responseProcessor.setWebClient(client);
-	}
-
-	@Override
-	public final void start() {
 	}
 
 	private boolean isRadioEnabled() {
@@ -146,11 +132,10 @@ public class CsDeviceManager implements
 		return true;
 	}
 
-	@Override
 	public boolean getAutoShortValue() {
-		return autoShortValue;
+		return this.autoShortValue;
 	}
-
+	
 	public void setAutoShortValue(boolean inValue) {
 		autoShortValue = inValue;
 		LOGGER.info("Site controller setting AUTOSHRT value = {}", inValue);
@@ -172,7 +157,6 @@ public class CsDeviceManager implements
 		}
 	}
 
-	@Override
 	public final List<AisleDeviceLogic> getAisleControllers() {
 		ArrayList<AisleDeviceLogic> aList = new ArrayList<AisleDeviceLogic>();
 		for (INetworkDevice theDevice : mDeviceMap.values()) {
@@ -182,7 +166,6 @@ public class CsDeviceManager implements
 		return aList;
 	}
 
-	@Override
 	public final List<CheDeviceLogic> getCheControllers() {
 		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();
 		for (INetworkDevice theDevice : mDeviceMap.values()) {
@@ -192,16 +175,16 @@ public class CsDeviceManager implements
 		return aList;
 	}
 
-	@Override
+	/*
 	public final void stop() {
 		radioController.stopController();
 	}
+	*/
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.codeshelf.device.ICsDeviceManager#getDeviceByGuid(com.codeshelf.flyweight.command.NetGuid)
+	 * @see com.codeshelf.device.CsDeviceManager#getDeviceByGuid(com.codeshelf.flyweight.command.NetGuid)
 	 */
-	@Override
 	public final INetworkDevice getDeviceByGuid(NetGuid inGuid) {
 		return mDeviceMap.get(inGuid);
 	}
@@ -237,16 +220,22 @@ public class CsDeviceManager implements
 			} else {
 				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
+		} else if (inNetworkDevice instanceof PosManagerDeviceLogic){
+			if (isAttachedToServer) {
+				((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}			
 		}
 
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	@Override
-	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final List<String> inContainerIdList, final Boolean reverse) {
+	public void computeCheWork(final String inCheId, final UUID inPersistentId, 
+			final List<String> inContainerIdList, final Boolean reverse) {
 		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, inContainerIdList);
 		String cheId = inPersistentId.toString();
 		LinkedList<String> containerIds = new LinkedList<String>();
@@ -254,38 +243,35 @@ public class CsDeviceManager implements
 			containerIds.add(containerId);
 		}
 		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds, reverse);
-		client.sendMessage(req);
+		clientEndpoint.sendMessage(req);
 	}
 
-	@Override
-	public final void computeCheWork(final String inCheId, final UUID inPersistentId, final String orderDetailId) {
+	public void computeCheWork(final String inCheId, final UUID inPersistentId, final String orderDetailId) {
 		LOGGER.debug("Compute work: Che={}; DetailId={}", inCheId, orderDetailId);
 		String cheId = inPersistentId.toString();
 		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId, orderDetailId);
-		client.sendMessage(req);
+		clientEndpoint.sendMessage(req);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.codeshelf.device.ICsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	@Override
-	public final void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
+	public void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
 		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
-		client.sendMessage(req);
+		clientEndpoint.sendMessage(req);
 	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.codeshelf.device.ICsDeviceManager#completeWi(java.lang.String, java.util.UUID, com.codeshelf.model.domain.WorkInstruction)
+	 * @see com.codeshelf.device.CsDeviceManager#completeWi(java.lang.String, java.util.UUID, com.codeshelf.model.domain.WorkInstruction)
 	 */
-	@Override
-	public final void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
+	public void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
-		client.sendMessage(req);
+		clientEndpoint.sendMessage(req);
 	}
 
 	/**
@@ -297,7 +283,7 @@ public class CsDeviceManager implements
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
 		LoginRequest loginRequest = new LoginRequest(username, password);
-		client.sendMessage(loginRequest);
+		clientEndpoint.sendMessage(loginRequest);
 	}
 
 	/**
@@ -314,21 +300,32 @@ public class CsDeviceManager implements
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).connectedToServer();
 			}
+			if (networkDevice instanceof PosManagerDeviceLogic) {
+				((PosManagerDeviceLogic) networkDevice).connectedToServer();
+			}
 		}
 	}
 
 	public void unattached() {
+		if(!isAttachedToServer)
+			return; // don't get stuck in a loop if device manager is requesting disconnection
+		
 		LOGGER.info("Unattached from server");
 		isAttachedToServer = false;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
 			}
+			if (networkDevice instanceof PosManagerDeviceLogic) {
+				((PosManagerDeviceLogic) networkDevice).disconnectedFromServer();
+			}
 		}
-		try {
-			client.disconnect();
-		} catch (IOException e) {
-			LOGGER.error("failed to disconnect client", e);
+		if(clientEndpoint.isConnected()) {
+			try {
+				clientEndpoint.disconnect();
+			} catch (IOException e) {
+				LOGGER.error("failed to disconnect client", e);
+			}
 		}
 	}
 
@@ -374,6 +371,8 @@ public class CsDeviceManager implements
 				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
+				netDevice = new PosManagerDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else {
 				LOGGER.error("Don't know how to create new network device of type={}", deviceType);
 				suppressMapUpdate = true;
@@ -421,6 +420,8 @@ public class CsDeviceManager implements
 					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
+					netDevice = new PosManagerDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else {
 					LOGGER.error("Cannot update existing network device of unrecognized type={}", deviceType);
 					suppressMapUpdate = true;
@@ -532,7 +533,11 @@ public class CsDeviceManager implements
 			try {
 				UUID id = ledController.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+				if (ledController.getDeviceType() == DeviceType.Poscons){
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_POS_CON_CTRL);
+				} else {
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+				}
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
@@ -613,6 +618,18 @@ public class CsDeviceManager implements
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
+	
+	public void processPosConControllerMessage(PosConControllerMessage message) {
+		NetGuid netGuid = new NetGuid(message.getNetGuidStr());
+		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(netGuid);
+		if (device != null) {
+			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
+			device.addPosConCmdFor(netGuid, message.getInstruction());
+			device.updatePosCons();
+		} else {
+			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", netGuid);
+		}
+	}
 
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
@@ -627,11 +644,6 @@ public class CsDeviceManager implements
 			// but may not be later when we have our multi-controller implementation.
 			LOGGER.debug("unknown GUID in lightSomeLeds");
 		}
-	}
-
-	@Override
-	public JettyWebSocketClient getWebSocketCient() {
-		return this.client;
 	}
 
 	@Override

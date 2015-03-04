@@ -34,6 +34,10 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 		}
 		return theInstance;
 	}
+	public final synchronized static boolean exists() {
+		return (theInstance != null);
+	}
+	
 	/**
 	 * singleton service: access before service is initialized will block; 
 	 * only the service manager should start service 

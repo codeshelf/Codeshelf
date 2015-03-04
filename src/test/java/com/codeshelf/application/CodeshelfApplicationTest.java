@@ -33,14 +33,17 @@ import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.service.WorkService;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 
 /**
  * @author jeffw
  *
  */
-public class CodeshelfApplicationTest {
-/*
+public class CodeshelfApplicationTest extends ServerTest { 
+	// we subclass ServerTest to ensure global static services are already running so they won't be started by fake app
+
+	/*
 	public class MockInjector implements Injector {
 
 		@Override
@@ -155,11 +158,9 @@ public class CodeshelfApplicationTest {
 	/**
 	 * Test method for {@link com.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
+	
 	@Test
 	public void testStartStopApplication() {
-		JvmProperties.load("test");
-
-		MetricsService.setInstance(new DummyMetricsService());
 		TenantPersistenceService.setInstance(mock(ITenantPersistenceService.class));
 		Facility.DAO = new MockDao<Facility>();
 		Aisle.DAO = new MockDao<Aisle>();
@@ -189,8 +190,8 @@ public class CodeshelfApplicationTest {
 			adminServer,
 			TenantManagerService.getMaybeRunningInstance(),
 			new WorkService(),
-			MetricsService.getMaybeRunningInstance(),
-			new SessionManagerService(),
+			this.metricsService,
+			this.sessionManagerService,
 			new DummyPropertyService());
 
 		final Result checkAppRunning = new Result();
@@ -231,5 +232,10 @@ public class CodeshelfApplicationTest {
 		Assert.assertFalse("app thread hung at shutdown",appThread.isAlive());
 
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
+	}
+
+	@Override
+	protected boolean ephemeralServicesShouldStartAutomatically() {
+		return false;
 	}
 }

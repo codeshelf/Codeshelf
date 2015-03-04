@@ -75,7 +75,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// The device manager.
 	@Accessors(prefix = "m")
 	@Getter
-	protected ICsDeviceManager		mDeviceManager;
+	protected CsDeviceManager		mDeviceManager;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -85,7 +85,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 
 	public DeviceLogicABC(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		mPersistentId = inPersistentId;
 		mGuid = inGuid;
@@ -128,5 +128,16 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	public final boolean isDeviceAssociated() {
 		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
 	}
-
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function. Should be promoted, and get a cached value.
+	 */
+	protected String getMyGuidStr() {
+		String thisGuidStr = "";
+		NetGuid thisGuid = this.getGuid();
+		if (thisGuid != null)
+			thisGuidStr = thisGuid.getHexStringNoPrefix();
+		return thisGuidStr;
+	}
 }

@@ -15,13 +15,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
+import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 
 public class PutwallTest extends EdiTestABC {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PutwallTest.class);
 
 	@Test
@@ -81,9 +82,9 @@ public class PutwallTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		ledController = tier.getLedController();
-		ledController.setDeviceType(DeviceType.Poscon);
+		ledController.setDeviceType(DeviceType.Poscons);
 		LedController.DAO.store(ledController);
-		tier.setPoscons(ledController, 5);
+		tier.setPoscons(5);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		// check controller, tier and slots

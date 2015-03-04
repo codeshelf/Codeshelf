@@ -8,8 +8,6 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.websocket.DeploymentException;
 import javax.websocket.Endpoint;
@@ -31,6 +29,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 
 public class CsDeviceManagerTest extends DAOTestABC {
 	
@@ -71,15 +70,15 @@ public class CsDeviceManagerTest extends DAOTestABC {
 	}
 
 	private CsDeviceManager produceAttachedDeviceManager(Tenant tenant,IRadioController mockRadioController) throws DeploymentException, IOException {
-		Map<String, String> properties = new HashMap<String, String>();
-		properties.put("websocket.uri", "ws://127.0.0.1:8181/ws/"); // this URL doesn't need to be accurate, just parseable
 		WebSocketContainer container = mock(WebSocketContainer.class);
 		Session mockSession = mock(Session.class);
 		when(mockSession.isOpen()).thenReturn(true);
 		when(container.connectToServer(any(Endpoint.class), any(URI.class))).thenReturn(mockSession);
-		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, container);
 		
-		deviceManager.start();
+		CsClientEndpoint.setWebSocketContainer(container);
+		CsClientEndpoint endpoint = new CsClientEndpoint();
+		CsDeviceManager deviceManager = new CsDeviceManager(mockRadioController, endpoint);
+		new SiteControllerMessageProcessor(deviceManager,endpoint);
 		
 		deviceManager.connected();
 		

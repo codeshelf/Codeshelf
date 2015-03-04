@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2013, Jeffrey B. Williams, All rights reserved
- *  $Id: ICsDeviceManager.java,v 1.6 2013/04/15 21:27:05 jeffw Exp $
+ *  $Id: CsDeviceManager.java,v 1.6 2013/04/15 21:27:05 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.device;
 

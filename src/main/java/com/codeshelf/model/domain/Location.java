@@ -1108,7 +1108,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (controller == null || controllerChannel == null) {
 			return false;
 		}
-		if (controller.getDeviceType()!=DeviceType.Poscon) {
+		if (controller.getDeviceType()!=DeviceType.Poscons) {
 			return false;
 		}
 		if (this.posconIndex!=null && this.posconIndex>0) {

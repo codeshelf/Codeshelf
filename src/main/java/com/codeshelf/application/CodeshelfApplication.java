@@ -22,7 +22,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jvm.GarbageCollectorMetricSet;
 import com.codahale.metrics.jvm.MemoryUsageGaugeSet;
 import com.codahale.metrics.jvm.ThreadStatesGaugeSet;
-import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
@@ -184,7 +184,7 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 		Runtime.getRuntime().addShutdownHook(mShutdownHookThread);
 	}
 	
-	protected void startApiServer(ICsDeviceManager deviceManager, Integer port) {
+	protected void startApiServer(CsDeviceManager deviceManager, Integer port) {
 		if(port != null) {
 			boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
 

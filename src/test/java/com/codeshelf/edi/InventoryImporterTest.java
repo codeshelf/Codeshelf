@@ -33,6 +33,7 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
@@ -267,6 +268,39 @@ public class InventoryImporterTest extends EdiTestABC {
 
 	}
 
+	@Test
+	public final void testNonSlottedGtinInventory() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+
+		// Very small test checking multiple inventory items for same SKU
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft,gtin\r\n" //
+				+ "1123,D401,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135,100\r\n" //
+				+ "1124,D402,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8,101\r\n" //
+				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,102\r\n"; //
+
+		setupInventoryData(facility, csvString);
+
+		Location locationD402 = facility.findSubLocationById("D402");
+		Assert.assertNotNull(locationD402);
+		Location locationD403 = facility.findSubLocationById("D403");
+		Assert.assertNotNull(locationD403);
+		
+		Item item1124Loc402CS = locationD402.getStoredItemFromMasterIdAndUom("1124", "CS");
+		Assert.assertNotNull(item1124Loc402CS);
+		Item item1125Loc403CS = locationD403.getStoredItemFromMasterIdAndUom("1125", "CS");
+		Assert.assertNotNull(item1125Loc403CS);
+		
+		Gtin item1124gtin = item1124Loc402CS.getGtin();
+		Assert.assertNotNull(item1124gtin);
+		
+		Gtin item1125gtin = item1125Loc403CS.getGtin();
+		Assert.assertNotNull(item1125gtin);
+
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedInventory() {

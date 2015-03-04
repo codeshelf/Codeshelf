@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.codeshelf.ws.jetty.protocol.command.PingCommand;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
@@ -15,6 +15,7 @@ import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
@@ -26,17 +27,22 @@ import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.UserSession;
+import com.google.inject.Inject;
 
 public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(SiteControllerMessageProcessor.class);
 
-	private JettyWebSocketClient	client;
-
+	CsClientEndpoint clientEndpoint;
+	
 	private CsDeviceManager			deviceManager;
 
-	public SiteControllerMessageProcessor(CsDeviceManager deviceManager) {
+	@Inject
+	public SiteControllerMessageProcessor(CsDeviceManager deviceManager,CsClientEndpoint clientEndpoint) {
 		this.deviceManager = deviceManager;
+		this.clientEndpoint = clientEndpoint;
+		
+		CsClientEndpoint.setMessageProcessor(this);
 	}
 
 	@Override
@@ -63,7 +69,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 					deviceManager.setSequenceKind(loginResponse.getSequenceKind());
 					// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
-					this.deviceManager.attached(network);
+					deviceManager.attached(network);
 				} else {
 					LOGGER.error("loginResponse has no network");
 				}
@@ -72,7 +78,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
 				try {
 					this.deviceManager.unattached();
-					client.disconnect();
+					clientEndpoint.disconnect();
 				} catch (IOException e) {
 					LOGGER.error("Failed to disconnect client", e);
 				}
@@ -151,6 +157,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			String guidStr = msg.getNetGuidStr();
 			NetGuid theGuid = new NetGuid(guidStr);
 			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
+		} else if (message instanceof PosConControllerMessage) {
+			PosConControllerMessage msg = (PosConControllerMessage)message;
+			this.deviceManager.processPosConControllerMessage(msg);
 		}
 	}
 
@@ -177,9 +186,5 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			LOGGER.warn("No response generated for request " + request);
 		}
 		return response;
-	}
-
-	public void setWebClient(JettyWebSocketClient client) {
-		this.client = client;
 	}
 }

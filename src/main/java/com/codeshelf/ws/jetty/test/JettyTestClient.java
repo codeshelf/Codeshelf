@@ -1,11 +1,8 @@
 package com.codeshelf.ws.jetty.test;
 
-import java.net.URI;
 import java.util.Arrays;
 
-import javax.websocket.ContainerProvider;
-
-import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.client.LogResponseProcessor;
 import com.codeshelf.ws.jetty.io.CompressedJsonMessage;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
@@ -22,7 +19,10 @@ public class JettyTestClient {
 		try {
     		// create WS client
         	IMessageProcessor responseProcessor = new LogResponseProcessor();
-        	JettyWebSocketClient client = new JettyWebSocketClient(ContainerProvider.getWebSocketContainer(), URI.create("ws://localhost:"+Integer.getInteger("api.port")+"/ws/"),responseProcessor,null);
+        	
+        	CsClientEndpoint.setMessageProcessor(responseProcessor);
+        	CsClientEndpoint.setEventListener(null); //optional
+        	CsClientEndpoint client = new CsClientEndpoint();
         	client.connect();
         	//Message that shouldn't compress
         	char[] charBuf = new char[CompressedJsonMessage.JSON_COMPRESS_MAXIMUM - 1];

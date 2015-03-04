@@ -36,19 +36,17 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.testframework.IntegrationTest;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
  *
  */
-public class CheProcessLineScan extends EndToEndIntegrationTest {
+public class CheProcessLineScan extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessLineScan.class);
-
-	public CheProcessLineScan() {
-
-	}
 
 	private Facility setUpSmallNoSlotFacility() {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
@@ -145,9 +143,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -232,9 +230,9 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 	 * Wait until a recent CHE update went through the updateNetwork mechanism, replacing the device logic for the che
 	 * May want to promote this.
 	*/
-	private PickSimulator waitAndGetPickerForProcessType(EndToEndIntegrationTest test, NetGuid cheGuid, String inProcessType) {
+	private PickSimulator waitAndGetPickerForProcessType(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
 		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
-		ThreadUtils.sleep(250);
+		ThreadUtils.sleep(250); // should not be needed in CsTest tests, to delete
 		long start = System.currentTimeMillis();
 		final long maxTimeToWaitMillis = 5000;
 		String existingType = "";
@@ -265,6 +263,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
+		
+		super.startSitecon();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -280,7 +280,7 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE1");
+		Che che1 = network.getChe(cheId1);
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
@@ -351,6 +351,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
@@ -404,6 +406,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
+
+		super.startSitecon();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -535,6 +539,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		Che.DAO.store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
+
+		super.startSitecon();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -670,6 +676,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		super.startSitecon();
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
@@ -796,19 +804,20 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
+		super.startSitecon();
+
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 		
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
 		
-		String scanPickValue = manager.getScanTypeValue();
-		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
-		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		//String scanPickValue = manager.getScanTypeValue();
+		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
 		 // kludgy! Somewhat simulates restarting site controller
-		manager.setScanTypeValue("SKU");
+		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
 
@@ -968,6 +977,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
+		this.startSitecon();
+		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -975,12 +986,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
 		
-		String scanPickValue = manager.getScanTypeValue();
-		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
-		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		//String scanPickValue = manager.getScanTypeValue();
+		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
 		 // kludgy! Somewhat simulates restarting site controller
-		manager.setScanTypeValue("SKU");
+		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
 
@@ -1089,6 +1100,8 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
+		this.startSitecon();
+		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -1096,12 +1109,12 @@ public class CheProcessLineScan extends EndToEndIntegrationTest {
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
 		
-		String scanPickValue = manager.getScanTypeValue();
-		LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
-		Assert.assertNotEquals("SKU", manager.getScanTypeValue());
+		//String scanPickValue = manager.getScanTypeValue();
+		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
+		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
 		 // kludgy! Somewhat simulates restarting site controller
-		manager.setScanTypeValue("SKU");
+		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
 

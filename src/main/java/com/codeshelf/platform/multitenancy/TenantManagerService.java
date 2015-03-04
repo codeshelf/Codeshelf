@@ -397,7 +397,8 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 				Tenant tenant = defaultTenant;
 				String schemaName = tenant.getSchemaName();
 				this.deleteDefaultOrdersWis();
-				LOGGER.warn("Deleting itemMasters ");
+				LOGGER.warn("Deleting itemMasters and gtin maps ");
+				tenant.executeSQL("DELETE FROM "+schemaName+".gtin_map");
 				tenant.executeSQL("DELETE FROM "+schemaName+".item");
 				tenant.executeSQL("DELETE FROM "+schemaName+".item_master");
 			} catch (SQLException e) {

@@ -63,7 +63,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	public AisleDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 	}
@@ -238,18 +238,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			return Short.compare(short1, short2);
 		}
 	};
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Utility function. Should be promoted, and get a cached value.
-	 */
-	private String getMyGuidStr() {
-		String thisGuidStr = "";
-		NetGuid thisGuid = this.getGuid();
-		if (thisGuid != null)
-			thisGuidStr = thisGuid.getHexStringNoPrefix();
-		return thisGuidStr;
-	}
 
 	private void setExpectedLastExpiration(long inMilliseconds) {
 		// Don't let a shorter timer set back after a longer one.

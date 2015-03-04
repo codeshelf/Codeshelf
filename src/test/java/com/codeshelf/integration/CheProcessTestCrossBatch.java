@@ -34,12 +34,13 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author jon ranstrom
  *
  */
-public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
+public class CheProcessTestCrossBatch extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestCrossBatch.class);
 
@@ -271,6 +272,8 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);
@@ -333,6 +336,8 @@ public class CheProcessTestCrossBatch extends EndToEndIntegrationTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
 		Assert.assertNotNull(facility);

@@ -32,6 +32,7 @@ import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
@@ -407,6 +408,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		String itemId = inCsvBean.getItemId();
 		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
+		Gtin gtinMap = upsertGtin(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 
 		Item updatedOrCreatedItem = null;
 		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
@@ -463,7 +465,8 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 						location,
 						inEdiProcessTime,
 						itemMaster,
-						uomMaster);
+						uomMaster, 
+						gtinMap);
 					// if we created a new item, then throw the old item on a list for evaluation
 					if (oldItem != null && !oldItem.equals(updatedOrCreatedItem))
 						addItemToEvaluationList(oldItem);
@@ -731,6 +734,67 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		return result;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inCsvBean
+	 * @param inFacility
+	 * @param inEdiProcessTime
+	 * @param inOrder
+	 * @param inUomMaster
+	 * @param inItemMaster
+	 * @return
+	 */
+	private Gtin upsertGtin(final OutboundOrderCsvBean inCsvBean,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
+		final OrderHeader inOrder,
+		final UomMaster inUomMaster,
+		final ItemMaster inItemMaster) {
+		
+		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
+			return null;
+		}
+
+		Gtin result = Gtin.DAO.findByDomainId(null, inCsvBean.getGtin());
+		ItemMaster previousItemMaster = null;
+		
+		if (result != null){
+			previousItemMaster = result.getParent();
+			
+			if (previousItemMaster.equals(inItemMaster)) {
+				UomMaster m = inFacility.getUomMaster(inCsvBean.getUom());
+				
+				// Update UOM for this GTIN in database. Assume order bean UOM is correct
+				// for this GTIN.
+				if (!m.equals(inUomMaster)) {
+					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
+						inCsvBean.getGtin(), m.getDomainId(), inUomMaster.getDomainId());
+					result.setUomMaster(inUomMaster);
+				}
+				
+			} else {
+				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
+					inCsvBean.getGtin(), inItemMaster.getDomainId());
+				
+				// Moving item masters for Gtin
+				previousItemMaster.removeGtinMapFromMaster(result);
+				
+				result.setParent(inItemMaster);
+				result.setUomMaster(inUomMaster);
+				inItemMaster.addGtinMapToMaster(result);
+			}
+			
+		} else {
+			result = new Gtin();
+			
+			result.setDomainId(inCsvBean.getGtin());
+			result.setParent(inItemMaster);
+			result.setUomMaster(inUomMaster);
+		}
+		
+		return result;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvBean
