@@ -4,6 +4,7 @@ import java.util.List;
 
 import lombok.Getter;
 
+import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -22,7 +23,7 @@ public class HardwareRequest implements Validatable{
 	@Getter
 	private List<CheDisplayRequest> cheMessages;
 	@Getter
-	private List<PosConCommand> posConCommands;
+	private List<PosConCmdGroup> posConCommands;
 
 	
 	public boolean isValid(ErrorResponse errors) {
@@ -56,7 +57,7 @@ public class HardwareRequest implements Validatable{
 			}
 		}
 		if (posConCommands != null) {
-			for (PosConCommand posCon : posConCommands) {
+			for (PosConCmdGroup posCon : posConCommands) {
 				if (!posCon.isValid(errors)){
 					valid = false;
 				}
@@ -109,71 +110,6 @@ public class HardwareRequest implements Validatable{
 				valid = false;
 			}
 			return valid;
-		}
-	}
-	
-	@JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-	static public class PosConCommand implements Validatable{
-		@Getter
-		private String controller;
-		@Getter
-		private Byte position, quantity, min, max;
-		@Getter
-		private Brightness brightness = Brightness.BRIGHT;
-		@Getter
-		private Frequency frequency = Frequency.SOLID;
-		
-		public PosConCommand() {}
-		
-		@Override
-		public boolean isValid(ErrorResponse errors) {
-			boolean valid = true;
-			if (controller == null) {
-				errors.addErrorMissingBodyParam("posConCommands.controller");
-				valid = false;
-			}
-			if (position == null) {
-				errors.addErrorMissingBodyParam("posConCommands.position");
-				valid = false;
-			}
-			if (quantity == null) {
-				errors.addErrorMissingBodyParam("posConCommands.quantity");
-				valid = false;
-			}
-			return valid;
-		}
-		
-		public void fillMinMax() {
-			if (min == null) {min = quantity;}
-			if (max == null) {max = quantity;}
-		}
-		
-		public enum Brightness {
-			BRIGHT, MEDIUM, DIM;
-			
-			public Byte toByte(){
-				if (this == BRIGHT) {
-					return PosControllerInstr.BRIGHT_DUTYCYCLE;
-				} else if (this == MEDIUM){
-					return PosControllerInstr.MED_DUTYCYCLE;
-				} else if (this == DIM){
-					return PosControllerInstr.DIM_DUTYCYCLE;
-				}
-				return null;
-			}
-		}
-		
-		public enum Frequency {
-			SOLID, BLINK;
-			
-			public Byte toByte(){
-				if (this == SOLID) {
-					return PosControllerInstr.SOLID_FREQ;
-				} else if (this == BLINK){
-					return PosControllerInstr.BLINK_FREQ;
-				}
-				return null;
-			}
 		}
 	}
 }

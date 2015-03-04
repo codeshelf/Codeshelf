@@ -24,9 +24,9 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
-import com.codeshelf.api.HardwareRequest.PosConCommand;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -191,11 +191,11 @@ public class FacilityResource {
 			
 			//POSCON MESSAGES
 			if (req.getPosConCommands() != null) {
-				for (PosConCommand posCmd : req.getPosConCommands()) {
+				for (PosConCmdGroup posCmd : req.getPosConCommands()) {
 					posCmd.fillMinMax();
-					PosControllerInstr instruction = new PosControllerInstr(posCmd.getPosition(), posCmd.getQuantity(), posCmd.getMin(), posCmd.getMax(), 
+					PosControllerInstr instruction = new PosControllerInstr(posCmd.getPosNum(), posCmd.getQuantity(), posCmd.getMin(), posCmd.getMax(), 
 																			posCmd.getFrequency().toByte(), posCmd.getBrightness().toByte());
-					PosConControllerMessage message = new PosConControllerMessage(posCmd.getController(), instruction);
+					PosConControllerMessage message = new PosConControllerMessage(posCmd.getControllerId(), instruction);
 					sessionManagerService.sendMessage(users, message);
 				}
 			}
