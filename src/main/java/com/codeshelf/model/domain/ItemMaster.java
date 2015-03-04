@@ -147,7 +147,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Gtin>			gtinMaps					= new HashMap<String, Gtin>();
+	private Map<String, Gtin>			gtins					= new HashMap<String, Gtin>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
@@ -204,11 +204,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/**
 	 * 
 	 */
-	public void addGtinMapToMaster(Gtin inGtinMap)	{
+	public void addGtinToMaster(Gtin inGtinMap)	{
 		ItemMaster previousItemMaster = inGtinMap.getParent();
 		
 		if(previousItemMaster == null)	{
-			gtinMaps.put(inGtinMap.getDomainId(), inGtinMap);
+			gtins.put(inGtinMap.getDomainId(), inGtinMap);
 			inGtinMap.setParent(this);
 		} else if(!previousItemMaster.equals(this)) {
 			LOGGER.error("cannot add GtinMap " + inGtinMap.getDomainId() + " to " + this.getDomainId()
@@ -218,10 +218,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 	
-	public void removeGtinMapFromMaster(Gtin inGtinMap) {
-		if (gtinMaps.containsKey(inGtinMap.getDomainId())) {
+	public void removeGtinFromMaster(Gtin inGtinMap) {
+		if (gtins.containsKey(inGtinMap.getDomainId())) {
 			inGtinMap.setParent(null);
-			gtinMaps.remove(inGtinMap.getDomainId());
+			gtins.remove(inGtinMap.getDomainId());
 		} else {
 			LOGGER.error("cannot remove GtinMap " + inGtinMap.getDomainId() + " from " + this.getDomainId()
 					+ " because it isn't found in children");
@@ -446,10 +446,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return item;
 	}
 
-	public Gtin getGtinMap(String gtin) {
+	public Gtin getGtin(String gtin) {
 						
-		if (gtinMaps.containsKey(gtin)){
-			return gtinMaps.get(gtin);
+		if (gtins.containsKey(gtin)){
+			return gtins.get(gtin);
 		} else {
 			return null;
 		}

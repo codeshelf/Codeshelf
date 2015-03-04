@@ -40,6 +40,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
@@ -275,9 +276,11 @@ public class InventoryImporterTest extends EdiTestABC {
 
 		// Very small test checking multiple inventory items for same SKU
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft,gtin\r\n" //
-				+ "1123,D401,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135,100\r\n" //
+				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135,100\r\n" //
 				+ "1124,D402,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,8,101\r\n" //
-				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,102\r\n"; //
+				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,102\r\n" //
+				+ "1126,D502,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,103\r\n" //
+				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,55,103\r\n" ; // Updating SKU / UOM
 
 		setupInventoryData(facility, csvString);
 
@@ -296,7 +299,81 @@ public class InventoryImporterTest extends EdiTestABC {
 		
 		Gtin item1125gtin = item1125Loc403CS.getGtin();
 		Assert.assertNotNull(item1125gtin);
+		
+		// Check SKU / UOM update
+		Location locationD502 = facility.findSubLocationById("D502");
+		Assert.assertNotNull(locationD502);
+		Location locationD503 = facility.findSubLocationById("D503");
+		Assert.assertNotNull(locationD503);
+		
+		Item item1126 = locationD502.getStoredItemFromMasterIdAndUom("1126", "CS");
+		Assert.assertNotNull(item1126);
+		Item item1127 = locationD503.getStoredItemFromMasterIdAndUom("1127", "EA");
+		Assert.assertNotNull(item1127);
+		
+		Gtin item1126gtin = item1126.getGtin();
+		Assert.assertNull(item1126gtin);
+		Gtin item1127gtin = item1127.getGtin();
+		Assert.assertNotNull(item1127gtin);
+		
+		// Should have also updated the item masters
+		ItemMaster itemMaster1126 = item1126.getParent();
+		Assert.assertNotNull(itemMaster1126);
+		Assert.assertNull(itemMaster1126.getGtin(item1127gtin.getDomainId()));
+		ItemMaster itemMaster1127 = item1127.getParent();
+		Assert.assertNotNull(itemMaster1127);
+		Assert.assertNotNull(itemMaster1127.getGtin(item1127gtin.getDomainId()));
+		
+		// Check that the gtin uom and the item uom are the same
+		UomMaster item1127Uom = item1127.getUomMaster();
+		Assert.assertNotNull(item1127Uom);
+		UomMaster item1127GtinUom = item1127.getGtin().getUomMaster();
+		Assert.assertNotNull(item1127GtinUom);
 
+		Assert.assertEquals(item1127Uom, item1127GtinUom);
+		
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
+	@Test
+	public final void testNonSlottedGtinInventory2() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+
+		// Very small test checking multiple inventory items for same SKU
+		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft,gtin\r\n" //
+				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135,100\r\n" //
+				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,101\r\n" //
+				+ "1125,D403,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,102\r\n" //	Updating the GTIN
+				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,55,103\r\n" //
+				+ "1127,D503,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,55,103\r\n" ; // Updating UOM
+
+		setupInventoryData(facility, csvString);
+		
+		// Updating the UOM of an item and corresponding GTIN
+		Location locationD503 = facility.findSubLocationById("D503");
+		Assert.assertNotNull(locationD503);
+		
+		Item item1127Loc503EA = locationD503.getStoredItemFromMasterIdAndUom("1127", "EA");
+		Assert.assertNotNull(item1127Loc503EA);
+		
+		Gtin item1127gtin = item1127Loc503EA.getGtin();
+		Assert.assertNotNull(item1127gtin);
+		
+		UomMaster item1127Uom = item1127Loc503EA.getUomMaster();
+		Assert.assertNotNull(item1127Uom);
+		UomMaster item1127GtinUom = item1127gtin.getUomMaster();
+		Assert.assertNotNull(item1127GtinUom);
+		Assert.assertEquals(item1127Uom, item1127GtinUom);
+		
+		// Updating an items GTIN
+		Location locationD403 = facility.findSubLocationById("D403");
+		Assert.assertNotNull(locationD403);
+		
+		Item item1125gtin101 = locationD403.getStoredItemFromMasterIdAndUom("1125", "CS");
+		Assert.assertNotNull(item1125gtin101);
+		Assert.assertNotEquals("101", item1125gtin101.getDomainId());
+		Assert.assertEquals("102", item1125gtin101.getGtin().getDomainId());
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
