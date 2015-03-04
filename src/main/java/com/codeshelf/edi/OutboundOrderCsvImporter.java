@@ -766,7 +766,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				
 				// Update UOM for this GTIN in database. Assume order bean UOM is correct
 				// for this GTIN.
-				if (!m.equals(inUomMaster)) {
+				if (!m.equals(result.getUomMaster())) {
 					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
 						inCsvBean.getGtin(), m.getDomainId(), inUomMaster.getDomainId());
 					result.setUomMaster(inUomMaster);
@@ -776,12 +776,21 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
 					inCsvBean.getGtin(), inItemMaster.getDomainId());
 				
-				// Moving item masters for Gtin
-				previousItemMaster.removeGtinMapFromMaster(result);
+				// Remove from item
+				List<Item> items = previousItemMaster.getItems();
+				for (Item item : items ) {
+					if (item.getGtin().equals(result)) {
+						item.setGtin(null);
+						break;
+					}
+				}
 				
-				result.setParent(inItemMaster);
+				// Moving item masters for Gtin
+				previousItemMaster.removeGtinFromMaster(result);
+				
+				result.setParent(null);
 				result.setUomMaster(inUomMaster);
-				inItemMaster.addGtinMapToMaster(result);
+				inItemMaster.addGtinToMaster(result);
 			}
 			
 		} else {
