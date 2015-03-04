@@ -84,7 +84,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	@OneToOne(optional = true, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
-	private GtinMap	gtinMap;
+	private Gtin	gtin;
 
 	// Quantity.
 	@Column(nullable = false)

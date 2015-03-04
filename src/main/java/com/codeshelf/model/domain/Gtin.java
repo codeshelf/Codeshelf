@@ -53,19 +53,19 @@ import com.google.inject.Singleton;
  */
 
 @Entity
-@Table(name = "gtin_map")
+@Table(name = "gtin")
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class GtinMap extends DomainObjectTreeABC<ItemMaster> {
+public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 
 	@Inject
-	public static ITypedDao<GtinMap>	DAO;
+	public static ITypedDao<Gtin>	DAO;
 	
 	@Singleton
-	public static class GtinMapDao extends GenericDaoABC<GtinMap> implements ITypedDao<GtinMap> {
-		public final Class<GtinMap> getDaoClass() {
-			return GtinMap.class;
+	public static class GtinMapDao extends GenericDaoABC<Gtin> implements ITypedDao<Gtin> {
+		public final Class<Gtin> getDaoClass() {
+			return Gtin.class;
 		}
 	}
 	
@@ -82,7 +82,7 @@ public class GtinMap extends DomainObjectTreeABC<ItemMaster> {
 	@Setter
 	private UomMaster			uomMaster;
 	
-	public GtinMap() { }
+	public Gtin() { }
 	
 	public void setGtin(final String inGtin) {
 		setDomainId(inGtin);
@@ -98,7 +98,7 @@ public class GtinMap extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<GtinMap> getDao() {
+	public final ITypedDao<Gtin> getDao() {
 		return DAO;
 	}
 

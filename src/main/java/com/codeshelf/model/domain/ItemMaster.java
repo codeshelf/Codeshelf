@@ -9,7 +9,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -19,6 +21,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -137,6 +140,14 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	private List<Item>						items						= new ArrayList<Item>();
+	
+	//@OneToMany(mappedBy = "parent")
+	//@Getter
+	//private List<GtinMap>					gtinMaps					= new ArrayList<GtinMap>();
+	
+	@OneToMany(mappedBy = "parent")
+	@MapKey(name = "domainId")
+	private Map<String, Gtin>			gtinMaps					= new HashMap<String, Gtin>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
@@ -186,6 +197,33 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 			items.remove(inItem);
 		} else {
 			LOGGER.error("cannot remove Item " + inItem.getDomainId() + " from " + this.getDomainId()
+					+ " because it isn't found in children");
+		}
+	}
+	
+	/**
+	 * 
+	 */
+	public void addGtinMapToMaster(Gtin inGtinMap)	{
+		ItemMaster previousItemMaster = inGtinMap.getParent();
+		
+		if(previousItemMaster == null)	{
+			gtinMaps.put(inGtinMap.getDomainId(), inGtinMap);
+			inGtinMap.setParent(this);
+		} else if(!previousItemMaster.equals(this)) {
+			LOGGER.error("cannot add GtinMap " + inGtinMap.getDomainId() + " to " + this.getDomainId()
+				+ ". because GtinMap should not change parent from " + previousItemMaster.getDomainId());
+		} else {
+			LOGGER.error("Extra unnecessary call to addGtinMapToMaster");
+		}
+	}
+	
+	public void removeGtinMapFromMaster(Gtin inGtinMap) {
+		if (gtinMaps.containsKey(inGtinMap.getDomainId())) {
+			inGtinMap.setParent(null);
+			gtinMaps.remove(inGtinMap.getDomainId());
+		} else {
+			LOGGER.error("cannot remove GtinMap " + inGtinMap.getDomainId() + " from " + this.getDomainId()
 					+ " because it isn't found in children");
 		}
 	}
@@ -406,6 +444,15 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		else if (!item.getStoredLocation().equals(inLocation))
 			inLocation.addStoredItem(item); // which removes from the prior location.
 		return item;
+	}
+
+	public Gtin getGtinMap(String gtin) {
+						
+		if (gtinMaps.containsKey(gtin)){
+			return gtinMaps.get(gtin);
+		} else {
+			return null;
+		}
 	}
 
 }
