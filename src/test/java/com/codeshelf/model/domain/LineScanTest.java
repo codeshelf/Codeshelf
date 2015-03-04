@@ -39,7 +39,7 @@ public class LineScanTest extends EdiTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		importer = createOrderImporter();
 		Facility facility = createFacility(); 
-		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null);
+		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null, null);
 		//processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
 		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get(), this.sessionManagerService);
 		
