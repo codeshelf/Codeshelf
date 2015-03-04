@@ -29,6 +29,7 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
 import com.codeshelf.flyweight.controller.PacketCaptureListener;
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -39,6 +40,7 @@ import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
+import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -62,6 +64,7 @@ public class CsDeviceManager implements
 
 	static final String									DEVICETYPE_CHE				= "CHE";
 	static final String									DEVICETYPE_LED				= "LED Controller";
+	static final String									DEVICETYPE_POS_CON_CTRL		= "PosCon Controller";
 	static final String									DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 
@@ -237,6 +240,12 @@ public class CsDeviceManager implements
 			} else {
 				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
+		} else if (inNetworkDevice instanceof PosManagerDeviceLogic){
+			if (isAttachedToServer) {
+				((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}			
 		}
 
 	}
@@ -314,6 +323,9 @@ public class CsDeviceManager implements
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).connectedToServer();
 			}
+			if (networkDevice instanceof PosManagerDeviceLogic) {
+				((PosManagerDeviceLogic) networkDevice).connectedToServer();
+			}
 		}
 	}
 
@@ -323,6 +335,9 @@ public class CsDeviceManager implements
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if (networkDevice instanceof CheDeviceLogic) {
 				((CheDeviceLogic) networkDevice).disconnectedFromServer();
+			}
+			if (networkDevice instanceof PosManagerDeviceLogic) {
+				((PosManagerDeviceLogic) networkDevice).disconnectedFromServer();
 			}
 		}
 		try {
@@ -374,6 +389,8 @@ public class CsDeviceManager implements
 				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
+				netDevice = new PosManagerDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else {
 				LOGGER.error("Don't know how to create new network device of type={}", deviceType);
 				suppressMapUpdate = true;
@@ -421,6 +438,8 @@ public class CsDeviceManager implements
 					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
+					netDevice = new PosManagerDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else {
 					LOGGER.error("Cannot update existing network device of unrecognized type={}", deviceType);
 					suppressMapUpdate = true;
@@ -532,7 +551,11 @@ public class CsDeviceManager implements
 			try {
 				UUID id = ledController.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-				doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+				if (ledController.getDeviceType() == DeviceType.Poscons){
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_POS_CON_CTRL);
+				} else {
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+				}
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
@@ -611,6 +634,18 @@ public class CsDeviceManager implements
 			cheDevice.sendDisplayCommand(line1, line2, line3, line4);
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+		}
+	}
+	
+	public void processPosConControllerMessage(PosConControllerMessage message) {
+		NetGuid netGuid = new NetGuid(message.getNetGuidStr());
+		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(netGuid);
+		if (device != null) {
+			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
+			device.addPosConCmdFor(netGuid, message.getInstruction());
+			device.updatePosCons();
+		} else {
+			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", netGuid);
 		}
 	}
 

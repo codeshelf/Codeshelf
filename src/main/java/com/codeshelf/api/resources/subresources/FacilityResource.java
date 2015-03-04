@@ -24,8 +24,10 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
+import com.codeshelf.api.HardwareRequest.PosConCommand;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.User;
@@ -36,6 +38,7 @@ import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -168,19 +171,35 @@ public class FacilityResource {
 			//LIGHTS
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
 			
-			for (LightRequest light :req.getLights()){
-				ledSamples.add(new LedSample(light.getPosition(), light.getColor()));				
+			if (req.getLights() != null) {
+				for (LightRequest light :req.getLights()){
+					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));				
+				}
+				
+				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
+				LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+				sessionManagerService.sendMessage(users, lightMessage);
 			}
-			
-			LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
-			LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
-			sessionManagerService.sendMessage(users, lightMessage);
 			
 			//CHE MESSAGES
-			for (CheDisplayRequest cheReq : req.getCheMessages()) {
-				CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
-				sessionManagerService.sendMessage(users, cheMessage);
+			if (req.getCheMessages() != null) {
+				for (CheDisplayRequest cheReq : req.getCheMessages()) {
+					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
+					sessionManagerService.sendMessage(users, cheMessage);
+				}
 			}
+			
+			//POSCON MESSAGES
+			if (req.getPosConCommands() != null) {
+				for (PosConCommand posCmd : req.getPosConCommands()) {
+					posCmd.fillMinMax();
+					PosControllerInstr instruction = new PosControllerInstr(posCmd.getPosition(), posCmd.getQuantity(), posCmd.getMin(), posCmd.getMax(), 
+																			posCmd.getFrequency().toByte(), posCmd.getBrightness().toByte());
+					PosConControllerMessage message = new PosConControllerMessage(posCmd.getController(), instruction);
+					sessionManagerService.sendMessage(users, message);
+				}
+			}
+			
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {
 			errors.processException(e);

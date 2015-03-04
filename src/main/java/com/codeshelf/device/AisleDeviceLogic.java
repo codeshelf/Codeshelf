@@ -239,18 +239,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		}
 	};
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Utility function. Should be promoted, and get a cached value.
-	 */
-	private String getMyGuidStr() {
-		String thisGuidStr = "";
-		NetGuid thisGuid = this.getGuid();
-		if (thisGuid != null)
-			thisGuidStr = thisGuid.getHexStringNoPrefix();
-		return thisGuidStr;
-	}
-
 	private void setExpectedLastExpiration(long inMilliseconds) {
 		// Don't let a shorter timer set back after a longer one.
 		if (inMilliseconds > mExpectedExpireMilliseconds)
