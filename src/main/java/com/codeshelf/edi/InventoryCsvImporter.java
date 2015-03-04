@@ -19,6 +19,7 @@ import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
@@ -225,9 +226,10 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			}
 
 			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
-
+			
 			String theItemID = inCsvBean.getItemId();
 			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
+			Gtin gtinMap = upsertGtinMap(inFacility, itemMaster, inCsvBean, uomMaster);
 
 			String theLocationID = inCsvBean.getLocationId();
 			Location location = inFacility.findSubLocationById(theLocationID);
@@ -256,7 +258,70 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				inCsvBean.setCmFromLeft("0");
 			}
 			@SuppressWarnings("unused")
-			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster, gtinMap);
+			
+	}
+
+	/**
+	 * Will not update a GtinMap. 
+	 * 
+	 */
+	private Gtin upsertGtinMap(final Facility inFacility, final ItemMaster inItemMaster, 
+		final InventorySlottedCsvBean inCsvBean, UomMaster uomMaster) {
+		
+		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
+			return null;
+		}
+		
+		Gtin result = null;
+		ItemMaster previousItemMaster = null;
+		
+		// Get existing GtinMap
+		result = Gtin.DAO.findByDomainId(null, inCsvBean.getGtin());
+		
+		if (result != null) {
+			previousItemMaster = result.getParent();
+			
+			if (previousItemMaster.equals(inItemMaster)) {
+				UomMaster m = inFacility.getUomMaster(inCsvBean.getUom());
+				
+				// FIXME Should we be updating the UOM here? Currently doing this because
+				// we are probably updating the unit of measure of the item as well since it
+				// already exists.
+				if (!m.equals(uomMaster)) {
+					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
+						inCsvBean.getGtin(), m.getDomainId(), uomMaster.getDomainId());
+					result.setUomMaster(uomMaster);
+				}
+				
+			} else {
+				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
+					inCsvBean.getGtin(), inItemMaster.getDomainId());
+				
+				// Moving item masters for Gtin
+				previousItemMaster.removeGtinMapFromMaster(result);
+				
+				result.setParent(inItemMaster);
+				result.setUomMaster(uomMaster);
+				inItemMaster.addGtinMapToMaster(result);
+			}
+		} else {
+			result = new Gtin();
+			
+			result.setDomainId(inCsvBean.getGtin());
+			result.setParent(inItemMaster);
+			result.setUomMaster(uomMaster);
+			
+			inItemMaster.addGtinMapToMaster(result);
+			
+			try {
+				Gtin.DAO.store(result);
+			} catch (DaoException e) {
+				LOGGER.error("upsertGtinMap save", e);
+			}
+		}
+		
+		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -384,7 +449,8 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final Location inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
-		final UomMaster inUomMaster) throws InputValidationException {
+		final UomMaster inUomMaster,
+		final Gtin inGtinMap ) throws InputValidationException {
 
 		DefaultErrors errors = new DefaultErrors(Item.class);
 		if (inLocation == null) {
@@ -436,6 +502,10 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			if (!useLenientValidation) {
 				throw new InputValidationException(errors);
 			}
+		}
+		
+		if (inGtinMap != null) {
+			result.setGtin(inGtinMap);
 		}
 
 
