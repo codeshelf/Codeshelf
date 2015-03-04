@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.ICommand;
@@ -20,7 +21,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 public class PosManagerDeviceLogic extends PosConDeviceABC{
 	private static final Logger	LOGGER							= LoggerFactory.getLogger(PosManagerDeviceLogic.class);
 	
-	private Map<NetGuid, List<PosControllerInstr>>	mDevicePosConCmdMap	= new HashMap<NetGuid, List<PosControllerInstr>>();
+	private Map<NetGuid, Map<Byte, PosControllerInstr>>	mDevicePosConCmdMap	= new HashMap<NetGuid, Map<Byte, PosControllerInstr>>();
 	
 	public PosManagerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
@@ -79,23 +80,19 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	}
 	
 	public final void addPosConCmdFor(NetGuid inNetGuid, PosControllerInstr cmd) {
-		List<PosControllerInstr> posConCmds = mDevicePosConCmdMap.get(inNetGuid);
+		Map<Byte, PosControllerInstr> posConCmds = mDevicePosConCmdMap.get(inNetGuid);
 		if (posConCmds == null) {
-			posConCmds = new ArrayList<PosControllerInstr>();
+			posConCmds = new HashMap<Byte, PosControllerInstr>();
 			mDevicePosConCmdMap.put(inNetGuid, posConCmds);
 		}
-		posConCmds.add(cmd);
+		posConCmds.put(cmd.getPosition(), cmd);
 	}
 	
 	
 	public final PosControllerInstr getPosConCmdFor(NetGuid inNetGuid, byte inPosition) {
-		List<PosControllerInstr> posConCmds = mDevicePosConCmdMap.get(inNetGuid);
+		Map<Byte, PosControllerInstr> posConCmds = mDevicePosConCmdMap.get(inNetGuid);
 		if (posConCmds != null) {
-			for (PosControllerInstr posConCmd : posConCmds) {
-				if (posConCmd.getPosition() == inPosition) {
-					return posConCmd;
-				}
-			}
+			return posConCmds.get(inPosition);
 		}
 		return null;
 	}
@@ -110,18 +107,13 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 
 	public final void lightExtraPosCons(int inSeconds, String inCommands) {
 		clearExtraPosConsFromMap();
-		//TODO Implement serializer
-		/*
-		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inCommands);
-		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
-			Short channnel = ledCmdGroup.getChannelNum();
-			for (LedSample ledSample : ledCmdGroup.getLedSampleList()) {
-				// This is the clever part. Add for my own GUID, not a CHE guid.
-				//addLedCmdFor(getGuid(), channnel, ledSample, EffectEnum.FLASH);
-			}
+
+		List<PosConCmdGroup> posConCmdGroups = PosConInstrGroupSerializer.deserializePosConCmdString(inCommands);
+		for (PosConCmdGroup cmd : posConCmdGroups) {
+			NetGuid netGuid = new NetGuid(cmd.getControllerId());
+			addPosConCmdFor(netGuid, null, cmd.getPosNum(), cmd.getQuantity(), cmd.getMin(), cmd.getMax(), cmd.getFrequency().toByte(), cmd.getBrightness().toByte());
 		}
 		//setLightsExpireTimer(inSeconds); 
-		 */
 		updatePosCons();
 	}
 	
@@ -139,8 +131,10 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	
 	public final void updatePosCons() {
 		clearAllPositionControllers();
-		for (Entry<NetGuid, List<PosControllerInstr>> devices : mDevicePosConCmdMap.entrySet()) {
-			sendPositionControllerInstructions(devices.getValue());
+		for (Entry<NetGuid, Map<Byte, PosControllerInstr>> devices : mDevicePosConCmdMap.entrySet()) {
+			Map<Byte, PosControllerInstr> devCommandsMap = devices.getValue();
+			List<PosControllerInstr> devCommands = new ArrayList<PosControllerInstr>(devCommandsMap.values());
+			sendPositionControllerInstructions(devCommands);
 		}
 	}
 }

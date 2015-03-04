@@ -152,7 +152,7 @@ public class SessionManagerService extends AbstractScheduledService {
 			return null; // called while shutting down or resetting - this should only happen in tests
 		}
 		for (UserSession session : this.getSessions()) {
-			if(session.getUser().equals(user)) {
+			if(session.getUser() != null && session.getUser().equals(user)) {
 				return session;
 			}
 		}

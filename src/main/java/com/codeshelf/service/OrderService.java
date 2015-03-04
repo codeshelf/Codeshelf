@@ -9,9 +9,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.StandardBasicTypes;
 
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -22,8 +25,11 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.Tenant;
+import com.codeshelf.platform.persistence.ITenantPersistenceService;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.api.NotFoundException;
 
@@ -35,6 +41,32 @@ import com.sun.jersey.api.NotFoundException;
  */
 public class OrderService implements IApiService {
 
+	public int archiveAllOrders(String facilityUUID) {
+		ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+		Session session = persistence.getSession();
+		UUID uuid = UUID.fromString(facilityUUID);
+
+		// The parent.parent traversal generates a cross join that results in invalid psql syntax
+//		
+//		int odResult = session.createQuery("update OrderDetail od set od.active = false where od.parent.parent.persistentId = :facilityUUID")
+//				.setParameter("facilityUUID", uuid)
+//				.executeUpdate();
+
+		int odResult = session.createSQLQuery("update order_detail od set active = false FROM order_header oh WHERE od.parent_persistentid = oh.persistentid AND CAST(oh.parent_persistentid AS VARCHAR(50)) =  :facilityUUIDString")
+			.setParameter("facilityUUIDString", uuid.toString())
+			.executeUpdate();
+		
+
+		int ohResult = session.createQuery("update OrderHeader oh set oh.active = false where oh.parent.persistentId = :facilityUUID")
+				.setParameter("facilityUUID", uuid)
+				.executeUpdate();
+
+		int ogResult = session.createQuery("update OrderGroup og set og.active = false where og.parent.persistentId = :facilityUUID")
+				.setParameter("facilityUUID", uuid)
+				.executeUpdate();
+		return ohResult;
+	}
+	
 	public StatusSummary statusSummary(Session session, String aggregate, String filterName) {
 		if (aggregate.equals("Case")) {
 			 return caseSummary(session,filterName);
