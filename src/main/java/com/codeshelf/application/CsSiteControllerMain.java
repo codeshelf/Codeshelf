@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codeshelf.device.CsDeviceManager;
-import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.SiteControllerMessageProcessor;
 import com.codeshelf.device.radio.RadioController;
 import com.codeshelf.flyweight.controller.FTDIInterface;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
@@ -25,11 +25,16 @@ import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.OpenTsdb;
 import com.codeshelf.metrics.OpenTsdbReporter;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
+import com.codeshelf.ws.jetty.client.MessageCoordinator;
+import com.codeshelf.ws.jetty.client.WebSocketEventListener;
+import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
@@ -45,7 +50,6 @@ public final class CsSiteControllerMain {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CsSiteControllerMain.class);
 
-	private static WebSocketContainer websocketContainer = ContainerProvider.getWebSocketContainer();
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -100,16 +104,30 @@ public final class CsSiteControllerMain {
 		
 		@Override
 		protected void configure() {
-			bind(WebSocketContainer.class).toInstance(websocketContainer);
+			requestStaticInjection(MetricsService.class);			
+			requestStaticInjection(CsClientEndpoint.class);
 
-			requestStaticInjection(MetricsService.class);
 			bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
 
-			bind(ICodeshelfApplication.class).to(SiteControllerApplication.class);
-			bind(IRadioController.class).to(RadioController.class);
-			bind(ICsDeviceManager.class).to(CsDeviceManager.class);
+			bind(ICodeshelfApplication.class).to(SiteControllerApplication.class).in(Singleton.class);
+			bind(IRadioController.class).to(RadioController.class).in(Singleton.class);
+			
+			bind(IMessageProcessor.class).to(SiteControllerMessageProcessor.class).in(Singleton.class);
+			bind(WebSocketEventListener.class).to(CsDeviceManager.class).in(Singleton.class);
+			
 		}
 		
+		@Provides
+		@Singleton
+		protected MessageCoordinator createMessageCoordinator() {
+			return new MessageCoordinator();
+		}
+		
+		@Provides
+		@Singleton
+		protected WebSocketContainer createWebSocketContainer() {
+			return ContainerProvider.getWebSocketContainer();
+		}
 	}
 
 	public static class DefaultModule extends BaseModule {

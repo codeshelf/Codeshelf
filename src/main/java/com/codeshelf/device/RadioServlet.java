@@ -23,8 +23,8 @@ public class RadioServlet extends HttpServlet {
     private static final String CACHE_CONTROL_HEADER = "Cache-Control";
     private static final String NO_CACHE = "must-revalidate,no-cache,no-store";
     
-    private ICsDeviceManager deviceManager;
-    public RadioServlet(ICsDeviceManager deviceManager) {
+    private CsDeviceManager deviceManager;
+    public RadioServlet(CsDeviceManager deviceManager) {
     	this.deviceManager = deviceManager;
     }
     

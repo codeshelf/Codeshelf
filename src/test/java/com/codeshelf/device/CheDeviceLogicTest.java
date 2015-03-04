@@ -65,7 +65,8 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		IRadioController radioController = mock(IRadioController.class);
 		
 		// CheDeviceLogic is now an abstract base class
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), 
+			mock(CsDeviceManager.class), radioController);
 		
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -120,7 +121,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		
 		IRadioController radioController = mock(IRadioController.class);
 		
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
 		
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -158,7 +159,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 		
 		IRadioController radioController = mock(IRadioController.class);
 		
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
 		
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -184,7 +185,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 	public void whenCheDisconnectedStateRemainsTheSameOnScan() {
 		IRadioController radioController = mock(IRadioController.class);
 		
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
 		
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -205,7 +206,7 @@ public class CheDeviceLogicTest extends DomainTestABC {
 	public void whenCheReconnectsStateReturns() {
 		IRadioController radioController = mock(IRadioController.class);
 		
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(ICsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
 		
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();

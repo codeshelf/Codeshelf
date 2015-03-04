@@ -9,7 +9,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -24,9 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.codeshelf.flyweight.command.CommandControlButton;
-import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
-import com.codeshelf.flyweight.command.CommandControlSetPosController;
 import com.codeshelf.flyweight.command.EffectEnum;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
@@ -220,7 +217,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 

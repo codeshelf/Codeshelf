@@ -39,7 +39,7 @@ import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codahale.metrics.servlets.HealthCheckServlet;
 import com.codahale.metrics.servlets.MetricsServlet;
 import com.codahale.metrics.servlets.PingServlet;
-import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.RadioServlet;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.ServiceStatusHealthCheck;
@@ -58,7 +58,7 @@ public class WebApiServer {
 		this.server = new Server();
 	}
 
-	public final void start(int port, ICsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement, String staticContentPath) {
+	public final void start(int port, CsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement, String staticContentPath) {
 		try {
 			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 			connector.setPort(port);
@@ -121,7 +121,7 @@ public class WebApiServer {
         return holderJsp;
     }
     
-	private Handler createAdminApiHandler(ICsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement) throws FileNotFoundException, URISyntaxException {
+	private Handler createAdminApiHandler(CsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement) throws FileNotFoundException, URISyntaxException {
 		ServletContextHandler contextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		
 		contextHandler.setContextPath("/adm");
@@ -150,8 +150,10 @@ public class WebApiServer {
 		// log level runtime change servlet
 		contextHandler.addServlet(new ServletHolder(new LoggingServlet()),"/loglevel");
 		
-		// service control (stop service etc)
-		contextHandler.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
+		if(application != null) {
+			// service control (stop service etc)
+			contextHandler.addServlet(new ServletHolder(new ServiceControlServlet(application, enableSchemaManagement)),"/service");
+		}
 
 		if (deviceManager != null) {
 			//////////////////////////

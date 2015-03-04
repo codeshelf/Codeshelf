@@ -1,13 +1,13 @@
 package com.codeshelf.metrics;
 
-import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.flyweight.controller.IRadioController;
 
 public class RadioOnHealthCheck extends CodeshelfHealthCheck {
 	
-	ICsDeviceManager theDeviceManager;
+	CsDeviceManager theDeviceManager;
 	
-	public RadioOnHealthCheck(ICsDeviceManager deviceManager) {
+	public RadioOnHealthCheck(CsDeviceManager deviceManager) {
 		super("Radio On");
 		this.theDeviceManager = deviceManager;
 	}

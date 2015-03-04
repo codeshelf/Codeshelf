@@ -235,6 +235,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 		while (!mIsStarted) {
 			try {
+				if(!this.mShouldRun)
+					return;
+				
 				Thread.sleep(SERIAL_RESET_TIMEOUT_MS);
 			} catch (InterruptedException e) {
 				LOGGER.warn("", e);

@@ -50,6 +50,7 @@ public class RadioControllerPacketIOService {
 
 	public void stop() {
 		isShutdown = true;
+		gatewayInterface.stopInterface();
 		executorService.shutdown();
 	}
 

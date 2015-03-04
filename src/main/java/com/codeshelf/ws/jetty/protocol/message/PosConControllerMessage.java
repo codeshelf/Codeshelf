@@ -1,8 +1,8 @@
 package com.codeshelf.ws.jetty.protocol.message;
 
-import com.codeshelf.device.PosControllerInstr;
-
 import lombok.Getter;
+
+import com.codeshelf.device.PosControllerInstr;
 
 public class PosConControllerMessage extends MessageABC{	
 	@Getter

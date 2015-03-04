@@ -75,7 +75,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// The device manager.
 	@Accessors(prefix = "m")
 	@Getter
-	protected ICsDeviceManager		mDeviceManager;
+	protected CsDeviceManager		mDeviceManager;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -85,7 +85,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 
 	public DeviceLogicABC(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		mPersistentId = inPersistentId;
 		mGuid = inGuid;

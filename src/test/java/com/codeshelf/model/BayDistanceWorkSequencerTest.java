@@ -8,7 +8,6 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.integration.EndToEndIntegrationTest;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
@@ -17,12 +16,13 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.testframework.ServerTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
-public class BayDistanceWorkSequencerTest extends EndToEndIntegrationTest{
+public class BayDistanceWorkSequencerTest extends ServerTest {
 	@Test
 	public void testEdiSequenceByPath() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();

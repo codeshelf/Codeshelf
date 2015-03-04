@@ -63,7 +63,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 	public AisleDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
-		final ICsDeviceManager inDeviceManager,
+		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 	}

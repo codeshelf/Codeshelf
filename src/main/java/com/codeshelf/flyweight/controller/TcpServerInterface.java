@@ -23,7 +23,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 
 	public static final int				PORT_NUM			= 45000;
 	public static final int				READ_WAIT_MILLIS	= 10;
-	public static final int				OPEN_WAIT_MILLIS	= 250;
+	public static final int				OPEN_WAIT_MILLIS	= 25;
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(TcpServerInterface.class);
 
@@ -72,7 +72,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	protected final void doStartInterface() {
 		Thread interfaceStarterThread = new Thread(new Runnable() {
 			public void run() {
-				while (true) {
+				while (mServerSocket != null) { // while running
 
 					Socket clientSocket = null;
 					try {
@@ -136,6 +136,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 			if (mServerSocket != null)
 				mServerSocket.close();
 
+			mServerSocket = null;
 			//doSetupConnection();
 		} catch (IOException e1) {
 			LOGGER.error("", e1);
@@ -175,7 +176,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 	 */
 	@Override
 	protected final byte readByte() {
-		while (true) {
+		while (this.shouldRun()) {
 			for (Remote remote : mRemotes) {
 				if (remote.clientSocket.isConnected()) {
 					try {
@@ -193,6 +194,7 @@ public class TcpServerInterface extends SerialInterfaceABC {
 				LOGGER.error("", e);
 			}
 		}
+		return 0;
 	}
 
 	// --------------------------------------------------------------------------

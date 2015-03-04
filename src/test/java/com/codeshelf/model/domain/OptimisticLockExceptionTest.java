@@ -18,21 +18,9 @@ import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
 import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.testframework.MockDaoTest;
 
-public class OptimisticLockExceptionTest {
-	@Getter
-	ITenantPersistenceService tenantPersistenceService;
-
-	@Before
-	public final void setup() {
-		JvmProperties.load("test");
-		tenantPersistenceService = TenantPersistenceService.getInstance();
-		OrderHeader.DAO = new OrderHeaderDao();
-		OrderDetail.DAO = new OrderDetailDao();
-		Facility.DAO = new FacilityDao();
-		Facility.DAO = new FacilityDao();
-	}
-
+public class OptimisticLockExceptionTest extends MockDaoTest {
 	@Test
 	public final void optimisticLockExceptionTest() {
 		this.getTenantPersistenceService().beginTransaction();

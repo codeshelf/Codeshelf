@@ -242,7 +242,6 @@ public final class ServerMain {
 			@Override
 			protected void configure() {
 				// Register the DAOs (statically as a singleton).
-				
 
 				requestStaticInjection(Aisle.class);
 				bind(new TypeLiteral<ITypedDao<Aisle>>() {

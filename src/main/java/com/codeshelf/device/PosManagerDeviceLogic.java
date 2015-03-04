@@ -24,7 +24,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	
 	public PosManagerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
-		ICsDeviceManager inDeviceManager,
+		CsDeviceManager inDeviceManager,
 		IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 	}

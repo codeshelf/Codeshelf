@@ -1,21 +1,19 @@
 package com.codeshelf.metrics;
 
-import com.codeshelf.device.ICsDeviceManager;
-import com.codeshelf.ws.jetty.client.JettyWebSocketClient;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 
 public class ConnectedToServerHealthCheck extends CodeshelfHealthCheck {
 	
-	ICsDeviceManager theDeviceManager;
+	CsClientEndpoint clientEndpoint;
 	
-	public ConnectedToServerHealthCheck(ICsDeviceManager deviceManager) {
+	public ConnectedToServerHealthCheck(CsClientEndpoint clientEndpoint) {
 		super("Server Connected");
-		this.theDeviceManager = deviceManager;
+		this.clientEndpoint = clientEndpoint;
 	}
 	
 	@Override
 	protected Result check() throws Exception {
-		JettyWebSocketClient wsClient = theDeviceManager.getWebSocketCient();
-		if (wsClient.isConnected()) {
+		if (clientEndpoint.isConnected()) {
 			return Result.healthy("Site controller is connected to server");
 		}
 		return Result.unhealthy("Site controller is disconnected from server");

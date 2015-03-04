@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
-import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;

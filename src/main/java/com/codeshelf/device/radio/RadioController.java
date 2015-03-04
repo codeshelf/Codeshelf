@@ -207,9 +207,11 @@ public class RadioController implements IRadioController {
 		backgroundService.shutdown();
 		packetIOService.stop();
 		packetHandlerService.shutdown();
-
+		
 		// Stop all of the interfaces.
 		gatewayInterface.stopInterface();
+
+		broadcastService.stop();
 
 		// Signal that we want to stop.
 		mShouldRun = false;

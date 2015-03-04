@@ -9,29 +9,42 @@ package com.codeshelf.application;
 import lombok.Getter;
 
 import com.codeshelf.device.ClientConnectionManagerService;
-import com.codeshelf.device.ICsDeviceManager;
+import com.codeshelf.device.CsDeviceManager;
+import com.codeshelf.device.SiteControllerMessageProcessor;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.metrics.AssociatedRadioHealthCheck;
 import com.codeshelf.metrics.ConnectedToServerHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
+import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.google.inject.Inject;
 
 public final class SiteControllerApplication extends CodeshelfApplication {
 
 	@Getter
-	private ICsDeviceManager	deviceManager;
+	private CsDeviceManager	deviceManager;
+	@Getter
+	private CsClientEndpoint	clientEndpoint;
+	private IRadioController	radioController;
 
 	
 	@Inject
-	public SiteControllerApplication(final ICsDeviceManager inDeviceManager,final WebApiServer inAdminServer,
-			IMetricsService metricsService) {
+	public SiteControllerApplication(
+			final WebApiServer inAdminServer,
+			IMetricsService metricsService,
+			IRadioController inRadioController,
+			CsClientEndpoint clientEndpoint) {
 		super(inAdminServer);
-		deviceManager = inDeviceManager;
-		
-		this.registerService(new ClientConnectionManagerService(deviceManager.getClient()));
+
+		this.registerService(new ClientConnectionManagerService(clientEndpoint));
 		this.registerService(metricsService);
 		
+		this.clientEndpoint = clientEndpoint;
+		this.radioController = inRadioController;
+		deviceManager = new CsDeviceManager(inRadioController,clientEndpoint);
+		
+		new SiteControllerMessageProcessor(deviceManager,clientEndpoint);
 	}
 
 	// --------------------------------------------------------------------------
@@ -54,27 +67,18 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 		startTsdbReporter();
 		registerSystemMetrics();
 		
-		// Start the device manager.
-		deviceManager.start();
-
 		// create and register site controller specific health checks
-		RadioOnHealthCheck radioCheck = new RadioOnHealthCheck(this.deviceManager);
-		MetricsService.getInstance().registerHealthCheck(radioCheck);
-		
-		ConnectedToServerHealthCheck serverConnectionCheck = new ConnectedToServerHealthCheck(this.deviceManager);
-		MetricsService.getInstance().registerHealthCheck(serverConnectionCheck);
-		
-		AssociatedRadioHealthCheck associateCheck = new AssociatedRadioHealthCheck(this.deviceManager);
-		MetricsService.getInstance().registerHealthCheck(associateCheck);
+		MetricsService.getInstance().registerHealthCheck(new RadioOnHealthCheck(this.deviceManager));
+		MetricsService.getInstance().registerHealthCheck(new ConnectedToServerHealthCheck(this.clientEndpoint));
+		MetricsService.getInstance().registerHealthCheck(new AssociatedRadioHealthCheck(this.deviceManager));
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
 	protected void doShutdown() {
-
-		// Stop the web socket.
-		deviceManager.stop();
+		// STOP RADIO
+		radioController.stopController();
 	}
 
 	// --------------------------------------------------------------------------

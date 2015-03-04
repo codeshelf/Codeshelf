@@ -33,20 +33,22 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.IntegrationTest;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
  *
  */
-public class CheProcessScanPick extends EndToEndIntegrationTest {
+public class CheProcessScanPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessScanPick.class);
 
 	public CheProcessScanPick() {
 
 	}
-
+	
 	private Facility setUpSmallNoSlotFacility() {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -142,9 +144,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(organizationId, new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -263,7 +265,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 	 * Wait until a recent CHE update went through the updateNetwork mechanism, replacing the device logic for the che
 	 * May want to promote this.
 	*/
-	private PickSimulator waitAndGetPickerForProcessType(EndToEndIntegrationTest test, NetGuid cheGuid, String inProcessType) {
+	private PickSimulator waitAndGetPickerForProcessType(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
 		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
@@ -298,12 +300,14 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
 		Assert.assertNotNull(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
-
+		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -357,6 +361,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSitecon();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
@@ -591,6 +597,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
+
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 		
@@ -664,6 +672,8 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
 		
+		this.startSitecon();
+
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		CsDeviceManager manager = this.getDeviceManager();
@@ -702,6 +712,7 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		this.setUpOrdersItemsOnSamePath(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSitecon();
 		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -776,7 +787,9 @@ public class CheProcessScanPick extends EndToEndIntegrationTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		this.setUpOrdersWithCntrAndSequence(facility);
 		this.getTenantPersistenceService().commitTransaction();
-
+		
+		this.startSitecon();
+		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());

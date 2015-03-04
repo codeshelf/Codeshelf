@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lombok.Getter;
 import lombok.experimental.Accessors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlSetPosController;
@@ -27,7 +27,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC{
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
 
-	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, ICsDeviceManager inDeviceManager, IRadioController inRadioController) {
+	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 		
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
