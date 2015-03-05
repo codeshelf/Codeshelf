@@ -107,8 +107,18 @@ public class ObjectMethodCommand extends CommandABC {
 			Class<?> classType = ClassUtils.getClass(arg.getClassType());
 			signatureClasses.add(classType);
 			if (Double.class.isAssignableFrom(classType)){
-					argumentValue = Double.valueOf(argumentValue.toString());
+				if (argumentValue==null) {
+					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+methodName + ": Argument "+arg.getName()+" is undefined.");
+					response.setStatus(ResponseStatus.Fail);
+					return response;
+				}
+				argumentValue = Double.valueOf(argumentValue.toString());
 			} else if (int.class.isAssignableFrom(classType)){
+				if (argumentValue==null) {
+					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+methodName + ": Argument "+arg.getName()+" is undefined.");
+					response.setStatus(ResponseStatus.Fail);
+					return response;
+				}
 				argumentValue = Integer.valueOf(argumentValue.toString());
 			}
 			cookedArguments.add(argumentValue);		

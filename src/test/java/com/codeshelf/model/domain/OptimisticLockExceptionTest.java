@@ -2,22 +2,13 @@ package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
 
-import lombok.Getter;
-
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.model.domain.Facility.FacilityDao;
-import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
-import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.MockDaoTest;
 
 public class OptimisticLockExceptionTest extends MockDaoTest {

@@ -18,6 +18,7 @@ import java.util.UUID;
 import javax.persistence.Column;
 
 import org.apache.commons.lang.NotImplementedException;
+import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 
 import com.codeshelf.model.domain.IDomainObject;
@@ -163,6 +164,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public <P extends IDomainObject> T reload(P domainObject) {
+		throw new NotImplementedException();
+	}
+
+	@Override
+	public List<T> findByCriteriaQuery(Criteria criteria) {
+		throw new NotImplementedException();
+	}
+
+	@Override
+	public Criteria createCriteria() {
 		throw new NotImplementedException();
 	}
 

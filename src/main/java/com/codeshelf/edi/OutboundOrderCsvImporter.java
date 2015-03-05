@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -35,12 +37,14 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.ItemMaster.ItemMasterDao;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.platform.caching.DomainObjectCache;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.validation.BatchResult;
@@ -66,7 +70,9 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	private String					oldPreferredLocation	= null;													// for DEV-596
 
 	private ArrayList<Item>			mEvaluationList;
-
+	
+	DomainObjectCache<ItemMaster> itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.DAO);	
+	
 	@Inject
 	public OutboundOrderCsvImporter(final EventProducer inProducer) {
 
@@ -94,6 +100,17 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		boolean undefinedGroupUpdated = false;
 
 		LOGGER.debug("Begin order import.");
+		
+		long startTime = System.currentTimeMillis();
+
+		// cache item master
+		itemMasterCache.reset();
+		if (list.size()>=10) {
+			// don't prefetch for small order batches
+			itemMasterCache.load(inFacility);
+		}
+		LOGGER.info("ItemMaster cache populated with "+this.itemMasterCache.size()+" entries");
+		
 		int lineCount = 1;
 		BatchResult<Object> batchResult = new BatchResult<Object>();
 		for (OutboundOrderCsvBean orderBean : list) {
@@ -121,9 +138,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		} else {
 			// If we've imported more than one order then do a full archive.
 			archiveCheckAllOrders(inFacility, inProcessTime, undefinedGroupUpdated);
+			long endTime = System.currentTimeMillis();
+			LOGGER.info("Imported "+orderSet.size()+" orders in "+(endTime-startTime)/1000+" seconds");
 		}
 		archiveCheckAllContainers(inFacility, inProcessTime);
 		archiveEmptyGroups(inFacility.getPersistentId());
+		itemMasterCache.reset();
+
 		LOGGER.debug("End order import.");
 
 		cleanupArchivedOrders();
@@ -277,7 +298,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		// WorkInstructions
 		// OrderDetail
 		// OrderHeader
-
 	}
 
 	private void addItemToEvaluationList(Item inItem) {
@@ -685,16 +705,21 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = ItemMaster.DAO.findByDomainId(inFacility, inItemId);
+		// retrieve item master from cache
+		result = this.itemMasterCache.get(inItemId);
+	
+		// create a new item, if needed
 		if (result == null) {
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
 			inFacility.addItemMaster(result);
+			this.itemMasterCache.put(result);
 		}
 
 		// If we were able to get/create an item master then update it.
 		if (result != null) {
+			// update only if
 			result.setDescription(inDescription);
 			result.setStandardUom(inUomMaster);
 			try {
@@ -766,7 +791,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				
 				// Update UOM for this GTIN in database. Assume order bean UOM is correct
 				// for this GTIN.
-				if (!m.equals(inUomMaster)) {
+				if (!m.equals(result.getUomMaster())) {
 					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
 						inCsvBean.getGtin(), m.getDomainId(), inUomMaster.getDomainId());
 					result.setUomMaster(inUomMaster);
@@ -776,12 +801,21 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
 					inCsvBean.getGtin(), inItemMaster.getDomainId());
 				
-				// Moving item masters for Gtin
-				previousItemMaster.removeGtinMapFromMaster(result);
+				// Remove from item
+				List<Item> items = previousItemMaster.getItems();
+				for (Item item : items ) {
+					if (item.getGtin().equals(result)) {
+						item.setGtin(null);
+						break;
+					}
+				}
 				
-				result.setParent(inItemMaster);
+				// Moving item masters for Gtin
+				previousItemMaster.removeGtinFromMaster(result);
+				
+				result.setParent(null);
 				result.setUomMaster(inUomMaster);
-				inItemMaster.addGtinMapToMaster(result);
+				inItemMaster.addGtinToMaster(result);
 			}
 			
 		} else {
