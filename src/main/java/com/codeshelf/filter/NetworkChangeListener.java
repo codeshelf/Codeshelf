@@ -48,11 +48,11 @@ public class NetworkChangeListener implements ObjectEventListener {
 	private MessageABC onAnythingChanged(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		CodeshelfNetwork network = null;
 		if(WirelessDeviceABC.class.isAssignableFrom(domainClass)) {
-			WirelessDeviceABC object = (WirelessDeviceABC) TenantPersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
+			WirelessDeviceABC object = (WirelessDeviceABC) TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
 			network = object.getParent();
 			
 		} else if(CodeshelfNetwork.class.isAssignableFrom(domainClass)) {
-			network = (CodeshelfNetwork) TenantPersistenceService.getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
+			network = (CodeshelfNetwork) TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(domainClass, domainPersistentId);
 		}
 		if(network != null) {
 			// if the object changed within this network, generate a new network status response

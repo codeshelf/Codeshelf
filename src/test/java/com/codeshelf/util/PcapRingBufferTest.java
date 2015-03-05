@@ -6,7 +6,9 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class PcapRingBufferTest {
+import com.codeshelf.testframework.MinimalTest;
+
+public class PcapRingBufferTest extends MinimalTest {
 	@Test
 	public void fillAndEmpty() {
 		PcapRingBuffer pb = new PcapRingBuffer(129,16); // enough room for slightly more than 3.5 packets (16 hdr+16 buffer)

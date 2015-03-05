@@ -11,11 +11,13 @@ import java.util.concurrent.BlockingQueue;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.MinimalTest;
+
 /**
  * @author jeffw
  *
  */
-public class PickDocumentGeneratorTest {
+public class PickDocumentGeneratorTest extends MinimalTest {
 
 	@Test
 	public void pickDocGeneratorThreadTest() {

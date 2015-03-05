@@ -15,10 +15,10 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -35,7 +35,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FacilityOutlineTest extends DomainTestABC {
+public class FacilityOutlineTest extends MockDaoTest {
 
 	@Test
 	public final void testCreateVertex() {

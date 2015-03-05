@@ -6,12 +6,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.model.domain.Item;
+import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ObjectMethodResponseTest {
+public class ObjectMethodResponseTest extends MinimalTest {
 
 	@Test
 	public void testSerialization() throws IOException {

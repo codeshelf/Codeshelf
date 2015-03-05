@@ -1310,7 +1310,6 @@ public class Facility extends Location {
 		facility.createDefaultContainerKind();
 		
 		// Setup two dummy CHEs
-		LOGGER.info("creating 2 CHEs");;
 		for (int cheNum = 1; cheNum <= 2; cheNum++) {
 			String cheName = "CHE" + cheNum;
 			Che che = network.getChe(cheName);

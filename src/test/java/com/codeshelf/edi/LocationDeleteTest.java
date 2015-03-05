@@ -32,12 +32,13 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * 
  * 
  */
-public class LocationDeleteTest extends EdiTestABC {
+public class LocationDeleteTest extends ServerTest {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(LocationDeleteTest.class);
 
 	private final boolean		LARGER_FACILITY		= true;

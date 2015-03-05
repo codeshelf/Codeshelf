@@ -17,106 +17,32 @@ import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.edi.InventoryCsvImporter;
-import com.codeshelf.edi.LocationAliasCsvImporter;
-import com.codeshelf.edi.OrderLocationCsvImporter;
-import com.codeshelf.edi.OutboundOrderCsvImporter;
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 
-public abstract class ServerTest extends FrameworkTest {
+public abstract class ServerTest extends HibernateTest {
 	private final Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
 
 	@Override
 	Type getFrameworkType() {
-		return Type.SERVER;
+		return Type.COMPLETE_SERVER;
+	}
+
+	@Override
+	public boolean ephemeralServicesShouldStartAutomatically() {
+		return true;
 	}
 
 	// various server utilities
-	protected static Path createPathForTest(Facility facility) {
-		return facility.createPath("");
-	}
-	protected static PathSegment addPathSegmentForTest(final Path inPath,
-		final Integer inSegmentOrder,
-		Double inStartX,
-		Double inStartY,
-		Double inEndX,
-		Double inEndY) {
-	
-		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
-		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentOrder, head, tail);
-		return returnSeg;
-	}
-	
-	protected AislesFileCsvImporter createAisleFileImporter() {
-		return new AislesFileCsvImporter(this.eventProducer);
-	}
-	protected ICsvLocationAliasImporter createLocationAliasImporter() {
-		return new LocationAliasCsvImporter(this.eventProducer);
-	}
-	protected ICsvOrderImporter createOrderImporter() {
-		return new OutboundOrderCsvImporter(this.eventProducer);
-	}
-	protected CodeshelfNetwork getNetwork() {
-		return CodeshelfNetwork.DAO.findByPersistentId(this.networkPersistentId);
-	}
-	private static String padRight(String s, int n) {
-		return String.format("%1$-" + n + "s", s);
-	}
-	public void logWiList(List<WorkInstruction> inList) {
-		for (WorkInstruction wi : inList) {
-			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
-			String statusStr = padRight(wi.getStatusString(), 8);
-			
-			LOGGER.info(statusStr + " WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
-					+ wi.getPickInstruction() + "(" + wi.getNominalLocationId() + ")" + " count: " + wi.getPlanQuantity()
-					+ " SKU: " + wi.getItemId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
-		}
-	}
-	public void logOneWi(WorkInstruction inWi) {
-		// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
-		String statusStr = padRight(inWi.getStatusString(), 8);
-		
-		LOGGER.info(statusStr + " " + inWi.getGroupAndSortCode() + " " + inWi.getContainerId() + " loc: "
-				+ inWi.getPickInstruction() + "(" + inWi.getNominalLocationId() + ")" + " count: " + inWi.getPlanQuantity() + " actual: " + inWi.getActualQuantity()
-				+ " SKU: " + inWi.getItemMasterId() + " order: " + inWi.getOrderId() + " desc.: " + inWi.getDescription());
-	}
-
-	protected ICsvCrossBatchImporter createCrossBatchImporter() {
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(eventProducer,
-			workService);
-		return importer;
-	}
-	protected ICsvOrderLocationImporter createOrderLocationImporter() {
-		ICsvOrderLocationImporter importer = new OrderLocationCsvImporter(eventProducer);
-		return importer;
-	}
-	protected ICsvInventoryImporter createInventoryImporter() {
-		return new InventoryCsvImporter(eventProducer);
-	}
-
-	protected void importInventoryData(Facility facility, String csvString) {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-	}
-
-	protected void importOrdersData(Facility facility, String csvString) throws IOException {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-	}
 	protected Facility setUpSimpleNoSlotFacility() {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
@@ -262,6 +188,65 @@ public abstract class ServerTest extends FrameworkTest {
 		tier.getDao().store(tier);
 
 		return getFacility();
+	}
+
+	protected CodeshelfNetwork getNetwork() {
+		return CodeshelfNetwork.DAO.findByPersistentId(this.networkPersistentId);
+	}
+	public void logWiList(List<WorkInstruction> inList) {
+		for (WorkInstruction wi : inList) {
+			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
+			String statusStr = padRight(wi.getStatusString(), 8);
+			
+			LOGGER.info(statusStr + " WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
+					+ wi.getPickInstruction() + "(" + wi.getNominalLocationId() + ")" + " count: " + wi.getPlanQuantity()
+					+ " SKU: " + wi.getItemId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
+		}
+	}
+	public void logOneWi(WorkInstruction inWi) {
+		// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
+		String statusStr = padRight(inWi.getStatusString(), 8);
+		
+		LOGGER.info(statusStr + " " + inWi.getGroupAndSortCode() + " " + inWi.getContainerId() + " loc: "
+				+ inWi.getPickInstruction() + "(" + inWi.getNominalLocationId() + ")" + " count: " + inWi.getPlanQuantity() + " actual: " + inWi.getActualQuantity()
+				+ " SKU: " + inWi.getItemMasterId() + " order: " + inWi.getOrderId() + " desc.: " + inWi.getDescription());
+	}
+	public void logItemList(List<Item> inList) {
+		for (Item item : inList)
+			LOGGER.info("SKU: " + item.getItemMasterId() + " cm: " + item.getCmFromLeft() + " posAlongPath: "
+					+ item.getPosAlongPathui() + " desc.: " + item.getItemDescription());
+	}
+	protected ICsvCrossBatchImporter createCrossBatchImporter() {
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(eventProducer,
+			workService);
+		return importer;
+	}
+
+	
+	
+	protected void importInventoryData(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+
+	protected void importOrdersData(Facility facility, String csvString) throws IOException {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer = createOrderImporter();
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+
+	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
+		// Now ready to run the cart
+		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
+		Che theChe = theNetwork.getChe(cheName);
+	
+		workService.setUpCheContainerFromString(theChe, containers);
+	
+		List<WorkInstruction> wiList = workService.getWorkInstructions(theChe, ""); // This returns them in working order.
+		logWiList(wiList);
+		return wiList;
+	
 	}
 
 

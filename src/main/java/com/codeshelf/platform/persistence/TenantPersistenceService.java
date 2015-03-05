@@ -69,7 +69,7 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	}
 
 	@SuppressWarnings("unchecked")
-	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
+	public ITypedDao<IDomainObject> getDao(Class<?> classObject) {
 		if (classObject==null) {
 			LOGGER.error("Failed to get DAO for undefined class");
 			return null;

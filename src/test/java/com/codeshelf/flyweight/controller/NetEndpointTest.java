@@ -9,12 +9,13 @@ package com.codeshelf.flyweight.controller;
 import org.junit.Test;
 
 import com.codeshelf.flyweight.command.NetEndpoint;
+import com.codeshelf.testframework.MinimalTest;
 
 /** --------------------------------------------------------------------------
  *  Test the net endpoint.
  *  @author jeffw
  */
-public final class NetEndpointTest {
+public final class NetEndpointTest extends MinimalTest {
 
 	private static final byte	DEVICE_TEST_ENDPOPINT	= 0x01;
 

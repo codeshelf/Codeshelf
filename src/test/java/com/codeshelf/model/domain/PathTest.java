@@ -10,11 +10,13 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.HibernateTest;
+
 /**
  * @author jeffw
  *
  */
-public class PathTest extends DomainTestABC {
+public class PathTest extends HibernateTest {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {

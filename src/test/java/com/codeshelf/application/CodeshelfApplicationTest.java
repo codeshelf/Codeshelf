@@ -17,29 +17,19 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.metrics.DummyMetricsService;
-import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.dao.MockDao;
 import com.codeshelf.model.dao.Result;
-import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Bay;
-import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Slot;
-import com.codeshelf.model.domain.Tier;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.testframework.MockDaoTest;
 
 /**
  * @author jeffw
  *
  */
-public class CodeshelfApplicationTest extends ServerTest { 
+public class CodeshelfApplicationTest extends MockDaoTest { 
 	// we subclass ServerTest to ensure global static services are already running so they won't be started by fake app
 
 	/*
@@ -160,12 +150,13 @@ public class CodeshelfApplicationTest extends ServerTest {
 	
 	@Test
 	public void testStartStopApplication() {
-		TenantPersistenceService.setInstance(mock(ITenantPersistenceService.class));
+		/*TenantPersistenceService.setInstance(mock(ITenantPersistenceService.class));
 		Facility.DAO = new MockDao<Facility>();
 		Aisle.DAO = new MockDao<Aisle>();
 		Bay.DAO = new MockDao<Bay>();
 		Tier.DAO = new MockDao<Tier>();
 		Slot.DAO = new MockDao<Slot>();
+		*/
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
@@ -233,8 +224,4 @@ public class CodeshelfApplicationTest extends ServerTest {
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}
 
-	@Override
-	protected boolean ephemeralServicesShouldStartAutomatically() {
-		return false;
-	}
 }

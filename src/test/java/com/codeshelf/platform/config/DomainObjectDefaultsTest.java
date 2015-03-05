@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.testframework.HibernateTest;
 
-public class DomainObjectDefaultsTest extends DomainTestABC {
+public class DomainObjectDefaultsTest extends HibernateTest {
 	
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectDefaultsTest.class);

@@ -41,12 +41,12 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
@@ -57,18 +57,24 @@ import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 import com.google.common.collect.ImmutableList;
 
-public class WorkServiceTest extends DomainTestABC {
+public class WorkServiceTest extends ServerTest {
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
-	private FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
+	private FacilityGenerator facilityGenerator;
 	
+	@Override
+	public void doBefore() {
+		super.doBefore();
+		facilityGenerator = new FacilityGenerator(getDefaultTenant());
+	}
+
 	@Override
 	protected WorkService generateWorkService() {
 		return this.workService; // in this test, we set up the workService manually at the beginning of the test
 	}
 
 	@Override
-	protected boolean ephemeralServicesShouldStartAutomatically() {
+	public boolean ephemeralServicesShouldStartAutomatically() {
 		return false; // in this test, we start services manually after defining the work service to start
 	}
 	/*

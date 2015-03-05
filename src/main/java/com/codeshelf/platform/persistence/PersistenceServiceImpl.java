@@ -95,7 +95,8 @@ public abstract class PersistenceServiceImpl<SCHEMA_TYPE extends Schema> extends
 
 	@Override
 	public void forgetInitialActions(SCHEMA_TYPE schema) {
-		initializedFactories.remove(schema);
+		if(initializedFactories != null) // in case stopping/stopped, ignore 
+			initializedFactories.remove(schema);
 	}
 
 	@Override

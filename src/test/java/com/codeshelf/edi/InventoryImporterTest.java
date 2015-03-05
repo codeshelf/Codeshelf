@@ -43,6 +43,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
@@ -54,13 +55,13 @@ import com.google.common.collect.ImmutableMap;
  * @author jeffw
  *
  */
-public class InventoryImporterTest extends EdiTestABC {
+public class InventoryImporterTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryImporterTest.class);
 
 	UUID facilityForVirtualSlottingId;
 
 	@Override
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		this.getTenantPersistenceService().beginTransaction();
 

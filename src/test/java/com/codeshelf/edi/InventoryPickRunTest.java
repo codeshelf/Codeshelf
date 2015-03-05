@@ -39,12 +39,13 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  *
  *
  */
-public class InventoryPickRunTest extends EdiTestABC {
+public class InventoryPickRunTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(InventoryPickRunTest.class);
 
 	@SuppressWarnings({ "unused" })

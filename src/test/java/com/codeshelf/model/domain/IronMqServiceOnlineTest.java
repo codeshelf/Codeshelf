@@ -12,14 +12,15 @@ import org.junit.Test;
 
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.testframework.MockDaoTest;
 
 // TODO: should use mock DAO 
-public class IronMqServiceOnlineTest extends DomainTestABC {
+public class IronMqServiceOnlineTest extends MockDaoTest {
 
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
 	
 	@Before
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		//USE THE DEFAULT KEYSTORE COMMUNICATING TO IRON MQ
 		String[] keys = new String[]{

@@ -12,11 +12,11 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
@@ -28,7 +28,7 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 
-public class LineScanTest extends EdiTestABC {
+public class LineScanTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	private ICsvOrderImporter importer;

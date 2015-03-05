@@ -16,6 +16,7 @@ import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -23,7 +24,7 @@ import com.google.common.collect.ImmutableMap;
  * @author jeffw
  *
  */
-public class WorkInstructionTest extends DomainTestABC {
+public class WorkInstructionTest extends HibernateTest {
 
 	@Test
 	public final void cookedDescriptionTest() {

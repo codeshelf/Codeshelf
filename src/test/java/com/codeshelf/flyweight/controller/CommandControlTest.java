@@ -27,8 +27,9 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.testframework.MinimalTest;
 
-public final class CommandControlTest {
+public final class CommandControlTest extends MinimalTest {
 
 	private static final String	TEST_MSG1				= "TEST1";
 	private static final String	TEST_MSG2				= "TEST2";

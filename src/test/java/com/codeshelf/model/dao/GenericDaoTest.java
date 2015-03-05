@@ -16,8 +16,9 @@ import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.testframework.ServerTest;
 
-public class GenericDaoTest extends DAOTestABC {
+public class GenericDaoTest extends ServerTest {
 	
 	public GenericDaoTest() {
 	}

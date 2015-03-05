@@ -72,7 +72,7 @@ public class ObjectUpdateCommand extends CommandABC {
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.				
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				
 				IDomainObject updateObject = null;
 				if(dao == null) {

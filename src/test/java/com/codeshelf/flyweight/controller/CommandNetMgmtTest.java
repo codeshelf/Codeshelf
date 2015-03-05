@@ -7,11 +7,13 @@ package com.codeshelf.flyweight.controller;
 
 import org.junit.Test;
 
+import com.codeshelf.testframework.MinimalTest;
+
 /** --------------------------------------------------------------------------
  *  Test the net management command.
  *  @author jeffw
  */
-public class CommandNetMgmtTest {
+public class CommandNetMgmtTest extends MinimalTest {
 
 	/**
 	 * Test method for {@link com.codeshelf.flyweightcontroller.command.CommandAssocReq#doFromStream(com.gadgetworks.bitfields.BitFieldInputStream, int)}.

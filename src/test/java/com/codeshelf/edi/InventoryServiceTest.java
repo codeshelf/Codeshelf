@@ -20,13 +20,14 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.InputValidationException;
 
 /**
  * @author jeffw
  *
  */
-public class InventoryServiceTest extends EdiTestABC {
+public class InventoryServiceTest extends ServerTest {
 
 
 	private UUID facilityId;

@@ -7,7 +7,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class DateTimeParserTest {
+import com.codeshelf.testframework.MinimalTest;
+
+public class DateTimeParserTest extends MinimalTest {
 
 	private DateTimeParser	parser;
 	private Calendar		calendar;

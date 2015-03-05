@@ -22,10 +22,11 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.MockDao;
+import com.codeshelf.testframework.MinimalTest;
+import com.codeshelf.testframework.MockDao;
 import com.codeshelf.validation.BatchResult;
 
-public class DropboxServiceTest {
+public class DropboxServiceTest extends MinimalTest {
 
 	/*
 	 * It's pretty easy to test and already connected DB account, but it's impossible to test the link process.

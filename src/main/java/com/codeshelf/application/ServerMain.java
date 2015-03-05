@@ -97,7 +97,7 @@ import com.codeshelf.model.domain.WorkArea;
 import com.codeshelf.model.domain.WorkArea.WorkAreaDao;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
-import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ITenantManagerService;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
@@ -179,7 +179,7 @@ public final class ServerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(ITenantManager.class).toInstance(TenantManagerService.getNonRunningInstance());
+				bind(ITenantManagerService.class).toInstance(TenantManagerService.getNonRunningInstance());
 				
 				requestStaticInjection(TenantPersistenceService.class);
 				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);

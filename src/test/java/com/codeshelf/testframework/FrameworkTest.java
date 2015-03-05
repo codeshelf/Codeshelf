@@ -1,5 +1,6 @@
 package com.codeshelf.testframework;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,12 +14,12 @@ import javax.websocket.WebSocketContainer;
 
 import lombok.Getter;
 
+import org.atteo.classindex.ClassIndex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,42 +40,13 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.dao.MockDao;
 import com.codeshelf.model.dao.PropertyDao;
-import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.ContainerKind;
-import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.DropboxService;
-import com.codeshelf.model.domain.EdiDocumentLocator;
-import com.codeshelf.model.domain.EdiServiceABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.model.domain.IronMqService;
-import com.codeshelf.model.domain.Item;
-import com.codeshelf.model.domain.ItemDdcGroup;
-import com.codeshelf.model.domain.ItemMaster;
-import com.codeshelf.model.domain.LedController;
-import com.codeshelf.model.domain.LocationAlias;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderGroup;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.OrderLocation;
-import com.codeshelf.model.domain.Path;
-import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.model.domain.Slot;
-import com.codeshelf.model.domain.Tier;
-import com.codeshelf.model.domain.UnspecifiedLocation;
-import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.model.domain.Vertex;
-import com.codeshelf.model.domain.WorkArea;
-import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ITenantManagerService;
 import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.ManagerSchema;
 import com.codeshelf.platform.multitenancy.Tenant;
@@ -106,24 +78,33 @@ public abstract class FrameworkTest implements IntegrationTest {
 	public enum Type {
 		MINIMAL, // no persistence, no services, null DAOs 
 		MOCK_DAO, // no services, mock/stub persistence
-		SERVER // server services, h2 persistence, can start Site Controller services
+		HIBERNATE, // minimal services, hibernate+h2 persistence
+		COMPLETE_SERVER // server services, can start Site Controller 
 	};
 	abstract Type getFrameworkType();
+	public abstract boolean ephemeralServicesShouldStartAutomatically(); // return true for WorkService
 
+	
 	private static Logger LOGGER; // = need to set up logging before creating the logger
-	@Rule public TestName testName = new TestName();
-	
-	protected static ServiceManager serverServiceManager = null;
-	protected static ServiceManager siteconServiceManager = null;
-	protected static Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = new HashMap<Class<? extends IDomainObject>,ITypedDao<?>>();
-	
-	protected static SessionManagerService staticSessionManagerService; 
-	protected static IMetricsService staticMetricsService; 
-	protected static IPropertyService staticPropertyService; 
-	protected static ServerMessageProcessor	staticServerMessageProcessor;
-	protected static MessageCoordinator staticServerMessageCoordinator;
+	@Getter
+	@Rule 
+	public TestName testName = new TestName();
 
+	// service managers for the various test types. for complete server test all of these will be used.
+	private static ServiceManager serverServiceManager = null;
+	private static ServiceManager persistenceServiceManager = null;
+	private static ServiceManager siteconServiceManager = null;
+
+	// app server static (reused) services
+	private static SessionManagerService staticSessionManagerService; 
+	private static IMetricsService staticMetricsService; 
+	private static IPropertyService staticPropertyService; 
+	private static ServerMessageProcessor	staticServerMessageProcessor;
+	//private static MessageCoordinator staticServerMessageCoordinator;
+
+	// real non-mock instance
 	private static ITenantPersistenceService realTenantPersistenceService;
+	private static ITenantManagerService realTenantManagerService;
 	
 	// default IDs to use when generating facility
 	protected static String		facilityId			= "F1";
@@ -135,13 +116,17 @@ public abstract class FrameworkTest implements IntegrationTest {
 	@Getter
 	protected static NetGuid	cheGuid2			= new NetGuid("0x00009992");
 	
-	// site controller
+	// site controller services
 	private static CsClientEndpoint staticClientEndpoint;
 	private static ClientConnectionManagerService	staticClientConnectionManagerService;
 	private static WebSocketContainer staticWebSocketContainer;
-	
-	private ITenantPersistenceService	savedPersistenceServiceInstance = null; // restore after test
-	private IMetricsService	savedMetricsService;
+
+	// these managed statics are saved/restored to avoid breaking tests that don't subclass this
+	private ITenantManagerService savedTenantManagerServiceService = null;
+	private ITenantPersistenceService	savedPersistenceServiceInstance = null; 
+	private IMetricsService	savedMetricsService = null;
+	private IPropertyService savedPropertyService;
+	private Map<Class<? extends IDomainObject>, ITypedDao<?>> savedDaos = null;
 
 	// instance services
 	protected ServiceManager ephemeralServiceManager;
@@ -160,10 +145,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected IRadioController	radioController;
 
 	// auto created facility details
-	private Facility facility = null;
-	protected UUID	networkPersistentId = null;
-	protected UUID	che1PersistentId = null;
-	protected UUID	che2PersistentId = null;
+	int facilitiesGenerated; // automatic serial naming
+	private Facility facility;
+	protected UUID	networkPersistentId;
+	protected UUID	che1PersistentId;
+	protected UUID	che2PersistentId;
 
 	private Integer	port;
 		
@@ -220,6 +206,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		Injector injector = setupInjector();
 
 		realTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
+		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
 
 		staticMetricsService = injector.getInstance(IMetricsService.class);
 		staticMetricsService.startAsync().awaitRunning(); // always running, outside of service manager
@@ -246,55 +233,77 @@ public abstract class FrameworkTest implements IntegrationTest {
 	
 	@Before
 	public void doBefore() {
-		LOGGER.info("******************* Setting up test: "+this.testName.getMethodName()+" *******************");
+		if(this.getFrameworkType().equals(Type.COMPLETE_SERVER)) // complete server setup has more logs during setup
+			LOGGER.info("******************* Setting up test: "+this.testName.getMethodName()+" *******************");
+
+		// save statics to restore after test
+		// TODO: make this list shorter ;)
+		if(MetricsService.exists()) {
+			this.savedMetricsService = MetricsService.getMaybeRunningInstance();
+		} else {
+			this.savedMetricsService = null;
+		}
+		if(PropertyService.exists()) {
+			this.savedPropertyService = PropertyService.getMaybeRunningInstance();
+		} else {
+			this.savedPropertyService = null;
+		}
+		if(TenantPersistenceService.exists()) {
+			this.savedPersistenceServiceInstance = TenantPersistenceService.getMaybeRunningInstance(); // restore after
+		} else {
+			this.savedPersistenceServiceInstance = null;
+		}
+		if(TenantManagerService.exists()) {
+			this.savedTenantManagerServiceService = TenantManagerService.getMaybeRunningInstance();
+		} else {
+			this.savedTenantManagerServiceService = null;
+		}
+		this.savedDaos = this.getStaticDaos();
+		
 		// reset all services to defaults in case changed by a test
 		sessionManagerService = staticSessionManagerService;
 		propertyService = staticPropertyService;
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
+		
+		radioController = null;
+		deviceManager = null;
+		apiServer = null;
+		
+		// reset default facility
+		facilitiesGenerated = 0;
+		facility = null;
+		networkPersistentId = null;
+		che1PersistentId = null;
+		che2PersistentId = null;
 
-		if(MetricsService.exists()) {
-			this.savedMetricsService = MetricsService.getMaybeRunningInstance();
-		} else {
-			this.savedMetricsService = null;
-		}
-		
-		if(TenantPersistenceService.exists()) {
-			this.savedPersistenceServiceInstance = TenantPersistenceService.getMaybeRunningInstance(); // restore after
-		} else {
-			this.savedPersistenceServiceInstance = null;
-		}
-		
 		if(this.getFrameworkType().equals(Type.MOCK_DAO)) {
 			setDummyPersistence();
-		} else if(this.getFrameworkType().equals(Type.SERVER)) {
-			setRealPersistence();
-
-			if(serverServiceManager == null) {
-				// initialize server for the first time
-				startServer();
-			}
-
-			// make sure default properties are in the database
-			TenantPersistenceService.getInstance().beginTransaction();
-	        PropertyDao.getInstance().syncPropertyDefaults();
-	        TenantPersistenceService.getInstance().commitTransaction();
+		} else if(this.getFrameworkType().equals(Type.COMPLETE_SERVER) || this.getFrameworkType().equals(Type.HIBERNATE)) {
+			startPersistence();
 			
-			apiServer = new WebApiServer();
-			apiServer.start(port, null, null, false, "./");
+			if(staticSessionManagerService.isRunning())
+				staticSessionManagerService.reset();
+
+	        if(this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
+	        	startServer();
+	        }
 		} else {
 			disablePersistence();
 		}
         
 		if(ephemeralServicesShouldStartAutomatically())
         	initializeEphemeralServiceManager();
+		
 		LOGGER.info("------------------- Running test: "+this.testName.getMethodName()+" -------------------");
 	}
 
 	@After
 	public void doAfter() {
-		LOGGER.info("------------------- Cleanup after test: "+this.testName.getMethodName()+" -------------------");
+		if(this.getFrameworkType().equals(Type.COMPLETE_SERVER)) // complete server setup has more logs during teardown
+			LOGGER.info("------------------- Cleanup after test: "+this.testName.getMethodName()+" -------------------");
+		
 		if(staticClientConnectionManagerService != null) {
 			staticClientConnectionManagerService.setDisconnected();
 		}
@@ -317,15 +326,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		CsClientEndpoint.setMessageProcessor(null);
 		CsClientEndpoint.setWebSocketContainer(null);
 		
-		boolean hadActiveTransactions = false;
-		if(this.getFrameworkType().equals(Type.SERVER)) {
-			hadActiveTransactions = this.tenantPersistenceService.rollbackAnyActiveTransactions();
-
-			TenantManagerService.getInstance().resetTenant(getDefaultTenant());
-			
-			this.tenantPersistenceService.forgetInitialActions(getDefaultTenant());
-		}
-
 		if(this.ephemeralServiceManager != null) {
 			try {
 				this.ephemeralServiceManager.stopAsync().awaitStopped(30, TimeUnit.SECONDS);
@@ -335,60 +335,110 @@ public abstract class FrameworkTest implements IntegrationTest {
 			ImmutableCollection<Service> failedServices = ephemeralServiceManager.servicesByState().get(State.FAILED);
 			Assert.assertTrue(failedServices == null || failedServices.isEmpty());
 		}
-		
-		if(staticSessionManagerService.isRunning())
-			staticSessionManagerService.reset();
 
 		sessionManagerService = null;
 		propertyService = null;
 		metricsService = null;
-		if(TenantPersistenceService.exists()) {
-			disablePersistence();
-		}
-		TenantPersistenceService.setInstance(this.savedPersistenceServiceInstance);
-		MetricsService.setInstance(savedMetricsService);
 
-		Assert.assertFalse(hadActiveTransactions);
+		ITenantPersistenceService duringTestPersistenceInstance = TenantPersistenceService.getMaybeRunningInstance();
+		TenantPersistenceService.setInstance(this.savedPersistenceServiceInstance);
+		TenantManagerService.setInstance(savedTenantManagerServiceService);
+		MetricsService.setInstance(savedMetricsService);
+		PropertyService.setInstance(savedPropertyService);
+		this.setStaticDaos(this.savedDaos);
+
+		if(this.getFrameworkType().equals(Type.HIBERNATE) 
+				|| this.getFrameworkType().equals(Type.COMPLETE_SERVER)
+				|| duringTestPersistenceInstance == realTenantPersistenceService) {
+
+			// for persistence tests, or any test that may have accessed persistence, reset H2 stuff
+			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
+			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
+			realTenantManagerService.resetTenant(realDefaultTenant);
+			
+			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
+		} 
+
 		LOGGER.info("******************* Completed test: "+this.testName.getMethodName()+" *******************");
 	}
 
 	private void disablePersistence() {
-		TenantPersistenceService.setInstance(null);
-		
-		Aisle.DAO = null;
-		LedController.DAO = null;
-		Bay.DAO = null;
-		Che.DAO = null;
-		SiteController.DAO = null;
-		CodeshelfNetwork.DAO = null;
-		Container.DAO = null;
-		ContainerKind.DAO = null;
-		ContainerUse.DAO = null;
-		DropboxService.DAO = null;
-		EdiServiceABC.DAO = null;
-		EdiDocumentLocator.DAO = null;
-		IronMqService.DAO = null;
-		Facility.DAO = null;
-		Item.DAO = null;
-		ItemMaster.DAO = null;
-		ItemDdcGroup.DAO = null;
-		LocationAlias.DAO = null;
-		OrderDetail.DAO = null;
-		OrderHeader.DAO = null;
-		OrderGroup.DAO = null;
-		OrderLocation.DAO = null;
-		Path.DAO = null;
-		PathSegment.DAO = null;
-		Slot.DAO = null;
-		Tier.DAO = null;
-		UnspecifiedLocation.DAO = null;
-		UomMaster.DAO = null;
-		Vertex.DAO = null;
-		WorkArea.DAO = null;
-		WorkInstruction.DAO = null;
+		Map<Class<? extends IDomainObject>, ITypedDao<?>> nullDaos = createDaos(false); // no mock
+		this.tenantPersistenceService = null;
+		TenantPersistenceService.setInstance(null);		
+		setStaticDaos(nullDaos);
 	}
 
-	private void setRealPersistence() {
+	private void setStaticDaos(Map<Class<? extends IDomainObject>, ITypedDao<?>> daos) {
+		Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
+		for (Class<? extends IDomainObject> domainType : domainTypes) {
+			Field field = null;
+			try {
+				field = domainType.getField("DAO");
+			} catch (NoSuchFieldException e) {
+			} catch (SecurityException e) {
+				LOGGER.error("unexpected SecurityException setting up test", e);
+			}
+			if(field != null) {
+				try {
+					field.set(null, daos.get(domainType));
+				} catch (IllegalArgumentException e) {
+					LOGGER.error("unexpected IllegalArgumentException setting up test", e);
+				} catch (IllegalAccessException e) {
+					LOGGER.error("unexpected IllegalAccessException setting up test", e);
+				} // ObjectClass.DAO = null;
+			}
+		}
+	}
+	private Map<Class<? extends IDomainObject>, ITypedDao<?>> getStaticDaos() {
+		Map<Class<? extends IDomainObject>,ITypedDao<?>> daos = new HashMap<Class<? extends IDomainObject>,ITypedDao<?>>();
+		
+		Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
+		for (Class<? extends IDomainObject> domainType : domainTypes) {
+			Field field = null;
+			try {
+				field = domainType.getField("DAO");
+			} catch (NoSuchFieldException e) {
+			} catch (SecurityException e) {
+				LOGGER.error("unexpected SecurityException setting up test", e);
+			}
+			if(field != null) {
+				try {
+					daos.put(domainType, (ITypedDao<?>) field.get(null));
+				} catch (IllegalArgumentException e) {
+					LOGGER.error("unexpected IllegalArgumentException setting up test", e);
+				} catch (IllegalAccessException e) {
+					LOGGER.error("unexpected IllegalAccessException setting up test", e);
+				}
+			}
+		}
+		return daos;
+	}
+	private Map<Class<? extends IDomainObject>, ITypedDao<?>> createDaos(boolean createMock) {
+		Map<Class<? extends IDomainObject>,ITypedDao<?>> daos = new HashMap<Class<? extends IDomainObject>,ITypedDao<?>>();
+		
+		Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
+		for (Class<? extends IDomainObject> domainType : domainTypes) {
+			Field field = null;
+			try {
+				field = domainType.getField("DAO");
+			} catch (NoSuchFieldException e) {
+			} catch (SecurityException e) {
+				LOGGER.error("unexpected SecurityException setting up test", e);
+			}
+			if(field != null) {
+				if(createMock) {
+					daos.put(domainType, new MockDao<>());
+				} else {
+					daos.put(domainType, null);
+				}
+			}
+		}
+		return daos;
+	}
+	
+	private void setupRealPersistenceObjects() {
+		TenantManagerService.setInstance(realTenantManagerService);
 		this.tenantPersistenceService = realTenantPersistenceService;
 		TenantPersistenceService.setInstance(tenantPersistenceService);
 		
@@ -396,56 +446,17 @@ public abstract class FrameworkTest implements IntegrationTest {
 		Injector injector = Guice.createInjector(ServerMain.createDaoBindingModule());
 	}
 
-	private ITypedDao<? extends IDomainObject> getMockDao(Class<? extends IDomainObject> clazz) {
-		@SuppressWarnings("unchecked")
-		ITypedDao<? extends IDomainObject> result = (ITypedDao<? extends IDomainObject>) mockDaos.get(clazz);
-		if(result == null) {
-			result = new MockDao<>();
-			mockDaos.put(clazz,result);
-		}
-		return result;
-	}
-	
-	@SuppressWarnings("unchecked")
 	private void setDummyPersistence() {
-		tenantPersistenceService = Mockito.mock(ITenantPersistenceService.class);
+		Map<Class<? extends IDomainObject>,ITypedDao<?>> mockDaos = this.createDaos(true);
+
+		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
+		setStaticDaos(mockDaos);
+
+		TenantManagerService.setInstance(new MockTenantManagerService(tenantPersistenceService.getDefaultSchema()));
 		TenantPersistenceService.setInstance(tenantPersistenceService);
-		
-		Aisle.DAO = (ITypedDao<Aisle>) getMockDao(Aisle.class);
-		LedController.DAO = (ITypedDao<LedController>) getMockDao(LedController.class);
-		Bay.DAO = (ITypedDao<Bay>) getMockDao(Bay.class);
-		Che.DAO = (ITypedDao<Che>) getMockDao(Che.class);
-		SiteController.DAO = (ITypedDao<SiteController>) getMockDao(SiteController.class);
-		CodeshelfNetwork.DAO = (ITypedDao<CodeshelfNetwork>) getMockDao(CodeshelfNetwork.class);
-		Container.DAO = (ITypedDao<Container>) getMockDao(Container.class);
-		Container.DAO = (ITypedDao<Container>) getMockDao(Container.class);
-		ContainerKind.DAO = (ITypedDao<ContainerKind>) getMockDao(ContainerKind.class);
-		ContainerUse.DAO = (ITypedDao<ContainerUse>) getMockDao(ContainerUse.class);
-		DropboxService.DAO = (ITypedDao<DropboxService>) getMockDao(DropboxService.class);
-		EdiServiceABC.DAO = (ITypedDao<EdiServiceABC>) getMockDao(EdiServiceABC.class);
-		EdiDocumentLocator.DAO = (ITypedDao<EdiDocumentLocator>) getMockDao(EdiDocumentLocator.class);
-		IronMqService.DAO = (ITypedDao<IronMqService>) getMockDao(IronMqService.class);
-		Facility.DAO = (ITypedDao<Facility>) getMockDao(Facility.class);
-		Item.DAO = (ITypedDao<Item>) getMockDao(Item.class);
-		ItemMaster.DAO = (ITypedDao<ItemMaster>) getMockDao(ItemMaster.class);
-		ItemDdcGroup.DAO = (ITypedDao<ItemDdcGroup>) getMockDao(ItemDdcGroup.class);
-		LocationAlias.DAO = (ITypedDao<LocationAlias>) getMockDao(LocationAlias.class);
-		OrderDetail.DAO = (ITypedDao<OrderDetail>) getMockDao(OrderDetail.class);
-		OrderHeader.DAO = (ITypedDao<OrderHeader>) getMockDao(OrderHeader.class);
-		OrderGroup.DAO = (ITypedDao<OrderGroup>) getMockDao(OrderGroup.class);
-		OrderLocation.DAO = (ITypedDao<OrderLocation>) getMockDao(OrderLocation.class);
-		Path.DAO = (ITypedDao<Path>) getMockDao(Path.class);
-		PathSegment.DAO = (ITypedDao<PathSegment>) getMockDao(PathSegment.class);
-		Slot.DAO = (ITypedDao<Slot>) getMockDao(Slot.class);
-		Tier.DAO = (ITypedDao<Tier>) getMockDao(Tier.class);
-		UnspecifiedLocation.DAO = (ITypedDao<UnspecifiedLocation>) getMockDao(UnspecifiedLocation.class);
-		UomMaster.DAO = (ITypedDao<UomMaster>) getMockDao(UomMaster.class);
-		Vertex.DAO = (ITypedDao<Vertex>) getMockDao(Vertex.class);
-		WorkArea.DAO = (ITypedDao<WorkArea>) getMockDao(WorkArea.class);
-		WorkInstruction.DAO = (ITypedDao<WorkInstruction>) getMockDao(WorkInstruction.class);
 	}
 
-	protected final void startSitecon() {		
+	protected final void startSiteController() {		
 		// subclasses call this method to initialize the site controller and connect to the server API
 
 		CsClientEndpoint.setWebSocketContainer(staticWebSocketContainer);
@@ -462,7 +473,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			try {
 				siteconServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
 			} catch (TimeoutException e1) {
-				throw new RuntimeException("Could not start unit test services (site controller)",e1);
+				throw new RuntimeException("Could not start test services (site controller)",e1);
 			}
 		} 	
 		this.getFacility(); // ensure we have created a facility
@@ -471,31 +482,52 @@ public abstract class FrameworkTest implements IntegrationTest {
 		this.awaitConnection();
 	}
 
-	private void startServer() {
-		// this is only called once - first time server is required for a test
-		
-		List<Service> services = new ArrayList<Service>();
-		ITenantManager tms = TenantManagerService.getMaybeRunningInstance();
-		PersistenceService<ManagerSchema> mps = ManagerPersistenceService.getMaybeRunningInstance();
+	private void startPersistence() {
+		setupRealPersistenceObjects();
 
-		if(!tms.isRunning())
-			services.add(tms); 
-		if(!mps.isRunning())
-			services.add(mps); 
-		if(!realTenantPersistenceService.isRunning())
-			services.add(realTenantPersistenceService);
-		
-		services.add(staticSessionManagerService); 
-		services.add(staticPropertyService); 
-		
-		serverServiceManager = new ServiceManager(services);
-		try {
-			serverServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
-		} catch (TimeoutException e1) {
-			throw new RuntimeException("Could not start unit test services (server)",e1);
+		if(persistenceServiceManager == null) {
+			// initialize server for the first time
+			List<Service> services = new ArrayList<Service>();
+			ITenantManagerService tms = TenantManagerService.getMaybeRunningInstance();
+			PersistenceService<ManagerSchema> mps = ManagerPersistenceService.getMaybeRunningInstance();
+
+			if(!tms.isRunning())
+				services.add(tms); 
+			if(!mps.isRunning())
+				services.add(mps); 
+			if(!realTenantPersistenceService.isRunning())
+				services.add(realTenantPersistenceService);
+			
+			persistenceServiceManager = new ServiceManager(services);
+			try {
+				persistenceServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
+			} catch (TimeoutException e1) {
+				throw new RuntimeException("Could not start test services (persistence)",e1);
+			}
 		}
+		
+		// make sure default properties are in the database
+		TenantPersistenceService.getInstance().beginTransaction();
+        PropertyDao.getInstance().syncPropertyDefaults();
+        TenantPersistenceService.getInstance().commitTransaction();
+	}
+	
+	private void startServer() {
+        if(serverServiceManager == null) {
+			// initialize server for the first time
+    		List<Service> services = new ArrayList<Service>();
+    		services.add(staticSessionManagerService); 
+    		services.add(staticPropertyService); 
+    		
+    		serverServiceManager = new ServiceManager(services);
+    		try {
+    			serverServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
+    		} catch (TimeoutException e1) {
+    			throw new RuntimeException("Could not start test services (server)",e1);
+    		}
+        }
 
-		// set up server endpoint 
+        // [re]set up server endpoint 
 		try {
 			CsServerEndPoint.setSessionManagerService(staticSessionManagerService);
 			CsServerEndPoint.setMessageProcessor(staticServerMessageProcessor);
@@ -503,6 +535,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		catch(Exception e) {
 			LOGGER.debug("Exception setting session manager / message processor: " + e.toString());
 		}
+
+		apiServer = new WebApiServer();
+		apiServer.start(port, null, null, false, "./");
 	}
 	
 	private void awaitConnection() {
@@ -529,10 +564,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		LOGGER.debug("Embedded site controller and server connected");	
 	}
 
-	protected boolean ephemeralServicesShouldStartAutomatically() {
-		return true;
-	}
-
 	protected final void initializeEphemeralServiceManager() {
 		if(ephemeralServiceManager != null) {
 			throw new RuntimeException("could not initialize ephemeralServiceManager (already started)");
@@ -554,7 +585,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		List<Service> services = new ArrayList<Service>();
 		// services.add(new Service()); e.g.
 		
-		if(this.getFrameworkType().equals(Type.SERVER)) {
+		if(this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
 			this.workService = this.generateWorkService();
 			if(this.workService != null)
 				services.add(this.workService);
@@ -571,12 +602,20 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected final Facility generateTestFacility() {
+		String useFacilityId;
+		if(this.facilitiesGenerated > 0) {
+			useFacilityId = facilityId + Integer.toString(facilitiesGenerated);
+		} else {
+			useFacilityId = facilityId;
+		}
+		facilitiesGenerated++;
+		
 		boolean inTransaction = this.tenantPersistenceService.hasActiveTransaction(this.getDefaultTenant());
 		if(!inTransaction) this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.DAO.findByDomainId(null, facilityId);
+		Facility facility = Facility.DAO.findByDomainId(null, useFacilityId);
 		if (facility == null) {
-			facility = Facility.createFacility(getDefaultTenant(), facilityId, "", Point.getZeroPoint());
+			facility = Facility.createFacility(getDefaultTenant(), useFacilityId, "", Point.getZeroPoint());
 			Facility.DAO.store(facility);
 		}
 
@@ -607,8 +646,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 		}
 		return facility;
 	}
+	public Facility createFacility() {
+		if(facility == null)
+			return getFacility();
+		//else actually create another one
+		return generateTestFacility();
+	}
 	protected final Tenant getDefaultTenant() {
-		return TenantManagerService.getInstance().getDefaultTenant();
+		return TenantPersistenceService.getInstance().getDefaultSchema();
 	}
 
 }

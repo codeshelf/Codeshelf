@@ -33,7 +33,6 @@ import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.InventoryGenerator;
@@ -52,6 +51,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
@@ -60,7 +60,7 @@ import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
-public class LightServiceTest extends EdiTestABC {
+public class LightServiceTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LightServiceTest.class);
 	
 	@SuppressWarnings("unchecked")

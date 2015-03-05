@@ -300,7 +300,7 @@ public class CheProcessScanPick extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -362,7 +362,7 @@ public class CheProcessScanPick extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
@@ -597,7 +597,7 @@ public class CheProcessScanPick extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -672,7 +672,7 @@ public class CheProcessScanPick extends ServerTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();	
 		
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
@@ -712,7 +712,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.setUpOrdersItemsOnSamePath(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -788,7 +788,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.setUpOrdersWithCntrAndSequence(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		
-		this.startSitecon();
+		this.startSiteController();
 		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 

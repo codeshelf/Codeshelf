@@ -30,10 +30,10 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.WorkInstructionCount;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.MockDaoTest;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -45,7 +45,7 @@ import com.google.common.collect.Lists;
  * @author pmonteiro
  *
  */
-public class CheDeviceLogicTest extends DomainTestABC {
+public class CheDeviceLogicTest extends MockDaoTest {
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {

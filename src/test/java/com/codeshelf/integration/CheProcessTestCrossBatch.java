@@ -272,7 +272,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);
@@ -336,7 +336,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.findByPersistentId(facId);

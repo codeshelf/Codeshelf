@@ -7,4 +7,9 @@ public abstract class MinimalTest extends FrameworkTest {
 		return Type.MINIMAL;
 	}
 
+	@Override
+	public boolean ephemeralServicesShouldStartAutomatically() {
+		return false;
+	}
+
 }

@@ -14,9 +14,9 @@ import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup.Brightness
 import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup.Frequency;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
-import com.codeshelf.model.domain.DomainTestABC;
+import com.codeshelf.testframework.MockDaoTest;
 
-public class PosManagerDeviceLogicTest extends DomainTestABC {
+public class PosManagerDeviceLogicTest extends MockDaoTest {
 	private PosManagerDeviceLogic mController;
 	private NetGuid mControllerGuid;
 	

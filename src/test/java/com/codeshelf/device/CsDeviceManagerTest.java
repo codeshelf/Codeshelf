@@ -24,14 +24,14 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
-import com.codeshelf.model.dao.DAOTestABC;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 
-public class CsDeviceManagerTest extends DAOTestABC {
+public class CsDeviceManagerTest extends MockDaoTest {
 	
 	@Test
 	public void communicatesServerUnattachedToChe() throws DeploymentException, IOException {

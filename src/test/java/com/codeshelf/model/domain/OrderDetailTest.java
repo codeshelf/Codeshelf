@@ -12,8 +12,9 @@ import org.mockito.Mockito;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.testframework.MinimalTest;
 
-public class OrderDetailTest {
+public class OrderDetailTest extends MinimalTest {
 
 	ITypedDao<OrderDetail> mockDao;
 	private OrderDetail	subject;

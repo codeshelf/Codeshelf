@@ -35,6 +35,7 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
 
 /**
@@ -49,7 +50,7 @@ import com.codeshelf.validation.BatchResult;
  * There are other unit tests of EDI behaviors.
  *
  */
-public class OutboundOrderImporterTest extends EdiTestABC {
+public class OutboundOrderImporterTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrderImporterTest.class);
 
 	// the full set of fields known to the bean  (in the order of the bean, just for easier verification) is
@@ -60,7 +61,7 @@ public class OutboundOrderImporterTest extends EdiTestABC {
 	private UUID				facilityId;
 
 	@Before
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 
 		this.getTenantPersistenceService().beginTransaction();

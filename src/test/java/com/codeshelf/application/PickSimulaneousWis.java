@@ -15,7 +15,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
@@ -32,16 +31,13 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author jon ranstrom
  *
  */
-public class PickSimulaneousWis extends EdiTestABC {
-
-	static {
-		JvmProperties.load("test");
-	}
+public class PickSimulaneousWis extends ServerTest {
 
 	@SuppressWarnings({ "unused" })
 	private Facility setUpSimpleNoSlotFacility(String inOrganizationName) {
