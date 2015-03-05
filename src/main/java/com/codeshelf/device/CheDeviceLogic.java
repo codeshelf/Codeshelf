@@ -659,6 +659,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			return;
 		}
 
+		// Clean up any potential newline or carriage returns.
+		inCommandStr = inCommandStr.replaceAll("[\n\r]", "");
+		
 		LOGGER.info(this + " received scan command: " + inCommandStr);
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
