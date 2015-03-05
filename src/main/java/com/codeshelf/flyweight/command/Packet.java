@@ -81,11 +81,7 @@ public final class Packet implements IPacket {
 	 *  @param inDstAddr
 	 *  @throws NullPointerException
 	 */
-	public Packet(final ICommand inCommand,
-		final NetworkId inNetworkId,
-		final NetAddress inSrcAddr,
-		final NetAddress inDstAddr,
-		final boolean inAckRequested) {
+	public Packet(final ICommand inCommand, final NetworkId inNetworkId, final NetAddress inSrcAddr, final NetAddress inDstAddr) {
 
 		mNetworkId = inNetworkId;
 		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);

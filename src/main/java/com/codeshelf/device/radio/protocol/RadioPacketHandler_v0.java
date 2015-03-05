@@ -3,9 +3,11 @@ package com.codeshelf.device.radio.protocol;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.radio.ChannelInfo;
 import com.codeshelf.device.radio.RadioController;
+import com.codeshelf.device.radio.RadioControllerPacketIOService;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.AckStateEnum;
@@ -34,11 +37,15 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
 import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 
 public class RadioPacketHandler_v0 implements IRadioPacketHandler {
-	private static final Logger										LOGGER	= LoggerFactory.getLogger(RadioPacketHandler_v0.class);
+	private static final Logger										LOGGER			= LoggerFactory.getLogger(RadioPacketHandler_v0.class);
+	// Ack Id must start from 1
+	private final AtomicInteger										mAckId			= new AtomicInteger(1);
+	private static final int										ACK_QUEUE_SIZE	= 200;
 
 	private final NetAddress										mServerAddress;
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
@@ -49,14 +56,32 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	private final List<IRadioControllerEventListener>				mEventListeners;
 	private final ChannelInfo[]										mChannelInfo;
 	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
+	//private final RadioController									radioController;
+	private final RadioControllerPacketIOService					packetIOService;
 
 	public RadioPacketHandler_v0(NetAddress mServerAddress,
 		ConcurrentMap<NetAddress, BlockingQueue<IPacket>> mPendingAcksMap,
-		Map<NetAddress, INetworkDevice> mDeviceNetAddrMap) {
+		Map<NetAddress, INetworkDevice> mDeviceNetAddrMap,
+		NetworkId broadcastNetworkId,
+		NetAddress broadcastAddress,
+		AtomicBoolean mChannelSelected,
+		List<IRadioControllerEventListener> mEventListeners,
+		ChannelInfo[] mChannelInfo,
+		Map<NetGuid, INetworkDevice> mDeviceGuidMap,
+		IRadioController radioController,
+		RadioControllerPacketIOService packetIOService) {
 		super();
 		this.mServerAddress = mServerAddress;
 		this.mPendingAcksMap = mPendingAcksMap;
 		this.mDeviceNetAddrMap = mDeviceNetAddrMap;
+		this.broadcastNetworkId = broadcastNetworkId;
+		this.broadcastAddress = broadcastAddress;
+		this.mChannelSelected = mChannelSelected;
+		this.mEventListeners = mEventListeners;
+		this.mChannelInfo = mChannelInfo;
+		this.mDeviceGuidMap = mDeviceGuidMap;
+		//this.radioController = radioController;
+		this.packetIOService = packetIOService;
 	}
 
 	@Override
@@ -141,10 +166,10 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
 				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
-			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
+			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr);
 			ackCmd.setPacket(ackPacket);
 			ackPacket.setAckId(inAckId);
-			sendSpacedPacket(ackPacket);
+			sendOutboundPacket(ackPacket, false);
 
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -279,7 +304,9 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 					new NetChannelValue((byte) 0),
 					new NetChannelValue((byte) 0));
 
-				sendCommand(netCheck, broadcastAddress, false);
+				IPacket packet = new Packet(netCheck, packetIOService.getNetworkId(), mServerAddress, broadcastAddress);
+				inCommand.setPacket(packet);
+				sendOutboundPacket(packet, false);
 			}
 		} else {
 			// This is a net-check response.
@@ -416,7 +443,10 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 						foundDevice.getAddress(),
 						foundDevice.getSleepSeconds());
 
-					sendCommand(assignCmd, broadcastNetworkId, broadcastAddress, false);
+					IPacket packet = new Packet(assignCmd, broadcastNetworkId, mServerAddress, broadcastAddress);
+					inCommand.setPacket(packet);
+					sendOutboundPacket(packet, false);
+
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 
 				} finally {
@@ -485,10 +515,78 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 				ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 
 				// Send the command.
-				sendCommand(ackCmd, inSrcAddr, false);
+				IPacket packet = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, inSrcAddr);
+				inCommand.setPacket(packet);
+				sendOutboundPacket(packet, false);
 			} finally {
 				ContextLogging.clearNetGuid();
 			}
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com
+	 * .gadgetworks.flyweight.command.ICommand,
+	 * com.gadgetworks.flyweight.command.NetworkId,
+	 * com.gadgetworks.flyweight.command.NetAddress, boolean)
+	 */
+	private void sendOutboundPacket(IPacket packet, boolean isAckRequested) {
+		/*
+		 * Certain commands can request the remote to ACK (to guarantee that
+		 * the command arrived). Most packets will not contain a command
+		 * that requests and ACK, so normally packets will just get sent
+		 * right here.
+		 * 
+		 * If a packet's command requires an ACK then we perform the
+		 * following steps:
+		 * 
+		 * - Check that the packet address is something other than a
+		 * broadcast network ID or network address. (We don't support
+		 * broadcast ACK.) - If a packet queue does not exist for the
+		 * destination then: 1. Create a packet queue for the destination.
+		 * 2. Put the packet in the queue. 3. Send the packet. - If a packet
+		 * queue does exist for the destination then just put the packet in
+		 * it.
+		 */
+
+		if ((isAckRequested) && (packet.getNetworkId().getValue() != (IPacket.BROADCAST_NETWORK_ID))
+				&& (packet.getDstAddr().getValue() != (IPacket.BROADCAST_ADDRESS))) {
+
+			// If we're pending an ACK then assign an ACK ID.
+			int nextAckId = mAckId.getAndIncrement();
+			while (nextAckId > Byte.MAX_VALUE) {
+				mAckId.compareAndSet(nextAckId, 1);
+				nextAckId = mAckId.get();
+			}
+
+			packet.setAckId((byte) nextAckId);
+			packet.setAckState(AckStateEnum.PENDING);
+
+			// Add the command to the pending ACKs map, and increment the command ID counter.
+			BlockingQueue<IPacket> queue = mPendingAcksMap.get(packet.getDstAddr());
+			if (queue == null) {
+				queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
+				BlockingQueue<IPacket> existingQueue = mPendingAcksMap.putIfAbsent(packet.getDstAddr(), queue);
+				if (existingQueue != null) {
+					queue = existingQueue;
+				}
+			}
+
+			// If the ACK queue is too full then pause.
+			boolean success = queue.offer(packet);
+			while (!success) {
+				// Given an ACK timeout of 20ms and a read frequency of 20ms. If the max queue size is over 20 (and it should be)
+				// then we can drop the earlier packets since they should be timed out anyway.
+				IPacket packetToDrop = queue.poll();
+				LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}", queue.size(), packetToDrop);
+				success = queue.offer(packet);
+			}
+			LOGGER.debug("Packet is now pending ACK: {}", packet);
+		} else {
+			packetIOService.handleOutboundPacket(packet);
 		}
 	}
 

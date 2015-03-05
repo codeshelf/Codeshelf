@@ -18,77 +18,60 @@ public interface IRadioController extends Runnable {
 
 	// --------------------------------------------------------------------------
 	/**
-	 *  Receive the next command from the controller.
-	 *  @param inCommand	The command sent.
-	 *  @param inSrcAddr	The source address that sent the command.
-	 */
-	void receiveCommand(ICommand inCommand, NetAddress inSrcAddr);
-
-	// --------------------------------------------------------------------------
-	/**
 	 *  Send a command to the controller.
 	 *  @param inCommand		The command to send.
 	 *  @param inDstAddr		The destination address for the command.
 	 */
 	void sendCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested);
-	
-	// --------------------------------------------------------------------------
-	/**
-	 *  Send a command to the controller.
-	 *  @param inCommand		The command to send.
-	 *  @param inNetworkId	The network type (real/virtual).
-	 *  @param inDstAddr		The destination address for the command.
-	 */
-	void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *	Set the network ID (call before startController) 
 	 */
 	void setNetworkId(final NetworkId inNetworkId);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *	Perform a controlled start of the controller.
 	 */
 	void startController(byte inPreferredChannel);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *	Perform a controlled shutdown of the controller.
 	 */
 	void stopController();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChannel
 	 */
 	void setRadioChannel(byte inChannel);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
 	byte getRadioChannel();
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *	Add an event listener to the controller.
 	 */
 	void addControllerEventListener(IRadioControllerEventListener inControllerEventListener);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inNetworkDevice
 	 */
 	void addNetworkDevice(INetworkDevice inNetworkDevice);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inNetworkDevice
 	 */
 	void removeNetworkDevice(INetworkDevice inNetworkDevice);
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inGuid
@@ -101,12 +84,11 @@ public interface IRadioController extends Runnable {
 	 * @return
 	 */
 	boolean isRunning();
-	
+
 	IGatewayInterface getGatewayInterface();
 
-	
 	NetGuid getNetGuidFromNetAddress(byte networkAddr);
-	
+
 	NetGuid getNetGuidFromNetAddress(NetAddress netAddress);
 
 }

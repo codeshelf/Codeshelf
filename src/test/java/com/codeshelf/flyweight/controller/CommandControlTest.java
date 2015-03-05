@@ -43,13 +43,13 @@ public final class CommandControlTest {
 	private static final Byte	FREQ					= 4;
 	private static final Byte	DUTYCYCLE				= 5;
 
-	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
-			MAX_VALUE, FREQ, DUTYCYCLE					};
-	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
-			MAX_VALUE, FREQ, DUTYCYCLE					};
+	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER,
+			INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE };
+	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER,
+			INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE };
 
-	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
-		MAX_VALUE, FREQ, DUTYCYCLE };
+	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM,
+			REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE };
 
 	protected ICommand createCommandABC() throws Exception {
 		return new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
@@ -108,7 +108,7 @@ public final class CommandControlTest {
 		dstAddr = new NetAddress(IPacket.ADDRESS_BITS);
 
 		// Create a new packet to send to the output stream.
-		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr, false);
+		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr);
 
 		// Stream the packet out.
 		packet.toStream(outputStream);

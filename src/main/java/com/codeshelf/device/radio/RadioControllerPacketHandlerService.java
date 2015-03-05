@@ -40,6 +40,8 @@ public class RadioControllerPacketHandlerService {
 
 	private final RadioController									radioController;
 
+	//private final Map<>
+
 	public RadioControllerPacketHandlerService(RadioController radioController) {
 		super();
 		this.radioController = radioController;
@@ -73,21 +75,17 @@ public class RadioControllerPacketHandlerService {
 			// But we should submit only if we succeeded in adding the packet to
 			// the queue!
 			if (wasAddedToQueue && wasQueueOriginallyEmpty) {
-				executor.submit(new PacketHandler(queue));
+				executor.submit(new InboundPacketHandler(queue));
 			}
 		}
 
 		return wasAddedToQueue;
 	}
 
-	public void shutdown() {
-		executor.shutdown();
-	}
-
-	private final class PacketHandler implements Runnable {
+	private final class InboundPacketHandler implements Runnable {
 		private final BlockingQueue<IPacket>	queue;
 
-		public PacketHandler(BlockingQueue<IPacket> queue) {
+		public InboundPacketHandler(BlockingQueue<IPacket> queue) {
 			super();
 			this.queue = queue;
 		}
@@ -129,4 +127,13 @@ public class RadioControllerPacketHandlerService {
 		}
 
 	}
+
+	public void handleOutboundPacket(IPacket packet) {
+
+	}
+
+	public void shutdown() {
+		executor.shutdown();
+	}
+
 }
