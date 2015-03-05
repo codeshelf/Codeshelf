@@ -17,7 +17,6 @@ import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.util.ThreadUtils;
 
 public class PickSimulator {
 
@@ -279,24 +278,11 @@ public class PickSimulator {
 	}
 
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			CheStateEnum currentState = cheDeviceLogic.getCheStateEnum();
-			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
-			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
-			// some of the side effects after this call.
-			if (currentState.equals(state) && !cheDeviceLogic.inSetState()) {
-				// expected state found - all good
-				return;
-			}
-		}
-		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
-		String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s, currentState: %s", 
-				state, timeoutInMillis, existingState,  cheDeviceLogic.inSetState(), cheDeviceLogic.getCheStateEnum());
+		CheStateEnum lastState = cheDeviceLogic.waitForCheState(state, timeoutInMillis);
+		String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s", 
+				state, timeoutInMillis, lastState,  cheDeviceLogic.inSetState());
 		LOGGER.error(theProblem);
-		Assert.fail(theProblem);
+		Assert.assertEquals(theProblem, state, lastState);
 	}
 
 	public boolean hasLastSentInstruction(byte position) {

@@ -10,18 +10,27 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.hamcrest.Description;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.OutboundOrderImporterTest;
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.CommandControlSetPosController;
+import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -30,6 +39,8 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.WorkInstructionCount;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -37,6 +48,7 @@ import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 /**
@@ -46,6 +58,72 @@ import com.google.common.collect.Lists;
  *
  */
 public class CheDeviceLogicTest extends DomainTestABC {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheDeviceLogicTest.class);
+
+	@Test
+	public void cheSetupAfterCompleteClearsPosCon() {
+		int posconPosition = 1;
+		String containerId = "CONTAINER9";
+		int wiQuantity = 1;
+		
+		IRadioController radioController = mock(IRadioController.class);
+		ICsDeviceManager deviceManager = mock(ICsDeviceManager.class);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), deviceManager, radioController);
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
+		cheDeviceLogic.startDevice();
+		
+		cheDeviceLogic.scanCommandReceived("U%PICKER1");
+
+		cheDeviceLogic.scanCommandReceived("C%" + containerId);
+		
+		cheDeviceLogic.scanCommandReceived("P%" + posconPosition);
+		
+		cheDeviceLogic.scanCommandReceived("X%START");
+		WorkInstructionCount wiCount = new WorkInstructionCount(1, 0, 0, 0,0);
+		cheDeviceLogic.processWorkInstructionCounts(1, ImmutableMap.<String, WorkInstructionCount>of(containerId, wiCount));
+		cheDeviceLogic.scanCommandReceived("X%START");
+		
+		WorkInstruction wi = mock(WorkInstruction.class, Mockito.CALLS_REAL_METHODS);
+		wi.setType(WorkInstructionTypeEnum.PLAN);
+		wi.setStatus(WorkInstructionStatusEnum.NEW);
+		wi.setPickInstruction("fakePickInstruction");
+		wi.setLedCmdStream("[]");
+		wi.setPlanQuantity(wiQuantity);
+		wi.setPlanMinQuantity(wiQuantity);
+		wi.setPlanMaxQuantity(wiQuantity);
+		
+		Mockito.when(wi.getContainerId()).thenReturn(containerId);
+		Mockito.when(wi.getItemId()).thenReturn("fakeItemId");
+		
+		cheDeviceLogic.assignWork(ImmutableList.<WorkInstruction>of(wi), "ASSIGN WORK MESSAGE?");
+		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.waitForCheState(CheStateEnum.DO_PICK, 5000));
+		pressButton(cheDeviceLogic, posconPosition, wiQuantity);
+		Assert.assertEquals(CheStateEnum.PICK_COMPLETE, cheDeviceLogic.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000));
+		
+		cheDeviceLogic.scanCommandReceived("X%SETUP");
+		
+		LinkedList<ICommand> commands =  posconCommands(radioController, 1);
+		
+		LOGGER.info(commands.toString());
+		
+		Collections.reverse(commands);
+		for (ICommand command : commands) { //find last poscon related message
+			if (command instanceof CommandControlClearPosController 
+				|| command instanceof CommandControlSetPosController) {
+				Assert.assertTrue("Last command: " + command,  command instanceof CommandControlClearPosController);
+				break;
+				
+			}
+		}
+		
+		
+	}
+	
+	private LinkedList<ICommand> posconCommands(IRadioController radioController, int posconPosition) {
+		ArgumentCaptor<ICommand> commands = ArgumentCaptor.forClass(ICommand.class);
+		verify(radioController, Mockito.atLeastOnce()).sendCommand(commands.capture(), any(NetAddress.class), any(Boolean.class));
+		return new LinkedList<ICommand>(commands.getAllValues());
+	}
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {
