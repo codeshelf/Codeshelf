@@ -226,6 +226,19 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		}
 	}
 
+	@Override
+	public final Criteria createCriteria() {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(getDaoClass());
+		return criteria;
+	}
+	
+	@Override
+	public List<T> findByCriteriaQuery(Criteria criteria) {
+		List<T> results = criteria.list();
+		return results;
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#getAll()

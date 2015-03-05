@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 
 import com.codeshelf.model.domain.IDomainObject;
@@ -46,5 +47,9 @@ public interface ITypedDao<T> extends IDao {
 	List<T> getAll();
 
 	Class<T> getDaoClass();
+
+	List<T> findByCriteriaQuery(Criteria criteria);
+
+	Criteria createCriteria();
 	
 }
