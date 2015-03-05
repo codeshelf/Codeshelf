@@ -74,7 +74,7 @@ public class UiUpdateService implements IApiService {
 			throw new InputValidationException(errors);
 		}
 
-		// FIXME - huffa
+		// FIXME - huffa DEV-645
 		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,

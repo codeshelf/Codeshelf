@@ -229,7 +229,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			
 			String theItemID = inCsvBean.getItemId();
 			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
-			Gtin gtinMap = upsertGtinMap(inFacility, itemMaster, inCsvBean, uomMaster);
+			Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
 			String theLocationID = inCsvBean.getLocationId();
 			Location location = inFacility.findSubLocationById(theLocationID);
@@ -266,7 +266,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * Will not update a GtinMap. 
 	 * 
 	 */
-	private Gtin upsertGtinMap(final Facility inFacility, final ItemMaster inItemMaster, 
+	private Gtin upsertGtin(final Facility inFacility, final ItemMaster inItemMaster, 
 		final InventorySlottedCsvBean inCsvBean, UomMaster uomMaster) {
 		
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
@@ -285,10 +285,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			if (previousItemMaster.equals(inItemMaster)) {
 				UomMaster m = inFacility.getUomMaster(inCsvBean.getUom());
 				
-				// FIXME Should we be updating the UOM here? Currently doing this because
-				// we are probably updating the unit of measure of the item as well since it
-				// already exists.
-				if (!m.equals(uomMaster)) {
+				if (!m.equals(result.getUomMaster())) {
 					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
 						inCsvBean.getGtin(), m.getDomainId(), uomMaster.getDomainId());
 					result.setUomMaster(uomMaster);
@@ -298,12 +295,22 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
 					inCsvBean.getGtin(), inItemMaster.getDomainId());
 				
-				// Moving item masters for Gtin
-				previousItemMaster.removeGtinMapFromMaster(result);
+				// Remove from item
+				List<Item> items = previousItemMaster.getItems();
+				for (Item item : items) {
+					if (item.getGtin().equals(result)) {
+						item.setGtin(null);
+						break;
+					}
+				}
 				
-				result.setParent(inItemMaster);
+				// Moving item masters for Gtin
+				previousItemMaster.removeGtinFromMaster(result);
+				
+				result.setParent(null);
 				result.setUomMaster(uomMaster);
-				inItemMaster.addGtinMapToMaster(result);
+				inItemMaster.addGtinToMaster(result);
+				
 			}
 		} else {
 			result = new Gtin();
@@ -312,7 +319,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			result.setParent(inItemMaster);
 			result.setUomMaster(uomMaster);
 			
-			inItemMaster.addGtinMapToMaster(result);
+			inItemMaster.addGtinToMaster(result);
 			
 			try {
 				Gtin.DAO.store(result);
