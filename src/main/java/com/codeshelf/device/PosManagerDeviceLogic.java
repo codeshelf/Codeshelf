@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -21,7 +20,8 @@ import com.codeshelf.flyweight.controller.IRadioController;
 public class PosManagerDeviceLogic extends PosConDeviceABC{
 	private static final Logger	LOGGER							= LoggerFactory.getLogger(PosManagerDeviceLogic.class);
 	
-	private Map<NetGuid, Map<Byte, PosControllerInstr>>	mDevicePosConCmdMap	= new HashMap<NetGuid, Map<Byte, PosControllerInstr>>();
+	//Instructions can come from other site controller (getGuid()) or from other devices (CHEs)
+	private Map<NetGuid, Map<Byte, PosControllerInstr>>	mPosInstructionBySource = new HashMap<NetGuid, Map<Byte, PosControllerInstr>>();
 	
 	public PosManagerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
@@ -56,17 +56,42 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		updatePosCons();
 	}
 
-	public final void clearAllPosConCmdsAndSend() {
-		mDevicePosConCmdMap.clear();
+	public final void clearAllPosConInstrsAndSend() {
+		mPosInstructionBySource.clear();
 		clearAllPositionControllers();
 	}
 
-	public final void removePosConCmdsForCheAndSend(final NetGuid inNetGuid) {
-		String cheGuidStr = inNetGuid.getHexStringNoPrefix();
+	/**
+	 * Remove all PosCon instructions from a single source device
+	 * Update PosCon displays
+	 */
+	public final void removePosConInstrsForSourceAndSend(final NetGuid inNetGuid) {
+		String sourceStr = inNetGuid.getHexStringNoPrefix();
 
-		LOGGER.info("Clear LEDs for CHE:" + cheGuidStr + " on " + getMyGuidStr());
+		LOGGER.info("Clear PosCons for Source:" + sourceStr + " on " + getMyGuidStr());
 
-		mDevicePosConCmdMap.remove(inNetGuid);
+		mPosInstructionBySource.remove(inNetGuid);
+		// Only send the command if the device is known active.
+		if (isDeviceAssociated()) {
+			updatePosCons();
+		}
+	}
+
+	/**
+	 * Remove PosCon instruction for a specific source device / position combination
+	 * Update PosCon displays
+	 */
+	public final void removePosConInstrsForSourceAndSend(NetGuid inNetGuid, List<Byte> positions) {
+		String sourceStr = inNetGuid.getHexStringNoPrefix();
+
+		Map<Byte, PosControllerInstr> sourceInsts = mPosInstructionBySource.get(inNetGuid);		
+		for (Byte position : positions) {
+			LOGGER.info("Clear PosCon " + position + " for Source:" + sourceStr + " on " + getMyGuidStr());
+			sourceInsts.remove(position);
+		}
+		
+		if (sourceInsts.isEmpty()) {mPosInstructionBySource.remove(inNetGuid);}
+		
 		// Only send the command if the device is known active.
 		if (isDeviceAssociated()) {
 			updatePosCons();
@@ -74,25 +99,26 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	}
 	
 	//LedSample isn't used yet.
-	public final void addPosConCmdFor(NetGuid inNetGuid, LedSample inLedSample, byte position, byte quantity, byte min, byte max, byte blink, byte brightness) {
+	public final void addPosConInstrFor(NetGuid inNetGuid, LedSample inLedSample, byte position, byte quantity, byte min, byte max, byte blink, byte brightness) {
 		PosControllerInstr cmd = new PosControllerInstr(position, quantity, min, max, blink, brightness);
-		addPosConCmdFor(inNetGuid, cmd);
+		addPosConInstrFor(inNetGuid, cmd);
 	}
 	
-	public final void addPosConCmdFor(NetGuid inNetGuid, PosControllerInstr cmd) {
-		Map<Byte, PosControllerInstr> posConCmds = mDevicePosConCmdMap.get(inNetGuid);
-		if (posConCmds == null) {
-			posConCmds = new HashMap<Byte, PosControllerInstr>();
-			mDevicePosConCmdMap.put(inNetGuid, posConCmds);
+	public final void addPosConInstrFor(NetGuid inNetGuid, PosControllerInstr cmd) {
+		Map<Byte, PosControllerInstr> posConInstrs = mPosInstructionBySource.get(inNetGuid);
+		if (posConInstrs == null) {
+			posConInstrs = new HashMap<Byte, PosControllerInstr>();
+			mPosInstructionBySource.put(inNetGuid, posConInstrs);
 		}
-		posConCmds.put(cmd.getPosition(), cmd);
+		cmd.setPostedToPosConController(System.currentTimeMillis());
+		posConInstrs.put(cmd.getPosition(), cmd);
 	}
 	
 	
-	public final PosControllerInstr getPosConCmdFor(NetGuid inNetGuid, byte inPosition) {
-		Map<Byte, PosControllerInstr> posConCmds = mDevicePosConCmdMap.get(inNetGuid);
-		if (posConCmds != null) {
-			return posConCmds.get(inPosition);
+	public final PosControllerInstr getPosConInstrFor(NetGuid inNetGuid, byte inPosition) {
+		Map<Byte, PosControllerInstr> posConInstrs = mPosInstructionBySource.get(inNetGuid);
+		if (posConInstrs != null) {
+			return posConInstrs.get(inPosition);
 		}
 		return null;
 	}
@@ -102,16 +128,16 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	 */
 	private void clearExtraPosConsFromMap() {
 		NetGuid thisPosConControllerGuid = getGuid();
-		mDevicePosConCmdMap.remove(thisPosConControllerGuid);
+		mPosInstructionBySource.remove(thisPosConControllerGuid);
 	}
 
-	public final void lightExtraPosCons(int inSeconds, String inCommands) {
+	public final void lightExtraPosCons(int inSeconds, String inInstructions) {
 		clearExtraPosConsFromMap();
 
-		List<PosConCmdGroup> posConCmdGroups = PosConInstrGroupSerializer.deserializePosConCmdString(inCommands);
+		List<PosConCmdGroup> posConCmdGroups = PosConInstrGroupSerializer.deserializePosConCmdString(inInstructions);
 		for (PosConCmdGroup cmd : posConCmdGroups) {
 			NetGuid netGuid = new NetGuid(cmd.getControllerId());
-			addPosConCmdFor(netGuid, null, cmd.getPosNum(), cmd.getQuantity(), cmd.getMin(), cmd.getMax(), cmd.getFrequency().toByte(), cmd.getBrightness().toByte());
+			addPosConInstrFor(netGuid, null, cmd.getPosNum(), cmd.getQuantity(), cmd.getMin(), cmd.getMax(), cmd.getFrequency().toByte(), cmd.getBrightness().toByte());
 		}
 		//setLightsExpireTimer(inSeconds); 
 		updatePosCons();
@@ -131,10 +157,23 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	
 	public final void updatePosCons() {
 		clearAllPositionControllers();
-		for (Entry<NetGuid, Map<Byte, PosControllerInstr>> devices : mDevicePosConCmdMap.entrySet()) {
-			Map<Byte, PosControllerInstr> devCommandsMap = devices.getValue();
-			List<PosControllerInstr> devCommands = new ArrayList<PosControllerInstr>(devCommandsMap.values());
-			sendPositionControllerInstructions(devCommands);
+		Map<Byte, PosControllerInstr> latestInstructionsForPosition = new HashMap<Byte, PosControllerInstr>();
+		List<Map<Byte, PosControllerInstr>> instructionsBySourceList = new ArrayList<Map<Byte, PosControllerInstr>> (mPosInstructionBySource.values());
+		
+		//Find the latest instruction posted to each PosCon
+		for (Map<Byte, PosControllerInstr> instructionsFromSingleSource : instructionsBySourceList) {
+			List<PosControllerInstr> instructionList = new ArrayList<PosControllerInstr> (instructionsFromSingleSource.values());
+			for (PosControllerInstr instruction : instructionList){
+				Byte position = instruction.getPosition();
+				PosControllerInstr latestInstructionForPosition = latestInstructionsForPosition.get(position);
+				if (latestInstructionForPosition == null || latestInstructionForPosition.getPostedToPosConController() < instruction.getPostedToPosConController()) {
+					latestInstructionsForPosition.put(position, instruction);
+				}
+			}
 		}
+
+		//Display latest instructions on PosCons
+		List<PosControllerInstr> latestCommandsList = new ArrayList<PosControllerInstr>(latestInstructionsForPosition.values());
+		sendPositionControllerInstructions(latestCommandsList);
 	}
 }

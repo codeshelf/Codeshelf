@@ -5,7 +5,6 @@ import java.util.List;
 import lombok.Getter;
 
 import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;

@@ -74,5 +74,4 @@ public abstract class PosConDeviceABC extends DeviceLogicABC{
 
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
-
 }

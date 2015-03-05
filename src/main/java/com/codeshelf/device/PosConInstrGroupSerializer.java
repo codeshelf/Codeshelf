@@ -110,12 +110,12 @@ public class PosConInstrGroupSerializer {
 	public static class PosConCmdGroup implements Validatable{		
 		@Accessors(prefix = "m")
 		@Getter @Setter @Expose
-		@SerializedName(value = "ctrl")
+		@SerializedName(value = "controllerId")
 		private String			mControllerId;
 
 		@Accessors(prefix = "m")
 		@Getter @Setter @Expose
-		@SerializedName(value = "pos")
+		@SerializedName(value = "posNum")
 		private Byte			mPosNum;
 
 		@Accessors(prefix = "m")
@@ -136,16 +136,32 @@ public class PosConInstrGroupSerializer {
 		@Accessors(prefix = "m")
 		@Getter @Setter @Expose
 		@SerializedName(value = "brightness")
-		private Brightness			mBrightness;
+		private Brightness		mBrightness = Brightness.BRIGHT;
 
 		@Accessors(prefix = "m")
 		@Getter @Setter @Expose
 		@SerializedName(value = "frequency")
-		private Frequency			mFrequency;
+		private Frequency		mFrequency = Frequency.SOLID;
+		
+		@Accessors(prefix = "m")
+		@Getter @Setter @Expose
+		@SerializedName(value = "remove")
+		private String mRemove;
+		
+		@Accessors(prefix = "m")
+		@Getter
+		private boolean mRemoveAll = false;
+		
+		@Accessors(prefix = "m")
+		@Getter
+		private List<Byte> mRemovePos = new ArrayList<Byte>();
+		
+		private String mRemoveError = null;
+
 
 		public PosConCmdGroup(){}
 		
-		public PosConCmdGroup(String inController, Byte posNum, Byte quantity, Byte min, Byte max, Brightness brightness, Frequency frequency) {
+		public PosConCmdGroup(String inController, Byte posNum, Byte quantity, Byte min, Byte max, Brightness brightness, Frequency frequency, String remove) {
 			mControllerId = inController;
 			mPosNum = posNum;
 			mQuantity = quantity;
@@ -153,8 +169,28 @@ public class PosConInstrGroupSerializer {
 			mMax = max;
 			mBrightness = brightness;
 			mFrequency = frequency;
+			mRemove = remove;
 		}
 
+		public void processRemovedField(){
+			if (mRemove == null) {return;}
+			if ("all".equalsIgnoreCase(mRemove)){
+				mRemoveAll = true;
+				return;
+			}
+			try {
+				mRemovePos.clear();
+				String[] removePositionsStr = mRemove.split(",");
+				for (String positionSrt : removePositionsStr) {
+					mRemovePos.add(Byte.parseByte(positionSrt));
+				}
+			} catch (Exception e) {
+				mRemoveError = "Could not process posConCommands.remove";
+				LOGGER.error("posConCommands.remove expcts \"all\" or a list of Byte position values");
+				LOGGER.error(mRemoveError + " " + e);
+			}
+		}
+		
 		public int compareTo(PosConCmdGroup anotherPosConGroup) {
 			return Byte.compare(getPosNum(), anotherPosConGroup.getPosNum());
 		}
@@ -162,17 +198,27 @@ public class PosConInstrGroupSerializer {
 		@Override
 		public boolean isValid(ErrorResponse errors) {
 			boolean valid = true;
+			processRemovedField();
 			if (mControllerId == null) {
 				errors.addErrorMissingBodyParam("posConCommands.ctrl");
 				valid = false;
 			}
-			if (mPosNum == null) {
-				errors.addErrorMissingBodyParam("posConCommands.pos");
+			if (mRemoveError != null) {
+				errors.addError(mRemoveError);
 				valid = false;
 			}
-			if (mQuantity == null) {
-				errors.addErrorMissingBodyParam("posConCommands.quantity");
-				valid = false;
+			if (!mRemoveAll && mRemovePos.isEmpty()) {
+				if (mPosNum == null) {
+					errors.addErrorMissingBodyParam("posConCommands.pos");
+					valid = false;
+				}
+				if (mQuantity == null) {
+					errors.addErrorMissingBodyParam("posConCommands.quantity");
+					valid = false;
+				} else if (mQuantity < 0) {
+					errors.addError("provide a positive posConCommands.quantity");
+					valid = false;
+				}
 			}
 			return valid;
 		}

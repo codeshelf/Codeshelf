@@ -193,9 +193,13 @@ public class FacilityResource {
 			if (req.getPosConCommands() != null) {
 				for (PosConCmdGroup posCmd : req.getPosConCommands()) {
 					posCmd.fillMinMax();
-					PosControllerInstr instruction = new PosControllerInstr(posCmd.getPosNum(), posCmd.getQuantity(), posCmd.getMin(), posCmd.getMax(), 
-																			posCmd.getFrequency().toByte(), posCmd.getBrightness().toByte());
-					PosConControllerMessage message = new PosConControllerMessage(posCmd.getControllerId(), instruction);
+					PosControllerInstr instruction = null;
+					if (!posCmd.isRemoveAll() && posCmd.getRemovePos().isEmpty()){
+						instruction = new PosControllerInstr(posCmd.getPosNum(), posCmd.getQuantity(), posCmd.getMin(), posCmd.getMax(), 
+															 posCmd.getFrequency().toByte(), posCmd.getBrightness().toByte());						
+					}
+					PosConControllerMessage message = new PosConControllerMessage(posCmd.getControllerId(), instruction, posCmd.isRemoveAll(), posCmd.getRemovePos());
+					Thread.sleep(300);
 					sessionManagerService.sendMessage(users, message);
 				}
 			}

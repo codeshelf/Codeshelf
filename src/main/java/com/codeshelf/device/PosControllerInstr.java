@@ -93,15 +93,14 @@ public class PosControllerInstr {
 	@SerializedName(value = "b")
 	@Expose
 	private byte				mDutyCycle;
+	
+	@Accessors(prefix = "m")
+	@Getter @Setter
+	private long mPostedToPosConController = 0;
 
 	public PosControllerInstr() {}
 	
-	public PosControllerInstr(final byte inPosition,
-		final byte inReqQty,
-		final byte inMinQty,
-		final byte inMaxQty,
-		final byte inFreq,
-		final byte inDutyCycle) {
+	public PosControllerInstr(final byte inPosition, final byte inReqQty, final byte inMinQty, final byte inMaxQty, final byte inFreq, final byte inDutyCycle) {
 		mPosition = inPosition;
 		mReqQty = inReqQty;
 		mMinQty = inMinQty;

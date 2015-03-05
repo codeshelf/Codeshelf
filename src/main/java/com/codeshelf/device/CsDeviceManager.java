@@ -624,8 +624,15 @@ public class CsDeviceManager implements
 		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(netGuid);
 		if (device != null) {
 			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
-			device.addPosConCmdFor(netGuid, message.getInstruction());
-			device.updatePosCons();
+			if (message.isRemoveAll()){
+				device.removePosConInstrsForSourceAndSend(netGuid);
+			} else if (!message.getRemovePos().isEmpty()){
+				device.removePosConInstrsForSourceAndSend(netGuid, message.getRemovePos());
+			} else {
+				device.addPosConInstrFor(netGuid, message.getInstruction());
+				device.updatePosCons();
+			}
+			
 		} else {
 			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", netGuid);
 		}
