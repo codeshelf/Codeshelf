@@ -432,6 +432,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			if (wi != null) {
 				processShortPickYes(wi, 0);
+				
+				// Need to clear poscon
+				String containerId = wi.getContainerId();
+				if (containerId != null) {
+					for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
+						if (containerId.equals(entry.getValue())){
+							Byte position = Byte.valueOf(entry.getKey());
+							clearOnePositionController(position);
+						}
+					}
+				}
 			}
 		} else {
 			// Just return to showing the active picks.
