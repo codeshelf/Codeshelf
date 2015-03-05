@@ -1467,10 +1467,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Setup the CHE by clearing all the datastructures
 	 */
 	protected void setupChe() {
-		super.setupChe();
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
+		super.setupChe();
 
 	}
 
