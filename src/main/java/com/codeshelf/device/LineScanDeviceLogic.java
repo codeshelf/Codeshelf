@@ -329,6 +329,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case SCAN_SOMETHING:
 				setState(CheStateEnum.SCAN_SOMETHING_SHORT); 
 				break;
+			case SCAN_SOMETHING_SHORT:
+				break;
 				
 			default:
 				setReadyMsg("No job to short");
