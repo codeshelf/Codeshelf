@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.JvmProperties;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
@@ -35,6 +34,7 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
@@ -43,11 +43,8 @@ import com.google.common.util.concurrent.ServiceManager;
  * @author jeffw
  *
  */
-public class EdiProcessorTest /* extends EdiTestABC */{
+public class EdiProcessorTest extends MinimalTest {
 	private final Logger LOGGER = LoggerFactory.getLogger(EdiProcessorTest.class);
-	static {
-		JvmProperties.load("test");
-	}
 
 	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		List<Facility> list = new ArrayList<Facility>(1);

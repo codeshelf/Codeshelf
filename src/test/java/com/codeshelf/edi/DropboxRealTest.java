@@ -23,13 +23,14 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
 
 /**
  * @author jon ranstrom
  *
  */
-public class DropboxRealTest extends EdiTestABC {
+public class DropboxRealTest extends ServerTest {
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(DropboxRealTest.class);
 
 	private ICsvOrderImporter			mCsvOrderImporter;
@@ -56,7 +57,7 @@ public class DropboxRealTest extends EdiTestABC {
 		super();
 	}
 
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 
 		mCsvOrderImporter = createOrderImporter();

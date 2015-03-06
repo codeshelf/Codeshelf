@@ -19,12 +19,17 @@ public class PropertyService extends AbstractPropertyService {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyService.class);
 	
 	@Inject
-	private static IPropertyService theInstance;
+	private static IPropertyService theInstance = null;
 
 	@Inject
 	public PropertyService() {
 	}
-	
+	public static IPropertyService getMaybeRunningInstance() {
+		return theInstance;
+	}
+	public static boolean exists() {
+		return (theInstance != null);
+	}
 	public static IPropertyService getInstance() {
 		// not self initializing, better static inject it first...
 		try {

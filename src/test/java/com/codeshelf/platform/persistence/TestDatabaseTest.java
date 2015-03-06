@@ -9,10 +9,10 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.testframework.HibernateTest;
 
-public class TestDatabaseTest extends DomainTestABC {
+public class TestDatabaseTest extends HibernateTest {
 	// These tests should be run together, as the tests will not be meaningful if run one at a time.
 	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(TestDatabaseTest.class);

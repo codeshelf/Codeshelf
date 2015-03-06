@@ -23,7 +23,7 @@ import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.google.common.util.concurrent.AbstractIdleService;
 
-public class TenantManagerService extends AbstractIdleService implements ITenantManager {
+public class TenantManagerService extends AbstractIdleService implements ITenantManagerService {
 	public enum ShutdownCleanupReq {
 	NONE , 
 	DROP_SCHEMA , 
@@ -35,7 +35,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
 	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 60;
-	private static TenantManagerService theInstance = null;
+	private static ITenantManagerService theInstance = null;
 	
 	//@Getter
 	//int defaultShardId = -1;
@@ -49,25 +49,32 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		super();
 	}
 	
-	public final synchronized static ITenantManager getMaybeRunningInstance() {
+	public final synchronized static ITenantManagerService getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new TenantManagerService();
 		}
 		return theInstance;
 	}
-	public final static ITenantManager getNonRunningInstance() {
+	public final static ITenantManagerService getNonRunningInstance() {
 		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
-			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
+			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.getClass().getSimpleName());
 		}
 		return theInstance;
 	}
-	public final static ITenantManager getInstance() {
+	public final static ITenantManagerService getInstance() {
 		try {
 			getMaybeRunningInstance().awaitRunning(MAX_TENANT_MANAGER_WAIT_SECS,TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			throw new IllegalStateException("Timeout contacting tenant manager",e);
 		}
 		return theInstance;
+	}
+	public final static void setInstance(ITenantManagerService testInstance) {
+		// testing only!
+		theInstance = testInstance;
+	}
+	public static boolean exists() {
+		return (theInstance != null);
 	}
 	
 	private void initDefaultShard() {
@@ -247,7 +254,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			if(user != null) {
 				result = user;	
 			} else {
-				LOGGER.warn("authentication failed for user "+username);
+				LOGGER.warn("user not found: "+username);
 			}
 		} finally {
 			managerPersistenceService.commitTransaction();

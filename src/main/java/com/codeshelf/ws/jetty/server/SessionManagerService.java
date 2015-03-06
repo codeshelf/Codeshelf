@@ -297,8 +297,8 @@ public class SessionManagerService extends AbstractScheduledService {
 			throw new IllegalStateException("reset called while service state is "+this.state().toString());
 		}
 		try {
-			shutDown();
-			startUp();
+			teardown();
+			initialize();
 		} catch (Exception e) {
 			throw new RuntimeException("failed to reset state of SessionManagerService",e);
 		}
@@ -308,6 +308,10 @@ public class SessionManagerService extends AbstractScheduledService {
 	
 	@Override
 	protected synchronized void startUp() throws Exception {
+		initialize();	
+	}
+
+	private void initialize() {
 		activeSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.active");
 		activeSiteControllerSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.sitecontrollers");
 		totalSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.total");
@@ -319,11 +323,14 @@ public class SessionManagerService extends AbstractScheduledService {
 		
 		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
 		killIdle = Boolean.getBoolean("websocket.idle.kill");
-
 	}
-
+	
 	@Override
 	protected synchronized void shutDown() throws Exception {
+		teardown();
+	}
+
+	private void teardown() throws Exception {
 		LOGGER.info("shutting down session manager with {} active sessions",this.activeSessions.size());
 		Collection<UserSession> sessions = this.activeSessions.values();
 		for(UserSession session : sessions) {

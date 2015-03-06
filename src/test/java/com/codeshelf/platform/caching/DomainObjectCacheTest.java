@@ -5,12 +5,12 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.testframework.HibernateTest;
 
-public class DomainObjectCacheTest extends DomainTestABC {
+public class DomainObjectCacheTest extends HibernateTest {
 
 	@Test
 	public void testReturnActiveLocationsOnly() {

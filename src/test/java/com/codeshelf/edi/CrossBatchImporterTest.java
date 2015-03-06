@@ -28,17 +28,18 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author jeffw
  * 
  */
-public class CrossBatchImporterTest extends EdiTestABC {
+public class CrossBatchImporterTest extends ServerTest {
 	
 	private UUID facilityId;
 	
 	@Override
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 
 		this.getTenantPersistenceService().beginTransaction();

@@ -37,7 +37,7 @@ public class ObjectDeleteCommand extends CommandABC {
 			// First we find the parent object (by it's ID).
 			Class<?> classObject = Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				IDomainObject object = dao.findByPersistentId(objectIdId);
 				
 				// First locate an instance of the parent class.

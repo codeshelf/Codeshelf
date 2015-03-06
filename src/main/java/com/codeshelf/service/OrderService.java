@@ -47,6 +47,7 @@ public class OrderService implements IApiService {
 //				.setParameter("facilityUUID", uuid)
 //				.executeUpdate();
 
+		@SuppressWarnings("unused")
 		int odResult = session.createSQLQuery("update order_detail od set active = false FROM order_header oh WHERE od.parent_persistentid = oh.persistentid AND CAST(oh.parent_persistentid AS VARCHAR(50)) =  :facilityUUIDString")
 			.setParameter("facilityUUIDString", uuid.toString())
 			.executeUpdate();
@@ -55,6 +56,7 @@ public class OrderService implements IApiService {
 				.setParameter("facilityUUID", uuid)
 				.executeUpdate();
 
+		@SuppressWarnings("unused")
 		int ogResult = session.createQuery("update OrderGroup og set og.active = false where og.parent.persistentId = :facilityUUID")
 				.setParameter("facilityUUID", uuid)
 				.executeUpdate();

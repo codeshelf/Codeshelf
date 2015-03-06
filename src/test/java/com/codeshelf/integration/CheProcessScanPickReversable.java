@@ -212,7 +212,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testForwardForward() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -237,7 +237,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testReverseReverse() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -262,7 +262,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testForwardReverse() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -287,7 +287,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testReverseForward() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -311,7 +311,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testMultipleDoubleStarts() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -350,7 +350,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testForwardAndLocation() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -375,7 +375,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testReverseAndLocation() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -400,7 +400,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testForwardForwardThenJump() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -453,7 +453,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testReverseReverseThenJump() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		
@@ -505,7 +505,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	 */
 	@Test
 	public void testForwardForwardPickReversePickForward() throws IOException{
-		this.startSitecon();
+		this.startSiteController();
 
 		PickSimulator picker = setupTestPicker();
 		

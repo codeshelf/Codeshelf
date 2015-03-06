@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.testframework.MockDaoTest;
 
-public class PutwallTest extends EdiTestABC {
+public class PutwallTest extends MockDaoTest {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PutwallTest.class);

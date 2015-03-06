@@ -16,12 +16,13 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
-public class SessionManagerTest {
+public class SessionManagerTest extends MinimalTest {
 	ServiceManager serviceManager;
 	SessionManagerService sessionManager;
 	

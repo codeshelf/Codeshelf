@@ -4,7 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.postgresql.util.PSQLException;
 
-public class IronMqServiceDaoTest extends DomainTestABC {
+import com.codeshelf.testframework.MockDaoTest;
+
+public class IronMqServiceDaoTest extends MockDaoTest {
 
 	@Test
 	public void updatedCredentialsAvailableToFacilityReference() throws PSQLException {

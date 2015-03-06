@@ -71,7 +71,7 @@ public class RegisterFilterCommand extends CommandABC {
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
 
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
+				ITypedDao<IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// create listener
 				
 				String filterClause = request.getFilterClause();

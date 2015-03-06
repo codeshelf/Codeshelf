@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: MockDao.java,v 1.13 2013/04/11 20:26:44 jeffw Exp $
  *******************************************************************************/
-package com.codeshelf.model.dao;
+package com.codeshelf.testframework;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -21,6 +21,8 @@ import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 
+import com.codeshelf.model.dao.IDaoListener;
+import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;
 import com.eaio.uuid.UUIDGen;
@@ -30,7 +32,6 @@ import com.eaio.uuid.UUIDGen;
  *
  */
 public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
-
 	private Map<String, T>	storageByFullDomainId	= new HashMap<String, T>(); // e.g. "O1.user@email"
 	private Map<String, T>	storageByDomainIdOnly	= new HashMap<String, T>(); // e.g. "user@email" for searching without specifying parent
 	private Map<UUID, T>	storageByPersistentId	= new HashMap<UUID, T>();
@@ -164,7 +165,10 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public <P extends IDomainObject> T reload(P domainObject) {
-		throw new NotImplementedException();
+		@SuppressWarnings("unchecked")
+		T domainObject2 = (T) domainObject;
+		return domainObject2; // I think this is okay -ivan
+		//throw new NotImplementedException();
 	}
 
 	@Override

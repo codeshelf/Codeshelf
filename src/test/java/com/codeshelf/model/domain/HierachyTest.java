@@ -4,7 +4,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class HierachyTest extends DomainTestABC {
+import com.codeshelf.testframework.MockDaoTest;
+
+public class HierachyTest extends MockDaoTest {
 
 	@Before
 	public void init() {

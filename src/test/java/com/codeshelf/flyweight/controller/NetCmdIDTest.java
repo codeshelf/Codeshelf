@@ -9,12 +9,13 @@ import org.junit.Test;
 
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.NetCommandGroup;
+import com.codeshelf.testframework.MinimalTest;
 
 /** --------------------------------------------------------------------------
  *  Test the net command ID.
  *  @author jeffw
  */
-public final class NetCmdIDTest {
+public final class NetCmdIDTest extends MinimalTest {
 
 	/**
 	 * Test method for {@link com.codeshelf.flyweightcontroller.command.NetEndpoint#NetEndpoint(int)}.

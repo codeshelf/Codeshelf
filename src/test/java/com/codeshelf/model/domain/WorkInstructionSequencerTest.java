@@ -15,14 +15,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.testframework.ServerTest;
 import com.eaio.uuid.UUID;
 
-public class WorkInstructionSequencerTest extends EdiTestABC {
+public class WorkInstructionSequencerTest extends ServerTest {
 	
 	public WorkInstructionSequencerTest() {
 	}

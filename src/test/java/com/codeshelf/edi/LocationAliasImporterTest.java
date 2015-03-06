@@ -30,13 +30,14 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.Errors;
 
 /**
  * @author jeffw
  *
  */
-public class LocationAliasImporterTest extends EdiTestABC {
+public class LocationAliasImporterTest extends MockDaoTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAliasImporterTest.class);
 
 	@SuppressWarnings("unchecked")

@@ -5,9 +5,10 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableMap;
 
-public class ItemTest extends DomainTestABC {
+public class ItemTest extends HibernateTest {
 
 	@Test
 	public void testItemWithoutAssignedTier() {

@@ -8,11 +8,13 @@ package com.codeshelf.model.domain;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.MockDaoTest;
+
 /**
  * @author jeffw
  *
  */
-public class LocationTest extends DomainTestABC {
+public class LocationTest extends MockDaoTest {
 
 	@Test
 	public final void getLocationIdToParentLevel() {

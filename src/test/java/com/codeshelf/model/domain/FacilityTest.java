@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.testframework.ServerTest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -18,7 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * @author jeffw
  *
  */
-public class FacilityTest extends DomainTestABC {
+public class FacilityTest extends ServerTest { // TODO: mock property service so that testSerializationOfExtraFields will work in MocKDao environ
 	
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {

@@ -2,7 +2,9 @@ package com.codeshelf.model.domain;
 
 import org.junit.Test;
 
-public class OrganizationTest extends DomainTestABC {
+import com.codeshelf.testframework.MockDaoTest;
+
+public class OrganizationTest extends MockDaoTest {
 
 	
 	@Test

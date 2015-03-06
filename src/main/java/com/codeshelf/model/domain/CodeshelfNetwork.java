@@ -315,7 +315,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			if(user.tenantEquals(tenant)) {
 				LOGGER.info("Site controller user already exists, not creating");
 			} else {
-				LOGGER.error("Cannot create site controller user since it already exists with another tenant");
+				if(TenantManagerService.class.isAssignableFrom(TenantManagerService.getInstance().getClass()))
+					// ignore for testing mock 
+					LOGGER.error("Cannot create site controller user since it already exists with another tenant");
 			}
 		} else if(sitecon == null) {
 			LOGGER.error("Will not create Site Controller user after failure to create Site Controller");

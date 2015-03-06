@@ -18,15 +18,15 @@ import org.junit.Test;
 import au.com.bytecode.opencsv.CSVReader;
 
 import com.codeshelf.generators.WorkInstructionGenerator;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.MockDaoTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-public class WorkInstructionCSVExporterTest extends DomainTestABC {
+public class WorkInstructionCSVExporterTest extends MockDaoTest {
 
 	private UUID facilityId;
 	
@@ -66,7 +66,7 @@ public class WorkInstructionCSVExporterTest extends DomainTestABC {
 	private DateFormat timestampFormat = new SimpleDateFormat(TIME_FORMAT);
 	
 	@Before
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		
 		this.getTenantPersistenceService().beginTransaction();

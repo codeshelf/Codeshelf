@@ -11,8 +11,6 @@ import org.mockito.Mockito;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.model.dao.DAOTestABC;
-import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -20,6 +18,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
@@ -31,20 +30,19 @@ import com.codeshelf.ws.jetty.server.UserSession;
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
-public class CreateCheTest extends DAOTestABC {
+public class CreateCheTest extends MockDaoTest {
 	UserSession mSession;
 	
 	private ServerMessageProcessor	processor;
 
 	@Before
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 	}
 
 	
 	@Test
-	// TODO: create proper mock daoProvider / set up injector /?
 	public final void testCreateChe() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
@@ -319,26 +317,6 @@ public class CreateCheTest extends DAOTestABC {
 		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
-		this.getTenantPersistenceService().commitTransaction();
-	}
-	
-	@Test
-	public void getDefaultProcessMode() {
-		this.getTenantPersistenceService().beginTransaction();
-		UiUpdateService service = new UiUpdateService();
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.createNetwork("WITEST");
-		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
-
-		//Get default mode in a facility without aisles
-		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles", processMode, ProcessMode.LINE_SCAN);
-		
-		//Get default mode in a facility with aisles
-		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
-		Aisle.DAO.store(aisle);
-		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles", processMode, ProcessMode.SETUP_ORDERS);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	

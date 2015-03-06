@@ -11,7 +11,7 @@ import com.google.common.util.concurrent.Service;
  * @author ivan
  *
  */
-public interface ITenantManager extends Service {
+public interface ITenantManagerService extends Service {
 	// shards
 	Shard getDefaultShard();
 	

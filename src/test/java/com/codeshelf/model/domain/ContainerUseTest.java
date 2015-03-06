@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.CompareNullChecker;
 import com.google.common.collect.ImmutableMap;
 
@@ -23,7 +24,7 @@ import com.google.common.collect.ImmutableMap;
  * @author ranstrom
  *
  */
-public class ContainerUseTest extends DomainTestABC {
+public class ContainerUseTest extends HibernateTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ContainerUseTest.class);
 

@@ -7,6 +7,8 @@ package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
+import org.atteo.classindex.IndexSubclasses;
+
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonGetter;
 
@@ -14,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
  * @author jeffw
  *
  */
+@IndexSubclasses
 public interface IDomainObject {
 
 	String	ID_PROPERTY			= "domainId";

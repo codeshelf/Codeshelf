@@ -75,6 +75,7 @@ public class WorkInstructionGenerator {
 		facility.addContainer(container);
 		Container.DAO.store(container);
 
+		//Che che1 = Che.DAO.findByDomainId(facility.getNetworks().get(0), "CHE1");
 		Che che1 = Che.DAO.findByDomainId(null, "CHE1");
 		
 		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);

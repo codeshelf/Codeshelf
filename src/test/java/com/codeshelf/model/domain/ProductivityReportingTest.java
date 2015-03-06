@@ -23,14 +23,15 @@ import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
+import com.codeshelf.testframework.ServerTest;
 
-public class ProductivityReportingTest extends DomainTestABC {
+public class ProductivityReportingTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	private OrderService	orderService;
 
 	@Override
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		orderService = new OrderService();
 	}
@@ -200,7 +201,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 
 	private List<WorkInstruction>  createFacilityWithOneRunAllWorkInstructionCombos(){
 		//12/22/14 6:46 PM = 1419291960000
-		Facility facility = getDefaultFacility();
+		Facility facility = getFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
 		List<WorkInstruction> generatedWIs = generator.generateCombinations(facility, new Timestamp(1419291960000l));
 		return generatedWIs;

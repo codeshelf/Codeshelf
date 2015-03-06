@@ -3,7 +3,9 @@ package com.codeshelf.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class UomNormalizerTest {
+import com.codeshelf.testframework.MinimalTest;
+
+public class UomNormalizerTest extends MinimalTest {
 
 	@Test
 	public void testNormalizeString() {

@@ -264,7 +264,7 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		
-		super.startSitecon();
+		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -351,7 +351,7 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -407,7 +407,7 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		super.startSitecon();
+		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -540,7 +540,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 
-		super.startSitecon();
+		super.startSiteController();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -676,7 +676,7 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		super.startSitecon();
+		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -804,7 +804,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		super.startSitecon();
+		super.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -977,7 +977,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		this.startSitecon();
+		this.startSiteController();
 		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -1100,7 +1100,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		this.startSitecon();
+		this.startSiteController();
 		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");

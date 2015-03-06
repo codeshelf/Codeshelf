@@ -14,8 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.testframework.HibernateTest;
 
-public class ObjectChangeBroadcasterTest extends DAOTestABC {
+public class ObjectChangeBroadcasterTest extends HibernateTest {
 
 	@Test
 	public void usesDifferentThreads() {

@@ -7,9 +7,10 @@ import org.junit.Test;
 
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableMap;
 
-public class OrderHeaderTest extends DomainTestABC {
+public class OrderHeaderTest extends HibernateTest {
 
 	
 	

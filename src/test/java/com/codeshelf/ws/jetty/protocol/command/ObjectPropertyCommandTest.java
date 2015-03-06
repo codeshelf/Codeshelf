@@ -14,13 +14,13 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 
-public class ObjectPropertyCommandTest extends DomainTestABC {
+public class ObjectPropertyCommandTest extends HibernateTest {
 	
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ObjectPropertyCommandTest.class);

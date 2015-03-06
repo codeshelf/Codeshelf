@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.UUID;
 
-import org.hibernate.HibernateException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,12 +34,13 @@ import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.MockDaoTest;
 
 /**
  * @author ranstrom
  * Also see createAisleTest() in FacilityTest.java
  */
-public class AisleImporterTest extends EdiTestABC {
+public class AisleImporterTest extends MockDaoTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleImporterTest.class);
 	
@@ -3321,129 +3321,6 @@ public class AisleImporterTest extends EdiTestABC {
 
 		this.getTenantPersistenceService().commitTransaction();
 
-	}
-
-	private void setActiveValue(Location inLocation, boolean inValue, boolean inWithTransaction, boolean inThrow) {
-		if (inWithTransaction)
-			this.getTenantPersistenceService().beginTransaction();
-
-		inLocation.setActive(inValue);
-		inLocation.<Location>getDao().store(inLocation);
-
-		if (inThrow) {
-			throw new EdiFileReadException("Just a throw because test commanded it to. No relevance to EDI.");
-		}
-
-		if (inWithTransaction)
-			this.getTenantPersistenceService().commitTransaction();
-	}
-
-	@SuppressWarnings("unused")
-	@Test
-	public final void testThrowInTransaction() {
-		// DAO-correct
-		// And nested transactions
-		this.getTenantPersistenceService().beginTransaction();
-
-		// Start with a file read to new facility
-		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A30,,,,,tierNotB1S1Side,12.85,43.45,Y,120,\r\n" //
-				+ "Bay,B1,115,,,,,\r\n" //
-				+ "Tier,T1,,5,40,0,,\r\n" //
-				+ "Bay,B2,115,,,,,\r\n" //
-				+ "Tier,T1,,5,40,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE30", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-
-		List<Facility> listA = Facility.DAO.getAll();
-		Facility facilityA = listA.get(0);
-		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A30.B1.T1.S5");
-		Assert.assertTrue(slotB1T1S5.getActive());
-
-		this.getTenantPersistenceService().commitTransaction();
-
-		LOGGER.info("Case 1: try to store without a transaction should throw");
-		boolean caughtExpected = false;
-		try {
-			slotB1T1S5.setActive(true);
-			LOGGER.info("Modify a detached object was ok."); // Modify and forget to store will be an easy mistake to make.
-			Slot.DAO.store(slotB1T1S5);
-			LOGGER.error("Should not see this message. Cannot store a detached object");
-		} catch (HibernateException e) {
-			caughtExpected = true;
-		}
-		if (!caughtExpected)
-			Assert.fail("did not see the expected throw");
-		final boolean throwYes = true;
-		final boolean throwNo = false;
-		final boolean transactionYes = true;
-		final boolean transactionNo = false;
-
-		LOGGER.info("Case 2: simple nested transaction that might work. See errors from PersistenceService");
-		this.getTenantPersistenceService().beginTransaction();
-		setActiveValue(slotB1T1S5, false, transactionYes, throwNo);
-		Assert.assertFalse(slotB1T1S5.getActive());
-		this.getTenantPersistenceService().commitTransaction();
-		Assert.assertFalse(slotB1T1S5.getActive());
-
-		LOGGER.info("Case 3: simple nested transaction will throw");
-		this.getTenantPersistenceService().beginTransaction();
-		caughtExpected = false;
-		try {
-			setActiveValue(slotB1T1S5, true, transactionYes, throwYes);
-		} catch (EdiFileReadException e) {
-			caughtExpected = true;
-		}
-		if (!caughtExpected)
-			Assert.fail("did not see the expected throw");
-		this.getTenantPersistenceService().commitTransaction();
-		Assert.assertTrue(slotB1T1S5.getActive());
-
-		LOGGER.info("Case 4: does nested transaction spoil the outer transaction? See errors from PersistenceService");
-		this.getTenantPersistenceService().beginTransaction();
-		setActiveValue(slotB1T1S5, true, transactionYes, throwNo);
-		slotB1T1S5.setLedChannel((short) 4);
-		try {
-			Slot.DAO.store(slotB1T1S5);
-		} catch (HibernateException e) {
-			caughtExpected = true;
-		}
-		if (!caughtExpected)
-			Assert.fail("did not see the expected throw");
-		this.getTenantPersistenceService().commitTransaction();
-		Assert.assertTrue(slotB1T1S5.getActive());
-		Assert.assertTrue(slotB1T1S5.getLedChannel() == 4);
-
-		LOGGER.info("Case 5: Not a nested transaction. Will throw, leaving transaction open");
-		caughtExpected = false;
-		try {
-			setActiveValue(slotB1T1S5, false, transactionYes, throwYes);
-		} catch (EdiFileReadException e) {
-			caughtExpected = true;
-		}
-		if (!caughtExpected)
-			Assert.fail("did not see the expected throw");
-		Assert.assertFalse(slotB1T1S5.getActive());
-
-		LOGGER.info("Case 6: After the throw that left a transaction open, continue with normal transaction.");
-		this.getTenantPersistenceService().beginTransaction();
-		slotB1T1S5.setActive(true);
-		Slot.DAO.store(slotB1T1S5);
-		this.getTenantPersistenceService().commitTransaction();
-		Assert.assertTrue(slotB1T1S5.getActive());
 	}
 
 	@Test

@@ -74,7 +74,7 @@ public class ObjectChangeBroadcaster {
 	 * 
 	 * @see com.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
-	public final synchronized void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
+	public synchronized void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
 		mListeners.put(daoClass, inListener);
 	}
 

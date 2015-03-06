@@ -23,12 +23,13 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author jeffw
  *
  */
-public class OrderLocationImporterTest extends EdiTestABC {
+public class OrderLocationImporterTest extends ServerTest {
 
 	/**
 	 * Given two orders and a single slot

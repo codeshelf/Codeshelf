@@ -4,11 +4,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
@@ -17,15 +17,14 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 
-public class LoginTest extends DomainTestABC {
+public class LoginTest extends HibernateTest {
 
 	private ServerMessageProcessor	processor;
 
 	
 	
 	@Override
-	public void doBefore() throws Exception {
-		// TODO Auto-generated method stub
+	public void doBefore() {
 		super.doBefore();
 		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 

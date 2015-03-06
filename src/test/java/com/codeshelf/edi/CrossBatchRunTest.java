@@ -40,12 +40,13 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  *
  *
  */
-public class CrossBatchRunTest extends EdiTestABC {
+public class CrossBatchRunTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
 
 	@SuppressWarnings({ "unused" })

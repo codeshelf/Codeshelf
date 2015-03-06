@@ -3,7 +3,9 @@ package com.codeshelf.util;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class SequenceNumberTest {
+import com.codeshelf.testframework.MinimalTest;
+
+public class SequenceNumberTest extends MinimalTest {
 
 	@Test
 	public void testSequenceNumberGeneration() {

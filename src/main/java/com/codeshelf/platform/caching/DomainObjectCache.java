@@ -21,6 +21,7 @@ import com.codeshelf.model.domain.ItemMaster;
 
 public class DomainObjectCache<T extends DomainObjectABC> {
 
+	@SuppressWarnings("unused")
 	private static final Logger LOGGER = LoggerFactory.getLogger(DomainObjectCache.class);
 	
 	@Getter @Setter

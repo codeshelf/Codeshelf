@@ -115,7 +115,7 @@ public class Filter implements ObjectEventListener {
 	private ResponseABC processEvent(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, EventType type) {
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (this.matchList.contains(domainPersistentId)) {
-			IDomainObject domainObject = TenantPersistenceService.getDao(domainClass).findByPersistentId(domainPersistentId);
+			IDomainObject domainObject = TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(domainPersistentId);
 			if (domainObject != null) {
 				domainObjectList.add(domainObject);
 			} else {

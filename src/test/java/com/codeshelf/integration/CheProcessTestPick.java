@@ -36,6 +36,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
@@ -46,7 +47,9 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Strings;
@@ -294,7 +297,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		
-		this.startSitecon();
+		this.startSiteController();
 		
 		//For this data set
 		//Forward ordering is 3,2,1
@@ -310,7 +313,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		PickSimulator picker = 		startReverseWork(facility);
 		
@@ -343,7 +346,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -469,7 +472,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -615,7 +618,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -735,7 +738,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -998,7 +1001,7 @@ public class CheProcessTestPick extends ServerTest {
 		setUpSmallInventoryAndOrders(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
@@ -1075,7 +1078,7 @@ public class CheProcessTestPick extends ServerTest {
 		setUpBatchOrdersForZigzag(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
@@ -1157,7 +1160,7 @@ public class CheProcessTestPick extends ServerTest {
 		setUpBatchOrdersForZigzag(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
@@ -1244,7 +1247,7 @@ public class CheProcessTestPick extends ServerTest {
 		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -1434,7 +1437,7 @@ public class CheProcessTestPick extends ServerTest {
 		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -1520,7 +1523,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		UUID facId = facility.getPersistentId();
@@ -1738,7 +1741,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -1800,7 +1803,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.DAO.reload(facility);
@@ -1959,4 +1962,26 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
 	}	
+
+	@Test
+	public void getDefaultProcessMode() {
+		this.getTenantPersistenceService().beginTransaction();
+		UiUpdateService service = new UiUpdateService();
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		CodeshelfNetwork network = facility.createNetwork("WITEST");
+		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
+
+		//Get default mode in a facility without aisles
+		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
+		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles", processMode, ProcessMode.LINE_SCAN);
+		
+		//Get default mode in a facility with aisles
+		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
+		Aisle.DAO.store(aisle);
+		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
+		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles", processMode, ProcessMode.SETUP_ORDERS);
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
+
 }

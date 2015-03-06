@@ -11,12 +11,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.testframework.MockDaoTest;
 
 /**
  * @author jeffw
  *
  */
-public class OrderGroupTest extends DomainTestABC {
+public class OrderGroupTest extends MockDaoTest {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
