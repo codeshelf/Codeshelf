@@ -52,7 +52,7 @@ public class LocationDeleteTest extends ServerTest {
 		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		if (inWhichFacility == LARGER_FACILITY)
 			readStandardAisleFile(facility);

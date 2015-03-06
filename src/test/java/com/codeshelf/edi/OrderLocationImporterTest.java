@@ -279,7 +279,7 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ ", A2.B2\r\n" // O3333's location
 				+ "O4444, "; //
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORDLOC.1", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-ORDLOC.1", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
@@ -429,7 +429,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		byte[] csvArray = csvString.getBytes();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORDLOC.2", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-ORDLOC.2", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
@@ -698,7 +698,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 
 	private Facility getTestFacility(String orgId, String facilityId) {
-		Facility facility = Facility.createFacility(getDefaultTenant(),facilityId, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		return facility;
 	}
 	

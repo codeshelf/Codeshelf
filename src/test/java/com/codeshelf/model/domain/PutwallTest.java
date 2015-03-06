@@ -50,7 +50,7 @@ public class PutwallTest extends MockDaoTest {
 		
 		// initial data setup
 		this.getTenantPersistenceService().beginTransaction();		
-		Facility facility= Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);

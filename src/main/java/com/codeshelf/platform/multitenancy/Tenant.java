@@ -28,7 +28,6 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
-import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,12 +117,9 @@ public class Tenant extends Schema {
 	@JsonProperty
 	boolean	active = true;
 	
-	@OneToMany(mappedBy = "tenant",targetEntity=User.class)
+	@OneToMany(mappedBy = "tenant",targetEntity=User.class /*, fetch = FetchType.EAGER */)
 	@MapKey(name = "username")
 	private Map<String, User> users = new HashMap<String, User>();
-
-	@Transient
-	Configuration hibernateConfiguration = null;
 
 	@Transient
 	private EventListenerIntegrator eventListenerIntegrator = null;

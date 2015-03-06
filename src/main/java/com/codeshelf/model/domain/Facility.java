@@ -38,7 +38,6 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.service.PropertyService;
@@ -1277,7 +1276,7 @@ public class Facility extends Location {
 	 * @param inAnchorPosY
 	 */
 	// @Transactional
-	public static Facility createFacility(Tenant tenant,final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+	public static Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
 		facility.setDomainId(inDomainId);
@@ -1304,7 +1303,7 @@ public class Facility extends Location {
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		// Create a site controller & associated user
-		network.createSiteControllerAndUser(tenant,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
 		
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();

@@ -905,7 +905,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	public final void testReimportOutboundOrderNoGroup() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORD2.1", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-ORD2.1", "TEST", Point.getZeroPoint());
 
 		String firstCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1597,7 +1597,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	//******************** private helpers ***********************
 
 	private Facility getTestFacility(String orgId, String facilityId) {
-		Facility facility = Facility.createFacility(getDefaultTenant(),facilityId, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		return facility;
 	}
 

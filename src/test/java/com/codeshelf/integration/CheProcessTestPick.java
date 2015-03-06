@@ -1967,7 +1967,7 @@ public class CheProcessTestPick extends ServerTest {
 	public void getDefaultProcessMode() {
 		this.getTenantPersistenceService().beginTransaction();
 		UiUpdateService service = new UiUpdateService();
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork("WITEST");
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
 

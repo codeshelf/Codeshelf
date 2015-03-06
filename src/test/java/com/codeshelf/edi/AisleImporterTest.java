@@ -33,7 +33,6 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.testframework.MockDaoTest;
 
 /**
@@ -66,7 +65,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE9", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE9", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -222,7 +221,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE10", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE10", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -409,7 +408,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE11", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE11", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -527,7 +526,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-SPARSE91", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-SPARSE91", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -640,7 +639,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE12", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE12", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -719,7 +718,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE13", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE13", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -844,7 +843,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE2X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE2X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -924,7 +923,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE14", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE14", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1012,7 +1011,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE15", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE15", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1160,7 +1159,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE16", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE16", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1327,7 +1326,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE21", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE21", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1369,7 +1368,7 @@ public class AisleImporterTest extends MockDaoTest {
 	public final void testPathCreation() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F4X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F4X", "TEST", Point.getZeroPoint());
 
 		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.0, 12.0, 48.0);
@@ -1444,7 +1443,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1516,7 +1515,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1666,7 +1665,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1816,7 +1815,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -1966,7 +1965,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2112,7 +2111,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 		
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2197,7 +2196,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2403,7 +2402,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2482,7 +2481,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2549,7 +2548,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2623,7 +2622,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2721,7 +2720,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2809,7 +2808,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-CLONE5X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -2963,7 +2962,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F3X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F3X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -3146,7 +3145,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE6X", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE6X", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -3240,7 +3239,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE29", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE29", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
@@ -3344,7 +3343,7 @@ public class AisleImporterTest extends MockDaoTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE31", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE31", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();

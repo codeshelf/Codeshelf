@@ -27,10 +27,10 @@ public class GenericDaoTest extends ServerTest {
 	public final void testFindByFilter() {
 		this.tenantPersistenceService.beginTransaction();
 		
-		Facility facility = Facility.createFacility(getDefaultTenant(), "LOADBYFILTERTEST1", "LOADBYFILTER", Point.getZeroPoint());		
+		Facility facility = Facility.createFacility( "LOADBYFILTERTEST1", "LOADBYFILTER", Point.getZeroPoint());		
 		Facility.DAO.store(facility);
 		
-		facility = Facility.createFacility(getDefaultTenant(), "LOADBYFILTERTEST2", "LOADBYFILTER", Point.getZeroPoint());
+		facility = Facility.createFacility( "LOADBYFILTERTEST2", "LOADBYFILTER", Point.getZeroPoint());
 		Facility.DAO.store(facility);
 		
 		List<Criterion> filterParams = new ArrayList<Criterion>();
@@ -120,7 +120,7 @@ public class GenericDaoTest extends ServerTest {
 
 		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
-		Facility facility = Facility.createFacility(getDefaultTenant(),FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		Facility facility = Facility.createFacility(FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
 		Facility.DAO.store(facility);
 
@@ -137,7 +137,7 @@ public class GenericDaoTest extends ServerTest {
 		Aisle foundAisle = Aisle.DAO.findByDomainId(facility, AISLE_ID);
 		Assert.assertNotNull(foundAisle);
 
-		facility = Facility.createFacility(getDefaultTenant(),FACILITY2_ID, FACILITY2_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
+		facility = Facility.createFacility(FACILITY2_ID, FACILITY2_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY2_ID);
 		Facility.DAO.store(facility);
 		t.commit();

@@ -2,7 +2,10 @@ package com.codeshelf.platform.multitenancy;
 
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -103,19 +106,23 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		managerPersistenceService.commitTransaction();
 
 		if(tenant != null) {
-			// Create initial users
-			createUser(tenant,"a@example.com", "testme",UserType.APPUSER); //view
-			createUser(tenant,"view@example.com", "testme",UserType.APPUSER); //view
-			createUser(tenant,"configure@example.com", "testme",UserType.APPUSER); //all
-			createUser(tenant,"simulate@example.com", "testme",UserType.APPUSER); //simulate + configure
-			createUser(tenant,"che@example.com", "testme",UserType.APPUSER); //view + simulate
-			createUser(tenant,"work@example.com", "testme",UserType.APPUSER); //view + simulate
-			
-			createUser(tenant,"view@accu-logistics.com", "accu-logistics",UserType.APPUSER); //view
-
-			createUser(tenant,Integer.toString(CodeshelfNetwork.DEFAULT_SITECON_SERIAL),CodeshelfNetwork.DEFAULT_SITECON_PASS,UserType.SITECON);
+			createDefaultUsers(tenant);
 		}
 
+	}
+
+	private void createDefaultUsers(Tenant tenant) {
+		// Create initial users
+		createUser(tenant,"a@example.com", "testme",UserType.APPUSER); //view
+		createUser(tenant,"view@example.com", "testme",UserType.APPUSER); //view
+		createUser(tenant,"configure@example.com", "testme",UserType.APPUSER); //all
+		createUser(tenant,"simulate@example.com", "testme",UserType.APPUSER); //simulate + configure
+		createUser(tenant,"che@example.com", "testme",UserType.APPUSER); //view + simulate
+		createUser(tenant,"work@example.com", "testme",UserType.APPUSER); //view + simulate
+		
+		createUser(tenant,"view@accu-logistics.com", "accu-logistics",UserType.APPUSER); //view
+
+		createUser(tenant,Integer.toString(CodeshelfNetwork.DEFAULT_SITECON_SERIAL),CodeshelfNetwork.DEFAULT_SITECON_PASS,UserType.SITECON);
 	}
 
 	private Tenant initDefaultTenant(Session session,Shard shard) {
@@ -197,6 +204,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 				user.setPassword(password);
 				user.setType(type);
 				tenant.addUser(user);
+				session.save(tenant);
 				session.save(user);
 				result = user;
 			} else {
@@ -210,25 +218,58 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 
 	@Override
 	public void resetTenant(Tenant tenant) {
+		eraseAllTenantData(tenant);
+
 		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
 		LOGGER.warn("Resetting schema and users for "+tenant.toString());
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
-			tenant = (Tenant) session.load(Tenant.class, tenant.getTenantId());
+
+			// reload detached tenant (might've added more users)
+			tenant = inflate((Tenant) session.load(Tenant.class, tenant.getTenantId()));
 			
-			// remove all users
+			// remove all users except site controller
 			for(User u : tenant.getUsers()) {
-				tenant.removeUser(u);
-				session.delete(u);
+				u = (User) session.load(User.class, u.getUserId());
+				if(u.getType() != UserType.SITECON) {
+					tenant.removeUser(u);
+					session.delete(u);
+				}
 			}
 
 		} finally {
 			managerPersistenceService.commitTransaction();	
 		}        
-		// reset schema
-		SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
-		se.create(false, true);
+		
+		// resetTenant for testing - not necessary to recreate default users here
+		//createDefaultUsers(tenant);
+	}
+
+	private void eraseAllTenantData(Tenant tenant) {		
+		String sql = "SET REFERENTIAL_INTEGRITY FALSE;";
+		for(String tableName : getTableNames(tenant)) {
+			sql += "TRUNCATE TABLE "+tenant.getSchemaName()+"."+tableName+";";
+		}
+		sql += "SET REFERENTIAL_INTEGRITY TRUE";
+		try {
+			tenant.executeSQL(sql);
+		} catch (SQLException e) {
+			LOGGER.error("Truncate of tenant tables failed, falling back on SchemaExport", e);
+			// reset schema old way, hbm2ddl
+			SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
+			se.create(false, true);
+		}
+	}
+
+	public Set<String> getTableNames(Tenant tenant) {
+		Set<String> tableNames = new HashSet<String>();
+		Iterator<org.hibernate.mapping.Table> tables = tenant.getHibernateConfiguration().getTableMappings();
+		while(tables.hasNext()) {
+			org.hibernate.mapping.Table table = tables.next();
+			tableNames.add(table.getName());
+		}
+		return tableNames;
 	}
 
 	@Override
@@ -262,6 +303,13 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		return result;
 	}
 
+	private Tenant inflate(Tenant tenant) {
+		// call with active session
+		Tenant result = ManagerPersistenceService.<Tenant>deproxify(tenant);
+		result.getUsers();
+		return result;
+	}
+
 	@Override
 	public Tenant getTenantByUsername(String username) {
 		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
@@ -272,7 +320,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			Session session = managerPersistenceService.getSessionWithTransaction();
 			User user = getUser(session,username); 
 			if(user != null) {
-				result = user.getTenant();
+				result = inflate(user.getTenant());
 			}		
 		} finally {
 			managerPersistenceService.commitTransaction();
@@ -295,7 +343,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			List<Tenant> tenantList = criteria.list();
 			
 			if(tenantList != null && tenantList.size() == 1) {
-				result = tenantList.get(0);
+				result = inflate(tenantList.get(0));
 			}
 		} finally {
 			managerPersistenceService.commitTransaction();
@@ -357,12 +405,15 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	public Collection<Tenant> getTenants() {
 		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 
-		Collection<Tenant> results = null;
+		Collection<Tenant> results = new HashSet<Tenant>();
 		
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(Tenant.class);
-			results = criteria.list();
+			Collection<Tenant> list = criteria.list();
+			for(Tenant tenant : list) {
+				results.add(inflate(tenant));
+			}
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
@@ -373,8 +424,6 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	public Tenant getDefaultTenant() {
 		if(this.defaultTenant == null)
 			this.defaultTenant = getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
-		if(this.defaultTenant != null) 
-			this.defaultTenant = ManagerPersistenceService.<Tenant>deproxify(this.defaultTenant);
 		return this.defaultTenant;
 	}
 	
@@ -457,4 +506,5 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 			}
 		}
 	}
+	
 }

@@ -41,7 +41,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 	public final void testCreateVertex() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
 		Facility.DAO.store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
@@ -93,7 +93,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
 		
 		/*
 		var anchorPoint = {'posTypeEnum': 'GPS', 'x': event.latLng.lng(), 'y': event.latLng.lat(), 'z' : 0.0};

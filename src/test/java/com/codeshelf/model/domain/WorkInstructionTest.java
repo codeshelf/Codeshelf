@@ -88,7 +88,7 @@ public class WorkInstructionTest extends HibernateTest {
 	public final void addRemoveOrderGroupTest() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(), "F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility( "F1", "test", Point.getZeroPoint());
 
 		Aisle aisle1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		Aisle.DAO.store(aisle1);

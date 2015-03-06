@@ -22,7 +22,6 @@ import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
 
@@ -78,7 +77,7 @@ public class DropboxRealTest extends ServerTest {
 		// Caller must use a different organization name each time this is used
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		/*
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));

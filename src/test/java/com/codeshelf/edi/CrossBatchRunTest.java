@@ -39,7 +39,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -83,7 +82,7 @@ public class CrossBatchRunTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();

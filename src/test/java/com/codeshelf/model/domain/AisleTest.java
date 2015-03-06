@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.EdiFileReadException;
 import com.codeshelf.model.dao.IDaoListener;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.testframework.HibernateTest;
 
 public class AisleTest extends HibernateTest { // TODO: maybe split associatepathsegment into separate class- rest of tests can be mockdao
@@ -178,7 +177,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),"F-AISLE30", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-AISLE30", "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();

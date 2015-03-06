@@ -30,7 +30,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -54,7 +53,7 @@ public class PickSimulaneousWis extends ServerTest {
 		// There are two CHE called CHE1 and CHE2
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(), fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility( fName, "TEST", Point.getZeroPoint());
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //

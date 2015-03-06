@@ -75,7 +75,7 @@ public class VirtualSlottedFacilityGenerator {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(tenant,fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		aisleImporter.importAislesFileFromCsvStream(reader, facility, ediProcessTime);

@@ -89,7 +89,7 @@ public class CreateCheTest extends MockDaoTest {
 		String description1 = "che description";
 		String description2 = "changed che description";
 				
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facilityf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facilityf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
@@ -134,7 +134,7 @@ public class CreateCheTest extends MockDaoTest {
 
 		//setupDaos();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
 
 		Facility.DAO.store(facility);		
 		
@@ -177,7 +177,7 @@ public class CreateCheTest extends MockDaoTest {
 		
 		//setupDaos();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
@@ -243,7 +243,7 @@ public class CreateCheTest extends MockDaoTest {
 
 		//setupDaos();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		Facility.DAO.store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
@@ -321,7 +321,7 @@ public class CreateCheTest extends MockDaoTest {
 	}
 	
 	private Che createTestChe(String netGuid){
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork("WITEST");
 		Che che = network.createChe(netGuid, new NetGuid(netGuid));
 		return che;

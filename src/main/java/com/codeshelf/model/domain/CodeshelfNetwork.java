@@ -30,9 +30,6 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.inject.Inject;
@@ -284,7 +281,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return this.getParent();
 	}
 
-	public void createSiteControllerAndUser(Tenant tenant,int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
 		String username = Integer.toString(serialNumber);
 
 		// create site controller object (or use found)
@@ -309,6 +306,10 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 
 		// create site controller user (or use found)
+		
+		/* not implemented anymore. 
+		 * tenant manager will create "default" site controller user
+		 * others must be created manually separate from domain object site controller
 		User user = TenantManagerService.getInstance().getUser(username);
 		if(user != null) {
 			// already exists?
@@ -326,6 +327,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			if(null == TenantManagerService.getInstance().createUser(tenant, username, password, UserType.SITECON)) {
 				LOGGER.error("Failed to create user for new site controller "+username);
 			}
-		} 
+		}
+		 */
+ 
 	}
 }

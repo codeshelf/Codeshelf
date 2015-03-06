@@ -361,7 +361,7 @@ public class LightServiceTest extends ServerTest {
 				+ "Tier,T2,,5,32,120,,\r\n"; //
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility= Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();

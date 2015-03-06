@@ -23,7 +23,7 @@ public class OrderGroupTest extends MockDaoTest {
 	public final void addRemoveOrderGroupTest() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "test", Point.getZeroPoint());
 		
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
@@ -75,7 +75,7 @@ public class OrderGroupTest extends MockDaoTest {
 	public final void releaseOrderGroupTest() {
 		this.getTenantPersistenceService().beginTransaction();
 		
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "test", Point.getZeroPoint());
 
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);

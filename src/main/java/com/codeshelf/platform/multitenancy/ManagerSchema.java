@@ -31,4 +31,5 @@ public class ManagerSchema extends Schema {
 	public String getChangeLogName() {
 		return MASTER_CHANGELOG_NAME;
 	}
+
 }

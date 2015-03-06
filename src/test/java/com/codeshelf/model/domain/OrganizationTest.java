@@ -11,7 +11,7 @@ public class OrganizationTest extends MockDaoTest {
 	public void testFacilityCreation() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility.createFacility(getDefaultTenant(),"FACILITY NAME", "INDESCRIPTIONS", Point.getZeroPoint());
+		Facility.createFacility("FACILITY NAME", "INDESCRIPTIONS", Point.getZeroPoint());
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

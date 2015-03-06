@@ -6,7 +6,6 @@ import org.apache.commons.lang.RandomStringUtils;
 
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Facility.FacilityDao;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.natpryce.makeiteasy.Instantiator;
 import com.natpryce.makeiteasy.Property;
 import com.natpryce.makeiteasy.PropertyLookup;
@@ -23,7 +22,6 @@ public class DAOMaker {
 																					public Facility instantiate(PropertyLookup<Facility> lookup) {
 
 																						Facility facility = Facility.createFacility(
-																							TenantManagerService.getInstance().getDefaultTenant(),
 																							lookup.valueOf(facilityId,
 																							RandomStringUtils.randomAlphanumeric(5)),
 																							lookup.valueOf(facilityId,

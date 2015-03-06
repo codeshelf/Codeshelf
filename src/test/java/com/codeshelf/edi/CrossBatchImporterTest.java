@@ -26,7 +26,6 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.testframework.ServerTest;
 
@@ -45,7 +44,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		String facilityName = "F-" + testName.getMethodName();
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),facilityName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(facilityName, "TEST", Point.getZeroPoint());
 		
 		facilityId = facility.getPersistentId();
 		

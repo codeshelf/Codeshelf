@@ -6,7 +6,6 @@ import java.util.UUID;
 import lombok.Getter;
 
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -23,7 +22,7 @@ public class Organization {
 
 	public boolean createFacilityUi(String domainId, String description, Double x, Double y) {
 		Point point = new Point(PositionTypeEnum.GPS, x, y, null);
-		return (null != Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(), domainId, description, point));
+		return (null != Facility.createFacility( domainId, description, point));
 	}
 
 	public Facility getFacility(final String inFacilityDomainId) {

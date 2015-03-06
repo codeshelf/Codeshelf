@@ -280,7 +280,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			staticClientConnectionManagerService.setDisconnected();
 		}
 		if (radioController != null) {
-			this.radioController.stopController();
+			radioController.stopController();
 			radioController = null;
 		}
 
@@ -313,15 +313,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		propertyService = null;
 		metricsService = null;
 
-		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)
-				|| TenantPersistenceService.getMaybeRunningInstance() == realTenantPersistenceService) {
-			// for persistence tests, or any test that may have accessed persistence, reset H2 stuff
-			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
-			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
-			realTenantManagerService.resetTenant(realDefaultTenant);
-
+		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
 			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
-		}
+		} 
 
 		LOGGER.info("******************* Completed test: " + this.testName.getMethodName() + " *******************");
 	}
@@ -377,6 +371,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	protected final void startSiteController() {
 		// subclasses call this method to initialize the site controller and connect to the server API
+		this.getFacility(); // ensure we have created a facility
 
 		CsClientEndpoint.setWebSocketContainer(staticWebSocketContainer);
 
@@ -395,7 +390,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 				throw new RuntimeException("Could not start test services (site controller)", e1);
 			}
 		}
-		this.getFacility(); // ensure we have created a facility
 
 		staticClientConnectionManagerService.setConnected();
 		this.awaitConnection();
@@ -431,6 +425,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 				// it's probably fine
 			}
 
+		} else {
+			// not 1st persistence run. need to reset
+			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
+			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
+			realTenantManagerService.resetTenant(realDefaultTenant);
 		}
 
 		// make sure default properties are in the database
@@ -543,7 +542,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		Facility facility = Facility.DAO.findByDomainId(null, useFacilityId);
 		if (facility == null) {
-			facility = Facility.createFacility(getDefaultTenant(), useFacilityId, "", Point.getZeroPoint());
+			facility = Facility.createFacility( useFacilityId, "", Point.getZeroPoint());
 			Facility.DAO.store(facility);
 		}
 

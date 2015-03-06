@@ -70,7 +70,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		super.doBefore();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.createFacility(getDefaultTenant(),this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
 		exporter  = new WorkInstructionCSVExporter();
 		
 		this.facilityId = facility.getPersistentId();
