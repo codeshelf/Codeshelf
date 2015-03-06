@@ -37,7 +37,6 @@ import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
-import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -619,17 +618,17 @@ public class CsDeviceManager implements
 		}
 	}
 	
-	public void processPosConControllerMessage(PosConControllerMessage message) {
-		NetGuid netGuid = new NetGuid(message.getNetGuidStr());
+	public void processPosConControllerMessage(PosControllerInstr instruction) {
+		NetGuid netGuid = new NetGuid(instruction.getControllerId());
 		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(netGuid);
 		if (device != null) {
 			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
-			if (message.isRemoveAll()){
+			if (instruction.isRemoveAll()){
 				device.removePosConInstrsForSourceAndSend(netGuid);
-			} else if (!message.getRemovePos().isEmpty()){
-				device.removePosConInstrsForSourceAndPositionsAndSend(netGuid, message.getRemovePos());
+			} else if (!instruction.getRemovePos().isEmpty()){
+				device.removePosConInstrsForSourceAndPositionsAndSend(netGuid, instruction.getRemovePos());
 			} else {
-				device.addPosConInstrFor(netGuid, message.getInstruction());
+				device.addPosConInstrFor(netGuid, instruction);
 				device.updatePosCons();
 			}
 			

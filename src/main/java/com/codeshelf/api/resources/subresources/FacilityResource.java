@@ -26,7 +26,6 @@ import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
-import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -38,7 +37,6 @@ import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -190,17 +188,11 @@ public class FacilityResource {
 			}
 			
 			//POSCON MESSAGES
-			if (req.getPosConCommands() != null) {
-				for (PosConCmdGroup posCmd : req.getPosConCommands()) {
-					posCmd.fillMinMax();
-					PosControllerInstr instruction = null;
-					if (!posCmd.isRemoveAll() && posCmd.getRemovePos().isEmpty()){
-						instruction = new PosControllerInstr(posCmd.getPosNum(), posCmd.getQuantity(), posCmd.getMin(), posCmd.getMax(), 
-															 posCmd.getFrequency().toByte(), posCmd.getBrightness().toByte());						
-					}
-					PosConControllerMessage message = new PosConControllerMessage(posCmd.getControllerId(), instruction, posCmd.isRemoveAll(), posCmd.getRemovePos());
-					Thread.sleep(300);
-					sessionManagerService.sendMessage(users, message);
+			if (req.getPosConInstructions() != null) {
+				for (PosControllerInstr posInstr : req.getPosConInstructions()) {
+					posInstr.prepareObject();
+					Thread.sleep(1000);
+					sessionManagerService.sendMessage(users, posInstr);
 				}
 			}
 			

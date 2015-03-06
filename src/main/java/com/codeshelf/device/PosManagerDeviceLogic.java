@@ -10,7 +10,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
+import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.ICommand;
@@ -136,6 +136,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 			mPosInstructionBySource.put(inNetGuid, posConInstrs);
 		}
 		cmd.setPostedToPosConController(System.currentTimeMillis());
+		try {Thread.sleep(2);} catch (InterruptedException e) {}
 		posConInstrs.put(cmd.getPosition(), cmd);
 	}
 	
@@ -158,15 +159,9 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 
 	public final void lightExtraPosCons(String inInstructions) {
 		removeExtraPosConsFromMap();
-
-		List<PosConCmdGroup> posConCmdGroups = PosConInstrGroupSerializer.deserializePosConCmdString(inInstructions);
-		for (PosConCmdGroup cmd : posConCmdGroups) {
-			cmd.fillMinMax();
-			NetGuid netGuid = new NetGuid(cmd.getControllerId());
-			if (cmd.isRemoveAll()){
-				
-			}
-			addPosConInstrFor(netGuid, null, cmd.getPosNum(), cmd.getQuantity(), cmd.getMin(), cmd.getMax(), cmd.getFrequency().toByte(), cmd.getBrightness().toByte());
+		List<PosControllerInstr> posConInstrs = PosConInstrGroupSerializer.deserializePosConInstrString(inInstructions);
+		for (PosControllerInstr cmd : posConInstrs) {
+			addPosConInstrFor(getGuid(), cmd);
 		}
 		//setLightsExpireTimer(inSeconds); 
 		updatePosCons();

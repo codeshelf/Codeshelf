@@ -5,17 +5,35 @@
  *******************************************************************************/
 package com.codeshelf.device;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.Validatable;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 
 @Data
+@EqualsAndHashCode(callSuper=false)
 @Accessors(prefix = "m")
-public class PosControllerInstr {
+public class PosControllerInstr extends MessageABC implements Validatable{
 
 	public static final Byte	POSITION_ALL					= 0;
 
@@ -52,51 +70,90 @@ public class PosControllerInstr {
 	public static final Byte	MED_DUTYCYCLE					= (byte) 0xF0;
 	public static final Byte	BRIGHT_DUTYCYCLE				= (byte) 0x40;
 
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	@SerializedName(value = "r")
-	@Expose
-	private byte				mPosition;
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(PosControllerInstr.class);
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	@SerializedName(value = "r")
+	@SerializedName(value = "position")
 	@Expose
-	private byte				mReqQty;
+	private Byte				mPosition;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	@SerializedName(value = "g")
+	@SerializedName(value = "reqQty")
 	@Expose
-	private byte				mMinQty;
+	private Byte				mReqQty;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	@SerializedName(value = "b")
+	@SerializedName(value = "minQty")
 	@Expose
-	private byte				mMaxQty;
+	private Byte				mMinQty;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	@SerializedName(value = "b")
+	@SerializedName(value = "maxQty")
 	@Expose
-	private byte				mFreq;
+	private Byte				mMaxQty;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	@SerializedName(value = "b")
+	@SerializedName(value = "freq")
 	@Expose
-	private byte				mDutyCycle;
+	private Byte				mFreq;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "dutyCycle")
+	@Expose
+	private Byte				mDutyCycle;
 	
 	@Accessors(prefix = "m")
 	@Getter @Setter
 	private long mPostedToPosConController = 0;
+	
+	//----------------------------------------------------
+	//Additional fields used by the RESTful API
+	@Accessors(prefix = "m")
+	@Getter @Setter @Expose
+	@SerializedName(value = "controllerId")
+	private String			mControllerId;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "frequency")
+	@Expose
+	private Frequency				mFrequency = Frequency.SOLID;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@SerializedName(value = "brightness")
+	@Expose
+	private Brightness				mBrightness = Brightness.BRIGHT;
+
+	@Accessors(prefix = "m")
+	@Getter @Setter @Expose
+	@SerializedName(value = "remove")
+	private String mRemove;
+
+	@Accessors(prefix = "m")
+	@Getter
+	private boolean mRemoveAll = false;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	private List<Byte> mRemovePos = new ArrayList<Byte>();
+
+	private String mRemoveError = null;
+
 
 	public PosControllerInstr() {}
 	
@@ -107,5 +164,140 @@ public class PosControllerInstr {
 		mMaxQty = inMaxQty;
 		mFreq = inFreq;
 		mDutyCycle = inDutyCycle;
+	}
+
+	public void processRemoveField(){
+		if (mRemove == null) {return;}
+		if ("all".equalsIgnoreCase(mRemove)){
+			mRemoveAll = true;
+			return;
+		}
+		try {
+			mRemovePos.clear();
+			String[] removePositionsStr = mRemove.split(",");
+			for (String positionSrt : removePositionsStr) {
+				mRemovePos.add(Byte.parseByte(positionSrt));
+			}
+		} catch (Exception e) {
+			mRemoveError = "Could not process posConCommands.remove";
+			LOGGER.error("posConCommands.remove expcts \"all\" or a list of Byte position values");
+			LOGGER.error(mRemoveError + " " + e);
+		}
+	}
+
+	@Override
+	public boolean isValid(ErrorResponse errors) {
+		boolean valid = true;
+		processRemoveField();
+		if (mControllerId == null) {
+			errors.addErrorMissingBodyParam("posConCommands.controllerId");
+			valid = false;
+		}
+		if (mRemoveError != null) {
+			errors.addError(mRemoveError);
+			valid = false;
+		}
+		if (!mRemoveAll && mRemovePos.isEmpty()) {
+			if (mPosition == null) {
+				errors.addErrorMissingBodyParam("posConCommands.position");
+				valid = false;
+			}
+			if (mReqQty == null) {
+				errors.addErrorMissingBodyParam("posConCommands.reqQty");
+				valid = false;
+			} else if (mReqQty < 0) {
+				errors.addError("provide a positive posConCommands.reqQty");
+				valid = false;
+			}
+		}
+		return valid;
+	}
+	
+	public void prepareObject() {
+		if (mMinQty == null) {mMinQty = mReqQty;}
+		if (mMaxQty == null) {mMaxQty = mReqQty;}
+		if (mFrequency != null) {mFreq = mFrequency.toByte();}
+		if (mBrightness != null) {mDutyCycle = mBrightness.toByte();}
+	}
+
+	public enum Brightness {
+		BRIGHT, MEDIUM, DIM;
+		
+		public Byte toByte(){
+			if (this == BRIGHT) {
+				return PosControllerInstr.BRIGHT_DUTYCYCLE;
+			} else if (this == MEDIUM){
+				return PosControllerInstr.MED_DUTYCYCLE;
+			} else if (this == DIM){
+				return PosControllerInstr.DIM_DUTYCYCLE;
+			}
+			return null;
+		}
+	}
+	
+	public enum Frequency {
+		SOLID, BLINK;
+		
+		public Byte toByte(){
+			if (this == SOLID) {
+				return PosControllerInstr.SOLID_FREQ;
+			} else if (this == BLINK){
+				return PosControllerInstr.BLINK_FREQ;
+			}
+			return null;
+		}
+	}
+	
+	public static class PosConInstrGroupSerializer {
+		/**
+		 * Duplicated from LedCmdGroupSerializer
+		 */
+		
+		// Don't expose a constructor.
+		private PosConInstrGroupSerializer() {}
+
+		// --------------------------------------------------------------------------
+		public static String serializePosConInstrString(final List<PosControllerInstr> inPosConInstrGroupList) {
+			String result = "";
+
+			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			result = gson.toJson(inPosConInstrGroupList);
+
+			return result;
+		}
+
+		// --------------------------------------------------------------------------
+
+		public static List<PosControllerInstr> deserializePosConInstrString(final String inInstrString) {
+			Preconditions.checkArgument(!Strings.isNullOrEmpty(inInstrString), "posConInstrString cannot be null");
+			List<PosControllerInstr> result = new ArrayList<PosControllerInstr>();
+
+			Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			Type collectionType = new TypeToken<Collection<PosControllerInstr>>() {
+			}.getType();
+			result = mGson.fromJson(inInstrString, collectionType);
+			
+			for (PosControllerInstr instr : result) {
+				instr.prepareObject();
+			}
+			
+			return result;
+		}
+		
+		// Just a utility checker.
+		public static boolean verifyPosConInstrGroupList(final List<PosControllerInstr> inPosConInstrGroupList){
+			boolean allOk = true;
+			for (PosControllerInstr posConInstrGroup : inPosConInstrGroupList) {
+				ErrorResponse errors = new ErrorResponse();
+				if (!posConInstrGroup.isValid(errors)){
+					allOk = false;
+				}
+				List<String> errorList = errors.getErrors();
+				for (String error : errorList) {
+					LOGGER.error(error);
+				}
+			}
+			return allOk;
+		}
 	}
 }

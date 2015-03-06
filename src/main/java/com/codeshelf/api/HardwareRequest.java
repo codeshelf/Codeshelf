@@ -4,7 +4,7 @@ import java.util.List;
 
 import lombok.Getter;
 
-import com.codeshelf.device.PosConInstrGroupSerializer.PosConCmdGroup;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -22,7 +22,8 @@ public class HardwareRequest implements Validatable{
 	@Getter
 	private List<CheDisplayRequest> cheMessages;
 	@Getter
-	private List<PosConCmdGroup> posConCommands;
+	private List<PosControllerInstr> posConInstructions;
+
 
 	
 	public boolean isValid(ErrorResponse errors) {
@@ -55,8 +56,8 @@ public class HardwareRequest implements Validatable{
 				}
 			}
 		}
-		if (posConCommands != null) {
-			for (PosConCmdGroup posCon : posConCommands) {
+		if (posConInstructions != null) {
+			for (PosControllerInstr posCon : posConInstructions) {
 				if (!posCon.isValid(errors)){
 					valid = false;
 				}

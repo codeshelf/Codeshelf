@@ -17,8 +17,6 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.metrics.DummyMetricsService;
-import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.MockDao;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.model.domain.Aisle;
