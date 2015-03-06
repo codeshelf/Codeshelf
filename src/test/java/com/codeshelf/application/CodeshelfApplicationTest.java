@@ -34,7 +34,6 @@ import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
 
 /**
  * @author jeffw

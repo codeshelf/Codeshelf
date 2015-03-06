@@ -627,7 +627,7 @@ public class CsDeviceManager implements
 			if (message.isRemoveAll()){
 				device.removePosConInstrsForSourceAndSend(netGuid);
 			} else if (!message.getRemovePos().isEmpty()){
-				device.removePosConInstrsForSourceAndSend(netGuid, message.getRemovePos());
+				device.removePosConInstrsForSourceAndPositionsAndSend(netGuid, message.getRemovePos());
 			} else {
 				device.addPosConInstrFor(netGuid, message.getInstruction());
 				device.updatePosCons();

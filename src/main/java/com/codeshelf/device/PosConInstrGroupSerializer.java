@@ -32,13 +32,6 @@ public class PosConInstrGroupSerializer {
 	 * 
 	 * The format of the stream is:
 	 * 
-	 * 	public PosControllerInstr(final byte inPosition,
-		final byte inReqQty,
-		final byte inMinQty,
-		final byte inMaxQty,
-		final byte inFreq,
-		final byte inDutyCycle) {
-
 	 * [
 	 * 		{
 	 * 			ctrl:		"controller mac addr",
@@ -86,7 +79,6 @@ public class PosConInstrGroupSerializer {
 		Type collectionType = new TypeToken<Collection<PosConCmdGroup>>() {
 		}.getType();
 		result = mGson.fromJson(inCmdString, collectionType);
-
 		return result;
 	}
 	
