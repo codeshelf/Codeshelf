@@ -16,6 +16,8 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.BayComparable;
+import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -139,5 +141,8 @@ public class Bay extends Location {
 	    }
 		throw new RuntimeException("Location is not a bay: "+location);
 	}
-		
+
+	public static void sortByDomainId(List<Bay> bays) {
+		java.util.Collections.sort(bays, new BayComparable());
+	}
 }

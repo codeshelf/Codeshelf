@@ -5,7 +5,9 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.UUID;
 
 import javax.persistence.DiscriminatorValue;
@@ -14,9 +16,11 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Tier.SlotIDComparator;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -149,7 +153,6 @@ public class Aisle extends Location {
 
 			}
 		}
-
 		return returnValue;
 	}
 
@@ -182,6 +185,39 @@ public class Aisle extends Location {
 		return bay;
 	}
 	
+	public void setPoscons(int startingIndex) {
+		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
+		Bay.sortByDomainId(bays);
+		int posconIndex = startingIndex;
+		for (Bay bay : bays) {
+			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
+			Tier.sortByDomainId(tiers);
+			for (Tier tier  : tiers) {
+				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
+				Slot.sortByDomainId(slots);
+				for (Slot slot  : slots) {
+					slot.setPosconIndex(posconIndex);
+					Slot.DAO.store(slot);
+					posconIndex++;	
+				}
+			}
+		}		
+	}
+	
+	public void resetPoscons() {
+		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
+		for (Bay bay : bays) {
+			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
+			for (Tier tier  : tiers) {
+				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
+				for (Slot slot  : slots) {
+					slot.setPosconIndex(null);
+					Slot.DAO.store(slot);
+				}
+			}
+		}		
+	}
+	
 	@Override
 	public boolean isAisle() {
 		return true;
@@ -195,5 +231,5 @@ public class Aisle extends Location {
 	    	return (Aisle) location;
 	    }
 		throw new RuntimeException("Location is not an aisle");
-	}		
+	}
 }

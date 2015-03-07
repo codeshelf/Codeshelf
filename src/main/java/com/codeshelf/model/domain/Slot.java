@@ -5,12 +5,15 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.List;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.SlotComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -63,6 +66,10 @@ public class Slot extends Location {
 
 	public static void setDao(SlotDao inSlotDao) {
 		Slot.DAO = inSlotDao;
+	}
+	
+	public static void sortByDomainId(List<Slot> slots) {
+		java.util.Collections.sort(slots, new SlotComparable());
 	}
 	
 	@Override

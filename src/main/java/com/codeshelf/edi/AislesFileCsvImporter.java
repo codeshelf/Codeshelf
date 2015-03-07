@@ -26,7 +26,9 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.BayComparable;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
@@ -222,23 +224,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		return result;
 	}
 
-	private class TierBayComparable implements Comparator<Tier> {
-		// For the tierRight and tierLeft aisle types. 
-
-		public int compare(Tier inLoc1, Tier inLoc2) {
-
-			if ((inLoc1 == null) && (inLoc2 == null)) {
-				return 0;
-			} else if (inLoc2 == null) {
-				return -1;
-			} else if (inLoc1 == null) {
-				return 1;
-			} else {
-				return inLoc1.getAisleTierBayForComparable().compareTo(inLoc2.getAisleTierBayForComparable());
-			}
-		}
-	}
-
 	private class ZigzagLeftComparable implements Comparator<Tier> {
 		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
@@ -276,39 +261,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					return (bayValue * -1);
 				else
 					return (inLoc1.getDomainId().compareTo(inLoc2.getDomainId()) * -1);
-			}
-		}
-	}
-
-	private class BayComparable implements Comparator<Bay> {
-		// We want B1, B2, ...B9, B10,B11, etc.
-		public int compare(Bay inLoc1, Bay inLoc2) {
-
-			if ((inLoc1 == null) && (inLoc2 == null)) {
-				return 0;
-			} else if (inLoc2 == null) {
-				return -1;
-			} else if (inLoc1 == null) {
-				return 1;
-			} else {
-				return inLoc1.getBayIdForComparable().compareTo(inLoc2.getBayIdForComparable());
-			}
-		}
-	}
-
-	@SuppressWarnings("unused")
-	private class SlotComparable implements Comparator<Slot> {
-		// We want B1, B2, ...B9, B10,B11, etc.
-		public int compare(Slot inLoc1, Slot inLoc2) {
-
-			if ((inLoc1 == null) && (inLoc2 == null)) {
-				return 0;
-			} else if (inLoc2 == null) {
-				return -1;
-			} else if (inLoc1 == null) {
-				return 1;
-			} else {
-				return inLoc1.getSlotIdForComparable().compareTo(inLoc2.getSlotIdForComparable());
 			}
 		}
 	}

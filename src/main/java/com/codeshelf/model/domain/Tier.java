@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -151,7 +152,7 @@ public class Tier extends Location {
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}
 
-	private class SlotIDComparator implements Comparator<Slot> {
+	public class SlotIDComparator implements Comparator<Slot> {
 		// This is clone of SlotNameComparable in AislesFileCsvImporter.  Move to public slot method?
 		public int compare(Slot inLoc1, Slot inLoc2) {
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -314,5 +315,9 @@ public class Tier extends Location {
 	    	return (Tier) location;
 	    }
 		throw new RuntimeException("Location is not a tier: "+location);
+	}
+
+	public static void sortByDomainId(List<Tier> tiers) {
+		java.util.Collections.sort(tiers, new TierBayComparable());
 	}	
 }
