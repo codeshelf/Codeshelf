@@ -15,7 +15,6 @@ import javax.websocket.WebSocketContainer;
 
 import lombok.Getter;
 
-import org.atteo.classindex.ClassIndex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,7 +25,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.DummyService;
 import com.codeshelf.application.JvmProperties;
-import com.codeshelf.application.ServerMain;
 import com.codeshelf.application.WebApiServer;
 import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
@@ -44,6 +42,7 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Point;
@@ -210,21 +209,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticWebSocketContainer = injector.getInstance(WebSocketContainer.class);
 
 		// get list of DAOs
-		Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
-		daoFields = new HashMap<Class<? extends IDomainObject>, Field>();
-		for (Class<? extends IDomainObject> domainType : domainTypes) {
-			Field field = null;
-			try {
-				field = domainType.getField("DAO");
-			} catch (NoSuchFieldException e) { // skip
-			} catch (SecurityException e) {
-				LOGGER.error("unexpected SecurityException setting up test", e);
-			}
-			if (field != null) {
-				daoFields.put(domainType, field);
-			}
-		}
-
+		daoFields = DomainObjectABC.getDaoFieldMap();
 	}
 
 	public FrameworkTest() {
@@ -355,8 +340,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		this.tenantPersistenceService = realTenantPersistenceService;
 		TenantPersistenceService.setInstance(tenantPersistenceService);
 
-		@SuppressWarnings("unused")
-		Injector injector = Guice.createInjector(ServerMain.createDaoBindingModule());
+		DomainObjectABC.assignStaticDaoFields();
 	}
 
 	private void setDummyPersistence() {

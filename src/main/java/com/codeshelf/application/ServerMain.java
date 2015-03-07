@@ -6,6 +6,8 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
+import java.util.Map;
+
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -28,75 +30,7 @@ import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Aisle.AisleDao;
-import com.codeshelf.model.domain.Bay;
-import com.codeshelf.model.domain.Bay.BayDao;
-import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Che.CheDao;
-import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.CodeshelfNetwork.CodeshelfNetworkDao;
-import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.Container.ContainerDao;
-import com.codeshelf.model.domain.ContainerKind;
-import com.codeshelf.model.domain.ContainerKind.ContainerKindDao;
-import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.ContainerUse.ContainerUseDao;
-import com.codeshelf.model.domain.DropboxService;
-import com.codeshelf.model.domain.DropboxService.DropboxServiceDao;
-import com.codeshelf.model.domain.EdiDocumentLocator;
-import com.codeshelf.model.domain.EdiDocumentLocator.EdiDocumentLocatorDao;
-import com.codeshelf.model.domain.EdiServiceABC;
-import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
-//import com.codeshelf.model.domain.EdiServiceABC.EdiServiceABCDao;
-import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Facility.FacilityDao;
-import com.codeshelf.model.domain.Gtin;
-import com.codeshelf.model.domain.Gtin.GtinMapDao;
-import com.codeshelf.model.domain.IronMqService;
-import com.codeshelf.model.domain.IronMqService.IronMqServiceDao;
-import com.codeshelf.model.domain.Item;
-import com.codeshelf.model.domain.Item.ItemDao;
-import com.codeshelf.model.domain.ItemDdcGroup;
-import com.codeshelf.model.domain.ItemDdcGroup.ItemDdcGroupDao;
-import com.codeshelf.model.domain.ItemMaster;
-import com.codeshelf.model.domain.ItemMaster.ItemMasterDao;
-import com.codeshelf.model.domain.LedController;
-import com.codeshelf.model.domain.LedController.LedControllerDao;
-//import com.codeshelf.model.domain.LocationABC.LocationABCDao;
-import com.codeshelf.model.domain.LocationAlias;
-import com.codeshelf.model.domain.LocationAlias.LocationAliasDao;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderDetail.OrderDetailDao;
-import com.codeshelf.model.domain.OrderGroup;
-import com.codeshelf.model.domain.OrderGroup.OrderGroupDao;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.OrderHeader.OrderHeaderDao;
-import com.codeshelf.model.domain.OrderLocation;
-import com.codeshelf.model.domain.OrderLocation.OrderLocationDao;
-import com.codeshelf.model.domain.Path;
-import com.codeshelf.model.domain.Path.PathDao;
-import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.PathSegment.PathSegmentDao;
-import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.model.domain.SiteController.SiteControllerDao;
-import com.codeshelf.model.domain.Slot;
-import com.codeshelf.model.domain.Slot.SlotDao;
-//import com.codeshelf.model.domain.SubLocationABC.SubLocationDao;
-import com.codeshelf.model.domain.Tier;
-import com.codeshelf.model.domain.Tier.TierDao;
-import com.codeshelf.model.domain.UnspecifiedLocation;
-import com.codeshelf.model.domain.UnspecifiedLocation.UnspecifiedLocationDao;
-import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.model.domain.UomMaster.UomMasterDao;
-import com.codeshelf.model.domain.Vertex;
-import com.codeshelf.model.domain.Vertex.VertexDao;
-//import com.codeshelf.model.domain.WirelessDeviceABC.WirelessDeviceDao;
-import com.codeshelf.model.domain.WorkArea;
-import com.codeshelf.model.domain.WorkArea.WorkAreaDao;
-import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.model.domain.WorkInstruction.WorkInstructionDao;
+import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.platform.multitenancy.ITenantManagerService;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
@@ -116,11 +50,9 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
@@ -134,12 +66,12 @@ import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
  */
 public final class ServerMain {
 	
-	// pre-main static load configuration and set up logging (see Configuration.java)
+	// pre-main static load configuration and set up logging (see JvmProperties.java)
+	private static final Logger	LOGGER;
 	static {
 		JvmProperties.load("server");
+		LOGGER = LoggerFactory.getLogger(ServerMain.class);
 	}
-
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(ServerMain.class);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -154,6 +86,11 @@ public final class ServerMain {
 
 		// Create and start the application.
 		Injector dynamicInjector = setupInjector();
+		
+		// Assign DAOs by reflection, so we don't have to list them all out by name for Guice injection
+		Map<Class<?>,Class<?>> result = DomainObjectABC.assignStaticDaoFields();
+		LOGGER.debug("Static DAO assignments: {}",result.toString());
+		
 		
 		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
 
@@ -232,147 +169,9 @@ public final class ServerMain {
 				return sessionManagerService;				
 			}
 			
-		}, createGuiceServletModule(), createDaoBindingModule());
+		}, createGuiceServletModule());
 
 		return injector;
-	}
-	
-	public static Module createDaoBindingModule() {
-		return new AbstractModule() {
-			@Override
-			protected void configure() {
-				// Register the DAOs (statically as a singleton).
-
-				requestStaticInjection(Aisle.class);
-				bind(new TypeLiteral<ITypedDao<Aisle>>() {
-				}).to(AisleDao.class);
-
-				requestStaticInjection(LedController.class);
-				bind(new TypeLiteral<ITypedDao<LedController>>() {
-				}).to(LedControllerDao.class);
-
-				requestStaticInjection(Bay.class);
-				bind(new TypeLiteral<ITypedDao<Bay>>() {
-				}).to(BayDao.class);
-
-				requestStaticInjection(Che.class);
-				bind(new TypeLiteral<ITypedDao<Che>>() {
-				}).to(CheDao.class);
-
-				requestStaticInjection(SiteController.class);
-				bind(new TypeLiteral<ITypedDao<SiteController>>() {
-				}).to(SiteControllerDao.class);
-
-				requestStaticInjection(CodeshelfNetwork.class);
-				bind(new TypeLiteral<ITypedDao<CodeshelfNetwork>>() {
-				}).to(CodeshelfNetworkDao.class);
-
-				requestStaticInjection(Container.class);
-				bind(new TypeLiteral<ITypedDao<Container>>() {
-				}).to(ContainerDao.class);
-
-				requestStaticInjection(ContainerKind.class);
-				bind(new TypeLiteral<ITypedDao<ContainerKind>>() {
-				}).to(ContainerKindDao.class);
-
-				requestStaticInjection(ContainerUse.class);
-				bind(new TypeLiteral<ITypedDao<ContainerUse>>() {
-				}).to(ContainerUseDao.class);
-
-				requestStaticInjection(DropboxService.class);
-				bind(new TypeLiteral<ITypedDao<DropboxService>>() {
-				}).to(DropboxServiceDao.class);
-
-				requestStaticInjection(EdiServiceABC.class);
-				bind(new TypeLiteral<ITypedDao<EdiServiceABC>>() {
-				}).to(EdiServiceABCDao.class);
-
-				requestStaticInjection(EdiDocumentLocator.class);
-				bind(new TypeLiteral<ITypedDao<EdiDocumentLocator>>() {
-				}).to(EdiDocumentLocatorDao.class);
-
-				requestStaticInjection(IronMqService.class);
-				bind(new TypeLiteral<ITypedDao<IronMqService>>() {
-				}).to(IronMqServiceDao.class);
-
-				requestStaticInjection(Facility.class);
-				bind(new TypeLiteral<ITypedDao<Facility>>() {
-				}).to(FacilityDao.class);
-
-				requestStaticInjection(Item.class);
-				bind(new TypeLiteral<ITypedDao<Item>>() {
-				}).to(ItemDao.class);
-
-				requestStaticInjection(ItemMaster.class);
-				bind(new TypeLiteral<ITypedDao<ItemMaster>>() {
-				}).to(ItemMasterDao.class);
-
-				requestStaticInjection(ItemDdcGroup.class);
-				bind(new TypeLiteral<ITypedDao<ItemDdcGroup>>() {
-				}).to(ItemDdcGroupDao.class);
-
-				requestStaticInjection(LocationAlias.class);
-				bind(new TypeLiteral<ITypedDao<LocationAlias>>() {
-				}).to(LocationAliasDao.class);
-
-				requestStaticInjection(OrderDetail.class);
-				bind(new TypeLiteral<ITypedDao<OrderDetail>>() {
-				}).to(OrderDetailDao.class);
-
-				requestStaticInjection(OrderHeader.class);
-				bind(new TypeLiteral<ITypedDao<OrderHeader>>() {
-				}).to(OrderHeaderDao.class);
-
-				requestStaticInjection(OrderGroup.class);
-				bind(new TypeLiteral<ITypedDao<OrderGroup>>() {
-				}).to(OrderGroupDao.class);
-
-				requestStaticInjection(OrderLocation.class);
-				bind(new TypeLiteral<ITypedDao<OrderLocation>>() {
-				}).to(OrderLocationDao.class);
-
-				requestStaticInjection(Path.class);
-				bind(new TypeLiteral<ITypedDao<Path>>() {
-				}).to(PathDao.class);
-
-				requestStaticInjection(PathSegment.class);
-				bind(new TypeLiteral<ITypedDao<PathSegment>>() {
-				}).to(PathSegmentDao.class);
-
-				requestStaticInjection(Slot.class);
-				bind(new TypeLiteral<ITypedDao<Slot>>() {
-				}).to(SlotDao.class);
-
-				requestStaticInjection(Tier.class);
-				bind(new TypeLiteral<ITypedDao<Tier>>() {
-				}).to(TierDao.class);
-				
-				requestStaticInjection(UnspecifiedLocation.class);
-				bind(new TypeLiteral<ITypedDao<UnspecifiedLocation>>() {
-				}).to(UnspecifiedLocationDao.class);
-
-				requestStaticInjection(UomMaster.class);
-				bind(new TypeLiteral<ITypedDao<UomMaster>>() {
-				}).to(UomMasterDao.class);
-
-				requestStaticInjection(Vertex.class);
-				bind(new TypeLiteral<ITypedDao<Vertex>>() {
-				}).to(VertexDao.class);
-
-				requestStaticInjection(WorkArea.class);
-				bind(new TypeLiteral<ITypedDao<WorkArea>>() {
-				}).to(WorkAreaDao.class);
-
-				requestStaticInjection(WorkInstruction.class);
-				bind(new TypeLiteral<ITypedDao<WorkInstruction>>() {
-				}).to(WorkInstructionDao.class);
-				
-				requestStaticInjection(Gtin.class);
-				bind(new TypeLiteral<ITypedDao<Gtin>>() {
-				}).to(GtinMapDao.class);
-
-			}
-		};
 	}
 	
 	private static ServletModule createGuiceServletModule() {

@@ -8,7 +8,10 @@ package com.codeshelf.model.domain;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -21,12 +24,14 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.atteo.classindex.ClassIndex;
 import org.atteo.classindex.IndexSubclasses;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,9 +55,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @ToString(doNotUseGetters = true, of = { "domainId" })
 public abstract class DomainObjectABC implements IDomainObject {
 
-	@SuppressWarnings("unused")
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
-
+	//@SuppressWarnings("unused")
+	//private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
+	private static Map<Class<? extends IDomainObject>, Field> daoFields = null; 
+	private static Map<Field,ITypedDao<?>> daos = null;
+	
 	// This is the internal GUID
 	@Id
 	@NonNull
@@ -152,5 +159,91 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	public void store() {
 		this.getDao().store(this);		
+	}
+
+	public static Map<Class<? extends IDomainObject>, Field> getDaoFieldMap() {
+		// Create a list of all domain objects that have an ITypedDao field declared. 
+		// The field must be static.
+		
+		if(daoFields == null) {
+			Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
+			daoFields = new HashMap<Class<? extends IDomainObject>, Field>();
+			for (Class<? extends IDomainObject> domainType : domainTypes) {
+				for(Field field : domainType.getDeclaredFields()) {
+					if(ITypedDao.class.isAssignableFrom(field.getType())) {
+						// found a DAO field
+						if(java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
+							daoFields.put(domainType, field);
+						} else {
+							throw new RuntimeException("DAO field is not static: "+domainType.getSimpleName()+"."+field.getName());
+						}
+					}
+				}
+			}
+		}
+		return daoFields;
+	}
+	
+	private static Map<Field,ITypedDao<?>> createDaos() {
+		// Create new ITypedDao objects for each corresponding static field.
+		// Return a list of them.
+		
+		Map<Field,ITypedDao<?>> daos = new HashMap<Field,ITypedDao<?>>();
+		Map<Class<? extends IDomainObject>, Field> daoFields = getDaoFieldMap();
+		Set<Class<? extends IDomainObject>> classes = daoFields.keySet();
+		for(Class<? extends IDomainObject> clazz : classes) {
+			Field field = daoFields.get(clazz);
+			Class<?>[] memberClasses = clazz.getDeclaredClasses();
+			Class<? extends ITypedDao<? extends IDomainObject>> foundDaoClass = null;
+			for(int i=0; i < memberClasses.length; i++) {
+				if(ITypedDao.class.isAssignableFrom(memberClasses[i])) {
+					if(foundDaoClass == null) {
+						@SuppressWarnings("unchecked")
+						Class<? extends ITypedDao<? extends IDomainObject>> dc 
+								= (Class<? extends ITypedDao<? extends IDomainObject>>) memberClasses[i]; 
+						foundDaoClass = dc;
+					} else {
+						throw new RuntimeException("Error: Failed to uniquely identify DAO class for "
+								+clazz.getSimpleName()+". Found "+foundDaoClass.getSimpleName()+" and "+memberClasses[i].getSimpleName());
+					}
+				}
+			}
+			if(foundDaoClass != null) {
+				ITypedDao<?> dao;
+				try {
+					dao = foundDaoClass.newInstance();
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new RuntimeException("Unexpected exception creating DAOs", e);
+				}
+				if(dao.getDaoClass().equals(field.getDeclaringClass())) {
+					daos.put(field, dao);
+				} else {
+					throw new RuntimeException("Could not assign DAO for "
+							+dao.getDaoClass().getSimpleName()+" to class "+field.getDeclaringClass().getSimpleName());
+				}
+			} 
+		}
+		return daos;
+	}
+
+	public static Map<Class<?>,Class<?>> assignStaticDaoFields() {
+		// assign (or for testing, reassign) all of the static DAO fields to DAO instances
+		// return a map of class -> DAO class assignments (just for debugging)
+		Map<Class<?>,Class<?>> result = new HashMap<Class<?>,Class<?>>();
+		
+		if(daos == null) {
+			daos = createDaos();
+		}
+		for(Field field : daos.keySet()) {
+			ITypedDao<?> dao = daos.get(field);
+			try {
+				field.set(null,dao);
+			} catch (IllegalArgumentException | IllegalAccessException e) {
+				throw new RuntimeException("Unexpected exception setting DAO", e);
+			}
+			result.put(field.getDeclaringClass(), dao.getClass());
+		}
+
+		return result;
 	}
 }
