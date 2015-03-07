@@ -18,6 +18,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -1218,6 +1220,24 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
 			invalidScanMsg(mCheStateEnum);
 		}
+	}
+
+	public CheStateEnum waitForCheState(CheStateEnum state, int timeoutInMillis) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < timeoutInMillis) {
+			// retry every 100ms
+			ThreadUtils.sleep(100);
+			CheStateEnum currentState = getCheStateEnum();
+			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
+			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
+			// some of the side effects after this call.
+			if (currentState.equals(state) && !inSetState()) {
+				// expected state found - all good
+				break;
+			}
+		}
+		CheStateEnum existingState = getCheStateEnum();
+		return existingState;
 	}
 
 }
