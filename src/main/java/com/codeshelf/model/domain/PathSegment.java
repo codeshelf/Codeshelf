@@ -30,8 +30,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -55,10 +53,10 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	@SuppressWarnings("unused")
 	private static final long		serialVersionUID	= -2776468192822374495L;
 
-	@Inject
+	//@Inject
 	public static ITypedDao<PathSegment>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
 		public final Class<PathSegment> getDaoClass() {
 			return PathSegment.class;

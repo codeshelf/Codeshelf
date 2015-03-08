@@ -42,8 +42,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -62,10 +60,10 @@ import com.google.inject.Singleton;
 @ToString(of = { "orderType", "status", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<OrderHeader>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class OrderHeaderDao extends GenericDaoABC<OrderHeader> implements ITypedDao<OrderHeader> {
 		public final Class<OrderHeader> getDaoClass() {
 			return OrderHeader.class;

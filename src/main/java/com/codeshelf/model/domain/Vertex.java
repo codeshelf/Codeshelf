@@ -26,8 +26,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -46,10 +44,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Vertex extends DomainObjectTreeABC<Location> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Vertex>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class VertexDao extends GenericDaoABC<Vertex> implements ITypedDao<Vertex> {
 		public final Class<Vertex> getDaoClass() {
 			return Vertex.class;

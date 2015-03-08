@@ -1,6 +1,7 @@
 package com.codeshelf.model;
 
 import java.util.Comparator;
+
 import com.codeshelf.model.domain.Slot;
 
 public class SlotComparable implements Comparator<Slot> {

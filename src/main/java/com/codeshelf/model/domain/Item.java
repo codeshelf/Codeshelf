@@ -36,8 +36,6 @@ import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -56,10 +54,10 @@ import com.google.inject.Singleton;
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Item>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
 		public final Class<Item> getDaoClass() {
 			return Item.class;

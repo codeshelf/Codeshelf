@@ -40,8 +40,6 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.util.CompareNullChecker;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -59,10 +57,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Path extends DomainObjectTreeABC<Facility> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Path>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class PathDao extends GenericDaoABC<Path> implements ITypedDao<Path> {
 		public final Class<Path> getDaoClass() {
 			return Path.class;

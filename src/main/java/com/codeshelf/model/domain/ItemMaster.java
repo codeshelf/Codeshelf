@@ -42,8 +42,6 @@ import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Joiner;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -61,10 +59,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<ItemMaster>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
 		public final Class<ItemMaster> getDaoClass() {
 			return ItemMaster.class;

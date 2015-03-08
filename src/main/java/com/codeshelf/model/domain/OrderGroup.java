@@ -35,8 +35,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -55,10 +53,10 @@ import com.google.inject.Singleton;
 public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	public static final String UNDEFINED = "undefined";
 	
-	@Inject
+	//@Inject
 	public static ITypedDao<OrderGroup>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
 		public final Class<OrderGroup> getDaoClass() {
 			return OrderGroup.class;

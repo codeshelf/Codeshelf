@@ -45,8 +45,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,13 +63,13 @@ import com.google.inject.Singleton;
 @ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<OrderDetail>	DAO;
 	
-	@Inject
-	public static WorkService	workService;
+	//@Inject
+	//public static WorkService	workService;
 
-	@Singleton
+	//@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
 		public final Class<OrderDetail> getDaoClass() {
 			return OrderDetail.class;
@@ -389,7 +387,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	/**
 	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
 	 */
-	public boolean willProduceWi() {
+	public boolean willProduceWi(WorkService workService) {
 		return workService.willOrderDetailGetWi(this);
 	}
 
@@ -398,7 +396,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * If the order header is crossbatch, leave blank. If outbound, then Y or -. Other types not implemented. Return ??
 	 * Advanced: If already completed work instruction: C. If short and not complete yet: s
 	 */
-	public String getWillProduceWiUi() {
+	public String getWillProduceWiUi(WorkService workService) {
 		OrderTypeEnum myParentType = getParentOrderType();
 		if (myParentType == OrderTypeEnum.CROSS)
 			return "";
@@ -416,7 +414,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 					foundShort = true;
 			}
 		}
-		if (willProduceWi())
+		if (willProduceWi(workService))
 			return "Y";
 		else if (foundShort)
 			return "-, short";

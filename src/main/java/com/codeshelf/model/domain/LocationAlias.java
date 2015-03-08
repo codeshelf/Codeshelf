@@ -28,8 +28,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -48,10 +46,10 @@ import com.google.inject.Singleton;
 @ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<LocationAlias>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class LocationAliasDao extends GenericDaoABC<LocationAlias> implements ITypedDao<LocationAlias> {
 		public final Class<LocationAlias> getDaoClass() {
 			return LocationAlias.class;

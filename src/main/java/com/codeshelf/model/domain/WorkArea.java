@@ -28,8 +28,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -47,10 +45,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class WorkArea extends DomainObjectTreeABC<Path> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<WorkArea>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class WorkAreaDao extends GenericDaoABC<WorkArea> implements ITypedDao<WorkArea> {
 		public final Class<WorkArea> getDaoClass() {
 			return WorkArea.class;

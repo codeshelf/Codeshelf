@@ -28,8 +28,6 @@ import org.atteo.classindex.ClassIndex;
 import org.atteo.classindex.IndexSubclasses;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;

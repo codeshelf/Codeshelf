@@ -280,7 +280,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		// Just check a UI field. Basically looking for NPE
 		for (OrderDetail detail : order.getOrderDetails()) {
-			String theUiField = detail.getWillProduceWiUi();
+			String theUiField = detail.getWillProduceWiUi(workService);
 		}
 
 		// Turn off housekeeping work instructions so as to not confuse the counts

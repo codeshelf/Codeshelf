@@ -17,8 +17,6 @@ import com.codeshelf.model.SlotComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -34,10 +32,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Slot extends Location {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Slot>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class SlotDao extends GenericDaoABC<Slot> implements ITypedDao<Slot> {
 		public final Class<Slot> getDaoClass() {
 			return Slot.class;

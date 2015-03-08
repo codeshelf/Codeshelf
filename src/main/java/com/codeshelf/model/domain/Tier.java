@@ -27,8 +27,6 @@ import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 //--------------------------------------------------------------------------
 /**
@@ -59,10 +57,10 @@ public class Tier extends Location {
 	public static final String		THIS_TIER_ONLY		= "";
 	public static final String		ALL_TIERS_IN_AISLE	= "aisle";
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Tier>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
 		public final Class<Tier> getDaoClass() {
 			return Tier.class;
