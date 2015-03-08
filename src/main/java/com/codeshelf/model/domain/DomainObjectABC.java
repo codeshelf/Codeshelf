@@ -167,15 +167,27 @@ public abstract class DomainObjectABC implements IDomainObject {
 			Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
 			daoFields = new HashMap<Class<? extends IDomainObject>, Field>();
 			for (Class<? extends IDomainObject> domainType : domainTypes) {
+				// iterate through domain types
+				
+				Field foundField = null;
 				for(Field field : domainType.getDeclaredFields()) {
+					// find an ITypedDao field
 					if(ITypedDao.class.isAssignableFrom(field.getType())) {
-						// found a DAO field
 						if(java.lang.reflect.Modifier.isStatic(field.getModifiers())) {
-							daoFields.put(domainType, field);
-						} else {
-							throw new RuntimeException("DAO field is not static: "+domainType.getSimpleName()+"."+field.getName());
-						}
-					}
+							if(foundField == null) {
+								if(!field.getName().equals("DAO")) {
+									throw new RuntimeException("Static DAO member did not follow naming convention, expected DAO but got "+field.getName());
+								}
+								foundField = field;
+							} else {
+								throw new RuntimeException("Failed to uniquely identify DAO field in "+domainType.getSimpleName()
+										+": found "+foundField.getName()+" and "+field.getName()  );
+							}
+						} // if not static, ignore
+					} // if not dao, ignore
+				}
+				if (foundField != null) {
+					daoFields.put(domainType,  foundField);
 				}
 			}
 		}
@@ -188,21 +200,28 @@ public abstract class DomainObjectABC implements IDomainObject {
 		
 		Map<Field,ITypedDao<?>> daos = new HashMap<Field,ITypedDao<?>>();
 		Map<Class<? extends IDomainObject>, Field> daoFields = getDaoFieldMap();
-		Set<Class<? extends IDomainObject>> classes = daoFields.keySet();
-		for(Class<? extends IDomainObject> clazz : classes) {
-			Field field = daoFields.get(clazz);
-			Class<?>[] memberClasses = clazz.getDeclaredClasses();
+		Set<Class<? extends IDomainObject>> domainTypes = daoFields.keySet();
+		for(Class<? extends IDomainObject> domainType : domainTypes) {
+			Field field = daoFields.get(domainType);
+			Class<?>[] memberClasses = domainType.getDeclaredClasses();
 			Class<? extends ITypedDao<? extends IDomainObject>> foundDaoClass = null;
 			for(int i=0; i < memberClasses.length; i++) {
 				if(ITypedDao.class.isAssignableFrom(memberClasses[i])) {
 					if(foundDaoClass == null) {
+						if(!memberClasses[i].getSimpleName().startsWith(domainType.getSimpleName()) 
+								|| !memberClasses[i].getSimpleName().endsWith("Dao")) {
+							throw new RuntimeException("DAO class did not follow expected naming convention - expected "
+								+domainType.getSimpleName()+"Dao but got "+memberClasses[i].getSimpleName()
+								+" (remove this if convention has changed)");
+						}
+
 						@SuppressWarnings("unchecked")
 						Class<? extends ITypedDao<? extends IDomainObject>> dc 
 								= (Class<? extends ITypedDao<? extends IDomainObject>>) memberClasses[i]; 
 						foundDaoClass = dc;
 					} else {
-						throw new RuntimeException("Error: Failed to uniquely identify DAO class for "
-								+clazz.getSimpleName()+". Found "+foundDaoClass.getSimpleName()+" and "+memberClasses[i].getSimpleName());
+						throw new RuntimeException("Failed to uniquely identify DAO class for "
+								+domainType.getSimpleName()+". Found "+foundDaoClass.getSimpleName()+" and "+memberClasses[i].getSimpleName());
 					}
 				}
 			}
@@ -226,7 +245,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	public static Map<Class<?>,Class<?>> assignStaticDaoFields() {
 		// assign (or for testing, reassign) all of the static DAO fields to DAO instances
-		// return a map of class -> DAO class assignments (just for debugging)
+		// return a map of class -> DAO class assignments, just for debugging
 		Map<Class<?>,Class<?>> result = new HashMap<Class<?>,Class<?>>();
 		
 		if(daos == null) {

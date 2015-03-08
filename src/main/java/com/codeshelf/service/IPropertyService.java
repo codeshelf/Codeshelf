@@ -6,9 +6,8 @@ import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
-import com.google.common.util.concurrent.Service;
 
-public interface IPropertyService extends Service, IApiService {
+public interface IPropertyService extends ICodeshelfService, IApiService {
 	// direct getter/setter
 	public DomainObjectProperty getProperty(IDomainObject object, String name);
 	public void changePropertyValue(final Facility inFacility, final String inPropertyName, final String inNewStringValue);		

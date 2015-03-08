@@ -56,6 +56,7 @@ import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
@@ -196,7 +197,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
 
 		staticMetricsService = injector.getInstance(IMetricsService.class);
-		staticMetricsService.startAsync().awaitRunning(); // always running, outside of service manager
+		staticMetricsService.startAsync(); // always running, outside of service manager
+		ServiceUtility.awaitRunningOrThrow(staticMetricsService); 
 
 		staticPropertyService = injector.getInstance(IPropertyService.class);
 

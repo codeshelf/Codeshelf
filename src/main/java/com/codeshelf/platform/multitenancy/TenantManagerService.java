@@ -6,8 +6,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import lombok.Setter;
 
@@ -23,10 +21,10 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.DatabaseConnection;
 import com.codeshelf.platform.persistence.PersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.codeshelf.service.AbstractCodeshelfIdleService;
+import com.codeshelf.service.ServiceUtility;
 
-public class TenantManagerService extends AbstractIdleService implements ITenantManagerService {
+public class TenantManagerService extends AbstractCodeshelfIdleService implements ITenantManagerService {
 	public enum ShutdownCleanupReq {
 	NONE , 
 	DROP_SCHEMA , 
@@ -37,7 +35,6 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
-	public static final int MAX_TENANT_MANAGER_WAIT_SECS = 60;
 	private static ITenantManagerService theInstance = null;
 	
 	//@Getter
@@ -65,11 +62,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 		return theInstance;
 	}
 	public final static ITenantManagerService getInstance() {
-		try {
-			getMaybeRunningInstance().awaitRunning(MAX_TENANT_MANAGER_WAIT_SECS,TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("Timeout contacting tenant manager",e);
-		}
+		ServiceUtility.awaitRunningOrThrow(theInstance);
 		return theInstance;
 	}
 	public final static void setInstance(ITenantManagerService testInstance) {
@@ -485,12 +478,7 @@ public class TenantManagerService extends AbstractIdleService implements ITenant
 	@Override
 	protected void shutDown() throws Exception {
 		if(!this.shutdownCleanupRequest.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
-			try {
-				TenantPersistenceService.getMaybeRunningInstance().awaitTerminated(30, TimeUnit.SECONDS);
-			} catch (TimeoutException e) {
-				LOGGER.error("timeout waiting for tenant persistence to shut down, cannot perform cleanup", e);
-				this.shutdownCleanupRequest = TenantManagerService.ShutdownCleanupReq.NONE;
-			}
+			ServiceUtility.awaitTerminatedOrThrow(theInstance);
 			switch (shutdownCleanupRequest) {
 				case DROP_SCHEMA:
 					dropDefaultSchema();

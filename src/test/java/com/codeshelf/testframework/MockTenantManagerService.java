@@ -121,4 +121,22 @@ public class MockTenantManagerService implements ITenantManagerService {
 	@Override
 	public void setShutdownCleanupRequest(ShutdownCleanupReq request) {
 	}
+	@Override
+	public String serviceName() {
+		return this.getClass().getSimpleName();
+	}
+	@Override
+	public void awaitRunningOrThrow() {
+	}
+	@Override
+	public void awaitTerminatedOrThrow() {
+	}
+	@Override
+	public int getStartupTimeoutSeconds() {
+		return Integer.MAX_VALUE;
+	}
+	@Override
+	public int getShutdownTimeoutSeconds() {
+		return Integer.MAX_VALUE;
+	}
 }

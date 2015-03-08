@@ -76,9 +76,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
-public class WorkService extends AbstractExecutionThreadService implements IApiService {
+public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
 	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
 	private static final String			SHUTDOWN_MESSAGE	= "*****SHTUDOWN*****";
@@ -1201,17 +1200,12 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 	@Override
 	protected void triggerShutdown() {
-		super.triggerShutdown();
-		//if(this.serviceThread != null) {
-		//	this.serviceThread.interrupt();
-		//}
-		//this.completedWorkInstructions.clear();
-		this.completedWorkInstructions.offer(new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE));
+		WIMessage poison = new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE);
+		this.completedWorkInstructions.offer(poison);
 	}
 
 	@Override
 	protected void startUp() throws Exception {
-		super.startUp();
 		// initialize
 		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
 	}

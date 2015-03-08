@@ -9,9 +9,8 @@ import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
-import com.google.common.util.concurrent.AbstractIdleService;
 
-public abstract class AbstractPropertyService extends AbstractIdleService implements IPropertyService {
+public abstract class AbstractPropertyService extends AbstractCodeshelfIdleService implements IPropertyService {
 	private final Logger LOGGER = LoggerFactory.getLogger(AbstractPropertyService.class);
 	
 	/**
