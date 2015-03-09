@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -136,6 +137,18 @@ public class LightService implements IApiService {
 		if (theLocation.isLightableAisleController()) {
 			LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, theLocation);
 			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
+		} else if (theLocation.isLightablePoscon()) {
+			String posConController = theLocation.getLedControllerId();
+			int posConIndex = theLocation.getPosconIndex();
+			PosControllerInstr message = new PosControllerInstr(
+				posConController,
+				(byte) posConIndex,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_LED_DASH,
+				PosControllerInstr.BITENCODED_LED_DASH,
+				PosControllerInstr.BLINK_FREQ,
+				PosControllerInstr.BRIGHT_DUTYCYCLE);
+			sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 		} else {
 			LOGGER.warn("Unable to light location: " + theLocation);
 		}
