@@ -3,7 +3,7 @@
 	<diskStore path="java.io.tmpdir" />
 
 	<defaultCache 
-		maxEntriesLocalHeap="10000" 
+		maxEntriesLocalHeap="20000" 
 		eternal="false"
 		timeToIdleSeconds="600" 
 		timeToLiveSeconds="1800"
