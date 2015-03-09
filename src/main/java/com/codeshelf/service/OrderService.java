@@ -161,9 +161,8 @@ public class OrderService implements IApiService {
 	}
 
 	public ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId),
-			WorkInstruction.class);
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilter(CriteriaRegistry.ALL_BY_PARENT,
+			ImmutableMap.<String, Object> of("parentId", facilityId));
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
 	}
@@ -183,9 +182,8 @@ public class OrderService implements IApiService {
 			}
 		}
 		//Get all instructions and filter those matching the requirements
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId),
-			WorkInstruction.class);
+		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilter(CriteriaRegistry.ALL_BY_PARENT,
+			ImmutableMap.<String, Object> of("parentId", facilityId));
 		List<WorkInstruction> filtered = new ArrayList<>();
 		for (WorkInstruction instruction : instructions) {
 			if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {

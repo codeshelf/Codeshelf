@@ -1,8 +1,6 @@
 package com.codeshelf.metrics;
 
 import java.net.InetAddress;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import lombok.Getter;
 
@@ -14,10 +12,11 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.codeshelf.service.AbstractCodeshelfIdleService;
+import com.codeshelf.service.ServiceUtility;
 import com.google.inject.Inject;
 
-public class MetricsService extends AbstractIdleService implements IMetricsService {
+public class MetricsService extends AbstractCodeshelfIdleService implements IMetricsService {
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(MetricsService.class);
 
@@ -47,11 +46,7 @@ public class MetricsService extends AbstractIdleService implements IMetricsServi
 		return theInstance;
 	}
 	public final static IMetricsService getInstance() {
-		try {
-			getMaybeRunningInstance().awaitRunning(60,TimeUnit.SECONDS); // TODO: configurable settings for all await* calls
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("Timeout contacting metrics service",e);
-		}
+		ServiceUtility.awaitRunningOrThrow(theInstance);
 		return theInstance;
 	}
 	public final static void setInstance(IMetricsService instance) { 

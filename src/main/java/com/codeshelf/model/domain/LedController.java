@@ -27,8 +27,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -44,10 +42,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LedController extends WirelessDeviceABC {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<LedController>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class LedControllerDao extends GenericDaoABC<LedController> implements ITypedDao<LedController> {
 		public final Class<LedController> getDaoClass() {
 			return LedController.class;

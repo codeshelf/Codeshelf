@@ -26,8 +26,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -43,10 +41,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<EdiDocumentLocator>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class EdiDocumentLocatorDao extends GenericDaoABC<EdiDocumentLocator> implements ITypedDao<EdiDocumentLocator> {
 		public final Class<EdiDocumentLocator> getDaoClass() {
 			return EdiDocumentLocator.class;

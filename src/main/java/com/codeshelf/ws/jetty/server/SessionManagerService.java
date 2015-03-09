@@ -24,14 +24,14 @@ import com.codeshelf.application.ContextLogging;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class SessionManagerService extends AbstractScheduledService {
+public class SessionManagerService extends AbstractCodeshelfScheduledService {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(SessionManagerService.class);
 
@@ -76,15 +76,7 @@ public class SessionManagerService extends AbstractScheduledService {
 
 	public SessionManagerService() {
 	}
-/*	
-	public void awaitRunningOrThrow() {
-		try {
-			this.awaitRunning(MAX_INITIALIZE_WAIT_SECONDS, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("timeout initializing "+serviceName(),e);
-		}
-	}
-*/
+
 	public synchronized UserSession sessionStarted(Session session) {
 		if(this.activeSessions == null) {
 			LOGGER.warn("sessionStarted called while service is uninitialized or resetting for test");

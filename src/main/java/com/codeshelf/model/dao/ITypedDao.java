@@ -18,15 +18,13 @@ import com.codeshelf.model.domain.IDomainObject;
  * @author jeffw
  *
  */
-public interface ITypedDao<T> extends IDao {
+public interface ITypedDao<T> {
 
 	T findByPersistentId(UUID inPersistentId);
 
 	T findByPersistentId(String inPersistentIdAsString);
 	
-	<P extends IDomainObject> T reload(P domainObject);
-
-	<P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId);
+	T reload(T domainObject);
 
 	T findByDomainId(IDomainObject inParentObject, String inDomainId);
 
@@ -34,15 +32,15 @@ public interface ITypedDao<T> extends IDao {
 
 	List<T> findByFilter(List<Criterion> inFilter);
 
-	List<T> findByFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs, Class<T> inClass);
+	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs);
 
-	boolean matchesFilterAndClass(String criteriaName, Map<String, Object> inFilterArgs,
-		Class<T> inClass, UUID persistentId);
+	boolean matchesFilter(String criteriaName, Map<String, Object> inFilterArgs,
+		UUID persistentId);
 
 	
-	void store(T inDomainObject) throws DaoException;
-
-	void delete(T inDomainObject) throws DaoException;
+	// runtime type of object should be checked by implementation:
+	void store(IDomainObject inDomainObject) throws DaoException; 
+	void delete(IDomainObject inDomainObject) throws DaoException;
 
 	List<T> getAll();
 

@@ -182,7 +182,8 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 		}
 
 		@Override
-		public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId,
+				final Class<? extends IDomainObject> parentClass, final UUID parentId) {
 			objectsDeleted++;
 			LOGGER.debug("Object deleted: "+domainPersistentId);
 		}

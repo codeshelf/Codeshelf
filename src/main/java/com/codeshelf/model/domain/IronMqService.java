@@ -44,8 +44,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 /**
  * @author jeffw
@@ -57,10 +55,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IronMqService extends EdiServiceABC {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<IronMqService>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
 		public final Class<IronMqService> getDaoClass() {
 			return IronMqService.class;

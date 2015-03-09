@@ -38,8 +38,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -73,10 +71,10 @@ import com.google.inject.Singleton;
 @ToString(of = { "type", "status", "orderDetail", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<WorkInstruction>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;

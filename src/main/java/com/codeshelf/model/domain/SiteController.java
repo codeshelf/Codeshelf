@@ -17,8 +17,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 @Entity
 @Table(name = "site_controller")
@@ -29,10 +27,10 @@ public class SiteController extends WirelessDeviceABC {
 
 	public final static String defaultLocationDescription = "Unknown";
 	
-	@Inject
+	//@Inject
 	public static ITypedDao<SiteController>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class SiteControllerDao extends GenericDaoABC<SiteController> implements ITypedDao<SiteController> {
 		public final Class<SiteController> getDaoClass() {
 			return SiteController.class;

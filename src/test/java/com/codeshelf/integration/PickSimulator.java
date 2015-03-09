@@ -18,7 +18,6 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.IntegrationTest;
-import com.codeshelf.util.ThreadUtils;
 
 public class PickSimulator {
 

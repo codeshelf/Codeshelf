@@ -1,8 +1,5 @@
 package com.codeshelf.service;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,11 +29,7 @@ public class PropertyService extends AbstractPropertyService {
 	}
 	public static IPropertyService getInstance() {
 		// not self initializing, better static inject it first...
-		try {
-			theInstance.awaitRunning(60, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("Timeout waiting for PropertyService",e);
-		}
+		ServiceUtility.awaitRunningOrThrow(theInstance);
 		return theInstance;
 	}
 	public static void setInstance(IPropertyService instance) {

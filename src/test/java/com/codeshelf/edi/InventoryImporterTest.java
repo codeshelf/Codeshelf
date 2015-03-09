@@ -740,11 +740,10 @@ public class InventoryImporterTest extends ServerTest {
 
 	@SuppressWarnings("unused")
 	private void assertAutoShort(Che theChe, Timestamp assignedTimestamp) {
-		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime",
+		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.DAO.findByFilter("workInstructionByCheAndAssignedTime",
 			 ImmutableMap.<String, Object>of(
 				 "cheId", theChe.getPersistentId(),
-				 "assignedTimestamp", assignedTimestamp),
-			 WorkInstruction.class);
+				 "assignedTimestamp", assignedTimestamp));
 		boolean foundOne = false;
 		for (WorkInstruction workInstruction : wiPlusAutoShort) {
 			if (workInstruction.getStatus().equals(WorkInstructionStatusEnum.SHORT)) {

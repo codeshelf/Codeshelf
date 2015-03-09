@@ -43,8 +43,6 @@ import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,10 +63,10 @@ public class Facility extends Location {
 	private static final String 		UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
 
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Facility>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		@Override
 		public final Class<Facility> getDaoClass() {

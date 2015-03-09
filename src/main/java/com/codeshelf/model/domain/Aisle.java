@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.UUID;
 
 import javax.persistence.DiscriminatorValue;
@@ -16,14 +14,10 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.domain.Tier.SlotIDComparator;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -39,10 +33,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Aisle extends Location {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Aisle>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
 		public final Class<Aisle> getDaoClass() {
 			return Aisle.class;

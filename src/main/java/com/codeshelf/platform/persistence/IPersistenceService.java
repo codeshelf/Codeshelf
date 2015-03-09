@@ -4,9 +4,9 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
-import com.google.common.util.concurrent.Service;
+import com.codeshelf.service.ICodeshelfService;
 
-public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends Service {
+public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends ICodeshelfService {
 
 	public SCHEMA_TYPE getDefaultSchema();
 	public Session getSession(SCHEMA_TYPE schema);
@@ -32,7 +32,4 @@ public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends Service
 	public SessionFactory getSessionFactory();
 	public EventListenerIntegrator getEventListenerIntegrator();
 
-	// service methods
-	public String serviceName();
-	public void awaitRunningOrThrow();
 }

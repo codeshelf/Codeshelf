@@ -1,6 +1,7 @@
 package com.codeshelf.device;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
@@ -9,12 +10,12 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.codeshelf.ws.jetty.server.UserSession;
-import com.google.common.util.concurrent.AbstractScheduledService;
 
-public class ClientConnectionManagerService extends AbstractScheduledService {
+public class ClientConnectionManagerService extends AbstractCodeshelfScheduledService {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(ClientConnectionManagerService.class);
 
@@ -114,8 +115,10 @@ public class ClientConnectionManagerService extends AbstractScheduledService {
 				LOGGER.warn("Not connected to server.  Trying to connect.");
 				clientEndpoint.connect();
 			}
+		} catch (ConnectException e) {
+			LOGGER.warn("Failed to connect WebSocket: "+e.getMessage());
 		} catch (Exception e) {
-			LOGGER.warn("exception connecting websocket client (continuing)", e); 
+			LOGGER.error("exception connecting websocket client (continuing)", e); 
 		}
 	}
 

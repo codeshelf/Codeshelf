@@ -215,7 +215,7 @@ public class WorkInstructionTest extends HibernateTest {
 		Map<String, Object> params = ImmutableMap.<String, Object>of(
 			"cheId", wi.getAssignedChe().getPersistentId().toString(),
 			"assignedTimestamp", wi.getAssigned().getTime());
-		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime", params, WorkInstruction.class);
+		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilter("workInstructionByCheAndAssignedTime", params);
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
 		this.getTenantPersistenceService().commitTransaction();
 	}

@@ -48,8 +48,6 @@ import com.dropbox.core.DbxWebAuthNoRedirect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,10 +63,10 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 
-	@Inject
+	//@Inject
 	public static ITypedDao<DropboxService>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
 		public final Class<DropboxService> getDaoClass() {
 			return DropboxService.class;

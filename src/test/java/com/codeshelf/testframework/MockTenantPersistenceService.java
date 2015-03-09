@@ -118,12 +118,11 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	}
 
 	@Override
-	public String serviceName() {
-		return this.getClass().getSimpleName();
+	public void awaitRunningOrThrow() {
 	}
 
 	@Override
-	public void awaitRunningOrThrow() {
+	public void awaitTerminatedOrThrow() {
 	}
 
 	@Override
@@ -192,10 +191,25 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	}
 
 	@Override
-	public ITypedDao<IDomainObject> getDao(Class<?> classObject) {
+	public <T extends IDomainObject> ITypedDao<T> getDao(Class<T> classObject) {
 		@SuppressWarnings("unchecked")
-		ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) this.mockDaos.get(classObject);
+		ITypedDao<T> dao = (ITypedDao<T>) this.mockDaos.get(classObject);
 		return dao;
+	}
+
+	@Override
+	public String serviceName() {
+		return this.getClass().getSimpleName();
+	}
+
+	@Override
+	public int getStartupTimeoutSeconds() {
+		return Integer.MAX_VALUE;
+	}
+
+	@Override
+	public int getShutdownTimeoutSeconds() {
+		return Integer.MAX_VALUE;
 	}
 
 }

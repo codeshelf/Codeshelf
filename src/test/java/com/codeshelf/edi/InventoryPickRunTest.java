@@ -423,7 +423,7 @@ public class InventoryPickRunTest extends ServerTest {
 		OrderHeader order = facility.getOrderHeader("12000");
 		Assert.assertNotNull(order);
 		for (OrderDetail detail : order.getOrderDetails()) {
-			String theUiField = detail.getWillProduceWiUi();
+			String theUiField = detail.getWillProduceWiUi(workService);
 		}
 
 		// Now ready to run the cart
@@ -603,7 +603,6 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 	@Test
 	public final void testBayDistance() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		OrderDetail.workService = workService;
 
 		
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
@@ -624,23 +623,23 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location");
 		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertTrue(orderDetail.willProduceWi());
+		Assert.assertTrue(orderDetail.willProduceWi(workService));
 		
 		LOGGER.info("2. OrderDetail 102 does not have an inventory location, does not have preferred location");
 		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
 		Assert.assertNotNull(orderDetail2);
 	
-		Assert.assertFalse(orderDetail2.willProduceWi());
+		Assert.assertFalse(orderDetail2.willProduceWi(workService));
 		
 		LOGGER.info("3. OrderDetail 103 does not have an inventory location, has bad preferred location");
 		OrderDetail orderDetail3 = orderHeader.getOrderDetail("103");
 		Assert.assertNotNull(orderDetail3);
-		Assert.assertFalse(orderDetail3.willProduceWi());
+		Assert.assertFalse(orderDetail3.willProduceWi(workService));
 		
 		LOGGER.info("4. OrderDetail 104 does have an inventory location, has bad preferred location");
 		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
 		Assert.assertNotNull(orderDetail4);
-		Assert.assertTrue(orderDetail4.willProduceWi());
+		Assert.assertTrue(orderDetail4.willProduceWi(workService));
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -667,23 +666,23 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location, has sequence");
 		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertTrue(orderDetail.willProduceWi());
+		Assert.assertTrue(orderDetail.willProduceWi(workService));
 		
 		LOGGER.info("2. OrderDetail 102 does not have an inventory location, does not have preferred location, no sequence");
 		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
 		Assert.assertNotNull(orderDetail2);
 	
-		Assert.assertFalse(orderDetail2.willProduceWi());
+		Assert.assertFalse(orderDetail2.willProduceWi(workService));
 		
 		LOGGER.info("3. OrderDetail 103 does not have an inventory location, has bad preferred location, has sequence");
 		OrderDetail orderDetail3 = orderHeader.getOrderDetail("103");
 		Assert.assertNotNull(orderDetail3);
-		Assert.assertTrue(orderDetail3.willProduceWi());
+		Assert.assertTrue(orderDetail3.willProduceWi(workService));
 		
 		LOGGER.info("4. OrderDetail 104 does have an inventory location, has bad preferred location, no sequence");
 		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
 		Assert.assertNotNull(orderDetail4);
-		Assert.assertTrue(orderDetail4.willProduceWi());
+		Assert.assertTrue(orderDetail4.willProduceWi(workService));
 		
 		
 		this.getTenantPersistenceService().commitTransaction();

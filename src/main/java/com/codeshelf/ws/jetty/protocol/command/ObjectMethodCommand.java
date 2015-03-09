@@ -70,9 +70,10 @@ public class ObjectMethodCommand extends CommandABC {
 		UUID objectId = UUID.fromString(request.getPersistentId());
 		try {
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(className);
+			@SuppressWarnings("unchecked")
+			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);				
+				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);				
 				// First locate an instance of the parent class.
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 

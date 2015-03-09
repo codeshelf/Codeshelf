@@ -251,9 +251,8 @@ public class ContainerUseTest extends HibernateTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		List<ContainerUse> uses = ContainerUse.DAO.findByFilterAndClass("containerUsesByChe",
-			ImmutableMap.<String, Object>of("cheId", UUID.randomUUID().toString()),
-			ContainerUse.class);
+		List<ContainerUse> uses = ContainerUse.DAO.findByFilter("containerUsesByChe",
+			ImmutableMap.<String, Object>of("cheId", UUID.randomUUID().toString()));
 		Assert.assertEquals(0, uses.size());
 		this.getTenantPersistenceService().commitTransaction();
 	}

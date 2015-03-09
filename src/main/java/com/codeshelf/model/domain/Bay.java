@@ -17,13 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.BayComparable;
-import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.collect.Ordering;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -40,10 +37,10 @@ import com.google.inject.Singleton;
 public class Bay extends Location {
 
 
-	@Inject
+	//@Inject
 	public static ITypedDao<Bay>	DAO;
 
-	@Singleton
+	//@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
 		public final Class<Bay> getDaoClass() {
 			return Bay.class;
