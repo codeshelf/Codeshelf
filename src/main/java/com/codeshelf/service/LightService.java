@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -138,21 +140,35 @@ public class LightService implements IApiService {
 			LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, theLocation);
 			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
 		} else if (theLocation.isLightablePoscon()) {
-			String posConController = theLocation.getLedControllerId();
-			int posConIndex = theLocation.getPosconIndex();
-			PosControllerInstr message = new PosControllerInstr(
-				posConController,
-				(byte) posConIndex,
-				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-				PosControllerInstr.BITENCODED_LED_DASH,
-				PosControllerInstr.BITENCODED_LED_DASH,
-				PosControllerInstr.BLINK_FREQ,
-				PosControllerInstr.BRIGHT_DUTYCYCLE);
-			sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+			lightPosCon(facility, theLocation);
 		} else {
 			LOGGER.warn("Unable to light location: " + theLocation);
 		}
-
+	}
+	
+	private void lightPosCon(final Facility facility, final Location theLocation){
+		final String posConController = theLocation.getLedControllerId();
+		final int posConIndex = theLocation.getPosconIndex();
+		PosControllerInstr message = new PosControllerInstr(
+			posConController,
+			(byte) posConIndex,
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+			PosControllerInstr.BITENCODED_TRIPLE_DASH,
+			PosControllerInstr.BITENCODED_TRIPLE_DASH,
+			PosControllerInstr.BLINK_FREQ,
+			PosControllerInstr.BRIGHT_DUTYCYCLE);
+		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+		//new PosConTimeout(sessionManagerService, facility.getSiteControllerUsers(), posConController, (byte)posConIndex).start();
+		new Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				LOGGER.info("AisleDeviceLogic expire timer fired.");
+				PosControllerInstr instruction = new PosControllerInstr();
+				instruction.setControllerId(posConController);
+				instruction.getRemovePos().add((byte) posConIndex);
+				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), instruction);
+			}
+		}, 20000);		
 	}
 
 	// --------------------------------------------------------------------------
