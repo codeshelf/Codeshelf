@@ -120,11 +120,15 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 	private long mPostedToPosConController = 0;
 	
 	//----------------------------------------------------
-	//Additional fields used by the RESTful API
 	@Accessors(prefix = "m")
 	@Getter @Setter @Expose
 	@SerializedName(value = "controllerId")
 	private String			mControllerId;
+	
+	@Accessors(prefix = "m")
+	@Getter @Setter @Expose
+	@SerializedName(value = "sourceId")
+	private String			mSourceId;
 	
 	@Accessors(prefix = "m")
 	@Getter

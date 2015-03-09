@@ -619,21 +619,23 @@ public class CsDeviceManager implements
 	}
 	
 	public void processPosConControllerMessage(PosControllerInstr instruction) {
-		NetGuid netGuid = new NetGuid(instruction.getControllerId());
-		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(netGuid);
+		NetGuid controllerGuid = new NetGuid(instruction.getControllerId());
+		String sourceStr = instruction.getSourceId();
+		NetGuid sourceGuid = (sourceStr==null) ? controllerGuid : new NetGuid(sourceStr);
+		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(controllerGuid);
 		if (device != null) {
 			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
 			if (instruction.isRemoveAll()){
-				device.removePosConInstrsForSourceAndSend(netGuid);
+				device.removePosConInstrsForSourceAndSend(sourceGuid);
 			} else if (!instruction.getRemovePos().isEmpty()){
-				device.removePosConInstrsForSourceAndPositionsAndSend(netGuid, instruction.getRemovePos());
+				device.removePosConInstrsForSourceAndPositionsAndSend(sourceGuid, instruction.getRemovePos());
 			} else {
-				device.addPosConInstrFor(netGuid, instruction);
+				device.addPosConInstrFor(sourceGuid, instruction);
 				device.updatePosCons();
 			}
 			
 		} else {
-			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", netGuid);
+			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", controllerGuid);
 		}
 	}
 
