@@ -20,6 +20,6 @@ public interface IDaoListener {
 	
 	void objectUpdated(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties);
 	
-	void objectDeleted(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
+	void objectDeleted(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Class<? extends IDomainObject> parentClass, final UUID parentId);
 
 }

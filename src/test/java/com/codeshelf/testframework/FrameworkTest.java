@@ -329,7 +329,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			= new HashMap<Class<? extends IDomainObject>, ITypedDao<?>>();
 		for (Class<? extends IDomainObject> clazz : daoFields.keySet()) {
 			if (createMock) {
-				daos.put(clazz, new MockDao<>());
+				daos.put(clazz, new MockDao<>(clazz));
 			} else {
 				daos.put(clazz, null);
 			}

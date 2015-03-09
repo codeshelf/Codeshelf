@@ -1,6 +1,7 @@
 package com.codeshelf.device;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
@@ -114,8 +115,10 @@ public class ClientConnectionManagerService extends AbstractCodeshelfScheduledSe
 				LOGGER.warn("Not connected to server.  Trying to connect.");
 				clientEndpoint.connect();
 			}
+		} catch (ConnectException e) {
+			LOGGER.warn("Failed to connect WebSocket: "+e.getMessage());
 		} catch (Exception e) {
-			LOGGER.warn("exception connecting websocket client (continuing)", e); 
+			LOGGER.error("exception connecting websocket client (continuing)", e); 
 		}
 	}
 

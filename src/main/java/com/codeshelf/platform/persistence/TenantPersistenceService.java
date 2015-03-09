@@ -69,7 +69,7 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	}
 
 	@SuppressWarnings("unchecked")
-	public ITypedDao<IDomainObject> getDao(Class<?> classObject) {
+	public <T extends IDomainObject> ITypedDao<T> getDao(Class<T> classObject) {
 		if (classObject==null) {
 			LOGGER.error("Failed to get DAO for undefined class");
 			return null;
@@ -78,7 +78,7 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				Class<IDomainObject> domainClass = (Class<IDomainObject>) classObject;
 				Field field = domainClass.getField("DAO");
-				ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) field.get(null);
+				ITypedDao<T> dao = (ITypedDao<T>) field.get(null);
 				return dao;
 			}
 		}

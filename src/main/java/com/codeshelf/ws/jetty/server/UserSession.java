@@ -190,7 +190,8 @@ public class UserSession implements IDaoListener {
 	}
 
 	@Override
-	public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+	public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId,
+			final Class<? extends IDomainObject> parentClass, final UUID parentId) {
 		if(executorService.isShutdown()) {
 			LOGGER.warn("objectDeleted called after executorService shutdown");
 			return;
@@ -205,7 +206,7 @@ public class UserSession implements IDaoListener {
 					synchronized(eventListeners) {
 						Collection<ObjectEventListener> listeners = eventListeners.values();
 						for (ObjectEventListener listener : listeners) {
-							MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId);
+							MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId, parentClass, parentId);
 							if (response != null) {
 								responses.add(response);
 							}

@@ -47,7 +47,7 @@ public class Filter implements ObjectEventListener {
 	List<String> propertyNames;
 
 	
-	final ITypedDao<IDomainObject> dao;
+	final ITypedDao<? extends IDomainObject> dao;
 	
 	@Getter @Setter
 	String criteriaName;
@@ -58,7 +58,7 @@ public class Filter implements ObjectEventListener {
 	
 	PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 
-	public Filter(ITypedDao<IDomainObject> dao, Class<? extends IDomainObject> persistenceClass, String id) {
+	public Filter(ITypedDao<? extends IDomainObject> dao, Class<? extends IDomainObject> persistenceClass, String id) {
 		this.persistenceClass = persistenceClass;
 		this.id = id;
 		this.dao = dao;
@@ -87,7 +87,7 @@ public class Filter implements ObjectEventListener {
 			Preconditions.checkNotNull(dao, "dao is null for class " + domainClass);
 			Preconditions.checkNotNull(params, "params is null for class " + domainClass); // could null be ok for this?
 			
-			boolean matches = dao.matchesFilterAndClass(criteriaName,params,dao.getDaoClass(), domainPersistentId);
+			boolean matches = dao.matchesFilter(criteriaName,params,domainPersistentId);
 			if (matches) {
 				if (this.matchList.contains(domainPersistentId)) {
 					return this.processEvent(domainClass, domainPersistentId,  EventType.Update);
@@ -95,7 +95,7 @@ public class Filter implements ObjectEventListener {
 					return processObjectAdd(domainClass, domainPersistentId);
 				}
 			} else if (this.matchList.contains(domainPersistentId)) {
-				return processObjectDelete(domainClass, domainPersistentId);
+				return processObjectDelete(domainClass, domainPersistentId, null, null);
 			}
 		}
 		return null;
@@ -103,7 +103,8 @@ public class Filter implements ObjectEventListener {
 	}
 
 	@Override
-	public ResponseABC processObjectDelete(Class<? extends IDomainObject> inDomainClass, final UUID inDomainPersistentId) {
+	public ResponseABC processObjectDelete(Class<? extends IDomainObject> inDomainClass, final UUID inDomainPersistentId,
+			Class<? extends IDomainObject> parentClass, final UUID parentPersistentId) {
 		Map<String, Object> deletedObjectProperties = getPropertiesForDeleted(inDomainClass, inDomainPersistentId);
 		ObjectChangeResponse deleteResponse = new ObjectChangeResponse();
 		deleteResponse.setResults(ImmutableList.of(deletedObjectProperties));
@@ -144,7 +145,7 @@ public class Filter implements ObjectEventListener {
 		
 	}
 	
-	public List<Map<String, Object>> getProperties(List<IDomainObject> inDomainObjectList, EventType type) {
+	public List<Map<String, Object>> getProperties(List<? extends IDomainObject> inDomainObjectList, EventType type) {
 		try {
 			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (IDomainObject matchedObject : inDomainObjectList) {
@@ -182,8 +183,8 @@ public class Filter implements ObjectEventListener {
 		return null;
 	}			
 
-	public List<IDomainObject> refreshMatchList() {
-		List<IDomainObject> objectMatchList = dao.findByFilterAndClass(criteriaName,params,dao.getDaoClass());
+	public List<? extends IDomainObject> refreshMatchList() {
+		List<? extends IDomainObject> objectMatchList = dao.findByFilter(criteriaName,params);
 		List<UUID> objectIds = new LinkedList<UUID>();
 		for (IDomainObject object : objectMatchList) {
 			objectIds.add(object.getPersistentId());

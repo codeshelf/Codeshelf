@@ -5,5 +5,5 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 
 public interface ITenantPersistenceService extends IPersistenceService<Tenant> {
-	public ITypedDao<IDomainObject> getDao(Class<?> classObject);
+	public <T extends IDomainObject> ITypedDao<T> getDao(Class<T> classObject);
 }

@@ -354,7 +354,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			"facilityId", inChe.getFacility().getPersistentId(),
 			"domainId", inScannedOrderDetailId
 		);
-		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
+		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilter("orderDetailByFacilityAndDomainId", filterArgs);
 
 		if (orderDetails.isEmpty()) {
 			// temporary: just return empty list instead of throwing

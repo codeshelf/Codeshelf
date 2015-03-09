@@ -38,12 +38,12 @@ public class DropboxServiceTest extends MinimalTest {
 	@Test
 	public final void dropboxCheckTest() throws IOException {
 
-		Facility.setDao(new MockDao<Facility>());
-		Aisle.setDao(new MockDao<Aisle>());
-		Bay.setDao(new MockDao<Bay>());
-		Vertex.setDao(new MockDao<Vertex>());
-		DropboxService.setDao(new MockDao<DropboxService>());
-		EdiDocumentLocator.setDao(new MockDao<EdiDocumentLocator>());
+		Facility.setDao(new MockDao<Facility>(Facility.class));
+		Aisle.setDao(new MockDao<Aisle>(Aisle.class));
+		Bay.setDao(new MockDao<Bay>(Bay.class));
+		Vertex.setDao(new MockDao<Vertex>(Vertex.class));
+		DropboxService.setDao(new MockDao<DropboxService>(DropboxService.class));
+		EdiDocumentLocator.setDao(new MockDao<EdiDocumentLocator>(EdiDocumentLocator.class));
 
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");

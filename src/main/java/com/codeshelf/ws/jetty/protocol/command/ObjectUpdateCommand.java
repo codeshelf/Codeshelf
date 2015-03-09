@@ -31,8 +31,8 @@ public class ObjectUpdateCommand extends CommandABC {
 		this.request = request;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public ResponseABC exec() {
 		ObjectUpdateResponse response = new ObjectUpdateResponse();
 		
@@ -69,10 +69,10 @@ public class ObjectUpdateCommand extends CommandABC {
 		Map<String, Object> properties = request.getProperties();
 		try {
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(className);
+			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.				
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
+				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				
 				IDomainObject updateObject = null;
 				if(dao == null) {

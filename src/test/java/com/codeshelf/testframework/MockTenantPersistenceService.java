@@ -191,9 +191,9 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	}
 
 	@Override
-	public ITypedDao<IDomainObject> getDao(Class<?> classObject) {
+	public <T extends IDomainObject> ITypedDao<T> getDao(Class<T> classObject) {
 		@SuppressWarnings("unchecked")
-		ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) this.mockDaos.get(classObject);
+		ITypedDao<T> dao = (ITypedDao<T>) this.mockDaos.get(classObject);
 		return dao;
 	}
 

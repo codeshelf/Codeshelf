@@ -63,11 +63,10 @@ public class OrderHeaderTest extends HibernateTest {
 	@Test
 	public void testOrderHeaderByFacilityAndType() {
 		this.getTenantPersistenceService().beginTransaction();
-		OrderHeader.DAO.findByFilterAndClass("orderHeadersByFacilityAndType",
+		OrderHeader.DAO.findByFilter("orderHeadersByFacilityAndType",
 											ImmutableMap.<String, Object>of(
 												"facilityId", UUID.randomUUID(),
-												"orderType", OrderTypeEnum.OUTBOUND.name()),
-											 OrderHeader.class);
+												"orderType", OrderTypeEnum.OUTBOUND.name()));
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
