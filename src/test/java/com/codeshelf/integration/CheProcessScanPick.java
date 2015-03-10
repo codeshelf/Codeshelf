@@ -893,7 +893,7 @@ public class CheProcessScanPick extends ServerTest {
 	private void tryPick(PickSimulator picker, String itemId, String excpectedLocation, CheStateEnum nextExpectedState){
 		picker.scanSomething(itemId);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals(excpectedLocation, picker.getLastCheDisplayString());		
+		Assert.assertEquals(excpectedLocation, picker.getLastCheDisplayString(1));		
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
