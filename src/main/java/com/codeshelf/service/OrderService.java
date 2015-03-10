@@ -151,7 +151,7 @@ public class OrderService implements IApiService {
 				getPicksPerHourQuery.setCacheable(true);
 				picksPerHour = getPicksPerHourQuery.list();
 			}
-			productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
+			productivitySummary = new ProductivitySummaryList(facility, picksPerHour, session);
 		} finally {
 			TenantPersistenceService.getInstance().commitTransaction(tenant);
 		}

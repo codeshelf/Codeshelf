@@ -45,7 +45,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(this.getTenantPersistenceService().getDefaultSchema(),facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
-		Assert.assertEquals(groups.size(), 3);
+		Assert.assertEquals(3, groups.size());
 		Iterator<String> groupNames = groups.keySet().iterator();
 		while (groupNames.hasNext()) {
 			String groupName = groupNames.next();
