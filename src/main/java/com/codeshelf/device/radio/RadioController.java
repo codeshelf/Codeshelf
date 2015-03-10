@@ -253,22 +253,25 @@ public class RadioController implements IRadioController {
 			}
 
 		} while (!started && mShouldRun);
-		LOGGER.info("Gateway radio interface started");
 
-		selectChannel();
+		if(mShouldRun) {
+			LOGGER.info("Gateway radio interface started");
 
-		// Start IO Service
-		packetIOService.start();
+			selectChannel();
 
-		// Kick off the background event processing
-		backgroundService.scheduleWithFixedDelay(new Runnable() {
-			@Override
-			public void run() {
-				processEvents();
-			}
-		}, 0, BACKGROUND_SERVICE_DELAY_MS, TimeUnit.MILLISECONDS);
+			// Start IO Service
+			packetIOService.start();
 
-		broadcastService.start();
+			// Kick off the background event processing
+			backgroundService.scheduleWithFixedDelay(new Runnable() {
+				@Override
+				public void run() {
+					processEvents();
+				}
+			}, 0, BACKGROUND_SERVICE_DELAY_MS, TimeUnit.MILLISECONDS);
+
+			broadcastService.start();
+		}
 	}
 
 	/*
