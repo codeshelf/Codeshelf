@@ -65,7 +65,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	/**
 	 * Remove all instructions for a specific PosCon
 	 */
-	public final void removePosConInstrsAndSend(Byte position) {
+	public final void removePosConInstrs(Byte position) {
 		List<NetGuid> emptySources = new ArrayList<NetGuid>();
 		Iterator<NetGuid> sources = mPosInstructionBySource.keySet().iterator();
 		while (sources.hasNext()) {
@@ -79,10 +79,6 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		for (NetGuid source : emptySources) {
 			mPosInstructionBySource.remove(source);
 		}
-		
-		if (isDeviceAssociated()) {
-			updatePosCons();
-		}
 	}
 
 
@@ -90,23 +86,17 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	 * Remove all PosCon instructions from a single source device
 	 * Update PosCon displays
 	 */
-	public final void removePosConInstrsForSourceAndSend(final NetGuid inNetGuid) {
+	public final void removePosConInstrsForSource(final NetGuid inNetGuid) {
 		String sourceStr = inNetGuid.getHexStringNoPrefix();
-
 		LOGGER.info("Clear PosCons for Source:" + sourceStr + " on " + getMyGuidStr());
-
 		mPosInstructionBySource.remove(inNetGuid);
-		// Only send the command if the device is known active.
-		if (isDeviceAssociated()) {
-			updatePosCons();
-		}
 	}
 
 	/**
 	 * Remove PosCon instruction for a specific source device / position combination
 	 * Update PosCon displays
 	 */
-	public final void removePosConInstrsForSourceAndPositionsAndSend(NetGuid inNetGuid, List<Byte> positions) {
+	public final void removePosConInstrsForSourceAndPositions(NetGuid inNetGuid, List<Byte> positions) {
 		String sourceStr = inNetGuid.getHexStringNoPrefix();
 
 		Map<Byte, PosControllerInstr> sourceInsts = mPosInstructionBySource.get(inNetGuid);		
@@ -116,11 +106,6 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		}
 		
 		if (sourceInsts.isEmpty()) {mPosInstructionBySource.remove(inNetGuid);}
-		
-		// Only send the command if the device is known active.
-		if (isDeviceAssociated()) {
-			updatePosCons();
-		}
 	}
 	
 	//LedSample isn't used yet.
@@ -163,8 +148,6 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		for (PosControllerInstr cmd : posConInstrs) {
 			addPosConInstrFor(getGuid(), cmd);
 		}
-		//setLightsExpireTimer(inSeconds); 
-		updatePosCons();
 	}
 	
 	@Override
@@ -176,10 +159,16 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 	@Override
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		// Also empty in AisleDeviceLogic
-		
 	}
 	
 	public final void updatePosCons() {
+		updatePosCons(false);
+	}
+	
+	public final void updatePosCons(boolean updateUnassociated) {
+		if (!isDeviceAssociated() && !updateUnassociated) {
+			return;
+		}
 		clearAllPositionControllers();
 		Map<Byte, PosControllerInstr> latestInstructionsForPosition = new HashMap<Byte, PosControllerInstr>();
 		List<Map<Byte, PosControllerInstr>> instructionsBySourceList = new ArrayList<Map<Byte, PosControllerInstr>> (mPosInstructionBySource.values());

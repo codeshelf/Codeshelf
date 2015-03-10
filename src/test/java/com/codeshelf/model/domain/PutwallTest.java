@@ -156,7 +156,7 @@ public class PutwallTest extends MockDaoTest {
 		mController.addPosConInstrFor(che1Guid, null, (byte)4, (byte)6, (byte)3, (byte)9, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
 		mController.addPosConInstrFor(che2Guid, null, (byte)4, (byte)60, (byte)30, (byte)90, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
 		mController.addPosConInstrFor(mControllerGuid, null, (byte)3, (byte)65, (byte)35, (byte)95, Frequency.SOLID.toByte(), Brightness.MEDIUM.toByte());
-		mController.updatePosCons();
+		mController.updatePosCons(true);
 		
 		//Test what was saved
 		PosControllerInstr instr1 = mController.getPosConInstrFor(che1Guid, (byte)2);
@@ -180,8 +180,8 @@ public class PutwallTest extends MockDaoTest {
 		//CLEAR INSTRUCTIONS
 		
 		//Remove instruction that is incidentally currently being displayed on PosCon 4 
-		mController.removePosConInstrsForSourceAndPositionsAndSend(che2Guid, Arrays.asList(new Byte[]{4}));
-		mController.updatePosCons();
+		mController.removePosConInstrsForSourceAndPositions(che2Guid, Arrays.asList(new Byte[]{4}));
+		mController.updatePosCons(true);
 		//Assert that the instruction is gone
 		instr3 = mController.getPosConInstrFor(che2Guid, (byte)4);
 		Assert.assertNull(instr3);
@@ -191,8 +191,8 @@ public class PutwallTest extends MockDaoTest {
 		compareInstructions(dispOn4, instr2);
 		
 		//Remove all instructions from a PosCon
-		mController.removePosConInstrsAndSend((byte)2);
-		mController.updatePosCons();
+		mController.removePosConInstrs((byte)2);
+		mController.updatePosCons(true);
 		//Assert that the instruction is gone
 		instr1 = mController.getPosConInstrFor(che1Guid, (byte)2);
 		Assert.assertNull(instr1);
@@ -202,8 +202,8 @@ public class PutwallTest extends MockDaoTest {
 		Assert.assertNull(dispOn2);
 		
 		//Remove all instructions for a source device
-		mController.removePosConInstrsForSourceAndSend(mControllerGuid);
-		mController.updatePosCons();
+		mController.removePosConInstrsForSource(mControllerGuid);
+		mController.updatePosCons(true);
 		//Assert that the instruction is gone
 		instr4 = mController.getPosConInstrFor(mControllerGuid, (byte)3);
 		Assert.assertNull(instr4);
@@ -249,6 +249,7 @@ public class PutwallTest extends MockDaoTest {
 				"    }\n" + 
 				"]";
 		mController.lightExtraPosCons(message);
+		mController.updatePosCons(true);
 		
 		PosControllerInstr instr1 = mController.getPosConInstrFor(mControllerGuid, (byte)1);
 		PosControllerInstr instr2 = mController.getPosConInstrFor(mControllerGuid, (byte)2);

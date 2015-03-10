@@ -21,28 +21,15 @@ import com.codeshelf.flyweight.controller.IRadioController;
 public abstract class PosConDeviceABC extends DeviceLogicABC{
 	private static final Logger				LOGGER									= LoggerFactory.getLogger(PosConDeviceABC.class);
 
-	//Container Position to last SetInstruction Map
-	//Used by unit tests to check the contents of PosCon displays
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
 
 	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
-		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
-		
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController);		
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
 	}
 	
-	// --------------------------------------------------------------------------
-	/**
-	 * Send a command to set update the position controller
-	 * Common Use: Send a pick request command to the CHE to light a position
-	 * 
-	 * @param inPos
-	 * @param inReqQty
-	 * @param inMinQty
-	 * @param inMaxQty
-	 */
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
 		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
@@ -63,7 +50,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC{
 	}
 	
 	protected void clearOnePositionController(Byte inPosition) {
-		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
+		LOGGER.info("Sending Clear PosCon Instruction {}", inPosition);
 
 		//Remove lastSent Set Instr from map to indicate the clear
 		if (PosControllerInstr.POSITION_ALL.equals(inPosition)) {
@@ -71,7 +58,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC{
 		} else {
 			mPosToLastSetIntrMap.remove(inPosition);
 		}
-
+		
+		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 }

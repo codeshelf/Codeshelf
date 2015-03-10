@@ -624,18 +624,17 @@ public class CsDeviceManager implements
 		NetGuid sourceGuid = (sourceStr==null) ? controllerGuid : new NetGuid(sourceStr);
 		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(controllerGuid);
 		if (device != null) {
-			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
+			LOGGER.info("processPosConControllerMessage calling display function");
 			if (instruction.isRemoveAll()){
-				device.removePosConInstrsForSourceAndSend(sourceGuid);
+				device.removePosConInstrsForSource(sourceGuid);
 			} else if (!instruction.getRemovePos().isEmpty()){
-				device.removePosConInstrsForSourceAndPositionsAndSend(sourceGuid, instruction.getRemovePos());
+				device.removePosConInstrsForSourceAndPositions(sourceGuid, instruction.getRemovePos());
 			} else {
 				device.addPosConInstrFor(sourceGuid, instruction);
-				if (!skipUpdate) {
-					device.updatePosCons();
-				}
 			}
-			
+			if (!skipUpdate) {
+				device.updatePosCons();
+			}
 		} else {
 			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", controllerGuid);
 		}
