@@ -95,8 +95,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected static final String			ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
 	protected static final String			ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
 
-	public    static final String			STARTWORK_COMMAND						= "START";
-	public 	  static final String			REVERSE_COMMAND							= "REVERSE";
+	public static final String				STARTWORK_COMMAND						= "START";
+	public static final String				REVERSE_COMMAND							= "REVERSE";
 	protected static final String			SETUP_COMMAND							= "SETUP";
 	protected static final String			SHORT_COMMAND							= "SHORT";
 	protected static final String			LOGOUT_COMMAND							= "LOGOUT";
@@ -109,7 +109,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
 	protected static final String			OR_SCAN_START							= cheLine("OR SCAN START");
 	protected static final String			OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
-	
+
 	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
 	protected static final String			SCAN_SKIP								= "SCANSKIP";
 	protected static final String			SKIP_SCAN								= "SKIPSCAN";
@@ -165,9 +165,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected int							mSetStateStackCount						= 0;
 
 	protected ScanNeededToVerifyPick		mScanNeededToVerifyPick;
-	
-	@Getter @Setter
-	protected Boolean						mReversePickOrder = false;
+
+	@Getter
+	@Setter
+	protected Boolean						mReversePickOrder						= false;
 
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
@@ -199,8 +200,11 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		if (wi.isHousekeeping())
 			return false;
-		else
-			return mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+		else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
+			return true;
+			// See if we can skip this scan because we already scanned.
+		}
+		return false;
 	}
 
 	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
@@ -336,6 +340,72 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * After simultaneous work instruction enhancement, the answer will come from mActivePickWiList.
+	 * For our v13 kludge, the answer comes from mAllPicksWiList
+	 */
+	private int getTotalCountSameSkuLocation(WorkInstruction inWi) {
+		if (inWi == null) {
+			LOGGER.error("null wi in getTotalCountSameSku");
+			return 0;
+		}
+
+		String pickSku = inWi.getItemId();
+		String pickLocation = inWi.getPickInstruction();
+		int totalQty = 0;
+
+		// using mAllPicksWiList, we expect same item, same pick location, uncompleted, unshorted.
+		// this will find and match the inWi also.
+		for (WorkInstruction wi : mAllPicksWiList) {
+			WorkInstructionStatusEnum theStatus = wi.getStatus();
+			if (theStatus == WorkInstructionStatusEnum.INPROGRESS || theStatus == WorkInstructionStatusEnum.NEW)
+				if (pickSku.equals(wi.getItemId()))
+					if (pickLocation.equals(wi.getPickInstruction()))
+					// decide not to also do uom check here. Would be very strange if a customer had different UOMs in the same pick location.
+					{
+						totalQty += inWi.getPlanQuantity();
+					}
+			/* This code makes the huge assumption that the work sequencer is very rational. A case that would fail is:
+			 * Pick item from slot A, sequence 1. Count 5.
+			 * Pick item from slot A, sequence 2. Count 1.
+			 * Pick other item from slot B, sequence 3. Count 2
+			 * Back to slot A, sequence 4 for the same item. Count 3.
+			 * This would fail by showing total count 9 for the first pick, even though the count for that group of pick from that location is only 6
+			*/
+		}
+		return totalQty;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Today, return just the simple string numeral.
+	 * Suggested enhancement: part of a multi-work instruction pick, return as +5+.  If a single, then -5-
+	 * For our v13 kludge, the answer comes from mAllPicksWiList
+	 */
+	protected String getWICountStringForCheDisplay(WorkInstruction inWi) {
+		if (inWi.isHousekeeping()) {
+			return "";
+		}
+		Integer planQty = inWi.getPlanQuantity();
+		Integer totalQtyThisSku = getTotalCountSameSkuLocation(inWi);
+		String returnStr;
+		/* better
+		if (planQty >= totalQtyThisSku)
+			returnStr = "-" + planQty + "-";
+		else
+			returnStr = "+" + totalQtyThisSku + "+";
+		*/
+		// As Zach specifies
+		if (planQty >= totalQtyThisSku)
+			returnStr = planQty.toString();
+		else
+			returnStr = totalQtyThisSku.toString();
+		// >=?  We do not really know that all future deviceLogic classes will use mAllPicksWiList which is where getTotalCountSameSku comes from.
+
+		return returnStr;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Breakup the description into three static lines no longer than 20 characters.
 	 * Except the last line can be up to 40 characters (since it scrolls).
 	 * Important change from v3. If quantity > 98, then tweak the description adding the count to the start.
@@ -343,10 +413,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	 * @param inDescription
 	 */
 	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
-		// temporary
-		LOGGER.info("sendDisplayWorkInstruction");
-
-		int planQty = wi.getPlanQuantity();
+		String planQtyStr = getWICountStringForCheDisplay(wi);
 
 		String[] pickInfoLines = { "", "", "" };
 
@@ -363,8 +430,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			pickInfoLines[0] = info;
 
 			String displayDescription = wi.getDescription();
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + displayDescription;
+			if (!planQtyStr.isEmpty()) {
+				displayDescription = planQtyStr + " " + displayDescription;
 			}
 
 			//Add description
@@ -380,8 +447,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
 
 			String displayDescription = wi.getDescription();
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				displayDescription = planQty + " " + displayDescription;
+			if (!planQtyStr.isEmpty()) {
+				displayDescription = planQtyStr + " " + displayDescription;
 			}
 
 			int pos = 0;
@@ -412,8 +479,8 @@ public class CheDeviceLogic extends DeviceLogicABC {
 			pickInfoLines[0] = info;
 
 			String quantity = "";
-			if (planQty >= maxCountForPositionControllerDisplay) {
-				quantity = "QTY " + planQty;
+			if (!planQtyStr.isEmpty()) {
+				quantity = "QTY " + planQtyStr;
 			}
 
 			//Make sure we do not exceed 40 chars
@@ -661,7 +728,7 @@ public class CheDeviceLogic extends DeviceLogicABC {
 
 		// Clean up any potential newline or carriage returns.
 		inCommandStr = inCommandStr.replaceAll("[\n\r]", "");
-		
+
 		LOGGER.info(this + " received scan command: " + inCommandStr);
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
@@ -963,6 +1030,10 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	}
 
 	protected void clearOnePositionController(Byte inPosition) {
+		if (inPosition == PosControllerInstr.POSITION_ALL)
+			LOGGER.info("sending clear poscon command for ALL");
+		else
+			LOGGER.info("sending clear poscon command for {}", inPosition);
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 
 		//Remove lastSent Set Instr from map to indicate the clear
@@ -1208,9 +1279,9 @@ public class CheDeviceLogic extends DeviceLogicABC {
 	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
 
 		String returnString = "";
-		
+
 		// If the user scanned SCANSKIP return true
-		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)){
+		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
 			// TODO need better warning message here. Get orderId and pickerId?
 			LOGGER.warn("SCANSKIP for work instruction");
 			return returnString;
