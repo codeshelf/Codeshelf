@@ -618,7 +618,7 @@ public class CsDeviceManager implements
 		}
 	}
 	
-	public void processPosConControllerMessage(PosControllerInstr instruction) {
+	public PosManagerDeviceLogic processPosConControllerMessage(PosControllerInstr instruction, boolean skipUpdate) {
 		NetGuid controllerGuid = new NetGuid(instruction.getControllerId());
 		String sourceStr = instruction.getSourceId();
 		NetGuid sourceGuid = (sourceStr==null) ? controllerGuid : new NetGuid(sourceStr);
@@ -631,13 +631,27 @@ public class CsDeviceManager implements
 				device.removePosConInstrsForSourceAndPositionsAndSend(sourceGuid, instruction.getRemovePos());
 			} else {
 				device.addPosConInstrFor(sourceGuid, instruction);
-				device.updatePosCons();
+				if (!skipUpdate) {
+					device.updatePosCons();
+				}
 			}
 			
 		} else {
 			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", controllerGuid);
 		}
+		return device;
 	}
+	
+	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
+		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
+		for (PosControllerInstr instruction : instructionList.getInstructions()) {
+			controllers.add(processPosConControllerMessage(instruction, true));
+		}
+		for (PosManagerDeviceLogic controller : controllers) {
+			controller.updatePosCons();
+		}
+	}
+
 
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing

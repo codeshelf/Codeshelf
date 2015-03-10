@@ -8,8 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -25,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -103,6 +102,8 @@ public class LightService implements IApiService {
 		} else {
 			lightChildLocations(facility, theLocation, color);
 		}
+		
+		lightPosConRange(facility, theLocation);
 	}
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
@@ -139,36 +140,40 @@ public class LightService implements IApiService {
 		if (theLocation.isLightableAisleController()) {
 			LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, theLocation);
 			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
-		} else if (theLocation.isLightablePoscon()) {
-			lightPosCon(facility, theLocation);
 		} else {
 			LOGGER.warn("Unable to light location: " + theLocation);
 		}
+		
+	}
+		
+	private void lightPosConRange(final Facility facility, final Location theLocation){
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		lightPosConRangeRecursive(facility, theLocation, instructions);
+		PosControllerInstrList message = new PosControllerInstrList(instructions);
+		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 	}
 	
-	private void lightPosCon(final Facility facility, final Location theLocation){
-		final String posConController = theLocation.getLedControllerId();
-		final int posConIndex = theLocation.getPosconIndex();
-		PosControllerInstr message = new PosControllerInstr(
-			posConController,
-			(byte) posConIndex,
-			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-			PosControllerInstr.BITENCODED_TRIPLE_DASH,
-			PosControllerInstr.BITENCODED_TRIPLE_DASH,
-			PosControllerInstr.BLINK_FREQ,
-			PosControllerInstr.BRIGHT_DUTYCYCLE);
-		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
-		//new PosConTimeout(sessionManagerService, facility.getSiteControllerUsers(), posConController, (byte)posConIndex).start();
-		new Timer().schedule(new TimerTask() {
-			@Override
-			public void run() {
-				LOGGER.info("AisleDeviceLogic expire timer fired.");
-				PosControllerInstr instruction = new PosControllerInstr();
-				instruction.setControllerId(posConController);
-				instruction.getRemovePos().add((byte) posConIndex);
-				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), instruction);
+	private void lightPosConRangeRecursive(final Facility facility, final Location theLocation, List<PosControllerInstr> instructions){
+		if (theLocation == null) {return;}
+		if (theLocation.isLightablePoscon()) {
+			String posConController = theLocation.getLedControllerId();
+			int posConIndex = theLocation.getPosconIndex();
+			PosControllerInstr message = new PosControllerInstr(
+				posConController,
+				(byte) posConIndex,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_TRIPLE_DASH,
+				PosControllerInstr.BITENCODED_TRIPLE_DASH,
+				PosControllerInstr.BLINK_FREQ,
+				PosControllerInstr.BRIGHT_DUTYCYCLE);
+			instructions.add(message);
+		}
+		List<Location> children = theLocation.getActiveChildren();
+		if (!children.isEmpty()){
+			for (Location child : children) {
+				lightPosConRangeRecursive(facility, child, instructions);
 			}
-		}, 20000);		
+		}
 	}
 
 	// --------------------------------------------------------------------------

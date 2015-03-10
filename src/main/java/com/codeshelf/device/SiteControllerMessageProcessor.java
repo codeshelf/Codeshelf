@@ -1,6 +1,7 @@
 package com.codeshelf.device;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,7 +159,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
 		} else if (message instanceof PosControllerInstr) {
 			PosControllerInstr msg = (PosControllerInstr)message;
-			this.deviceManager.processPosConControllerMessage(msg);
+			this.deviceManager.processPosConControllerMessage(msg, false);
+		} else if (message instanceof PosControllerInstrList) {
+			PosControllerInstrList msg = (PosControllerInstrList)message;
+			this.deviceManager.processPosConControllerListMessage(msg);
 		}
 	}
 
