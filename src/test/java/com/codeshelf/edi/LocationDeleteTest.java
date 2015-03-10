@@ -60,7 +60,7 @@ public class LocationDeleteTest extends ServerTest {
 			readSmallerAisleFile(facility);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -69,7 +69,7 @@ public class LocationDeleteTest extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
@@ -88,11 +88,11 @@ public class LocationDeleteTest extends ServerTest {
 		Short channel1 = 1;
 		controller1.addLocation(aisle1);
 		aisle1.setLedChannel(channel1);
-		Aisle.DAO.store(aisle1);
+		Aisle.staticGetDao().store(aisle1);
 
 		controller2.addLocation(aisle2);
 		aisle2.setLedChannel(channel1);
-		Aisle.DAO.store(aisle2);
+		Aisle.staticGetDao().store(aisle2);
 
 		return facility;
 

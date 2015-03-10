@@ -181,7 +181,7 @@ public class ProductivityReportingTest extends ServerTest {
 	private Facility createFacilityWithOneRun(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
 		Facility facility = createFacility();
-		Che che = Che.DAO.findByDomainId(null,"CHE1");
+		Che che = Che.staticGetDao().findByDomainId(null,"CHE1");
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);
@@ -212,7 +212,7 @@ public class ProductivityReportingTest extends ServerTest {
 		//12/22/14 6:46 PM = 1419291960000
 		//12/23/14 7:40 PM = 1419363620000
 		Facility facility = createFacility();
-		Che che = Che.DAO.findByDomainId(null,"CHE1");
+		Che che = Che.staticGetDao().findByDomainId(null,"CHE1");
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);

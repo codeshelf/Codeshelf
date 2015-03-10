@@ -56,7 +56,7 @@ public class LineScanTest extends ServerTest {
 	@Test
 	public void testGetWorkInstructionDirect() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 
 		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(che, "11.1");
 		List<WorkInstruction> instructions = response.getWorkInstructions();
@@ -71,7 +71,7 @@ public class LineScanTest extends ServerTest {
 	@Test
 	public void testGetWorkInstruction() {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
@@ -91,7 +91,7 @@ public class LineScanTest extends ServerTest {
 	@Test
 	public void testGetWorkInstructionDuplicate() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "10.1");
 			processor.handleRequest(Mockito.mock(UserSession.class), request);
@@ -106,7 +106,7 @@ public class LineScanTest extends ServerTest {
 	@Test
 	public void testGetWorkInstructionCompletedInstruction() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
 		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(Mockito.mock(UserSession.class), request);
@@ -129,7 +129,7 @@ public class LineScanTest extends ServerTest {
 	@Test
 	public void testGetWorkInstructionBadDetailId() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 		
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "xxx");

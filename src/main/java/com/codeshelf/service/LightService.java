@@ -80,7 +80,7 @@ public class LightService implements IApiService {
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
-		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
+		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
 		if (theItem == null) {
 			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
 			return;
@@ -329,7 +329,7 @@ public class LightService implements IApiService {
 	}
 
 	private Facility checkFacility(final String facilityPersistentId) {
-		return checkNotNull(Facility.DAO.findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
+		return checkNotNull(Facility.staticGetDao().findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
 	}
 
 	private Location checkLocation(Facility facility, final String inLocationNominalId) {
@@ -398,7 +398,7 @@ public class LightService implements IApiService {
 				return;
 			}
 
-			Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
 			if (facility == null) {
 				LOGGER.error("lightAllControllers called with unknown facility");
 				return;

@@ -37,7 +37,7 @@ public class ComputeWorkCommand extends CommandABC {
 	public ResponseABC exec() {
 		ComputeWorkResponse response = new ComputeWorkResponse();
 		String cheId = request.getDeviceId();
-		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
+		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			// Get the work instructions for this CHE at this location for the given containers.

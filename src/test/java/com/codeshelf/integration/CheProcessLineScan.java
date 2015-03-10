@@ -102,7 +102,7 @@ public class CheProcessLineScan extends ServerTest {
 		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(getFacility());
@@ -111,14 +111,14 @@ public class CheProcessLineScan extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
 		Path path2 = createPathForTest(getFacility());
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.DAO.findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
@@ -267,7 +267,7 @@ public class CheProcessLineScan extends ServerTest {
 		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		// Prove that our orders file is working. D401 is a modeled location (alias for a Tier)
@@ -284,7 +284,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -354,7 +354,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -410,7 +410,7 @@ public class CheProcessLineScan extends ServerTest {
 		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		// Prove that our orders file is working. D601 is an unmodeled location
@@ -427,7 +427,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -527,7 +527,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		// we need to set che1 to be in line scan mode
@@ -536,7 +536,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -679,7 +679,7 @@ public class CheProcessLineScan extends ServerTest {
 		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -706,7 +706,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		LOGGER.info("2a: Import the orders file again, but with containerId");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		setUpLineScanOrdersWithCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
@@ -731,7 +731,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		LOGGER.info("3a: Set LOCAPICK, then import the orders file again, with containerId");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
@@ -785,7 +785,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		
 		// we need to set che1 to be in line scan mode
@@ -794,7 +794,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 		
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
@@ -958,7 +958,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		
 		// we need to set che1 to be in line scan mode
@@ -967,7 +967,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 		
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
@@ -1081,7 +1081,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		
 		// we need to set che1 to be in line scan mode
@@ -1090,7 +1090,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 		
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {

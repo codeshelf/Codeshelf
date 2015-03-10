@@ -42,7 +42,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Facility");

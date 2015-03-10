@@ -37,15 +37,6 @@ public class UsersServlet extends HttpServlet {
         PrintWriter out = resp.getWriter();
         out.println("<html><head><title>service control</title></head><body><h4>user management</h4>");
         
-        /*
-        PersistenceService.getInstance().beginTransaction();
-        List<User> users = User.DAO.getAll();
-        for(User u : users) {
-            out.println("<form name=stop action='#' method=post><input type=hidden name='action' value='stop' /></form>");
-        }
-        PersistenceService.getInstance().commitTransaction();
-        */
-        
         String schema = req.getParameter("schema");
         String org = req.getParameter("org");
         String email = req.getParameter("email");

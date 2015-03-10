@@ -120,7 +120,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		for(Tenant tenant : tenants) {
 			try {
 				TenantPersistenceService.getInstance().beginTransaction(tenant);
-				for (Facility facility : Facility.DAO.getAll()) {
+				for (Facility facility : Facility.staticGetDao().getAll()) {
 					for (Path path : facility.getPaths()) {
 						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 						facility.recomputeLocationPathDistances(path);

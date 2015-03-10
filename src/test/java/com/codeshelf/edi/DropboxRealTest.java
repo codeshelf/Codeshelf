@@ -96,7 +96,7 @@ public class DropboxRealTest extends ServerTest {
 			dropboxService.setDomainId("DB");
 			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
 			dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
-			DropboxService.DAO.store(dropboxService);
+			DropboxService.staticGetDao().store(dropboxService);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
 		}

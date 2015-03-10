@@ -746,7 +746,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			return;
 		}
 		for (Vertex v : vertices) {
-			Vertex.DAO.delete(v);
+			Vertex.staticGetDao().delete(v);
 		}
 		setAnchorPoint(Point.getZeroPoint());
 		vertices.clear();
@@ -1289,7 +1289,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		// Get the LedController
 		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
-		LedController newLedController = LedController.DAO.findByPersistentId(persistentId);
+		LedController newLedController = LedController.staticGetDao().findByPersistentId(persistentId);
 		if (newLedController == null)
 			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
 

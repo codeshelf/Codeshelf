@@ -41,19 +41,19 @@ public class TestDatabaseTest extends HibernateTest {
 			// create an org to look for in future steps
 			Facility fac = this.createFacility();
 			fac.setDomainId("org_create");
-			Facility.DAO.store(fac);
+			Facility.staticGetDao().store(fac);
 			
 			// new transaction
 			this.getTenantPersistenceService().commitTransaction();
 			this.getTenantPersistenceService().beginTransaction();
 
 			// org just created should still exist
-			assertNotNull(Facility.DAO.findByDomainId(null,"org_create"));			
+			assertNotNull(Facility.staticGetDao().findByDomainId(null,"org_create"));			
 			
 			// create another org
 			fac= this.createFacility();
 			fac.setDomainId("org_rollback");
-			Facility.DAO.store(fac);			
+			Facility.staticGetDao().store(fac);			
 			
 			// rollback and new transaction
 			this.getTenantPersistenceService().rollbackTransaction();
@@ -61,14 +61,14 @@ public class TestDatabaseTest extends HibernateTest {
 			this.getTenantPersistenceService().beginTransaction();
 
 			// last step rolled back new org, so it should not exist
-			assertNull(Facility.DAO.findByDomainId(null,"org_rollback"));
+			assertNull(Facility.staticGetDao().findByDomainId(null,"org_rollback"));
 
 		} else if(TestDatabaseTest.sequence_static == 2) {
 			// confirm test object was recreated by JUnit (not reused)
 			assertEquals(this.sequence_member,1);
 			
 			// org created in prior step should not exist
-			assertNull(Facility.DAO.findByDomainId(null,"org_create"));			
+			assertNull(Facility.staticGetDao().findByDomainId(null,"org_create"));			
 		}		
 		
 		this.sequence_member++;
@@ -84,16 +84,16 @@ public class TestDatabaseTest extends HibernateTest {
 		Facility org = new Facility();
 		org.setDomainId("an org");
 		org.setDescription("foo");
-		Facility.DAO.store(org);					
+		Facility.staticGetDao().store(org);					
 		commitTransaction();
 		
 		beginTransaction();
 		org.setDescription("bar");
-		Facility.DAO.store(org);					
+		Facility.staticGetDao().store(org);					
 		commitTransaction();		
 
 		beginTransaction();
-		Facility org2 = Facility.DAO.findByDomainId(null,"an org");
+		Facility org2 = Facility.staticGetDao().findByDomainId(null,"an org");
 		assertNotNull(org2);
 		assertEquals("bar", org2.getDescription());
 		commitTransaction();		

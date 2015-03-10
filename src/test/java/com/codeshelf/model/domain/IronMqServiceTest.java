@@ -17,14 +17,15 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.testframework.MinimalTest;
+import com.codeshelf.testframework.MockDaoTest;
 
-public class IronMqServiceTest extends MinimalTest {
-	@SuppressWarnings("unchecked")
+public class IronMqServiceTest extends MockDaoTest {
 	@Before
 	public void doBefore() {
 		super.doBefore();
-		IronMqService.DAO = mock(ITypedDao.class);
+		@SuppressWarnings("unchecked")
+		ITypedDao<IronMqService> mock = mock(ITypedDao.class);
+		super.useCustomDao(IronMqService.class, mock);
 	}
 	
 	@Test

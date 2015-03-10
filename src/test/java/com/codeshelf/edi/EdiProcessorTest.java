@@ -35,6 +35,7 @@ import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.MinimalTest;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
@@ -43,24 +44,19 @@ import com.google.common.util.concurrent.ServiceManager;
  * @author jeffw
  *
  */
-public class EdiProcessorTest extends MinimalTest {
+public class EdiProcessorTest extends MockDaoTest {
 	private final Logger LOGGER = LoggerFactory.getLogger(EdiProcessorTest.class);
+	private List<Service>	ephemeralServices;
 
-	public final class TestFacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
-		List<Facility> list = new ArrayList<Facility>(1);
+	
+	@Override
+	public boolean ephemeralServicesShouldStartAutomatically() {
+		return false;
+	}
 
-		public TestFacilityDao(final Facility facility) {
-			super();
-			list.add(facility);
-		}
-
-		public final Class<Facility> getDaoClass() {
-			return Facility.class;
-		}
-
-		public final List<Facility> getAll() {
-			return list;
-		}
+	@Override
+	protected List<Service> generateEphemeralServices() {
+		return this.ephemeralServices;
 	}
 
 	@Test
@@ -83,33 +79,15 @@ public class EdiProcessorTest extends MinimalTest {
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
 		
-		Facility facility = new Facility();
-		facility.setDomainId("FTEST");
-
-		Facility.DAO = new TestFacilityDao(facility);
+		getFacility();
 
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
 
-		ITenantPersistenceService mock = mock(ITenantPersistenceService.class);
-		TenantPersistenceService.setInstance(mock);
-
-		ArrayList<Service> services = new ArrayList<Service>();
-		services.add(ediProcessorService);
-		services.add(metrics);
-		ServiceManager serviceManager = new ServiceManager(services);
-
-		try {
-			serviceManager.startAsync().awaitHealthy(10,TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			Assert.fail(e.getMessage());
-		} 
-
-		try {
-			serviceManager.stopAsync().awaitStopped(10,TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			Assert.fail(e.getMessage());
-		}
+		this.ephemeralServices = new ArrayList<Service>();
+		ephemeralServices.add(ediProcessorService);
+		ephemeralServices.add(metrics);
+		this.initializeEphemeralServiceManager();
 	}
 
 	@Test
@@ -130,11 +108,8 @@ public class EdiProcessorTest extends MinimalTest {
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
-		Facility facility = new Facility();
-		facility.setDomainId("FTEST");
-
-		Facility.DAO = new TestFacilityDao(facility);
-
+		getFacility();
+		
 		IEdiService ediServiceLinked = new IEdiService() {
 
 			public EdiServiceStateEnum getServiceState() {
@@ -365,7 +340,8 @@ public class EdiProcessorTest extends MinimalTest {
 				return null;
 			}
 		};
-
+		
+		Facility facility = getFacility();
 		facility.addEdiService(ediServiceUnlinked);
 		facility.addEdiService(ediServiceLinked);
 
@@ -379,18 +355,10 @@ public class EdiProcessorTest extends MinimalTest {
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
 
-		ITenantPersistenceService mock = mock(ITenantPersistenceService.class);
-		TenantPersistenceService.setInstance(mock);
-
-		ArrayList<Service> services = new ArrayList<Service>();
-		services.add(ediProcessorService);
-		services.add(metrics);
-		ServiceManager serviceManager = new ServiceManager(services);
-		try {
-			serviceManager.startAsync().awaitHealthy(30, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			Assert.fail(e.getMessage());
-		}
+		this.ephemeralServices = new ArrayList<Service>();
+		ephemeralServices.add(ediProcessorService);
+		ephemeralServices.add(metrics);
+		this.initializeEphemeralServiceManager();
 
 		try {
 			// Sleep will switch us to the EdiProcessor thread.
@@ -401,11 +369,6 @@ public class EdiProcessorTest extends MinimalTest {
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
 		
-		try {
-			serviceManager.stopAsync().awaitStopped(30, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			Assert.fail(e.getMessage());
-		}
 	}
 
 	private ICsvOrderImporter generateFailingImporter() {

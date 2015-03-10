@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 // --------------------------------------------------------------------------
@@ -39,10 +40,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class UomMaster extends DomainObjectTreeABC<Facility> {
 
-	//@Inject
-	public static ITypedDao<UomMaster>	DAO;
-
-	//@Singleton
 	public static class UomMasterDao extends GenericDaoABC<UomMaster> implements ITypedDao<UomMaster> {
 		public final Class<UomMaster> getDaoClass() {
 			return UomMaster.class;
@@ -69,7 +66,11 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<UomMaster> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<UomMaster> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(UomMaster.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -88,7 +89,4 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 		setDomainId(inUomMasterId);
 	}
 
-	public static void setDao(UomMasterDao inUomMasterDao) {
-		UomMaster.DAO = inUomMasterDao;
-	}
 }

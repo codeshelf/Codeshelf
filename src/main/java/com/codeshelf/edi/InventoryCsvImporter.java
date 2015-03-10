@@ -165,7 +165,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			if (!itemMasterIsActive) {
 				LOGGER.info("Archive old item master: " + itemMaster.getItemId());
 				itemMaster.setActive(false);
-				ItemMaster.DAO.store(itemMaster);
+				ItemMaster.staticGetDao().store(itemMaster);
 			}
 		}
 
@@ -196,7 +196,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			itemMaster.setDescription(inCsvBean.getDescription());
 
 			try {
-				ItemMaster.DAO.store(itemMaster);
+				ItemMaster.staticGetDao().store(itemMaster);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -277,7 +277,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		ItemMaster previousItemMaster = null;
 		
 		// Get existing GtinMap
-		result = Gtin.DAO.findByDomainId(null, inCsvBean.getGtin());
+		result = Gtin.staticGetDao().findByDomainId(null, inCsvBean.getGtin());
 		
 		if (result != null) {
 			previousItemMaster = result.getParent();
@@ -322,7 +322,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			inItemMaster.addGtinToMaster(result);
 			
 			try {
-				Gtin.DAO.store(result);
+				Gtin.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertGtinMap save", e);
 			}
@@ -346,7 +346,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = ItemMaster.DAO.findByDomainId(inFacility, inItemId);
+		result = ItemMaster.staticGetDao().findByDomainId(inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
@@ -361,7 +361,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				ItemMaster.DAO.store(result);
+				ItemMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateItemMaster", e);
 			}
@@ -392,7 +392,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			inFacility.addUomMaster(result);
 
 			try {
-				UomMaster.DAO.store(result);
+				UomMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertUomMaster save", e);
 			}
@@ -520,7 +520,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 
-		Item.DAO.store(result);
+		Item.staticGetDao().store(result);
 		return result;
 	}
 

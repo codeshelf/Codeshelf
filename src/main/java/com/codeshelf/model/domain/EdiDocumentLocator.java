@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.EdiDocumentStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -41,10 +42,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
-	//@Inject
-	public static ITypedDao<EdiDocumentLocator>	DAO;
-
-	//@Singleton
 	public static class EdiDocumentLocatorDao extends GenericDaoABC<EdiDocumentLocator> implements ITypedDao<EdiDocumentLocator> {
 		public final Class<EdiDocumentLocator> getDaoClass() {
 			return EdiDocumentLocator.class;
@@ -110,7 +107,11 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<EdiDocumentLocator> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<EdiDocumentLocator> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(EdiDocumentLocator.class);
 	}
 
 	public Facility getFacility() {
@@ -119,11 +120,6 @@ public class EdiDocumentLocator extends DomainObjectTreeABC<EdiServiceABC> {
 
 	public String getParentEdiServiceID() {
 		return getParent().getDomainId();
-	}
-
-	public static void setDao(ITypedDao<EdiDocumentLocator> inEdiDocumentLocatorDao) {
-		EdiDocumentLocator.DAO = inEdiDocumentLocatorDao; 
-		
 	}
 
 }

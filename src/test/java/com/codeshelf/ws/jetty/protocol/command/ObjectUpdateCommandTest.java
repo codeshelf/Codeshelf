@@ -33,7 +33,7 @@ public class ObjectUpdateCommandTest extends HibernateTest {
 	@Before
 	public void doBefore() {
 		super.doBefore();
-		MockModel.DAO = mockTypedDao;
+		super.useCustomDao(MockModel.class, mockTypedDao);
 	}
 	
 	@Test

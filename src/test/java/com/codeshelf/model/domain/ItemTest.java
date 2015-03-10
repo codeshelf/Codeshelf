@@ -59,7 +59,7 @@ public class ItemTest extends HibernateTest {
 	public void testCriteriaByTier() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Item.DAO.findByFilter("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()));
+		Item.staticGetDao().findByFilter("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()));
 		
 		this.getTenantPersistenceService().commitTransaction();
 		

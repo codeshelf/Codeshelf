@@ -51,7 +51,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		Short testChannel = 8;
 		aisle.setControllerChannel(controller1.getPersistentId().toString(), testChannel.toString());
 		
-		Aisle storedAisle = Aisle.DAO.findByPersistentId(aisle.getPersistentId());
+		Aisle storedAisle = Aisle.staticGetDao().findByPersistentId(aisle.getPersistentId());
 		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
 		assertEquals(testChannel, storedAisle.getLedChannel());
 
@@ -187,7 +187,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 
 		this.getTenantPersistenceService().beginTransaction();
 
-		List<Facility> listA = Facility.DAO.getAll();
+		List<Facility> listA = Facility.staticGetDao().getAll();
 		Facility facilityA = listA.get(0);
 		Slot slotB1T1S5 = (Slot) facilityA.findSubLocationById("A30.B1.T1.S5");
 		Assert.assertTrue(slotB1T1S5.getActive());
@@ -199,7 +199,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		try {
 			slotB1T1S5.setActive(true);
 			LOGGER.info("Modify a detached object was ok."); // Modify and forget to store will be an easy mistake to make.
-			Slot.DAO.store(slotB1T1S5);
+			Slot.staticGetDao().store(slotB1T1S5);
 			LOGGER.error("Should not see this message. Cannot store a detached object");
 		} catch (HibernateException e) {
 			caughtExpected = true;
@@ -236,7 +236,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		setActiveValue(slotB1T1S5, true, transactionYes, throwNo);
 		slotB1T1S5.setLedChannel((short) 4);
 		try {
-			Slot.DAO.store(slotB1T1S5);
+			Slot.staticGetDao().store(slotB1T1S5);
 		} catch (HibernateException e) {
 			caughtExpected = true;
 		}
@@ -260,7 +260,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		LOGGER.info("Case 6: After the throw that left a transaction open, continue with normal transaction.");
 		this.getTenantPersistenceService().beginTransaction();
 		slotB1T1S5.setActive(true);
-		Slot.DAO.store(slotB1T1S5);
+		Slot.staticGetDao().store(slotB1T1S5);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 	}

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -41,10 +42,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
-	//@Inject
-	public static ITypedDao<ItemDdcGroup>	DAO;
-
-	//@Singleton
 	public static class ItemDdcGroupDao extends GenericDaoABC<ItemDdcGroup> implements ITypedDao<ItemDdcGroup> {
 		public final Class<ItemDdcGroup> getDaoClass() {
 			return ItemDdcGroup.class;
@@ -80,7 +77,11 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemDdcGroup> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<ItemDdcGroup> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ItemDdcGroup.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {

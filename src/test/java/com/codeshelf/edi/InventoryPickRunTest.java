@@ -93,7 +93,7 @@ public class InventoryPickRunTest extends ServerTest {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -102,7 +102,7 @@ public class InventoryPickRunTest extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
@@ -470,13 +470,13 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Item item1124 = master1124.getItemsOfUom("EA").get(0);
 		Assert.assertNotNull(item1123);
 		Assert.assertNotNull(item1124);
-		Item.DAO.delete(item1123);
-		Item.DAO.delete(item1124);
+		Item.staticGetDao().delete(item1123);
+		Item.staticGetDao().delete(item1124);
 
 		// Interesting and important. If this commit is not done here, the cart setup will still find undeleted items 1123 and 1124.
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		//
 
 		// Now ready to run the cart
@@ -529,7 +529,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		LOGGER.info("2: Read the orders file, which has some preferred locations");
 		// This facility has aliases D26 ->D33 and D71->D74
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D-27,61"
 				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D-28,43"
@@ -546,7 +546,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		LOGGER.info("3: Set up CHE for orders 10 and 11. Should get 3 jobs");
 		this.getTenantPersistenceService().beginTransaction();
 
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		propertyService.turnOffHK(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
@@ -568,7 +568,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
 		this.getTenantPersistenceService().beginTransaction();
 
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		propertyService.turnOffHK(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
@@ -589,7 +589,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		LOGGER.info("And a logger.warn saying: Item not found at D-71. Substituted item at D-74");
 		this.getTenantPersistenceService().beginTransaction();
 
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		propertyService.turnOffHK(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");

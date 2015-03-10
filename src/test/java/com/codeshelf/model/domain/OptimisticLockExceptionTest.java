@@ -19,7 +19,7 @@ public class OptimisticLockExceptionTest extends MockDaoTest {
 		Facility facility = new Facility();
 		facility.setFacilityId("OPTIMISTIC-F1");
 		facility.setAnchorPoint(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 
 		OrderHeader order1 = new OrderHeader();
 		order1.setDomainId("OPTIMISTIC-123");
@@ -31,17 +31,17 @@ public class OptimisticLockExceptionTest extends MockDaoTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 
-		OrderHeader foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
+		OrderHeader foundOrder = OrderHeader.staticGetDao().findByDomainId(facility, "OPTIMISTIC-123");
 		foundOrder.setStatus(OrderStatusEnum.INPROGRESS);
-		OrderHeader.DAO.store(foundOrder);
+		OrderHeader.staticGetDao().store(foundOrder);
 
 		order1.setStatus(OrderStatusEnum.COMPLETE);
 		order1.setVersion(order1.getVersion() + 1);
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 
-		foundOrder = OrderHeader.DAO.findByDomainId(facility, "OPTIMISTIC-123");
+		foundOrder = OrderHeader.staticGetDao().findByDomainId(facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatus(), order1.getStatus());
 
 		this.getTenantPersistenceService().commitTransaction();

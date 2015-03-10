@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -46,10 +47,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @ToString(of = { "location", "parent", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
-	//@Inject
-	public static ITypedDao<OrderLocation>	DAO;
-
-	//@Singleton
 	public static class OrderLocationDao extends GenericDaoABC<OrderLocation> implements ITypedDao<OrderLocation> {
 		public final Class<OrderLocation> getDaoClass() {
 			return OrderLocation.class;
@@ -100,7 +97,11 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderLocation> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<OrderLocation> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(OrderLocation.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -109,10 +110,6 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	public final Facility getFacility() {
 		return getParent().getFacility();
-	}
-
-	public static void setDao(OrderLocationDao inOrderLocationDao) {
-		OrderLocation.DAO = inOrderLocationDao;
 	}
 
 }

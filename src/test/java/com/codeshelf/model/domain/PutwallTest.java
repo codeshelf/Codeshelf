@@ -87,13 +87,13 @@ public class PutwallTest extends MockDaoTest {
 				
 		// LedController should be in light mode initially
 		this.getTenantPersistenceService().beginTransaction();
-		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle);
 		tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		List<Slot> slots = aisle.getActiveChildrenAtLevel(Slot.class);
 		Slot slot = slots.get(0);
 		LedController ledController = tier.getLedController();
-		ledController = LedController.DAO.findByPersistentId(ledController.getPersistentId());
+		ledController = LedController.staticGetDao().findByPersistentId(ledController.getPersistentId());
 		Assert.assertEquals(DeviceType.Lights, ledController.getDeviceType());
 		Assert.assertTrue(tier.isLightableAisleController());
 		Assert.assertTrue(slot.isLightableAisleController());
@@ -106,7 +106,7 @@ public class PutwallTest extends MockDaoTest {
 		tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		ledController = tier.getLedController();
 		ledController.setDeviceType(DeviceType.Poscons);
-		LedController.DAO.store(ledController);
+		LedController.staticGetDao().store(ledController);
 		tier.setPoscons(5);
 		this.getTenantPersistenceService().commitTransaction();
 		

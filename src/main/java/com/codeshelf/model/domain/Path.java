@@ -37,6 +37,7 @@ import com.codeshelf.model.TravelDirectionEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.CompareNullChecker;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -57,10 +58,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Path extends DomainObjectTreeABC<Facility> {
 
-	//@Inject
-	public static ITypedDao<Path>	DAO;
-
-	//@Singleton
 	public static class PathDao extends GenericDaoABC<Path> implements ITypedDao<Path> {
 		public final Class<Path> getDaoClass() {
 			return Path.class;
@@ -113,7 +110,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Path> getDao() {
-		return Path.DAO;
+		return Path.staticGetDao();
+	}
+
+	public static ITypedDao<Path> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Path.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -200,7 +201,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	//				length += pathSegment.getLength();
 	//			}
 	//			try {
-	//				Path.DAO.store(this);
+	//				Path.staticGetDao().store(this);
 	//			} catch (DaoException e) {
 	//				LOGGER.error("", e);
 	//			}
@@ -221,7 +222,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			tempWorkArea.setDescription("Default work area");
 			this.setWorkArea(tempWorkArea);
 			try {
-				WorkArea.DAO.store(tempWorkArea);
+				WorkArea.staticGetDao().store(tempWorkArea);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -270,7 +271,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		result.setEndPoint(inTail);
 		this.addPathSegment(result);
 		try {
-			PathSegment.DAO.store(result);
+			PathSegment.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("Failed to store PathSegment", e);
 		}
@@ -469,30 +470,26 @@ public class Path extends DomainObjectTreeABC<Facility> {
 				}
 			}
 			// delete the segment
-			PathSegment.DAO.delete(segment);
+			PathSegment.staticGetDao().delete(segment);
 		}
 
 		// delete the work area
 		WorkArea wa = this.getWorkArea();
 		if (wa != null) {
 			this.setWorkArea(null);
-			Path.DAO.store(this);
-			WorkArea.DAO.delete(wa);
+			Path.staticGetDao().store(this);
+			WorkArea.staticGetDao().delete(wa);
 
 			/*			
 			wa.setParent(null);
-			WorkArea.DAO.store(wa);
+			WorkArea...store(wa);
 			*/
 			// WorkArea has lists of locations, users and active ches also.
 			// Jeff said users and ches will come later, but for now, they do not point at the wa. He said location list can be removed.
 
 		}
 		// then delete this path
-		Path.DAO.delete(this);
-	}
-
-	public static void setDao(PathDao inPathDao) {
-		Path.DAO = inPathDao;
+		Path.staticGetDao().delete(this);
 	}
 
 	@Override

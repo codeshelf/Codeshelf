@@ -66,7 +66,7 @@ public class ImportResource {
 		try {
 			persistence.beginTransaction();
 			// make sure facility exists
-			Facility facility = Facility.DAO.findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
@@ -101,7 +101,7 @@ public class ImportResource {
 		try {
 			persistence.beginTransaction();
 			// make sure facility exists
-			Facility facility = Facility.DAO.findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
@@ -136,7 +136,7 @@ public class ImportResource {
 		try {
 			persistence.beginTransaction();
 			// make sure facility exists
-			Facility facility = Facility.DAO.findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
@@ -167,7 +167,7 @@ public class ImportResource {
 		try {
 			persistence.beginTransaction();
 			// make sure facility exists
-			Facility facility = Facility.DAO.findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);

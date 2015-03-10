@@ -75,7 +75,7 @@ public class CreatePathCommandTest extends HibernateTest {
 			
 			
 			
-			Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
+			Path noPath = Path.staticGetDao().findByDomainId(testFacility, testPathDomainId);
 			Assert.assertNull(noPath);
 			
 			PathSegment[] segments = createPathSegment(numberOfSegments);

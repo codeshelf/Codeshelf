@@ -103,12 +103,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
 
-	// list of domain objects' DAO fields
-	private static Map<Class<? extends IDomainObject>, Field>	daoFields;
-
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
 	private static ITenantManagerService						realTenantManagerService;
+	private boolean												resetRealPersistenceDaos;
 
 	// default IDs to use when generating facility
 	protected static String										facilityId					= "F1";
@@ -209,9 +207,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticClientEndpoint = new CsClientEndpoint();
 		staticClientConnectionManagerService = new ClientConnectionManagerService(staticClientEndpoint);
 		staticWebSocketContainer = injector.getInstance(WebSocketContainer.class);
-
-		// get list of DAOs
-		daoFields = DomainObjectABC.getDaoFieldMap();
 	}
 
 	public FrameworkTest() {
@@ -302,54 +297,51 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
 			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
-		} 
+		}
+		
+		if(resetRealPersistenceDaos) {
+			realTenantPersistenceService.resetDaosForTest();
+			resetRealPersistenceDaos = false;
+		}
 
 		LOGGER.info("******************* Completed test: " + this.testName.getMethodName() + " *******************");
 	}
 
-	private void disablePersistence() {
-		Map<Class<? extends IDomainObject>, ITypedDao<?>> nullDaos = createDaos(false); // no mock
-		this.tenantPersistenceService = null;
-		TenantPersistenceService.setInstance(null);
-		setStaticDaos(nullDaos);
-	}
-
-	private void setStaticDaos(Map<Class<? extends IDomainObject>, ITypedDao<?>> daos) {
-		for (Entry<Class<? extends IDomainObject>, Field> entry : daoFields.entrySet()) {
-			try {
-				entry.getValue().set(null, daos.get(entry.getKey()));
-			} catch (Exception e) {
-				LOGGER.error("unexpected exception setting up test", e);
-			}
+	public <T extends IDomainObject> void useCustomDao(Class<T> domainType, ITypedDao<T> testDao) {
+		this.tenantPersistenceService.setDaoForTest(domainType,testDao);
+		if(this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
+			resetRealPersistenceDaos = true;
 		}
 	}
 
-	private Map<Class<? extends IDomainObject>, ITypedDao<?>> createDaos(boolean createMock) {
+	private void disablePersistence() {
+		this.tenantPersistenceService = null;
+		TenantPersistenceService.setInstance(null);
+	}
+
+	private Map<Class<? extends IDomainObject>, ITypedDao<?>> createMockDaos() {
+		Map<Class<? extends IDomainObject>, Class<? extends ITypedDao<? extends IDomainObject>>> daoClasses
+			= DomainObjectABC.getDaoClasses();
+				
 		Map<Class<? extends IDomainObject>, ITypedDao<?>> daos 
 			= new HashMap<Class<? extends IDomainObject>, ITypedDao<?>>();
-		for (Class<? extends IDomainObject> clazz : daoFields.keySet()) {
-			if (createMock) {
-				daos.put(clazz, new MockDao<>(clazz));
-			} else {
-				daos.put(clazz, null);
-			}
+		for (Class<? extends IDomainObject> clazz : daoClasses.keySet()) {
+			daos.put(clazz, new MockDao<>(clazz));
 		}
 		return daos;
 	}
 
 	private void setupRealPersistenceObjects() {
 		TenantManagerService.setInstance(realTenantManagerService);
+		
 		this.tenantPersistenceService = realTenantPersistenceService;
 		TenantPersistenceService.setInstance(tenantPersistenceService);
-
-		DomainObjectABC.assignStaticDaoFields();
 	}
 
 	private void setDummyPersistence() {
-		Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = this.createDaos(true);
+		Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = this.createMockDaos();
 
 		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
-		setStaticDaos(mockDaos);
 
 		TenantManagerService.setInstance(new MockTenantManagerService(tenantPersistenceService.getDefaultSchema()));
 		TenantPersistenceService.setInstance(tenantPersistenceService);
@@ -489,7 +481,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			try {
 				this.ephemeralServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
 			} catch (TimeoutException e) {
-				throw new RuntimeException("timeout starting ephemeralServiceManager", e);
+				Assert.fail("timeout starting ephemeralServiceManager: "+ e.getMessage());
 			}
 		}
 	}
@@ -526,10 +518,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (!inTransaction)
 			this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.DAO.findByDomainId(null, useFacilityId);
+		Facility facility = Facility.staticGetDao().findByDomainId(null, useFacilityId);
 		if (facility == null) {
 			facility = Facility.createFacility( useFacilityId, "", Point.getZeroPoint());
-			Facility.DAO.store(facility);
+			Facility.staticGetDao().store(facility);
 		}
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);

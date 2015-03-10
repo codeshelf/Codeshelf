@@ -256,7 +256,7 @@ public class PickSimulator {
 		List<WorkInstruction> serversList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : activeList) {
 			UUID theId = wi.getPersistentId();
-			WorkInstruction fullWi = WorkInstruction.DAO.findByPersistentId(theId);
+			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
 			serversList.add(fullWi);
 		}
 
@@ -272,7 +272,7 @@ public class PickSimulator {
 		List<WorkInstruction> currentList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : inList) {
 			UUID theId = wi.getPersistentId();
-			WorkInstruction fullWi = WorkInstruction.DAO.findByPersistentId(theId);
+			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
 			currentList.add(fullWi);
 		}
 		return currentList;

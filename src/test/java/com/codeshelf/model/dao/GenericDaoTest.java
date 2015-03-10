@@ -28,14 +28,14 @@ public class GenericDaoTest extends ServerTest {
 		this.tenantPersistenceService.beginTransaction();
 		
 		Facility facility = Facility.createFacility( "LOADBYFILTERTEST1", "LOADBYFILTER", Point.getZeroPoint());		
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		
 		facility = Facility.createFacility( "LOADBYFILTERTEST2", "LOADBYFILTER", Point.getZeroPoint());
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("domainId", "LOADBYFILTERTEST1"));
-		List<Facility> foundOrganizationList = Facility.DAO.findByFilter(filterParams);
+		List<Facility> foundOrganizationList = Facility.staticGetDao().findByFilter(filterParams);
 		
 		this.tenantPersistenceService.commitTransaction();
 		Assert.assertEquals(1, foundOrganizationList.size());
@@ -48,12 +48,12 @@ public class GenericDaoTest extends ServerTest {
 		this.tenantPersistenceService.beginTransaction();
 		Facility facility = createFacility();
 		facility.setDescription(desc);
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		this.tenantPersistenceService.commitTransaction();
 
 		// load stored org and check data in a sep transaction
 		this.tenantPersistenceService.beginTransaction();
-		Facility foundFacility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+		Facility foundFacility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
 		this.tenantPersistenceService.commitTransaction();
 
 		Assert.assertNotNull(foundFacility);
@@ -68,20 +68,20 @@ public class GenericDaoTest extends ServerTest {
 		Facility facility = createFacility();
 		facility.setDomainId("LOADBYLIST-TEST1");
 		facility.setDescription("LOADBYLIST-TEST1");
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		
 		persistentIdList.add(facility.getPersistentId());
 
 		facility = createFacility();
 		facility.setDomainId("LOADBYLIST-TEST2");
 		facility.setDescription("LOADBYLIST-TEST2");
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 
 		persistentIdList.add(facility.getPersistentId());
 		this.tenantPersistenceService.commitTransaction();
 
 		this.tenantPersistenceService.beginTransaction();
-		List<Facility> foundFacilityList = Facility.DAO.findByPersistentIdList(persistentIdList);
+		List<Facility> foundFacilityList = Facility.staticGetDao().findByPersistentIdList(persistentIdList);
 		Assert.assertEquals(2, foundFacilityList.size());
 		this.tenantPersistenceService.commitTransaction();
 	}
@@ -96,7 +96,7 @@ public class GenericDaoTest extends ServerTest {
 		Facility facility1 = createFacility();
 		facility1.setDomainId(FACILITY_ID);
 		facility1.setDescription(FACILITY_ID);
-		Facility.DAO.store(facility1);
+		Facility.staticGetDao().store(facility1);
 
 		CodeshelfNetwork network = facility1.getNetworks().get(0);		
 		String NETWORK_ID = network.getDomainId();
@@ -104,10 +104,10 @@ public class GenericDaoTest extends ServerTest {
 
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		Facility foundFacility = Facility.DAO.findByDomainId(null, FACILITY_ID);
+		Facility foundFacility = Facility.staticGetDao().findByDomainId(null, FACILITY_ID);
 		Assert.assertNotNull(foundFacility);
 
-		CodeshelfNetwork foundCodeshelfNetwork = CodeshelfNetwork.DAO.findByDomainId(null, NETWORK_ID);
+		CodeshelfNetwork foundCodeshelfNetwork = CodeshelfNetwork.staticGetDao().findByDomainId(null, NETWORK_ID);
 		Assert.assertNotNull(foundCodeshelfNetwork);
 		t.commit();
 	}
@@ -122,29 +122,29 @@ public class GenericDaoTest extends ServerTest {
 		Transaction t = session.beginTransaction();
 		Facility facility = Facility.createFacility(FACILITY_ID, FACILITY_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY_ID);
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 
 		Aisle aisle1 = facility.createAisle(
 			AISLE_ID,
 			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0),
 			new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		aisle1.setDomainId(AISLE_ID);
-		Aisle.DAO.store(aisle1);
+		Aisle.staticGetDao().store(aisle1);
 		t.commit();
 
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		Aisle foundAisle = Aisle.DAO.findByDomainId(facility, AISLE_ID);
+		Aisle foundAisle = Aisle.staticGetDao().findByDomainId(facility, AISLE_ID);
 		Assert.assertNotNull(foundAisle);
 
 		facility = Facility.createFacility(FACILITY2_ID, FACILITY2_ID, new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
 		facility.setDescription(FACILITY2_ID);
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		t.commit();
 
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		foundAisle = Aisle.DAO.findByDomainId(facility, AISLE_ID);
+		foundAisle = Aisle.staticGetDao().findByDomainId(facility, AISLE_ID);
 		Assert.assertNull(foundAisle);
 		t.commit();
 	}
@@ -158,7 +158,7 @@ public class GenericDaoTest extends ServerTest {
 		Facility facility = createFacility();
 		facility.setDomainId("LOADBY-TEST");
 		facility.setDescription(desc);
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		UUID id = facility.getPersistentId();
 		t.commit();
 		Assert.assertNotNull(id);
@@ -172,30 +172,30 @@ public class GenericDaoTest extends ServerTest {
 		Session session = tenantPersistenceService.getSession();
 		Transaction t = session.beginTransaction();
 
-		Assert.assertNotNull(Facility.DAO);
+		Assert.assertNotNull(Facility.staticGetDao());
 		Facility facility = createFacility();
 		facility.setDomainId("DELETE-TEST");
 		facility.setDescription(orgDesc);
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		UUID id = facility.getPersistentId();
 		t.commit();
 		
 		// make sure org exists and then update it
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		Facility foundFacility = Facility.DAO.findByPersistentId(id);
+		Facility foundFacility = Facility.staticGetDao().findByPersistentId(id);
 		Assert.assertNotNull(foundFacility);
 		Assert.assertEquals(orgDesc,foundFacility.getDescription());
 		Assert.assertNotNull(foundFacility.getDao());
 		foundFacility.setDescription(updatedDesc);
-		Facility.DAO.store(foundFacility);
+		Facility.staticGetDao().store(foundFacility);
 		t.commit();
 		Assert.assertNotNull(foundFacility);
 		
 		// now reload it again and make sure desc has changed
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		foundFacility = Facility.DAO.findByPersistentId(id);
+		foundFacility = Facility.staticGetDao().findByPersistentId(id);
 		Assert.assertNotNull(foundFacility);
 		Assert.assertEquals(updatedDesc,foundFacility.getDescription());
 		t.commit();
@@ -209,23 +209,23 @@ public class GenericDaoTest extends ServerTest {
 		Facility facility = new Facility();
 		facility.setDomainId("DELETE-TEST");
 		facility.setDescription("DELETE-TEST");
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		UUID id = facility.getPersistentId();
 		t.commit();
 		
 		// make sure org exists and then delete it
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		Facility foundFacility= Facility.DAO.findByPersistentId(id);
+		Facility foundFacility= Facility.staticGetDao().findByPersistentId(id);
 		Assert.assertNotNull(foundFacility);
-		Facility.DAO.delete(foundFacility);
+		Facility.staticGetDao().delete(foundFacility);
 		t.commit();
 		Assert.assertNotNull(foundFacility);
 		
 		// now try to reload it again
 		session = tenantPersistenceService.getSession();
 		t = session.beginTransaction();
-		foundFacility= Facility.DAO.findByPersistentId(id);
+		foundFacility= Facility.staticGetDao().findByPersistentId(id);
 		Assert.assertNull(foundFacility);
 		t.commit();
 	}
@@ -238,12 +238,12 @@ public class GenericDaoTest extends ServerTest {
 		Facility facility= new Facility();
 		facility.setDomainId("GETALL-TEST1");
 		facility.setDescription("GETALL-TEST1");
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 
 		facility = new Facility();
 		facility.setDomainId("GETALL-TEST2");
 		facility.setDescription("GETALL-TEST2");
-		Facility.DAO.store(facility);
+		Facility.staticGetDao().store(facility);
 		t.commit();
 		
 		session = tenantPersistenceService.getSession();
@@ -251,7 +251,7 @@ public class GenericDaoTest extends ServerTest {
 		// This is not a great test - all these DB tests run in parallel against the same DB.
 		// There's no way to know how many items getAll() will return, so we just look for the ones we put in.
 		int totalFound = 0;
-		for (Facility fac : Facility.DAO.getAll()) {
+		for (Facility fac : Facility.staticGetDao().getAll()) {
 			if (fac.getDomainId().startsWith("GETALL-TEST")) {
 				totalFound++;
 			}

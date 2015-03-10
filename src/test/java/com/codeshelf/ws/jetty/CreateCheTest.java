@@ -46,14 +46,14 @@ public class CreateCheTest extends MockDaoTest {
 	public final void testCreateChe() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateService service = new UiUpdateService();
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.findByPersistentId(cheid);
+		Che che = Che.staticGetDao().findByPersistentId(cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
@@ -66,7 +66,7 @@ public class CreateCheTest extends MockDaoTest {
 	public final void testDeleteChe() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateService service = new UiUpdateService();
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
@@ -75,7 +75,7 @@ public class CreateCheTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 		service.deleteChe(cheid.toString());
 
-		Che che = Che.DAO.findByPersistentId(cheid);
+		Che che = Che.staticGetDao().findByPersistentId(cheid);
 		Assert.assertNull(che);
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -90,7 +90,7 @@ public class CreateCheTest extends MockDaoTest {
 		String description2 = "changed che description";
 				
 		Facility facility = Facility.createFacility("F1", "facilityf1", Point.getZeroPoint());
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -98,7 +98,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -136,7 +136,7 @@ public class CreateCheTest extends MockDaoTest {
 
 		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
 
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -144,7 +144,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -178,7 +178,7 @@ public class CreateCheTest extends MockDaoTest {
 		//setupDaos();
 
 		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -186,7 +186,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -244,7 +244,7 @@ public class CreateCheTest extends MockDaoTest {
 		//setupDaos();
 
 		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -252,7 +252,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -284,7 +284,7 @@ public class CreateCheTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		che = Che.DAO.findByPersistentId(cheid);
+		che = Che.staticGetDao().findByPersistentId(cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);

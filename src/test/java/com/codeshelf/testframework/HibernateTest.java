@@ -17,5 +17,4 @@ public class HibernateTest extends MockDaoTest {
 		return false;
 	}
 
-
 }

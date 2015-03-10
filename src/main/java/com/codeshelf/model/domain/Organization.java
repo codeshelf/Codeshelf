@@ -26,10 +26,10 @@ public class Organization {
 	}
 
 	public Facility getFacility(final String inFacilityDomainId) {
-		return Facility.DAO.findByDomainId(null, inFacilityDomainId);
+		return Facility.staticGetDao().findByDomainId(null, inFacilityDomainId);
 	}
 
 	public List<Facility> getFacilities() {
-		return Facility.DAO.getAll();
+		return Facility.staticGetDao().getAll();
 	}
 }

@@ -57,10 +57,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
-	//@Inject
-	public static ITypedDao<EdiServiceABC>	DAO;
-
-	//@Singleton
 	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		public final Class<EdiServiceABC> getDaoClass() {
 			return EdiServiceABC.class;

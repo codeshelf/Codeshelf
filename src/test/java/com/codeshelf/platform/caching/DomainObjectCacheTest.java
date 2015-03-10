@@ -17,14 +17,14 @@ public class DomainObjectCacheTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = this.createFacility();
 		
-		DomainObjectCache<ItemMaster> cache = new DomainObjectCache<ItemMaster>(ItemMaster.DAO);
+		DomainObjectCache<ItemMaster> cache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
 		cache.loadAll();
 		Assert.assertEquals(0, cache.size());
 		
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId("EA");
 		uomMaster.setParent(facility);
-		UomMaster.DAO.store(uomMaster);
+		UomMaster.staticGetDao().store(uomMaster);
 		facility.addUomMaster(uomMaster);
 		ItemMaster im = new ItemMaster();
 		im.setParent(facility);
@@ -32,7 +32,7 @@ public class DomainObjectCacheTest extends HibernateTest {
 		im.setItemId("IM#1");
 		im.setStandardUom(uomMaster);
 		im.setUpdated(new Timestamp(System.currentTimeMillis()));
-		ItemMaster.DAO.store(im);
+		ItemMaster.staticGetDao().store(im);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -44,7 +44,7 @@ public class DomainObjectCacheTest extends HibernateTest {
 		im2.setItemId("IM#2");
 		im2.setStandardUom(uomMaster);
 		im2.setUpdated(new Timestamp(System.currentTimeMillis()));
-		ItemMaster.DAO.store(im2);
+		ItemMaster.staticGetDao().store(im2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();

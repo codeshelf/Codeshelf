@@ -66,7 +66,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);

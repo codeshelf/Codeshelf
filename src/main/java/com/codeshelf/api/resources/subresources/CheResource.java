@@ -48,7 +48,7 @@ public class CheResource {
 
 		try {
 			persistence.beginTransaction();
-			Che che = Che.DAO.findByPersistentId(mUUIDParam.getUUID());
+			Che che = Che.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
 			if (che == null) {
 				errors.addErrorUUIDDoesntExist(mUUIDParam.getRawValue(), "che");
 				return errors.buildResponse();
@@ -58,7 +58,7 @@ public class CheResource {
 			Facility facility = che.getFacility();
 			List<String> validContainers = new ArrayList<>();
 			for (String containerId : containers) {
-				Container container = Container.DAO.findByDomainId(facility, containerId);
+				Container container = Container.staticGetDao().findByDomainId(facility, containerId);
 				if (container != null) {
 					validContainers.add(containerId);
 				}

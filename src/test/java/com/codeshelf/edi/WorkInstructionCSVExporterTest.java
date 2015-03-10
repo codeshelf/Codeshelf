@@ -80,7 +80,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void generatesCSV() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		WorkInstruction testWi2 = generateValidCompleteWorkInstruction(facility);
@@ -118,7 +118,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void dateFieldsAreISO8601UTC() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		WorkInstruction testWi2 = generateValidCompleteWorkInstruction(facility);
@@ -137,7 +137,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void missingDateFieldsAreEmpty() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		testWi.setAssigned(null);
@@ -162,7 +162,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void missingUomMasterReturnsEmpty() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String expectedValue = "TESTDOMAINID";
 		
@@ -187,7 +187,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void usesOrderDomainId() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String expectedValue = "OH1";
 		
@@ -211,7 +211,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void usesOrderGroupDomainId() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String expectedValue = "OG1";
 		
@@ -233,7 +233,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void orderGroupIdOptional() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		testWi.getOrderDetail().getParent().setOrderGroup(null);
@@ -248,7 +248,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	@Test
 	public void nullQuantityReturnsEmpty() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		this.getTenantPersistenceService().commitTransaction();

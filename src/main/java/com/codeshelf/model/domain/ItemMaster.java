@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
@@ -59,10 +60,6 @@ import com.google.common.base.Joiner;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
-	//@Inject
-	public static ITypedDao<ItemMaster>	DAO;
-
-	//@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
 		public final Class<ItemMaster> getDaoClass() {
 			return ItemMaster.class;
@@ -155,7 +152,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<ItemMaster> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ItemMaster.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -377,10 +378,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 		Collections.sort(itemLocationIds, asciiAlphanumericComparator);
 		return Joiner.on(",").join(itemLocationIds);
-	}
-
-	public static void setDao(ItemMasterDao inItemMasterDao) {
-		ItemMaster.DAO = inItemMasterDao;
 	}
 
 	/*

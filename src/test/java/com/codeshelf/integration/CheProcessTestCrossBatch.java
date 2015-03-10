@@ -83,7 +83,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -92,7 +92,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
@@ -254,7 +254,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
+		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 		List<Container> containers = facility.getContainers();
@@ -275,7 +275,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
+		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 
@@ -339,7 +339,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(facId);
+		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
@@ -366,7 +366,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
-		Che che1 = Che.DAO.findByPersistentId(this.che1PersistentId);
+		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
 		List<WorkInstruction> cheWis = che1.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis);
 		int cheWiTotal = cheWis.size();

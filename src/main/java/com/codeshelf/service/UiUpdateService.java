@@ -49,7 +49,7 @@ public class UiUpdateService implements IApiService {
 		String quantity,
 		String inUomId,
 		String orderDetailId) {
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		if (facility == null) {
 			throw new InputValidationException("Facility {0} not found", facilityId);
 		}
@@ -84,10 +84,10 @@ public class UiUpdateService implements IApiService {
 			null );
 
 		if (orderDetailId != null && !orderDetailId.isEmpty()) {
-			OrderDetail detail = OrderDetail.DAO.findByPersistentId(orderDetailId);
+			OrderDetail detail = OrderDetail.staticGetDao().findByPersistentId(orderDetailId);
 			if (detail != null) {
 				detail.setPreferredLocation(storedLocationId);
-				OrderDetail.DAO.store(detail);
+				OrderDetail.staticGetDao().store(detail);
 			}
 		}
 		return returnItem;
@@ -104,7 +104,7 @@ public class UiUpdateService implements IApiService {
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr) {
-		Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
 		Che che = new Che();
 		che.setParent(facility.getNetworks().get(0));
 		ProcessMode processMode = ProcessMode.getMode(processModeStr);
@@ -132,13 +132,13 @@ public class UiUpdateService implements IApiService {
 				return null;
 			}
 			che.setDeviceNetGuid(newGuid);
-			//Che.DAO.store(this);
+			//Che.staticGetDao().store(this);
 		} catch (Exception e) {
 			// Need to fix this. What kind of exception? Presumably, bad controller ID that leads to invalid GUID
 			LOGGER.error("Failed to set controller ID", e);
 		}
 
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		return che.getPersistentId();
 	}
 
@@ -153,7 +153,7 @@ public class UiUpdateService implements IApiService {
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr) {
-		Che che = Che.DAO.findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(cheId);
 
 		if (che == null) {
 			LOGGER.error("Could not find che {0}", cheId);
@@ -184,23 +184,23 @@ public class UiUpdateService implements IApiService {
 				return;
 			}
 			che.setDeviceNetGuid(newGuid);
-			//Che.DAO.store(this);
+			//Che.staticGetDao().store(this);
 		} catch (Exception e) {
 			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
 			LOGGER.error("Failed to set controller ID", e);
 		}
 
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 	}
 
 	public void deleteChe(final String cheId) {
-		Che che = Che.DAO.findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(cheId);
 
 		if (che == null) {
 			LOGGER.error("Could not find che {0}", cheId);
 			return;
 		}
-		Che.DAO.delete(che);
+		Che.staticGetDao().delete(che);
 	}
 
 	public ProcessMode getDefaultProcessMode(String cheId) {
@@ -209,7 +209,7 @@ public class UiUpdateService implements IApiService {
 			return ProcessMode.SETUP_ORDERS;
 		}
 
-		Che che = Che.DAO.findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che == null) {
 			LOGGER.error("Could not find Che " + cheId);
 			return ProcessMode.SETUP_ORDERS;
@@ -217,7 +217,7 @@ public class UiUpdateService implements IApiService {
 		Facility facility = che.getFacility();
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
-		List<Aisle> aisled = Aisle.DAO.findByFilter(filterParams);
+		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(filterParams);
 		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
 	}
 }

@@ -89,7 +89,7 @@ public class CrossBatchRunTest extends ServerTest {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -98,7 +98,7 @@ public class CrossBatchRunTest extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
@@ -389,7 +389,7 @@ public class CrossBatchRunTest extends ServerTest {
 		setUpGroup1OrdersAndSlotting(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("housekeepingContainerAndCount.  Set up CHE for 11,12,13");
@@ -411,7 +411,7 @@ public class CrossBatchRunTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Integer wiCount = aList.size();
 		for(int i=0;i<wiCount; i++) {
-			aList.set(i, WorkInstruction.DAO.reload(aList.get(i)));
+			aList.set(i, WorkInstruction.staticGetDao().reload(aList.get(i)));
 		}
 		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
@@ -420,7 +420,7 @@ public class CrossBatchRunTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		WorkInstruction wi4 = WorkInstruction.DAO.reload(aList.get(3));
+		WorkInstruction wi4 = WorkInstruction.staticGetDao().reload(aList.get(3));
 
 		String wi4Desc = wi4.getDescription();
 
@@ -438,12 +438,12 @@ public class CrossBatchRunTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		setUpGroup1OrdersAndSlotting(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -455,7 +455,7 @@ public class CrossBatchRunTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
+		theChe = Che.staticGetDao().reload(theChe);
 		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
 
 		int usesCount = theChe.getUses().size();
@@ -469,26 +469,26 @@ public class CrossBatchRunTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
+		theChe = Che.staticGetDao().reload(theChe);
 		// Adding same item. Not storing
-		theChe.addContainerUse(ContainerUse.DAO.reload(aUse));
+		theChe.addContainerUse(ContainerUse.staticGetDao().reload(aUse));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
-		theChe.addContainerUse(ContainerUse.DAO.reload(aUse));
+		theChe = Che.staticGetDao().reload(theChe);
+		theChe.addContainerUse(ContainerUse.staticGetDao().reload(aUse));
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
+		theChe = Che.staticGetDao().reload(theChe);
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
+		theChe = Che.staticGetDao().reload(theChe);
 		aUse=aUse.getDao().reload(aUse);
 		theChe.addContainerUse(aUse);
 		aUse.getDao().store(aUse);
@@ -501,19 +501,19 @@ public class CrossBatchRunTest extends ServerTest {
         this.getTenantPersistenceService().commitTransaction();
 
         this.getTenantPersistenceService().beginTransaction();
-        facility = Facility.DAO.reload(facility);
-        theChe = Che.DAO.reload(theChe);
+        facility = Facility.staticGetDao().reload(facility);
+        theChe = Che.staticGetDao().reload(theChe);
 
 		workService.setUpCheContainerFromString(theChe, "14");
         this.getTenantPersistenceService().commitTransaction();
 
         this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.findByDomainId(theNetwork, "CHE1");
+		theChe = Che.staticGetDao().findByDomainId(theNetwork, "CHE1");
 		Assert.assertTrue(theChe.getUses().size() == 1);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		propertyService.restoreHKDefaults(facility); // set it back
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -541,9 +541,9 @@ public class CrossBatchRunTest extends ServerTest {
 		UUID che2Uuid = che2.getPersistentId();
 		// get additional references to the same CHE
 		Che che1b = theNetwork.getChe("CHE1");
-		Che che1c = Che.DAO.findByPersistentId(che1Uuid);
+		Che che1c = Che.staticGetDao().findByPersistentId(che1Uuid);
 
-		List<ContainerUse> aList = ContainerUse.DAO.getAll();
+		List<ContainerUse> aList = ContainerUse.staticGetDao().getAll();
 		int useCount = aList.size();
 		ContainerUse use0 = aList.get(0);
 		ContainerUse use1 = aList.get(1);
@@ -555,7 +555,7 @@ public class CrossBatchRunTest extends ServerTest {
 		// - Parent add method needs to call the child's set method for the parent relationship.
 		// - Then code needs to remember to do the DAO.store(child)
 		che1.addContainerUse(use0);
-		ContainerUse.DAO.store(use0);
+		ContainerUse.staticGetDao().store(use0);
 		che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(che1UsesCount, 1);
 
@@ -566,7 +566,7 @@ public class CrossBatchRunTest extends ServerTest {
 		// get only works within a transaction, and findByPersistentId does a get. But it catches the exception and returns null
 		boolean expectedCatch = false;
 		try {
-			che1d = Che.DAO.findByPersistentId(che1Uuid);
+			che1d = Che.staticGetDao().findByPersistentId(che1Uuid);
 			Assert.assertNull("findByPersistentId returned an object without a transaction?", che1d);
 		} catch (HibernateException e) {
 			expectedCatch = true;
@@ -575,7 +575,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		LOGGER.info("Case 2: findByPersistentId() works within a transaction. And has the expected container use");
 		this.getTenantPersistenceService().beginTransaction();
-		Che che1e = Che.DAO.findByPersistentId(che1Uuid);
+		Che che1e = Che.staticGetDao().findByPersistentId(che1Uuid);
 		che1UsesCount = che1e.getUses().size();
 		Assert.assertEquals(che1UsesCount, 1);
 
@@ -587,7 +587,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		LOGGER.info("Case 4: add to an earlier obtained reference. See if all our references have the new use");
 		che1.addContainerUse(use1);
-		ContainerUse.DAO.store(use1);
+		ContainerUse.staticGetDao().store(use1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -608,7 +608,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		LOGGER.info("Case 4c: get the reference from the DAO again. Now the uses count is ok.");
 		this.getTenantPersistenceService().beginTransaction();
-		che1e = Che.DAO.findByPersistentId(che1Uuid);
+		che1e = Che.staticGetDao().findByPersistentId(che1Uuid);
 		che1UsesCount = che1e.getUses().size();
 		// Now ok
 		Assert.assertEquals(2, che1UsesCount);
@@ -617,7 +617,7 @@ public class CrossBatchRunTest extends ServerTest {
 		LOGGER.info("Case 5: try to add the same use again. Ok. See error in log.");
 		this.getTenantPersistenceService().beginTransaction();
 		che1.addContainerUse(use0);
-		ContainerUse.DAO.store(use0);
+		ContainerUse.staticGetDao().store(use0);
 		che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(2, che1UsesCount);
 
@@ -627,9 +627,9 @@ public class CrossBatchRunTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Assert.assertNotNull(use2);
 		che2.addContainerUse(use2);
-		ContainerUse.DAO.store(use2);
+		ContainerUse.staticGetDao().store(use2);
 		// extra store call, just to see no trouble
-		ContainerUse.DAO.store(use2);
+		ContainerUse.staticGetDao().store(use2);
 		int che2UsesCount = che2.getUses().size();
 		Assert.assertEquals(1, che2UsesCount);
 		this.getTenantPersistenceService().commitTransaction();
@@ -640,7 +640,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		LOGGER.info("Case 6c: get the CHE reference again.");
 		this.getTenantPersistenceService().beginTransaction();
-		Che che2b = Che.DAO.findByPersistentId(che2Uuid);
+		Che che2b = Che.staticGetDao().findByPersistentId(che2Uuid);
 		che2UsesCount = che2b.getUses().size();
 		Assert.assertEquals(1, che2UsesCount);
 		Che che2c = use2.getCurrentChe();
@@ -652,7 +652,7 @@ public class CrossBatchRunTest extends ServerTest {
 		boolean expectedCaught = false;
 		try {
 			// store call on old reference. Nothing changed. Should this throw?
-			ContainerUse.DAO.store(use2);
+			ContainerUse.staticGetDao().store(use2);
 		} catch (NonUniqueObjectException e) {
 			expectedCaught = true;
 		}
@@ -666,14 +666,14 @@ public class CrossBatchRunTest extends ServerTest {
 
 		// Uncomment these two lines uncommented will cause the store(use2); line to throw because
 		// This pulls new reference for the use into memory for that persistentId, and then we try to store the old reference.
-		// Che che2d = Che.DAO.findByPersistentId(che2Uuid);
+		// Che che2d = Che.staticGetDao().findByPersistentId(che2Uuid);
 		// int use2dCount = che2d.getUses().size();
 
 		boolean unExpectedCaught = false;
 		try {
 			// Same as above, but a real change. Should this throw?
 			use2.setActive(false);
-			ContainerUse.DAO.store(use2);
+			ContainerUse.staticGetDao().store(use2);
 		} catch (NonUniqueObjectException e) {
 			unExpectedCaught = true;
 		}
@@ -710,9 +710,9 @@ public class CrossBatchRunTest extends ServerTest {
 
 		try {
 			this.getTenantPersistenceService().beginTransaction();
-			che1 = Che.DAO.reload(che1);
+			che1 = Che.staticGetDao().reload(che1);
 			che1.setDescription(desc);
-			Che.DAO.store(che1);
+			Che.staticGetDao().store(che1);
 			Assert.assertEquals(desc, che1.getDescription());
 			this.getTenantPersistenceService().commitTransaction();
 			Assert.fail("Should have thrown exception related to column width");
@@ -725,10 +725,10 @@ public class CrossBatchRunTest extends ServerTest {
 		LOGGER.info("Case 2: modify the description field on the other CHE in separate transaction.");
 		try {
 			this.getTenantPersistenceService().beginTransaction();
-			che2 = Che.DAO.reload(che2);
+			che2 = Che.staticGetDao().reload(che2);
 			che2.setDescription(descript2);
 			Assert.assertEquals(descript2, che2.getDescription());
-			Che.DAO.store(che2);
+			Che.staticGetDao().store(che2);
 			this.getTenantPersistenceService().commitTransaction();
 		} catch(DataException e) {
 			this.getTenantPersistenceService().rollbackTransaction();
@@ -738,7 +738,7 @@ public class CrossBatchRunTest extends ServerTest {
 		LOGGER.info("Case 3: get che2 in yet another transaction and check the description.");
 		try {
 			this.getTenantPersistenceService().beginTransaction();
-			Che che2b = Che.DAO.findByPersistentId(che2Uuid);
+			Che che2b = Che.staticGetDao().findByPersistentId(che2Uuid);
 
 			Assert.assertEquals(descript2, che2b.getDescription());
 
@@ -751,7 +751,7 @@ public class CrossBatchRunTest extends ServerTest {
 		LOGGER.info("Case 4: get che1 in yet another transaction and check the description.");
 		try {
 			this.getTenantPersistenceService().beginTransaction();
-			Che che1b = Che.DAO.findByPersistentId(che1Uuid);
+			Che che1b = Che.staticGetDao().findByPersistentId(che1Uuid);
 
 			Assert.assertEquals(che1DefaultDescription, che1b.getDescription());
 			this.getTenantPersistenceService().commitTransaction();

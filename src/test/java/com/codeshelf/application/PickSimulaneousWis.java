@@ -85,7 +85,7 @@ public class PickSimulaneousWis extends ServerTest {
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = facility.getAisle("A1");// Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = facility.getAisle("A1");// Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -94,7 +94,7 @@ public class PickSimulaneousWis extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = facility.getAisle("A2");//Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = facility.getAisle("A2");//Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
@@ -102,7 +102,7 @@ public class PickSimulaneousWis extends ServerTest {
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 //		facility.getLocations().get("A2")l
-		Aisle aisle3 = facility.getAisle("A3");//Aisle.DAO.findByDomainId(facility, "A3");
+		Aisle aisle3 = facility.getAisle("A3");//Aisle.staticGetDao().findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
@@ -173,7 +173,7 @@ public class PickSimulaneousWis extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		/*  From CD_0043  applied to each pick in aisle A1
 		Order 1, with two order details: A and B.
@@ -202,7 +202,7 @@ public class PickSimulaneousWis extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
@@ -210,7 +210,7 @@ public class PickSimulaneousWis extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -234,7 +234,7 @@ public class PickSimulaneousWis extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
@@ -248,8 +248,8 @@ public class PickSimulaneousWis extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		theChe = Che.DAO.reload(theChe);
+		facility = Facility.staticGetDao().reload(facility);
+		theChe = Che.staticGetDao().reload(theChe);
 
 		List<WorkInstruction> aList = workService.getWorkInstructions(theChe, "");
 
@@ -272,7 +272,7 @@ public class PickSimulaneousWis extends ServerTest {
 		// Check the order of the work instructions. What we are really doing is seeing if the the 2nd, 3rd, and 4th WI have group component in the group and sort.
 		// Answer: no. Not now anyway. So no simultaneous dispatch.
 		this.getTenantPersistenceService().beginTransaction();
-		WorkInstruction wi1 = WorkInstruction.DAO.reload(wiListAfterScan.get(0));
+		WorkInstruction wi1 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(0));
 		Assert.assertNotNull(wi1);
 		String wi1Order = wi1.getOrderId();
 		String wi1Item = wi1.getItemId();
@@ -280,7 +280,7 @@ public class PickSimulaneousWis extends ServerTest {
 		Assert.assertEquals("0001", groupSortStr1);
 		Double wi1Pos = wi1.getPosAlongPath();
 
-		WorkInstruction wi2 = WorkInstruction.DAO.reload(wiListAfterScan.get(1));
+		WorkInstruction wi2 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(1));
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
@@ -288,13 +288,13 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Assert.assertTrue(wi2Pos > wi1Pos);
 
-		WorkInstruction wi3 = WorkInstruction.DAO.reload(wiListAfterScan.get(2));
+		WorkInstruction wi3 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(2));
 		Assert.assertNotNull(wi3);
 		String groupSortStr3 = wi3.getGroupAndSortCode();
 		Assert.assertEquals("0003", groupSortStr3);
 		Double wi3Pos = wi3.getPosAlongPath();
 
-		WorkInstruction wi4 = WorkInstruction.DAO.reload(wiListAfterScan.get(3));
+		WorkInstruction wi4 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(3));
 		Assert.assertNotNull(wi4);
 		String groupSortStr4 = wi4.getGroupAndSortCode();
 		Assert.assertEquals("0004", groupSortStr4);
@@ -302,23 +302,23 @@ public class PickSimulaneousWis extends ServerTest {
 		// 2, 3 and 4 for same item, so should be equal.
 		Assert.assertEquals(wi2Pos, wi4Pos);
 
-		WorkInstruction wi5 = WorkInstruction.DAO.reload(wiListAfterScan.get(4));
+		WorkInstruction wi5 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(4));
 		Assert.assertNotNull(wi5);
 		String groupSortStr5 = wi5.getGroupAndSortCode();
 		Double wi5Pos = wi5.getPosAlongPath();
 
-		WorkInstruction wi6 = WorkInstruction.DAO.reload(wiListAfterScan.get(5));
+		WorkInstruction wi6 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(5));
 		Assert.assertNotNull(wi6);
 		String groupSortStr6 = wi6.getGroupAndSortCode();
 		Double wi6Pos = wi6.getPosAlongPath();
 
-		WorkInstruction wi7 = WorkInstruction.DAO.reload(wiListAfterScan.get(6));
+		WorkInstruction wi7 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(6));
 		Assert.assertNotNull(wi7);
 		String groupSortStr7 = wi7.getGroupAndSortCode();
 		Assert.assertEquals("0007", groupSortStr7);
 		Double wi7Pos = wi7.getPosAlongPath();
 
-		WorkInstruction wi8 = WorkInstruction.DAO.reload(wiListAfterScan.get(7));
+		WorkInstruction wi8 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(7));
 		Assert.assertNotNull(wi8);
 		String groupSortStr8 = wi8.getGroupAndSortCode();
 		Assert.assertEquals("0008", groupSortStr8);

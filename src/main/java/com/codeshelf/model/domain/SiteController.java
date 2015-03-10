@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -27,10 +28,6 @@ public class SiteController extends WirelessDeviceABC {
 
 	public final static String defaultLocationDescription = "Unknown";
 	
-	//@Inject
-	public static ITypedDao<SiteController>	DAO;
-
-	//@Singleton
 	public static class SiteControllerDao extends GenericDaoABC<SiteController> implements ITypedDao<SiteController> {
 		public final Class<SiteController> getDaoClass() {
 			return SiteController.class;
@@ -64,16 +61,16 @@ public class SiteController extends WirelessDeviceABC {
 		return "SC";
 	}
 
-	public final static void setDao(ITypedDao<SiteController> dao) {
-		SiteController.DAO = dao;
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public ITypedDao<SiteController> getDao() {
-		return SiteController.DAO;
+		return SiteController.staticGetDao();
 	}
 	
+	public static ITypedDao<SiteController> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(SiteController.class);
+	}
+
 	@Override
 	public String toString() {
 		return this.getDomainId();

@@ -81,7 +81,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testInventoryImporterFromCsvStream() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,each,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -109,7 +109,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testEmptyUom() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -124,7 +124,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testAlphaQuantity() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,A,each,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -144,7 +144,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNegativeQuantity() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,-2,each,A1.B1,111,2012-09-26 11:31:01\r\n";
@@ -166,7 +166,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testMultipleNonEachItemInstancesInventoryImporterFromCsvStream() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 		
 		String csvString = "itemId,itemDetailId,description,quantity,uom,locationId,lotId,inventoryDate\r\n" //
 				+ "3001,3001,Widget,100,case,A1.B1,111,2012-09-26 11:31:01\r\n" //
@@ -215,7 +215,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testBayAnchors() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// This is critical for path values for non-slotted inventory. Otherwise, this belongs in aisle file test, and not in inventory test.
 		Facility facility = facilityForVirtualSlotting;
@@ -273,7 +273,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNonSlottedGtinInventory() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking multiple inventory items for same SKU
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft,gtin\r\n" //
@@ -339,7 +339,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNonSlottedGtinInventory2() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking multiple inventory items for same SKU
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft,gtin\r\n" //
@@ -383,7 +383,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNonSlottedInventory() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		Facility facility = facilityForVirtualSlotting;
 
@@ -490,7 +490,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNonSlottedInventory2() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking leds for this one inventory item
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -535,7 +535,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNonSlottedInventory3() {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// Very small test checking multiple inventory items for same SKU
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -575,7 +575,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testNonSlottedPick() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -644,19 +644,19 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
+		theChe = Che.staticGetDao().reload(theChe);
 		List<WorkInstruction> wiListBeginningOfPath = workService.getWorkInstructions(theChe, "");
 		Assert.assertEquals("The WIs: " + wiListBeginningOfPath, 0, wiListBeginningOfPath.size()); // 3, but one should be short. Only 1123 and 1522 find each inventory
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.DAO.reload(theChe);
+		theChe = Che.staticGetDao().reload(theChe);
 		// Set up a cart for order 12345, which will generate work instructions
 		workService.setUpCheContainerFromString(theChe, "12345");
 		
@@ -740,7 +740,7 @@ public class InventoryImporterTest extends ServerTest {
 
 	@SuppressWarnings("unused")
 	private void assertAutoShort(Che theChe, Timestamp assignedTimestamp) {
-		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.DAO.findByFilter("workInstructionByCheAndAssignedTime",
+		List<WorkInstruction> wiPlusAutoShort = WorkInstruction.staticGetDao().findByFilter("workInstructionByCheAndAssignedTime",
 			 ImmutableMap.<String, Object>of(
 				 "cheId", theChe.getPersistentId(),
 				 "assignedTimestamp", assignedTimestamp));
@@ -748,7 +748,7 @@ public class InventoryImporterTest extends ServerTest {
 		for (WorkInstruction workInstruction : wiPlusAutoShort) {
 			if (workInstruction.getStatus().equals(WorkInstructionStatusEnum.SHORT)) {
 				UUID orderDetailPersistentId = workInstruction.getOrderDetail().getPersistentId();
-				OrderDetail persistedOrderDetail = OrderDetail.DAO.findByPersistentId(orderDetailPersistentId);
+				OrderDetail persistedOrderDetail = OrderDetail.staticGetDao().findByPersistentId(orderDetailPersistentId);
 				Assert.assertEquals(OrderStatusEnum.SHORT, persistedOrderDetail.getStatus());
 				foundOne = true;
 			}
@@ -765,7 +765,7 @@ public class InventoryImporterTest extends ServerTest {
 	@Test
 	public final void testSameProductPick() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -777,7 +777,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
@@ -789,7 +789,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// SKU 1123 needed for 12000
 		// SKU 1123 needed for 12010
@@ -806,7 +806,7 @@ public class InventoryImporterTest extends ServerTest {
 		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
+		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
@@ -816,12 +816,12 @@ public class InventoryImporterTest extends ServerTest {
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
 		// Set up a cart for the three orders, which will generate work instructions
 		workService.setUpCheContainerFromString(theChe, "12000,12010,12345");
-		//Che.DAO.store(theChe);
+		//Che.staticGetDao().store(theChe);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(this.facilityForVirtualSlottingId);
-		theChe = Che.DAO.findByPersistentId(theChe.getPersistentId());
+		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
+		theChe = Che.staticGetDao().findByPersistentId(theChe.getPersistentId());
 		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, ""); // get all in working order
 		
 		for (WorkInstruction wi : wiListAfterScan) {

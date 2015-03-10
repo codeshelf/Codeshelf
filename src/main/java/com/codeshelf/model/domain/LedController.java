@@ -25,6 +25,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -42,10 +43,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LedController extends WirelessDeviceABC {
 
-	//@Inject
-	public static ITypedDao<LedController>	DAO;
-
-	//@Singleton
 	public static class LedControllerDao extends GenericDaoABC<LedController> implements ITypedDao<LedController> {
 		public final Class<LedController> getDaoClass() {
 			return LedController.class;
@@ -78,7 +75,11 @@ public class LedController extends WirelessDeviceABC {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<LedController> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<LedController> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(LedController.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -132,16 +133,12 @@ public class LedController extends WirelessDeviceABC {
 			}
 			// persist, if changed
 			if (modified) {
-				LedController.DAO.store(this);
+				getDao().store(this);
 			}
 		}
 		catch (Exception e) {
 			LOGGER.error("Failed to update LedController",e);
 		}
-	}
-
-	public static void setDao(LedControllerDao inLedControllerDao) {
-		LedController.DAO = inLedControllerDao;
 	}
 
 }

@@ -27,7 +27,7 @@ public class PathTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		Facility retrievedFacility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+		Facility retrievedFacility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
 		
 		Path path = retrievedFacility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);

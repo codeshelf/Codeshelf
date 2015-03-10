@@ -67,7 +67,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 	}
 	
 	List<Facility> getFacilities() {
-		return Facility.DAO.getAll();
+		return Facility.staticGetDao().getAll();
 	}
 
 	@Override

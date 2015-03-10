@@ -134,7 +134,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
 		this.getTenantPersistenceService().commitTransaction(); // end of transaction for this test
@@ -190,7 +190,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
 		this.getTenantPersistenceService().commitTransaction();
 

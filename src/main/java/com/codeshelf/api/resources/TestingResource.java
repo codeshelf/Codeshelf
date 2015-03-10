@@ -55,7 +55,7 @@ public class TestingResource {
 
 		try {
 			persistence.beginTransaction();
-			Facility facility = Facility.DAO.findByPersistentId(facilityUUID.getUUID());
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getUUID());
 			if (facility == null) {
 				errors.addErrorUUIDDoesntExist(facilityUUID.getRawValue(), "facility");;
 				return errors.buildResponse();
@@ -70,7 +70,7 @@ public class TestingResource {
 			Thread.sleep(6000);
 			
 			persistence.beginTransaction();
-			List<Che> ches = Che.DAO.getAll();
+			List<Che> ches = Che.staticGetDao().getAll();
 			if (ches == null || ches.isEmpty()){
 				errors.addError("Ensure that facility " + facilityUUID.getRawValue() + " has, at least, one che");
 				return errors.buildResponse();
@@ -79,7 +79,7 @@ public class TestingResource {
 			List<String> containers = new ArrayList<String>();
 			containers.add(order1 + "");
 			containers.add(order2 + "");
-			facility = Facility.DAO.findByPersistentId(facilityUUID.getUUID());
+			facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getUUID());
 			WorkList workList = workService.computeWorkInstructions(che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
 			System.out.println("*****************Got " + instructions.size() + " instructions");

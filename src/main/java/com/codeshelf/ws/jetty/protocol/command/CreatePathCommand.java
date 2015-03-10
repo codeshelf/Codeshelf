@@ -26,7 +26,7 @@ public class CreatePathCommand extends CommandABC {
 	public ResponseABC exec() {
 		CreatePathResponse response = new CreatePathResponse();
 		try {
-			Facility facility = Facility.DAO.findByPersistentId(request.getFacilityId());
+			Facility facility = Facility.staticGetDao().findByPersistentId(request.getFacilityId());
 			if (facility==null) {
 				response.setStatus(ResponseStatus.Fail);
 				response.setStatusMessage("Facility not found");

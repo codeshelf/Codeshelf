@@ -125,7 +125,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 							} else {
 								LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
 								orderDetail.setActive(false);
-								OrderDetail.DAO.store(orderDetail);
+								OrderDetail.staticGetDao().store(orderDetail);
 							}
 						}
 					}
@@ -137,12 +137,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 					try {
 
 						order.setActive(false);
-						OrderHeader.DAO.store(order);
+						OrderHeader.staticGetDao().store(order);
 
 						ContainerUse containerUse = order.getContainerUse();
 						if (containerUse != null) {
 							containerUse.setActive(false);
-							ContainerUse.DAO.store(containerUse);
+							ContainerUse.staticGetDao().store(containerUse);
 						}
 					} catch (PersistenceException e) {
 						LOGGER.error("Caught exception archiving order or containerUse in archiveCheckCrossBatches", e);
@@ -194,13 +194,13 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				@SuppressWarnings("unused")
 				OrderDetail detail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, itemMaster, uomMaster);
 				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
-				//OrderHeader.DAO.commitTransaction();
+				//OrderHeader.staticGetDao().commitTransaction();
 				return container;
 			}
 		} catch (Exception e) {
 			errors.reject(ErrorCode.GENERAL, e.toString());
 		} finally {
-			//OrderHeader.DAO.endTransaction();
+			//OrderHeader.staticGetDao().endTransaction();
 		}
 		throw new InputValidationException(errors);
 	}
@@ -230,7 +230,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				OrderGroup.DAO.store(result);
+				OrderGroup.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -277,7 +277,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			OrderHeader.DAO.store(result);
+			OrderHeader.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -326,7 +326,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		}
 
 		try {
-			OrderDetail.DAO.store(result);
+			OrderDetail.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -360,7 +360,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			result.setUpdated(inEdiProcessTime);
 			result.setActive(true);
 			try {
-				Container.DAO.store(result);
+				Container.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -389,9 +389,9 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			use.setUpdated(inEdiProcessTime);
 
 			try {
-				ContainerUse.DAO.store(use);
+				ContainerUse.staticGetDao().store(use);
 				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
-				OrderHeader.DAO.store(inOrder);
+				OrderHeader.staticGetDao().store(inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -419,7 +419,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			inFacility.addUomMaster(result);
 
 			try {
-				UomMaster.DAO.store(result);
+				UomMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}

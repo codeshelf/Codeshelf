@@ -212,4 +212,13 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 		return Integer.MAX_VALUE;
 	}
 
+	@Override
+	public void resetDaosForTest() {
+	}
+
+	@Override
+	public <T extends IDomainObject> void setDaoForTest(Class<T> domainType, ITypedDao<T> testDao) {
+		this.mockDaos.put(domainType, testDao);
+	}
+
 }

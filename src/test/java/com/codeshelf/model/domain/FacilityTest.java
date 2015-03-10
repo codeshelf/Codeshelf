@@ -67,12 +67,12 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(id);
+		facility = Facility.staticGetDao().findByPersistentId(id);
 		facility.removeAllVertices();
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(id);
+		facility = Facility.staticGetDao().findByPersistentId(id);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -84,6 +84,6 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		v.setDrawOrder(drawOrder);
 		v.setPoint(new Point(PositionTypeEnum.GPS, inX, inY, 0d));
 		facility.addVertex(v);
-		Vertex.DAO.store(v);		
+		Vertex.staticGetDao().store(v);		
 	}
 }

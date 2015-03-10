@@ -89,7 +89,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			if (!locationAlias.getUpdated().equals(inProcessTime)) {
 				LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
 				locationAlias.setActive(false);
-				LocationAlias.DAO.store(locationAlias);
+				locationAlias.getDao().store(locationAlias);
 			}
 		}
 	}
@@ -156,7 +156,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			LocationAlias.DAO.store(result);
+			LocationAlias.staticGetDao().store(result);
 		}
 		return result;
 	}

@@ -134,7 +134,7 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		}
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		Facility.DAO.reload(facility);
+		Facility.staticGetDao().reload(facility);
 		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 	

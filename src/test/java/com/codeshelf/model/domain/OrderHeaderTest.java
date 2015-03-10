@@ -27,15 +27,15 @@ public class OrderHeaderTest extends HibernateTest {
 		Facility facility = createFacility();
 		Aisle a1 = getDefaultAisle(facility, "A1");
 		a1.setPickFaceEndPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 5.0, 0.0, 0.0));
-		Aisle.DAO.store(a1);
+		Aisle.staticGetDao().store(a1);
 		Aisle a2 = getDefaultAisle(facility, "A2");
 		a2.setAnchorPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 10.0, 0.0)); //should have a move that moves
 		a2.setPickFaceEndPoint(new Point(PositionTypeEnum.METERS_FROM_PARENT, 5.0, 10.0, 0.0)); //should have a move that moves
-		Aisle.DAO.store(a2);
+		Aisle.staticGetDao().store(a2);
 		Path path = createAssociatedPath(a1, a2);
 
-		a1 = Aisle.DAO.findByPersistentId(a1.getPersistentId());
-		a2 = Aisle.DAO.findByPersistentId(a2.getPersistentId());
+		a1 = Aisle.staticGetDao().findByPersistentId(a1.getPersistentId());
+		a2 = Aisle.staticGetDao().findByPersistentId(a2.getPersistentId());
 		
 		Assert.assertNotNull(a1.getPosAlongPath());
 		Assert.assertNotNull(a2.getPosAlongPath());
@@ -50,7 +50,7 @@ public class OrderHeaderTest extends HibernateTest {
 		Assert.assertEquals(a1, orderLocation.getLocation());
 		
 		loc1.setActive(false);
-		OrderLocation.DAO.store(loc1);
+		OrderLocation.staticGetDao().store(loc1);
 		
 		OrderLocation orderLocationAfterInactivating = header.getFirstOrderLocationOnPath(path);
 		Assert.assertEquals(a2, orderLocationAfterInactivating.getLocation());
@@ -63,7 +63,7 @@ public class OrderHeaderTest extends HibernateTest {
 	@Test
 	public void testOrderHeaderByFacilityAndType() {
 		this.getTenantPersistenceService().beginTransaction();
-		OrderHeader.DAO.findByFilter("orderHeadersByFacilityAndType",
+		OrderHeader.staticGetDao().findByFilter("orderHeadersByFacilityAndType",
 											ImmutableMap.<String, Object>of(
 												"facilityId", UUID.randomUUID(),
 												"orderType", OrderTypeEnum.OUTBOUND.name()));

@@ -109,8 +109,8 @@ public class ContainerUseTest extends HibernateTest {
 		
 		LOGGER.info("testUseHeaderRelationship Case 1: normal removal");
 		header0.removeHeadersContainerUse(cntrUse0);
-		OrderHeader.DAO.store(header0);
-		ContainerUse.DAO.store(cntrUse0);
+		OrderHeader.staticGetDao().store(header0);
+		ContainerUse.staticGetDao().store(cntrUse0);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		// From here we will follow the pattern of original references are header0, cntrUse1, etc.  New fetches from the DAO are header0d, cntrUse1d, etc.
@@ -125,8 +125,8 @@ public class ContainerUseTest extends HibernateTest {
 		Assert.assertNull(cntrUse0.getOrderHeader());
 		
 		this.getTenantPersistenceService().beginTransaction();
-		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
-		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
+		cntrUse0d = ContainerUse.staticGetDao().findByPersistentId(cntrUse0Uuid);
+		header0d = OrderHeader.staticGetDao().findByPersistentId(header0Uuid);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertNull(header0d.getContainerUse());
 		Assert.assertNull(cntrUse0d.getOrderHeader());
@@ -134,14 +134,14 @@ public class ContainerUseTest extends HibernateTest {
 		LOGGER.info("Case 2: Add same again. No change to final condition");
 		this.getTenantPersistenceService().beginTransaction();
 		header2.addHeadersContainerUse(cntrUse2);
-		OrderHeader.DAO.store(header2);
-		ContainerUse.DAO.store(cntrUse2);
+		OrderHeader.staticGetDao().store(header2);
+		ContainerUse.staticGetDao().store(cntrUse2);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse2, header2.getContainerUse());
 
 		this.getTenantPersistenceService().beginTransaction();
-		cntrUse2d = ContainerUse.DAO.findByPersistentId(cntrUse2Uuid);
-		header2d = OrderHeader.DAO.findByPersistentId(header2Uuid);
+		cntrUse2d = ContainerUse.staticGetDao().findByPersistentId(cntrUse2Uuid);
+		header2d = OrderHeader.staticGetDao().findByPersistentId(header2Uuid);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse2d, header2d.getContainerUse());
 
@@ -149,13 +149,13 @@ public class ContainerUseTest extends HibernateTest {
 		LOGGER.info("Case 3: Try to add a container use already with another header to header without. Should refuse.");
 		this.getTenantPersistenceService().beginTransaction();
 		header0.addHeadersContainerUse(cntrUse2);
-		OrderHeader.DAO.store(header0);
-		ContainerUse.DAO.store(cntrUse2);
+		OrderHeader.staticGetDao().store(header0);
+		ContainerUse.staticGetDao().store(cntrUse2);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertNull(header0.getContainerUse());
 
 		this.getTenantPersistenceService().beginTransaction();
-		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
+		header0d = OrderHeader.staticGetDao().findByPersistentId(header0Uuid);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertNull(header0.getContainerUse());
 
@@ -163,29 +163,29 @@ public class ContainerUseTest extends HibernateTest {
 		LOGGER.info("Case 4: Try to add a container use to header that has one already. Should refuse.");
 		this.getTenantPersistenceService().beginTransaction();
 		header1.addHeadersContainerUse(cntrUse0);
-		OrderHeader.DAO.store(header1);
-		ContainerUse.DAO.store(cntrUse0);
+		OrderHeader.staticGetDao().store(header1);
+		ContainerUse.staticGetDao().store(cntrUse0);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse1, header1.getContainerUse());
 		
 		this.getTenantPersistenceService().beginTransaction();
-		header1d = OrderHeader.DAO.findByPersistentId(header1Uuid);
-		cntrUse1d = ContainerUse.DAO.findByPersistentId(cntrUse1Uuid);
+		header1d = OrderHeader.staticGetDao().findByPersistentId(header1Uuid);
+		cntrUse1d = ContainerUse.staticGetDao().findByPersistentId(cntrUse1Uuid);
 		Assert.assertEquals(cntrUse1d, header1d.getContainerUse());
 		this.getTenantPersistenceService().commitTransaction();
 	
 		LOGGER.info("Case 5: Normal add. Should work as the this is how the data was setup in the first place.");
 		this.getTenantPersistenceService().beginTransaction();
 		header0.addHeadersContainerUse(cntrUse0);
-		OrderHeader.DAO.store(header0);
-		ContainerUse.DAO.store(cntrUse0);
+		OrderHeader.staticGetDao().store(header0);
+		ContainerUse.staticGetDao().store(cntrUse0);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse0, header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
 
 		this.getTenantPersistenceService().beginTransaction();
-		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
-		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
+		header0d = OrderHeader.staticGetDao().findByPersistentId(header0Uuid);
+		cntrUse0d = ContainerUse.staticGetDao().findByPersistentId(cntrUse0Uuid);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse0d, header0d.getContainerUse());
 		Assert.assertEquals(header0d, cntrUse0d.getOrderHeader());
@@ -195,12 +195,12 @@ public class ContainerUseTest extends HibernateTest {
 		header0.removeHeadersContainerUse(cntrUse0);
 		header1.removeHeadersContainerUse(cntrUse1);
 		header2.removeHeadersContainerUse(cntrUse2);
-		OrderHeader.DAO.store(header0);
-		ContainerUse.DAO.store(cntrUse0);
-		OrderHeader.DAO.store(header1);
-		ContainerUse.DAO.store(cntrUse1);
-		OrderHeader.DAO.store(header2);
-		ContainerUse.DAO.store(cntrUse2);
+		OrderHeader.staticGetDao().store(header0);
+		ContainerUse.staticGetDao().store(cntrUse0);
+		OrderHeader.staticGetDao().store(header1);
+		ContainerUse.staticGetDao().store(cntrUse1);
+		OrderHeader.staticGetDao().store(header2);
+		ContainerUse.staticGetDao().store(cntrUse2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -208,15 +208,15 @@ public class ContainerUseTest extends HibernateTest {
 		// This would only happen by upgrade on bad data, or a throw somewhere in normal transaction.
 		// DO NOT CALL setOrderHeader elsewhere in the code. Doing it here to simulate throw in the middle of addHeadersContainerUse or removeHeadersContainerUse to achieve inconsistent data
 		cntrUse0.setOrderHeader(header0);
-		ContainerUse.DAO.store(cntrUse0);
+		ContainerUse.staticGetDao().store(cntrUse0);
 		this.getTenantPersistenceService().commitTransaction();
 		// check the orphan result
 		Assert.assertNull(header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse0.getOrderHeader());
 		// check that the database has the orphan result
 		this.getTenantPersistenceService().beginTransaction();
-		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
-		cntrUse0d = ContainerUse.DAO.findByPersistentId(cntrUse0Uuid);
+		header0d = OrderHeader.staticGetDao().findByPersistentId(header0Uuid);
+		cntrUse0d = ContainerUse.staticGetDao().findByPersistentId(cntrUse0Uuid);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertNull(header0d.getContainerUse());
 		Assert.assertEquals(header0d, cntrUse0d.getOrderHeader()); 
@@ -226,15 +226,15 @@ public class ContainerUseTest extends HibernateTest {
 		LOGGER.info("        Then have the header add another containerUse");
 		this.getTenantPersistenceService().beginTransaction();
 		header0.addHeadersContainerUse(cntrUse1);
-		OrderHeader.DAO.store(header0);
-		ContainerUse.DAO.store(cntrUse1);
+		OrderHeader.staticGetDao().store(header0);
+		ContainerUse.staticGetDao().store(cntrUse1);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse1, header0.getContainerUse());
 		Assert.assertEquals(header0, cntrUse1.getOrderHeader());
 
 		this.getTenantPersistenceService().beginTransaction();
-		header0d = OrderHeader.DAO.findByPersistentId(header0Uuid);
-		cntrUse1d = ContainerUse.DAO.findByPersistentId(cntrUse1Uuid);
+		header0d = OrderHeader.staticGetDao().findByPersistentId(header0Uuid);
+		cntrUse1d = ContainerUse.staticGetDao().findByPersistentId(cntrUse1Uuid);
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertEquals(cntrUse1d, header0d.getContainerUse());
 		Assert.assertEquals(header0d, cntrUse1d.getOrderHeader());
@@ -251,7 +251,7 @@ public class ContainerUseTest extends HibernateTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		List<ContainerUse> uses = ContainerUse.DAO.findByFilter("containerUsesByChe",
+		List<ContainerUse> uses = ContainerUse.staticGetDao().findByFilter("containerUsesByChe",
 			ImmutableMap.<String, Object>of("cheId", UUID.randomUUID().toString()));
 		Assert.assertEquals(0, uses.size());
 		this.getTenantPersistenceService().commitTransaction();

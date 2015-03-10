@@ -127,7 +127,7 @@ public class WiFactory {
 		inFacility.addWorkInstruction(resultWi);
 
 		try {
-			WorkInstruction.DAO.store(resultWi);
+			WorkInstruction.staticGetDao().store(resultWi);
 		} catch (DaoException e) {
 			LOGGER.error("createHouseKeepingWi", e);
 		}
@@ -220,7 +220,7 @@ public class WiFactory {
 			}
 		}
 
-		WorkInstruction.DAO.store(resultWi);
+		WorkInstruction.staticGetDao().store(resultWi);
 		return resultWi;
 	}
 
@@ -326,7 +326,7 @@ public class WiFactory {
 				resultWi.doSetPickInstruction(locStr);
 			}
 
-			WorkInstruction.DAO.store(resultWi);
+			WorkInstruction.staticGetDao().store(resultWi);
 		}
 		return resultWi;
 	}

@@ -86,7 +86,7 @@ public class FacilityResource {
 
 		try {
 			persistence.beginTransaction();
-			List<WorkInstruction> instructions = WorkInstruction.DAO.getAll();
+			List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
 			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
@@ -163,7 +163,7 @@ public class FacilityResource {
 		}
 		try {
 			persistence.beginTransaction();
-			Facility facility = Facility.DAO.findByPersistentId(mUUIDParam.getUUID());
+			Facility facility = Facility.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
 			Set<User> users = facility.getSiteControllerUsers();
 			
 			//LIGHTS

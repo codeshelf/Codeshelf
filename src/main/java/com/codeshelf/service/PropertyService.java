@@ -44,7 +44,7 @@ public class PropertyService extends AbstractPropertyService {
 	 */
 	public void changePropertyValueUI(final String inFacilityPersistId, final String inPropertyName, final String inNewStringValue) {
 		LOGGER.info("call to update property " + inPropertyName + " to " + inNewStringValue);
-		Facility facility = Facility.DAO.findByPersistentId(inFacilityPersistId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityPersistId);
 		if (facility == null) {
 			DefaultErrors errors = new DefaultErrors(DomainObjectProperty.class);
 			String instruction = "unknown facility";

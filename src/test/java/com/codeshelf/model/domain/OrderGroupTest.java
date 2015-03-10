@@ -30,7 +30,7 @@ public class OrderGroupTest extends MockDaoTest {
 		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderGroup.DAO.store(orderGroup);
+		OrderGroup.staticGetDao().store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -40,7 +40,7 @@ public class OrderGroupTest extends MockDaoTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order1);
@@ -58,7 +58,7 @@ public class OrderGroupTest extends MockDaoTest {
 		order2.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2.setActive(true);
 		order2.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order2);
+		OrderHeader.staticGetDao().store(order2);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order2);
@@ -82,7 +82,7 @@ public class OrderGroupTest extends MockDaoTest {
 		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderGroup.DAO.store(orderGroup);
+		OrderGroup.staticGetDao().store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -93,7 +93,7 @@ public class OrderGroupTest extends MockDaoTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 		
 		orderGroup.addOrderHeader(order1);
 		

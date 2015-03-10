@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -47,10 +48,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ContainerUse extends DomainObjectTreeABC<Container> {
 
-	//@Inject
-	public static ITypedDao<ContainerUse>	DAO;
-
-	//@Singleton
 	public static class ContainerUseDao extends GenericDaoABC<ContainerUse> implements ITypedDao<ContainerUse> {
 		public final Class<ContainerUse> getDaoClass() {
 			return ContainerUse.class;
@@ -104,7 +101,11 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ContainerUse> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<ContainerUse> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ContainerUse.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -202,10 +203,6 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 			return master.getPersistentId().toString();
 		
 		return "";
-	}
-
-	public static void setDao(ContainerUseDao inContainerUseDao) {
-		ContainerUse.DAO = inContainerUseDao;
 	}
 
 }

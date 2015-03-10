@@ -23,21 +23,17 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
 
 @Entity
 @Table(name = "property")
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class DomainObjectProperty extends DomainObjectABC implements IDomainObject {
+public class DomainObjectProperty extends DomainObjectABC {
 
 	private static final Logger						LOGGER				= LoggerFactory.getLogger(DomainObjectProperty.class);
-
-	@Inject
-	public static ITypedDao<DomainObjectProperty>	DAO					= PropertyDao.getInstance();
 
 	@Getter
 	@NonNull
@@ -80,6 +76,15 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	public final static String						Default_CNTRTYPE	= "Order";
 	public final static String						SCANPICK			= "SCANPICK";
 	public final static String						Default_SCANPICK	= "Disabled";
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public ITypedDao<DomainObjectProperty> getDao() {
+		return staticGetDao();
+	}
+	public static ITypedDao<DomainObjectProperty> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(DomainObjectProperty.class);
+	}
 
 	public DomainObjectProperty() {
 	}
@@ -224,12 +229,6 @@ public class DomainObjectProperty extends DomainObjectABC implements IDomainObje
 	@Override
 	public Facility getFacility() {
 		throw new RuntimeException("Not Supported");
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public ITypedDao<DomainObjectProperty> getDao() {
-		return DomainObjectProperty.DAO;
 	}
 
 	/**

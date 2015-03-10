@@ -147,14 +147,14 @@ public class WorkServiceTest extends ServerTest {
 		wiToRecord.setStatus(WorkInstructionStatusEnum.SHORT);
 
 		this.getTenantPersistenceService().beginTransaction();
-		OrderDetail priorOrderDetail = OrderDetail.DAO.findByPersistentId(detailId);
+		OrderDetail priorOrderDetail = OrderDetail.staticGetDao().findByPersistentId(detailId);
 		Assert.assertNotEquals(OrderStatusEnum.SHORT, priorOrderDetail.getStatus());
 
 		workService.completeWorkInstruction(cheId,	wiToRecord);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		OrderDetail updatedOrderDetail = OrderDetail.DAO.findByPersistentId(detailId);
+		OrderDetail updatedOrderDetail = OrderDetail.staticGetDao().findByPersistentId(detailId);
 		Assert.assertEquals(OrderStatusEnum.SHORT, updatedOrderDetail.getStatus());
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -206,7 +206,7 @@ public class WorkServiceTest extends ServerTest {
 		Facility facility = facilityGenerator.generateValid();
 
 		ITypedDao<WorkInstruction> workInstructionDao = mock(ITypedDao.class);
-		WorkInstruction.DAO = workInstructionDao;
+		this.useCustomDao(WorkInstruction.class, workInstructionDao);
 
 		ArrayList<WorkInstruction> inputs = new ArrayList<WorkInstruction>();
 		for (int i = 0; i < 4; i++) {
@@ -239,11 +239,11 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
-		Che.DAO = mock(ITypedDao.class);
-		when(Che.DAO.findByPersistentId(eq(cheId))).thenReturn(new Che());
+		this.useCustomDao(Che.class, mock(ITypedDao.class));
+		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
 
-		WorkInstruction.DAO = mock(ITypedDao.class);
-		when(WorkInstruction.DAO.findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(null);
+		this.useCustomDao(WorkInstruction.class,mock(ITypedDao.class));
+		when(WorkInstruction.staticGetDao().findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(null);
 
 		try {
 			workService.completeWorkInstruction(cheId, wiToRecord);
@@ -252,7 +252,7 @@ public class WorkServiceTest extends ServerTest {
 			Assert.assertNotNull(e.getErrors().getFieldErrors("persistentId"));
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
-		verify(WorkInstruction.DAO, never()).store(any(WorkInstruction.class));
+		verify(WorkInstruction.staticGetDao(), never()).store(any(WorkInstruction.class));
 				
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -270,20 +270,21 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
-		Che.DAO = mock(ITypedDao.class);
-		when(Che.DAO.findByPersistentId(eq(cheId))).thenReturn(new Che());
+		this.useCustomDao(Che.class, mock(ITypedDao.class));
+		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
 
 		UUID testId = UUID.randomUUID();
 
 		existingWi.setPersistentId(testId);
 		wiToRecord.setPersistentId(testId);
 
-		WorkInstruction.DAO = mock(ITypedDao.class);
-		OrderDetail.DAO = mock(ITypedDao.class);
-		OrderHeader.DAO = mock(ITypedDao.class);
-		when(WorkInstruction.DAO.findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(existingWi);
+		ITypedDao<WorkInstruction> wiDao = mock(ITypedDao.class);
+		useCustomDao(WorkInstruction.class,wiDao);
+		useCustomDao(OrderDetail.class,mock(ITypedDao.class));
+		useCustomDao(OrderHeader.class,mock(ITypedDao.class));
+		when(wiDao.findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(existingWi);
 
-		doThrow(new DaoException("test")).when(WorkInstruction.DAO).store(eq(wiToRecord));
+		doThrow(new DaoException("test")).when(WorkInstruction.staticGetDao()).store(eq(wiToRecord));
 
 		workService.completeWorkInstruction(cheId, wiToRecord);
 

@@ -87,14 +87,9 @@ public final class ServerMain {
 		// Create and start the application.
 		Injector dynamicInjector = setupInjector();
 		
-		// Assign DAOs by reflection, so we don't have to list them all out by name for Guice injection
-		Map<Class<?>,Class<?>> result = DomainObjectABC.assignStaticDaoFields();
-		LOGGER.debug("Static DAO assignments: {}",result.toString());
-		
-		
 		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
 
-		application.startServices();
+		application.startServices(); // this includes persistence and such, probably has to start before anything else
 
 		CsServerEndPoint.setSessionManagerService(dynamicInjector.getInstance(SessionManagerService.class));
 		CsServerEndPoint.setMessageProcessor(dynamicInjector.getInstance(ServerMessageProcessor.class));

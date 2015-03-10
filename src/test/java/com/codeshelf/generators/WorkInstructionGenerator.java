@@ -59,24 +59,24 @@ public class WorkInstructionGenerator {
 	
 	private WorkInstruction generateWithStatusAndType(Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
 		Aisle aisle=facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisle);
+		Aisle.staticGetDao().store(aisle);
 		
 		UomMaster uomMaster = facility.createUomMaster("UOMID");
-		UomMaster.DAO.store(uomMaster);
+		UomMaster.staticGetDao().store(uomMaster);
 		ItemMaster itemMaster = facility.createItemMaster("ITEMID", "ITEMDESCRIPTION", uomMaster);
-		ItemMaster.DAO.store(itemMaster);
+		ItemMaster.staticGetDao().store(itemMaster);
 		OrderDetail orderDetail = generateValidOrderDetail(facility, itemMaster, uomMaster);
-		OrderDetail.DAO.store(orderDetail);
+		OrderDetail.staticGetDao().store(orderDetail);
 
 		Container container = 	
 				new Container("CONTID",
 							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
 							  true);
 		facility.addContainer(container);
-		Container.DAO.store(container);
+		Container.staticGetDao().store(container);
 
-		//Che che1 = Che.DAO.findByDomainId(facility.getNetworks().get(0), "CHE1");
-		Che che1 = Che.DAO.findByDomainId(null, "CHE1");
+		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
+		Che che1 = Che.staticGetDao().findByDomainId(null, "CHE1");
 		
 		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
 		
@@ -98,13 +98,13 @@ public class WorkInstructionGenerator {
 	private OrderDetail generateValidOrderDetail(Facility facility, ItemMaster itemMaster, UomMaster uom) {
 		OrderGroup orderGroup = new OrderGroup("OG1");
 		facility.addOrderGroup(orderGroup);
-		OrderGroup.DAO.store(orderGroup);
+		OrderGroup.staticGetDao().store(orderGroup);
 		
 		OrderHeader orderHeader = new OrderHeader("OH1", OrderTypeEnum.OUTBOUND);
 		facility.addOrderHeader(orderHeader);
 		
 		orderGroup.addOrderHeader(orderHeader);
-		OrderHeader.DAO.store(orderHeader);
+		OrderHeader.staticGetDao().store(orderHeader);
 
 		OrderDetail detail = new OrderDetail("OD1", true);
 		detail.setStatus(OrderStatusEnum.RELEASED);

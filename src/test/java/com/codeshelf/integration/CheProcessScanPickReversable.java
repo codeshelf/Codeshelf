@@ -52,7 +52,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(getFacility());
@@ -156,7 +156,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "Disabled");

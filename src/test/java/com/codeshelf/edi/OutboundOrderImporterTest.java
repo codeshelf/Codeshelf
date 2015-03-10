@@ -87,7 +87,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -138,7 +138,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderImporterWithLocationsFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderId,preassignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n1,1,1.1,,,BO-PA-16,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
@@ -218,7 +218,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderImporterWithPickStrategyFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,pickStrategy,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -257,7 +257,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderImporterWithShipperIdFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipperId,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,TRUCKA,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -279,7 +279,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderImporterWithPreassignedContainerIdFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate, dueDate\r\n" //
 				+ "1,,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
@@ -305,7 +305,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
 
-		Container container = Container.DAO.findByDomainId(facility, "CONTAINER1");
+		Container container = Container.staticGetDao().findByDomainId(facility, "CONTAINER1");
 		Assert.assertNotNull(container);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -321,7 +321,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public void testFailOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		// orderId,itemId,description,quantity,uom are not nullable according to the bean
 		// There's no due date on first order line. nullable, ok
@@ -375,7 +375,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public void testManyOrderArchive() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -459,7 +459,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public void testOneOrderArchive() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -511,7 +511,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testMinMaxOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,	1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -549,7 +549,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testMinMaxDefaultOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -626,7 +626,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testMinMaxBoundariesCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -663,7 +663,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testDetailIdOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -734,7 +734,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		//Refresh facility
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.findByPersistentId(this.facilityId);
+		facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		//123.1 should no longer exist. Instead, there should be 10700589-each
 		order = facility.getOrderHeader("123");
@@ -769,7 +769,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testReimportDetailIdOrderImporterFromCsvStream() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String firstCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -809,7 +809,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public void testNonsequentialOrderIds() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String nonSequentialOrders = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId"
 				+ "\r\n243511,243511.2.01,2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3(a),Lids fro 8.88 x6.8 Fiber Boxes cs/400,77,CS,243511"
@@ -836,13 +836,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		//The edi mechanism finds the facility from DAO before entering the importers
 		Facility foundFacility = null;
-		foundFacility = Facility.DAO.findByPersistentId(facilityId);
+		foundFacility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		//The large set creates the initial sets of orders
 		BatchResult<?> result = importOrdersResource(foundFacility, "largeset/superset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
 
-		foundFacility = Facility.DAO.findByPersistentId(facilityId);
+		foundFacility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		//The subset triggers all but one of the details to be active = false
 		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
@@ -851,7 +851,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		//Simulate a cache trim between the uploads
 		// Ebean.getServer("codeshelf").getServerCacheManager().getCollectionIdsCache(OrderHeader.class, "orderDetails").clear();
 
-		foundFacility = Facility.DAO.findByPersistentId(facilityId);
+		foundFacility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
@@ -875,7 +875,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,\"\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
-		List<OrderDetail> orderDetails = OrderDetail.DAO.getAll();
+		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().getAll();
 		Assert.assertEquals(1, orderDetails.size());
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0, orderDetails.get(0).getQuantity().intValue());
@@ -893,7 +893,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,\"A\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
-		List<OrderDetail> orderDetails = OrderDetail.DAO.getAll();
+		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().getAll();
 		Assert.assertEquals(1, orderDetails.size());
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0, orderDetails.get(0).getQuantity().intValue());
@@ -1010,18 +1010,18 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testItemCreationfromOrders() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("1: Read a very small aisles and locations file. Aliases exist only for D34, D35, D13");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		loadSmallAislesAndLocations(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("3: Read the orders file, which has some preferred locations");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
 				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D34,43"
@@ -1081,7 +1081,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		// getting a lazy initialization error during the read on a tier addStoredItem.
 		// Interesting that relaod the facility seems to set the tier straight.
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader4 = new InputStreamReader(stream4);
@@ -1100,12 +1100,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void itemCreationChoicesfromOrders() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(this.facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("1: Read a very small aisles and locations file");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		loadSmallAislesAndLocations(facility);
 
 		LOGGER.info("2: Set LOCAPICK = true");
@@ -1118,7 +1118,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		LOGGER.info("3: Read the orders file, which has some preferred locations");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		String csvString1 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,61"
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
@@ -1147,7 +1147,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		LOGGER.info("   Change preferredLocation for a case order detail. Should create new inventory for SKU0001, but delete old.");
 		LOGGER.info("   Change preferredLocation for an each order detail. Should move and not create new inventory for SKU0004");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		// Checking precondition, and remembering the persistentId of the items.
 		master1 = facility.getItemMaster("SKU0001");
@@ -1192,7 +1192,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		LOGGER.info("7: Move the 10.1 SKU0001 order at D34. But add another SKU0001 order at D34. SKU0001 hould have two itemLocations after that.");
 		// Just for thoroughness, changed the cm Offset of the D34 item. Does not matter.
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		String csvString3 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n10,10,10.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D35,70"
@@ -1211,7 +1211,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		LOGGER.info("8: Showing the limits of current implementation. Next day, orders for the same SKUs in different locations. Does not clean up old inventory.");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		String csvString4 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,upc,type,locationId,cmFromLeft"
 				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,"
@@ -1257,7 +1257,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testArchiveOneGroup() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
@@ -1289,7 +1289,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testArchiveNoGroup() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
@@ -1323,7 +1323,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testArchiveTwoGroups() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
@@ -1354,7 +1354,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testArchiveAbandonedGroup() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
@@ -1403,7 +1403,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		 * Then drop the second orders file.
 		 */
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		LOGGER.info("1: Read orders for for group 1, as if it is morning wave");
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
@@ -1415,7 +1415,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 
 		OrderHeader header1a = facility.getOrderHeader("1");
 		OrderDetail detail1_1a = header1a.getOrderDetail("1.1");
@@ -1477,7 +1477,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderDetailIdNormal() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		//Test that if orderDetailId is provided, it becomes detail's id. If not, then use the item-uom combination.
 		//Also confirm that detail ids can be reused across orders
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
@@ -1505,7 +1505,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testOrderDetailIdDuplicates() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				//Repeating orderDetailId - leave last one
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1" +
@@ -1547,7 +1547,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testPreferedSequence() throws IOException{
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence" +
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" +
 				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
@@ -1577,11 +1577,11 @@ public class OutboundOrderImporterTest extends ServerTest {
 	 * then found the groups and headers in the facility to check.
 	 */
 	private void assertArchiveStatuses(HashMap<String, Boolean> groupExpectations, HashMap<String, Boolean> headerExpectations) {
-		List<OrderGroup> groups = OrderGroup.DAO.getAll();
+		List<OrderGroup> groups = OrderGroup.staticGetDao().getAll();
 		for (OrderGroup group : groups) {
 			assertArchiveStatusesHelper(groupExpectations, group.getDomainId(), group.getActive(), "group");
 		}
-		List<OrderHeader> headers = OrderHeader.DAO.getAll();
+		List<OrderHeader> headers = OrderHeader.staticGetDao().getAll();
 		for (OrderHeader header : headers) {
 			assertArchiveStatusesHelper(headerExpectations, header.getDomainId(), header.getActive(), "order header");
 		}

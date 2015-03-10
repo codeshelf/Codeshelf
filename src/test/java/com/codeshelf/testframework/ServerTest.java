@@ -102,7 +102,7 @@ public abstract class ServerTest extends HibernateTest {
 		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(getFacility());
@@ -111,14 +111,14 @@ public abstract class ServerTest extends HibernateTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
 		Path path2 = createPathForTest(getFacility());
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.DAO.findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
@@ -191,7 +191,7 @@ public abstract class ServerTest extends HibernateTest {
 	}
 
 	protected CodeshelfNetwork getNetwork() {
-		return CodeshelfNetwork.DAO.findByPersistentId(this.networkPersistentId);
+		return CodeshelfNetwork.staticGetDao().findByPersistentId(this.networkPersistentId);
 	}
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList) {

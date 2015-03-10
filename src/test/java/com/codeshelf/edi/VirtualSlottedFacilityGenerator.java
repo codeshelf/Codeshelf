@@ -81,7 +81,7 @@ public class VirtualSlottedFacilityGenerator {
 		aisleImporter.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -90,14 +90,14 @@ public class VirtualSlottedFacilityGenerator {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
 		Path path2 = createPathForTest(facility);
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 10.85, 58.45);
 
-		Aisle aisle3 = Aisle.DAO.findByDomainId(facility, "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);

@@ -37,6 +37,7 @@ import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
@@ -63,13 +64,6 @@ import com.google.common.collect.Sets;
 @ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
-	//@Inject
-	public static ITypedDao<OrderDetail>	DAO;
-	
-	//@Inject
-	//public static WorkService	workService;
-
-	//@Singleton
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
 		public final Class<OrderDetail> getDaoClass() {
 			return OrderDetail.class;
@@ -178,7 +172,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderDetail> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<OrderDetail> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(OrderDetail.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
