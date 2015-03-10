@@ -1592,6 +1592,17 @@ public class CheProcessTestPick extends ServerTest {
 
 		//Make sure position 1 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
+		
+		// Look at the screen
+		String line1 = picker.getLastCheDisplayString(1);
+		String line2 = picker.getLastCheDisplayString(2);
+		String line3 = picker.getLastCheDisplayString(3);
+		String line4 = picker.getLastCheDisplayString(4);
+		
+		Assert.assertEquals("D301", line1);
+		Assert.assertEquals("1", line2);
+		Assert.assertEquals("QTY 1", line3); // This may change soon. Just update this line.
+		Assert.assertEquals("", line4);
 
 		picker.pick(1, 1);
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
@@ -1621,6 +1632,14 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
+		
+		// Look at the screen
+		line1 = picker.getLastCheDisplayString(1);
+		line3 = picker.getLastCheDisplayString(3);	
+		Assert.assertEquals("D302", line1);
+		// Important: this next line shows DEV-691 result. Two picks in a row from same spot, so total for that SKU is 2, not 1.
+		Assert.assertEquals("QTY 2", line3); // This may change soon. Just update this line.
+
 
 		/**
 		 * Now we will do a short pick and cancel it and make sure we never lose feedback.
@@ -1728,6 +1747,13 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
+		
+		// Look at the screen
+		line1 = picker.getLastCheDisplayString(1);
+		line3 = picker.getLastCheDisplayString(3);	
+		Assert.assertEquals("ALL WORK COMPLETE", line1);
+		Assert.assertEquals("", line3); 
+
 
 		propertyService.restoreHKDefaults(facility);
 

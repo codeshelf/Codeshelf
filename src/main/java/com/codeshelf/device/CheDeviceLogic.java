@@ -315,9 +315,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine4Message) {
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		doSetRecentCheDisplayString(1, inLine1Message);
-		doSetRecentCheDisplayString(2, inLine1Message);
-		doSetRecentCheDisplayString(3, inLine1Message);
-		doSetRecentCheDisplayString(4, inLine1Message);
+		doSetRecentCheDisplayString(2, inLine2Message);
+		doSetRecentCheDisplayString(3, inLine3Message);
+		doSetRecentCheDisplayString(4, inLine4Message);
 
 		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
 		// Lots of upstream code generates display messages.
