@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -93,7 +95,7 @@ public class LightService implements IApiService {
 
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 
-		Facility facility = checkFacility(facilityPersistentId);
+		final Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
@@ -103,7 +105,25 @@ public class LightService implements IApiService {
 			lightChildLocations(facility, theLocation, color);
 		}
 		
-		lightPosConRange(facility, theLocation);
+		//Light the POS range
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		lightPosConRange(facility, theLocation, instructions);
+		final PosControllerInstrList message = new PosControllerInstrList(instructions);
+		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+		//Modify all POS commands to clear their POSs instead.
+		new Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				LOGGER.info("AisleDeviceLogic expire timer fired.");
+				for (PosControllerInstr instructions : message.getInstructions()){
+					instructions.getRemovePos().add(instructions.getPosition());
+				}
+				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+			}
+		}, 20000);
+
+		
+
 	}
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
@@ -145,15 +165,8 @@ public class LightService implements IApiService {
 		}
 		
 	}
-		
-	private void lightPosConRange(final Facility facility, final Location theLocation){
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		lightPosConRangeRecursive(facility, theLocation, instructions);
-		PosControllerInstrList message = new PosControllerInstrList(instructions);
-		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
-	}
 	
-	private void lightPosConRangeRecursive(final Facility facility, final Location theLocation, List<PosControllerInstr> instructions){
+	private void lightPosConRange(final Facility facility, final Location theLocation, List<PosControllerInstr> instructions){
 		if (theLocation == null) {return;}
 		if (theLocation.isLightablePoscon()) {
 			String posConController = theLocation.getLedControllerId();
@@ -171,7 +184,7 @@ public class LightService implements IApiService {
 		List<Location> children = theLocation.getActiveChildren();
 		if (!children.isEmpty()){
 			for (Location child : children) {
-				lightPosConRangeRecursive(facility, child, instructions);
+				lightPosConRange(facility, child, instructions);
 			}
 		}
 	}
