@@ -79,10 +79,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private Location			storedLocation;
 	
 	// The Gtin value
-	@OneToOne(optional = true, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Gtin	gtin;
+	//@OneToOne(optional = true, fetch = FetchType.LAZY)
+	//@Getter
+	//@Setter
+	//private Gtin	gtin;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -449,6 +449,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// Let's return much less than the lomboc toString.
 		String toSay = "Sku:" + this.getItemMasterId() + " Uom:" + this.getUomMasterId() + " Loc:" + this.getItemLocationAlias();
 		return toSay;
+	}
+	
+	public Gtin getGtin() {
+		
+		return getParent().getGtinForUom(uomMaster);
 	}
 
 }

@@ -74,14 +74,12 @@ public class UiUpdateService implements IApiService {
 			throw new InputValidationException(errors);
 		}
 
-		// FIXME - huffa DEV-645
 		Item returnItem = importer.updateSlottedItem(false,
 			itemBean,
 			location,
 			new Timestamp(System.currentTimeMillis()),
 			itemMaster,
-			uomMaster,
-			null );
+			uomMaster);
 
 		if (orderDetailId != null && !orderDetailId.isEmpty()) {
 			OrderDetail detail = OrderDetail.DAO.findByPersistentId(orderDetailId);
