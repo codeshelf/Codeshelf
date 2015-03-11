@@ -258,7 +258,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				inCsvBean.setCmFromLeft("0");
 			}
 			@SuppressWarnings("unused")
-			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster, gtinMap);
+			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
 			
 	}
 
@@ -282,45 +282,30 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		if (result != null) {
 			previousItemMaster = result.getParent();
 			
+			// Check if existing GTIN is associated with the ItemMaster
 			if (previousItemMaster.equals(inItemMaster)) {
-				UomMaster m = inFacility.getUomMaster(inCsvBean.getUom());
 				
-				if (!m.equals(result.getUomMaster())) {
-					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
-						inCsvBean.getGtin(), m.getDomainId(), uomMaster.getDomainId());
-					result.setUomMaster(uomMaster);
+				// Check if the UOM specified in the inventory file matches UOM of existing GTIN
+				if (!uomMaster.equals(result.getUomMaster())) {
+					LOGGER.warn("UOM specified in order line {} conflicts with UOM of specified existing GTIN {}." +
+							" Did not change UOM for existing GTIN.", inCsvBean.toString(), result.getDomainId());
+					
+					return null;
 				}
 				
 			} else {
-				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
-					inCsvBean.getGtin(), inItemMaster.getDomainId());
 				
-				// Remove from item
-				List<Item> items = previousItemMaster.getItems();
-				for (Item item : items) {
-					if (item.getGtin().equals(result)) {
-						item.setGtin(null);
-						break;
-					}
-				}
+				// Import line is attempting to associate existing GTIN with a new item. We do not allow this.
+				LOGGER.warn("GTIN {} already exists and is associated with item {}." + 
+						" GTIN will remain associated with item {}.", result.getDomainId(), result.getParent().getDomainId(),
+						result.getParent().getDomainId());
 				
-				// Moving item masters for Gtin
-				previousItemMaster.removeGtinFromMaster(result);
-				
-				result.setParent(null);
-				result.setUomMaster(uomMaster);
-				inItemMaster.addGtinToMaster(result);
-				
+				return null;
 			}
 		} else {
-			result = new Gtin();
 			
-			result.setDomainId(inCsvBean.getGtin());
-			result.setParent(inItemMaster);
-			result.setUomMaster(uomMaster);
-			
-			inItemMaster.addGtinToMaster(result);
-			
+			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
+
 			try {
 				Gtin.staticGetDao().store(result);
 			} catch (DaoException e) {
@@ -456,8 +441,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final Location inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
-		final UomMaster inUomMaster,
-		final Gtin inGtinMap ) throws InputValidationException {
+		final UomMaster inUomMaster) throws InputValidationException {
 
 		DefaultErrors errors = new DefaultErrors(Item.class);
 		if (inLocation == null) {
@@ -510,11 +494,6 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				throw new InputValidationException(errors);
 			}
 		}
-		
-		if (inGtinMap != null) {
-			result.setGtin(inGtinMap);
-		}
-
 
 		result.setQuantity(quantity);
 		result.setActive(true);
