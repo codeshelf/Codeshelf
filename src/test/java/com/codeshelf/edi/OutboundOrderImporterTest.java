@@ -28,6 +28,7 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
@@ -1569,31 +1570,63 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+	/*
+	 * If multiple gtins are created for an item we may return the incorrect gtin. We do not check if a gtin exists
+	 * for an item before creating a new one. Probably good to do in the future if this becomes an issue, however,
+	 * multiple gtins for identical items does not make sense.
+	 */
 	@Test
 	public final void testGtin() throws IOException{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		/*
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence" +
+		
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin" +
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" +
 				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
-				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1," +
-				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1,2";
+				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,3" +	// Create new gtin for existing item. Not well supported
+				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1,4" +
+				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item3,,90,cs,Group1,4" +		// Repeat gtin for diff UOM
+				"\r\n2,2,203,12/03/14 12:00,12/31/14 12:00,Item4,,90,each,Group1,5" +
+				"\r\n2,2,204,12/03/14 12:00,12/31/14 12:00,Item5,,90,each,Group1,5" +	// Repeat gtin for different item
+				"\r\n2,2,205,12/03/14 12:00,12/31/14 12:00,Item5,,90,cs,Group1,6";		// Create new gtin for new UOM
 		importCsvString(facility, firstCsvString);
 
 		OrderHeader h1 = facility.getOrderHeader("1");
 		OrderDetail d1_1 = h1.getOrderDetail("101");
-		Assert.assertEquals(d1_1.getWorkSequence(), (Integer)1);
-		OrderDetail d1_2 = h1.getOrderDetail("102");
-		Assert.assertEquals(d1_2.getWorkSequence(), (Integer)2);
-
+		Gtin d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
+		Assert.assertEquals("1", d1_1_gtin.getDomainId());
+		
+		/*
+		 * This tests unsupported functionality of multiple GTINs for the same item
+		 * 2 or 3 would be "correct" answers
+		 */
+		/*
+		OrderDetail d1_2 = h1.getOrderDetail("103");
+		Gtin d1_2_gtin = d1_2.getItemMaster().getGtinForUom(d1_2.getUomMaster());
+		Assert.assertEquals("2", d1_2_gtin.getDomainId());
+		*/
+		
 		OrderHeader h2 = facility.getOrderHeader("2");
 		OrderDetail d2_1 = h2.getOrderDetail("201");
-		Assert.assertNull(d2_1.getWorkSequence());
+		Gtin d2_1_gtin = d2_1.getItemMaster().getGtinForUom(d2_1.getUomMaster());
+		Assert.assertEquals("4", d2_1_gtin.getDomainId());
+		
 		OrderDetail d2_2 = h2.getOrderDetail("202");
-		Assert.assertEquals(d2_2.getWorkSequence(), (Integer)2);
-		*/
+		Gtin d2_2_gtin = d2_2.getItemMaster().getGtinForUom(d2_2.getUomMaster());
+		Assert.assertNull(d2_2_gtin);
+		
+		OrderDetail d2_3 = h2.getOrderDetail("203");
+		Gtin d2_3_gtin = d2_3.getItemMaster().getGtinForUom(d2_3.getUomMaster());
+		Assert.assertEquals("5", d2_3_gtin.getDomainId());
+		
+		OrderDetail d2_4 = h2.getOrderDetail("204");
+		Gtin d2_4_gtin = d2_4.getItemMaster().getGtinForUom(d2_4.getUomMaster());
+		Assert.assertNull(d2_4_gtin);
+		
+		OrderDetail d2_5 = h2.getOrderDetail("205");
+		Gtin d2_5_gtin = d2_5.getItemMaster().getGtinForUom(d2_5.getUomMaster());
+		Assert.assertEquals("6", d2_5_gtin.getDomainId());
+		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
