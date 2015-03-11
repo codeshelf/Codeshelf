@@ -801,7 +801,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
 
 			try {
-				Gtin.DAO.store(result);
+				Gtin.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertGtinMap save", e);
 			}
