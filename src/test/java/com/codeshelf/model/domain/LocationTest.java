@@ -7,6 +7,10 @@ package com.codeshelf.model.domain;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.LedRange;
 
 /**
  * @author jeffw
@@ -15,11 +19,53 @@ import org.junit.Test;
 public class LocationTest extends DomainTestABC {
 
 	@Test
+	public final void locationLedControllerIsLightable() {
+		Location location = Mockito.mock(Location.class, Mockito.CALLS_REAL_METHODS);
+		Mockito.when(location.getParent()).thenReturn(Mockito.mock(Location.class));
+		LedController controller = Mockito.mock(LedController.class);
+		Mockito.when(controller.getDeviceType()).thenReturn(DeviceType.Lights);
+		location.setLedController(controller);
+		location.setLedChannel((short)1);
+		location.setFirstLedNumAlongPath((short) 1);
+		location.setLastLedNumAlongPath((short) 3);
+		Assert.assertTrue(location.isLightable());
+	}
+
+	@Test
+	public final void facilityLedRangeZero() {
+		try {
+			this.getTenantPersistenceService().beginTransaction();
+
+
+			Facility facility = createFacilityWithOutboundOrders();
+			Assert.assertEquals(LedRange.zero(), facility.getFirstLastLedsForLocation());
+		} finally {
+			this.getTenantPersistenceService().commitTransaction();
+
+		}
+	}
+
+	@Test
+	public final void facilityUnspecificedLocationLedRangeZero() {
+		try {
+			this.getTenantPersistenceService().beginTransaction();
+
+
+			Facility facility = createFacilityWithOutboundOrders();
+			Location location = facility.getUnspecifiedLocation();
+			Assert.assertEquals(LedRange.zero(), location.getFirstLastLedsForLocation());
+		} finally {
+			this.getTenantPersistenceService().commitTransaction();
+
+		}
+	}
+
+	@Test
 	public final void getLocationIdToParentLevel() {
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = createFacilityWithOutboundOrders();
-		
+
 		Location aisle = facility.findLocationById("A1");
 		Location bay = aisle.findLocationById("B1");
 

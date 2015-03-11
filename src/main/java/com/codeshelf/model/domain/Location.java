@@ -206,7 +206,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Getter
 	@Setter
 	private Boolean						active;
-	
+
 	// The owning location.
 	@ManyToOne(optional=true,fetch=FetchType.LAZY)
 	@Getter
@@ -240,7 +240,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private Double				pickFaceEndPosZ;
-	
+
 	@Getter @Setter
 	@JsonProperty
 	@Column(name="poscon_index")
@@ -270,15 +270,15 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public boolean isBay() {
 		return false;
 	}
-	
+
 	public boolean isTier() {
 		return false;
 	}
-	
+
 	public boolean isSlot() {
 		return false;
 	}
-	
+
 	public void updateAnchorPoint(Double x, Double y, Double z) {
 		anchorPosX = x;
 		anchorPosY = y;
@@ -341,12 +341,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	// --------------------------------------------------------------------------
 	/**
 	 * Get all of the children of this type (no matter how far down the hierarchy).
-	 * 
+	 *
 	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
-	 * 
+	 *
 	 * Aisle aisle = facility.<Aisle> getActiveChildrenAtLevel(Aisle.class)
 	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
-	 * 
+	 *
 	 * @param inClassWanted
 	 * @return
 	 */
@@ -453,12 +453,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	// --------------------------------------------------------------------------
 	/**
 	 * Get the parent of this location at the class level specified.
-	 * 
+	 *
 	 * To get it to strongly type the return for you then use this unusual Java construct at the caller:
-	 * 
+	 *
 	 * Aisle aisle = bay.<Aisle> getParentAtLevel(Aisle.class)
 	 * (If calling this method from a generic location type then you need to define it as LocationABC<?> location.)
-	 * 
+	 *
 	 * @param inClassWanted
 	 * @return
 	 */
@@ -487,7 +487,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			}
 		}
 		// this is totally normal, not all locations have a parent
-		// else 
+		// else
 		//	LOGGER.error("parent location of: " + this + " could not be retrieved", new Exception());
 
 		return result;
@@ -564,7 +564,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				return alias.getMappedLocation();
 			}
 		} // else
-		
+
 		// Hibernate: This result is going to get cast, so deproxify here to avoid problems.
 		return TenantPersistenceService.<Location>deproxify(locations.get(inLocationId));
 	}
@@ -617,7 +617,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		return result;
 	}
-	
+
 	public PathSegment getAssociatedPathSegment() {
 		if (isFacility()) {
 			return null;
@@ -1102,13 +1102,18 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	@JsonIgnore
+	public boolean isLightable() {
+		return (isLightableAisleController() || isLightablePoscon());
+	}
+
+	@JsonIgnore
 	public boolean isLightablePoscon() {
 		LedController controller = this.getEffectiveLedController();
 		Short controllerChannel = this.getEffectiveLedChannel();
 		if (controller == null || controllerChannel == null) {
 			return false;
 		}
-		if (controller.getDeviceType()!=DeviceType.Poscon) {
+		if (!DeviceType.Poscon.equals(controller.getDeviceType())) {
 			return false;
 		}
 		if (this.posconIndex!=null && this.posconIndex>0) {
@@ -1116,7 +1121,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		return false;
 	}
-	
+
 	@JsonIgnore
 	public boolean isLightableAisleController() {
 		LedController controller = this.getEffectiveLedController();
@@ -1124,12 +1129,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (controller == null || controllerChannel == null) {
 			return false;
 		}
-		if (controller.getDeviceType()!=DeviceType.Lights) {
+		if (!DeviceType.Lights.equals(controller.getDeviceType())) {
 			return false;
 		}
 		Short firstLocLed = getFirstLedNumAlongPath();
 		Short lastLocLed = getLastLedNumAlongPath();
 		if (firstLocLed == null || lastLocLed == null) {
+            LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
 			return false;
 		} else if (firstLocLed == 0 && lastLocLed == 0) {
 			return false;
@@ -1138,21 +1144,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public LedRange getFirstLastLedsForLocation() {
-        // we will want a different function here isLocationPossiblyLightable()
-		// besides facility, new AgnosticLocation type would return false.
-        if (this.isFacility()) {
+        if (!isLightable()) {
             return LedRange.zero(); // was initialized to give values of 0,0
         }
-        
+
         // This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
         // to compute, we need the locations first and last led positions
         Short firstLocLed = getFirstLedNumAlongPath();
         Short lastLocLed = getLastLedNumAlongPath();
         if (firstLocLed == null || lastLocLed == null) {
-            LOGGER.warn(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
-                this,
-                firstLocLed,
-                lastLocLed));
+            LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
             return LedRange.zero();
         }
 
@@ -1162,7 +1163,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
         return theLedRange;
     }
-	
+
 	private class InventoryPositionComparator implements Comparator<Item> {
 		// We want this to sort from low to high
 		public int compare(Item item1, Item item2) {
