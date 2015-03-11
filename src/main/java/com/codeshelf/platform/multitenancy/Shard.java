@@ -22,7 +22,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,97 +33,110 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "shard")
-@EqualsAndHashCode(callSuper = false,of={"shardId","created"})
+@EqualsAndHashCode(callSuper = false, of = { "name", "url", "username" })
+@ToString(of = { "id", "name" }, callSuper = false)
 public class Shard extends DatabaseConnection {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Shard.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Shard.class);
 
 	@Id
-	@Column(nullable = false,name="id")
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@Column(nullable = false, name = "id")
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Getter
 	@Setter
-	int shardId;
+	@JsonProperty
+	int							id;
 
 	/* Timestamped entity */
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(nullable = false,name="created")
+	@Column(nullable = false, name = "created")
 	@JsonProperty
-	Date created;
+	Date						created;
 	//
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(nullable = false,name="last_modified")
+	@Column(nullable = false, name = "last_modified")
 	@JsonProperty
-	Date lastModified;
+	Date						lastModified;
+
 	//
 	@PrePersist
-	protected void onCreate() { this.created = this.lastModified = new Date(); }
-	@PreUpdate
-	protected void onUpdate() { this.lastModified = new Date(); }
-	/* Timestamped entity */
-	
-	@Column(nullable = false,length=255,name="name")
-	@Getter 
-	@Setter
-	@NonNull
-	@JsonProperty
-	String name;
-	
-	@Column(nullable = false,name="url")
-	@Getter 
-	@Setter
-	@NonNull
-	@JsonProperty
-	String url;
-	
-	@Column(nullable = false,length=16,name="username")
-	@Getter
-	@Setter
-	String username;
-
-	@Column(nullable = false,length=36,name="password")
-	@Getter
-	@Setter
-	String password;
-
-    @OneToMany(mappedBy = "shard", targetEntity=Tenant.class)
-    @MapKey(name = "name")
-	private Map<String, Tenant> tenants = new HashMap<String, Tenant>();
-
-	public Shard() {
+	protected void onCreate() {
+		this.created = this.lastModified = new Date();
 	}
 
-	@Override
-	public String toString() {
-		return "shard "+this.shardId+" "+this.name;
+	@PreUpdate
+	protected void onUpdate() {
+		this.lastModified = new Date();
+	}
+
+	/* Timestamped entity */
+
+	@Column(nullable = false, length = 255, name = "name")
+	@Getter
+	@Setter
+	@NonNull
+	@JsonProperty
+	String						name;
+
+	@Column(nullable = false, name = "url")
+	@Getter
+	@Setter
+	@NonNull
+	String						url;
+
+	@Column(nullable = false, length = 16, name = "username")
+	@Getter
+	@Setter
+	String						username;
+
+	@Column(nullable = false, length = 36, name = "password")
+	@Getter
+	@Setter
+	String						password;
+
+	@OneToMany(mappedBy = "shard", targetEntity = Tenant.class)
+	@MapKey(name = "name")
+	private Map<String, Tenant>	tenants	= new HashMap<String, Tenant>();
+
+	public Shard() {
 	}
 
 	public Tenant getTenant(String name) {
 		return tenants.get(name);
 	}
 
+	protected void addTenant(String name, Tenant tenant) {
+		// should only be called be createTenant
+		this.tenants.put(name,tenant);
+	}
+
+	public void removeTenant(Tenant tenant) {
+		this.tenants.remove(tenant);
+	}
+
 	private boolean createSchemaAndUser(Tenant newTenant) {
 		boolean result = false;
 		try {
-			if(newTenant.getSQLSyntax() == DatabaseConnection.SQLSyntax.H2) {
+			if (newTenant.getSQLSyntax() == DatabaseConnection.SQLSyntax.H2) {
 				// use H2 syntax
-				executeSQL("CREATE SCHEMA "+newTenant.getSchemaName()); 
-				executeSQL("CREATE USER "+newTenant.getUsername()+" PASSWORD '"+newTenant.getPassword()+"'");
-				executeSQL("ALTER USER "+newTenant.getUsername()+" ADMIN TRUE");
+				executeSQL("CREATE SCHEMA " + newTenant.getSchemaName());
+				executeSQL("CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
+				executeSQL("ALTER USER " + newTenant.getUsername() + " ADMIN TRUE");
 			} else {
 				// assuming postgres syntax
-				executeSQL("CREATE SCHEMA IF NOT EXISTS "+newTenant.getSchemaName());
+				executeSQL("CREATE SCHEMA IF NOT EXISTS " + newTenant.getSchemaName());
 				try {
-					executeSQL("CREATE USER "+newTenant.getUsername()+" PASSWORD '"+newTenant.getPassword()+"'");
+					executeSQL("CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
 				} catch (SQLException e) {
-					if(e.getMessage().equals("ERROR: role \""+newTenant.getUsername()+"\" already exists")) {
-						LOGGER.warn("Tried to create user but already existed (assuming same password): "+newTenant.getUsername());
+					if (e.getMessage().equals("ERROR: role \"" + newTenant.getUsername() + "\" already exists")) {
+						LOGGER.warn("Tried to create user {} for tenant {} but already existed (assuming same password)",
+							newTenant.getUsername(),newTenant.getName());
 					} else {
 						throw e;
 					}
 				}
-				executeSQL("GRANT ALL ON SCHEMA "+newTenant.getSchemaName()+" TO "+newTenant.getUsername());
+				executeSQL("GRANT ALL ON SCHEMA " + newTenant.getSchemaName() + " TO " + newTenant.getUsername());
 			}
 			result = true;
 		} catch (SQLException e) {
@@ -130,41 +145,43 @@ public class Shard extends DatabaseConnection {
 		return result;
 	}
 
-	public Tenant createTenant(String name,String schemaName,String username,String password) {
-		// must be called within active transaction
+	public Tenant createTenant(String name, String schemaName, String username, String password) {
+		Tenant result = null;
 
-		Tenant result = null;	
-		
-		if(canCreateTenant(name,schemaName)) {
-			// tenant does not already exist with this 
-			Tenant tenant = new Tenant();
-			tenant.setName(name);
-			tenant.setUsername(username);
-			tenant.setSchemaName(schemaName);
-			tenant.setPassword(password);
-			tenant.setShard(this);
+		// this is called to initialize default tenant while TenantManagerService is starting
+		// so, we call getMaybeRunningInstance which does not block
+		if (TenantManagerService.getMaybeRunningInstance().canCreateTenant(name, schemaName)) {
+			try {
+				Session session = ManagerPersistenceService.getInstance().getSessionWithTransaction();
 
-			if(createSchemaAndUser(tenant)) { // automatically generated password
-				tenants.put(name, tenant);
-				ManagerPersistenceService.getInstance().getSession().save(tenant);
-				result = tenant;
-			} else {
-				LOGGER.error("Failed to create schema/username "+username);
+				Shard thisShard = (Shard) session.load(Shard.class,this.id);
+				Tenant tenant = new Tenant();
+				tenant.setName(name);
+				tenant.setUsername(username);
+				tenant.setSchemaName(schemaName);
+				tenant.setPassword(password);
+				thisShard.addTenant(name, tenant);
+				tenant.setShard(thisShard);
+
+				session.save(tenant);
+				session.save(thisShard);
+
+				if (createSchemaAndUser(tenant)) { // automatically generated password
+					result = tenant;
+				} else {
+					LOGGER.error("Critical: Failed to create schema {} username {}",schemaName,username);
+				}
+			} finally {
+				if (result == null) {
+					ManagerPersistenceService.getInstance().rollbackTransaction();
+				} else {
+					ManagerPersistenceService.getInstance().commitTransaction();
+				}
 			}
 		} else {
-			LOGGER.error("Tried to create tenant that already exists: "+name);
+			LOGGER.error("Tried to create tenant that already exists: " + name);
 		}
 		return result;
-	}
-
-	private boolean canCreateTenant(String name, String schemaName) {
-		for(Tenant tenant : this.tenants.values()) {
-			if(name.equals(tenant.getName())
-					|| schemaName.equals(tenant.getSchemaName()) ) {
-				return false;
-			}
-		}
-		return true;
 	}
 
 }

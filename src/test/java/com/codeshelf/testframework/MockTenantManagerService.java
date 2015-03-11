@@ -1,7 +1,7 @@
 package com.codeshelf.testframework;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -113,8 +113,8 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return this.defaultTenant;
 	}
 	@Override
-	public Collection<Tenant> getTenants() {
-		Collection<Tenant> tenants = new ArrayList<Tenant>(1);
+	public List<Tenant> getTenants() {
+		List<Tenant> tenants = new ArrayList<Tenant>(1);
 		tenants.add(this.defaultTenant);
 		return tenants;
 	}
@@ -138,5 +138,34 @@ public class MockTenantManagerService implements ITenantManagerService {
 	@Override
 	public int getShutdownTimeoutSeconds() {
 		return Integer.MAX_VALUE;
+	}
+	@Override
+	public List<User> getUsers() {
+		List<User> list = new ArrayList<User>(1);
+		list.add(getUser(""));
+		return list;
+	}
+	@Override
+	public User getUser(Integer id) {
+		return getUser("");
+	}
+	@Override
+	public User updateUser(User user) {
+		return user;
+	}
+	@Override
+	public Tenant getTenant(Integer id) {
+		return this.defaultTenant;
+	}
+	@Override
+	public Tenant updateTenant(Tenant tenant) {
+		return tenant;
+	}
+	@Override
+	public boolean canCreateTenant(String tenantName,String schemaName) {
+		return true;
+	}
+	@Override
+	public void destroyTenant(Tenant tenant) {
 	}
 }

@@ -6,8 +6,6 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
-import java.util.Map;
-
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.shiro.authc.credential.CredentialsMatcher;
 import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
@@ -110,7 +108,8 @@ public final class ServerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(ITenantManagerService.class).toInstance(TenantManagerService.getNonRunningInstance());
+				requestStaticInjection(TenantManagerService.class);
+				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
 				
 				requestStaticInjection(TenantPersistenceService.class);
 				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
@@ -120,8 +119,6 @@ public final class ServerMain {
 
 				requestStaticInjection(PropertyService.class);
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
-
-				//bind(EdiProcessor.class).to(EdiProcessor.class).in(Singleton.class);
 
 				bind(GuiceFilter.class);
 				

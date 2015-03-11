@@ -6,6 +6,7 @@
 
 package com.codeshelf.application;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 import org.slf4j.Logger;
@@ -116,7 +117,11 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	 */
 	protected void doInitializeApplicationData() {
 		// Recompute path positions
-		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
+		
+		//Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
+		Collection<Tenant> tenants = new ArrayList<Tenant>(1);
+		tenants.add(TenantManagerService.getInstance().getDefaultTenant());
+
 		for(Tenant tenant : tenants) {
 			try {
 				TenantPersistenceService.getInstance().beginTransaction(tenant);

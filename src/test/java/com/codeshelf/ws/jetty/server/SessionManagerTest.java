@@ -68,7 +68,7 @@ public class SessionManagerTest extends MinimalTest {
 	private User mockUser(Tenant tenant, int userId, String username) {
 		User user = new User();
 		user.setType(UserType.SITECON);
-		user.setUserId(userId);
+		user.setId(userId);
 		user.setUsername(username);
 		return user;
 	}
