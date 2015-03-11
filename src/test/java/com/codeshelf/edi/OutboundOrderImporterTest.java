@@ -1573,7 +1573,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testGtin() throws IOException{
 		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		/*
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence" +
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" +
