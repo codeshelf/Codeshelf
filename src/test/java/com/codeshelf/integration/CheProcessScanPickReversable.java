@@ -1,8 +1,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,41 +12,16 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessScanPickReversable extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessScanPickReversable.class);
 	private static final int WAIT_TIME = 4000;
 	
-	private PickSimulator waitAndGetPickerForProcessType(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
-		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
-		ThreadUtils.sleep(250);
-		long start = System.currentTimeMillis();
-		final long maxTimeToWaitMillis = 5000;
-		String existingType = "";
-		int count = 0;
-		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
-			count++;
-			PickSimulator picker = new PickSimulator(test, cheGuid);
-			existingType = picker.getProcessType();
-			if (existingType.equals(inProcessType)) {
-				LOGGER.info(count + " pickers made in waitAndGetPickerForProcessType before getting it right");
-				return picker;
-			}
-			ThreadUtils.sleep(100); // retry every 100ms
-		}
-		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is "
-				+ existingType);
-		return null;
-	}
-
 	private PickSimulator setupTestPicker() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpOneAisleFourBaysFlatFacilityWithOrders();

@@ -33,9 +33,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
@@ -261,32 +259,6 @@ public class CheProcessScanPick extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
 		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
-	}
-
-	/**
-	 * Wait until a recent CHE update went through the updateNetwork mechanism, replacing the device logic for the che
-	 * May want to promote this.
-	*/
-	private PickSimulator waitAndGetPickerForProcessType(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
-		// took over 250 ms on JR's fast macbook pro. Hence the initial wait, then checking more frequently in the loop
-		ThreadUtils.sleep(250);
-		long start = System.currentTimeMillis();
-		final long maxTimeToWaitMillis = 5000;
-		String existingType = "";
-		int count = 0;
-		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
-			count++;
-			PickSimulator picker = new PickSimulator(test, cheGuid);
-			existingType = picker.getProcessType();
-			if (existingType.equals(inProcessType)) {
-				LOGGER.info(count + " pickers made in waitAndGetPickerForProcessType before getting it right");
-				return picker;
-			}
-			ThreadUtils.sleep(100); // retry every 100ms
-		}
-		Assert.fail("Process type " + inProcessType + " not encountered in " + maxTimeToWaitMillis + "ms. Process type is "
-				+ existingType);
-		return null;
 	}
 
 	/**

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.integration.PickSimulator;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -30,6 +32,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
 	private final Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
@@ -335,5 +338,66 @@ public abstract class ServerTest extends HibernateTest {
 	
 	}
 
+	protected PickSimulator waitAndGetPickerForProcessTypeX(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		final long maxTimeToWaitMillis = 5000;
+		String existingType = "";
+		int count = 0;
+		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
+			count++;
+			PickSimulator picker = new PickSimulator(test, cheGuid);
+			existingType = picker.getProcessType();
+			if (existingType.equals(inProcessType)) {
+				LOGGER.info(count + " pickers made in waitAndGetPickerForProcessType before getting it right");
+				return picker;
+			}
+			ThreadUtils.sleep(100); // retry every 100ms
+		}
+		Assert.fail(String.format("Process type %s not encounter in %dms after %d checks. Process type is %s", inProcessType, maxTimeToWaitMillis, count, existingType));
+		return null;
+	}
+	
+	protected PickSimulator waitAndGetPickerForProcessType(final IntegrationTest test, final NetGuid deviceGuid, final String inProcessType) {
+		Callable<PickSimulator> createPickSimulator = new Callable<PickSimulator> () {
+			@Override
+			public PickSimulator call() throws Exception {
+				PickSimulator picker = new PickSimulator(test, deviceGuid);
+				String type = picker.getProcessType();
+				return (type.equals(inProcessType))? picker : null;
+			}
+		};
+		
+		PickSimulator picker = new WaitForResult<PickSimulator>(createPickSimulator).waitForResult();
+		return picker; 
+	}
 
+	protected class WaitForResult <T>{
+		private Callable<T> logicToCall;
+		
+		public WaitForResult(Callable<T> callable) {
+			this.logicToCall = callable;
+		}
+		
+		public T waitForResult() {
+			ThreadUtils.sleep(250);
+			long start = System.currentTimeMillis();
+			final long maxTimeToWaitMillis = 5000;
+			int count = 0;
+			while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
+				count++;
+				T result = null;
+				try {
+					result = this.logicToCall.call();
+				} catch (Exception e) {e.printStackTrace();}
+				if (result != null) {
+					LOGGER.info("Desired object retrieved in " + count + " attempts");
+					return result;
+				}
+				ThreadUtils.sleep(100); // retry every 100ms
+			}
+			Assert.fail(String.format("Did not encounter requested object in %dms after %d checks.", maxTimeToWaitMillis, count));
+			return null;
+		}
+	}
 }
