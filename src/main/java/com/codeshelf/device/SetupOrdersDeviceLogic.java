@@ -110,9 +110,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1, OR_SCAN_LOCATION, OR_SCAN_START, SHOWING_WI_COUNTS);
 					else
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
-						LOCATION_SELECT_REVIEW_MSG_LINE_2,
-						LOCATION_SELECT_REVIEW_MSG_LINE_3,
-						SHOWING_WI_COUNTS);
+							LOCATION_SELECT_REVIEW_MSG_LINE_2,
+							LOCATION_SELECT_REVIEW_MSG_LINE_3,
+							SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 
@@ -431,18 +431,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				wi = wiList.get(0);
 
 			if (wi != null) {
-					
+
 				// Need to clear poscon
 				String containerId = wi.getContainerId();
 				if (containerId != null) {
 					for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-						if (containerId.equals(entry.getValue())){
+						if (containerId.equals(entry.getValue())) {
 							Byte position = Byte.valueOf(entry.getKey());
 							clearOnePositionController(position);
 						}
 					}
 				}
-				
+
 				processShortPickYes(wi, 0);
 			}
 		} else {
@@ -809,8 +809,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
-		
-		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr, getMReversePickOrder(), reverseOrderFromLastTime);
+
+		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
+			getPersistentId(),
+			inLocationStr,
+			getMReversePickOrder(),
+			reverseOrderFromLastTime);
 		setState(CheStateEnum.GET_WORK);
 	}
 
@@ -1180,7 +1184,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void startWork(final String inScanedPickDirections) {
 		boolean isReverse = inScanedPickDirections.equals(REVERSE_COMMAND);
-		
+
 		clearAllPositionControllers();
 		mContainerInSetup = "";
 		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
@@ -1464,18 +1468,38 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
-
 	}
 
 	/**
-	 * Setup the CHE by clearing all the datastructures
+	 * Setup the CHE by clearing all the data structures
 	 */
 	protected void setupChe() {
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
 		super.setupChe();
+	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Attempt to guess if we already must have scanned this one.
+	 * For DEV-692.  Our allPicksList should be sorted and still have recently completed work.
+	 */
+	@Override
+	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
+		String matchSku = inWi.getItemId();
+		String matchPickLocation = inWi.getPickInstruction();
+		for (WorkInstruction wi : getAllPicksWiList()) {
+			if (!wi.equals(inWi))
+				if (wiMatchesItemLocation(matchSku, matchPickLocation, wi)) {
+					WorkInstructionStatusEnum theStatus = wi.getStatus();
+					// Short or complete must have been scanned.
+					if (theStatus.equals(WorkInstructionStatusEnum.COMPLETE) || theStatus.equals(WorkInstructionStatusEnum.SHORT))
+						return true;
+
+				}
+		}
+		return false;
 	}
 
 }
