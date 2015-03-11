@@ -1478,4 +1478,26 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Attempt to guess if we already must have scanned this one.
+	 * For DEV-692.  Our allPicksList should be sorted and still have recently completed work.
+	 */
+	@Override
+	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
+		String matchSku = inWi.getItemId();
+		String matchPickLocation = inWi.getPickInstruction();
+		for (WorkInstruction wi : getAllPicksWiList()) {
+			if (!wi.equals(inWi))
+				if (wiMatchesItemLocation(matchSku, matchPickLocation, wi)) {
+					WorkInstructionStatusEnum theStatus = wi.getStatus();
+					// Short or complete must have been scanned.
+					if (theStatus.equals(WorkInstructionStatusEnum.COMPLETE) || theStatus.equals(WorkInstructionStatusEnum.SHORT))
+						return true;
+
+				}
+		}
+		return false;
+	}
+
 }

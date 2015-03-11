@@ -95,14 +95,22 @@ public class WorkSequenceWorkInstructionSequencer extends WorkInstructionSequenc
 
 	}
 
+	/**
+	 * Compare by work sequence field as first sort.
+	 * From v14, secondary sort is item ID. Tertiary sort order ID.
+	 * Order ID commonly needed for same itemID in same location, so simultaneous pick. However, also common at PFSWeb to have
+	 * sequence 9999 for "last pick" items. If several orders have 9999 items, we would want the item picks to group together.
+	 */
 	public class WorkSequenceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction left, WorkInstruction right) {
 			Integer leftWorkSequence = left.getWorkSequence();
 			Integer rightWorkSequence = right.getWorkSequence();
-			
+
 			return ComparisonChain.start()
 				.compare(leftWorkSequence, rightWorkSequence, Ordering.natural().nullsLast())
+				.compare(left.getItemId(), right.getItemId(), Ordering.natural().nullsLast())
+				.compare(left.getOrderId(), right.getOrderId(), Ordering.natural().nullsLast())
 				.result();
 		}
 
