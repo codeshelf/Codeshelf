@@ -46,6 +46,8 @@ import com.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 public class WebApiServer {
 
@@ -58,7 +60,13 @@ public class WebApiServer {
 		this.server = new Server();
 	}
 
-	public final void start(int port, CsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement, String staticContentPath) {
+	public final void start(int port, CsDeviceManager deviceManager, CodeshelfApplication application) {
+		boolean enableSchemaManagement = Boolean.getBoolean("adminserver.schemamanagement");
+		boolean enableApi = Boolean.getBoolean("adminserver.api.enable");
+		boolean enableManagerApi = Boolean.getBoolean("adminserver.manager.enable");
+		boolean enableWebSockets = Boolean.getBoolean("adminserver.websockets.enable");
+		String staticContentPath = System.getProperty("webapp.content.path");
+
 		try {
 			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 			connector.setPort(port);
@@ -74,24 +82,36 @@ public class WebApiServer {
 			if (deviceManager == null) {
 				// server only:
 
-				// rest API
-				contexts.addHandler(this.createRestApiHandler());
+				if(enableApi) {
+					// rest API
+					// needs a better name
+					contexts.addHandler(this.createRestApiHandler());
+				}
 
-		        // websocket API
-				ServletContextHandler wscontext = new ServletContextHandler(ServletContextHandler.SESSIONS);
-				wscontext.setContextPath("/ws");
-				contexts.addHandler(wscontext);
-		        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
-		        wscontainer.addEndpoint(CsServerEndPoint.class);
+				if(enableManagerApi) {
+					// manager API
+					contexts.addHandler(this.createManagerApiHandler());
+				}
+
+				if(enableWebSockets) {
+			        // websocket API
+					ServletContextHandler wscontext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+					wscontext.setContextPath("/ws");
+					contexts.addHandler(wscontext);
+			        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
+			        wscontainer.addEndpoint(CsServerEndPoint.class);
+				}
 
 		        // embedded static content web server
-				ResourceHandler resourceHandler = new ResourceHandler();
-				resourceHandler.setDirectoriesListed(false);
-				resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
-				resourceHandler.setResourceBase(staticContentPath);
-				ContextHandler resourceContextHandler=new ContextHandler("/");
-				resourceContextHandler.setHandler(resourceHandler);
-				contexts.addHandler(resourceContextHandler);				
+		        if(staticContentPath != null) {
+					ResourceHandler resourceHandler = new ResourceHandler();
+					resourceHandler.setDirectoriesListed(false);
+					resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
+					resourceHandler.setResourceBase(staticContentPath);
+					ContextHandler resourceContextHandler=new ContextHandler("/");
+					resourceContextHandler.setHandler(resourceHandler);
+					contexts.addHandler(resourceContextHandler);				
+		        }
 			}
 
 			server.start();
@@ -198,7 +218,7 @@ public class WebApiServer {
 	}
 
 	private Handler createRestApiHandler() {
-		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS); // why sessions? -ivan
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
@@ -208,6 +228,17 @@ public class WebApiServer {
 		//restApiContext.setSecurityHandler(createRestApiSecurityHandler());
 
 		return restApiContext;
+	}
+	
+	private Handler createManagerApiHandler() {
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+		ServletContainer container = new ServletContainer(new PackagesResourceConfig("com.codeshelf.manager.api"));
+		
+		context.setContextPath("/mgr");
+		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addServlet(new ServletHolder(container), "/*");
+		return context;
 	}
 	
 	/*

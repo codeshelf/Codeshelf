@@ -1,11 +1,9 @@
 package com.codeshelf.testframework;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -131,6 +129,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	@Getter
 	protected ITenantPersistenceService							tenantPersistenceService;
+	protected ITenantManagerService								tenantManagerService;
+
 	@Getter
 	protected CsDeviceManager									deviceManager;
 	protected SessionManagerService								sessionManagerService;
@@ -158,6 +158,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 				requestStaticInjection(TenantPersistenceService.class);
 				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+
+				requestStaticInjection(TenantManagerService.class);
+				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
 
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(DummyMetricsService.class).in(Singleton.class);
@@ -316,7 +319,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	private void disablePersistence() {
 		this.tenantPersistenceService = null;
+		this.tenantManagerService = null;
 		TenantPersistenceService.setInstance(null);
+		TenantManagerService.setInstance(null);
 	}
 
 	private Map<Class<? extends IDomainObject>, ITypedDao<?>> createMockDaos() {
@@ -332,19 +337,21 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	private void setupRealPersistenceObjects() {
-		TenantManagerService.setInstance(realTenantManagerService);
-		
 		this.tenantPersistenceService = realTenantPersistenceService;
 		TenantPersistenceService.setInstance(tenantPersistenceService);
+
+		this.tenantManagerService = realTenantManagerService;
+		TenantManagerService.setInstance(tenantManagerService);
 	}
 
 	private void setDummyPersistence() {
 		Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = this.createMockDaos();
 
 		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
-
-		TenantManagerService.setInstance(new MockTenantManagerService(tenantPersistenceService.getDefaultSchema()));
 		TenantPersistenceService.setInstance(tenantPersistenceService);
+
+		tenantManagerService = new MockTenantManagerService(tenantPersistenceService.getDefaultSchema());
+		TenantManagerService.setInstance(tenantManagerService);
 	}
 
 	protected final void startSiteController() {
@@ -379,13 +386,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (persistenceServiceManager == null) {
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
-			ITenantManagerService tms = TenantManagerService.getMaybeRunningInstance();
 			PersistenceService<ManagerSchema> mps = ManagerPersistenceService.getMaybeRunningInstance();
 
-			if (!tms.isRunning())
-				services.add(tms);
 			if (!mps.isRunning())
 				services.add(mps);
+			if (!realTenantManagerService.isRunning())
+				services.add(realTenantManagerService);
 			if (!realTenantPersistenceService.isRunning())
 				services.add(realTenantPersistenceService);
 
@@ -408,6 +414,13 @@ public abstract class FrameworkTest implements IntegrationTest {
 			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
 			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
 			realTenantManagerService.resetTenant(realDefaultTenant);
+			// destroy any non-default tenants we created
+			List<Tenant> tenants = realTenantManagerService.getTenants();
+			for(Tenant tenant : tenants) {
+				if(!tenant.equals(realDefaultTenant)) {
+					realTenantManagerService.destroyTenant(tenant);
+				}
+			}
 		}
 
 		// make sure default properties are in the database
@@ -443,7 +456,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		}
 
 		apiServer = new WebApiServer();
-		apiServer.start(port, null, null, false, "./");
+		apiServer.start(port, null, null);
 	}
 
 	private void awaitConnection() {

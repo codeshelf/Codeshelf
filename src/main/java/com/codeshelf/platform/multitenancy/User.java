@@ -29,11 +29,11 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -44,6 +44,7 @@ import com.codeshelf.model.domain.UserType;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 // --------------------------------------------------------------------------
@@ -59,10 +60,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @Table(name = "users") // user can be reserved word in sql
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
-@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@EqualsAndHashCode(of={"userId","created","username","tenant"})
+@EqualsAndHashCode(of={"username","type"})
+@ToString(of={"username"}, callSuper = false)
 public class User {
 
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(User.class);
@@ -83,7 +85,8 @@ public class User {
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Getter
 	@Setter
-	int userId;
+	@JsonProperty
+	Integer id;
 	
 	/* Timestamped entity */
 	@Getter
@@ -106,10 +109,11 @@ public class User {
 
 	// The owning organization.
 	@ManyToOne(optional = false,fetch=FetchType.EAGER)
-	@Getter(AccessLevel.PROTECTED)
-	@Setter(AccessLevel.PROTECTED)
+	@Getter
+	@Setter
+	@JsonProperty
 	private Tenant				tenant;
-
+	
 	@Column(nullable = false,name="username")
 	@NonNull
 	@Getter
@@ -282,5 +286,14 @@ public class User {
 	public boolean tenantEquals(Tenant tenant2) {
 		return this.getTenant().equals(tenant2);
 	}
-
+	
+	public static boolean isValidPassword(String password) {
+		if(password == null) 
+			return false;
+		if(password.isEmpty())
+			return false;
+		
+		return true;
+	}
+	
 }

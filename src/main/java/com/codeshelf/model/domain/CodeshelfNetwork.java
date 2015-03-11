@@ -64,7 +64,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	
 	public static final int				DEFAULT_SITECON_SERIAL	= 5000;
 	public static final String			DEFAULT_SITECON_PASS	= "0.6910096026612129";
-
+	public static final String			DEFAULT_SITECON_USERNAME= Integer.toString(CodeshelfNetwork.DEFAULT_SITECON_SERIAL);
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(CodeshelfNetwork.class);
 
 	// The network description.
