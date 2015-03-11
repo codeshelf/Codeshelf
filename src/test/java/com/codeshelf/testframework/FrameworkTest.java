@@ -55,6 +55,7 @@ import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
@@ -126,6 +127,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	// instance services
 	protected ServiceManager									ephemeralServiceManager;
 	protected WorkService										workService;
+	protected InventoryService									inventoryService;
 	protected EventProducer										eventProducer				= new EventProducer();
 	protected WebApiServer										apiServer;
 

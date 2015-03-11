@@ -442,6 +442,20 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return item;
 	}
 	
+	private Gtin findExistingGtin(String inGtin) {
+		return gtins.get(inGtin);
+	}
+	
+	public Gtin findOrCreateGtin(String inGtin, UomMaster inUomMaster) {
+		Gtin gtin = findExistingGtin(inGtin);
+		
+		if (gtin == null){
+			gtin = createGtin(inGtin, inUomMaster);
+		}
+		
+		return gtin;
+	}
+	
 	public Gtin createGtin(String inGtin, UomMaster inUomMaster) {
 		Gtin gtin = new Gtin();
 		gtin.setDomainId(inGtin);
