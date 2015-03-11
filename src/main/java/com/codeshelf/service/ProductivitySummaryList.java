@@ -79,6 +79,7 @@ public class ProductivitySummaryList {
 						+ " from OrderDetail as od left join od.parent.orderGroup as og"
 						+ " where od.active = true group by og, od.status")
 			.setResultTransformer(AliasToEntityMapResultTransformer.INSTANCE)
+			.setCacheable(true)
 			.list(); 
 		
 		List<OrderGroup> orderGroups = facility.getOrderGroups();
