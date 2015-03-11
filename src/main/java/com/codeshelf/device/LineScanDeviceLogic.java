@@ -141,17 +141,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Temporary
-	 */
-	@Override
-	protected void doSetRecentCheDisplayString(String inFirstLine) {
-		// a place to override that does not interfere with lomboc
-		LOGGER.info("saving last display message: " + inFirstLine);
-		super.setRecentCheDisplayString(inFirstLine);
-	}
-
 	/**
 	 * The CHE is in the GET_WORK state. 
 	 * Should only happen if the get work answer did not come back from server before user scanned another detailId

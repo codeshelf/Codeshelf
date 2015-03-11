@@ -314,7 +314,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		String firstLine = picker.getLastCheDisplayString();
+		String firstLine = picker.getLastCheDisplayString(1);
 		LOGGER.info(picker.getPickerTypeAndState("5:"));
 
 		// Should be showing the job now. 
@@ -447,7 +447,7 @@ public class CheProcessLineScan extends ServerTest {
 		List<WorkInstruction> theWiList = picker.getActivePickList();
 		logWiList(theWiList);
 
-		String firstLine = picker.getLastCheDisplayString();
+		String firstLine = picker.getLastCheDisplayString(1);
 		// Should be showing the job now. 
 		Assert.assertEquals("D601", firstLine);
 
@@ -470,7 +470,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("7b: scan NO, so we should be on the 12345.3 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("7: repeat: scan another good detail. Screen will ask for yes or no.");
 		picker.scanOrderDetailId("11111.1");
@@ -491,7 +491,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("8c: scan YES, so we should be on the 11111.1 job");
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());
+		Assert.assertEquals("D401", picker.getLastCheDisplayString(1));
 
 		// make sure we can logout from ABANDON_CHECK and DO_PICK		
 		LOGGER.info("9: logout works from DO_PICK");
@@ -553,7 +553,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanOrderDetailId("12345.3"); // does not add "%"	
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 		WorkInstruction wi = picker.getActivePick();
 		int quant = wi.getPlanQuantity();
 		Assert.assertEquals(3, quant); // This order detail has quantity 3
@@ -578,7 +578,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("3a: scan same order again");
 		picker.scanOrderDetailId("12345.3"); 	
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("3b: check that the count should be 1");
 		wi = picker.getActivePick();
@@ -596,7 +596,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("3e: scan NO, so we should be back on job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("4: CLEAR from SHORT_PICK state");
 		picker.scanCommand("SHORT");
@@ -625,7 +625,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("6b: scan NO, so we should be on the 12345.3 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 		
 		LOGGER.info("6c: Repeat, but scan YES, so go to the 11111.1 job");
 		picker.scanCommand("SHORT");
@@ -634,7 +634,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());
+		Assert.assertEquals("D401", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("7: Scan other order line from SHORT_PICK_CONFIRM state");
 		picker.scanCommand("SHORT");
@@ -647,7 +647,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("7b: scan NO, so we should still be on the 11111.1 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());
+		Assert.assertEquals("D401", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("7c: Repeat, but scan YES, so go to the 12345.3 job");
 		picker.scanCommand("SHORT");
@@ -658,7 +658,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 	
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);

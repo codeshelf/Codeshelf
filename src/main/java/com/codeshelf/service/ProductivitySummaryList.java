@@ -2,20 +2,23 @@ package com.codeshelf.service;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Session;
+import org.hibernate.transform.AliasToEntityMapResultTransformer;
+
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
-import com.codeshelf.model.domain.OrderHeader;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class ProductivitySummaryList {
+	
 	@Getter
 	private HashMap<String, StatusSummary> groups = new HashMap<>();
 	
@@ -64,25 +67,50 @@ public class ProductivitySummaryList {
 		}
 	}
 	
-	public ProductivitySummaryList(Facility facility, List<Object[]> picksPerHour) {
-		if (facility == null || facility.getOrderHeaders() == null) {return;}
-		for (OrderHeader orderHeader : facility.getOrderHeaders()){
-			processOrder(orderHeader);
+	public ProductivitySummaryList(Facility facility, List<Object[]> picksPerHour, Session session) {
+		if (facility == null) {
+			return;
+		}
+		
+		@SuppressWarnings("unchecked")
+		//group orderdetails by ordergroup and status
+		List<Map<String, Object>> results = session
+			.createQuery( "select count(od.status) as total, od.status as status, og as orderGroup"
+						+ " from OrderDetail as od left join od.parent.orderGroup as og"
+						+ " where od.active = true group by og, od.status")
+			.setResultTransformer(AliasToEntityMapResultTransformer.INSTANCE)
+			.setCacheable(true)
+			.list(); 
+		
+		List<OrderGroup> orderGroups = facility.getOrderGroups();
+		//make sure there is a summary for each group
+		for (OrderGroup orderGroup : orderGroups) {
+			groups.put(toGroupName(orderGroup), new StatusSummary());
+		}
+		
+		for (Map<String, Object> statusRow : results) {
+			OrderStatusEnum status = OrderStatusEnum.valueOf(statusRow.get("status").toString()); 
+			int total              = Integer.valueOf(statusRow.get("total").toString());
+			String groupName       = toGroupName((OrderGroup)statusRow.get("orderGroup"));
+			processSummary(groupName, status, total);
 		}
 		assignPicksPerHour(picksPerHour);
 	}
 	
-	private void processOrder(OrderHeader orderHeader){
-		String groupName = orderHeader.getOrderGroup() == null? OrderGroup.UNDEFINED : orderHeader.getOrderGroup().getDomainId();
+	private String toGroupName(OrderGroup orderGroup) {
+		if (orderGroup == null) {
+			return OrderGroup.UNDEFINED;
+		}
+		return orderGroup.getDomainId();
+	}
+
+	private void processSummary(String groupName, OrderStatusEnum orderStatus, int total){
 		StatusSummary statusSummary = groups.get(groupName);
 		if (statusSummary == null) {
 			statusSummary = new StatusSummary();
 			groups.put(groupName, statusSummary);
 		}
-		for (OrderDetail orderDetail : orderHeader.getOrderDetails()) {
-			OrderStatusEnum status = orderDetail.getStatus();
-			statusSummary.add(1, status);
-		}
+		statusSummary.add(total, orderStatus);
 	}
 	
 	private void assignPicksPerHour(List<Object[]> picksPerHour) {

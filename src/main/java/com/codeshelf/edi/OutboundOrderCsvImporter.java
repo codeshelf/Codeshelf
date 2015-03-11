@@ -431,7 +431,8 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		String itemId = inCsvBean.getItemId();
 		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
-		Gtin gtinMap = upsertGtin(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
+		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
+
 
 		Item updatedOrCreatedItem = null;
 		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
@@ -488,8 +489,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 						location,
 						inEdiProcessTime,
 						itemMaster,
-						uomMaster, 
-						gtinMap);
+						uomMaster);
 					// if we created a new item, then throw the old item on a list for evaluation
 					if (oldItem != null && !oldItem.equals(updatedOrCreatedItem))
 						addItemToEvaluationList(oldItem);
@@ -763,75 +763,53 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		return result;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inCsvBean
-	 * @param inFacility
-	 * @param inEdiProcessTime
-	 * @param inOrder
-	 * @param inUomMaster
-	 * @param inItemMaster
-	 * @return
-	 */
-	private Gtin upsertGtin(final OutboundOrderCsvBean inCsvBean,
-		final Facility inFacility,
-		final Timestamp inEdiProcessTime,
-		final OrderHeader inOrder,
-		final UomMaster inUomMaster,
-		final ItemMaster inItemMaster) {
+	private Gtin upsertGtin(final Facility inFacility, final ItemMaster inItemMaster, 
+		final OutboundOrderCsvBean inCsvBean, UomMaster uomMaster) {
 		
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
 			return null;
 		}
-
+		
 		Gtin result = Gtin.staticGetDao().findByDomainId(null, inCsvBean.getGtin());
 		ItemMaster previousItemMaster = null;
 		
 		if (result != null){
 			previousItemMaster = result.getParent();
 			
+			// Check if existing GTIN is associated with the ItemMaster
 			if (previousItemMaster.equals(inItemMaster)) {
-				UomMaster m = inFacility.getUomMaster(inCsvBean.getUom());
 				
-				// Update UOM for this GTIN in database. Assume order bean UOM is correct
-				// for this GTIN.
-				if (!m.equals(result.getUomMaster())) {
-					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
-						inCsvBean.getGtin(), m.getDomainId(), inUomMaster.getDomainId());
-					result.setUomMaster(inUomMaster);
+				// Check if the UOM specified in the inventory file matches UOM of existing GTIN
+				if (!uomMaster.equals(result.getUomMaster())) {
+					LOGGER.warn("UOM specified in order line {} conflicts with UOM of specified existing GTIN {}." +
+							" Did not change UOM for existing GTIN.", inCsvBean.toString(), result.getDomainId());
+					
+					return null;
 				}
 				
 			} else {
-				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
-					inCsvBean.getGtin(), inItemMaster.getDomainId());
 				
-				// Remove from item
-				List<Item> items = previousItemMaster.getItems();
-				for (Item item : items ) {
-					if (item.getGtin().equals(result)) {
-						item.setGtin(null);
-						break;
-					}
-				}
+				// Import line is attempting to associate existing GTIN with a new item. We do not allow this.
+				LOGGER.warn("GTIN {} already exists and is associated with item {}." + 
+						" GTIN will remain associated with item {}.", result.getDomainId(), result.getParent().getDomainId(),
+						result.getParent().getDomainId());
 				
-				// Moving item masters for Gtin
-				previousItemMaster.removeGtinFromMaster(result);
-				
-				result.setParent(null);
-				result.setUomMaster(inUomMaster);
-				inItemMaster.addGtinToMaster(result);
+				return null;
 			}
-			
 		} else {
-			result = new Gtin();
 			
-			result.setDomainId(inCsvBean.getGtin());
-			result.setParent(inItemMaster);
-			result.setUomMaster(inUomMaster);
+			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
+
+			try {
+				Gtin.staticGetDao().store(result);
+			} catch (DaoException e) {
+				LOGGER.error("upsertGtinMap save", e);
+			}
 		}
 		
 		return result;
 	}
+
 	
 	// --------------------------------------------------------------------------
 	/**

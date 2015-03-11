@@ -207,7 +207,7 @@ public class RadioController implements IRadioController {
 		backgroundService.shutdown();
 		packetIOService.stop();
 		packetHandlerService.shutdown();
-		
+
 		// Stop all of the interfaces.
 		gatewayInterface.stopInterface();
 
@@ -254,7 +254,7 @@ public class RadioController implements IRadioController {
 
 		} while (!started && mShouldRun);
 
-		if(mShouldRun) {
+		if (mShouldRun) {
 			LOGGER.info("Gateway radio interface started");
 
 			selectChannel();
@@ -806,22 +806,22 @@ public class RadioController implements IRadioController {
 
 					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					if ((inCommand.getSystemStatus() & 0x02) > 0) {
-						LOGGER.info(" Status: LVD");
+						LOGGER.debug(" Status: LVD");
 					}
 					if ((inCommand.getSystemStatus() & 0x04) > 0) {
-						LOGGER.info(" Status: ICG");
+						LOGGER.debug(" Status: ICG");
 					}
 					if ((inCommand.getSystemStatus() & 0x10) > 0) {
-						LOGGER.info(" Status: ILOP");
+						LOGGER.debug(" Status: ILOP");
 					}
 					if ((inCommand.getSystemStatus() & 0x20) > 0) {
-						LOGGER.info(" Status: COP");
+						LOGGER.debug(" Status: COP");
 					}
 					if ((inCommand.getSystemStatus() & 0x40) > 0) {
-						LOGGER.info(" Status: PIN");
+						LOGGER.debug(" Status: PIN");
 					}
 					if ((inCommand.getSystemStatus() & 0x80) > 0) {
-						LOGGER.info(" Status: POR");
+						LOGGER.debug(" Status: POR");
 					}
 					// LOGGER.info("----------------------------------------------------");
 

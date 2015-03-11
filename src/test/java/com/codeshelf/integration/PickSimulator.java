@@ -21,7 +21,7 @@ import com.codeshelf.testframework.IntegrationTest;
 
 public class PickSimulator {
 
-	IntegrationTest		test;
+	IntegrationTest				test;
 
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
@@ -141,13 +141,13 @@ public class PickSimulator {
 	public void scanOrderDetailId(String inOrderDetailId) {
 		cheDeviceLogic.scanCommandReceived(inOrderDetailId);
 	}
+
 	/**
 	 * Same as scanOrderId. DEV-653. Just given this name for clarity of JUnit tests. (Scan the SKU, or UPC, or license plate)
 	 */
 	public void scanSomething(String inSomething) {
 		cheDeviceLogic.scanCommandReceived(inSomething);
 	}
-
 
 	public void scanPosition(String inPositionId) {
 		cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
@@ -280,10 +280,14 @@ public class PickSimulator {
 
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
 		CheStateEnum lastState = cheDeviceLogic.waitForCheState(state, timeoutInMillis);
-		String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
-				state, timeoutInMillis, lastState,  cheDeviceLogic.inSetState());
-		LOGGER.error(theProblem);
-		Assert.assertEquals(theProblem, state, lastState);
+		if (!state.equals(lastState)) {
+			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
+				state,
+				timeoutInMillis,
+				lastState,
+				cheDeviceLogic.inSetState());
+			Assert.fail(theProblem);
+		}
 	}
 
 	public boolean hasLastSentInstruction(byte position) {
@@ -347,12 +351,12 @@ public class PickSimulator {
 	/**
 	 * Intentionally incomplete. Could parameterize for each line, but initially only remember the first line.
 	 */
-	public String getLastCheDisplayString() {
-		return cheDeviceLogic.getRecentCheDisplayString();
+	public String getLastCheDisplayString(int lineIndex) {
+		return cheDeviceLogic.getRecentCheDisplayString(lineIndex);
 	}
 
 	public void forceDeviceToMatchManagerConfiguration() {
 		cheDeviceLogic.updateConfigurationFromManager();
-		}
+	}
 
 }

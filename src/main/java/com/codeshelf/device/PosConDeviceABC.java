@@ -18,18 +18,18 @@ import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 
-public abstract class PosConDeviceABC extends DeviceLogicABC{
-	private static final Logger				LOGGER									= LoggerFactory.getLogger(PosConDeviceABC.class);
+public abstract class PosConDeviceABC extends DeviceLogicABC {
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(PosConDeviceABC.class);
 
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
 
 	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
-		super(inPersistentId, inGuid, inDeviceManager, inRadioController);		
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
 	}
-	
+
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
 		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
 		//Update the last sent posControllerInstr for the position 
@@ -48,9 +48,12 @@ public abstract class PosConDeviceABC extends DeviceLogicABC{
 	protected void clearAllPositionControllers() {
 		clearOnePositionController(PosControllerInstr.POSITION_ALL);
 	}
-	
+
 	protected void clearOnePositionController(Byte inPosition) {
-		LOGGER.info("Sending Clear PosCon Instruction {}", inPosition);
+		if (inPosition == PosControllerInstr.POSITION_ALL)
+			LOGGER.info("Sending Clear PosCon command for ALL");
+		else
+			LOGGER.info("Sending Clear PosCon command for {}", inPosition);
 
 		//Remove lastSent Set Instr from map to indicate the clear
 		if (PosControllerInstr.POSITION_ALL.equals(inPosition)) {
@@ -58,7 +61,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC{
 		} else {
 			mPosToLastSetIntrMap.remove(inPosition);
 		}
-		
+
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}

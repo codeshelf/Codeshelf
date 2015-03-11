@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -440,6 +441,17 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 			inLocation.addStoredItem(item); // which removes from the prior location.
 		return item;
 	}
+	
+	public Gtin createGtin(String inGtin, UomMaster inUomMaster) {
+		Gtin gtin = new Gtin();
+		gtin.setDomainId(inGtin);
+		
+		this.addGtinToMaster(gtin);
+		
+		gtin.setUomMaster(inUomMaster);
+		
+		return gtin;
+	}
 
 	public Gtin getGtin(String gtin) {
 						
@@ -448,6 +460,25 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		} else {
 			return null;
 		}
+	}
+	
+	/*
+	 * Assuming only one GTIN per ItemMaster <--> UOM matching
+	 * If more than one we might return the wrong GTIN, however, having multiple
+	 * GTINs with the same UOM is wrong.
+	 * 
+	 * FIXME Database restraint for GTIN ItemMaster <--> UOM matching
+	 */
+	public Gtin getGtinForUom(UomMaster inUomMaster){
+		
+		List<Gtin> gtinList = new ArrayList<Gtin>(gtins.values());
+		
+		for (Gtin gtin : gtinList) {
+			if (gtin.getUomMaster().equals(inUomMaster))
+				return gtin;
+		}
+		
+		return null;
 	}
 
 }
