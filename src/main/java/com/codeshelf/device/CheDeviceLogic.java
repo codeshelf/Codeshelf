@@ -185,13 +185,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
+	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
+		return false;
+	}
+
 	protected boolean isScanNeededToVerifyPick() {
 		WorkInstruction wi = this.getOneActiveWorkInstruction();
 
 		if (wi.isHousekeeping())
 			return false;
 		else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
-			return true;
+			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 			// See if we can skip this scan because we already scanned.
 		}
 		return false;
@@ -293,7 +297,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		return mLastScreenDisplayLines.get(oneBasedLineIndex - 1);
 	}
-	
+
 	protected void doSetRecentCheDisplayString(int oneBasedLineIndex, String lineValue) {
 		if (oneBasedLineIndex < 1 || oneBasedLineIndex > 4) {
 			LOGGER.error("boundary error in doSetRecentCheDisplayString");
@@ -346,6 +350,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
+	protected boolean wiMatchesItemLocation(String matchItem, String matchPickLocation, WorkInstruction wiToCheck) { // used for DEV-691, DEV-692
+		// decide not to also do uom check here. Would be very strange if a customer had different UOMs in the same pick location.
+		if (matchItem.equals(wiToCheck.getItemId()))
+			if (matchPickLocation.equals(wiToCheck.getPickInstruction()))
+				return true;
+		return false;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * After simultaneous work instruction enhancement, the answer will come from mActivePickWiList.
@@ -366,12 +378,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		for (WorkInstruction wi : mAllPicksWiList) {
 			WorkInstructionStatusEnum theStatus = wi.getStatus();
 			if (theStatus == WorkInstructionStatusEnum.INPROGRESS || theStatus == WorkInstructionStatusEnum.NEW)
-				if (pickSku.equals(wi.getItemId()))
-					if (pickLocation.equals(wi.getPickInstruction()))
-					// decide not to also do uom check here. Would be very strange if a customer had different UOMs in the same pick location.
-					{
-						totalQty += inWi.getPlanQuantity();
-					}
+				if (wiMatchesItemLocation(pickSku, pickLocation, wi)) {
+					totalQty += wi.getPlanQuantity();
+				}
 			/* This code makes the huge assumption that the work sequencer is very rational. A case that would fail is:
 			 * Pick item from slot A, sequence 1. Count 5.
 			 * Pick item from slot A, sequence 2. Count 1.

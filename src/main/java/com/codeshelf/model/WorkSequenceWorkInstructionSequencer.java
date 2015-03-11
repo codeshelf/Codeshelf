@@ -23,12 +23,12 @@ import com.google.common.collect.Ordering;
  */
 public class WorkSequenceWorkInstructionSequencer extends WorkInstructionSequencerABC {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(WorkSequenceWorkInstructionSequencer.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkSequenceWorkInstructionSequencer.class);
 
 	public WorkSequenceWorkInstructionSequencer() {
-	
+
 	}
-	
+
 	// --------------------------------------------------------------------------
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -37,21 +37,21 @@ public class WorkSequenceWorkInstructionSequencer extends WorkInstructionSequenc
 	@Override
 	public List<WorkInstruction> sort(Facility facility, List<WorkInstruction> inWiList) {
 		List<WorkInstruction> workingWiList = new ArrayList<>(inWiList);
-		
+
 		preSortByPosAlongPath(workingWiList);
-				
+
 		// Now we need to sort and group the work instructions, so that the CHE can display them by working order.
 		List<Location> bayList = new ArrayList<Location>();
 		for (Path path : facility.getPaths()) {
 			List<Location> baysOnPath = path.<Location> getLocationsByClass(Bay.class);
-			for(Location locBay : baysOnPath) {
+			for (Location locBay : baysOnPath) {
 				//String bayStr = locBay.getNominalLocationId();
 				bayList.add(locBay);
 			}
 			// that was for debugging. quick way:
 			// bayList.addAll(path.<Location> getLocationsByClass(Bay.class));
 		}
-		LOGGER.debug("Sequencing work instructions at "+facility.getDomainId());
+		LOGGER.debug("Sequencing work instructions at " + facility.getDomainId());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		// Cycle over all bays on the path.
 		for (Location subLocation : bayList) {
@@ -64,7 +64,7 @@ public class WorkSequenceWorkInstructionSequencer extends WorkInstructionSequenc
 					Location wiLoc = wi.getLocation();
 					//String wiLocStr = wiLoc.getNominalLocationId();
 					if (workLocation.equals(wiLoc)) {
-						LOGGER.debug("Adding WI "+wi+" at "+workLocation);
+						LOGGER.debug("Adding WI " + wi + " at " + workLocation);
 						wiResultList.add(wi);
 						// WorkInstructionSequencerABC sets the sort code and persists
 						wiIterator.remove();
@@ -72,11 +72,10 @@ public class WorkSequenceWorkInstructionSequencer extends WorkInstructionSequenc
 				}
 			}
 		}
-		
-		
+
 		//Add all missed instructions with a preferred sequence
-		for (WorkInstruction instruction : inWiList){
-			if(instruction.getWorkSequence() != null && !wiResultList.contains(instruction)) {
+		for (WorkInstruction instruction : inWiList) {
+			if (instruction.getWorkSequence() != null && !wiResultList.contains(instruction)) {
 				wiResultList.add(instruction);
 			}
 		}
@@ -95,18 +94,25 @@ public class WorkSequenceWorkInstructionSequencer extends WorkInstructionSequenc
 
 	}
 
+	/**
+	 * Compare by work sequence field as first sort.
+	 * From v14, secondary sort is item ID. Tertiary sort order ID.
+	 * Order ID commonly needed for same itemID in same location, so simultaneous pick. However, also common at PFSWeb to have
+	 * sequence 9999 for "last pick" items. If several orders have 9999 items, we would want the item picks to group together.
+	 */
 	public class WorkSequenceComparator implements Comparator<WorkInstruction> {
 
 		public int compare(WorkInstruction left, WorkInstruction right) {
 			Integer leftWorkSequence = left.getWorkSequence();
 			Integer rightWorkSequence = right.getWorkSequence();
-			
+
 			return ComparisonChain.start()
 				.compare(leftWorkSequence, rightWorkSequence, Ordering.natural().nullsLast())
+				.compare(left.getItemId(), right.getItemId(), Ordering.natural().nullsLast())
+				.compare(left.getOrderId(), right.getOrderId(), Ordering.natural().nullsLast())
 				.result();
 		}
 
 	}
-
 
 }
