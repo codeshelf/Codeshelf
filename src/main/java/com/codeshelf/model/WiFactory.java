@@ -402,7 +402,9 @@ public class WiFactory {
 		Double posAlongPath = null;
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
-			LOGGER.warn("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem using location" );
+			//The below warding was removed due to DEV-695. The error was firing needlessly when LOCAPICK was off but the preferred location was specified.
+			//In the future, we'll need to handle moving preferred location whenever users move the Item in the UI
+			//LOGGER.warn("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem using location" );
 			posAlongPath = inLocation.getPosAlongPath();
 			//return;
 		} else {
