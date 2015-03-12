@@ -593,7 +593,7 @@ public class RadioController implements IRadioController {
 	public synchronized final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
 		try {
-			mDeviceGuidMap.remove(inNetworkDevice.getGuid());
+			mDeviceGuidMap.remove(inNetworkDevice.getGuid().getHexStringNoPrefix());
 			mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -610,7 +610,7 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final INetworkDevice getNetworkDevice(NetGuid inGuid) {
-		return mDeviceGuidMap.get(inGuid);
+		return mDeviceGuidMap.get(inGuid.getHexStringNoPrefix());
 	}
 
 	@Override

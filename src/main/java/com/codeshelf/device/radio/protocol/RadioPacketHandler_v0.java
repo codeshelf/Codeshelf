@@ -54,7 +54,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	private final AtomicBoolean										mChannelSelected;
 	private final List<IRadioControllerEventListener>				mEventListeners;
 	private final ChannelInfo[]										mChannelInfo;
-	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
+	private final Map<String, INetworkDevice>						mDeviceGuidMap;
 	private final RadioControllerPacketIOService					packetIOService;
 
 	public RadioPacketHandler_v0(NetAddress mServerAddress,
@@ -65,7 +65,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 		AtomicBoolean mChannelSelected,
 		List<IRadioControllerEventListener> mEventListeners,
 		ChannelInfo[] mChannelInfo,
-		Map<NetGuid, INetworkDevice> mDeviceGuidMap,
+		Map<String, INetworkDevice> mDeviceGuidMap,
 		RadioControllerPacketIOService packetIOService) {
 		super();
 		this.mServerAddress = mServerAddress;
@@ -401,7 +401,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 			// Happens all the time, especially in the office
 			// Could keep a counter on these.
 		} else {
-			INetworkDevice foundDevice = mDeviceGuidMap.get(theGuid);
+			INetworkDevice foundDevice = mDeviceGuidMap.get(inCommand.getGUID());
 
 			if (foundDevice != null) {
 				ContextLogging.setNetGuid(foundDevice.getGuid());
@@ -457,11 +457,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	 * @param inCommand
 	 */
 	private void processAssocCheckCommand(CommandAssocCheck inCommand, NetAddress inSrcAddr) {
-
-		// First get the unique ID from the command.
-		String uid = inCommand.getGUID();
-
-		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
+		INetworkDevice foundDevice = mDeviceGuidMap.get(inCommand.getGUID());
 
 		if (foundDevice != null) {
 			ContextLogging.setNetGuid(foundDevice.getGuid());
@@ -501,14 +497,14 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 				// device.
 				// (This could be two matching network IDs on the same channel.
 				// This could be a serious flaw in the network protocol.)
-				if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
-					LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: {} and {}", foundDevice.getGuid(), uid);
+				if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + inCommand.getGUID())) {
+					LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: {} and {}", foundDevice.getGuid(), inCommand.getGUID());
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
 				}
 
 				// Create and send an ack command to the remote that we think is
 				// in the running state.
-				ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
+				ackCmd = new CommandAssocAck(inCommand.getGUID(), new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 
 				// Send the command.
 				IPacket packet = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, inSrcAddr, false);
