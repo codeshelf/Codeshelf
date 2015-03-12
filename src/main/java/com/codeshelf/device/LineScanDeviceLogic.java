@@ -515,6 +515,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	@Override
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
 
+		/*
 		byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
 		byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
 		byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
@@ -538,6 +539,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			maxQuantityForPositionController,
 			freq,
 			brightness);
+		*/
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		PosControllerInstr instruction = getPosInstructionForWiAtIndex(firstWi, getPosconIndex());		
 		instructions.add(instruction);
 		sendPositionControllerInstructions(instructions);
 	}

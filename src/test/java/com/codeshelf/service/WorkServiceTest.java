@@ -364,7 +364,8 @@ public class WorkServiceTest extends ServerTest {
 		long previousTimestamp = timings.remove(0);
 		for (Long timestamp : timings) {
 			long diff = timestamp - previousTimestamp;
-			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff > expectedRetryDelay);
+			// change from diff > expectedRetryDelay to diff >= expectedRetryDelay. Not necessarily accurate to the ms, but JRs Mac caught this a lot.
+			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff >= expectedRetryDelay);
 		}
 
 		this.getTenantPersistenceService().commitTransaction();

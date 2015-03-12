@@ -508,6 +508,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String cntrId = wi.getContainerId();
 		return mPositionToContainerMap.containsValue(cntrId);
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -1384,6 +1385,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
 		if (!sendHousekeepingDisplay()) {
+			/*
 			byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
 			byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
 			byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
@@ -1416,7 +1418,35 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 			sendPositionControllerInstructions(instructions);
+			
+			
+			*/
+			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+			for (WorkInstruction wi : mActivePickWiList) {
+				Byte theIndex = getPosconIndexofWi(wi);
+				if (theIndex > 0) {
+					PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexofWi(wi));
+					instructions.add(instruction);
+				} else
+					LOGGER.error("unexpected missing poscon index for work instruction");
+			}
+
+			sendPositionControllerInstructions(instructions);
+
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/** What poscon does this wi belong to?
+	 */
+	Byte getPosconIndexofWi(WorkInstruction wi) {
+		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
+			if (mapEntry.getValue().equals(wi.getContainerId())) {
+				return Byte.valueOf(mapEntry.getKey());
+			}
+		}
+		return 0;
 	}
 
 	// --------------------------------------------------------------------------

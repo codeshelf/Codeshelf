@@ -2033,7 +2033,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 
 		// bug here!
-		// Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		LOGGER.info("2a: Complete the second poscon first");
@@ -2082,7 +2082,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 		
 		// same bug again. getting 5 (same as first controller) rather than this controller's value.
-		// Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
 		
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 

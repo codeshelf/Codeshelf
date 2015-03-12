@@ -1238,6 +1238,37 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get one poscon instruction for a Wi that does not need completed, feedback, type display. But does deal with short flashing display.
+	 */
+	protected PosControllerInstr getPosInstructionForWiAtIndex(WorkInstruction inWi, Byte inPosconIndex ) {
+
+		byte planQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanQuantity());
+		byte minQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMinQuantity());
+		byte maxQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMaxQuantity());
+		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
+
+		byte freq = PosControllerInstr.SOLID_FREQ;
+		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
+		if (planQuantityForPositionController != minQuantityForPositionController
+				|| planQuantityForPositionController != maxQuantityForPositionController) {
+			freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
+			brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		}
+
+		PosControllerInstr instruction = new PosControllerInstr(inPosconIndex,
+			planQuantityForPositionController,
+			minQuantityForPositionController,
+			maxQuantityForPositionController,
+			freq,
+			brightness);
+		
+		return instruction;
+	}
+	
+// --------------------------------------------------------------------------
+	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
 	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
