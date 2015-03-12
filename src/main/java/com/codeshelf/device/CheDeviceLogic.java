@@ -1252,13 +1252,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
 
 		String returnString = "";
-
+		// TODO
 		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
 			// This is improved from v13 PFSWeb
-			String orderId = inWi.getOrderId();
+			
+			// String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
+			// And, this is not even set.
+			
 			String itemId = inWi.getItemId();
-			LOGGER.warn("SKIPSCAN for order:{} item:{}", orderId, itemId);
+			String locId = inWi.getPickInstruction();
+			// String picker = inWi.getPickerId();
+			// String picker = this.getUserId();
+			
+			// LOGGER.warn("SKIPSCAN for order/cntr:{} item:{} location:{} by picker:{}", orderId, itemId, locId, picker);
+			LOGGER.warn("SKIPSCAN for item:{} location:{}", itemId, locId);
 			return returnString;
 		}
 
