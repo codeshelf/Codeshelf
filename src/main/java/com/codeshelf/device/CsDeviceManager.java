@@ -91,6 +91,10 @@ public class CsDeviceManager implements
 
 	@Getter
 	@Setter
+	private boolean										pickMultValue				= false;
+
+	@Getter
+	@Setter
 	private String										containerTypeValue			= "Order";
 
 	@Getter

@@ -1980,11 +1980,7 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public final void basicSimulPick() throws IOException {
-		// Test cases:
-		// 1. One good plans for position 1.
-		// 2. One good plan for position 2 and and immediate short.
-
-		// set up data for pick scenario
+	
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 
@@ -1997,10 +1993,11 @@ public class CheProcessTestPick extends ServerTest {
 		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping");
+		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
 		propertyService.changePropertyValue(facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
@@ -2034,7 +2031,6 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("1d: see that both poscons show their pick count: 1 and 2");
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 
-		/*
 		// bug here!
 		// Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
 
@@ -2075,7 +2071,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("LOC3", line1);
 		Assert.assertEquals("Sku3",line2);
 		Assert.assertEquals("QTY 1",line3);
-*/
+
 	}
 
 }

@@ -512,7 +512,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	private boolean selectNextActivePicks() {
-		final boolean kDoMultipleWiPicks = false; // DEV-451
+		boolean doMultipleWiPicks = mDeviceManager.isPickMultValue(); // DEV-451
 
 		boolean result = false;
 
@@ -527,16 +527,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 			}
 
-			/*
-			if (mPositionToContainerMap.values().isEmpty()) {
-				LOGGER.warn(this + " assigned work but no containers assigned");
-			}
-
-			for (String containerId : mPositionToContainerMap.values()) {
-				// If the WI is for this container then consider it. ??? Looks wrong
-				if (wi.getContainerId().equals(containerId)) {
-			*/
-
 			// If the WI is INPROGRESS or NEW then consider it.
 			if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
 					|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
@@ -547,7 +537,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					wi.setStarted(new Timestamp(System.currentTimeMillis()));
 					mActivePickWiList.add(wi);
 					result = true;
-					if (!kDoMultipleWiPicks)
+					if (!doMultipleWiPicks)
 						return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
 				}
 			}
