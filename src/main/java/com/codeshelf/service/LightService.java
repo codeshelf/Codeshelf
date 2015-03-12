@@ -92,6 +92,28 @@ public class LightService implements IApiService {
 			LOGGER.warn("The item is not lightable: " + theItem);
 		}
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 */
+	public void lightItemSpecificColor(final String facilityPersistentId, final String inItemPersistentId, ColorEnum color) {
+		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
+		Facility facility = checkFacility(facilityPersistentId);
+
+		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
+		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
+		if (theItem == null) {
+			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
+			return;
+		}
+
+		if (theItem.isLightable()) {
+			sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(facility, defaultLedsToLight, color, theItem));
+		} else {
+			LOGGER.warn("The item is not lightable: " + theItem);
+		}
+	}
 
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 
