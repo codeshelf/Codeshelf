@@ -351,6 +351,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	protected boolean wiMatchesItemLocation(String matchItem, String matchPickLocation, WorkInstruction wiToCheck) { // used for DEV-691, DEV-692
 		// decide not to also do uom check here. Would be very strange if a customer had different UOMs in the same pick location.
+
+		if (matchItem == null || matchPickLocation == null) // this clause used for DEV-451 in selectNextActivePicks()
+			return false;
+		
 		if (matchItem.equals(wiToCheck.getItemId()))
 			if (matchPickLocation.equals(wiToCheck.getPickInstruction()))
 				return true;
