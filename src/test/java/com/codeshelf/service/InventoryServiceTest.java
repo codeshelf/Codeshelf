@@ -51,7 +51,9 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void createInventoryService() {
-		this.inventoryService = new InventoryService();
+		//FIXME - huffa - How to do this correctly?
+		LightService ls = new LightService(this.sessionManagerService);
+		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		
 		this.getTenantPersistenceService().beginTransaction();

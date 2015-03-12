@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
@@ -20,9 +21,18 @@ import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.inject.Inject;
 
 public class InventoryService implements IApiService {
 
+	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
+	
+	LightService lightService;
+	
+	@Inject
+	public InventoryService(LightService inLightService){
+		this.lightService = inLightService;
+	}
 	
 	public Item moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId){
 		
@@ -56,6 +66,7 @@ public class InventoryService implements IApiService {
 			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			
 			Gtin.staticGetDao().store(gtin);
+			// TODO huffa - error message
 		} else {
 			gtin = gtins.get(0);
 			itemMaster = gtin.getParent();
@@ -66,12 +77,35 @@ public class InventoryService implements IApiService {
 		// Look in this function call for whether a item will be moved or created
 		Item result = itemMaster.findOrCreateItem(location, uomMaster);
 		
+		if (result != null)
+			lightService.lightItemSpecificColor(facility.getPersistentId().toString(), result.getPersistentId().toString(), che.getColor());
+		// Light the item in its new location
+		
 		return result;
 	}
 	
 	
-	public boolean lightInventory(String inGTIN, UUID inChePersistentId){
+	public boolean lightInventory(String inGtin, UUID inChePersistentId){
 		
+		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
+		ColorEnum color = che.getColor();
+		Facility facility = che.getFacility();
+		
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
+		if (gtins.isEmpty()) {
+			return false;
+			// TODO huffa - error message
+		}
+		
+		Gtin gtin = gtins.get(0);
+		ItemMaster itemMaster = gtin.getParent();
+		List<Item> items = itemMaster.getItemsOfUom(gtin.getUomMaster().getDomainId());
+		
+		for (Item item : items) {
+			if (item.isLightable()){
+				lightService.lightItemSpecificColor(facility.getPersistentId().toString(), item.getPersistentId().toString(), color);
+			}
+		}
 		return false;
 	}
 	
