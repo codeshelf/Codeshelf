@@ -187,9 +187,6 @@ public class WebApiServer {
 			//////////////////////////
 			// only for server
 			//////////////////////////
-			
-			// user manager sql generator (temporary)
-			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
 			// admin JSP handler
 			try {

@@ -41,11 +41,13 @@ public class UsersResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response get(@QueryParam("username") String username, @QueryParam("tenantid") Integer tenantId) {
-		if (username == null) {
-			return getUsers(tenantId);
-		} //else
-		return getUser(username,tenantId);
+	public Response get(@QueryParam("username") String username, 
+				@QueryParam("tenantid") Integer tenantId, 
+				@QueryParam("htpasswd") Boolean htpasswd) {
+		if (username == null)
+			return getUsers(tenantId, htpasswd);
+		//else
+		return getUser(username,tenantId); // htpasswd ignored for username search
 	}
 
 	@POST
@@ -143,7 +145,7 @@ public class UsersResource {
 
 		boolean success = false;
 		if (key.equals("password")) {
-			if (User.isValidPassword(value)) {
+			if (User.passwordMeetsRequirements(value)) {
 				LOGGER.info("update user {} - change password requested", user.getUsername());
 				user.setPassword(value);
 				success = true;
@@ -188,7 +190,7 @@ public class UsersResource {
 
 			if (username != null && password != null && type != null) {
 				if (manager.canCreateUser(username)) {
-					if (User.isValidPassword(password)) {
+					if (User.passwordMeetsRequirements(password)) {
 						Tenant tenant;
 						if(tenantId == null)
 							tenant = manager.getDefaultTenant();
@@ -216,18 +218,30 @@ public class UsersResource {
 		return newUser;
 	}
 
-	private Response getUsers(Integer tenantId) {
+	private Response getUsers(Integer tenantId, Boolean htpasswd) {
 		try {
 			Tenant tenant = null;
 			if (tenantId != null) 
 				tenant = TenantManagerService.getInstance().getTenant(tenantId);
 			
 			List<User> userList = TenantManagerService.getInstance().getUsers(tenant);
+			
+			if(htpasswd != null && htpasswd) 
+				return Response.ok(makeHtpasswd(userList)).build();
+			//else
 			return Response.ok(userList).build();
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception", e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
+	}
+
+	private String makeHtpasswd(List<User> userList) {
+		String result="";
+		for(User user : userList) {
+			result += user.getHtpasswdEntry() + "\n";
+		}
+		return result;
 	}
 
 	private Response getUser(String username, Integer tenantId) {
