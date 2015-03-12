@@ -3,7 +3,7 @@
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
  *  $Id: User.java,v 1.23 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -44,7 +44,6 @@ import com.codeshelf.model.domain.UserType;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 // --------------------------------------------------------------------------

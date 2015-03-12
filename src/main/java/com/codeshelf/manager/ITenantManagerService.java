@@ -1,4 +1,4 @@
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
 import java.util.List;
 

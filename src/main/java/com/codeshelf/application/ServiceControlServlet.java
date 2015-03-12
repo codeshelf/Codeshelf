@@ -11,7 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.manager.TenantManagerService;
 
 @SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {

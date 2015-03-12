@@ -1,8 +1,8 @@
 package com.codeshelf.generators;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.multitenancy.Tenant;
 
 public class FacilityGenerator {
 	Tenant tenant;

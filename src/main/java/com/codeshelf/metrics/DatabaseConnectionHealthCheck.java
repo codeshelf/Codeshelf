@@ -2,7 +2,7 @@ package com.codeshelf.metrics;
 
 import java.sql.SQLException;
 
-import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.manager.TenantManagerService;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 

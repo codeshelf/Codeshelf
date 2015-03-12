@@ -20,11 +20,11 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
 
 // note:
 // it is intentional that the reasons for errors are only logged and not returned to the client

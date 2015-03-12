@@ -13,10 +13,6 @@ import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.Shard;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.testframework.HibernateTest;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
@@ -45,6 +41,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertTrue(tenants.contains(tenant));		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void manipulateUsers() {
 		String existingUsername = CodeshelfNetwork.DEFAULT_SITECON_USERNAME; 
@@ -149,6 +146,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","newpassword"));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void manipulateTenants() {
 		String shardName = TenantManagerService.DEFAULT_SHARD_NAME;
@@ -226,7 +224,7 @@ public class TenantManagerTest extends HibernateTest {
 		// succeeds update with clean map
 		Assert.assertNotNull(this.tenantsResource.updateTenant(apiTenant.getId(), params).getEntity());
 		apiTenant = (Tenant) this.tenantsResource.getTenant(apiTenant.getId()).getEntity();
-		Assert.assertNotNull(apiTenant.getName().equals("newname"));
+		Assert.assertTrue(apiTenant.getName().equals("newname"));
 
 		// can disable
 		Assert.assertTrue(apiTenant.isActive());

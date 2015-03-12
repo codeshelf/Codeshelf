@@ -3,7 +3,7 @@ package com.codeshelf.application;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 
-import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.manager.User;
 
 /**
  * 		

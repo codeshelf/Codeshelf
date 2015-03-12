@@ -5,15 +5,15 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.filter.NetworkChangeListener;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Organization;
 import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
