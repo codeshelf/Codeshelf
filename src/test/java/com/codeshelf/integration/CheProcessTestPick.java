@@ -32,6 +32,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
@@ -39,6 +40,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -66,7 +68,6 @@ public class CheProcessTestPick extends ServerTest {
 
 	}
 
-	@SuppressWarnings("unused")
 	private Facility setUpZigzagSlottedFacility() {
 		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
 		// This is the zigzag/cross-batch portion of the MAT as of v10
@@ -178,7 +179,6 @@ public class CheProcessTestPick extends ServerTest {
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
 
 		Short channel1 = 1;
 		Location aisle1x = getFacility().findSubLocationById("A1");
@@ -270,23 +270,6 @@ public class CheProcessTestPick extends ServerTest {
 
 	}
 
-	@SuppressWarnings("unused")
-	@Test
-	public final void testDataSetup() throws IOException {
-
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = setUpSimpleNoSlotFacility();
-		UUID facId = facility.getPersistentId();
-		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
-
-		List<Container> containers = facility.getContainers();
-		this.getTenantPersistenceService().commitTransaction();
-	}
 	
 	@Test
 	public final void testStartWorkReverse() throws IOException {
@@ -464,7 +447,6 @@ public class CheProcessTestPick extends ServerTest {
 
 	}
 	
-	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPick() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -494,8 +476,6 @@ public class CheProcessTestPick extends ServerTest {
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
-		Location locationD502 = facility.findSubLocationById("D502");
-		Location locationD503 = facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
@@ -600,17 +580,14 @@ public class CheProcessTestPick extends ServerTest {
 		WiSetSummary theSummary = summaries.get(0);
 		// So, how many shorts, how many active? None complete yet.
 		int actives = theSummary.getActiveCount();
-		int shorts = theSummary.getShortCount();
+		// int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
 		Assert.assertEquals(0, completes);
 		Assert.assertEquals(3, actives);
-		//Auto-shorting functionality disabled 02/03/2015
-		//Assert.assertEquals(0, shorts);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPickViaChe() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -638,10 +615,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
-		Location locationD403 = facility.findSubLocationById("D403");
-		Location locationD402 = facility.findSubLocationById("D402");
-		Location locationD502 = facility.findSubLocationById("D502");
-		Location locationD503 = facility.findSubLocationById("D503");
+			Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
@@ -723,8 +697,8 @@ public class CheProcessTestPick extends ServerTest {
 		picker.logout();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
+	@SuppressWarnings("unused")
 	public final void testCheProcess1() throws IOException {
 		// Test cases:
 		// 1) If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)
@@ -742,7 +716,6 @@ public class CheProcessTestPick extends ServerTest {
 		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -971,7 +944,6 @@ public class CheProcessTestPick extends ServerTest {
 		// for (WorkInstruction cheWi : che1.getCheWorkInstructions()) {
 		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis2);
-		int cheWiTotal2 = cheWis2.size();
 
 		for (WorkInstruction cheWi : cheWis2) {
 			if (cheWi.getItemMasterId().equals("1555"))
@@ -1220,7 +1192,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.tenantPersistenceService.commitTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
 		// Test cases:
@@ -1235,7 +1206,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		UUID facId = facility.getPersistentId();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1507,7 +1477,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testCartRunFeedback() throws IOException {
 		// Test cases:
@@ -1526,7 +1495,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		UUID facId = facility.getPersistentId();
 		facility = Facility.staticGetDao().reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
@@ -1759,6 +1727,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
+
 
 	@Test
 	public void testContainerReassignmentDuringCHESetup() throws IOException {
@@ -2008,6 +1977,105 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles", processMode, ProcessMode.SETUP_ORDERS);
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
+	@Test
+	public final void basicSimulPick() throws IOException {
+		// Test cases:
+		// 1. One good plans for position 1.
+		// 2. One good plan for position 2 and and immediate short.
+
+		// set up data for pick scenario
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LOC1,1"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku3,Test Item 3,1,each,LOC3,3"
+				+ "\r\n1,USF314,COSTCO,22222,22222,Sku2,Test Item 2,1,each,LOC2,2"
+				+ "\r\n1,USF314,COSTCO,44444,44444,Sku1,Test Item 1,2,each,LOC1,1"
+				+ "\r\n1,USF314,COSTCO,55555,55555,Sku2,Test Item 2,1,each,LOC2,2";
+		importOrdersData(facility, csvOrders);
+		this.getTenantPersistenceService().commitTransaction();
+
+		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping");
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility,
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+		propertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+		this.startSiteController(); // after all the parameter changes
+		
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("44444", "2");
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("1c: Screen shows the location, SKU, and total to pick");
+		String line1 = picker.getLastCheDisplayString(1);
+		String line2 = picker.getLastCheDisplayString(2);
+		String line3 = picker.getLastCheDisplayString(3);
+		String line4 = picker.getLastCheDisplayString(4);
+
+		Assert.assertEquals("LOC1", line1);
+		Assert.assertEquals("Sku1",line2);
+		Assert.assertEquals("QTY 3",line3);
+		Assert.assertEquals("", line4);
+			
+		LOGGER.info("1d: see that both poscons show their pick count: 1 and 2");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+
+		/*
+		// bug here!
+		// Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+
+		LOGGER.info("2a: Complete the second poscon first");
+		picker.pick(2, 2);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("2b: see that poscons 1 count remains, and 2 is now oc");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_O);
+
+		LOGGER.info("2c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LOC1", line1);
+		Assert.assertEquals("Sku1",line2);
+		Assert.assertEquals("QTY 1",line3);
+
+		LOGGER.info("3a: Complete the first poscon");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("3b: Poscon 1 gets the next job, poscon 2 remains oc");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_O);
+
+		LOGGER.info("3c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LOC3", line1);
+		Assert.assertEquals("Sku3",line2);
+		Assert.assertEquals("QTY 1",line3);
+*/
+	}
 
 }
