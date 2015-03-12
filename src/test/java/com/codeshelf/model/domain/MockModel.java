@@ -12,8 +12,6 @@ import com.codeshelf.model.dao.ITypedDao;
  */
 public class MockModel implements IDomainObject {
 
-	public static ITypedDao<MockModel>	DAO;
-
 	private String testSetterString;
 	private int testSetterInt;
 	private double testSetterDouble;
@@ -69,7 +67,6 @@ public class MockModel implements IDomainObject {
 
 	@Override
 	public <T extends IDomainObject> ITypedDao<T> getDao() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 	

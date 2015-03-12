@@ -66,7 +66,7 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 		for (WorkInstruction wi : inWiList) {
 			count++;
 			wi.setGroupAndSortCode(String.format("%04d", count));
-			WorkInstruction.DAO.store(wi);
+			WorkInstruction.staticGetDao().store(wi);
 		}
 
 		return inWiList;

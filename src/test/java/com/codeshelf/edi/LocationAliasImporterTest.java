@@ -30,13 +30,14 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.Errors;
 
 /**
  * @author jeffw
  *
  */
-public class LocationAliasImporterTest extends EdiTestABC {
+public class LocationAliasImporterTest extends MockDaoTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAliasImporterTest.class);
 
 	@SuppressWarnings("unchecked")
@@ -126,16 +127,16 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Facility facility = createFacility();
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA1);
+		Aisle.staticGetDao().store(aisleA1);
 
 		Bay bay1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bay1);
+		Bay.staticGetDao().store(bay1);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA2);
+		Aisle.staticGetDao().store(aisleA2);
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bay2);
+		Bay.staticGetDao().store(bay2);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
@@ -182,16 +183,16 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		String facilityDomainId = facility.getDomainId();
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA1);
+		Aisle.staticGetDao().store(aisleA1);
 
 		Bay bay1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bay1);
+		Bay.staticGetDao().store(bay1);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA2);
+		Aisle.staticGetDao().store(aisleA2);
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bay2);
+		Bay.staticGetDao().store(bay2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		
@@ -292,7 +293,7 @@ public class LocationAliasImporterTest extends EdiTestABC {
 		Assert.assertEquals(bay1dDomainId, "B1"); // works, even though facility reference is stale
 		
 		// Let's get the facility again within this transaction.
-		Facility facility2 = Facility.DAO.findByDomainId(null, facilityDomainId);
+		Facility facility2 = Facility.staticGetDao().findByDomainId(null, facilityDomainId);
 		Location bay1e = facility2.findLocationById("B34x");
 		Assert.assertNotNull(bay1e);
 		String bay1eDomainId = bay1e.getDomainId();

@@ -26,10 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -48,10 +47,6 @@ import com.google.inject.Singleton;
 @ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
-	@Inject
-	public static ITypedDao<LocationAlias>	DAO;
-
-	@Singleton
 	public static class LocationAliasDao extends GenericDaoABC<LocationAlias> implements ITypedDao<LocationAlias> {
 		public final Class<LocationAlias> getDaoClass() {
 			return LocationAlias.class;
@@ -99,7 +94,11 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<LocationAlias> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<LocationAlias> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(LocationAlias.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -116,10 +115,6 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	public String getAlias() {
 		return getDomainId();
-	}
-
-	public static void setDao(LocationAliasDao inLocationAliasDao) {
-		LocationAlias.DAO = inLocationAliasDao;
 	}
 
 	public String getNominalLocationId() {

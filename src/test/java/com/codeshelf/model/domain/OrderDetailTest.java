@@ -4,7 +4,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
@@ -12,19 +11,22 @@ import org.mockito.Mockito;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.testframework.MinimalTest;
+import com.codeshelf.testframework.MockDaoTest;
 
-public class OrderDetailTest {
+public class OrderDetailTest extends MockDaoTest {
 
 	ITypedDao<OrderDetail> mockDao;
 	private OrderDetail	subject;
 	private Integer	testQuantity;
 	
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Before
-	public void setUp() {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	@Override
+	public void doBefore() {
+		super.doBefore();
 		testQuantity = 5;
 		mockDao = Mockito.<ITypedDao>mock(ITypedDao.class);
-		OrderDetail.DAO = mockDao;
+		this.useCustomDao(OrderDetail.class, mockDao);
 
 		subject = new OrderDetail();
 		subject.setQuantities(testQuantity);

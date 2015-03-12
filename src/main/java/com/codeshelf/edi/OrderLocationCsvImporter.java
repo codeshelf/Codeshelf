@@ -99,7 +99,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 					if (!orderLocation.getUpdated().equals(inProcessTime)) {
 						LOGGER.debug("Archive old orderLocation: " + orderLocation.getDomainId());
 						orderLocation.setActive(false);
-						OrderLocation.DAO.store(orderLocation);
+						OrderLocation.staticGetDao().store(orderLocation);
 					}
 				}
 			}
@@ -192,7 +192,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				result.setLocation(mappedLocation);
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				OrderLocation.DAO.store(result);
+				OrderLocation.staticGetDao().store(result);
 			}
 
 		}
@@ -215,7 +215,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			while (iter.hasNext()) {
 				OrderLocation orderLocation = iter.next();
 				order.removeOrderLocation(orderLocation);
-				OrderLocation.DAO.delete(orderLocation);
+				OrderLocation.staticGetDao().delete(orderLocation);
 			}
 		}
 	}
@@ -237,7 +237,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				OrderLocation orderLocation = iter.next();
 				if (orderLocation.getLocation().equals(location)) {
 					order.removeOrderLocation(orderLocation);
-					OrderLocation.DAO.delete(orderLocation);
+					OrderLocation.staticGetDao().delete(orderLocation);
 				}
 			}
 		}

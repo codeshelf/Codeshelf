@@ -17,156 +17,25 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.metrics.DummyMetricsService;
-import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.dao.MockDao;
 import com.codeshelf.model.dao.Result;
-import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Bay;
-import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Slot;
-import com.codeshelf.model.domain.Tier;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.testframework.MockDaoTest;
 
 /**
  * @author jeffw
  *
  */
-public class CodeshelfApplicationTest extends ServerTest { 
-	// we subclass ServerTest to ensure global static services are already running so they won't be started by fake app
-
-	/*
-	public class MockInjector implements Injector {
-
-		@Override
-		public void injectMembers(Object instance) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public Set<TypeConverterBinding> getTypeConverterBindings() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Map<Class<? extends Annotation>, Scope> getScopeBindings() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> Provider<T> getProvider(Class<T> type) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> Provider<T> getProvider(Key<T> key) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Injector getParent() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> MembersInjector<T> getMembersInjector(Class<T> type) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> MembersInjector<T> getMembersInjector(TypeLiteral<T> typeLiteral) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> T getInstance(Class<T> type) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> T getInstance(Key<T> key) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> Binding<T> getExistingBinding(Key<T> key) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Map<Key<?>, Binding<?>> getBindings() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> Binding<T> getBinding(Class<T> type) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> Binding<T> getBinding(Key<T> key) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Map<Key<?>, Binding<?>> getAllBindings() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public <T> List<Binding<T>> findBindingsByType(TypeLiteral<T> type) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Injector createChildInjector(Module... modules) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Injector createChildInjector(Iterable<? extends Module> modules) {
-			// TODO Auto-generated method stub
-			return null;
-		}
-	}
-*/
+public class CodeshelfApplicationTest extends MockDaoTest { 
 	/**
 	 * Test method for {@link com.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
 	
 	@Test
 	public void testStartStopApplication() {
-		TenantPersistenceService.setInstance(mock(ITenantPersistenceService.class));
-		Facility.DAO = new MockDao<Facility>();
-		Aisle.DAO = new MockDao<Aisle>();
-		Bay.DAO = new MockDao<Bay>();
-		Tier.DAO = new MockDao<Tier>();
-		Slot.DAO = new MockDao<Slot>();
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
@@ -219,11 +88,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 			}
 		}
 
-		// This next line causes the whole JUnit system to stop.
-		// Yes, I know it's terrible to have dependent unit tests.
-		// I don't know how to fix this.  WIll consult with someone.
-
-		application.stopApplication();
+		application.stopApplication(); // this doesn't actually exit
 		try {
 			appThread.join(60000, 0);
 		} catch (InterruptedException e) {
@@ -234,8 +99,4 @@ public class CodeshelfApplicationTest extends ServerTest {
 		Assert.assertTrue("application failed to start", checkAppRunning.result);
 	}
 
-	@Override
-	protected boolean ephemeralServicesShouldStartAutomatically() {
-		return false;
-	}
 }

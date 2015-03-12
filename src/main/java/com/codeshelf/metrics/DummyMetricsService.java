@@ -5,9 +5,9 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.codeshelf.service.AbstractCodeshelfIdleService;
 
-public class DummyMetricsService extends AbstractIdleService implements IMetricsService {
+public class DummyMetricsService extends AbstractCodeshelfIdleService implements IMetricsService {
 
 	@Override
 	protected void startUp() throws Exception {}

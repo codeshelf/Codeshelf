@@ -26,10 +26,9 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -47,10 +46,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class WorkArea extends DomainObjectTreeABC<Path> {
 
-	@Inject
-	public static ITypedDao<WorkArea>	DAO;
-
-	@Singleton
 	public static class WorkAreaDao extends GenericDaoABC<WorkArea> implements ITypedDao<WorkArea> {
 		public final Class<WorkArea> getDaoClass() {
 			return WorkArea.class;
@@ -91,7 +86,11 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkArea> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<WorkArea> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(WorkArea.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -104,10 +103,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 
 	public void removeLocation(Location inLocation) {
 		locations.remove(inLocation);
-	}
-
-	public static void setDao(WorkAreaDao inWorkAreaDao) {
-		WorkArea.DAO = inWorkAreaDao;
 	}
 
 	@Override

@@ -12,7 +12,7 @@ public class FacilityGenerator {
 	}
 	
 	public Facility generateValid() {
-		Facility facility = Facility.createFacility(tenant,"F1", "", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "", Point.getZeroPoint());
 		return facility;
 	}
 }

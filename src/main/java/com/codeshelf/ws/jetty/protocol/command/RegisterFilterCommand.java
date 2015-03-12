@@ -47,7 +47,6 @@ public class RegisterFilterCommand extends CommandABC {
 	}
 	
 	@Override
-	@SuppressWarnings("unchecked")
 	public ResponseABC exec() {
 		try {
 			String objectClassName = request.getClassName();
@@ -67,20 +66,21 @@ public class RegisterFilterCommand extends CommandABC {
 			}
 
 			// First we find the object (by it's ID).
-			Class<?> classObject = Class.forName(objectClassName);
+			@SuppressWarnings("unchecked")
+			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				this.objectChangeBroadcaster.registerDAOListener(session, (Class<IDomainObject>)classObject);
+				this.objectChangeBroadcaster.registerDAOListener(session, classObject);
 
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
+				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// create listener
 				
 				String filterClause = request.getFilterClause();
 					
-				Filter filter = new Filter(dao, (Class<IDomainObject>) classObject, request.getMessageId());				
+				Filter filter = new Filter(dao, classObject, request.getMessageId());				
 				filter.setPropertyNames(request.getPropertyNames());
 				filter.setParams(processedParams);
 				filter.setCriteriaName(filterClause);
-				List<IDomainObject> objectMatchList = filter.refreshMatchList();
+				List<? extends IDomainObject> objectMatchList = filter.refreshMatchList();
 				this.session.registerObjectEventListener(filter);
 
 				// generate response

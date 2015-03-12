@@ -102,7 +102,7 @@ public class CheProcessLineScan extends ServerTest {
 		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(getFacility());
@@ -111,14 +111,14 @@ public class CheProcessLineScan extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
 		Path path2 = createPathForTest(getFacility());
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.DAO.findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
@@ -264,10 +264,10 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		
-		super.startSitecon();
+		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		// Prove that our orders file is working. D401 is a modeled location (alias for a Tier)
@@ -284,7 +284,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -314,7 +314,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		String firstLine = picker.getLastCheDisplayString();
+		String firstLine = picker.getLastCheDisplayString(1);
 		LOGGER.info(picker.getPickerTypeAndState("5:"));
 
 		// Should be showing the job now. 
@@ -351,10 +351,10 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.startSitecon();
+		this.startSiteController();
 		
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -407,10 +407,10 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		super.startSitecon();
+		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		// Prove that our orders file is working. D601 is an unmodeled location
@@ -427,7 +427,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -447,7 +447,7 @@ public class CheProcessLineScan extends ServerTest {
 		List<WorkInstruction> theWiList = picker.getActivePickList();
 		logWiList(theWiList);
 
-		String firstLine = picker.getLastCheDisplayString();
+		String firstLine = picker.getLastCheDisplayString(1);
 		// Should be showing the job now. 
 		Assert.assertEquals("D601", firstLine);
 
@@ -470,7 +470,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("7b: scan NO, so we should be on the 12345.3 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("7: repeat: scan another good detail. Screen will ask for yes or no.");
 		picker.scanOrderDetailId("11111.1");
@@ -491,7 +491,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("8c: scan YES, so we should be on the 11111.1 job");
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());
+		Assert.assertEquals("D401", picker.getLastCheDisplayString(1));
 
 		// make sure we can logout from ABANDON_CHECK and DO_PICK		
 		LOGGER.info("9: logout works from DO_PICK");
@@ -527,7 +527,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		// we need to set che1 to be in line scan mode
@@ -536,11 +536,11 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
 
-		super.startSitecon();
+		super.startSiteController();
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -553,7 +553,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanOrderDetailId("12345.3"); // does not add "%"	
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 		WorkInstruction wi = picker.getActivePick();
 		int quant = wi.getPlanQuantity();
 		Assert.assertEquals(3, quant); // This order detail has quantity 3
@@ -578,7 +578,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("3a: scan same order again");
 		picker.scanOrderDetailId("12345.3"); 	
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("3b: check that the count should be 1");
 		wi = picker.getActivePick();
@@ -596,7 +596,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("3e: scan NO, so we should be back on job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("4: CLEAR from SHORT_PICK state");
 		picker.scanCommand("SHORT");
@@ -625,7 +625,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("6b: scan NO, so we should be on the 12345.3 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 		
 		LOGGER.info("6c: Repeat, but scan YES, so go to the 11111.1 job");
 		picker.scanCommand("SHORT");
@@ -634,7 +634,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());
+		Assert.assertEquals("D401", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("7: Scan other order line from SHORT_PICK_CONFIRM state");
 		picker.scanCommand("SHORT");
@@ -647,7 +647,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("7b: scan NO, so we should still be on the 11111.1 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D401", picker.getLastCheDisplayString());
+		Assert.assertEquals("D401", picker.getLastCheDisplayString(1));
 
 		LOGGER.info("7c: Repeat, but scan YES, so go to the 12345.3 job");
 		picker.scanCommand("SHORT");
@@ -658,7 +658,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		Assert.assertEquals("D601", picker.getLastCheDisplayString());
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 	
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
@@ -676,10 +676,10 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		super.startSitecon();
+		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -706,7 +706,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		LOGGER.info("2a: Import the orders file again, but with containerId");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		setUpLineScanOrdersWithCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
@@ -731,7 +731,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		LOGGER.info("3a: Set LOCAPICK, then import the orders file again, with containerId");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
@@ -785,7 +785,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		
 		// we need to set che1 to be in line scan mode
@@ -794,7 +794,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 		
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
@@ -804,7 +804,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		super.startSitecon();
+		super.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
@@ -958,7 +958,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		
 		// we need to set che1 to be in line scan mode
@@ -967,7 +967,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 		
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
@@ -977,7 +977,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		this.startSitecon();
+		this.startSiteController();
 		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
@@ -1081,7 +1081,7 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		
 		// we need to set che1 to be in line scan mode
@@ -1090,7 +1090,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.DAO.store(che1);
+		Che.staticGetDao().store(che1);
 		
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
@@ -1100,7 +1100,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
-		this.startSitecon();
+		this.startSiteController();
 		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");

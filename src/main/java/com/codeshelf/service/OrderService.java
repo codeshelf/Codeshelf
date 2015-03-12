@@ -9,12 +9,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
 import org.hibernate.Session;
-import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.StandardBasicTypes;
 
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -26,10 +23,8 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.api.NotFoundException;
 
@@ -52,18 +47,20 @@ public class OrderService implements IApiService {
 //				.setParameter("facilityUUID", uuid)
 //				.executeUpdate();
 
+		@SuppressWarnings("unused")
 		int odResult = session.createSQLQuery("update order_detail od set active = false FROM order_header oh WHERE od.parent_persistentid = oh.persistentid AND CAST(oh.parent_persistentid AS VARCHAR(50)) =  :facilityUUIDString")
 			.setParameter("facilityUUIDString", uuid.toString())
 			.executeUpdate();
 		
-
 		int ohResult = session.createQuery("update OrderHeader oh set oh.active = false where oh.parent.persistentId = :facilityUUID")
 				.setParameter("facilityUUID", uuid)
 				.executeUpdate();
 
+		@SuppressWarnings("unused")
 		int ogResult = session.createQuery("update OrderGroup og set og.active = false where og.parent.persistentId = :facilityUUID")
 				.setParameter("facilityUUID", uuid)
 				.executeUpdate();
+		
 		return ohResult;
 	}
 	
@@ -131,7 +128,7 @@ public class OrderService implements IApiService {
 		ProductivitySummaryList productivitySummary = null;
 		try {
 			Session session = TenantPersistenceService.getInstance().getSessionWithTransaction(tenant);
-			facility = Facility.DAO.findByPersistentId(facilityId);
+			facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility == null) {
 				throw new NotFoundException("Facility " + facilityId + " does not exist");
 			}
@@ -156,7 +153,7 @@ public class OrderService implements IApiService {
 				getPicksPerHourQuery.setCacheable(true);
 				picksPerHour = getPicksPerHourQuery.list();
 			}
-			productivitySummary = new ProductivitySummaryList(facility, picksPerHour);
+			productivitySummary = new ProductivitySummaryList(facility, picksPerHour, session);
 		} finally {
 			TenantPersistenceService.getInstance().commitTransaction(tenant);
 		}
@@ -164,31 +161,29 @@ public class OrderService implements IApiService {
 	}
 
 	public ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId),
-			WorkInstruction.class);
+		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(CriteriaRegistry.ALL_BY_PARENT,
+			ImmutableMap.<String, Object> of("parentId", facilityId));
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
 	}
 
 	public List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
 		//Get Facility
-		Facility facility = Facility.DAO.findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		if (facility == null) {
 			throw new NotFoundException("Facility " + facilityId + " does not exist");
 		}
 		//If group name provided, confirm that such group exists
 		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
 		if (!(allGroups || undefined)) {
-			OrderGroup group = OrderGroup.DAO.findByDomainId(facility, groupNameIn);
+			OrderGroup group = OrderGroup.staticGetDao().findByDomainId(facility, groupNameIn);
 			if (group == null) {
 				throw new NotFoundException("Group " + groupNameIn + " had not been created");
 			}
 		}
 		//Get all instructions and filter those matching the requirements
-		List<WorkInstruction> instructions = WorkInstruction.DAO.findByFilterAndClass(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId),
-			WorkInstruction.class);
+		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(CriteriaRegistry.ALL_BY_PARENT,
+			ImmutableMap.<String, Object> of("parentId", facilityId));
 		List<WorkInstruction> filtered = new ArrayList<>();
 		for (WorkInstruction instruction : instructions) {
 			if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {

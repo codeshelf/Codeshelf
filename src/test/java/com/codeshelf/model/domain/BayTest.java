@@ -7,9 +7,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.testframework.MockDaoTest;
 import com.google.common.collect.ImmutableList;
 
-public class BayTest extends DomainTestABC {
+public class BayTest extends MockDaoTest {
 
 	@Before
 	public void init() {
@@ -19,7 +20,7 @@ public class BayTest extends DomainTestABC {
 	public void testOrderingOfTiers() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = getDefaultFacility();
+		Facility facility = getFacility();
 		Aisle aisle = getDefaultAisle(facility, "A1");
 		Bay bay = getDefaultBay(aisle, "B1");
 		Tier tier1 = getDefaultTier(bay, "TA");

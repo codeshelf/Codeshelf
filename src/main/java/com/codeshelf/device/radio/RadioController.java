@@ -8,7 +8,6 @@ package com.codeshelf.device.radio;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -16,7 +15,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Getter;
 
@@ -24,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
+import com.codeshelf.device.radio.protocol.IRadioPacketHandler;
+import com.codeshelf.device.radio.protocol.RadioPacketHandler_v0;
 import com.codeshelf.flyweight.command.AckStateEnum;
 import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
 import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
@@ -50,73 +50,73 @@ import com.google.inject.Inject;
  */
 
 public class RadioController implements IRadioController {
-	private static final Logger										LOGGER						= LoggerFactory.getLogger(RadioController.class);
+	private static final Logger										LOGGER								= LoggerFactory.getLogger(RadioController.class);
 
-	public static final String										PRIVATE_GUID				= "00000000";
-	public static final String										VIRTUAL_GUID				= "%%%%%%%%";
+	public static final String										PRIVATE_GUID						= "00000000";
+	public static final String										VIRTUAL_GUID						= "%%%%%%%%";
 
-	public static final byte										MAX_CHANNELS				= 16;
-	public static final byte										NO_PREFERRED_CHANNEL		= (byte) 255;
-	public static final String										NO_PREFERRED_CHANNEL_TEXT	= "None";
+	public static final byte										MAX_CHANNELS						= 16;
+	public static final byte										NO_PREFERRED_CHANNEL				= (byte) 255;
+	public static final String										NO_PREFERRED_CHANNEL_TEXT			= "None";
 
-	private static final String										CONTROLLER_THREAD_NAME		= "Radio Controller";
-	private static final String										STARTER_THREAD_NAME			= "Intferface Starter";
+	private static final String										CONTROLLER_THREAD_NAME				= "Radio Controller";
+	private static final String										STARTER_THREAD_NAME					= "Intferface Starter";
 
-	private static final int										STARTER_THREAD_PRIORITY		= Thread.NORM_PRIORITY;
+	private static final int										STARTER_THREAD_PRIORITY				= Thread.NORM_PRIORITY;
 
-	private static final long										CTRL_START_DELAY_MILLIS		= 5;
-	private static final long										NETCHECK_DELAY_MILLIS		= 250;
+	private static final long										CTRL_START_DELAY_MILLIS				= 5;
+	private static final long										NETCHECK_DELAY_MILLIS				= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS			= 20;
-	private static final int										ACK_SEND_RETRY_COUNT		= 20;
-	private static final long										MAX_PACKET_AGE_MILLIS		= 2000;
+	private static final long										ACK_TIMEOUT_MILLIS					= 20;
+	private static final int										ACK_SEND_RETRY_COUNT				= 20;
+	private static final long										MAX_PACKET_AGE_MILLIS				= 2000;
 
-	private static final long										BACKGROUND_SERVICE_DELAY_MS	= 20;
+	private static final long										BACKGROUND_SERVICE_DELAY_MS			= 20;
 
-	private static final long										BROADCAST_RATE_MILLIS		= 750;
+	private static final long										BROADCAST_RATE_MILLIS				= 750;
 
-	private static final int										MAX_CHANNEL_VALUE			= 255;
-	private static final long										PACKET_SPACING_MILLIS		= 20;
+	private static final int										MAX_CHANNEL_VALUE					= 255;
+	private static final long										PACKET_SPACING_MILLIS				= 20;
 
 	@Getter
 	private final IGatewayInterface									gatewayInterface;
 
-	private volatile boolean										mShouldRun					= true;
+	private volatile boolean										mShouldRun							= true;
 
-	private final NetAddress										mServerAddress				= new NetAddress(IPacket.GATEWAY_ADDRESS);
+	private final NetAddress										mServerAddress						= new NetAddress(IPacket.GATEWAY_ADDRESS);
 
 	// We iterate over this list often, but write almost never. It needs to be thread-safe so we chose to make writes slow and reads lock-free.
-	private final List<IRadioControllerEventListener>				mEventListeners				= new CopyOnWriteArrayList<>();
+	private final List<IRadioControllerEventListener>				mEventListeners						= new CopyOnWriteArrayList<>();
 
 	// This does not need to be synchronized because it is only ever used by a single thread in the packet handler service
 	// processNetworkCheckCommand only accesses this array for the broadcast network address.
-	private final ChannelInfo[]										mChannelInfo				= new ChannelInfo[MAX_CHANNELS];
+	private final ChannelInfo[]										mChannelInfo						= new ChannelInfo[MAX_CHANNELS];
 
-	private final AtomicBoolean										mChannelSelected			= new AtomicBoolean(false);
+	private final AtomicBoolean										mChannelSelected					= new AtomicBoolean(false);
 
 	// These 2 variables are only every modified in a synchronized method but we make volatile so it is visable to other threads.
 	private volatile byte											mPreferredChannel;
-	private volatile byte											mRadioChannel				= 0;
+	private volatile byte											mRadioChannel						= 0;
 
 	private Thread													mControllerThread;
 
 	// Background service executor
-	private final ScheduledExecutorService							backgroundService			= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
-																									.build());
-	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap				= Maps.newConcurrentMap();
-	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap			= Maps.newConcurrentMap();
+	private final ScheduledExecutorService							backgroundService					= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
+																											.build());
+	private final Map<String, INetworkDevice>						mDeviceGuidMap						= Maps.newConcurrentMap();
+	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap					= Maps.newConcurrentMap();
 
-	// Ack Id must start from 1
-	private final AtomicInteger										mAckId						= new AtomicInteger(1);
-
-	private volatile boolean										mRunning					= false;
+	private volatile boolean										mRunning							= false;
 
 	// Services
 	private final RadioControllerPacketHandlerService				packetHandlerService;
 	private final RadioControllerPacketIOService					packetIOService;
 	private final RadioControllerBroadcastService					broadcastService;
 
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap				= Maps.newConcurrentMap();
+	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap						= Maps.newConcurrentMap();
+
+	//This map is initialized in the constructor
+	private final Map<Byte, IRadioPacketHandler>					mProtocolVersionToPacketHandlerMap	= Maps.newHashMap();
 
 	/**
 	 * @param inSessionManager
@@ -135,7 +135,9 @@ public class RadioController implements IRadioController {
 		NetAddress broadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 
 		// Create Services
-		this.packetHandlerService = new RadioControllerPacketHandlerService(this);
+		this.packetHandlerService = new RadioControllerPacketHandlerService(mProtocolVersionToPacketHandlerMap,
+			mDeviceNetAddrMap,
+			mDeviceGuidMap);
 		this.packetIOService = new RadioControllerPacketIOService(inGatewayInterface,
 			packetHandlerService,
 			broadcastAddress,
@@ -144,6 +146,20 @@ public class RadioController implements IRadioController {
 			broadcastAddress,
 			this,
 			BROADCAST_RATE_MILLIS);
+
+		//Protocol to handler map
+
+		//Version 0
+		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v0(broadcastAddress,
+			mPendingAcksMap,
+			mDeviceNetAddrMap,
+			broadcastNetworkId,
+			broadcastAddress,
+			mChannelSelected,
+			mEventListeners,
+			mChannelInfo,
+			mDeviceGuidMap,
+			packetIOService));
 	}
 
 	@Override
@@ -237,22 +253,25 @@ public class RadioController implements IRadioController {
 			}
 
 		} while (!started && mShouldRun);
-		LOGGER.info("Gateway radio interface started");
 
-		selectChannel();
+		if (mShouldRun) {
+			LOGGER.info("Gateway radio interface started");
 
-		// Start IO Service
-		packetIOService.start();
+			selectChannel();
 
-		// Kick off the background event processing
-		backgroundService.scheduleWithFixedDelay(new Runnable() {
-			@Override
-			public void run() {
-				processEvents();
-			}
-		}, 0, BACKGROUND_SERVICE_DELAY_MS, TimeUnit.MILLISECONDS);
+			// Start IO Service
+			packetIOService.start();
 
-		broadcastService.start();
+			// Kick off the background event processing
+			backgroundService.scheduleWithFixedDelay(new Runnable() {
+				@Override
+				public void run() {
+					processEvents();
+				}
+			}, 0, BACKGROUND_SERVICE_DELAY_MS, TimeUnit.MILLISECONDS);
+
+			broadcastService.start();
+		}
 	}
 
 	/*
@@ -456,61 +475,34 @@ public class RadioController implements IRadioController {
 			IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
 			inCommand.setPacket(packet);
 
-			/*
-			 * Certain commands can request the remote to ACK (to guarantee that
-			 * the command arrived). Most packets will not contain a command
-			 * that requests and ACK, so normally packets will just get sent
-			 * right here.
-			 * 
-			 * If a packet's command requires an ACK then we perform the
-			 * following steps:
-			 * 
-			 * - Check that the packet address is something other than a
-			 * broadcast network ID or network address. (We don't support
-			 * broadcast ACK.) - If a packet queue does not exist for the
-			 * destination then: 1. Create a packet queue for the destination.
-			 * 2. Put the packet in the queue. 3. Send the packet. - If a packet
-			 * queue does exist for the destination then just put the packet in
-			 * it.
-			 */
-
-			if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
-					&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
-
-				// If we're pending an ACK then assign an ACK ID.
-				int nextAckId = mAckId.getAndIncrement();
-				while (nextAckId > Byte.MAX_VALUE) {
-					mAckId.compareAndSet(nextAckId, 1);
-					nextAckId = mAckId.get();
-				}
-
-				packet.setAckId((byte) nextAckId);
-				packet.setAckState(AckStateEnum.PENDING);
-
-				// Add the command to the pending ACKs map, and increment the command ID counter.
-				BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
-				if (queue == null) {
-					queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
-					BlockingQueue<IPacket> existingQueue = mPendingAcksMap.putIfAbsent(inDstAddr, queue);
-					if (existingQueue != null) {
-						queue = existingQueue;
-					}
-				}
-
-				// If the ACK queue is too full then pause.
-				boolean success = queue.offer(packet);
-				while (!success) {
-					// Given an ACK timeout of 20ms and a read frequency of 20ms. If the max queue size is over 20 (and it should be)
-					// then we can drop the earlier packets since they should be timed out anyway.
-					IPacket packetToDrop = queue.poll();
-					LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}",
-						queue.size(),
-						packetToDrop);
-					success = queue.offer(packet);
-				}
-				LOGGER.debug("Packet is now pending ACK: {}", packet);
-			} else {
+			if (inDstAddr.getValue() == (IPacket.BROADCAST_ADDRESS)) {
+				//If we're broadcasting just send it out
 				packetIOService.handleOutboundPacket(packet);
+			} else {
+				//Now we can lookup the INetworkDevice from the NetAddr
+				//Make sure device is registered
+				if (device == null) {
+					LOGGER.warn("Cannot send packet to unregistered (null) packet={}", packet);
+					return;
+				}
+
+				//Check version
+				Byte radioProtocolVersion = device.getRadioProtocolVersion();
+
+				if (radioProtocolVersion == null) {
+					LOGGER.warn("Cannot send packet to unregistered (with no radio protocol version) packet={}", packet);
+					return;
+				}
+
+				IRadioPacketHandler handler = mProtocolVersionToPacketHandlerMap.get(radioProtocolVersion);
+
+				if (handler == null) {
+					LOGGER.warn("Cannot send packet to device with an unsupported radio protocol verions. packet={}", packet);
+					return;
+				}
+
+				//Handle Packet
+				handler.handleInboundPacket(packet);
 			}
 
 		} finally {
@@ -580,7 +572,7 @@ public class RadioController implements IRadioController {
 				// inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 			}
 
-			mDeviceGuidMap.put(inNetworkDevice.getGuid(), inNetworkDevice);
+			mDeviceGuidMap.put(inNetworkDevice.getGuid().getHexStringNoPrefix(), inNetworkDevice);
 			mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 
 		} finally {

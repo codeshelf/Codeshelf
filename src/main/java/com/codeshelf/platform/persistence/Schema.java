@@ -28,25 +28,29 @@ import org.slf4j.LoggerFactory;
 public abstract class Schema extends DatabaseConnection {
 	static final Logger LOGGER	= LoggerFactory.getLogger(Schema.class);
 
+	private Configuration hibernateConfiguration = null;
+	
 	public abstract String getSchemaName();
 	public abstract String getHibernateConfigurationFilename();
 	public abstract String getChangeLogName();
 
-	public Configuration getHibernateConfiguration() {
-		// fetch database config from properties file
-		Configuration hibernateConfiguration = new Configuration().configure(this.getHibernateConfigurationFilename());
+	public synchronized Configuration getHibernateConfiguration() {
+		if(hibernateConfiguration == null) {
+			hibernateConfiguration = new Configuration().configure(this.getHibernateConfigurationFilename());
+			
+			hibernateConfiguration.setProperty("hibernate.connection.url", this.getUrl());
+			hibernateConfiguration.setProperty("hibernate.connection.username", this.getUsername());
+			hibernateConfiguration.setProperty("hibernate.connection.password", this.getPassword());
+			hibernateConfiguration.setProperty("hibernate.default_schema", this.getSchemaName());
 		
-		hibernateConfiguration .setProperty("hibernate.connection.url", this.getUrl());
-		hibernateConfiguration .setProperty("hibernate.connection.username", this.getUsername());
-		hibernateConfiguration .setProperty("hibernate.connection.password", this.getPassword());
-		hibernateConfiguration .setProperty("hibernate.default_schema", this.getSchemaName());
-	
-		// wait why this again
-		hibernateConfiguration .setProperty("javax.persistence.schema-generation-source","metadata-then-script");
+			// wait why this again
+			hibernateConfiguration .setProperty("javax.persistence.schema-generation-source","metadata-then-script");
+		}
+		// fetch database config from properties file
 		return hibernateConfiguration;
 	}
 	
-	void applyLiquibaseSchemaUpdates() {
+	synchronized void applyLiquibaseSchemaUpdates() {
 		if(getSQLSyntax() != DatabaseConnection.SQLSyntax.POSTGRES) {
 			LOGGER.debug("Will not attempt to apply Liquibase updates to non-Postgres schema");
 			return;

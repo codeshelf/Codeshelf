@@ -16,12 +16,12 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.BayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.collect.Ordering;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -37,11 +37,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Bay extends Location {
 
-
-	@Inject
-	public static ITypedDao<Bay>	DAO;
-
-	@Singleton
 	public static class BayDao extends GenericDaoABC<Bay> implements ITypedDao<Bay> {
 		public final Class<Bay> getDaoClass() {
 			return Bay.class;
@@ -59,7 +54,11 @@ public class Bay extends Location {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Bay> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Bay> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Bay.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -110,10 +109,6 @@ public class Bay extends Location {
 		
 	}
 
-	public static void setDao(ITypedDao<Bay> inBayDao) {
-		Bay.DAO = inBayDao;
-	}
-	
 	public Tier createTier(String inTierId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Tier tier = new Tier();
 		tier.setDomainId(inTierId);
@@ -139,5 +134,8 @@ public class Bay extends Location {
 	    }
 		throw new RuntimeException("Location is not a bay: "+location);
 	}
-		
+
+	public static void sortByDomainId(List<Bay> bays) {
+		java.util.Collections.sort(bays, new BayComparable());
+	}
 }

@@ -24,14 +24,14 @@ import com.codeshelf.application.ContextLogging;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.google.common.collect.Maps;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class SessionManagerService extends AbstractScheduledService {
+public class SessionManagerService extends AbstractCodeshelfScheduledService {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(SessionManagerService.class);
 
@@ -76,15 +76,7 @@ public class SessionManagerService extends AbstractScheduledService {
 
 	public SessionManagerService() {
 	}
-/*	
-	public void awaitRunningOrThrow() {
-		try {
-			this.awaitRunning(MAX_INITIALIZE_WAIT_SECONDS, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("timeout initializing "+serviceName(),e);
-		}
-	}
-*/
+
 	public synchronized UserSession sessionStarted(Session session) {
 		if(this.activeSessions == null) {
 			LOGGER.warn("sessionStarted called while service is uninitialized or resetting for test");
@@ -152,7 +144,7 @@ public class SessionManagerService extends AbstractScheduledService {
 			return null; // called while shutting down or resetting - this should only happen in tests
 		}
 		for (UserSession session : this.getSessions()) {
-			if(session.getUser().equals(user)) {
+			if(session.getUser() != null && session.getUser().equals(user)) {
 				return session;
 			}
 		}
@@ -297,8 +289,8 @@ public class SessionManagerService extends AbstractScheduledService {
 			throw new IllegalStateException("reset called while service state is "+this.state().toString());
 		}
 		try {
-			shutDown();
-			startUp();
+			teardown();
+			initialize();
 		} catch (Exception e) {
 			throw new RuntimeException("failed to reset state of SessionManagerService",e);
 		}
@@ -308,6 +300,10 @@ public class SessionManagerService extends AbstractScheduledService {
 	
 	@Override
 	protected synchronized void startUp() throws Exception {
+		initialize();	
+	}
+
+	private void initialize() {
 		activeSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.active");
 		activeSiteControllerSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.sitecontrollers");
 		totalSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"sessions.total");
@@ -319,11 +315,14 @@ public class SessionManagerService extends AbstractScheduledService {
 		
 		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
 		killIdle = Boolean.getBoolean("websocket.idle.kill");
-
 	}
-
+	
 	@Override
 	protected synchronized void shutDown() throws Exception {
+		teardown();
+	}
+
+	private void teardown() throws Exception {
 		LOGGER.info("shutting down session manager with {} active sessions",this.activeSessions.size());
 		Collection<UserSession> sessions = this.activeSessions.values();
 		for(UserSession session : sessions) {

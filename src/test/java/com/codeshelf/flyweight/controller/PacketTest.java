@@ -22,12 +22,13 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.testframework.MinimalTest;
 
 /** --------------------------------------------------------------------------
  *  Test the Packet class.
  *  @author jeffw
  */
-public final class PacketTest {
+public final class PacketTest extends MinimalTest {
 
 	private static final byte[]	PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05,
 			0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
@@ -58,25 +59,25 @@ public final class PacketTest {
 		NetAddress srcAddr = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		NetAddress destAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
 
-		packet = new Packet(command, networkId, srcAddr, destAddr);
+		packet = new Packet(command, networkId, srcAddr, destAddr, false);
 		// OK, expected case.
 
 		try {
-			packet = new Packet(null, networkId, srcAddr, destAddr);
+			packet = new Packet(null, networkId, srcAddr, destAddr, false);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
 
 		try {
-			packet = new Packet(command, networkId, null, destAddr);
+			packet = new Packet(command, networkId, null, destAddr, false);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
 
 		try {
-			packet = new Packet(command, networkId, srcAddr, null);
+			packet = new Packet(command, networkId, srcAddr, null, false);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
@@ -140,7 +141,7 @@ public final class PacketTest {
 		dstAddr = new NetAddress(IPacket.ADDRESS_BITS);
 
 		// Create a new packet to send to the output stream.
-		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr);
+		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr, false);
 
 		// Stream the packet out.
 		packet.toStream(outputStream);

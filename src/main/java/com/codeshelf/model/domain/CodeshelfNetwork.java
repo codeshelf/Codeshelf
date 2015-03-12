@@ -30,13 +30,9 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -56,10 +52,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 
-	@Inject
-	public static ITypedDao<CodeshelfNetwork>	DAO;
-
-	@Singleton
 	public static class CodeshelfNetworkDao extends GenericDaoABC<CodeshelfNetwork> implements ITypedDao<CodeshelfNetwork> {
 		public final Class<CodeshelfNetwork> getDaoClass() {
 			return CodeshelfNetwork.class;
@@ -151,11 +143,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<CodeshelfNetwork> getDao() {
-		return DAO;
+		return staticGetDao();
 	}
-	
-	public final static void setDao(ITypedDao<CodeshelfNetwork> dao) {
-		CodeshelfNetwork.DAO = dao;
+
+	public static ITypedDao<CodeshelfNetwork> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(CodeshelfNetwork.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -239,14 +231,14 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 */
 	public Che createChe(String inDomainId, NetGuid inGuid) {
 		// If the CHE doesn't already exist then create it.
-		Che che = Che.DAO.findByDomainId(this, inGuid.getHexStringNoPrefix());
+		Che che = Che.staticGetDao().findByDomainId(this, inGuid.getHexStringNoPrefix());
 		if (che == null) {
 			che = new Che();
 			che.setDomainId(inDomainId);
 			che.setDeviceNetGuid(inGuid);
 			this.addChe(che);
 			try {
-				Che.DAO.store(che);
+				Che.staticGetDao().store(che);
 			} catch (DaoException e) {
 				LOGGER.error("Couldn't store new CHE "+inDomainId, e);
 			}
@@ -262,7 +254,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 */
 	public LedController findOrCreateLedController(String inDomainId, NetGuid inGuid) {
 
-		LedController result = LedController.DAO.findByDomainId(this, inDomainId);
+		LedController result = LedController.staticGetDao().findByDomainId(this, inDomainId);
 		if (result == null) {
 			// Get the first network in the list of networks.
 			result = new LedController();
@@ -272,7 +264,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			this.addLedController(result); // so that it works immediately in unit test, and not only after one rehydration cycle
 
 			try {
-				LedController.DAO.store(result);
+				LedController.staticGetDao().store(result);
 			} catch (DaoException e) { 
 				LOGGER.error("Couldn't store new LED controller "+inDomainId, e);
 			}
@@ -284,11 +276,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return this.getParent();
 	}
 
-	public void createSiteControllerAndUser(Tenant tenant,int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
 		String username = Integer.toString(serialNumber);
 
 		// create site controller object (or use found)
-		SiteController sitecon = SiteController.DAO.findByDomainId(this,username);
+		SiteController sitecon = SiteController.staticGetDao().findByDomainId(this,username);
 		if(sitecon == null) {
 			sitecon = new SiteController();
 			sitecon.setDomainId(username);
@@ -298,7 +290,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			this.addSiteController(sitecon);
 			
 			try {
-				SiteController.DAO.store(sitecon); 
+				SiteController.staticGetDao().store(sitecon); 
 			} catch (DaoException e) { 
 				LOGGER.error("Couldn't store new Site Controller "+username, e);
 				sitecon=null;
@@ -309,13 +301,19 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		}
 
 		// create site controller user (or use found)
+		
+		/* not implemented anymore. 
+		 * tenant manager will create "default" site controller user
+		 * others must be created manually separate from domain object site controller
 		User user = TenantManagerService.getInstance().getUser(username);
 		if(user != null) {
 			// already exists?
 			if(user.tenantEquals(tenant)) {
 				LOGGER.info("Site controller user already exists, not creating");
 			} else {
-				LOGGER.error("Cannot create site controller user since it already exists with another tenant");
+				if(TenantManagerService.class.isAssignableFrom(TenantManagerService.getInstance().getClass()))
+					// ignore for testing mock 
+					LOGGER.error("Cannot create site controller user since it already exists with another tenant");
 			}
 		} else if(sitecon == null) {
 			LOGGER.error("Will not create Site Controller user after failure to create Site Controller");
@@ -324,6 +322,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			if(null == TenantManagerService.getInstance().createUser(tenant, username, password, UserType.SITECON)) {
 				LOGGER.error("Failed to create user for new site controller "+username);
 			}
-		} 
+		}
+		 */
+ 
 	}
 }

@@ -76,9 +76,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
-public class WorkService extends AbstractExecutionThreadService implements IApiService {
+public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
 	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
 	private static final String			SHUTDOWN_MESSAGE	= "*****SHTUDOWN*****";
@@ -190,7 +189,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 					}
 
 					try {
-						ContainerUse.DAO.store(thisUse);
+						ContainerUse.staticGetDao().store(thisUse);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -211,7 +210,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 			if (!newCntrUses.contains(oldUse)) {
 				inChe.removeContainerUse(oldUse);
 				try {
-					ContainerUse.DAO.store(oldUse);
+					ContainerUse.staticGetDao().store(oldUse);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
@@ -249,7 +248,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
 		final boolean doThrowInstead = false;
-		Che che = Che.DAO.findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che == null)
 			return;
 
@@ -286,7 +285,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
-		Che che = Che.DAO.findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che != null) {
 			try {
 				final WorkInstruction storedWi = persistWorkInstruction(incomingWI);
@@ -307,7 +306,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 	 * @return
 	 */
 	public final void fakeCompleteWi(String wiPersistentId, String inCompleteStr) {
-		WorkInstruction wi = WorkInstruction.DAO.findByPersistentId(wiPersistentId);
+		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiPersistentId);
 		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
 		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
 
@@ -355,7 +354,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 			"facilityId", inChe.getFacility().getPersistentId(),
 			"domainId", inScannedOrderDetailId
 		);
-		List<OrderDetail> orderDetails = OrderDetail.DAO.findByFilterAndClass("orderDetailByFacilityAndDomainId", filterArgs, OrderDetail.class);
+		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByFilter("orderDetailByFacilityAndDomainId", filterArgs);
 
 		if (orderDetails.isEmpty()) {
 			// temporary: just return empty list instead of throwing
@@ -432,7 +431,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 			WorkInstruction wi = wiIter.next();
 			if (wi.isHousekeeping()) {
 				LOGGER.info("Removing exisiting HK WI={}", wi);
-				WorkInstruction.DAO.delete(wi);
+				WorkInstruction.staticGetDao().delete(wi);
 				wiIter.remove();
 			}
 		}
@@ -533,7 +532,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 				if (assignedChe != null)
 					assignedChe.removeWorkInstruction(wi); // necessary?
 				inOrderDetail.removeWorkInstruction(wi); // necessary?
-				WorkInstruction.DAO.delete(wi);
+				WorkInstruction.staticGetDao().delete(wi);
 
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work SHORT instruction", e);
@@ -625,7 +624,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		inWi.doSetPickInstruction(locationString);
 
 		try {
-			WorkInstruction.DAO.store(inWi);
+			WorkInstruction.staticGetDao().store(inWi);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -653,7 +652,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 					if (wi.getLocation().equals(workLocation)) {
 						wiResultList.add(wi);
 						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
-						WorkInstruction.DAO.store(wi);
+						WorkInstruction.staticGetDao().store(wi);
 						wiIterator.remove();
 					}
 				}
@@ -887,7 +886,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 					resultWi.setPlanQuantity(0);
 					resultWi.setPlanMinQuantity(0);
 					resultWi.setPlanMaxQuantity(0);
-					WorkInstruction.DAO.store(resultWi);
+					WorkInstruction.staticGetDao().store(resultWi);
 				}
 				resultWork.setInstruction(resultWi);
 			} else {
@@ -1092,7 +1091,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
 
 		// Hibernate version has test failing with database lock here, so pull out the query
-		List<WorkInstruction> filterWiList = WorkInstruction.DAO.findByFilter(filterParams);
+		List<WorkInstruction> filterWiList = WorkInstruction.staticGetDao().findByFilter(filterParams);
 
 		for (WorkInstruction wi : filterWiList) {
 			// Very unlikely. But if some wLocationABCs were deleted between start work and scan starting location, let's not give out the "deleted" wis
@@ -1120,13 +1119,13 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		}
 		// No try/catch here. The intent is to fail badly and see how the system handles it.
 		che.setDescription(desc);
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		LOGGER.warn("Intentional database persistence error. Setting too long description on " + che.getDomainId());
 	}
 
 	private WorkInstruction persistWorkInstruction(WorkInstruction updatedWi) throws DaoException {
 		UUID wiId = updatedWi.getPersistentId();
-		WorkInstruction storedWi = WorkInstruction.DAO.findByPersistentId(wiId);
+		WorkInstruction storedWi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
 		if (storedWi == null) {
 			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
@@ -1136,7 +1135,7 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 		storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
 		storedWi.setStarted(updatedWi.getStarted());
 		storedWi.setCompleted(updatedWi.getCompleted());
-		WorkInstruction.DAO.store(storedWi);
+		WorkInstruction.staticGetDao().store(storedWi);
 
 		// Find the order detail for this WI and mark it.
 		OrderDetail orderDetail = storedWi.getOrderDetail();
@@ -1201,17 +1200,12 @@ public class WorkService extends AbstractExecutionThreadService implements IApiS
 
 	@Override
 	protected void triggerShutdown() {
-		super.triggerShutdown();
-		//if(this.serviceThread != null) {
-		//	this.serviceThread.interrupt();
-		//}
-		//this.completedWorkInstructions.clear();
-		this.completedWorkInstructions.offer(new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE));
+		WIMessage poison = new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE);
+		this.completedWorkInstructions.offer(poison);
 	}
 
 	@Override
 	protected void startUp() throws Exception {
-		super.startUp();
 		// initialize
 		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
 	}

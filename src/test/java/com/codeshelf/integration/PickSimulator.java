@@ -18,11 +18,10 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.IntegrationTest;
-import com.codeshelf.util.ThreadUtils;
 
 public class PickSimulator {
 
-	IntegrationTest		test;
+	IntegrationTest				test;
 
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
@@ -142,13 +141,13 @@ public class PickSimulator {
 	public void scanOrderDetailId(String inOrderDetailId) {
 		cheDeviceLogic.scanCommandReceived(inOrderDetailId);
 	}
+
 	/**
 	 * Same as scanOrderId. DEV-653. Just given this name for clarity of JUnit tests. (Scan the SKU, or UPC, or license plate)
 	 */
 	public void scanSomething(String inSomething) {
 		cheDeviceLogic.scanCommandReceived(inSomething);
 	}
-
 
 	public void scanPosition(String inPositionId) {
 		cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
@@ -234,7 +233,7 @@ public class PickSimulator {
 	}
 
 	/**
-	 * Careful: returns the actual list from the cheDeviceLogic. 
+	 * Careful: returns the actual list from the cheDeviceLogic.
 	 * This is intended to return all NEW and INPROGRESS instructions that will appear on the che
 	 */
 	public List<WorkInstruction> getRemainingPicksWiList() {
@@ -257,7 +256,7 @@ public class PickSimulator {
 		List<WorkInstruction> serversList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : activeList) {
 			UUID theId = wi.getPersistentId();
-			WorkInstruction fullWi = WorkInstruction.DAO.findByPersistentId(theId);
+			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
 			serversList.add(fullWi);
 		}
 
@@ -273,31 +272,22 @@ public class PickSimulator {
 		List<WorkInstruction> currentList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : inList) {
 			UUID theId = wi.getPersistentId();
-			WorkInstruction fullWi = WorkInstruction.DAO.findByPersistentId(theId);
+			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
 			currentList.add(fullWi);
 		}
 		return currentList;
 	}
 
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			CheStateEnum currentState = cheDeviceLogic.getCheStateEnum();
-			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
-			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
-			// some of the side effects after this call.
-			if (currentState.equals(state) && !cheDeviceLogic.inSetState()) {
-				// expected state found - all good
-				return;
-			}
+		CheStateEnum lastState = cheDeviceLogic.waitForCheState(state, timeoutInMillis);
+		if (!state.equals(lastState)) {
+			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
+				state,
+				timeoutInMillis,
+				lastState,
+				cheDeviceLogic.inSetState());
+			Assert.fail(theProblem);
 		}
-		CheStateEnum existingState = cheDeviceLogic.getCheStateEnum();
-		String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s, currentState: %s", 
-				state, timeoutInMillis, existingState,  cheDeviceLogic.inSetState(), cheDeviceLogic.getCheStateEnum());
-		LOGGER.error(theProblem);
-		Assert.fail(theProblem);
 	}
 
 	public boolean hasLastSentInstruction(byte position) {
@@ -361,12 +351,12 @@ public class PickSimulator {
 	/**
 	 * Intentionally incomplete. Could parameterize for each line, but initially only remember the first line.
 	 */
-	public String getLastCheDisplayString() {
-		return cheDeviceLogic.getRecentCheDisplayString();
+	public String getLastCheDisplayString(int lineIndex) {
+		return cheDeviceLogic.getRecentCheDisplayString(lineIndex);
 	}
 
 	public void forceDeviceToMatchManagerConfiguration() {
 		cheDeviceLogic.updateConfigurationFromManager();
-		}
+	}
 
 }

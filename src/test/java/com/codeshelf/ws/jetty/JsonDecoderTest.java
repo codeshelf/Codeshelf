@@ -10,11 +10,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.JvmProperties;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.ObjectMixIn;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -24,14 +24,10 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class JsonDecoderTest  {
+public class JsonDecoderTest extends MinimalTest {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(JsonDecoderTest.class);
 
-	static {
-		JvmProperties.load("test");
-	}
-	
 	/**
 	 * Test simple decoding without exception
 	 */

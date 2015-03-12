@@ -28,10 +28,9 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -49,16 +48,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class PathSegment extends DomainObjectTreeABC<Path> {
 
-	/**
-	 * 
-	 */
-	@SuppressWarnings("unused")
-	private static final long		serialVersionUID	= -2776468192822374495L;
-
-	@Inject
-	public static ITypedDao<PathSegment>	DAO;
-
-	@Singleton
 	public static class PathSegmentDao extends GenericDaoABC<PathSegment> implements ITypedDao<PathSegment> {
 		public final Class<PathSegment> getDaoClass() {
 			return PathSegment.class;
@@ -145,7 +134,11 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<PathSegment> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<PathSegment> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(PathSegment.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -304,10 +297,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 			deltaFromStartOfSegment = getValueAlongPathSegment(startP.getY(), endP.getY(), inFromPoint.getY());
 
 		return distance + deltaFromStartOfSegment;
-	}
-
-	public static void setDao(PathSegmentDao inPathSegmentDao) {
-		PathSegment.DAO = inPathSegmentDao;
 	}
 
 }

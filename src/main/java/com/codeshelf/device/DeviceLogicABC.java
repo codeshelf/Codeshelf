@@ -35,6 +35,11 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Setter
 	private short					mFirmwareVersion;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Byte					mRadioProtocolVersion	= null;
+
 	// PersistentId
 	@Accessors(prefix = "m")
 	@Getter
@@ -105,6 +110,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// --------------------------------------------------------------------------
 	/* 
 	*/
+	@Override
 	public boolean isAckIdNew(byte inAckId) {
 		int unsignedAckId = inAckId & 0xFF;
 		int unsignedLastAckId = mLastAckId & 0xFF;
@@ -128,7 +134,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	public final boolean isDeviceAssociated() {
 		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Utility function. Should be promoted, and get a cached value.

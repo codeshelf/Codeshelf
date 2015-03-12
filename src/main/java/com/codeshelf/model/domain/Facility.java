@@ -38,14 +38,12 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,11 +63,6 @@ public class Facility extends Location {
 	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
 	private static final String 		UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
 
-
-	@Inject
-	public static ITypedDao<Facility>	DAO;
-
-	@Singleton
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		@Override
 		public final Class<Facility> getDaoClass() {
@@ -148,10 +141,6 @@ public class Facility extends Location {
 		return new ArrayList<Path>(this.paths.values());
 	}
 
-	public final static void setDao(ITypedDao<Facility> dao) {
-		Facility.DAO = dao;
-	}
-
 	@Override
 	public final String getDefaultDomainIdPrefix() {
 		return "F";
@@ -160,7 +149,11 @@ public class Facility extends Location {
 	@Override
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Facility> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Facility> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Facility.class);
 	}
 
 	@Override
@@ -552,7 +545,7 @@ public class Facility extends Location {
 		while (true) {
 			index++;
 			pathId = facilityID + "." + index;
-			Path existingPath = Path.DAO.findByDomainId(this, pathId);
+			Path existingPath = Path.staticGetDao().findByDomainId(this, pathId);
 			if (existingPath == null)
 				break;
 			// just fear of infinite loops
@@ -575,7 +568,7 @@ public class Facility extends Location {
 		path.setDomainId(pathDomainId);
 
 		this.addPath(path);
-		Path.DAO.store(path);
+		Path.staticGetDao().store(path);
 
 		path.createDefaultWorkArea(); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
 		return path;
@@ -602,7 +595,7 @@ public class Facility extends Location {
 			pathSegment.setDomainId(segmentDomainId);
 
 			path.addPathSegment(pathSegment);
-			PathSegment.DAO.store(pathSegment);
+			PathSegment.staticGetDao().store(pathSegment);
 		}
 		return path;
 	}
@@ -662,7 +655,7 @@ public class Facility extends Location {
 		vertex.setDrawOrder(inDrawOrder);
 		this.addVertex(vertex);
 
-		Vertex.DAO.store(vertex);
+		Vertex.staticGetDao().store(vertex);
 	}
 
 	// --------------------------------------------------------------------------
@@ -702,7 +695,7 @@ public class Facility extends Location {
 
 					// Interesting bug. Drop aisle works. Redrop while still running lead to error if addVertex not there. Subsequent redrops after application start ok.
 					inLocation.addVertex(vertexN);
-					Vertex.DAO.store(vertexN);
+					Vertex.staticGetDao().store(vertexN);
 				}
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -713,7 +706,7 @@ public class Facility extends Location {
 				for (int n = 0; n < vertexListSize; n++) {
 					Vertex theVertex = vList.get(n);
 					if (n >= 4) {
-						// Vertex.DAO.delete(theVertex);
+						// Vertex.staticGetDao().delete(theVertex);
 						LOGGER.error("extra vertex?. Why is it here?");
 					} else {
 						// just update the points
@@ -723,7 +716,7 @@ public class Facility extends Location {
 							LOGGER.error("Wrong vertex name. How?");
 						}
 						theVertex.setPoint(points[n]);
-						Vertex.DAO.store(theVertex);
+						Vertex.staticGetDao().store(theVertex);
 					}
 				}
 
@@ -737,7 +730,7 @@ public class Facility extends Location {
 		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
 		location.setFirstLedNumAlongPath((short)0);
 		this.addLocation(location);
-		UnspecifiedLocation.DAO.store(location);
+		UnspecifiedLocation.staticGetDao().store(location);
 		return location;
 	}
 	
@@ -767,7 +760,7 @@ public class Facility extends Location {
 
 		this.addContainerKind(result);
 		try {
-			ContainerKind.DAO.store(result);
+			ContainerKind.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -780,7 +773,7 @@ public class Facility extends Location {
 	 * @return
 	 */
 	public IEdiService getEdiExportService() {
-		return IronMqService.DAO.findByDomainId(this, IRONMQ_DOMAINID);
+		return IronMqService.staticGetDao().findByDomainId(this, IRONMQ_DOMAINID);
 	}
 
 	// --------------------------------------------------------------------------
@@ -798,7 +791,7 @@ public class Facility extends Location {
 		this.addEdiService(result);
 		result.storeCredentials("", ""); // non-null credentials
 		try {
-			IronMqService.DAO.store(result);
+			IronMqService.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("Failed to save IronMQ service", e);
 		}
@@ -837,7 +830,7 @@ public class Facility extends Location {
 
 		this.addEdiService(result);
 		try {
-			DropboxService.DAO.store(result);
+			DropboxService.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -862,7 +855,7 @@ public class Facility extends Location {
 		this.addNetwork(result);
 
 		try {
-			CodeshelfNetwork.DAO.store(result);
+			CodeshelfNetwork.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("DaoException persistence error storing CodeshelfNetwork", e);
 		}
@@ -916,7 +909,7 @@ public class Facility extends Location {
 		for (Location location : ddcLocations) {
 			// Delete all of the old DDC groups from this location.
 			for (ItemDdcGroup ddcGroup : location.getDdcGroups()) {
-				ItemDdcGroup.DAO.delete(ddcGroup);
+				ItemDdcGroup.staticGetDao().delete(ddcGroup);
 			}
 
 			locationItemsQuantity = getLocationDdcItemsAndTotalQuantity(ddcItemMasters, locationItems, location);
@@ -950,7 +943,7 @@ public class Facility extends Location {
 			ddcPos += distPerItem * item.getQuantity();
 			item.setPosAlongPath(ddcPos);
 			try {
-				Item.DAO.store(item);
+				Item.staticGetDao().store(item);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -960,7 +953,7 @@ public class Facility extends Location {
 
 				// Finish the end position of the last DDC group and store it.
 				if (lastDdcGroup != null) {
-					ItemDdcGroup.DAO.store(lastDdcGroup);
+					ItemDdcGroup.staticGetDao().store(lastDdcGroup);
 				}
 
 				// Start the next DDC group.
@@ -974,7 +967,7 @@ public class Facility extends Location {
 		}
 		// Store the last DDC
 		if (lastDdcGroup != null) {
-			ItemDdcGroup.DAO.store(lastDdcGroup);
+			ItemDdcGroup.staticGetDao().store(lastDdcGroup);
 		}
 	}
 
@@ -1277,7 +1270,7 @@ public class Facility extends Location {
 	 * @param inAnchorPosY
 	 */
 	// @Transactional
-	public static Facility createFacility(Tenant tenant,final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+	public static Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
 		facility.setDomainId(inDomainId);
@@ -1304,13 +1297,12 @@ public class Facility extends Location {
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		// Create a site controller & associated user
-		network.createSiteControllerAndUser(tenant,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
 		
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
 		
 		// Setup two dummy CHEs
-		LOGGER.info("creating 2 CHEs");;
 		for (int cheNum = 1; cheNum <= 2; cheNum++) {
 			String cheName = "CHE" + cheNum;
 			Che che = network.getChe(cheName);

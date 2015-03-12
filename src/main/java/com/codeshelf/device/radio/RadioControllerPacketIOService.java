@@ -76,11 +76,6 @@ public class RadioControllerPacketIOService {
 		executorService.shutdown();
 	}
 
-	/**
-	 * This method is synchronized because the gateway's thread safety is
-	 * unknown
-	 */
-
 	/** Properly spaces outbound packets
 	 * @param inPacket
 	 */
@@ -212,6 +207,10 @@ public class RadioControllerPacketIOService {
 		return lastIOTimestmapMs;
 	}
 
+	/**
+	 * This method is synchronized because the gateway's thread safety is
+	 * unknown
+	 */
 	public synchronized void sendOutboundPacket(IPacket packet) {
 		// Send packet
 		packet.incrementSendCount();

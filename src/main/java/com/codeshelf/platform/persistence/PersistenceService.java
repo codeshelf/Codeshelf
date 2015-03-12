@@ -1,18 +1,14 @@
 package com.codeshelf.platform.persistence;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.util.concurrent.AbstractIdleService;
+import com.codeshelf.service.AbstractCodeshelfIdleService;
 
-public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends AbstractIdleService implements IPersistenceService<SCHEMA_TYPE> {
-	private static final int MAX_INITIALIZE_WAIT_SECONDS	= 60;
+public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends AbstractCodeshelfIdleService implements IPersistenceService<SCHEMA_TYPE> {
 	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceServiceImpl.class);
 
 	// define behavior of service
@@ -134,13 +130,4 @@ public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends Abs
 		return hasActiveTransaction(getDefaultSchema());
 	}
 	
-	// service methods
-	@Override
-	public void awaitRunningOrThrow() {
-		try {
-			this.awaitRunning(MAX_INITIALIZE_WAIT_SECONDS, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("timeout initializing "+serviceName(),e);
-		}
-	}
 }

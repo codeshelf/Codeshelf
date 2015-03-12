@@ -10,11 +10,13 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.HibernateTest;
+
 /**
  * @author jeffw
  *
  */
-public class PathTest extends DomainTestABC {
+public class PathTest extends HibernateTest {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
@@ -25,7 +27,7 @@ public class PathTest extends DomainTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		Facility retrievedFacility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+		Facility retrievedFacility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
 		
 		Path path = retrievedFacility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);

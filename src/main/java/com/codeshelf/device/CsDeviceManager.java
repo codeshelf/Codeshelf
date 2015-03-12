@@ -37,7 +37,6 @@ import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
-import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -619,17 +618,39 @@ public class CsDeviceManager implements
 		}
 	}
 	
-	public void processPosConControllerMessage(PosConControllerMessage message) {
-		NetGuid netGuid = new NetGuid(message.getNetGuidStr());
-		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(netGuid);
+	public PosManagerDeviceLogic processPosConControllerMessage(PosControllerInstr instruction, boolean skipUpdate) {
+		NetGuid controllerGuid = new NetGuid(instruction.getControllerId());
+		String sourceStr = instruction.getSourceId();
+		NetGuid sourceGuid = (sourceStr==null) ? controllerGuid : new NetGuid(sourceStr);
+		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(controllerGuid);
 		if (device != null) {
-			LOGGER.info("processPosConControllerMessage calling cheDevice.sendDisplayCommand()");
-			device.addPosConCmdFor(netGuid, message.getInstruction());
-			device.updatePosCons();
+			LOGGER.info("processPosConControllerMessage calling display function");
+			if (instruction.isRemoveAll()){
+				device.removePosConInstrsForSource(sourceGuid);
+			} else if (!instruction.getRemovePos().isEmpty()){
+				device.removePosConInstrsForSourceAndPositions(sourceGuid, instruction.getRemovePos());
+			} else {
+				device.addPosConInstrFor(sourceGuid, instruction);
+			}
+			if (!skipUpdate) {
+				device.updatePosCons();
+			}
 		} else {
-			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", netGuid);
+			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", controllerGuid);
+		}
+		return device;
+	}
+	
+	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
+		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
+		for (PosControllerInstr instruction : instructionList.getInstructions()) {
+			controllers.add(processPosConControllerMessage(instruction, true));
+		}
+		for (PosManagerDeviceLogic controller : controllers) {
+			controller.updatePosCons();
 		}
 	}
+
 
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing

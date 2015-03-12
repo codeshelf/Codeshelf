@@ -14,5 +14,5 @@ public interface ObjectEventListener {
 
 	MessageABC processObjectUpdate(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties);
 
-	MessageABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
+	MessageABC processObjectDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Class<? extends IDomainObject> parentClass, final UUID parentId);
 }

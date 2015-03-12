@@ -1,6 +1,7 @@
 package com.codeshelf.device;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,6 @@ import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
-import com.codeshelf.ws.jetty.protocol.message.PosConControllerMessage;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
@@ -157,9 +157,12 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			String guidStr = msg.getNetGuidStr();
 			NetGuid theGuid = new NetGuid(guidStr);
 			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
-		} else if (message instanceof PosConControllerMessage) {
-			PosConControllerMessage msg = (PosConControllerMessage)message;
-			this.deviceManager.processPosConControllerMessage(msg);
+		} else if (message instanceof PosControllerInstr) {
+			PosControllerInstr msg = (PosControllerInstr)message;
+			this.deviceManager.processPosConControllerMessage(msg, false);
+		} else if (message instanceof PosControllerInstrList) {
+			PosControllerInstrList msg = (PosControllerInstrList)message;
+			this.deviceManager.processPosConControllerListMessage(msg);
 		}
 	}
 

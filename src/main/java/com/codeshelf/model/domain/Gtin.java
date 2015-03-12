@@ -20,9 +20,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -40,10 +39,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 
-	@Inject
-	public static ITypedDao<Gtin>	DAO;
-	
-	@Singleton
 	public static class GtinMapDao extends GenericDaoABC<Gtin> implements ITypedDao<Gtin> {
 		public final Class<Gtin> getDaoClass() {
 			return Gtin.class;
@@ -80,7 +75,11 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Gtin> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Gtin> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Gtin.class);
 	}
 
 	@Override

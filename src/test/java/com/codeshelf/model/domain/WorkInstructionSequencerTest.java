@@ -15,14 +15,14 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.testframework.ServerTest;
 import com.eaio.uuid.UUID;
 
-public class WorkInstructionSequencerTest extends EdiTestABC {
+public class WorkInstructionSequencerTest extends ServerTest {
 	
 	public WorkInstructionSequencerTest() {
 	}
@@ -59,14 +59,14 @@ public class WorkInstructionSequencerTest extends EdiTestABC {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);

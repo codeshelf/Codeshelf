@@ -10,12 +10,13 @@ import org.junit.Test;
 
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.testframework.MinimalTest;
 
 /** --------------------------------------------------------------------------
  *  Test the NetAddress calss.
  *  @author jeffw
  */
-public final class NetAddressTest {
+public final class NetAddressTest extends MinimalTest {
 
 	/**
 	 * Test method for {@link com.codeshelf.flyweightcontroller.command.NetAddress#NetAddress(int)}.

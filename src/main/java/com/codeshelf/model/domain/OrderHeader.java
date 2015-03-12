@@ -40,10 +40,9 @@ import com.codeshelf.model.PickStrategyEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -62,10 +61,6 @@ import com.google.inject.Singleton;
 @ToString(of = { "orderType", "status", "orderGroup", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
-	@Inject
-	public static ITypedDao<OrderHeader>	DAO;
-
-	@Singleton
 	public static class OrderHeaderDao extends GenericDaoABC<OrderHeader> implements ITypedDao<OrderHeader> {
 		public final Class<OrderHeader> getDaoClass() {
 			return OrderHeader.class;
@@ -85,7 +80,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		header.setActive(Boolean.TRUE);
 		header.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addOrderHeader(header);
-		OrderHeader.DAO.store(header);
+		OrderHeader.staticGetDao().store(header);
 		return header;
 	}
 
@@ -202,7 +197,11 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderHeader> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<OrderHeader> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(OrderHeader.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -320,7 +319,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public OrderLocation addOrderLocation(Location inLocation) {
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
-		OrderLocation.DAO.store(result);
+		OrderLocation.staticGetDao().store(result);
 		return result;
 	}
 
@@ -572,10 +571,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		if (theGroup == null)
 			return "";
 		return theGroup.getDomainId();
-	}
-
-	public static void setDao(OrderHeaderDao inOrderHeaderDao) {
-		OrderHeader.DAO = inOrderHeaderDao;
 	}
 
 }

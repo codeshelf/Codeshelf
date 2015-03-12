@@ -15,10 +15,10 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -35,14 +35,14 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
-public class FacilityOutlineTest extends DomainTestABC {
+public class FacilityOutlineTest extends MockDaoTest {
 
 	@Test
 	public final void testCreateVertex() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
-		Facility.DAO.store(facility);
+		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
+		Facility.staticGetDao().store(facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Facility");
@@ -93,7 +93,7 @@ public class FacilityOutlineTest extends DomainTestABC {
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
 		
 		/*
 		var anchorPoint = {'posTypeEnum': 'GPS', 'x': event.latLng.lng(), 'y': event.latLng.lat(), 'z' : 0.0};

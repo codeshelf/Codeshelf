@@ -33,10 +33,9 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -53,17 +52,14 @@ import com.google.inject.Singleton;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class OrderGroup extends DomainObjectTreeABC<Facility> {
-	public static final String UNDEFINED = "undefined";
-	
-	@Inject
-	public static ITypedDao<OrderGroup>	DAO;
 
-	@Singleton
 	public static class OrderGroupDao extends GenericDaoABC<OrderGroup> implements ITypedDao<OrderGroup> {
 		public final Class<OrderGroup> getDaoClass() {
 			return OrderGroup.class;
 		}
 	}
+
+	public static final String UNDEFINED = "undefined";
 
 	public final static String			DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
 
@@ -129,7 +125,11 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderGroup> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<OrderGroup> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(OrderGroup.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -180,7 +180,4 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 		return getOrderHeaders();
 	}
 
-	public static void setDao(OrderGroupDao inOrderGroupDao) {
-		OrderGroup.DAO = inOrderGroupDao;
-	}
 }

@@ -22,10 +22,10 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.MockDao;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 
-public class DropboxServiceTest {
+public class DropboxServiceTest extends MockDaoTest {
 
 	/*
 	 * It's pretty easy to test and already connected DB account, but it's impossible to test the link process.
@@ -36,13 +36,6 @@ public class DropboxServiceTest {
 
 	@Test
 	public final void dropboxCheckTest() throws IOException {
-
-		Facility.setDao(new MockDao<Facility>());
-		Aisle.setDao(new MockDao<Aisle>());
-		Bay.setDao(new MockDao<Bay>());
-		Vertex.setDao(new MockDao<Vertex>());
-		DropboxService.setDao(new MockDao<DropboxService>());
-		EdiDocumentLocator.setDao(new MockDao<EdiDocumentLocator>());
 
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");

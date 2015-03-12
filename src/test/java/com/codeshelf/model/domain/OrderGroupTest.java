@@ -11,25 +11,26 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.testframework.MockDaoTest;
 
 /**
  * @author jeffw
  *
  */
-public class OrderGroupTest extends DomainTestABC {
+public class OrderGroupTest extends MockDaoTest {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "test", Point.getZeroPoint());
 		
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderGroup.DAO.store(orderGroup);
+		OrderGroup.staticGetDao().store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -39,7 +40,7 @@ public class OrderGroupTest extends DomainTestABC {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order1);
@@ -57,7 +58,7 @@ public class OrderGroupTest extends DomainTestABC {
 		order2.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2.setActive(true);
 		order2.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order2);
+		OrderHeader.staticGetDao().store(order2);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order2);
@@ -74,14 +75,14 @@ public class OrderGroupTest extends DomainTestABC {
 	public final void releaseOrderGroupTest() {
 		this.getTenantPersistenceService().beginTransaction();
 		
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "test", Point.getZeroPoint());
 
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderGroup.DAO.store(orderGroup);
+		OrderGroup.staticGetDao().store(orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -92,7 +93,7 @@ public class OrderGroupTest extends DomainTestABC {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 		
 		orderGroup.addOrderHeader(order1);
 		

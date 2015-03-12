@@ -33,7 +33,6 @@ import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.InventoryGenerator;
@@ -52,6 +51,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
@@ -60,7 +60,7 @@ import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
-public class LightServiceTest extends EdiTestABC {
+public class LightServiceTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LightServiceTest.class);
 	
 	@SuppressWarnings("unchecked")
@@ -80,7 +80,7 @@ public class LightServiceTest extends EdiTestABC {
 
 		LOGGER.info("1: reload facility. Get childre aisle, tiers.");
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Aisle aisle = (Aisle) facility.getChildren().get(0);
 		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
 		int itemsPerTier = 5;
@@ -93,7 +93,7 @@ public class LightServiceTest extends EdiTestABC {
 
 		LOGGER.info("3: get inventory in working order for one aisle.");
 		this.getTenantPersistenceService().beginTransaction();
-		aisle = Aisle.DAO.reload(aisle);
+		aisle = Aisle.staticGetDao().reload(aisle);
 		List<Item> items = aisle.getInventoryInWorkingOrder();
 		Assert.assertNotEquals(0,  items.size());
 		this.getTenantPersistenceService().commitTransaction();
@@ -121,8 +121,8 @@ public class LightServiceTest extends EdiTestABC {
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
 		// and pass through to Future<Void> chaserLight()
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
-		aisle = Aisle.DAO.reload(aisle);
+		facility = Facility.staticGetDao().reload(facility);
+		aisle = Aisle.staticGetDao().reload(aisle);
 		items = aisle.getInventoryInWorkingOrder();
 		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
@@ -153,7 +153,7 @@ public class LightServiceTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
@@ -177,7 +177,7 @@ public class LightServiceTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*whole bay*/);
@@ -204,7 +204,7 @@ public class LightServiceTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
 		Tier b2t1 = (Tier)facility.findSubLocationById("A1.B2.T1");
@@ -233,7 +233,7 @@ public class LightServiceTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
 		b1t1.clearControllerChannel();
 		
@@ -263,7 +263,7 @@ public class LightServiceTest extends EdiTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.DAO.reload(facility);
+		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);
@@ -361,14 +361,14 @@ public class LightServiceTest extends EdiTestABC {
 				+ "Tier,T2,,5,32,120,,\r\n"; //
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility= Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
 		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -377,7 +377,7 @@ public class LightServiceTest extends EdiTestABC {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 

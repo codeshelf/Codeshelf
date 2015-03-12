@@ -23,14 +23,14 @@ import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.google.common.util.concurrent.AbstractScheduledService;
+import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
  *  @author jeffw
  */
-public final class EdiProcessorService extends AbstractScheduledService {
+public final class EdiProcessorService extends AbstractCodeshelfScheduledService {
 
 	int periodSeconds = 30;
 
@@ -67,7 +67,7 @@ public final class EdiProcessorService extends AbstractScheduledService {
 	}
 	
 	List<Facility> getFacilities() {
-		return Facility.DAO.getAll();
+		return Facility.staticGetDao().getAll();
 	}
 
 	@Override

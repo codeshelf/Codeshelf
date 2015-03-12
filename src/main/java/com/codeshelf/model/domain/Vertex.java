@@ -24,10 +24,9 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -46,10 +45,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Vertex extends DomainObjectTreeABC<Location> {
 
-	@Inject
-	public static ITypedDao<Vertex>	DAO;
-
-	@Singleton
 	public static class VertexDao extends GenericDaoABC<Vertex> implements ITypedDao<Vertex> {
 		public final Class<Vertex> getDaoClass() {
 			return Vertex.class;
@@ -109,7 +104,11 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Vertex> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Vertex> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Vertex.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -128,10 +127,6 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 		posX = inPoint.getX();
 		posY = inPoint.getY();
 		posZ = inPoint.getZ();
-	}
-
-	public static void setDao(ITypedDao<Vertex> inVertexDao) {
-		Vertex.DAO = inVertexDao;
 	}
 
 	@Override

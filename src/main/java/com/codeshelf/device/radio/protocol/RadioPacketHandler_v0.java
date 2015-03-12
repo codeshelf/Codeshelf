@@ -37,7 +37,6 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
 import com.codeshelf.flyweight.controller.INetworkDevice;
-import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 
@@ -56,7 +55,6 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	private final List<IRadioControllerEventListener>				mEventListeners;
 	private final ChannelInfo[]										mChannelInfo;
 	private final Map<NetGuid, INetworkDevice>						mDeviceGuidMap;
-	//private final RadioController									radioController;
 	private final RadioControllerPacketIOService					packetIOService;
 
 	public RadioPacketHandler_v0(NetAddress mServerAddress,
@@ -68,7 +66,6 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 		List<IRadioControllerEventListener> mEventListeners,
 		ChannelInfo[] mChannelInfo,
 		Map<NetGuid, INetworkDevice> mDeviceGuidMap,
-		IRadioController radioController,
 		RadioControllerPacketIOService packetIOService) {
 		super();
 		this.mServerAddress = mServerAddress;
@@ -80,7 +77,6 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 		this.mEventListeners = mEventListeners;
 		this.mChannelInfo = mChannelInfo;
 		this.mDeviceGuidMap = mDeviceGuidMap;
-		//this.radioController = radioController;
 		this.packetIOService = packetIOService;
 	}
 
@@ -166,10 +162,10 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
 				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
-			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr);
+			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
 			ackCmd.setPacket(ackPacket);
 			ackPacket.setAckId(inAckId);
-			sendOutboundPacket(ackPacket, false);
+			handleOutboundPacket(ackPacket);
 
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -304,9 +300,9 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 					new NetChannelValue((byte) 0),
 					new NetChannelValue((byte) 0));
 
-				IPacket packet = new Packet(netCheck, packetIOService.getNetworkId(), mServerAddress, broadcastAddress);
+				IPacket packet = new Packet(netCheck, packetIOService.getNetworkId(), mServerAddress, broadcastAddress, false);
 				inCommand.setPacket(packet);
-				sendOutboundPacket(packet, false);
+				handleOutboundPacket(packet);
 			}
 		} else {
 			// This is a net-check response.
@@ -443,9 +439,9 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 						foundDevice.getAddress(),
 						foundDevice.getSleepSeconds());
 
-					IPacket packet = new Packet(assignCmd, broadcastNetworkId, mServerAddress, broadcastAddress);
+					IPacket packet = new Packet(assignCmd, broadcastNetworkId, mServerAddress, broadcastAddress, false);
 					inCommand.setPacket(packet);
-					sendOutboundPacket(packet, false);
+					handleOutboundPacket(packet);
 
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 
@@ -515,25 +511,17 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 				ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 
 				// Send the command.
-				IPacket packet = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, inSrcAddr);
+				IPacket packet = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, inSrcAddr, false);
 				inCommand.setPacket(packet);
-				sendOutboundPacket(packet, false);
+				handleOutboundPacket(packet);
 			} finally {
 				ContextLogging.clearNetGuid();
 			}
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * com.gadgetworks.flyweight.controller.IRadioController#sendCommand(com
-	 * .gadgetworks.flyweight.command.ICommand,
-	 * com.gadgetworks.flyweight.command.NetworkId,
-	 * com.gadgetworks.flyweight.command.NetAddress, boolean)
-	 */
-	private void sendOutboundPacket(IPacket packet, boolean isAckRequested) {
+	@Override
+	public void handleOutboundPacket(IPacket packet) {
 		/*
 		 * Certain commands can request the remote to ACK (to guarantee that
 		 * the command arrived). Most packets will not contain a command
@@ -551,8 +539,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 		 * queue does exist for the destination then just put the packet in
 		 * it.
 		 */
-
-		if ((isAckRequested) && (packet.getNetworkId().getValue() != (IPacket.BROADCAST_NETWORK_ID))
+		if ((packet.isAckRequested()) && (packet.getNetworkId().getValue() != (IPacket.BROADCAST_NETWORK_ID))
 				&& (packet.getDstAddr().getValue() != (IPacket.BROADCAST_ADDRESS))) {
 
 			// If we're pending an ACK then assign an ACK ID.
@@ -600,6 +587,8 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
 		try {
+			//Add device to 
+
 			inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
 			inNetworkDevice.startDevice();
 			for (IRadioControllerEventListener radioEventListener : mEventListeners) {

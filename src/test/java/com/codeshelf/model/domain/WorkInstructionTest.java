@@ -16,6 +16,7 @@ import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -23,7 +24,7 @@ import com.google.common.collect.ImmutableMap;
  * @author jeffw
  *
  */
-public class WorkInstructionTest extends DomainTestABC {
+public class WorkInstructionTest extends HibernateTest {
 
 	@Test
 	public final void cookedDescriptionTest() {
@@ -87,23 +88,23 @@ public class WorkInstructionTest extends DomainTestABC {
 	public final void addRemoveOrderGroupTest() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(), "F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility( "F1", "test", Point.getZeroPoint());
 
 		Aisle aisle1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisle1);
+		Aisle.staticGetDao().store(aisle1);
 
 		Bay baya1b1 = aisle1.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(baya1b1);
+		Bay.staticGetDao().store(baya1b1);
 		Bay baya1b2 = aisle1.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(baya1b2);
+		Bay.staticGetDao().store(baya1b2);
 
 		Aisle aisle2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisle2);
+		Aisle.staticGetDao().store(aisle2);
 
 		Bay baya2b1 = aisle2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(baya2b1);
+		Bay.staticGetDao().store(baya2b1);
 		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(baya2b2);
+		Bay.staticGetDao().store(baya2b2);
 
 		Container container = new Container();
 		container.setDomainId("C1");
@@ -111,12 +112,12 @@ public class WorkInstructionTest extends DomainTestABC {
 		container.setKind(facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		container.setActive(true);
 		container.setUpdated(new Timestamp(System.currentTimeMillis()));
-		Container.DAO.store(container);
+		Container.staticGetDao().store(container);
 
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId("EA");
 		uomMaster.setParent(facility);
-		UomMaster.DAO.store(uomMaster);
+		UomMaster.staticGetDao().store(uomMaster);
 		facility.addUomMaster(uomMaster);
 
 		ItemMaster itemMaster = new ItemMaster();
@@ -125,7 +126,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		itemMaster.setStandardUom(uomMaster);
 		itemMaster.setActive(true);
 		itemMaster.setUpdated(new Timestamp(System.currentTimeMillis()));
-		ItemMaster.DAO.store(itemMaster);
+		ItemMaster.staticGetDao().store(itemMaster);
 
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -135,7 +136,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.DAO.store(order1);
+		OrderHeader.staticGetDao().store(order1);
 
 		OrderDetail orderDetail = createOrderDetail(order1, itemMaster);
 
@@ -163,7 +164,7 @@ public class WorkInstructionTest extends DomainTestABC {
 		wi.setPlanMaxQuantity(5);
 		wi.setActualQuantity(0);
 		wi.setAssigned(new Timestamp(System.currentTimeMillis()));
-		WorkInstruction.DAO.store(wi);
+		WorkInstruction.staticGetDao().store(wi);
 
 		// Check if the work instruction is contained by the facility, aisle and bay
 		Assert.assertTrue(wi.isContainedByLocation(facility));
@@ -207,21 +208,21 @@ public class WorkInstructionTest extends DomainTestABC {
 		wi.getOrderDetail().getParent().getDao().store(wi.getOrderDetail().getParent());
 		wi.getOrderDetail().getDao().store(wi.getOrderDetail());
 		
-		WorkInstruction.DAO.store(wi);
+		WorkInstruction.staticGetDao().store(wi);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
 		Map<String, Object> params = ImmutableMap.<String, Object>of(
 			"cheId", wi.getAssignedChe().getPersistentId().toString(),
 			"assignedTimestamp", wi.getAssigned().getTime());
-		List<WorkInstruction> foundInstructions = WorkInstruction.DAO.findByFilterAndClass("workInstructionByCheAndAssignedTime", params, WorkInstruction.class);
+		List<WorkInstruction> foundInstructions = WorkInstruction.staticGetDao().findByFilter("workInstructionByCheAndAssignedTime", params);
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	/*
 	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {
 		boolean result = false;
-		for (WorkInstruction wi : WorkInstruction.DAO.getAll()) {
+		for (WorkInstruction wi : WorkInstruction.staticGetDao().getAll()) {
 			if (wi.getOrderId().equals(inOrderHeader.getOrderId())) {
 				result = true;
 			}

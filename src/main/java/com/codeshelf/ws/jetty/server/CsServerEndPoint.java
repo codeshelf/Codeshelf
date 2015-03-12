@@ -84,9 +84,13 @@ public class CsServerEndPoint {
                // pass request to processor to execute command
                 ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
                 if (response!=null) {
-                	// send response to client
-                	LOGGER.debug("Sending response "+response+" for request "+request);
-                	csSession.sendMessage(response);
+                	if(csSession != null) {
+                    	// send response to client
+                    	LOGGER.debug("Sending response "+response+" for request "+request);
+                    	csSession.sendMessage(response);
+                	} else {
+                		LOGGER.warn("Could not respond "+response.getStatusMessage()+" on "+message.getClass().getSimpleName()+" because csSession is null");
+                	}
                 }
                 else {
                 	LOGGER.warn("No response generated for request "+request);

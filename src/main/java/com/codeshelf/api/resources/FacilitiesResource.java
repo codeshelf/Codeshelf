@@ -40,7 +40,7 @@ public class FacilitiesResource {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			persistence.beginTransaction();
-			List<Facility> facilities = Facility.DAO.getAll();
+			List<Facility> facilities = Facility.staticGetDao().getAll();
 			List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
 			return BaseResponse.buildResponse(facilitiesShort);
 		} catch (Exception e) {

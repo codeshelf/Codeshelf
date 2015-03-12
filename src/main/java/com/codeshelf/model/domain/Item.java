@@ -29,6 +29,7 @@ import com.codeshelf.model.LedRange;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.ErrorCode;
@@ -36,8 +37,6 @@ import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -56,10 +55,6 @@ import com.google.inject.Singleton;
 @ToString
 public class Item extends DomainObjectTreeABC<ItemMaster> {
 
-	@Inject
-	public static ITypedDao<Item>	DAO;
-
-	@Singleton
 	public static class ItemDao extends GenericDaoABC<Item> implements ITypedDao<Item> {
 		public final Class<Item> getDaoClass() {
 			return Item.class;
@@ -81,10 +76,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private Location			storedLocation;
 	
 	// The Gtin value
-	@OneToOne(optional = true, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Gtin	gtin;
+	//@OneToOne(optional = true, fetch = FetchType.LAZY)
+	//@Getter
+	//@Setter
+	//private Gtin	gtin;
 
 	// Quantity.
 	@Column(nullable = false)
@@ -142,7 +137,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Item> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Item> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Item.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -434,10 +433,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return (theRange.getRangeString());
 	}
 
-	public static void setDao(ItemDao inItemDao) {
-		Item.DAO = inItemDao;
-	}
-
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
@@ -451,6 +446,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		// Let's return much less than the lomboc toString.
 		String toSay = "Sku:" + this.getItemMasterId() + " Uom:" + this.getUomMasterId() + " Loc:" + this.getItemLocationAlias();
 		return toSay;
+	}
+	
+	public Gtin getGtin() {
+		
+		return getParent().getGtinForUom(uomMaster);
 	}
 
 }

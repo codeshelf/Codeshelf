@@ -52,7 +52,7 @@ public class WiSummarizer {
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
 		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
-		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		for (WorkInstruction wi : wis) {
 			Timestamp wiAssignTime = wi.getAssigned();
 			WiSetSummary theSummary = getOrCreateSummaryForTime(wiAssignTime);
@@ -74,7 +74,7 @@ public class WiSummarizer {
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
 		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
-		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		int wiCount = 0;
 		for (WorkInstruction wi : wis) {
 			Timestamp wiCompleteTime = wi.getCompleted();

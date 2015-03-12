@@ -14,10 +14,10 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.testframework.HibernateTest;
 
-public class DomainObjectPropertyTest extends DomainTestABC {
+public class DomainObjectPropertyTest extends HibernateTest {
 	
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectPropertyTest.class);

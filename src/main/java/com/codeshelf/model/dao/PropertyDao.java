@@ -14,7 +14,7 @@ import com.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 
-public class PropertyDao extends GenericDaoABC<DomainObjectProperty> implements ITypedDao<DomainObjectProperty> {
+public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 
 	private static final Logger LOGGER	= LoggerFactory.getLogger(PropertyDao.class);
 	

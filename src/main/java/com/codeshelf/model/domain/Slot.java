@@ -5,17 +5,19 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.List;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.SlotComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -31,10 +33,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Slot extends Location {
 
-	@Inject
-	public static ITypedDao<Slot>	DAO;
-
-	@Singleton
 	public static class SlotDao extends GenericDaoABC<Slot> implements ITypedDao<Slot> {
 		public final Class<Slot> getDaoClass() {
 			return Slot.class;
@@ -50,7 +48,11 @@ public class Slot extends Location {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Slot> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Slot> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Slot.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -61,8 +63,8 @@ public class Slot extends Location {
 		return getCompString(getDomainId());
 	}
 
-	public static void setDao(SlotDao inSlotDao) {
-		Slot.DAO = inSlotDao;
+	public static void sortByDomainId(List<Slot> slots) {
+		java.util.Collections.sort(slots, new SlotComparable());
 	}
 	
 	@Override

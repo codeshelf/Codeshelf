@@ -10,9 +10,10 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.testframework.MinimalTest;
 import com.eaio.uuid.UUIDGen;
 
-public class PersistABCTest {
+public class PersistABCTest extends MinimalTest {
 	
 	@BeforeClass
 	public final static void setup() {

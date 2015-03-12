@@ -27,7 +27,7 @@ public class GetWorkCommand extends CommandABC {
 	public ResponseABC exec() {
 		GetWorkResponse response = new GetWorkResponse();
 		String cheId = request.getDeviceId();
-		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
+		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			String locationId = request.getLocationId();

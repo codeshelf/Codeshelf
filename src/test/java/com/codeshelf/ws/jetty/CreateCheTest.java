@@ -11,8 +11,6 @@ import org.mockito.Mockito;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.model.dao.DAOTestABC;
-import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -20,6 +18,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
@@ -31,31 +30,30 @@ import com.codeshelf.ws.jetty.server.UserSession;
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
-public class CreateCheTest extends DAOTestABC {
+public class CreateCheTest extends MockDaoTest {
 	UserSession mSession;
 	
 	private ServerMessageProcessor	processor;
 
 	@Before
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
 	}
 
 	
 	@Test
-	// TODO: create proper mock daoProvider / set up injector /?
 	public final void testCreateChe() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateService service = new UiUpdateService();
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.findByPersistentId(cheid);
+		Che che = Che.staticGetDao().findByPersistentId(cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
@@ -68,7 +66,7 @@ public class CreateCheTest extends DAOTestABC {
 	public final void testDeleteChe() {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateService service = new UiUpdateService();
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
@@ -77,7 +75,7 @@ public class CreateCheTest extends DAOTestABC {
 		this.getTenantPersistenceService().beginTransaction();
 		service.deleteChe(cheid.toString());
 
-		Che che = Che.DAO.findByPersistentId(cheid);
+		Che che = Che.staticGetDao().findByPersistentId(cheid);
 		Assert.assertNull(che);
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -91,8 +89,8 @@ public class CreateCheTest extends DAOTestABC {
 		String description1 = "che description";
 		String description2 = "changed che description";
 				
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facilityf1", Point.getZeroPoint());
-		Facility.DAO.store(facility);		
+		Facility facility = Facility.createFacility("F1", "facilityf1", Point.getZeroPoint());
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -100,7 +98,7 @@ public class CreateCheTest extends DAOTestABC {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -136,9 +134,9 @@ public class CreateCheTest extends DAOTestABC {
 
 		//setupDaos();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
 
-		Facility.DAO.store(facility);		
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -146,7 +144,7 @@ public class CreateCheTest extends DAOTestABC {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -179,8 +177,8 @@ public class CreateCheTest extends DAOTestABC {
 		
 		//setupDaos();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
-		Facility.DAO.store(facility);		
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -188,7 +186,7 @@ public class CreateCheTest extends DAOTestABC {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -245,8 +243,8 @@ public class CreateCheTest extends DAOTestABC {
 
 		//setupDaos();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
-		Facility.DAO.store(facility);		
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
+		Facility.staticGetDao().store(facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -254,7 +252,7 @@ public class CreateCheTest extends DAOTestABC {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.DAO.store(che);
+		Che.staticGetDao().store(che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -286,7 +284,7 @@ public class CreateCheTest extends DAOTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		che = Che.DAO.findByPersistentId(cheid);
+		che = Che.staticGetDao().findByPersistentId(cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
@@ -322,28 +320,8 @@ public class CreateCheTest extends DAOTestABC {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
-	@Test
-	public void getDefaultProcessMode() {
-		this.getTenantPersistenceService().beginTransaction();
-		UiUpdateService service = new UiUpdateService();
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.createNetwork("WITEST");
-		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
-
-		//Get default mode in a facility without aisles
-		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles", processMode, ProcessMode.LINE_SCAN);
-		
-		//Get default mode in a facility with aisles
-		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
-		Aisle.DAO.store(aisle);
-		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles", processMode, ProcessMode.SETUP_ORDERS);
-		this.getTenantPersistenceService().commitTransaction();
-	}
-	
 	private Che createTestChe(String netGuid){
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork("WITEST");
 		Che che = network.createChe(netGuid, new NetGuid(netGuid));
 		return che;

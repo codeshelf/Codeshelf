@@ -6,9 +6,13 @@
 package com.codeshelf.model.domain;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -21,12 +25,14 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.atteo.classindex.ClassIndex;
 import org.atteo.classindex.IndexSubclasses;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -53,6 +59,11 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectABC.class);
 
+	// dao classes + instances
+	// statically cached so they do not have to be regenerated in between junit tests
+	private static Map<Class<? extends IDomainObject>,Class<? extends ITypedDao<? extends IDomainObject>>> daoClasses = null;
+	private static Map<Class<? extends IDomainObject>,ITypedDao<?>> daos = null;
+	
 	// This is the internal GUID
 	@Id
 	@NonNull
@@ -153,4 +164,86 @@ public abstract class DomainObjectABC implements IDomainObject {
 	public void store() {
 		this.getDao().store(this);		
 	}
+	
+	public static Map<Class<? extends IDomainObject>,ITypedDao<?>> getDaos() {
+		// Create new ITypedDao objects for each domain class
+		
+		if(daos != null) {
+			// already initialized
+			return daos;
+		}
+		getDaoClasses(); // ensure dao class list is initialized first
+		
+		daos = new HashMap<Class<? extends IDomainObject>,ITypedDao<?>>();
+		Set<Class<? extends IDomainObject>> domainTypes = daoClasses.keySet();
+		
+		for(Class<? extends IDomainObject> domainType : domainTypes) {
+			Class<? extends ITypedDao<? extends IDomainObject>> daoClass = daoClasses.get(domainType);
+			ITypedDao<?> dao = null;
+			try {
+				dao = daoClass.newInstance();
+			} catch (InstantiationException | IllegalAccessException e) {
+				throw new RuntimeException("Unexpected exception creating DAOs", e);
+			}
+			if(dao.getDaoClass().equals(domainType)) {
+				daos.put(domainType, dao);
+			} else {
+				throw new RuntimeException("Could not assign DAO for "
+						+dao.getDaoClass().getSimpleName()+" to class "+domainType.getSimpleName());
+			}
+		}
+		//LOGGER.info("created DAOs for: "+daos.keySet());
+		return daos;
+	}
+
+	public static Map<Class<? extends IDomainObject>,Class<? extends ITypedDao<? extends IDomainObject>>> getDaoClasses() {
+		if(daoClasses != null) {
+			// already initialized
+			return daoClasses;
+		}
+
+		Iterable<Class<? extends IDomainObject>> domainTypes = ClassIndex.getSubclasses(IDomainObject.class);
+		
+		daoClasses = new HashMap<Class<? extends IDomainObject>,Class<? extends ITypedDao<? extends IDomainObject>>>();
+		
+		// iterate through all classes that implement IDomainObject
+		for (Class<? extends IDomainObject> domainType : domainTypes) {
+			Class<?>[] memberClasses = domainType.getDeclaredClasses();
+			Class<? extends ITypedDao<? extends IDomainObject>> foundDaoClass = null;
+			
+			// find a single declared static member class extending ITypedDao which is the DAO for that type
+			for(int i=0; i < memberClasses.length; i++) {
+				Class<?> memberClass = memberClasses[i];
+				if(ITypedDao.class.isAssignableFrom(memberClass)) {
+					if(Modifier.isStatic(memberClass.getModifiers())) {
+						if(foundDaoClass == null) {
+							if(!memberClass.getSimpleName().startsWith(domainType.getSimpleName()) 
+									|| !memberClass.getSimpleName().endsWith("Dao")) {
+								throw new RuntimeException("DAO class did not follow expected naming convention - expected "
+									+domainType.getSimpleName()+"[...]Dao but got "+memberClasses[i].getSimpleName()
+									+" (remove this if convention has changed)");
+							}
+
+							@SuppressWarnings("unchecked")
+							Class<? extends ITypedDao<? extends IDomainObject>> dc 
+									= (Class<? extends ITypedDao<? extends IDomainObject>>) memberClass; 
+							foundDaoClass = dc;
+						} else {
+							throw new RuntimeException("Failed to uniquely identify DAO class for "
+									+domainType.getSimpleName()+". Found "+foundDaoClass.getSimpleName()+" and "+memberClass.getSimpleName());
+						}
+					} else {
+						throw new RuntimeException("DAO class was not declared static - "+memberClass.getCanonicalName());
+					}
+				} // else ignore not ITypedDao
+			}
+			if(foundDaoClass != null) {
+				daoClasses.put(domainType, foundDaoClass);
+			} // else if no declared DAO class, ignore			
+		}
+		//LOGGER.info("Found DAO classes: "+daoClasses.values());
+		return daoClasses;
+	}
+
+	
 }

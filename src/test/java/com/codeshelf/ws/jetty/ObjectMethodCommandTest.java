@@ -11,8 +11,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.command.ArgsClass;
@@ -24,7 +24,7 @@ import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ObjectMethodCommandTest extends DomainTestABC {
+public class ObjectMethodCommandTest extends MockDaoTest {
 
 	@Test
 	// this should really be an integration test

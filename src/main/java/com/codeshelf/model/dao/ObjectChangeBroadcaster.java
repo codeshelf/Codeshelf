@@ -59,11 +59,12 @@ public class ObjectChangeBroadcaster {
 	/**
 	 * @param inDomainObject
 	 */
-	public synchronized void broadcastDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+	public synchronized void broadcastDelete(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId,
+				Class<? extends IDomainObject> parentClass, final UUID parentId) {
 		Set<IDaoListener> listeners = mListeners.get(domainClass);
 		if(listeners != null) {
 			for (final IDaoListener daoListener : listeners) {
-				daoListener.objectDeleted(domainClass, domainPersistentId);
+				daoListener.objectDeleted(domainClass, domainPersistentId, parentClass, parentId);
 			}
 		}
 	}
@@ -74,7 +75,7 @@ public class ObjectChangeBroadcaster {
 	 * 
 	 * @see com.codeshelf.model.dao.ISystemDAO#registerDAOListener(com.codeshelf.model.dao.IDAOListener)
 	 */
-	public final synchronized void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
+	public synchronized void registerDAOListener(IDaoListener inListener, Class<? extends IDomainObject> daoClass) {
 		mListeners.put(daoClass, inListener);
 	}
 

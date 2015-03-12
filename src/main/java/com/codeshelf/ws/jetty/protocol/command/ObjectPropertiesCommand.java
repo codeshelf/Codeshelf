@@ -60,10 +60,11 @@ public class ObjectPropertiesCommand extends CommandABC {
 		
 		try {
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(className);
+			@SuppressWarnings("unchecked")
+			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				// First locate an instance of the parent class.				
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);
+				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				IDomainObject object = null;
 				if(dao == null) {
 					LOGGER.error("DAO is undefined for "+className);

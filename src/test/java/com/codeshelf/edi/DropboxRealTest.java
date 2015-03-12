@@ -22,14 +22,14 @@ import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
 
 /**
  * @author jon ranstrom
  *
  */
-public class DropboxRealTest extends EdiTestABC {
+public class DropboxRealTest extends ServerTest {
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(DropboxRealTest.class);
 
 	private ICsvOrderImporter			mCsvOrderImporter;
@@ -56,7 +56,7 @@ public class DropboxRealTest extends EdiTestABC {
 		super();
 	}
 
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 
 		mCsvOrderImporter = createOrderImporter();
@@ -77,7 +77,7 @@ public class DropboxRealTest extends EdiTestABC {
 		// Caller must use a different organization name each time this is used
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(TenantManagerService.getInstance().getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		/*
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
@@ -96,7 +96,7 @@ public class DropboxRealTest extends EdiTestABC {
 			dropboxService.setDomainId("DB");
 			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
 			dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
-			DropboxService.DAO.store(dropboxService);
+			DropboxService.staticGetDao().store(dropboxService);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
 		}

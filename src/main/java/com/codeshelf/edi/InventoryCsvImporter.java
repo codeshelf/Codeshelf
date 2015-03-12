@@ -165,7 +165,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			if (!itemMasterIsActive) {
 				LOGGER.info("Archive old item master: " + itemMaster.getItemId());
 				itemMaster.setActive(false);
-				ItemMaster.DAO.store(itemMaster);
+				ItemMaster.staticGetDao().store(itemMaster);
 			}
 		}
 
@@ -196,7 +196,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			itemMaster.setDescription(inCsvBean.getDescription());
 
 			try {
-				ItemMaster.DAO.store(itemMaster);
+				ItemMaster.staticGetDao().store(itemMaster);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -229,7 +229,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			
 			String theItemID = inCsvBean.getItemId();
 			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
-			Gtin gtinMap = upsertGtinMap(inFacility, itemMaster, inCsvBean, uomMaster);
+			Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
 			String theLocationID = inCsvBean.getLocationId();
 			Location location = inFacility.findSubLocationById(theLocationID);
@@ -258,7 +258,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				inCsvBean.setCmFromLeft("0");
 			}
 			@SuppressWarnings("unused")
-			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster, gtinMap);
+			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
 			
 	}
 
@@ -266,7 +266,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * Will not update a GtinMap. 
 	 * 
 	 */
-	private Gtin upsertGtinMap(final Facility inFacility, final ItemMaster inItemMaster, 
+	private Gtin upsertGtin(final Facility inFacility, final ItemMaster inItemMaster, 
 		final InventorySlottedCsvBean inCsvBean, UomMaster uomMaster) {
 		
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
@@ -277,45 +277,37 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		ItemMaster previousItemMaster = null;
 		
 		// Get existing GtinMap
-		result = Gtin.DAO.findByDomainId(null, inCsvBean.getGtin());
+		result = Gtin.staticGetDao().findByDomainId(null, inCsvBean.getGtin());
 		
 		if (result != null) {
 			previousItemMaster = result.getParent();
 			
+			// Check if existing GTIN is associated with the ItemMaster
 			if (previousItemMaster.equals(inItemMaster)) {
-				UomMaster m = inFacility.getUomMaster(inCsvBean.getUom());
 				
-				// FIXME Should we be updating the UOM here? Currently doing this because
-				// we are probably updating the unit of measure of the item as well since it
-				// already exists.
-				if (!m.equals(uomMaster)) {
-					LOGGER.warn("UOM for GTIN: {} is being updated from: {} to: {}",
-						inCsvBean.getGtin(), m.getDomainId(), uomMaster.getDomainId());
-					result.setUomMaster(uomMaster);
+				// Check if the UOM specified in the inventory file matches UOM of existing GTIN
+				if (!uomMaster.equals(result.getUomMaster())) {
+					LOGGER.warn("UOM specified in order line {} conflicts with UOM of specified existing GTIN {}." +
+							" Did not change UOM for existing GTIN.", inCsvBean.toString(), result.getDomainId());
+					
+					return null;
 				}
 				
 			} else {
-				LOGGER.warn("Existing GTIN: {} is being associate with a different item {}", 
-					inCsvBean.getGtin(), inItemMaster.getDomainId());
 				
-				// Moving item masters for Gtin
-				previousItemMaster.removeGtinMapFromMaster(result);
+				// Import line is attempting to associate existing GTIN with a new item. We do not allow this.
+				LOGGER.warn("GTIN {} already exists and is associated with item {}." + 
+						" GTIN will remain associated with item {}.", result.getDomainId(), result.getParent().getDomainId(),
+						result.getParent().getDomainId());
 				
-				result.setParent(inItemMaster);
-				result.setUomMaster(uomMaster);
-				inItemMaster.addGtinMapToMaster(result);
+				return null;
 			}
 		} else {
-			result = new Gtin();
 			
-			result.setDomainId(inCsvBean.getGtin());
-			result.setParent(inItemMaster);
-			result.setUomMaster(uomMaster);
-			
-			inItemMaster.addGtinMapToMaster(result);
-			
+			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
+
 			try {
-				Gtin.DAO.store(result);
+				Gtin.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertGtinMap save", e);
 			}
@@ -339,7 +331,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = ItemMaster.DAO.findByDomainId(inFacility, inItemId);
+		result = ItemMaster.staticGetDao().findByDomainId(inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
@@ -354,7 +346,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				ItemMaster.DAO.store(result);
+				ItemMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("updateItemMaster", e);
 			}
@@ -385,7 +377,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			inFacility.addUomMaster(result);
 
 			try {
-				UomMaster.DAO.store(result);
+				UomMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertUomMaster save", e);
 			}
@@ -449,8 +441,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		final Location inLocation,
 		final Timestamp inEdiProcessTime,
 		final ItemMaster inItemMaster,
-		final UomMaster inUomMaster,
-		final Gtin inGtinMap ) throws InputValidationException {
+		final UomMaster inUomMaster) throws InputValidationException {
 
 		DefaultErrors errors = new DefaultErrors(Item.class);
 		if (inLocation == null) {
@@ -503,17 +494,12 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				throw new InputValidationException(errors);
 			}
 		}
-		
-		if (inGtinMap != null) {
-			result.setGtin(inGtinMap);
-		}
-
 
 		result.setQuantity(quantity);
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 
-		Item.DAO.store(result);
+		Item.staticGetDao().store(result);
 		return result;
 	}
 

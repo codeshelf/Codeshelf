@@ -33,13 +33,12 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -73,10 +72,6 @@ import com.google.inject.Singleton;
 @ToString(of = { "type", "status", "orderDetail", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
-	@Inject
-	public static ITypedDao<WorkInstruction>	DAO;
-
-	@Singleton
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
 		public final Class<WorkInstruction> getDaoClass() {
 			return WorkInstruction.class;
@@ -258,7 +253,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<WorkInstruction> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(WorkInstruction.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -554,10 +553,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		// Or this
 		cookedDesc = cookedDesc.replaceAll("[^a-zA-Z0-9+., -]", "");
 		return cookedDesc;
-	}
-
-	public static void setDao(WorkInstructionDao inWorkInstructionDao) {
-		WorkInstruction.DAO = inWorkInstructionDao;
 	}
 
 	@Override

@@ -66,27 +66,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return this.findByPersistentId(inPersistentId);
 	}
 
-	public final <P extends IDomainObject> T reload(P domainObject) {
+	public final T reload(T domainObject) {
 		if (domainObject==null) {
 			return null;
 		}
 		T reloadedDomainObject = findByPersistentId(domainObject.getPersistentId());
 		return reloadedDomainObject;
-	}
-	
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.model.dao.IGenericDao#loadByPersistentId(java.lang.Integer)
-	 */
-	public final <P extends IDomainObject> P findByPersistentId(Class<P> inClass, UUID inPersistentId) {
-		P result = null;
-		try {
-			Session session = getCurrentSession();
-			result = (P) session.get(inClass, inPersistentId);
-		} catch (PersistenceException e) {
-			LOGGER.error("Failed to retrieve object of type "+getDaoClass().getSimpleName()+" with ID "+inPersistentId, e);
-		}
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -156,9 +141,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 	
 	@Override
-	public boolean matchesFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass, UUID inPersistentId) {
+	public boolean matchesFilter(String inCriteriaName, Map<String, Object> inArgs, UUID inPersistentId) {
 		String parameterName = "persistentIdToMatch";
-		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, inClass);
+		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
 		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
 		TypedCriteria singleObjectCriteria = criteria.addEqualsRestriction("persistentId", parameterName, UUID.class);
 		
@@ -171,9 +156,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
-	public List<T> findByFilterAndClass(String inCriteriaName, Map<String, Object> inArgs, Class<T> inClass) {
+	public List<T> findByFilter(String inCriteriaName, Map<String, Object> inArgs) {
 		// create criteria using look-up table
-		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, inClass);
+		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
 		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
 		return findByCriteria(criteria, inArgs);
 	}
@@ -207,7 +192,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
 	 */
-	public final void store(final T inDomainObject) throws DaoException {
+	public final void store(final IDomainObject inDomainObject) throws DaoException {
+		validateClass(inDomainObject.getClass());
+
 		Session session = getCurrentSession();
 		session.saveOrUpdate(inDomainObject);
 	}
@@ -216,7 +203,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#delete(java.lang.Object)
 	 */
-	public final void delete(final T inDomainObject) throws DaoException {
+	public final void delete(final IDomainObject inDomainObject) throws DaoException {
+		validateClass(inDomainObject.getClass());
 		try {
 			Session session = getCurrentSession();
 			session.delete(inDomainObject);
@@ -226,6 +214,19 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		}
 	}
 
+	@Override
+	public final Criteria createCriteria() {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(getDaoClass());
+		return criteria;
+	}
+	
+	@Override
+	public List<T> findByCriteriaQuery(Criteria criteria) {
+		List<T> results = criteria.list();
+		return results;
+	}
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#getAll()
@@ -247,4 +248,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	    return persistentId;
 	}
 
+	
+	private void validateClass(Class<? extends IDomainObject> clazz) {
+		Class<?> expectedClass = this.getDaoClass();
+		if(!expectedClass.isAssignableFrom(clazz)) {
+			throw new DaoException("unexpected class used with DAO - expected "
+				+expectedClass.getSimpleName()+" but got "+clazz.getSimpleName());
+		}
+	}
 }

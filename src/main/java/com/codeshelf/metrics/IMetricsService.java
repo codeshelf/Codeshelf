@@ -5,9 +5,9 @@ import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheckRegistry;
-import com.google.common.util.concurrent.Service;
+import com.codeshelf.service.ICodeshelfService;
 
-public interface IMetricsService extends Service {
+public interface IMetricsService extends ICodeshelfService {
 	String getHostName();
 
 	void registerHealthCheck(CodeshelfHealthCheck healthCheck);

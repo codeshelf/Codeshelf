@@ -17,9 +17,8 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -35,10 +34,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Aisle extends Location {
 
-	@Inject
-	public static ITypedDao<Aisle>	DAO;
-
-	@Singleton
 	public static class AisleDao extends GenericDaoABC<Aisle> implements ITypedDao<Aisle> {
 		public final Class<Aisle> getDaoClass() {
 			return Aisle.class;
@@ -51,9 +46,14 @@ public class Aisle extends Location {
 		super();
 	}
 
+	@Override
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Aisle> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public final static ITypedDao<Aisle> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Aisle.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -72,7 +72,7 @@ public class Aisle extends Location {
 		 * 3b) Aisle associated to different segment, but this add does not resolve. No actions aside from Throw. Covered in test associatePathSegment()
 		 */
 		UUID persistentId = UUID.fromString(inPathSegPersistentID);
-		PathSegment newPathSegment = PathSegment.DAO.findByPersistentId(persistentId);
+		PathSegment newPathSegment = PathSegment.staticGetDao().findByPersistentId(persistentId);
 		if (newPathSegment == null) {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
 		}
@@ -149,7 +149,6 @@ public class Aisle extends Location {
 
 			}
 		}
-
 		return returnValue;
 	}
 
@@ -167,10 +166,6 @@ public class Aisle extends Location {
 		return pathSegIncreaseFromAisleAnchor;
 	}
 
-	public static void setDao(ITypedDao<Aisle> inAisleDao) {
-		Aisle.DAO = inAisleDao;
-	}
-
 	public Bay createBay(String inBayId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Bay bay = new Bay();
 		bay.setDomainId(inBayId);
@@ -180,6 +175,39 @@ public class Aisle extends Location {
 		this.addLocation(bay);
 
 		return bay;
+	}
+	
+	public void setPoscons(int startingIndex) {
+		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
+		Bay.sortByDomainId(bays);
+		int posconIndex = startingIndex;
+		for (Bay bay : bays) {
+			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
+			Tier.sortByDomainId(tiers);
+			for (Tier tier  : tiers) {
+				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
+				Slot.sortByDomainId(slots);
+				for (Slot slot  : slots) {
+					slot.setPosconIndex(posconIndex);
+					Slot.staticGetDao().store(slot);
+					posconIndex++;	
+				}
+			}
+		}		
+	}
+	
+	public void resetPoscons() {
+		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
+		for (Bay bay : bays) {
+			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
+			for (Tier tier  : tiers) {
+				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
+				for (Slot slot  : slots) {
+					slot.setPosconIndex(null);
+					Slot.staticGetDao().store(slot);
+				}
+			}
+		}		
 	}
 	
 	@Override
@@ -195,5 +223,5 @@ public class Aisle extends Location {
 	    	return (Aisle) location;
 	    }
 		throw new RuntimeException("Location is not an aisle");
-	}		
+	}
 }

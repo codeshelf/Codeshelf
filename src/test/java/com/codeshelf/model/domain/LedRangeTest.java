@@ -9,12 +9,13 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.model.LedRange;
+import com.codeshelf.testframework.MinimalTest;
 
 /**
  * @author ranstrom
  *
  */
-public class LedRangeTest {
+public class LedRangeTest extends MinimalTest {
 
 	@Test
 	public final void rangeTest() {

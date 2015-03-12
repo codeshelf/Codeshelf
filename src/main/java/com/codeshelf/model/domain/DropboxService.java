@@ -36,6 +36,7 @@ import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.dropbox.core.DbxAccountInfo;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
@@ -48,8 +49,6 @@ import com.dropbox.core.DbxWebAuthNoRedirect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -65,10 +64,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DropboxService extends EdiServiceABC {
 
-	@Inject
-	public static ITypedDao<DropboxService>	DAO;
-
-	@Singleton
 	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
 		public final Class<DropboxService> getDaoClass() {
 			return DropboxService.class;
@@ -110,17 +105,17 @@ public class DropboxService extends EdiServiceABC {
 
 	}
 
-	public final static void setDao(ITypedDao<DropboxService> dao) {
-		DropboxService.DAO = dao;
-	}
-
 	public final String getServiceName() {
 		return DROPBOX_SERVICE_NAME;
 	}
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<DropboxService> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<DropboxService> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(DropboxService.class);
 	}
 
 	@Override
@@ -202,7 +197,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
-						DropboxService.DAO.store(this);
+						DropboxService.staticGetDao().store(this);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -431,7 +426,7 @@ public class DropboxService extends EdiServiceABC {
 
 		try {
 			setServiceState(EdiServiceStateEnum.LINKING);
-			DropboxService.DAO.store(this);
+			DropboxService.staticGetDao().store(this);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to change dropbox service state", e);
 		}
@@ -470,7 +465,7 @@ public class DropboxService extends EdiServiceABC {
 					setDbCursor("");
 					result = true;
 				}
-				DropboxService.DAO.store(this);
+				DropboxService.staticGetDao().store(this);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to store dropboxservice change after linking", e);
 			}
@@ -512,7 +507,7 @@ public class DropboxService extends EdiServiceABC {
 		}
 
 		if (shouldUpdateEntry) {
-			EdiDocumentLocator locator = EdiDocumentLocator.DAO.findByDomainId(this, inEntry.lcPath);
+			EdiDocumentLocator locator = EdiDocumentLocator.staticGetDao().findByDomainId(this, inEntry.lcPath);
 			if (locator == null) {
 				locator = new EdiDocumentLocator();
 				locator.setReceived(new Timestamp(System.currentTimeMillis()));
@@ -523,7 +518,7 @@ public class DropboxService extends EdiServiceABC {
 
 				addEdiDocumentLocator(locator);
 				try {
-					EdiDocumentLocator.DAO.store(locator);
+					EdiDocumentLocator.staticGetDao().store(locator);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 					result = false;
@@ -817,7 +812,7 @@ public class DropboxService extends EdiServiceABC {
 		EdiDocumentLocator locator = getDocumentLocatorByPath(inEntry.lcPath);
 		if (locator != null) {
 			try {
-				EdiDocumentLocator.DAO.delete(locator);
+				EdiDocumentLocator.staticGetDao().delete(locator);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 				result = false;

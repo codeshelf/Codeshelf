@@ -18,7 +18,7 @@ import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
-import com.codeshelf.platform.multitenancy.ITenantManager;
+import com.codeshelf.platform.multitenancy.ITenantManagerService;
 import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
@@ -43,7 +43,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	public ServerCodeshelfApplication(final EdiProcessorService inEdiProcessorService,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
-			final ITenantManager tenantManager,
+			final ITenantManagerService tenantManagerService,
 			final WorkService workService,
 			final IMetricsService metricsService,
 			final SessionManagerService sessionManagerService,
@@ -57,7 +57,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.metricsService = metricsService;
 		
 		// if services already running e.g. in test, these will log an error and continue
-		this.registerService(tenantManager);
+		this.registerService(tenantManagerService);
 		this.registerService(TenantPersistenceService.getMaybeRunningInstance()); 
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
 		this.registerService(workService);
@@ -120,7 +120,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		for(Tenant tenant : tenants) {
 			try {
 				TenantPersistenceService.getInstance().beginTransaction(tenant);
-				for (Facility facility : Facility.DAO.getAll()) {
+				for (Facility facility : Facility.staticGetDao().getAll()) {
 					for (Path path : facility.getPaths()) {
 						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
 						facility.recomputeLocationPathDistances(path);

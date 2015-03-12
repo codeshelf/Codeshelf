@@ -70,9 +70,10 @@ public class ObjectMethodCommand extends CommandABC {
 		UUID objectId = UUID.fromString(request.getPersistentId());
 		try {
 			// First we find the parent object (by it's ID).
-			Class<?> classObject = Class.forName(className);
+			@SuppressWarnings("unchecked")
+			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<IDomainObject> dao = TenantPersistenceService.getDao(classObject);				
+				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);				
 				// First locate an instance of the parent class.
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 
@@ -107,8 +108,18 @@ public class ObjectMethodCommand extends CommandABC {
 			Class<?> classType = ClassUtils.getClass(arg.getClassType());
 			signatureClasses.add(classType);
 			if (Double.class.isAssignableFrom(classType)){
-					argumentValue = Double.valueOf(argumentValue.toString());
+				if (argumentValue==null) {
+					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+methodName + ": Argument "+arg.getName()+" is undefined.");
+					response.setStatus(ResponseStatus.Fail);
+					return response;
+				}
+				argumentValue = Double.valueOf(argumentValue.toString());
 			} else if (int.class.isAssignableFrom(classType)){
+				if (argumentValue==null) {
+					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+methodName + ": Argument "+arg.getName()+" is undefined.");
+					response.setStatus(ResponseStatus.Fail);
+					return response;
+				}
 				argumentValue = Integer.valueOf(argumentValue.toString());
 			}
 			cookedArguments.add(argumentValue);		

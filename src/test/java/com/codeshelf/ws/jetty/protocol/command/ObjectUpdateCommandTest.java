@@ -17,6 +17,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.MockModel;
+import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
@@ -25,14 +26,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
 @RunWith(MockitoJUnitRunner.class)
-public class ObjectUpdateCommandTest {
+public class ObjectUpdateCommandTest extends HibernateTest {
 	@Mock
 	private ITypedDao<MockModel> mockTypedDao;
 	
 	@Before
 	public void doBefore() {
-		
-		MockModel.DAO = mockTypedDao;
+		super.doBefore();
+		super.useCustomDao(MockModel.class, mockTypedDao);
 	}
 	
 	@Test

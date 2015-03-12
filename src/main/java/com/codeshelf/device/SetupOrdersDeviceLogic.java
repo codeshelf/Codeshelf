@@ -431,6 +431,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				wi = wiList.get(0);
 
 			if (wi != null) {
+					
+				// Need to clear poscon
+				String containerId = wi.getContainerId();
+				if (containerId != null) {
+					for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
+						if (containerId.equals(entry.getValue())){
+							Byte position = Byte.valueOf(entry.getKey());
+							clearOnePositionController(position);
+						}
+					}
+				}
+				
 				processShortPickYes(wi, 0);
 			}
 		} else {
@@ -715,6 +727,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SCAN_SOMETHING:
 				setState(CheStateEnum.SCAN_SOMETHING_SHORT);
+				break;
+			case SCAN_SOMETHING_SHORT:
 				break;
 
 			//Anywhere else we can start work if there's anything setup
@@ -1288,6 +1302,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SCAN_SOMETHING:
+			case SCAN_SOMETHING_SHORT:
 				// Do not allow button press in this state. We did display the count on poscon. User might get confused.
 				setState(mCheStateEnum);
 				return;
@@ -1456,10 +1471,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Setup the CHE by clearing all the datastructures
 	 */
 	protected void setupChe() {
-		super.setupChe();
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
+		super.setupChe();
 
 	}
 

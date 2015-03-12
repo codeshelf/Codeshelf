@@ -59,6 +59,9 @@ public final class Packet implements IPacket {
 
 	private static final Logger		LOGGER			= LoggerFactory.getLogger(Packet.class);
 
+	//Not serialized
+	private final boolean			ackRequested;
+
 	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
 	private NBitInteger				mPacketType;
 	private NBitInteger				mReservedHeaderBits;
@@ -81,8 +84,12 @@ public final class Packet implements IPacket {
 	 *  @param inDstAddr
 	 *  @throws NullPointerException
 	 */
-	public Packet(final ICommand inCommand, final NetworkId inNetworkId, final NetAddress inSrcAddr, final NetAddress inDstAddr) {
-
+	public Packet(final ICommand inCommand,
+		final NetworkId inNetworkId,
+		final NetAddress inSrcAddr,
+		final NetAddress inDstAddr,
+		boolean ackRequested) {
+		this.ackRequested = ackRequested;
 		mNetworkId = inNetworkId;
 		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);
 		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, (byte) 0);
@@ -111,6 +118,7 @@ public final class Packet implements IPacket {
 	 *  @param inInputStream
 	 */
 	public Packet() {
+		this.ackRequested = false;
 		mPacketVersion = new PacketVersion(IPacket.PACKET_VERSION_0);
 		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, (byte) 0);
 		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
@@ -397,5 +405,10 @@ public final class Packet implements IPacket {
 	@Override
 	public void setPacketType(byte inPacketType) {
 		mPacketType.setValue(inPacketType);
+	}
+
+	@Override
+	public boolean isAckRequested() {
+		return ackRequested;
 	}
 }

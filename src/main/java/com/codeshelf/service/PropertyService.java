@@ -1,8 +1,5 @@
 package com.codeshelf.service;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,19 +16,20 @@ public class PropertyService extends AbstractPropertyService {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyService.class);
 	
 	@Inject
-	private static IPropertyService theInstance;
+	private static IPropertyService theInstance = null;
 
 	@Inject
 	public PropertyService() {
 	}
-	
+	public static IPropertyService getMaybeRunningInstance() {
+		return theInstance;
+	}
+	public static boolean exists() {
+		return (theInstance != null);
+	}
 	public static IPropertyService getInstance() {
 		// not self initializing, better static inject it first...
-		try {
-			theInstance.awaitRunning(60, TimeUnit.SECONDS);
-		} catch (TimeoutException e) {
-			throw new IllegalStateException("Timeout waiting for PropertyService",e);
-		}
+		ServiceUtility.awaitRunningOrThrow(theInstance);
 		return theInstance;
 	}
 	public static void setInstance(IPropertyService instance) {
@@ -46,7 +44,7 @@ public class PropertyService extends AbstractPropertyService {
 	 */
 	public void changePropertyValueUI(final String inFacilityPersistId, final String inPropertyName, final String inNewStringValue) {
 		LOGGER.info("call to update property " + inPropertyName + " to " + inNewStringValue);
-		Facility facility = Facility.DAO.findByPersistentId(inFacilityPersistId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityPersistId);
 		if (facility == null) {
 			DefaultErrors errors = new DefaultErrors(DomainObjectProperty.class);
 			String instruction = "unknown facility";

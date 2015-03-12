@@ -34,10 +34,9 @@ import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -55,10 +54,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Che extends WirelessDeviceABC {
 
-	@Inject
-	public static ITypedDao<Che>	DAO;
-
-	@Singleton
 	public static class CheDao extends GenericDaoABC<Che> implements ITypedDao<Che> {
 		public final Class<Che> getDaoClass() {
 			return Che.class;
@@ -101,11 +96,11 @@ public class Che extends WirelessDeviceABC {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Che> getDao() {
-		return DAO;
+		return staticGetDao();
 	}
 
-	public final static void setDao(ITypedDao<Che> dao) {
-		Che.DAO = dao;
+	public static ITypedDao<Che> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Che.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -170,7 +165,7 @@ public class Che extends WirelessDeviceABC {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", getPersistentId()));
 		filterParams.add(Restrictions.in("type", wiTypes));
-		List<WorkInstruction> wis = WorkInstruction.DAO.findByFilter(filterParams);
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		for (WorkInstruction wi : wis) {
 			try {
 
@@ -184,7 +179,7 @@ public class Che extends WirelessDeviceABC {
 					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
 					owningDetail.reevaluateStatus();
 				}
-				WorkInstruction.DAO.delete(wi);
+				WorkInstruction.staticGetDao().delete(wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
 			}

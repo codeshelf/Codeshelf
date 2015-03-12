@@ -32,12 +32,13 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * 
  * 
  */
-public class LocationDeleteTest extends EdiTestABC {
+public class LocationDeleteTest extends ServerTest {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(LocationDeleteTest.class);
 
 	private final boolean		LARGER_FACILITY		= true;
@@ -51,7 +52,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		// Two CHE called CHE1 and CHE2. CHE1 colored green and CHE2 magenta
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
 
 		if (inWhichFacility == LARGER_FACILITY)
 			readStandardAisleFile(facility);
@@ -59,7 +60,7 @@ public class LocationDeleteTest extends EdiTestABC {
 			readSmallerAisleFile(facility);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.DAO.findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
 		Path aPath = createPathForTest(facility);
@@ -68,7 +69,7 @@ public class LocationDeleteTest extends EdiTestABC {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.DAO.findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
@@ -87,11 +88,11 @@ public class LocationDeleteTest extends EdiTestABC {
 		Short channel1 = 1;
 		controller1.addLocation(aisle1);
 		aisle1.setLedChannel(channel1);
-		Aisle.DAO.store(aisle1);
+		Aisle.staticGetDao().store(aisle1);
 
 		controller2.addLocation(aisle2);
 		aisle2.setLedChannel(channel1);
-		Aisle.DAO.store(aisle2);
+		Aisle.staticGetDao().store(aisle2);
 
 		return facility;
 

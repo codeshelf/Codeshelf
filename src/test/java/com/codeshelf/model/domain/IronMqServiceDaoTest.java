@@ -4,7 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.postgresql.util.PSQLException;
 
-public class IronMqServiceDaoTest extends DomainTestABC {
+import com.codeshelf.testframework.MockDaoTest;
+
+public class IronMqServiceDaoTest extends MockDaoTest {
 
 	@Test
 	public void updatedCredentialsAvailableToFacilityReference() throws PSQLException {
@@ -14,7 +16,7 @@ public class IronMqServiceDaoTest extends DomainTestABC {
 			IronMqService ironMqService = ((IronMqService)f.getEdiExportService());
 			String originalCredentials = ironMqService.getProviderCredentials();
 			
-			IronMqService ironMqServiceByDao = IronMqService.DAO.findByPersistentId(ironMqService.getPersistentId());
+			IronMqService ironMqServiceByDao = IronMqService.staticGetDao().findByPersistentId(ironMqService.getPersistentId());
 			ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN");
 			String updatedCredentials = ((IronMqService)f.getEdiExportService()).getProviderCredentials();
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);

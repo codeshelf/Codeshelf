@@ -1,6 +1,7 @@
 package com.codeshelf.platform.persistence;
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -9,16 +10,21 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.inject.Inject;
 
 public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {
+
+	@SuppressWarnings("unused")
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
 	@Inject
 	private static ITenantPersistenceService theInstance;
+	
+	private Map<Class<? extends IDomainObject>,ITypedDao<?>> daos;
 
 	@Inject
 	private TenantPersistenceService() {
@@ -69,23 +75,31 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	}
 
 	@SuppressWarnings("unchecked")
-	public static ITypedDao<IDomainObject> getDao(Class<?> classObject) {
+	public <T extends IDomainObject> ITypedDao<T> getDao(Class<T> classObject) {
 		if (classObject==null) {
-			LOGGER.error("Failed to get DAO for undefined class");
-			return null;
+			throw new NullPointerException("classObject was null calling getDao");
 		}
-		try {
-			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				Class<IDomainObject> domainClass = (Class<IDomainObject>) classObject;
-				Field field = domainClass.getField("DAO");
-				ITypedDao<IDomainObject> dao = (ITypedDao<IDomainObject>) field.get(null);
-				return dao;
-			}
-		}
-		catch (Exception e) {
-			LOGGER.error("Failed to get DAO for class "+classObject.getName(),e);
-		}
-		// not a domain object
-		return null;
+		return (ITypedDao<T>) this.daos.get(classObject);
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		setupDaos();
+		super.startUp();
+	}
+
+	private void setupDaos() {
+		this.daos = new HashMap<Class<? extends IDomainObject>, ITypedDao<?>>();
+		this.daos.putAll(DomainObjectABC.getDaos());
+	}
+
+	@Override
+	public void resetDaosForTest() {
+		setupDaos();
+	}
+
+	@Override
+	public <T extends IDomainObject> void setDaoForTest(Class<T> domainType, ITypedDao<T> testDao) {
+		this.daos.put(domainType,testDao);
 	}
 }

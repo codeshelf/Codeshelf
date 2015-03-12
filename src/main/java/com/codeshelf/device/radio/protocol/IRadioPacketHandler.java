@@ -6,4 +6,6 @@ public interface IRadioPacketHandler {
 
 	public void handleInboundPacket(IPacket packet);
 
+	public void handleOutboundPacket(IPacket packet);
+
 }

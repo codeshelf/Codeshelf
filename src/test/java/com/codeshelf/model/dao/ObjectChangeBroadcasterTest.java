@@ -14,8 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.testframework.HibernateTest;
 
-public class ObjectChangeBroadcasterTest extends DAOTestABC {
+public class ObjectChangeBroadcasterTest extends HibernateTest {
 
 	@Test
 	public void usesDifferentThreads() {
@@ -44,7 +45,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Facility facility = createFacility();
 			facility.setDomainId("LOADBY-TEST");
 			facility.setDescription(desc);
-			Facility.DAO.store(facility);		
+			Facility.staticGetDao().store(facility);		
 			UUID id = facility.getPersistentId();
 			t.commit();
 			Thread.sleep(1000); //shame on me
@@ -73,18 +74,18 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Facility facility = new Facility();
 			facility.setDomainId("DELETE-TEST");
 			facility.setDescription(orgDesc);
-			Facility.DAO.store(facility);
+			Facility.staticGetDao().store(facility);
 			UUID id = facility.getPersistentId();
 			this.getTenantPersistenceService().commitTransaction();
 
 			// make sure org exists and then update it
 			this.getTenantPersistenceService().beginTransaction();
 			
-			Facility foundFacility = Facility.DAO.findByPersistentId(id);
+			Facility foundFacility = Facility.staticGetDao().findByPersistentId(id);
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(orgDesc,foundFacility.getDescription());
 			foundFacility.setDescription(updatedDesc);
-			Facility.DAO.store(foundFacility);
+			Facility.staticGetDao().store(foundFacility);
 			this.getTenantPersistenceService().commitTransaction();
 
 			Thread.sleep(1000); //shame on me
@@ -97,7 +98,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 
 			// make sure org exists and then update it
 			this.getTenantPersistenceService().beginTransaction();
-			foundFacility= Facility.DAO.findByPersistentId(id);
+			foundFacility= Facility.staticGetDao().findByPersistentId(id);
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(updatedDesc,foundFacility.getDescription());
 			this.getTenantPersistenceService().commitTransaction();
@@ -121,7 +122,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			Facility facility = new Facility();
 			facility.setDomainId("DELETE-TEST");
 			facility.setDescription("DELETE-TEST");
-			Facility.DAO.store(facility);
+			Facility.staticGetDao().store(facility);
 			UUID id = facility.getPersistentId();
 			t.commit();
 			Thread.sleep(1000); //shame on me
@@ -129,9 +130,9 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			// make sure org exists and then delete it
 			session = tenantPersistenceService.getSession();
 			t = session.beginTransaction();
-			Facility foundOrganization = Facility.DAO.findByPersistentId(id);
+			Facility foundOrganization = Facility.staticGetDao().findByPersistentId(id);
 			Assert.assertNotNull(foundOrganization);
-			Facility.DAO.delete(foundOrganization);
+			Facility.staticGetDao().delete(foundOrganization);
 			t.commit();
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(1, l.getObjectsDeleted());
@@ -139,7 +140,7 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 			// now try to reload it again
 			session = tenantPersistenceService.getSession();
 			t = session.beginTransaction();
-			foundOrganization = Facility.DAO.findByPersistentId(id);
+			foundOrganization = Facility.staticGetDao().findByPersistentId(id);
 			Assert.assertNull(foundOrganization);
 			t.commit();
 		} finally {
@@ -181,7 +182,8 @@ public class ObjectChangeBroadcasterTest extends DAOTestABC {
 		}
 
 		@Override
-		public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
+		public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId,
+				final Class<? extends IDomainObject> parentClass, final UUID parentId) {
 			objectsDeleted++;
 			LOGGER.debug("Object deleted: "+domainPersistentId);
 		}

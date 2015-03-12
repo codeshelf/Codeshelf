@@ -746,7 +746,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			return;
 		}
 		for (Vertex v : vertices) {
-			Vertex.DAO.delete(v);
+			Vertex.staticGetDao().delete(v);
 		}
 		setAnchorPoint(Point.getZeroPoint());
 		vertices.clear();
@@ -1102,13 +1102,18 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	@JsonIgnore
+	public boolean isLightable() {
+		return (isLightableAisleController() || isLightablePoscon());
+	}
+
+	@JsonIgnore
 	public boolean isLightablePoscon() {
 		LedController controller = this.getEffectiveLedController();
 		Short controllerChannel = this.getEffectiveLedChannel();
 		if (controller == null || controllerChannel == null) {
 			return false;
 		}
-		if (controller.getDeviceType()!=DeviceType.Poscons) {
+		if (!DeviceType.Poscons.equals(controller.getDeviceType())) {
 			return false;
 		}
 		if (this.posconIndex!=null && this.posconIndex>0) {
@@ -1124,23 +1129,22 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (controller == null || controllerChannel == null) {
 			return false;
 		}
-		if (controller.getDeviceType()!=DeviceType.Lights) {
+		if (!DeviceType.Lights.equals(controller.getDeviceType())) {
 			return false;
 		}
 		Short firstLocLed = getFirstLedNumAlongPath();
 		Short lastLocLed = getLastLedNumAlongPath();
 		if (firstLocLed == null || lastLocLed == null) {
+            LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
 			return false;
 		} else if (firstLocLed == 0 && lastLocLed == 0) {
 			return false;
 		}
 		return true;
 	}
-
+	
 	public LedRange getFirstLastLedsForLocation() {
-        // we will want a different function here isLocationPossiblyLightable()
-		// besides facility, new AgnosticLocation type would return false.
-        if (this.isFacility()) {
+        if (!isLightable()) {
             return LedRange.zero(); // was initialized to give values of 0,0
         }
         
@@ -1149,10 +1153,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
         Short firstLocLed = getFirstLedNumAlongPath();
         Short lastLocLed = getLastLedNumAlongPath();
         if (firstLocLed == null || lastLocLed == null) {
-            LOGGER.warn(String.format("Cannot calculate LedRange for %s, firstLed: %s , lastLed %s ",
-                this,
-                firstLocLed,
-                lastLocLed));
+            LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
             return LedRange.zero();
         }
 
@@ -1289,7 +1290,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		// Get the LedController
 		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
-		LedController newLedController = LedController.DAO.findByPersistentId(persistentId);
+		LedController newLedController = LedController.staticGetDao().findByPersistentId(persistentId);
 		if (newLedController == null)
 			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
 

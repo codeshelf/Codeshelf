@@ -12,11 +12,11 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.EdiTestABC;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
@@ -28,7 +28,7 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.UserSession;
 
-public class LineScanTest extends EdiTestABC {
+public class LineScanTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	private ICsvOrderImporter importer;
@@ -56,7 +56,7 @@ public class LineScanTest extends EdiTestABC {
 	@Test
 	public void testGetWorkInstructionDirect() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 
 		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(che, "11.1");
 		List<WorkInstruction> instructions = response.getWorkInstructions();
@@ -71,7 +71,7 @@ public class LineScanTest extends EdiTestABC {
 	@Test
 	public void testGetWorkInstruction() {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
 		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
@@ -91,7 +91,7 @@ public class LineScanTest extends EdiTestABC {
 	@Test
 	public void testGetWorkInstructionDuplicate() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "10.1");
 			processor.handleRequest(Mockito.mock(UserSession.class), request);
@@ -106,7 +106,7 @@ public class LineScanTest extends EdiTestABC {
 	@Test
 	public void testGetWorkInstructionCompletedInstruction() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
 		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(Mockito.mock(UserSession.class), request);
@@ -129,7 +129,7 @@ public class LineScanTest extends EdiTestABC {
 	@Test
 	public void testGetWorkInstructionBadDetailId() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.DAO.getAll().get(0);
+		Che che = Che.staticGetDao().getAll().get(0);
 		
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "xxx");

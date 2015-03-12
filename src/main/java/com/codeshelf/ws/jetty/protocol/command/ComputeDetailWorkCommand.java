@@ -31,7 +31,7 @@ public class ComputeDetailWorkCommand extends CommandABC {
 	public ResponseABC exec() {
 		GetOrderDetailWorkResponse response = null;
 		String cheId = request.getDeviceId();
-		Che che = Che.DAO.findByPersistentId(UUID.fromString(cheId));
+		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			// Get the work instructions for this CHE and order detail

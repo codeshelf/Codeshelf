@@ -57,7 +57,7 @@ public class LoginCommand extends CommandABC {
 							+ session.getSessionId());
 
 					// determine if site controller
-					SiteController sitecon = SiteController.DAO.findByDomainId(null, username);
+					SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
 					CodeshelfNetwork network = null;
 					if (sitecon != null) {
 						network = TenantPersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());

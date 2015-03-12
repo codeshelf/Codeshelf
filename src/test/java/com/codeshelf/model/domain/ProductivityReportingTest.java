@@ -23,14 +23,15 @@ import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
+import com.codeshelf.testframework.ServerTest;
 
-public class ProductivityReportingTest extends DomainTestABC {
+public class ProductivityReportingTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
 	private OrderService	orderService;
 
 	@Override
-	public void doBefore() throws Exception {
+	public void doBefore() {
 		super.doBefore();
 		orderService = new OrderService();
 	}
@@ -45,7 +46,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(this.getTenantPersistenceService().getDefaultSchema(),facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
-		Assert.assertEquals(groups.size(), 3);
+		Assert.assertEquals(3, groups.size());
 		Iterator<String> groupNames = groups.keySet().iterator();
 		while (groupNames.hasNext()) {
 			String groupName = groupNames.next();
@@ -180,7 +181,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 	private Facility createFacilityWithOneRun(String orgId){
 		//12/22/14 6:46 PM = 1419291960000
 		Facility facility = createFacility();
-		Che che = Che.DAO.findByDomainId(null,"CHE1");
+		Che che = Che.staticGetDao().findByDomainId(null,"CHE1");
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);
@@ -200,7 +201,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 
 	private List<WorkInstruction>  createFacilityWithOneRunAllWorkInstructionCombos(){
 		//12/22/14 6:46 PM = 1419291960000
-		Facility facility = getDefaultFacility();
+		Facility facility = getFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
 		List<WorkInstruction> generatedWIs = generator.generateCombinations(facility, new Timestamp(1419291960000l));
 		return generatedWIs;
@@ -211,7 +212,7 @@ public class ProductivityReportingTest extends DomainTestABC {
 		//12/22/14 6:46 PM = 1419291960000
 		//12/23/14 7:40 PM = 1419363620000
 		Facility facility = createFacility();
-		Che che = Che.DAO.findByDomainId(null,"CHE1");
+		Che che = Che.staticGetDao().findByDomainId(null,"CHE1");
 
 		UomMaster uomMaster = createUomMaster("EA", facility);
 		ItemMaster itemMaster = createItemMaster("ITEM1", facility, uomMaster);

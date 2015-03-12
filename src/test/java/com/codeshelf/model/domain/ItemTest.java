@@ -5,9 +5,10 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableMap;
 
-public class ItemTest extends DomainTestABC {
+public class ItemTest extends HibernateTest {
 
 	@Test
 	public void testItemWithoutAssignedTier() {
@@ -58,7 +59,7 @@ public class ItemTest extends DomainTestABC {
 	public void testCriteriaByTier() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Item.DAO.findByFilterAndClass("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()), Item.class);
+		Item.staticGetDao().findByFilter("itemsByFacilityAndLocation", ImmutableMap.<String, Object>of("facilityId", UUID.randomUUID(), "locationId", UUID.randomUUID()));
 		
 		this.getTenantPersistenceService().commitTransaction();
 		

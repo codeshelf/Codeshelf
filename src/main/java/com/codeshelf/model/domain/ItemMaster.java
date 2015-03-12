@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -36,14 +37,13 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Joiner;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 // --------------------------------------------------------------------------
 /**
@@ -61,10 +61,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
-	@Inject
-	public static ITypedDao<ItemMaster>	DAO;
-
-	@Singleton
 	public static class ItemMasterDao extends GenericDaoABC<ItemMaster> implements ITypedDao<ItemMaster> {
 		public final Class<ItemMaster> getDaoClass() {
 			return ItemMaster.class;
@@ -147,7 +143,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, Gtin>			gtinMaps					= new HashMap<String, Gtin>();
+	private Map<String, Gtin>			gtins					= new HashMap<String, Gtin>();
 
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
@@ -157,7 +153,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<ItemMaster> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ItemMaster.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -204,11 +204,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/**
 	 * 
 	 */
-	public void addGtinMapToMaster(Gtin inGtinMap)	{
+	public void addGtinToMaster(Gtin inGtinMap)	{
 		ItemMaster previousItemMaster = inGtinMap.getParent();
 		
 		if(previousItemMaster == null)	{
-			gtinMaps.put(inGtinMap.getDomainId(), inGtinMap);
+			gtins.put(inGtinMap.getDomainId(), inGtinMap);
 			inGtinMap.setParent(this);
 		} else if(!previousItemMaster.equals(this)) {
 			LOGGER.error("cannot add GtinMap " + inGtinMap.getDomainId() + " to " + this.getDomainId()
@@ -218,10 +218,10 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 	}
 	
-	public void removeGtinMapFromMaster(Gtin inGtinMap) {
-		if (gtinMaps.containsKey(inGtinMap.getDomainId())) {
+	public void removeGtinFromMaster(Gtin inGtinMap) {
+		if (gtins.containsKey(inGtinMap.getDomainId())) {
 			inGtinMap.setParent(null);
-			gtinMaps.remove(inGtinMap.getDomainId());
+			gtins.remove(inGtinMap.getDomainId());
 		} else {
 			LOGGER.error("cannot remove GtinMap " + inGtinMap.getDomainId() + " from " + this.getDomainId()
 					+ " because it isn't found in children");
@@ -381,10 +381,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		return Joiner.on(",").join(itemLocationIds);
 	}
 
-	public static void setDao(ItemMasterDao inItemMasterDao) {
-		ItemMaster.DAO = inItemMasterDao;
-	}
-
 	/*
 	 * Assuming the existing item would be on its master:
 	 * 1) Find the existing. 2) Disallow same location, master, uom combination. 3) Disallow same master, each anywhere.
@@ -445,14 +441,44 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 			inLocation.addStoredItem(item); // which removes from the prior location.
 		return item;
 	}
+	
+	public Gtin createGtin(String inGtin, UomMaster inUomMaster) {
+		Gtin gtin = new Gtin();
+		gtin.setDomainId(inGtin);
+		
+		this.addGtinToMaster(gtin);
+		
+		gtin.setUomMaster(inUomMaster);
+		
+		return gtin;
+	}
 
-	public Gtin getGtinMap(String gtin) {
+	public Gtin getGtin(String gtin) {
 						
-		if (gtinMaps.containsKey(gtin)){
-			return gtinMaps.get(gtin);
+		if (gtins.containsKey(gtin)){
+			return gtins.get(gtin);
 		} else {
 			return null;
 		}
+	}
+	
+	/*
+	 * Assuming only one GTIN per ItemMaster <--> UOM matching
+	 * If more than one we might return the wrong GTIN, however, having multiple
+	 * GTINs with the same UOM is wrong.
+	 * 
+	 * FIXME Database restraint for GTIN ItemMaster <--> UOM matching
+	 */
+	public Gtin getGtinForUom(UomMaster inUomMaster){
+		
+		List<Gtin> gtinList = new ArrayList<Gtin>(gtins.values());
+		
+		for (Gtin gtin : gtinList) {
+			if (gtin.getUomMaster().equals(inUomMaster))
+				return gtin;
+		}
+		
+		return null;
 	}
 
 }

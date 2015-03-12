@@ -153,12 +153,13 @@ public interface IPacket {
 	 */
 	void setPacketType(byte inPacketType);
 
-	//	// --------------------------------------------------------------------------
-	//	/**
-	//	 *  Determine if this command requires an ACK.
-	//	 *  @return
-	//	 */
-	//	boolean getAckRequested();
+	// --------------------------------------------------------------------------
+	/**
+	 *  Determine if this command requires an ACK.
+	 *  @return
+	 */
+	boolean isAckRequested();
+
 	//
 	//	// --------------------------------------------------------------------------
 	//	/**

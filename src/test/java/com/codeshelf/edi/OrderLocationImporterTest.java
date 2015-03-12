@@ -23,12 +23,13 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author jeffw
  *
  */
-public class OrderLocationImporterTest extends EdiTestABC {
+public class OrderLocationImporterTest extends ServerTest {
 
 	/**
 	 * Given two orders and a single slot
@@ -182,7 +183,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		Assert.assertTrue(importSlotting(facility, rotateAgain));
 
-		facility = Facility.DAO.findByPersistentId(facility.getPersistentId());
+		facility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
 		OrderHeader orderAfterReduction = facility.getOrderHeader("01111");
 		Assert.assertEquals(1, orderAfterReduction.getOrderLocations().size());
 		assertOrderHasLocation(facility, orderAfterReduction, "D-22");
@@ -278,7 +279,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ ", A2.B2\r\n" // O3333's location
 				+ "O4444, "; //
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORDLOC.1", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-ORDLOC.1", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
@@ -289,7 +290,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order1111.setActive(true);
 		order1111.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order1111);
-		OrderHeader.DAO.store(order1111);
+		OrderHeader.staticGetDao().store(order1111);
 
 		OrderHeader order2222 = new OrderHeader();
 		order2222.setOrderId("O2222");
@@ -300,7 +301,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order2222.setActive(true);
 		order2222.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order2222);
-		OrderHeader.DAO.store(order2222);
+		OrderHeader.staticGetDao().store(order2222);
 
 		OrderHeader order3333 = new OrderHeader();
 		order3333.setOrderId("O3333");
@@ -311,7 +312,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order3333.setActive(true);
 		order3333.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order3333);
-		OrderHeader.DAO.store(order3333);
+		OrderHeader.staticGetDao().store(order3333);
 
 		OrderHeader order4444 = new OrderHeader();
 		order4444.setOrderId("O4444");
@@ -322,37 +323,37 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order4444.setActive(true);
 		order4444.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order4444);
-		OrderHeader.DAO.store(order4444);
+		OrderHeader.staticGetDao().store(order4444);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA1);
+		Aisle.staticGetDao().store(aisleA1);
 
 		Bay bayA1B1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA1B1);
+		Bay.staticGetDao().store(bayA1B1);
 
 		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA1B2);
+		Bay.staticGetDao().store(bayA1B2);
 
 		Bay bayA1B3 = aisleA1.createBay("B3", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA1B3);
+		Bay.staticGetDao().store(bayA1B3);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA2);
+		Aisle.staticGetDao().store(aisleA2);
 
 		Bay bayA2B1 = aisleA2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA2B1);
+		Bay.staticGetDao().store(bayA2B1);
 
 		Bay bayA2B2 = aisleA2.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA2B2);
+		Bay.staticGetDao().store(bayA2B2);
 
 		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA3);
+		Aisle.staticGetDao().store(aisleA3);
 
 		Bay bayA3B1 = aisleA3.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA3B1);
+		Bay.staticGetDao().store(bayA3B1);
 
 		Bay bayA3B2 = aisleA3.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA3B2);
+		Bay.staticGetDao().store(bayA3B2);
 
 		// This order location should get blanked out by the import.
 		OrderLocation orderLocation3333 = new OrderLocation();
@@ -361,7 +362,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		orderLocation3333.setActive(true);
 		orderLocation3333.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderLocation3333.setParent(order3333);
-		OrderLocation.DAO.store(orderLocation3333);
+		OrderLocation.staticGetDao().store(orderLocation3333);
 		order3333.addOrderLocation(orderLocation3333);
 
 		// This order location should get blanked out by the import.
@@ -371,7 +372,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		orderLocation4444.setActive(true);
 		orderLocation4444.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderLocation4444.setParent(order4444);
-		OrderLocation.DAO.store(orderLocation4444);
+		OrderLocation.staticGetDao().store(orderLocation4444);
 		order4444.addOrderLocation(orderLocation4444);
 
 		// This order location should get blanked out by the import.
@@ -381,7 +382,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		orderLocation5555.setActive(true);
 		orderLocation5555.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderLocation5555.setParent(order4444);
-		OrderLocation.DAO.store(orderLocation5555);
+		OrderLocation.staticGetDao().store(orderLocation5555);
 		order4444.addOrderLocation(orderLocation5555);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
@@ -428,7 +429,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 		byte[] csvArray = csvString.getBytes();
 
-		Facility facility = Facility.createFacility(getDefaultTenant(),"F-ORDLOC.2", "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility("F-ORDLOC.2", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
 		order1111.setOrderId("O1111");
@@ -439,7 +440,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order1111.setActive(true);
 		order1111.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order1111);
-		OrderHeader.DAO.store(order1111);
+		OrderHeader.staticGetDao().store(order1111);
 
 		OrderHeader order2222 = new OrderHeader();
 		order2222.setOrderId("O2222");
@@ -450,7 +451,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order2222.setActive(true);
 		order2222.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order2222);
-		OrderHeader.DAO.store(order2222);
+		OrderHeader.staticGetDao().store(order2222);
 
 		OrderHeader order3333 = new OrderHeader();
 		order3333.setOrderId("O3333");
@@ -461,7 +462,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order3333.setActive(true);
 		order3333.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order3333);
-		OrderHeader.DAO.store(order3333);
+		OrderHeader.staticGetDao().store(order3333);
 
 		OrderHeader order4444 = new OrderHeader();
 		order4444.setOrderId("O4444");
@@ -472,37 +473,37 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		order4444.setActive(true);
 		order4444.setUpdated(new Timestamp(System.currentTimeMillis()));
 		facility.addOrderHeader(order4444);
-		OrderHeader.DAO.store(order4444);
+		OrderHeader.staticGetDao().store(order4444);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA1);
+		Aisle.staticGetDao().store(aisleA1);
 
 		Bay bayA1B1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA1B1);
+		Bay.staticGetDao().store(bayA1B1);
 
 		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA1B2);
+		Bay.staticGetDao().store(bayA1B2);
 
 		Bay bayA1B3 = aisleA1.createBay( "B3", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA1B3);
+		Bay.staticGetDao().store(bayA1B3);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA2);
+		Aisle.staticGetDao().store(aisleA2);
 
 		Bay bayA2B1 = aisleA2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA2B1);
+		Bay.staticGetDao().store(bayA2B1);
 
 		Bay bayA2B2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA2B2);
+		Bay.staticGetDao().store(bayA2B2);
 
 		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.DAO.store(aisleA3);
+		Aisle.staticGetDao().store(aisleA3);
 
 		Bay bayA3B1 = aisleA3.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA3B1);
+		Bay.staticGetDao().store(bayA3B1);
 
 		Bay bayA3B2 = aisleA3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.DAO.store(bayA3B2);
+		Bay.staticGetDao().store(bayA3B2);
 
 		// This order location should get blanked out by the import.
 		OrderLocation orderLocation3333 = new OrderLocation();
@@ -511,7 +512,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		orderLocation3333.setActive(true);
 		orderLocation3333.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderLocation3333.setParent(order3333);
-		OrderLocation.DAO.store(orderLocation3333);
+		OrderLocation.staticGetDao().store(orderLocation3333);
 		order3333.addOrderLocation(orderLocation3333);
 
 		// This order location should get blanked out by the import.
@@ -521,7 +522,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		orderLocation4444.setActive(true);
 		orderLocation4444.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderLocation4444.setParent(order4444);
-		OrderLocation.DAO.store(orderLocation4444);
+		OrderLocation.staticGetDao().store(orderLocation4444);
 		order4444.addOrderLocation(orderLocation4444);
 
 		// This order location should get blanked out by the import.
@@ -531,7 +532,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 		orderLocation5555.setActive(true);
 		orderLocation5555.setUpdated(new Timestamp(System.currentTimeMillis()));
 		orderLocation5555.setParent(order4444);
-		OrderLocation.DAO.store(orderLocation5555);
+		OrderLocation.staticGetDao().store(orderLocation5555);
 		order4444.addOrderLocation(orderLocation5555);
 
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
@@ -600,7 +601,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n"; //
 		Assert.assertTrue(importAisles(facility, aisleCsv));;
-		Aisle aisle = Aisle.DAO.findByDomainId(facility, "A9");
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle);
 		Location location = facility.findSubLocationById("A9.B1.T1.S1");
 		Assert.assertNotNull(location);
@@ -697,7 +698,7 @@ public class OrderLocationImporterTest extends EdiTestABC {
 
 
 	private Facility getTestFacility(String orgId, String facilityId) {
-		Facility facility = Facility.createFacility(getDefaultTenant(),facilityId, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		return facility;
 	}
 	

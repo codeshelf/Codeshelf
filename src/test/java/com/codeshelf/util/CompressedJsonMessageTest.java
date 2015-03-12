@@ -5,11 +5,12 @@ import javax.websocket.DecodeException;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.jetty.io.CompressedJsonMessage;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
-public class CompressedJsonMessageTest {
+public class CompressedJsonMessageTest extends MinimalTest {
 	@Test
 	public void testCompress() {
 		

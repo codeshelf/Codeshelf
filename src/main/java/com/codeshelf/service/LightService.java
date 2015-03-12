@@ -8,6 +8,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -22,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -76,7 +80,7 @@ public class LightService implements IApiService {
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
-		Item theItem = Item.DAO.findByPersistentId(inItemPersistentId);
+		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
 		if (theItem == null) {
 			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
 			return;
@@ -91,7 +95,7 @@ public class LightService implements IApiService {
 
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 
-		Facility facility = checkFacility(facilityPersistentId);
+		final Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
@@ -100,6 +104,26 @@ public class LightService implements IApiService {
 		} else {
 			lightChildLocations(facility, theLocation, color);
 		}
+		
+		//Light the POS range
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		lightPosConRange(facility, theLocation, instructions);
+		final PosControllerInstrList message = new PosControllerInstrList(instructions);
+		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+		//Modify all POS commands to clear their POSs instead.
+		new Timer().schedule(new TimerTask() {
+			@Override
+			public void run() {
+				LOGGER.info("AisleDeviceLogic expire timer fired.");
+				for (PosControllerInstr instructions : message.getInstructions()){
+					instructions.getRemovePos().add(instructions.getPosition());
+				}
+				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+			}
+		}, 20000);
+
+		
+
 	}
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
@@ -139,7 +163,30 @@ public class LightService implements IApiService {
 		} else {
 			LOGGER.warn("Unable to light location: " + theLocation);
 		}
-
+		
+	}
+	
+	private void lightPosConRange(final Facility facility, final Location theLocation, List<PosControllerInstr> instructions){
+		if (theLocation == null) {return;}
+		if (theLocation.isLightablePoscon()) {
+			String posConController = theLocation.getLedControllerId();
+			int posConIndex = theLocation.getPosconIndex();
+			PosControllerInstr message = new PosControllerInstr(
+				posConController,
+				(byte) posConIndex,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_TRIPLE_DASH,
+				PosControllerInstr.BITENCODED_TRIPLE_DASH,
+				PosControllerInstr.BLINK_FREQ,
+				PosControllerInstr.BRIGHT_DUTYCYCLE);
+			instructions.add(message);
+		}
+		List<Location> children = theLocation.getActiveChildren();
+		if (!children.isEmpty()){
+			for (Location child : children) {
+				lightPosConRange(facility, child, instructions);
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -282,7 +329,7 @@ public class LightService implements IApiService {
 	}
 
 	private Facility checkFacility(final String facilityPersistentId) {
-		return checkNotNull(Facility.DAO.findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
+		return checkNotNull(Facility.staticGetDao().findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
 	}
 
 	private Location checkLocation(Facility facility, final String inLocationNominalId) {
@@ -351,7 +398,7 @@ public class LightService implements IApiService {
 				return;
 			}
 
-			Facility facility = Facility.DAO.findByPersistentId(facilityPersistentId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
 			if (facility == null) {
 				LOGGER.error("lightAllControllers called with unknown facility");
 				return;

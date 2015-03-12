@@ -20,12 +20,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.codeshelf.filter.Filter;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.codeshelf.model.domain.DomainTestABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.command.ArgsClass;
 import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
@@ -41,7 +41,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(MockitoJUnitRunner.class)
-public class CreatePathCommandTest extends DomainTestABC {
+public class CreatePathCommandTest extends HibernateTest {
 
 	@Mock
 	private ServiceFactory mockServiceFactory;
@@ -70,12 +70,12 @@ public class CreatePathCommandTest extends DomainTestABC {
 
 		try {
 			/* register a filter like the UI does */
-			viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getDao(PathSegment.class), PathSegment.class, "ID1"));
+			viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
 			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
 			
 			
 			
-			Path noPath = Path.DAO.findByDomainId(testFacility, testPathDomainId);
+			Path noPath = Path.staticGetDao().findByDomainId(testFacility, testPathDomainId);
 			Assert.assertNull(noPath);
 			
 			PathSegment[] segments = createPathSegment(numberOfSegments);

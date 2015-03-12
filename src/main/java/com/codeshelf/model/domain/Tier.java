@@ -23,11 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 //--------------------------------------------------------------------------
 /**
@@ -58,10 +58,6 @@ public class Tier extends Location {
 	public static final String		THIS_TIER_ONLY		= "";
 	public static final String		ALL_TIERS_IN_AISLE	= "aisle";
 
-	@Inject
-	public static ITypedDao<Tier>	DAO;
-
-	@Singleton
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
 		public final Class<Tier> getDaoClass() {
 			return Tier.class;
@@ -94,7 +90,11 @@ public class Tier extends Location {
 	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Tier> getDao() {
-		return DAO;
+		return staticGetDao();
+	}
+
+	public static ITypedDao<Tier> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(Tier.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
@@ -151,7 +151,7 @@ public class Tier extends Location {
 		return (theTierIds.aisleName + "-" + theTierIds.bayName);
 	}
 
-	private class SlotIDComparator implements Comparator<Slot> {
+	public class SlotIDComparator implements Comparator<Slot> {
 		// This is clone of SlotNameComparable in AislesFileCsvImporter.  Move to public slot method?
 		public int compare(Slot inLoc1, Slot inLoc2) {
 			if ((inLoc1 == null) && (inLoc2 == null)) {
@@ -281,15 +281,11 @@ public class Tier extends Location {
 			Slot slot = (Slot) li.next();
 			slot.setLedController(ledController);
 			slot.setPosconIndex(posconIndex);
-			Slot.DAO.store(slot);
+			Slot.staticGetDao().store(slot);
 			posconIndex++;	
 		}
 	}
 	
-	public static void setDao(TierDao inTierDao) {
-		Tier.DAO = inTierDao;
-	}
-
 	public Slot createSlot(String inSlotId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Slot slot=new Slot();
 		slot.setDomainId(inSlotId);
@@ -314,5 +310,9 @@ public class Tier extends Location {
 	    	return (Tier) location;
 	    }
 		throw new RuntimeException("Location is not a tier: "+location);
+	}
+
+	public static void sortByDomainId(List<Tier> tiers) {
+		java.util.Collections.sort(tiers, new TierBayComparable());
 	}	
 }

@@ -9,7 +9,9 @@ package com.codeshelf.flyweight.bitfields;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class NBitIntegerSaTest {
+import com.codeshelf.testframework.MinimalTest;
+
+public class NBitIntegerSaTest extends MinimalTest {
 
 	/*
 	 * Test method for 'com.gadgetworks.bitfields.NBitInteger.NBitInteger(int, int)'

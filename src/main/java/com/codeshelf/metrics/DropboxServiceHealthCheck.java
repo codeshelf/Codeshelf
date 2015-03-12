@@ -20,7 +20,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 		TenantPersistenceService.getInstance().beginTransaction();
 		int numFacilities = -1;
 		try {
-			List<Facility> allFacilities = Facility.DAO.getAll();
+			List<Facility> allFacilities = Facility.staticGetDao().getAll();
 			for (Facility facility : allFacilities) {
 				DropboxService service = facility.getDropboxService();
 				if (service != null) {

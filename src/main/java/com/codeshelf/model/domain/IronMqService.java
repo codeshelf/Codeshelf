@@ -37,6 +37,7 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -44,8 +45,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 /**
  * @author jeffw
@@ -57,10 +56,6 @@ import com.google.inject.Singleton;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class IronMqService extends EdiServiceABC {
 
-	@Inject
-	public static ITypedDao<IronMqService>	DAO;
-
-	@Singleton
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
 		public final Class<IronMqService> getDaoClass() {
 			return IronMqService.class;
@@ -139,11 +134,11 @@ public class IronMqService extends EdiServiceABC {
 
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<IronMqService> getDao() {
-		return DAO;
+		return staticGetDao();
 	}
 
-	public final static void setDao(ITypedDao<IronMqService> dao) {
-		IronMqService.DAO = dao;
+	public static ITypedDao<IronMqService> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(IronMqService.class);
 	}
 
 	public final String getServiceName() {
@@ -179,7 +174,7 @@ public class IronMqService extends EdiServiceABC {
 				LOGGER.warn("IronMqService is unlinked, will not export work instructions");
 			}
 		}
-		IronMqService.DAO.store(this); //This is the DAO the UI is listening to
+		IronMqService.staticGetDao().store(this); //This is the DAO the UI is listening to
 	}
 
 	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,

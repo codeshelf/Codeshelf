@@ -1,5 +1,7 @@
 package com.codeshelf.platform.persistence;
 
+import java.util.UUID;
+
 import org.hibernate.Hibernate;
 import org.hibernate.event.spi.PostCommitDeleteEventListener;
 import org.hibernate.event.spi.PostDeleteEvent;
@@ -9,6 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.DomainObjectTreeABC;
+import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.IDomainObjectTree;
 
 public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 
@@ -28,9 +33,21 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 	@Override
 	public void onPostDelete(PostDeleteEvent event) {
 		Object entity = event.getEntity();
-		if (entity instanceof DomainObjectABC) {
+		if (DomainObjectABC.class.isAssignableFrom(entity.getClass())) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
-			this.objectChangeBroadcaster.broadcastDelete(Hibernate.getClass(domainObject), domainObject.getPersistentId());
+
+			Class<? extends IDomainObject> parentClass = null;
+			UUID parentId = null;
+			if(DomainObjectTreeABC.class.isAssignableFrom(entity.getClass())) {
+				IDomainObjectTree<? extends IDomainObject> childObject = (IDomainObjectTree<? extends IDomainObject>) entity;
+				IDomainObject parent = childObject.getParent();
+				if(parent != null) {
+					parentClass = parent.getClass();
+					parentId = childObject.getParentPersistentId();
+				}
+			}
+			this.objectChangeBroadcaster.broadcastDelete(Hibernate.getClass(domainObject), domainObject.getPersistentId(),
+				parentClass, parentId);
 		}
 	}
 

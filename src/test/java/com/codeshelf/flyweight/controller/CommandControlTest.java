@@ -27,8 +27,9 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.testframework.MinimalTest;
 
-public final class CommandControlTest {
+public final class CommandControlTest extends MinimalTest {
 
 	private static final String	TEST_MSG1				= "TEST1";
 	private static final String	TEST_MSG2				= "TEST2";
@@ -77,12 +78,12 @@ public final class CommandControlTest {
 
 		PosControllerInstr instruction = instructions.get(0);
 
-		Assert.assertEquals(POS_NUM, (Byte) instruction.getPosition());
-		Assert.assertEquals(REQ_VALUE, (Byte) instruction.getReqQty());
-		Assert.assertEquals(MIN_VALUE, (Byte) instruction.getMinQty());
-		Assert.assertEquals(MAX_VALUE, (Byte) instruction.getMaxQty());
-		Assert.assertEquals(FREQ, (Byte) instruction.getFreq());
-		Assert.assertEquals(DUTYCYCLE, (Byte) instruction.getDutyCycle());
+		Assert.assertEquals(POS_NUM, instruction.getPosition());
+		Assert.assertEquals(REQ_VALUE, instruction.getReqQty());
+		Assert.assertEquals(MIN_VALUE, instruction.getMinQty());
+		Assert.assertEquals(MAX_VALUE, instruction.getMaxQty());
+		Assert.assertEquals(FREQ, instruction.getFreq());
+		Assert.assertEquals(DUTYCYCLE, instruction.getDutyCycle());
 	}
 
 	@Test
@@ -108,7 +109,7 @@ public final class CommandControlTest {
 		dstAddr = new NetAddress(IPacket.ADDRESS_BITS);
 
 		// Create a new packet to send to the output stream.
-		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr);
+		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr, false);
 
 		// Stream the packet out.
 		packet.toStream(outputStream);
