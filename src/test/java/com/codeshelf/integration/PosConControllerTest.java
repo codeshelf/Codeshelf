@@ -23,6 +23,7 @@ import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
 
 public class PosConControllerTest extends ServerTest{
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PosConControllerTest.class);
 	
 	@Test

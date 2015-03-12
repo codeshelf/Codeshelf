@@ -431,6 +431,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		String itemId = inCsvBean.getItemId();
 		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
+		@SuppressWarnings("unused")
 		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
 

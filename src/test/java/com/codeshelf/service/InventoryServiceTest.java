@@ -1,70 +1,26 @@
 package com.codeshelf.service;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doCallRealMethod;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.mockito.internal.stubbing.answers.DoesNothing;
-import org.mockito.internal.stubbing.answers.ThrowsException;
-import org.mockito.invocation.InvocationOnMock;
 
 import com.codeshelf.edi.ICsvInventoryImporter;
-import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.VirtualSlottedFacilityGenerator;
-import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.generators.FacilityGenerator;
-import com.codeshelf.generators.WorkInstructionGenerator;
-import com.codeshelf.model.OrderStatusEnum;
-import com.codeshelf.model.WiSetSummary;
-import com.codeshelf.model.WorkInstructionStatusEnum;
-import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ConverterProvider;
-import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
-import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
-import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
-import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
-import com.google.common.collect.ImmutableList;
 
 public class InventoryServiceTest extends ServerTest {
 
+	@SuppressWarnings("unused")
 	private FacilityGenerator facilityGenerator;
 	
 	UUID facilityForVirtualSlottingId;

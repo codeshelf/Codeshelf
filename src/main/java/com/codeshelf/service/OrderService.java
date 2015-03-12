@@ -14,6 +14,7 @@ import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.type.StandardBasicTypes;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.CriteriaRegistry;
 import com.codeshelf.model.domain.Facility;
@@ -21,7 +22,6 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;

@@ -239,10 +239,10 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
-		this.useCustomDao(Che.class, mock(ITypedDao.class));
+		this.<Che>useCustomDao(Che.class, mock(ITypedDao.class));
 		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
 
-		this.useCustomDao(WorkInstruction.class,mock(ITypedDao.class));
+		this.<WorkInstruction>useCustomDao(WorkInstruction.class,mock(ITypedDao.class));
 		when(WorkInstruction.staticGetDao().findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(null);
 
 		try {
@@ -270,7 +270,7 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
-		this.useCustomDao(Che.class, mock(ITypedDao.class));
+		this.<Che>useCustomDao(Che.class, mock(ITypedDao.class));
 		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
 
 		UUID testId = UUID.randomUUID();
@@ -280,8 +280,8 @@ public class WorkServiceTest extends ServerTest {
 
 		ITypedDao<WorkInstruction> wiDao = mock(ITypedDao.class);
 		useCustomDao(WorkInstruction.class,wiDao);
-		useCustomDao(OrderDetail.class,mock(ITypedDao.class));
-		useCustomDao(OrderHeader.class,mock(ITypedDao.class));
+		this.<OrderDetail>useCustomDao(OrderDetail.class,mock(ITypedDao.class));
+		this.<OrderHeader>useCustomDao(OrderHeader.class,mock(ITypedDao.class));
 		when(wiDao.findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(existingWi);
 
 		doThrow(new DaoException("test")).when(WorkInstruction.staticGetDao()).store(eq(wiToRecord));

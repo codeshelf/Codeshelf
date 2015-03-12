@@ -4,9 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;

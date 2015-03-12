@@ -15,6 +15,12 @@ eclipse {
 	}
 }
 
+compileJava {
+	sourceCompatibility = 1.7
+	targetCompatibility = 1.7
+}
+
+
 task cleanLegacy {
 	(new File('target')).deleteDir()
 	(new File('APIs')).deleteDir()
@@ -57,6 +63,7 @@ dependencies {
 			'com.google.inject.extensions:guice-servlet:3.0',
 			'com.google.guava:guava:16.0',
 			'commons-io:commons-io:1.4',
+			'commons-codec:commons-codec:1.10',
 
 			'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.7.v20150116',
 			'org.eclipse.jetty.websocket:javax-websocket-client-impl:9.2.7.v20150116',

@@ -1,10 +1,7 @@
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -16,7 +13,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -25,6 +21,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
+import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -125,8 +122,8 @@ public class Tenant extends Schema {
 	boolean	active = true;
 	
 	@OneToMany(mappedBy = "tenant",targetEntity=User.class)
-	@MapKey(name = "username")
-	private Map<String, User> users = new HashMap<String, User>();
+	@Getter(AccessLevel.PROTECTED)
+	private List<User> users;
 
 	@Transient
 	private EventListenerIntegrator eventListenerIntegrator = null;
@@ -141,20 +138,12 @@ public class Tenant extends Schema {
 	
 	protected void addUser(User u) {
 		u.setTenant(this);
-		users.put(u.getUsername(), u);
+		users.add(u);
 	}
 	
 	public void removeUser(User u) {
 		u.setTenant(null);
-		users.remove(u.getUsername());
-	}
-	
-	public List<User> getUserList() {
-		List<User> userList = new ArrayList<User>(users.values().size());
-		for(User user : users.values()) {
-			userList.add(ManagerPersistenceService.<User>deproxify(user));
-		}
-		return userList;
+		users.remove(u);
 	}
 
 	@Override

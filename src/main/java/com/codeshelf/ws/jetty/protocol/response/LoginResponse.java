@@ -3,9 +3,9 @@ package com.codeshelf.ws.jetty.protocol.response;
 import lombok.Getter;
 import lombok.Setter;
 
+import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Organization;
-import com.codeshelf.platform.multitenancy.User;
 
 public class LoginResponse extends ResponseABC {
 	@Getter @Setter

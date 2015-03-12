@@ -19,9 +19,9 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
 
 @Path("/tenants")
 public class TenantsResource {

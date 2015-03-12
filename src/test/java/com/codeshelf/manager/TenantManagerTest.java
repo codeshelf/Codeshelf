@@ -13,10 +13,6 @@ import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.Shard;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
-import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.testframework.HibernateTest;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
@@ -38,13 +34,17 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertEquals(tenant,user.getTenant());
 		Assert.assertEquals(shard,tenant.getShard());
 		
-		List<User> users = this.tenantManagerService.getUsers();
+		List<User> users = this.tenantManagerService.getUsers(null);
+		Assert.assertTrue(users.contains(user));
+		
+		users = this.tenantManagerService.getUsers(tenant);
 		Assert.assertTrue(users.contains(user));
 		
 		List<Tenant> tenants = this.tenantManagerService.getTenants();
 		Assert.assertTrue(tenants.contains(tenant));		
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Test
 	public void manipulateUsers() {
 		String existingUsername = CodeshelfNetwork.DEFAULT_SITECON_USERNAME; 
@@ -68,7 +68,8 @@ public class TenantManagerTest extends HibernateTest {
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getId()).equals(newUser));
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getUsername()).equals(newUser));
-		Assert.assertTrue(this.tenantManagerService.getUsers().contains(newUser));
+		Assert.assertTrue(this.tenantManagerService.getUsers(null).contains(newUser));
+		Assert.assertTrue(this.tenantManagerService.getUsers(newUser.getTenant()).contains(newUser));
 
 		// can authenticate
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
@@ -90,10 +91,18 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"newpassword"));
 		
 		// can look up via REST API several ways
-		List<User> users = (List<User>) this.usersResource.get(null).getEntity();
+		List<User> users = (List<User>) this.usersResource.get(null,null,false).getEntity();
 		Assert.assertTrue(users.contains(newUser));
+		Assert.assertEquals(this.getDefaultTenant().getId(), users.get(users.indexOf(newUser)).getTenant().getId());
 
-		User user = (User) this.usersResource.get(existingUsername).getEntity();
+		String htpasswd = (String) this.usersResource.get(null,null,true).getEntity();
+		Assert.assertTrue(htpasswd.indexOf(newUser.getUsername()+":") >= 0);
+
+		users = (List<User>) this.usersResource.get(null,newUser.getTenant().getId(),false).getEntity();
+		Assert.assertTrue(users.contains(newUser));
+		Assert.assertEquals(this.getDefaultTenant().getName(), users.get(users.indexOf(newUser)).getTenant().getName());
+
+		User user = (User) this.usersResource.get(existingUsername,null,false).getEntity();
 		Assert.assertTrue(user.getUsername().equals(existingUsername));
 		
 		user = (User) this.usersResource.getUser(newUser.getId()).getEntity();
@@ -104,6 +113,7 @@ public class TenantManagerTest extends HibernateTest {
 		params.putSingle("username", "apiuser");
 		params.putSingle("password", "goodpassword");
 		params.putSingle("type", "APPUSER");
+		params.putSingle("tenantid", Integer.toString(this.getDefaultTenant().getId()));
 		User apiUser = (User) this.usersResource.createUser(params).getEntity();
 		Assert.assertTrue(apiUser.getUsername().equals("apiuser"));
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","goodpassword"));
@@ -149,6 +159,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","newpassword"));
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void manipulateTenants() {
 		String shardName = TenantManagerService.DEFAULT_SHARD_NAME;
@@ -194,6 +205,7 @@ public class TenantManagerTest extends HibernateTest {
 		params.putSingle("schemaname", "myschema");
 		Tenant apiTenant = (Tenant) this.tenantsResource.createTenant(params).getEntity();
 		Assert.assertTrue(apiTenant.getName().equals("mytenant"));
+		// TODO: create user by API 
 		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", UserType.APPUSER);		
 		// can authenticate 
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser", "goodpassword"));
@@ -226,7 +238,7 @@ public class TenantManagerTest extends HibernateTest {
 		// succeeds update with clean map
 		Assert.assertNotNull(this.tenantsResource.updateTenant(apiTenant.getId(), params).getEntity());
 		apiTenant = (Tenant) this.tenantsResource.getTenant(apiTenant.getId()).getEntity();
-		Assert.assertNotNull(apiTenant.getName().equals("newname"));
+		Assert.assertTrue(apiTenant.getName().equals("newname"));
 
 		// can disable
 		Assert.assertTrue(apiTenant.isActive());

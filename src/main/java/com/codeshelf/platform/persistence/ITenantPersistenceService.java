@@ -1,8 +1,8 @@
 package com.codeshelf.platform.persistence;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.multitenancy.Tenant;
 
 public interface ITenantPersistenceService extends IPersistenceService<Tenant> {
 

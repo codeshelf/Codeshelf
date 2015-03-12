@@ -1,4 +1,4 @@
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -37,6 +37,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	private static final Logger LOGGER = LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String DEFAULT_SHARD_NAME = "default";
 	public static final String DEFAULT_TENANT_NAME = "default";
+	private static final String	DEFAULT_APPUSER_PASS	= "testme";
 	//@Getter
 	//int defaultShardId = -1;
 	
@@ -116,20 +117,18 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	private void createDefaultUsers(Tenant tenant) {
 		// Create initial users
-		createUser(tenant,"a@example.com", "testme",UserType.APPUSER); //view
-		createUser(tenant,"view@example.com", "testme",UserType.APPUSER); //view
-		createUser(tenant,"configure@example.com", "testme",UserType.APPUSER); //all
-		createUser(tenant,"simulate@example.com", "testme",UserType.APPUSER); //simulate + configure
-		createUser(tenant,"che@example.com", "testme",UserType.APPUSER); //view + simulate
-		createUser(tenant,"work@example.com", "testme",UserType.APPUSER); //view + simulate
+		createUser(tenant,"a@example.com", DEFAULT_APPUSER_PASS, UserType.APPUSER); //view
+		createUser(tenant,"view@example.com", DEFAULT_APPUSER_PASS, UserType.APPUSER); //view
+		createUser(tenant,"configure@example.com", DEFAULT_APPUSER_PASS, UserType.APPUSER); //all
+		createUser(tenant,"simulate@example.com", DEFAULT_APPUSER_PASS, UserType.APPUSER); //simulate + configure
+		createUser(tenant,"che@example.com", DEFAULT_APPUSER_PASS, UserType.APPUSER); //view + simulate
+		createUser(tenant,"work@example.com", DEFAULT_APPUSER_PASS, UserType.APPUSER); //view + simulate
 		
-		createUser(tenant,"view@accu-logistics.com", "accu-logistics",UserType.APPUSER); //view
-
 		createUser(tenant,CodeshelfNetwork.DEFAULT_SITECON_USERNAME,CodeshelfNetwork.DEFAULT_SITECON_PASS,UserType.SITECON);
 	}
 
 	private Tenant initDefaultTenant(Session session,Shard shard) {
-		Tenant tenant = shard.getTenant(DEFAULT_TENANT_NAME);
+		Tenant tenant = this.getTenantByName(DEFAULT_TENANT_NAME);
 		if(tenant == null) {
 			String dbSchemaName = System.getProperty("tenant.default.schema");
 			String dbUsername = System.getProperty("tenant.default.username");
@@ -235,7 +234,8 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			tenant = inflate((Tenant) session.load(Tenant.class, tenant.getId()));
 			
 			// remove all users except site controller
-			List<User> users = tenant.getUserList();
+			List<User> users = new ArrayList<User>();
+			users.addAll(tenant.getUsers());
 			for(User u : users) {
 				u = (User) session.load(User.class, u.getId());
 				if(u.getType() != UserType.SITECON || !u.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
@@ -282,7 +282,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	public User authenticate(String username,String password) {
 		User user = getUser(username);
 		if(user!=null) {
-			boolean passwordValid = user.isPasswordValid(password);
+			boolean passwordValid = user.checkPassword(password);
 			if(user.getTenant().isActive()) {
 				if(user.isActive()) {
 					if(passwordValid) {
@@ -333,6 +333,22 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			User user = getUser(session,username); 
 			if(user != null) {
 				result = user;	
+				
+				if(!user.hashIsValid()) {
+					boolean update = false;
+					if(user.getUsername().endsWith("@example.com")) {
+						user.setPassword(DEFAULT_APPUSER_PASS);
+						update = true;
+					} else if(user.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
+						user.setPassword(CodeshelfNetwork.DEFAULT_SITECON_PASS);
+						update = true;
+					}
+					if(update) {
+						LOGGER.warn("Automatic default account password reset (switch hash to apr1");
+						session.save(user);
+					}
+				}
+				
 			} else {
 				LOGGER.warn("user not found: "+username);
 			}
@@ -344,14 +360,26 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	
 
 	@Override
-	public List<User> getUsers() {
+	public List<User> getUsers(Tenant tenant) {
 		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		List<User> userList = null;
 		try {
-			@SuppressWarnings("unchecked")
-			List<User> list = session.createCriteria(User.class).list();
-			userList = list;
+			if(tenant == null) {
+				Criteria criteria = session.createCriteria(User.class);
+				@SuppressWarnings("unchecked")
+				List<User> list = (List<User>) criteria.list();
+				userList = list;
+			} else {
+				Tenant loaded = (Tenant) session.load(Tenant.class, tenant.getId());
+				userList = new ArrayList<User>(loaded.getUsers().size());
+				// get deep list of non-proxy objects
+				for(User user : loaded.getUsers()) {
+					User realUser = ManagerPersistenceService.<User>deproxify(user);
+					realUser.setTenant(ManagerPersistenceService.<Tenant>deproxify(realUser.getTenant()));
+					userList.add(realUser);
+				}
+			}
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
@@ -641,7 +669,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			LOGGER.warn("DESTROYING tenant {} including users and schema",tenant);
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
-			for(User user : tenant.getUserList()) {
+			for(User user : tenant.getUsers()) {
 				user = (User) session.load(User.class, user.getId());
 				session.delete(user);
 			}

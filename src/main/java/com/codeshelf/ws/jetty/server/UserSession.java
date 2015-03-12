@@ -24,12 +24,12 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.filter.ObjectEventListener;
+import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 

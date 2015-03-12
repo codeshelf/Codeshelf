@@ -1,4 +1,4 @@
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public interface ITenantManagerService extends ICodeshelfService {
 	User getUser(String username);
 	User updateUser(User user);
 	User authenticate(String username,String password);
-	List<User> getUsers();
+	List<User> getUsers(Tenant tenant);
 
 	// tenants
 	boolean canCreateTenant(String tenantName,String schemaName);	

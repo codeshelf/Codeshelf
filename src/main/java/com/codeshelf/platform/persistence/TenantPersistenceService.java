@@ -7,13 +7,13 @@ import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.google.inject.Inject;
 
 public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {

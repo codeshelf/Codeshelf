@@ -504,8 +504,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**
 	 */
+	private boolean wiContainerIdInMap(final WorkInstruction wi) {
+		String cntrId = wi.getContainerId();
+		return mPositionToContainerMap.containsValue(cntrId);
+	}
+	// --------------------------------------------------------------------------
+	/**
+	 */
 	private boolean selectNextActivePicks() {
-		final boolean kDoMultipleWiPicks = false;
+		final boolean kDoMultipleWiPicks = false; // DEV-451
 
 		boolean result = false;
 
@@ -515,30 +522,39 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
+			if (!wiContainerIdInMap(wi)) {
+				LOGGER.error("{} not in container map", wi.getContainerId());
+				break;
+			}
+
+			/*
 			if (mPositionToContainerMap.values().isEmpty()) {
 				LOGGER.warn(this + " assigned work but no containers assigned");
 			}
+
 			for (String containerId : mPositionToContainerMap.values()) {
-				// If the WI is for this container then consider it.
+				// If the WI is for this container then consider it. ??? Looks wrong
 				if (wi.getContainerId().equals(containerId)) {
-					// If the WI is INPROGRESS or NEW then consider it.
-					if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
-							|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
-						if ((firstLocationId == null) || (firstLocationId.equals(wi.getLocationId()))) {
-							if ((firstItemId == null) || (firstItemId.equals(wi.getItemId()))) {
-								firstLocationId = wi.getLocationId();
-								firstItemId = wi.getItemId();
-								wi.setStarted(new Timestamp(System.currentTimeMillis()));
-								mActivePickWiList.add(wi);
-								result = true;
-								if (!kDoMultipleWiPicks)
-									return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
-							}
-						}
-					}
+			*/
+
+			// If the WI is INPROGRESS or NEW then consider it.
+			if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
+					|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
+				// if we did not have one yet, make sure we add the first. Using firstItemId == null as our test
+				if (firstItemId == null || wiMatchesItemLocation(firstItemId, firstLocationId, wi)) {
+					firstLocationId = wi.getPickInstruction();
+					firstItemId = wi.getItemId();
+					wi.setStarted(new Timestamp(System.currentTimeMillis()));
+					mActivePickWiList.add(wi);
+					result = true;
+					if (!kDoMultipleWiPicks)
+						return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
 				}
 			}
 		}
+		/*
+			}
+		} */
 
 		return result;
 	}

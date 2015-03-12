@@ -26,6 +26,7 @@ public class PickSimulator {
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
 	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {

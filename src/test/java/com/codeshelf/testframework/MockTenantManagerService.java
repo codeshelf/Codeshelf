@@ -8,12 +8,12 @@ import java.util.concurrent.TimeoutException;
 
 import org.mockito.Mockito;
 
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.Shard;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.Shard;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService.ShutdownCleanupReq;
-import com.codeshelf.platform.multitenancy.User;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
@@ -140,7 +140,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return Integer.MAX_VALUE;
 	}
 	@Override
-	public List<User> getUsers() {
+	public List<User> getUsers(Tenant t) {
 		List<User> list = new ArrayList<User>(1);
 		list.add(getUser(""));
 		return list;

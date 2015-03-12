@@ -10,10 +10,10 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.mockito.Mockito;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.multitenancy.Tenant;
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.google.common.util.concurrent.ListenableFuture;

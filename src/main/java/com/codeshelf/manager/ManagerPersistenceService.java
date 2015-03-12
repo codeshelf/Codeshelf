@@ -1,4 +1,4 @@
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
 import com.codeshelf.platform.persistence.PersistenceService;

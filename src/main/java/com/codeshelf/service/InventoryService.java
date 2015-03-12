@@ -4,8 +4,6 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
-import org.hibernate.Query;
-import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 

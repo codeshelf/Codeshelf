@@ -1,4 +1,4 @@
-package com.codeshelf.platform.multitenancy;
+package com.codeshelf.manager;
 
 import java.sql.SQLException;
 import java.util.Date;
@@ -100,10 +100,6 @@ public class Shard extends DatabaseConnection {
 	private Map<String, Tenant>	tenants	= new HashMap<String, Tenant>();
 
 	public Shard() {
-	}
-
-	public Tenant getTenant(String name) {
-		return tenants.get(name);
 	}
 
 	protected void addTenant(String name, Tenant tenant) {

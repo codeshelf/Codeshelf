@@ -3,7 +3,7 @@ package com.codeshelf.application;
 import org.apache.logging.log4j.ThreadContext;
 
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.manager.User;
 import com.codeshelf.ws.jetty.server.UserSession;
 
 public class ContextLogging {
