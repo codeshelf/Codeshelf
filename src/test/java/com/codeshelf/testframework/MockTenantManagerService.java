@@ -140,7 +140,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return Integer.MAX_VALUE;
 	}
 	@Override
-	public List<User> getUsers() {
+	public List<User> getUsers(Tenant t) {
 		List<User> list = new ArrayList<User>(1);
 		list.add(getUser(""));
 		return list;

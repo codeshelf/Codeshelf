@@ -33,6 +33,7 @@ public class UsersResource {
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(UsersResource.class);
 	private static final Set<String>	validCreateUserFields	= new HashSet<String>();
 	static {
+		validCreateUserFields.add("tenantid");
 		validCreateUserFields.add("username");
 		validCreateUserFields.add("password");
 		validCreateUserFields.add("type");
@@ -40,12 +41,11 @@ public class UsersResource {
 
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response get(@QueryParam("username") String username) {
+	public Response get(@QueryParam("username") String username, @QueryParam("tenantid") Integer tenantId) {
 		if (username == null) {
-			return getUsers();
-		} else {
-			return getUser(username);
-		}
+			return getUsers(tenantId);
+		} //else
+		return getUser(username,tenantId);
 	}
 
 	@POST
@@ -170,6 +170,7 @@ public class UsersResource {
 		Map<String, String> cleanInput = RootResource.validFieldsOnly(userParams, validCreateUserFields);
 		if (cleanInput != null) {
 			String username = cleanInput.get("username");
+			String tenantIdString = cleanInput.get("tenantid");
 			String password = cleanInput.get("password");
 			String typeString = cleanInput.get("type");
 			UserType type = null;
@@ -178,14 +179,30 @@ public class UsersResource {
 			} catch (Exception e) {
 				LOGGER.warn("could not convert value to UserType: {}", typeString);
 			}
+			Integer tenantId = null;
+			try {
+				tenantId = Integer.valueOf(tenantIdString);
+			} catch(NumberFormatException e) {
+				LOGGER.warn("count not convert value to tenantId: {}", tenantIdString);
+			}
 
 			if (username != null && password != null && type != null) {
 				if (manager.canCreateUser(username)) {
 					if (User.isValidPassword(password)) {
-						Tenant defaultTenant = manager.getDefaultTenant();
-						newUser = manager.createUser(defaultTenant, username, password, type);
-						if (newUser == null)
-							LOGGER.warn("failed to create user {}", username);
+						Tenant tenant;
+						if(tenantId == null)
+							tenant = manager.getDefaultTenant();
+						else 
+							tenant = manager.getTenant(tenantId);
+						
+						if(tenant != null) {
+							newUser = manager.createUser(tenant, username, password, type);
+							if (newUser == null)
+								LOGGER.warn("failed to create user {}", username);
+							// else success
+						} else {
+							LOGGER.warn("could not create user because tenant {} not found", tenantId);
+						}
 					} else {
 						LOGGER.warn("cannot create user {} - invalid password", username);
 					}
@@ -199,9 +216,13 @@ public class UsersResource {
 		return newUser;
 	}
 
-	private Response getUsers() {
+	private Response getUsers(Integer tenantId) {
 		try {
-			List<User> userList = TenantManagerService.getInstance().getUsers();
+			Tenant tenant = null;
+			if (tenantId != null) 
+				tenant = TenantManagerService.getInstance().getTenant(tenantId);
+			
+			List<User> userList = TenantManagerService.getInstance().getUsers(tenant);
 			return Response.ok(userList).build();
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception", e);
@@ -209,10 +230,13 @@ public class UsersResource {
 		}
 	}
 
-	private Response getUser(String username) {
+	private Response getUser(String username, Integer tenantId) {
 		try {
 			User user = TenantManagerService.getInstance().getUser(username);
-			return Response.ok(user).build();
+			if(tenantId == null || tenantId.equals(user.getTenant().getId()) )
+				return Response.ok(user).build();
+			else 
+				return Response.status(Status.NOT_FOUND).build();
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception", e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();

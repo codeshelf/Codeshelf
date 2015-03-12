@@ -129,7 +129,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private Tenant initDefaultTenant(Session session,Shard shard) {
-		Tenant tenant = shard.getTenant(DEFAULT_TENANT_NAME);
+		Tenant tenant = this.getTenantByName(DEFAULT_TENANT_NAME);
 		if(tenant == null) {
 			String dbSchemaName = System.getProperty("tenant.default.schema");
 			String dbUsername = System.getProperty("tenant.default.username");
@@ -235,7 +235,8 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			tenant = inflate((Tenant) session.load(Tenant.class, tenant.getId()));
 			
 			// remove all users except site controller
-			List<User> users = tenant.getUserList();
+			List<User> users = new ArrayList<User>();
+			users.addAll(tenant.getUsers());
 			for(User u : users) {
 				u = (User) session.load(User.class, u.getId());
 				if(u.getType() != UserType.SITECON || !u.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
@@ -344,14 +345,26 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	
 
 	@Override
-	public List<User> getUsers() {
+	public List<User> getUsers(Tenant tenant) {
 		PersistenceService<ManagerSchema> managerPersistenceService=ManagerPersistenceService.getInstance();
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		List<User> userList = null;
 		try {
-			@SuppressWarnings("unchecked")
-			List<User> list = session.createCriteria(User.class).list();
-			userList = list;
+			if(tenant == null) {
+				Criteria criteria = session.createCriteria(User.class);
+				@SuppressWarnings("unchecked")
+				List<User> list = (List<User>) criteria.list();
+				userList = list;
+			} else {
+				Tenant loaded = (Tenant) session.load(Tenant.class, tenant.getId());
+				userList = new ArrayList<User>(loaded.getUsers().size());
+				// get deep list of non-proxy objects
+				for(User user : loaded.getUsers()) {
+					User realUser = ManagerPersistenceService.<User>deproxify(user);
+					realUser.setTenant(ManagerPersistenceService.<Tenant>deproxify(realUser.getTenant()));
+					userList.add(realUser);
+				}
+			}
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
@@ -641,7 +654,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			LOGGER.warn("DESTROYING tenant {} including users and schema",tenant);
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
-			for(User user : tenant.getUserList()) {
+			for(User user : tenant.getUsers()) {
 				user = (User) session.load(User.class, user.getId());
 				session.delete(user);
 			}

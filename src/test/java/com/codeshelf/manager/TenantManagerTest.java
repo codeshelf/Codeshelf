@@ -34,7 +34,10 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertEquals(tenant,user.getTenant());
 		Assert.assertEquals(shard,tenant.getShard());
 		
-		List<User> users = this.tenantManagerService.getUsers();
+		List<User> users = this.tenantManagerService.getUsers(null);
+		Assert.assertTrue(users.contains(user));
+		
+		users = this.tenantManagerService.getUsers(tenant);
 		Assert.assertTrue(users.contains(user));
 		
 		List<Tenant> tenants = this.tenantManagerService.getTenants();
@@ -65,7 +68,8 @@ public class TenantManagerTest extends HibernateTest {
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getId()).equals(newUser));
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getUsername()).equals(newUser));
-		Assert.assertTrue(this.tenantManagerService.getUsers().contains(newUser));
+		Assert.assertTrue(this.tenantManagerService.getUsers(null).contains(newUser));
+		Assert.assertTrue(this.tenantManagerService.getUsers(newUser.getTenant()).contains(newUser));
 
 		// can authenticate
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
@@ -87,10 +91,15 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"newpassword"));
 		
 		// can look up via REST API several ways
-		List<User> users = (List<User>) this.usersResource.get(null).getEntity();
+		List<User> users = (List<User>) this.usersResource.get(null,null).getEntity();
 		Assert.assertTrue(users.contains(newUser));
+		Assert.assertEquals(this.getDefaultTenant().getId(), users.get(users.indexOf(newUser)).getTenant().getId());
 
-		User user = (User) this.usersResource.get(existingUsername).getEntity();
+		users = (List<User>) this.usersResource.get(null,newUser.getTenant().getId()).getEntity();
+		Assert.assertTrue(users.contains(newUser));
+		Assert.assertEquals(this.getDefaultTenant().getName(), users.get(users.indexOf(newUser)).getTenant().getName());
+
+		User user = (User) this.usersResource.get(existingUsername,null).getEntity();
 		Assert.assertTrue(user.getUsername().equals(existingUsername));
 		
 		user = (User) this.usersResource.getUser(newUser.getId()).getEntity();
@@ -101,6 +110,7 @@ public class TenantManagerTest extends HibernateTest {
 		params.putSingle("username", "apiuser");
 		params.putSingle("password", "goodpassword");
 		params.putSingle("type", "APPUSER");
+		params.putSingle("tenantid", Integer.toString(this.getDefaultTenant().getId()));
 		User apiUser = (User) this.usersResource.createUser(params).getEntity();
 		Assert.assertTrue(apiUser.getUsername().equals("apiuser"));
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","goodpassword"));
@@ -192,6 +202,7 @@ public class TenantManagerTest extends HibernateTest {
 		params.putSingle("schemaname", "myschema");
 		Tenant apiTenant = (Tenant) this.tenantsResource.createTenant(params).getEntity();
 		Assert.assertTrue(apiTenant.getName().equals("mytenant"));
+		// TODO: create user by API 
 		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", UserType.APPUSER);		
 		// can authenticate 
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser", "goodpassword"));

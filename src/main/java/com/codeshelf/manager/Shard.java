@@ -102,10 +102,6 @@ public class Shard extends DatabaseConnection {
 	public Shard() {
 	}
 
-	public Tenant getTenant(String name) {
-		return tenants.get(name);
-	}
-
 	protected void addTenant(String name, Tenant tenant) {
 		// should only be called be createTenant
 		this.tenants.put(name,tenant);
