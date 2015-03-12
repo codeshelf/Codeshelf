@@ -1253,10 +1253,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		String returnString = "";
 
-		// If the user scanned SCANSKIP return true
+		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
-			// TODO need better warning message here. Get orderId and pickerId?
-			LOGGER.warn("SCANSKIP for work instruction");
+			// This is improved from v13 PFSWeb
+			String orderId = inWi.getOrderId();
+			String itemId = inWi.getItemId();
+			LOGGER.warn("SKIPSCAN for order:{} item:{}", orderId, itemId);
 			return returnString;
 		}
 

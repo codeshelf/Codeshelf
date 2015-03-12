@@ -1985,11 +1985,11 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
-				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LOC1,1"
-				+ "\r\n1,USF314,COSTCO,11111,11111,Sku3,Test Item 3,1,each,LOC3,3"
-				+ "\r\n1,USF314,COSTCO,22222,22222,Sku2,Test Item 2,1,each,LOC2,2"
-				+ "\r\n1,USF314,COSTCO,44444,44444,Sku1,Test Item 1,2,each,LOC1,1"
-				+ "\r\n1,USF314,COSTCO,55555,55555,Sku2,Test Item 2,1,each,LOC2,2";
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku3,Test Item 3,1,each,LocB,2"
+				+ "\r\n1,USF314,COSTCO,22222,22222,Sku2,Test Item 2,4,each,LocC,3"
+				+ "\r\n1,USF314,COSTCO,44444,44444,Sku1,Test Item 1,2,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku2,Test Item 2,5,each,LocC,3";
 		importOrdersData(facility, csvOrders);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -2011,6 +2011,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("44444", "2");
+		picker.setupOrderIdAsContainer("22222", "3");
 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
@@ -2023,7 +2024,7 @@ public class CheProcessTestPick extends ServerTest {
 		String line3 = picker.getLastCheDisplayString(3);
 		String line4 = picker.getLastCheDisplayString(4);
 
-		Assert.assertEquals("LOC1", line1);
+		Assert.assertEquals("LocA", line1);
 		Assert.assertEquals("Sku1",line2);
 		Assert.assertEquals("QTY 3",line3);
 		Assert.assertEquals("", line4);
@@ -2033,23 +2034,25 @@ public class CheProcessTestPick extends ServerTest {
 
 		// bug here!
 		// Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		LOGGER.info("2a: Complete the second poscon first");
 		picker.pick(2, 2);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
-		LOGGER.info("2b: see that poscons 1 count remains, and 2 is now oc");
+		LOGGER.info("2b: see that poscons 1 count remains, and 2 is now oc. 3 still null/blank");
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_O);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		LOGGER.info("2c: Screen shows the location, SKU, and total to pick");
 		line1 = picker.getLastCheDisplayString(1);
 		line2 = picker.getLastCheDisplayString(2);
 		line3 = picker.getLastCheDisplayString(3);
 
-		Assert.assertEquals("LOC1", line1);
+		Assert.assertEquals("LocA", line1);
 		Assert.assertEquals("Sku1",line2);
 		Assert.assertEquals("QTY 1",line3);
 
@@ -2057,20 +2060,46 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(1, 1);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
-		LOGGER.info("3b: Poscon 1 gets the next job, poscon 2 remains oc");
+		LOGGER.info("3b: Poscon 1 gets the next job, poscon 2 remains oc. 3 still null/blank");
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_C);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_O);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
 		LOGGER.info("3c: Screen shows the location, SKU, and total to pick");
 		line1 = picker.getLastCheDisplayString(1);
 		line2 = picker.getLastCheDisplayString(2);
 		line3 = picker.getLastCheDisplayString(3);
 
-		Assert.assertEquals("LOC3", line1);
+		Assert.assertEquals("LocB", line1);
 		Assert.assertEquals("Sku3",line2);
 		Assert.assertEquals("QTY 1",line3);
+
+		LOGGER.info("4a: Complete the job on first poscon");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("4b: Poscon 1 and 3 gets the next jobs, poscon 2 remains oc.");
+		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		
+		// same bug again. getting 5 (same as first controller) rather than this controller's value.
+		// Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+
+		LOGGER.info("4c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocC", line1);
+		Assert.assertEquals("Sku2",line2);
+		Assert.assertEquals("QTY 9",line3);
+
+		LOGGER.info("5a: Complete the job on first poscon. Now it should go oc");
+		picker.pick(1, 5);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+
 
 	}
 
