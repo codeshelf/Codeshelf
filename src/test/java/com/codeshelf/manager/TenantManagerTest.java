@@ -25,7 +25,7 @@ public class TenantManagerTest extends HibernateTest {
 	@Override
 	public void doBefore() {
 		super.doBefore();
-		usersResource = new UsersResource(authProviderService);
+		usersResource = new UsersResource();
 		tenantsResource = new TenantsResource();
 	}
 

@@ -103,7 +103,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IMetricsService								staticMetricsService;
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
-	private static HmacAuthService									staticHmacAuthService;
+	private static HmacAuthService								staticHmacAuthService;
 
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
@@ -176,6 +176,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
 				
+				requestStaticInjection(HmacAuthService.class);
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
 

@@ -28,7 +28,7 @@ import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.AuthProviderService;
-import com.google.inject.Inject;
+import com.codeshelf.security.HmacAuthService;
 
 // note:
 // it is intentional that the reasons for errors are only logged and not returned to the client
@@ -48,9 +48,8 @@ public class UsersResource {
 		validUpdateUserFields.add("active");
 	}
 	
-	@Inject
-	public UsersResource(AuthProviderService authProviderService) {
-		this.authProviderService = authProviderService;
+	public UsersResource() {
+		this.authProviderService = HmacAuthService.getInstance();
 	}
 	
 	@GET
@@ -71,7 +70,7 @@ public class UsersResource {
 		return Response.ok(new String(TenantManagerService.getInstance().getHtpasswd())).build();
 	}
 
-	@GET
+	@POST
 	@Path("auth")
 	@Produces(MediaType.TEXT_HTML)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)

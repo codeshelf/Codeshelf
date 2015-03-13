@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;

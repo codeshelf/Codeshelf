@@ -46,6 +46,8 @@ import com.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 public class WebApiServer {
 
@@ -80,15 +82,15 @@ public class WebApiServer {
 			if (deviceManager == null) {
 				// server only:
 
+				if(enableManagerApi) {
+					// manager API
+					contexts.addHandler(this.createManagerApiHandler());
+				}
+
 				if(enableApi) {
 					// rest API
 					// needs a better name
 					contexts.addHandler(this.createRestApiHandler());
-				}
-
-				if(enableManagerApi) {
-					// manager API
-					contexts.addHandler(this.createManagerApiHandler());
 				}
 
 				if(enableWebSockets) {
@@ -229,14 +231,15 @@ public class WebApiServer {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
 		
 		context.setContextPath("/mgr");
-		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
+		// can't seem to inject both APIs, Guice gets confused.. hm
+		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-		context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
-		context.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
+		//context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
+		//context.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 
-		//ServletContainer container = new ServletContainer(new PackagesResourceConfig("com.codeshelf.manager.api"));
-		//context.addServlet(new ServletHolder(container), "/*");
+		ServletContainer container = new ServletContainer(new PackagesResourceConfig("com.codeshelf.manager.api"));
+		context.addServlet(new ServletHolder(container), "/*");
 		return context;
 	}
 	

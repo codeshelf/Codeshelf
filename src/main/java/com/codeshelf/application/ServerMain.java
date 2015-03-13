@@ -146,6 +146,7 @@ public final class ServerMain {
 				bind(HashedCredentialsMatcher.class);
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 				
+				requestStaticInjection(HmacAuthService.class);
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
 			
@@ -163,7 +164,7 @@ public final class ServerMain {
 				return sessionManagerService;				
 			}
 			
-		}, createGuiceServletModuleForApi(), createGuiceServletModuleForManager());
+		}, createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
 
 		return injector;
 	}
@@ -189,7 +190,7 @@ public final class ServerMain {
 		};
 	}
 
-	private static ServletModule createGuiceServletModuleForManager() {
+/*	private static ServletModule createGuiceServletModuleForManager() {
 		return new ServletModule() {
 		    @Override
 		    protected void configureServlets() {
@@ -208,5 +209,5 @@ public final class ServerMain {
 		        serve("/*").with(GuiceContainer.class);
 		    }
 		};
-	}
+	}*/
 }

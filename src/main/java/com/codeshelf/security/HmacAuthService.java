@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.service.AbstractCodeshelfIdleService;
+import com.google.inject.Inject;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
@@ -39,8 +40,14 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	private boolean	secureCookies;
 	private Mac mac;
 
+	@Inject
+	static AuthProviderService theInstance;
 	
-	public HmacAuthService() {
+	public static AuthProviderService getInstance() {
+		return theInstance;
+	}
+	
+	public HmacAuthService() { // for testing
 	}
 
 	private byte[] createHmac(int id,long timestamp) {
