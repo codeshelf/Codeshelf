@@ -12,6 +12,7 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
@@ -21,6 +22,7 @@ import com.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.jetty.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
+import com.codeshelf.ws.jetty.protocol.command.InventoryScanCommand;
 import com.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
@@ -39,6 +41,7 @@ import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.jetty.protocol.request.DeviceRequest;
 import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryScanRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
@@ -195,7 +198,13 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				command = new CreatePathCommand(csSession,(CreatePathRequest) request);
 				objectFilterCounter.inc();
 				applicationRequestCounter.inc();
-			}			
+			}
+			else if (request instanceof InventoryScanRequest) {
+				//TODO - huffa - Ask paul if this is the correct way to use this serviceFactory
+				command = new InventoryScanCommand(csSession, (InventoryScanRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+				//TODO - huffa - do i need to add an "objectupdatecounter" here? Ask Paul what this is about
+				applicationRequestCounter.inc();
+			}
 			// check if matching command was found
 			if (command==null) {
 				LOGGER.warn("Unable to find matching command for request "+request+". Ignoring request.");
