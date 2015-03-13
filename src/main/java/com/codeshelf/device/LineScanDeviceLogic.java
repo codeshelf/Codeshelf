@@ -379,7 +379,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				doShortTransaction(wi, mShortPickQty);
 				LOGGER.info("Pick shorted: " + wi);
 
-				clearLedControllersForWi(wi);
+				clearLedAndPosConControllersForWi(wi);
 				setReadyMsg("");
 				setState(CheStateEnum.READY);
 			}
@@ -405,7 +405,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				doShortTransaction(wi, 0);
 			}
 			
-			clearLedControllersForWi(wi);
+			clearLedAndPosConControllersForWi(wi);
 			setReadyMsg("");
 			setState(CheStateEnum.READY);
 		} else {
@@ -434,7 +434,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		// Skip the count stuff that setup_Orders process has
 
 		// Clear off any lit aisles for last job
-		clearLedControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi);
 
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.

@@ -34,6 +34,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
 import com.google.common.collect.ImmutableList;
@@ -107,7 +108,7 @@ public class LightService implements IApiService {
 		
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		lightPosConRange(facility, theLocation, instructions);
+		getInstructionsForPosConRange(facility, null, theLocation, instructions);
 		final PosControllerInstrList message = new PosControllerInstrList(instructions);
 		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 		//Modify all POS commands to clear their POSs instead.
@@ -121,9 +122,6 @@ public class LightService implements IApiService {
 				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 			}
 		}, 20000);
-
-		
-
 	}
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
@@ -166,25 +164,38 @@ public class LightService implements IApiService {
 		
 	}
 	
-	private void lightPosConRange(final Facility facility, final Location theLocation, List<PosControllerInstr> instructions){
+	public static void getInstructionsForPosConRange(final Facility facility, final WorkInstruction wi, final Location theLocation, List<PosControllerInstr> instructions){
 		if (theLocation == null) {return;}
 		if (theLocation.isLightablePoscon()) {
 			String posConController = theLocation.getLedControllerId();
 			int posConIndex = theLocation.getPosconIndex();
-			PosControllerInstr message = new PosControllerInstr(
-				posConController,
-				(byte) posConIndex,
-				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-				PosControllerInstr.BITENCODED_TRIPLE_DASH,
-				PosControllerInstr.BITENCODED_TRIPLE_DASH,
-				PosControllerInstr.BLINK_FREQ,
-				PosControllerInstr.BRIGHT_DUTYCYCLE);
+			PosControllerInstr message = null;
+			if (wi == null) {
+				 message = new PosControllerInstr(
+					posConController,
+					(byte) posConIndex,
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_TRIPLE_DASH,
+					PosControllerInstr.BITENCODED_TRIPLE_DASH,
+					PosControllerInstr.BLINK_FREQ,
+					PosControllerInstr.BRIGHT_DUTYCYCLE);
+			} else {
+				message = new PosControllerInstr(
+					posConController,
+					(byte) posConIndex,
+					wi.getPlanQuantity().byteValue(),
+					wi.getPlanMinQuantity().byteValue(),
+					wi.getPlanMaxQuantity().byteValue(),
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.BRIGHT_DUTYCYCLE);
+ 
+			}
 			instructions.add(message);
 		}
 		List<Location> children = theLocation.getActiveChildren();
 		if (!children.isEmpty()){
 			for (Location child : children) {
-				lightPosConRange(facility, child, instructions);
+				getInstructionsForPosConRange(facility, wi, child, instructions);
 			}
 		}
 	}

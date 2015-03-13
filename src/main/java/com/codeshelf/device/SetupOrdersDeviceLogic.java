@@ -384,7 +384,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		LOGGER.info("Pick shorted: " + inWi);
 
-		clearLedControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi);
 
 		// DEV-582 hook up to AUTOSHRT parameter
 		if (mDeviceManager.getAutoShortValue())
@@ -1266,7 +1266,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			this.showCartRunFeedbackIfNeeded(position);
 		}
 
-		clearLedControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi);
 
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
