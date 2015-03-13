@@ -176,7 +176,7 @@ public class PosConControllerTest extends ServerTest{
 		Assert.assertEquals(DeviceType.Poscons, controller.getDeviceType());
 
 		//Assign PosCon controller and indexies to tiers
-		String[] tierNames = {"A1.B1.T1", "A1.B1.T2", "A1.B1.T3", "A1.B1.T4"};
+		String[] tierNames = {"A1.B1.T1", "A1.B2.T1", "A1.B3.T1", "A1.B4.T1"};
 		int posconIndex = 1;
 		for (String tierName : tierNames) {
 			Location tier = getFacility().findSubLocationById(tierName);
