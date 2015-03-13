@@ -1381,46 +1381,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
 	 */
 	@Override
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+	protected void doPosConDisplaysforActiveWis() {
 
 		// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
 		if (!sendHousekeepingDisplay()) {
-			/*
-			byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
-			byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
-			byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
-			if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
-				minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
-			// Also pretty easy. Light the position controllers on this CHE
-			byte freq = PosControllerInstr.SOLID_FREQ;
-			byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
-			if (planQuantityForPositionController != minQuantityForPositionController
-					|| planQuantityForPositionController != maxQuantityForPositionController) {
-				freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
-				brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			}
-
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			for (WorkInstruction wi : mActivePickWiList) {
-				for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
-					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						Byte posconIndex = Byte.valueOf(mapEntry.getKey());
-						PosControllerInstr instruction = new PosControllerInstr(posconIndex,
-							planQuantityForPositionController,
-							minQuantityForPositionController,
-							maxQuantityForPositionController,
-							freq,
-							brightness);
-						instructions.add(instruction);
-					}
-				}
-			}
-			sendPositionControllerInstructions(instructions);
-			
-			
-			*/
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
 			for (WorkInstruction wi : mActivePickWiList) {

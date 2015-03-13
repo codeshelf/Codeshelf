@@ -1231,7 +1231,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			lightWiLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
-			doPosConDisplaysforWi(firstWi);
+			doPosConDisplaysforActiveWis();
 			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
@@ -1271,8 +1271,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
-		LOGGER.error("doPosConDisplaysforWi() needs override");
+	protected void doPosConDisplaysforActiveWis() {
+		LOGGER.error("doPosConDisplaysforActiveWis() needs override");
 	}
 
 	// --------------------------------------------------------------------------

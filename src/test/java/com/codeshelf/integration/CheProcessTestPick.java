@@ -2032,7 +2032,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("1d: see that both poscons show their pick count: 1 and 2");
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 
-		// bug here!
+		// bug was here
 		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
@@ -2079,11 +2079,9 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		LOGGER.info("4b: Poscon 1 and 3 gets the next jobs, poscon 2 remains oc.");
-		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
-		
-		// same bug again. getting 5 (same as first controller) rather than this controller's value.
-		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
-		
+		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());	
+		// same bug was here
+		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());		
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 
 		LOGGER.info("4c: Screen shows the location, SKU, and total to pick");
