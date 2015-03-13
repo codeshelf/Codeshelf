@@ -378,9 +378,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
 
+		notifyWarn(inWi, "SHORT");
 		doShortTransaction(inWi, inPicked);
-
-		LOGGER.info("Pick shorted: " + inWi);
 
 		clearLedAndPosConControllersForWi(inWi);
 
@@ -582,7 +581,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return false;
 		}
 		if (shortId.compareTo(proposedId) == 0) {
-			LOGGER.info("SHORT AHEAD " + inProposedWi);
 			return true;
 		}
 
@@ -637,10 +635,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// - There may be bay changes or repeat containers. And only one housekeep between at a time (for now--this may break)
 		// - So track the previous work instruction as we iterate. If there is a housekeep right before a short ahead, we assume it is not needed.
 		// - Repeat: definitely not needed. Baychange: maybe not needed. Better to over-remove than leave a final bay change at the end of the list.
+		
+		// Warning: for simultaneous work instructions, "short ahead" might actually be behind in the sequence. So we need to iterate the activePickList always.
+		
 
 		Integer laterCount = 0;
 		Integer toShortCount = 0;
 		Integer removeHousekeepCount = 0;
+		
+		
+		/* old Algorithm
 		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
 		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
 		WorkInstruction prevWi = null;
@@ -665,6 +669,48 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 			prevWi = wi;
 		}
+		*/
+		
+		// New algorithm. Assemble what we want to short
+		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
+		// Find short aheads from the active picks first, which might have lower sort values.
+		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
+		for (WorkInstruction wi : getActivePickWiList()) {
+			if (wi.isHousekeeping()) {
+				LOGGER.error("unanticipated housekeeping WI in mActivePickWiList in doShortAheads");
+			}
+			if (!wi.equals(inShortWi))
+				if (sameProductLotEtc(wi, inShortWi)) {
+					toShortCount++;
+					toShortList.add(wi);
+				}
+		}
+		// Now look for later work instructions to short, and remove housekeeps as necessary.
+		WorkInstruction prevWi = null;
+		for (WorkInstruction wi : mAllPicksWiList) {
+			if (laterWi(wi, inShortWi)) {
+				laterCount++;
+				if (sameProductLotEtc(wi, inShortWi)) {
+					toShortCount++;
+					toShortList.add(wi);
+					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
+					if (unCompletedUnneededHousekeep(prevWi)) {
+						if (mActivePickWiList.contains(prevWi))
+							LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
+						removeHousekeepCount++;
+						doCompleteUnneededHousekeep(prevWi);
+					}
+				}
+			}
+			prevWi = wi;
+		}
+		// Finally, do all our shorts
+		for (WorkInstruction wi : toShortList) {
+			// Short aheads will always set the actual pick quantity to zero.
+			notifyWarn(wi, "SHORT_AHEAD");
+			doShortTransaction(wi, 0);	
+		}
+			
 
 		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
 		if (toShortCount > 0) {
@@ -800,6 +846,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			clearAllPositionControllers();
+			this.setUserId(inScanStr);
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);

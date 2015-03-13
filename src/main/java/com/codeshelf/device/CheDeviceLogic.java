@@ -122,6 +122,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
+	@Setter
 	protected String					mUserId;
 
 	// All WIs for all containers on the CHE.
@@ -847,6 +848,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
+		this.setUserId("");
 		clearAllPositionControllers();
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
@@ -1323,6 +1325,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * This might get hooked up to Codeshelf Companion alerts table someday. For now, just log a WARN
+	 */
+	protected void notifyWarn(final WorkInstruction inWi, String inVerb) {
+		String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
+
+		String itemId = inWi.getItemId();
+		String locId = inWi.getPickInstruction();
+		String picker = this.getUserId();
+
+		LOGGER.warn("{} for order/cntr:{} item:{} location:{} by picker:{}", inVerb, orderId, itemId, locId, picker);
+	
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * @param insScanPrefixStr
 	 * @param inScanStr
 	 */
@@ -1332,18 +1349,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// TODO
 		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
-			// This is improved from v13 PFSWeb
-
-			// String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
-			// And, this is not even set.
-
-			String itemId = inWi.getItemId();
-			String locId = inWi.getPickInstruction();
-			// String picker = inWi.getPickerId();
-			// String picker = this.getUserId();
-
-			// LOGGER.warn("SKIPSCAN for order/cntr:{} item:{} location:{} by picker:{}", orderId, itemId, locId, picker);
-			LOGGER.warn("SKIPSCAN for item:{} location:{}", itemId, locId);
+			notifyWarn(inWi, "SKIPSCAN");
 			return returnString;
 		}
 

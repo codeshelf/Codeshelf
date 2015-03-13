@@ -133,11 +133,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			setReadyMsg("");
+			this.setUserId(inScanStr);
 			setState(CheStateEnum.READY);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			setReadyMsg("Invalid scan");
-
 		}
 	}
 
@@ -153,7 +153,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
 		setState(CheStateEnum.ABANDON_CHECK);
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -376,8 +375,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = this.getActiveWorkInstruction();
 			if (wi != null) {
+				notifyWarn(wi, "SHORT");
 				doShortTransaction(wi, mShortPickQty);
-				LOGGER.info("Pick shorted: " + wi);
 
 				clearLedAndPosConControllersForWi(wi);
 				setReadyMsg("");
