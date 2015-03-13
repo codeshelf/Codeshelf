@@ -374,12 +374,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Process the Yes after a short. P
+	 * Process the Yes after a short. Very complicated for simultaneous picks
 	 */
 	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
-		// HACK HACK HACK
-		// StitchFix is the first client and they only pick one item at a time - ever.
-		// When we have h/w that picks more than one item we'll address this.
+
 		doShortTransaction(inWi, inPicked);
 
 		LOGGER.info("Pick shorted: " + inWi);
@@ -387,8 +385,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		clearLedAndPosConControllersForWi(inWi);
 
 		// DEV-582 hook up to AUTOSHRT parameter
-		if (mDeviceManager.getAutoShortValue())
+		if (mDeviceManager.getAutoShortValue()) {
 			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+			// bug here. Need to clearLedControllersForWi for others in active picks that shorted ahead.
+		}
 
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
@@ -649,18 +649,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				laterCount++;
 				if (sameProductLotEtc(wi, inShortWi)) {
 					// When simultaneous pick work instructions return, we must not short ahead within the simultaneous pick. See CD_0043 for details.
-					if (!mActivePickWiList.contains(wi)) {
-						toShortCount++;
-						// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
-						if (unCompletedUnneededHousekeep(prevWi)) {
-							if (mActivePickWiList.contains(prevWi))
-								LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
-							removeHousekeepCount++;
-							doCompleteUnneededHousekeep(prevWi);
-						}
-						// Short aheads will always set the actual pick quantity to zero.
-						doShortTransaction(wi, 0);
+					// if (!mActivePickWiList.contains(wi)) {
+					toShortCount++;
+					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
+					if (unCompletedUnneededHousekeep(prevWi)) {
+						if (mActivePickWiList.contains(prevWi))
+							LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
+						removeHousekeepCount++;
+						doCompleteUnneededHousekeep(prevWi);
 					}
+					// Short aheads will always set the actual pick quantity to zero.
+					doShortTransaction(wi, 0);
+					// }
 				}
 			}
 			prevWi = wi;

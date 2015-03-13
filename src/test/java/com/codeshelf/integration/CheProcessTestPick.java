@@ -2252,8 +2252,6 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		LOGGER.info("5b: Poscon 3 job should have shorted. Poscon 2 should have shorted ahead. We should be on to the next simultaneous jobs");
-		// bug: did not short ahead
-		/*
 		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 		Assert.assertEquals(3, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
 		Assert.assertEquals(6, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
@@ -2263,7 +2261,6 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("LocC", line1);
 		Assert.assertEquals("Sku2", line2);
 		Assert.assertEquals("QTY 13", line3);
-		 */
 
 	}
 
