@@ -28,7 +28,6 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
@@ -253,10 +252,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "1001dry,D-31\r\n" + "1001dry,D-32\r\n" + "1001dry,D-33\r\n" + "1001dry,D-34\r\n"
 				+ "1001dry,D-35\r\n"
 				+ "1003dry,D-22\r\n" + "1006dry,D-100\r\n" + "1016dry,D-76\r\n" + "1007dry,D-99\r\n";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		boolean result = importer.importOrderLocationsFromCsvStream(new StringReader(csvSlotting), inFacility, ediProcessTime);
+		boolean result = importSlotting(inFacility, csvSlotting);
 
 		// Batches file. Only containers 2,3,7,11
 		String csvBatch = "itemId,orderGroupId,containerId,description,quantity,uom\r\n" //
@@ -264,11 +260,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "53a8a03ab38e3c0200000330,5/26/14,3,vitalvittles Organic Flax-Seed Oat Bread,1,loaf\r\n" //
 				+ "50916c6dd136890200000311,5/26/14,7,blackjet Crack*a*Roons,2,cookies\r\n" //
 				+ "5266bd1e4d5eed0200000155,5/26/14,11,firebrand Pretzel Croutons,7,bag\r\n";//
-
-		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter batchImporter = createCrossBatchImporter();
-		batchImporter.importCrossBatchesFromCsvStream(new StringReader(csvBatch), inFacility, thirdEdiProcessTime);
-
+		importBatchData(inFacility, csvBatch);
 	}
 
 	@Test

@@ -22,7 +22,6 @@ import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
@@ -211,15 +210,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "456,D-25\r\n" // in A1.B2
 				+ "888,D-XX\r\n" // bad location
 				+ "789,D-35\r\n"; // in A2.B2
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		boolean result = importer.importOrderLocationsFromCsvStream(reader2, inFacility, ediProcessTime);
+		boolean result = importSlotting(inFacility, csvString2);
 
 		// Batches file. 11-15 are valid. 16-18 are looking for problems.
 		String thirdCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -232,16 +223,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "1,18,77777777,2,ea\r\n" // Order for item does not exist.
 				+ "1,19,66666666,2,ea\r\n" // Order for item came with 0 count in outbound order.
 				+ "1,15,10706961,2,ea\r\n"; // a good one last, to prove we elegantly skipped one line each only above.
-
-		byte[] thirdCsvArray = thirdCsvString.getBytes();
-
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(thirdCsvArray);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-
-		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer3 = createCrossBatchImporter();
-		importer3.importCrossBatchesFromCsvStream(reader3, inFacility, thirdEdiProcessTime);
-
+		importBatchData(inFacility, thirdCsvString);
 	}
 
 	@Test

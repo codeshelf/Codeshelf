@@ -18,6 +18,7 @@ import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.integration.PickSimulator;
 import com.codeshelf.model.WorkInstructionSequencerType;
@@ -325,6 +326,19 @@ public abstract class ServerTest extends HibernateTest {
 		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
+	protected boolean importSlotting(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+	
+	protected int importBatchData(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvCrossBatchImporter importer = createCrossBatchImporter();
+		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+
+	}
+	
 	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
 		// Now ready to run the cart
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);

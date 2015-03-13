@@ -385,9 +385,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		OrderLocation.staticGetDao().store(orderLocation5555);
 		order4444.addOrderLocation(orderLocation5555);
 
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		boolean result = importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		boolean result = importSlotting(facility, csvString);
 		Assert.assertTrue(result);
 		
 		// Make sure we can lookup all of the locations for order O1111.
@@ -687,15 +685,6 @@ public class OrderLocationImporterTest extends ServerTest {
 		boolean result = importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return result;
 	}
-	
-	private boolean importSlotting(Facility facility, String csvString) {
-
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-	}
-
 
 	private Facility getTestFacility(String orgId, String facilityId) {
 		Facility facility = Facility.createFacility(facilityId, "TEST", Point.getZeroPoint());

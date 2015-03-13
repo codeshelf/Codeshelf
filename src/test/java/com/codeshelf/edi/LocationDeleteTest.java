@@ -261,15 +261,7 @@ public class LocationDeleteTest extends ServerTest {
 				+ "123,D-2\r\n" // in A1.B1
 				+ "456,D-25\r\n" // in A1.B2
 				+ "789,D-35\r\n"; // in A2.B2
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		boolean result = importer.importOrderLocationsFromCsvStream(reader2, inFacility, ediProcessTime);
+		boolean result = importSlotting(inFacility, csvString2);
 
 		// Batches file
 		String thirdCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -278,16 +270,7 @@ public class LocationDeleteTest extends ServerTest {
 				+ "1,13,10706962,3,ea\r\n" //
 				+ "1,14,10100250,4,ea\r\n" //
 				+ "1,15,10706961,2,ea\r\n"; //
-
-		byte[] thirdCsvArray = thirdCsvString.getBytes();
-
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(thirdCsvArray);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-
-		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter importer3 = createCrossBatchImporter();
-		importer3.importCrossBatchesFromCsvStream(reader3, inFacility, thirdEdiProcessTime);
-
+		importBatchData(inFacility, thirdCsvString);
 	}
 
 	@Test
