@@ -64,6 +64,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					// DEV-582 hook up to AUTOSHRT parameter
 					deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
+					String pickMult = loginResponse.getPickMultValue();
+					deviceManager.setPickMultValue(Boolean.parseBoolean(pickMult));
 					deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
 					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 					deviceManager.setSequenceKind(loginResponse.getSequenceKind());

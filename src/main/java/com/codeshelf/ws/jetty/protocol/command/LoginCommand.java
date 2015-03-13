@@ -94,6 +94,9 @@ public class LoginCommand extends CommandABC {
 						
 						String sequenceKind = properties.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
 						response.setSequenceKind(sequenceKind);
+						
+						String pickMultValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKMULT);
+						response.setPickMultValue(pickMultValue);
 
 					} else {
 						response.setAutoShortValue(false); // not read by client. No need to look it up.

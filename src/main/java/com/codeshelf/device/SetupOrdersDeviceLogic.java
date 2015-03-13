@@ -508,11 +508,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String cntrId = wi.getContainerId();
 		return mPositionToContainerMap.containsValue(cntrId);
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 */
 	private boolean selectNextActivePicks() {
-		final boolean kDoMultipleWiPicks = false; // DEV-451
+		boolean doMultipleWiPicks = mDeviceManager.isPickMultValue(); // DEV-451
 
 		boolean result = false;
 
@@ -527,16 +528,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 			}
 
-			/*
-			if (mPositionToContainerMap.values().isEmpty()) {
-				LOGGER.warn(this + " assigned work but no containers assigned");
-			}
-
-			for (String containerId : mPositionToContainerMap.values()) {
-				// If the WI is for this container then consider it. ??? Looks wrong
-				if (wi.getContainerId().equals(containerId)) {
-			*/
-
 			// If the WI is INPROGRESS or NEW then consider it.
 			if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
 					|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
@@ -547,7 +538,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					wi.setStarted(new Timestamp(System.currentTimeMillis()));
 					mActivePickWiList.add(wi);
 					result = true;
-					if (!kDoMultipleWiPicks)
+					if (!doMultipleWiPicks)
 						return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
 				}
 			}
@@ -1390,43 +1381,37 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
 	 */
 	@Override
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+	protected void doPosConDisplaysforActiveWis() {
 
 		// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
 		if (!sendHousekeepingDisplay()) {
-			byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
-			byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
-			byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
-			if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
-				minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
-
-			// Also pretty easy. Light the position controllers on this CHE
-			byte freq = PosControllerInstr.SOLID_FREQ;
-			byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
-			if (planQuantityForPositionController != minQuantityForPositionController
-					|| planQuantityForPositionController != maxQuantityForPositionController) {
-				freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
-				brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			}
 
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
 			for (WorkInstruction wi : mActivePickWiList) {
-				for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
-					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						Byte posconIndex = Byte.valueOf(mapEntry.getKey());
-						PosControllerInstr instruction = new PosControllerInstr(posconIndex,
-							planQuantityForPositionController,
-							minQuantityForPositionController,
-							maxQuantityForPositionController,
-							freq,
-							brightness);
-						instructions.add(instruction);
-					}
-				}
+				Byte theIndex = getPosconIndexofWi(wi);
+				if (theIndex > 0) {
+					PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexofWi(wi));
+					instructions.add(instruction);
+				} else
+					LOGGER.error("unexpected missing poscon index for work instruction");
 			}
+
 			sendPositionControllerInstructions(instructions);
+
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/** What poscon does this wi belong to?
+	 */
+	Byte getPosconIndexofWi(WorkInstruction wi) {
+		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
+			if (mapEntry.getValue().equals(wi.getContainerId())) {
+				return Byte.valueOf(mapEntry.getKey());
+			}
+		}
+		return 0;
 	}
 
 	// --------------------------------------------------------------------------

@@ -35,6 +35,10 @@ public class LoginResponse extends ResponseABC {
 	@Getter
 	@Setter
 	String					sequenceKind;
+	
+	@Getter
+	@Setter
+	String					pickMultValue;
 
 
 	public LoginResponse() {

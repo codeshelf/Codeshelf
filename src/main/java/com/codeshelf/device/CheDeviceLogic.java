@@ -69,7 +69,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String		SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
 	protected static final String		PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
-	protected static final String		YES_NO_MSG								= cheLine("SCAN YES OR NO");
+	public static final String			YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
 	protected static final String		NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
 	protected static final String		POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
 	protected static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
@@ -356,7 +356,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		if (matchItem == null || matchPickLocation == null) // this clause used for DEV-451 in selectNextActivePicks()
 			return false;
-		
+
 		if (matchItem.equals(wiToCheck.getItemId()))
 			if (matchPickLocation.equals(wiToCheck.getPickInstruction()))
 				return true;
@@ -1277,17 +1277,48 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			lightWiPosConLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
-			doPosConDisplaysforWi(firstWi);
+			doPosConDisplaysforActiveWis();
 			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Get one poscon instruction for a Wi that does not need completed, feedback, type display. But does deal with short flashing display.
+	 */
+	protected PosControllerInstr getPosInstructionForWiAtIndex(WorkInstruction inWi, Byte inPosconIndex) {
+
+		byte planQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanQuantity());
+		byte minQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMinQuantity());
+		byte maxQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMaxQuantity());
+		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
+
+		byte freq = PosControllerInstr.SOLID_FREQ;
+		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
+		if (planQuantityForPositionController != minQuantityForPositionController
+				|| planQuantityForPositionController != maxQuantityForPositionController) {
+			freq = PosControllerInstr.BRIGHT_DUTYCYCLE; // Bug?  should be BLINK_FREQ
+			brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		}
+
+		PosControllerInstr instruction = new PosControllerInstr(inPosconIndex,
+			planQuantityForPositionController,
+			minQuantityForPositionController,
+			maxQuantityForPositionController,
+			freq,
+			brightness);
+
+		return instruction;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Send to the LED controller the active picks for the work instruction that's active on the CHE now.
 	 */
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
-		LOGGER.error("doPosConDisplaysforWi() needs override");
+	protected void doPosConDisplaysforActiveWis() {
+		LOGGER.error("doPosConDisplaysforActiveWis() needs override");
 	}
 
 	// --------------------------------------------------------------------------
@@ -1298,11 +1329,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
 
 		String returnString = "";
-
-		// If the user scanned SCANSKIP return true
+		// TODO
+		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
-			// TODO need better warning message here. Get orderId and pickerId?
-			LOGGER.warn("SCANSKIP for work instruction");
+			// This is improved from v13 PFSWeb
+
+			// String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
+			// And, this is not even set.
+
+			String itemId = inWi.getItemId();
+			String locId = inWi.getPickInstruction();
+			// String picker = inWi.getPickerId();
+			// String picker = this.getUserId();
+
+			// LOGGER.warn("SKIPSCAN for order/cntr:{} item:{} location:{} by picker:{}", orderId, itemId, locId, picker);
+			LOGGER.warn("SKIPSCAN for item:{} location:{}", itemId, locId);
 			return returnString;
 		}
 
