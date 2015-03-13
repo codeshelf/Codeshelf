@@ -84,14 +84,11 @@ public class CsDeviceManager implements
 	private boolean										isAttachedToServer			= false;
 
 	private boolean										autoShortValue				= true;	// log on set (below)
+	private boolean										pickMultValue				= false; // log on set (below)
 
 	@Getter
 	@Setter
 	private String										pickInfoValue				= "SKU";
-
-	@Getter
-	@Setter
-	private boolean										pickMultValue				= false;
 
 	@Getter
 	@Setter
@@ -135,10 +132,17 @@ public class CsDeviceManager implements
 		return true;
 	}
 
-	public boolean getAutoShortValue() {
-		return this.autoShortValue;
+	public boolean getPickMultValue() {
+		return this.pickMultValue;
+	}
+	public void setPickMultValue(boolean inValue) {
+		pickMultValue = inValue;
+		LOGGER.info("Site controller setting PICKMULT value = {}", inValue);
 	}
 	
+	public boolean getAutoShortValue() {
+		return this.autoShortValue;
+	}	
 	public void setAutoShortValue(boolean inValue) {
 		autoShortValue = inValue;
 		LOGGER.info("Site controller setting AUTOSHRT value = {}", inValue);

@@ -683,7 +683,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 		} else {
 			byte count = (byte) wiCount.getGoodCount();
-			LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+			LOGGER.info("Position Feedback: Poscon {} -- {}", position, wiCount);
 			if (count == 0) {
 				//0 good WI's means dim display
 				if (wiCount.hasBadCounts()) {

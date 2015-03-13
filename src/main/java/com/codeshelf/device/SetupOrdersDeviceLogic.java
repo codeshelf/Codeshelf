@@ -352,6 +352,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// CheDeviceLogic does the main shorting transactions
 		super.doShortTransaction(inWi, inActualPickQuantity);
 
+		// See that doNormalPick will remove from activePickList; therefore, any short should as well.
+		if (mActivePickWiList.contains(inWi))
+			mActivePickWiList.remove(inWi);
+
 		// Extra stuff for setup_orders is keeping track of poscon feedback information
 		//Decrement count as short
 		if (!inWi.isHousekeeping()) {
@@ -369,7 +373,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 			this.showCartRunFeedbackIfNeeded(position);
-		}
+		} else
+			LOGGER.error("unexpected housekeep in doShortTransaction");
 	}
 
 	// --------------------------------------------------------------------------
@@ -381,18 +386,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		notifyWarn(inWi, "SHORT");
 		doShortTransaction(inWi, inPicked);
 
-		clearLedAndPosConControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi); // wrong? What about any short aheads?
 
-		// DEV-582 hook up to AUTOSHRT parameter
-		if (mDeviceManager.getAutoShortValue()) {
+		// Depends on AUTOSHRT parameter
+		boolean autoShortOn = mDeviceManager.getAutoShortValue();
+		if (autoShortOn) {
 			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 			// bug here. Need to clearLedControllersForWi for others in active picks that shorted ahead.
 		}
 
+		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
-			// This is tricky. Simultaneous work instructions: which was short? All of them?
-			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
+			if (autoShortOn) {
+				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick");
+				// let's log the first just for fun
+				LOGGER.error("wi = {}", mActivePickWiList.get(0));
+			}
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
@@ -512,7 +522,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	private boolean selectNextActivePicks() {
-		boolean doMultipleWiPicks = mDeviceManager.isPickMultValue(); // DEV-451
+		boolean doMultipleWiPicks = mDeviceManager.getPickMultValue(); // DEV-451
 
 		boolean result = false;
 
@@ -635,15 +645,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// - There may be bay changes or repeat containers. And only one housekeep between at a time (for now--this may break)
 		// - So track the previous work instruction as we iterate. If there is a housekeep right before a short ahead, we assume it is not needed.
 		// - Repeat: definitely not needed. Baychange: maybe not needed. Better to over-remove than leave a final bay change at the end of the list.
-		
+
 		// Warning: for simultaneous work instructions, "short ahead" might actually be behind in the sequence. So we need to iterate the activePickList always.
-		
 
 		Integer laterCount = 0;
 		Integer toShortCount = 0;
 		Integer removeHousekeepCount = 0;
-		
-		
+
 		/* old Algorithm
 		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
 		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
@@ -670,7 +678,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			prevWi = wi;
 		}
 		*/
-		
+
 		// New algorithm. Assemble what we want to short
 		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
 		// Find short aheads from the active picks first, which might have lower sort values.
@@ -691,8 +699,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (laterWi(wi, inShortWi)) {
 				laterCount++;
 				if (sameProductLotEtc(wi, inShortWi)) {
-					toShortCount++;
-					toShortList.add(wi);
+					// might be already in the list from above
+					if (!toShortList.contains(wi)) {
+						toShortCount++;
+						toShortList.add(wi);
+					}
 					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
 					if (unCompletedUnneededHousekeep(prevWi)) {
 						if (mActivePickWiList.contains(prevWi))
@@ -708,9 +719,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		for (WorkInstruction wi : toShortList) {
 			// Short aheads will always set the actual pick quantity to zero.
 			notifyWarn(wi, "SHORT_AHEAD");
-			doShortTransaction(wi, 0);	
+			doShortTransaction(wi, 0);
 		}
-			
 
 		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
 		if (toShortCount > 0) {
@@ -1075,7 +1085,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
-				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
 					if (wiCount.hasBadCounts()) {
@@ -1306,9 +1316,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		clearLedAndPosConControllersForWi(inWi);
 
+		// If PICKMULT if on, there still might be other jobs in active pick list. If off, there should not be
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
-			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in processNormalPick");
+			if (!mDeviceManager.getPickMultValue()) {
+				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in processNormalPick");
+				// let's log the first just for fun
+				LOGGER.error("wi = {}", mActivePickWiList.get(0));
+			}
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
