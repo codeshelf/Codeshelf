@@ -29,7 +29,6 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.apache.commons.codec.digest.Md5Crypt;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
@@ -60,9 +59,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @EqualsAndHashCode(of={"username","type"})
 @ToString(of={"username"}, callSuper = false)
 public class User {
-	
+
 	@SuppressWarnings("unused")
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(User.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(User.class);
 
 	@Id
 	@Column(nullable = false,name="id")
@@ -107,6 +106,9 @@ public class User {
 
 	// The hashed password including salt in APR1 format (NGINX/HTTPD compatible)
 	@Column(name="hashed_password")
+	@Getter
+	@Setter
+	//not JSON
 	private String				hashedPassword;
 
 	// sitecon, webapp, system user etc
@@ -127,33 +129,9 @@ public class User {
 	public User() {
 		active = true;
 	}
-
-	public void setPassword(final String inPassword) {
-		hashedPassword = Md5Crypt.apr1Crypt(inPassword);
-	}
 	
-	public boolean checkPassword(final String inPassword) {
-		return Md5Crypt.apr1Crypt(inPassword,this.hashedPassword).equals(this.hashedPassword);
-	}
-
-	public boolean tenantEquals(Tenant tenant2) {
-		return this.getTenant().equals(tenant2);
-	}
-	
-	public static boolean passwordMeetsRequirements(String password) {
-		if(password == null) 
-			return false;
-		if(password.isEmpty())
-			return false;
-		
-		return true;
-	}
-	
-	public String getHtpasswdEntry() {
+	protected String getHtpasswdEntry() {
 		return this.getUsername()+":"+this.hashedPassword;
 	}
-	
-	public boolean hashIsValid() {
-		return this.hashedPassword.startsWith("$apr1$");
-	}
+
 }

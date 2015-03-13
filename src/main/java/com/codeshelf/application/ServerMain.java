@@ -34,7 +34,9 @@ import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
+import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
@@ -144,6 +146,7 @@ public final class ServerMain {
 				bind(HashedCredentialsMatcher.class);
 				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
 				
+				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
 			
 			@Provides
@@ -160,17 +163,38 @@ public final class ServerMain {
 				return sessionManagerService;				
 			}
 			
-		}, createGuiceServletModule());
+		}, createGuiceServletModuleForApi(), createGuiceServletModuleForManager());
 
 		return injector;
 	}
 	
-	private static ServletModule createGuiceServletModule() {
+	private static ServletModule createGuiceServletModuleForApi() {
 		return new ServletModule() {
 		    @Override
 		    protected void configureServlets() {
 		        // bind resource classes here
 		    	ResourceConfig rc = new PackagesResourceConfig( "com.codeshelf.api.resources" );
+		    	for ( Class<?> resource : rc.getClasses() ) {
+		    		bind( resource );	
+		    	}
+		    	
+		        // hook JerseyContainer into Guice Servlet
+		        bind(GuiceContainer.class);
+
+		        // hook Jackson into Jersey as the POJO <-> JSON mapper
+		        bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+
+		        serve("/*").with(GuiceContainer.class);
+		    }
+		};
+	}
+
+	private static ServletModule createGuiceServletModuleForManager() {
+		return new ServletModule() {
+		    @Override
+		    protected void configureServlets() {
+		        // bind resource classes here
+		    	ResourceConfig rc = new PackagesResourceConfig( "com.codeshelf.manager.api" );
 		    	for ( Class<?> resource : rc.getClasses() ) {
 		    		bind( resource );	
 		    	}

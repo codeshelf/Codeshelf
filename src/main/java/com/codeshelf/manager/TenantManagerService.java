@@ -1,5 +1,6 @@
 package com.codeshelf.manager;
 
+import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,6 +23,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.DatabaseConnection;
 import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
 import com.google.inject.Inject;
@@ -48,10 +50,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Inject
 	private static ITenantManagerService theInstance;
+	private AuthProviderService authProviderService;
 	
 	@Inject
-	private TenantManagerService() {
+	private TenantManagerService(AuthProviderService authProviderService) {
 		super();
+		
+		this.authProviderService = authProviderService;
 	}
 	
 	public final synchronized static ITenantManagerService getMaybeRunningInstance() {
@@ -204,7 +209,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				// ok to create
 				User user = new User();
 				user.setUsername(username);
-				user.setPassword(password);
+				user.setHashedPassword(authProviderService.hashPassword(password));
 				user.setType(type);
 				tenant.addUser(user);
 				session.save(tenant);
@@ -282,7 +287,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	public User authenticate(String username,String password) {
 		User user = getUser(username);
 		if(user!=null) {
-			boolean passwordValid = user.checkPassword(password);
+			boolean passwordValid = authProviderService.checkPassword(password,user.getHashedPassword());
 			if(user.getTenant().isActive()) {
 				if(user.isActive()) {
 					if(passwordValid) {
@@ -334,13 +339,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			if(user != null) {
 				result = user;	
 				
-				if(!user.hashIsValid()) {
+				if(!authProviderService.hashIsValid(user.getHashedPassword())) {
 					boolean update = false;
 					if(user.getUsername().endsWith("@example.com")) {
-						user.setPassword(DEFAULT_APPUSER_PASS);
+						user.setHashedPassword(authProviderService.hashPassword(DEFAULT_APPUSER_PASS));
 						update = true;
 					} else if(user.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
-						user.setPassword(CodeshelfNetwork.DEFAULT_SITECON_PASS);
+						user.setHashedPassword(authProviderService.hashPassword(CodeshelfNetwork.DEFAULT_SITECON_PASS));
 						update = true;
 					}
 					if(update) {
@@ -384,6 +389,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			managerPersistenceService.commitTransaction();
 		}
 		return userList;
+	}
+
+	@Override
+	public byte[] getHtpasswd() {
+		String result="";
+		for(User user : this.getUsers(null)) {
+			result += user.getHtpasswdEntry() + "\n";
+		}
+		return result.getBytes(Charset.forName("ISO-8859-1"));
+
 	}
 
 	private Tenant inflate(Tenant tenant) {

@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.User;
+
 public class APICallFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(APICallFilter.class);
 
@@ -29,7 +31,15 @@ public class APICallFilter implements Filter {
 			String url = httpRequest.getRequestURL().toString();
 			String queryString = httpRequest.getQueryString();
 			String method = httpRequest.getMethod();
-			LOGGER.info("API CALL: {} {}{}", method, url, queryString==null?"":"?"+queryString);
+			
+			Object attr = httpRequest.getAttribute("user");
+			String attrString = "";
+			if(attr!= null) {
+				User user = (User) attr;
+				attrString = user.getUsername();
+			}
+			
+			LOGGER.info("API CALL: {} {}{} {}", method, url, queryString==null?"":"?"+queryString, attrString);
 		} else {
 			LOGGER.info("API CALL: {}. Can't cast to HttpServletRequest", request);
 		}

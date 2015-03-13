@@ -21,6 +21,7 @@ import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.MockDaoTest;
@@ -61,7 +62,8 @@ public class CodeshelfApplicationTest extends MockDaoTest {
 			new WorkService(),
 			this.metricsService,
 			this.sessionManagerService,
-			new DummyPropertyService());
+			new DummyPropertyService(),
+			mock(AuthProviderService.class));
 
 		final Result checkAppRunning = new Result();
 
