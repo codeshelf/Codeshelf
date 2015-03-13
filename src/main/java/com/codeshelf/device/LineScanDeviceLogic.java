@@ -513,8 +513,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Very simple for line scan CHE. Send the one WI count to poscon #1.
 	 */
 	@Override
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+	protected void doPosConDisplaysforActiveWis() {
 
+		/*
 		byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
 		byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
 		byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
@@ -538,6 +539,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			maxQuantityForPositionController,
 			freq,
 			brightness);
+		*/
+		WorkInstruction firstWi = getOneActiveWorkInstruction();
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		PosControllerInstr instruction = getPosInstructionForWiAtIndex(firstWi, getPosconIndex());		
 		instructions.add(instruction);
 		sendPositionControllerInstructions(instructions);
 	}
