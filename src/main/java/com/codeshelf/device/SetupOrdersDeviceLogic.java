@@ -392,7 +392,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		boolean autoShortOn = mDeviceManager.getAutoShortValue();
 		if (autoShortOn) {
 			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
-			// bug here. Need to clearLedControllersForWi for others in active picks that shorted ahead.
 		}
 
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
@@ -400,8 +399,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// If there's more active picks then show them.
 			if (autoShortOn) {
 				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick");
-				// let's log the first just for fun
-				LOGGER.error("wi = {}", mActivePickWiList.get(0));
+				LOGGER.error("wi = {}", mActivePickWiList.get(0)); // log the first to help understand
 			}
 			showActivePicks();
 		} else {
@@ -802,7 +800,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (wi.isHousekeeping())
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					else
-						setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
+						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
 				} else {
 					// Stay in the same state - the scan made no sense.
 					invalidScanMsg(mCheStateEnum);
@@ -1397,7 +1395,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
-				clearOnePositionController(buttonPosition);
+				
+				clearOnePositionController(buttonPosition); // BUG!  if multiple flashing, we need to clear those. That is all on active job list.
+				// Do this in processShortPick?
+				
 				String itemId = wi.getItemId();
 				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
 				if (inQuantity >= wi.getPlanMinQuantity()) {

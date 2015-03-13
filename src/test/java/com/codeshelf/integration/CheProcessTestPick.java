@@ -2225,10 +2225,10 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(3, 3);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
 		// Bug!  3 went out. 2 still flashing. Misleading to user.
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
-		// Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		// Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2)); // this would be correct BUG
 		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
-		//Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
 
 		LOGGER.info("4b: Say no to confirm. Should be back at DO_PICK. Nothing flashing");
 		line2 = picker.getLastCheDisplayString(2);
@@ -2261,9 +2261,14 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("QTY 13", line3);
 
 		LOGGER.info("6a: Just work these off");
-		picker.pick(1, 4);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pick(2, 3);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		// brief diversion to see poscon states. 2 should be -- now. 1 and 3 with active picks
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(6, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		picker.pick(1, 4);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pick(3, 6);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
@@ -2272,11 +2277,9 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		/* bug!
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
-		*/
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
