@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.server.SessionManagerService;
@@ -48,7 +49,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final WorkService workService,
 			final IMetricsService metricsService,
 			final SessionManagerService sessionManagerService,
-			final IPropertyService propertyService) {
+			final IPropertyService propertyService,
+			final AuthProviderService authService) {
 			
 		super(inWebApiServer);
 	
@@ -65,6 +67,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(metricsService);
 		this.registerService(sessionManagerService);
 		this.registerService(propertyService);
+		this.registerService(authService);
 
 		this.registerService(ediProcessorService);
 

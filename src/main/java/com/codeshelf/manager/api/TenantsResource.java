@@ -27,9 +27,12 @@ import com.codeshelf.manager.TenantManagerService;
 public class TenantsResource {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(TenantsResource.class);
 	private static final Set<String>	validCreateTenantFields	= new HashSet<String>();
+	private static final Set<String>	validUpdateTenantFields	= new HashSet<String>();
 	static {
 		validCreateTenantFields.add("name");
 		validCreateTenantFields.add("schemaname");
+		validUpdateTenantFields.add("name");
+		validUpdateTenantFields.add("active");
 	}
 
 	@GET
@@ -111,18 +114,24 @@ public class TenantsResource {
 		boolean updated = false;
 
 		for(String key : tenantParams.keySet()) {
-			List<String> values = tenantParams.get(key);
-			if(values == null) {
-				LOGGER.warn("update tenant {} - no value for key {}",tenant.getName(),key);
-				updated = false;
-				break; // key with no values
-			} else if(values.size() != 1) {
-				LOGGER.warn("update tenant {} - multiple values for key {}",tenant.getName(),key);
-				updated = false;
-				break; // multiple values specified				
-			} else if(updateTenant(tenant,key,values.get(0))) {
-				updated = true;
+			if(validUpdateTenantFields.contains(key)) {
+				List<String> values = tenantParams.get(key);
+				if(values == null) {
+					LOGGER.warn("update tenant {} - no value for key {}",tenant.getName(),key);
+					updated = false;
+					break; // key with no values
+				} else if(values.size() != 1) {
+					LOGGER.warn("update tenant {} - multiple values for key {}",tenant.getName(),key);
+					updated = false;
+					break; // multiple values specified				
+				} else if(updateTenant(tenant,key,values.get(0))) {
+					updated = true;
+				} else {
+					updated = false;
+					break;
+				}
 			} else {
+				LOGGER.warn("update tenant {} - unknown key {}",tenant.getName(),key);
 				updated = false;
 				break;
 			}
@@ -139,6 +148,7 @@ public class TenantsResource {
 		if(tenant == null || key == null || value == null)
 			return false;
 		
+		// field name already validated from list (see top)
 		boolean success = false;
 		if(key.equals("name")) {
 			String oldName = tenant.getName();
@@ -154,13 +164,12 @@ public class TenantsResource {
 		} else if (key.equals("active")) {
 			Boolean active = Boolean.valueOf(value);
 			if(tenant.isActive() != active) {
+				LOGGER.info("update tenant {} - set active = {}", tenant.getName(),active);
 				tenant.setActive(active);
 			} // else ignore if no change
 			success=true;
-		} else {
-			// TODO: support updating other user fields here  
-			LOGGER.warn("update tenant {} - unknown key {}",tenant.getName(),key);
-		}
+		} 
+		// add other fields to support here
 		return success;
 	}
 
@@ -190,7 +199,7 @@ public class TenantsResource {
 			} else {
 				LOGGER.warn("cannot create tenant - incomplete data");
 			}
-		}
+		} // else validFieldsOnly will log reason
 		return newTenant;
 	}
 

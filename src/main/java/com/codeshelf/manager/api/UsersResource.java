@@ -1,5 +1,6 @@
 package com.codeshelf.manager.api;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -25,29 +27,67 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.security.AuthProviderService;
+import com.google.inject.Inject;
 
 // note:
 // it is intentional that the reasons for errors are only logged and not returned to the client
 @Path("/users")
 public class UsersResource {
+	AuthProviderService authProviderService;
+	
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(UsersResource.class);
 	private static final Set<String>	validCreateUserFields	= new HashSet<String>();
+	private static final Set<String>	validUpdateUserFields	= new HashSet<String>();
 	static {
 		validCreateUserFields.add("tenantid");
 		validCreateUserFields.add("username");
 		validCreateUserFields.add("password");
 		validCreateUserFields.add("type");
+		validUpdateUserFields.add("password");
+		validUpdateUserFields.add("active");
 	}
-
+	
+	@Inject
+	public UsersResource(AuthProviderService authProviderService) {
+		this.authProviderService = authProviderService;
+	}
+	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get(@QueryParam("username") String username, 
-				@QueryParam("tenantid") Integer tenantId, 
-				@QueryParam("htpasswd") Boolean htpasswd) {
+				@QueryParam("tenantid") Integer tenantId) {
 		if (username == null)
-			return getUsers(tenantId, htpasswd);
+			return getUsers(tenantId);
 		//else
 		return getUser(username,tenantId); // htpasswd ignored for username search
+	}
+	
+	@GET
+	@Path("htpasswd")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response getHtpasswd() {
+		// TODO: extra authentication here
+		return Response.ok(new String(TenantManagerService.getInstance().getHtpasswd())).build();
+	}
+
+	@GET
+	@Path("auth")
+	@Produces(MediaType.TEXT_HTML)
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public Response auth(MultivaluedMap<String, String> userParams, 
+					@QueryParam("next") URI nextLocation) {
+		String username = userParams.getFirst("u");
+		String password = userParams.getFirst("p");
+		if(username != null && password != null) {
+			User user = TenantManagerService.getInstance().authenticate(username, password);
+			if(user != null) {
+				// auth succeeds, generate token
+				NewCookie cookie = authProviderService.createAuthCookie(user.getId(),authProviderService.getDefaultCookieExpirationSeconds());
+				return Response.seeOther(nextLocation).cookie(cookie).build();
+			}
+		}
+		return Response.status(Status.FORBIDDEN).build();
 	}
 
 	@POST
@@ -115,18 +155,24 @@ public class UsersResource {
 		boolean updated = false;
 
 		for (String key : userParams.keySet()) {
-			List<String> values = userParams.get(key);
-			if (values == null) {
-				LOGGER.warn("update user {} - no value for key {}", user.getUsername(), key);
-				updated = false;
-				break; // key with no values
-			} else if (values.size() != 1) {
-				LOGGER.warn("update user {} - multiple values for key {}", user.getUsername(), key);
-				updated = false;
-				break; // multiple values specified				
-			} else if (updateUser(user, key, values.get(0))) {
-				updated = true;
+			if(validUpdateUserFields.contains(key)) {
+				List<String> values = userParams.get(key);
+				if (values == null) {
+					LOGGER.warn("update user {} - no value for key {}", user.getUsername(), key);
+					updated = false;
+					break; // key with no values
+				} else if (values.size() != 1) {
+					LOGGER.warn("update user {} - multiple values for key {}", user.getUsername(), key);
+					updated = false;
+					break; // multiple values specified				
+				} else if (updateUser(user, key, values.get(0))) {
+					updated = true;
+				} else {
+					updated = false;
+					break;
+				}
 			} else {
+				LOGGER.warn("update user {} - unknown key {}", user.getUsername(), key);
 				updated = false;
 				break;
 			}
@@ -145,9 +191,9 @@ public class UsersResource {
 
 		boolean success = false;
 		if (key.equals("password")) {
-			if (User.passwordMeetsRequirements(value)) {
+			if (authProviderService.passwordMeetsRequirements(value)) {
 				LOGGER.info("update user {} - change password requested", user.getUsername());
-				user.setPassword(value);
+				user.setHashedPassword(authProviderService.hashPassword(value));
 				success = true;
 			} else {
 				LOGGER.warn("update user {} - invalid password specified", user.getUsername(), key);
@@ -155,12 +201,10 @@ public class UsersResource {
 		} else if (key.equals("active")) {
 			Boolean active = Boolean.valueOf(value);
 			if (user.isActive() != active) {
+				LOGGER.info("update user {} - set active = {}", user.getUsername(),active);
 				user.setActive(active);
 			} // else ignore if no change
 			success = true;
-		} else {
-			// TODO: support updating other user fields here  
-			LOGGER.warn("update user {} - unknown key {}", user.getUsername(), key);
 		}
 		return success;
 	}
@@ -190,7 +234,7 @@ public class UsersResource {
 
 			if (username != null && password != null && type != null) {
 				if (manager.canCreateUser(username)) {
-					if (User.passwordMeetsRequirements(password)) {
+					if (authProviderService.passwordMeetsRequirements(password)) {
 						Tenant tenant;
 						if(tenantId == null)
 							tenant = manager.getDefaultTenant();
@@ -212,13 +256,13 @@ public class UsersResource {
 					LOGGER.warn("cannot create user {} - username not accepted", username);
 				}
 			} else {
-				LOGGER.warn("cannot create user - incomplete data");
+				LOGGER.warn("cannot create user - incomplete form data");
 			}
-		}
+		} // else validFieldsOnly will log reason
 		return newUser;
 	}
 
-	private Response getUsers(Integer tenantId, Boolean htpasswd) {
+	private Response getUsers(Integer tenantId) {
 		try {
 			Tenant tenant = null;
 			if (tenantId != null) 
@@ -226,9 +270,6 @@ public class UsersResource {
 			
 			List<User> userList = TenantManagerService.getInstance().getUsers(tenant);
 			
-			if(htpasswd != null && htpasswd) 
-				return Response.ok(makeHtpasswd(userList)).build();
-			//else
 			return Response.ok(userList).build();
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception", e);
@@ -236,21 +277,13 @@ public class UsersResource {
 		}
 	}
 
-	private String makeHtpasswd(List<User> userList) {
-		String result="";
-		for(User user : userList) {
-			result += user.getHtpasswdEntry() + "\n";
-		}
-		return result;
-	}
-
 	private Response getUser(String username, Integer tenantId) {
 		try {
 			User user = TenantManagerService.getInstance().getUser(username);
 			if(tenantId == null || tenantId.equals(user.getTenant().getId()) )
 				return Response.ok(user).build();
-			else 
-				return Response.status(Status.NOT_FOUND).build();
+			//else 
+			return Response.status(Status.NOT_FOUND).build();
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception", e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();

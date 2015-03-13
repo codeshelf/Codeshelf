@@ -5,21 +5,45 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.codeshelf.manager.User;
 
 @Path("/")
 public class RootResource {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(RootResource.class);
 	
 	@GET
-	public String get() {
-		return "Codeshelf TMS";
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response get() {
+		return Response.ok("Codeshelf TMS").build();
 	}
+	
+	@GET
+	@Path("/security")
+	@Produces(MediaType.TEXT_PLAIN)
+	public Response get(@Context HttpServletRequest request) {
+		// echo currently authenticated user for debugging
+
+		User user = (User) request.getAttribute("user");
+		String response;
+		if(user != null) {
+			response = user.toString();
+		} else {
+			response = "unknown user";
+		}
+		return Response.ok(response).build();
+	}	
 	
 	public static Map<String, String> validFieldsOnly(MultivaluedMap<String, String> userParams, Set<String> validFields) {
 		Map<String, String> result = new HashMap<String, String>();
@@ -44,10 +68,14 @@ public class RootResource {
 					result.put(key, values.get(0)); // ok field
 				}
 			} else {
-				LOGGER.warn("unrecognized field {} trying to create user", key);
+				LOGGER.warn("unrecognized field {}", key);
 				error = true;
 				break;
 			}
+		}
+		if(result.isEmpty()) {
+			LOGGER.warn("no form data");
+			error = true;
 		}
 
 		return error ? null : result;

@@ -52,6 +52,8 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.AuthProviderService;
+import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.PropertyService;
@@ -101,6 +103,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IMetricsService								staticMetricsService;
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
+	private static HmacAuthService									staticHmacAuthService;
 
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
@@ -138,6 +141,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected SessionManagerService								sessionManagerService;
 	protected IPropertyService									propertyService;
 	protected IMetricsService									metricsService;
+	protected AuthProviderService										authProviderService;
 
 	protected IRadioController									radioController;
 
@@ -171,6 +175,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
 
 				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
+				
+				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
 
 			@Provides
@@ -204,6 +210,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		ServiceUtility.awaitRunningOrThrow(staticMetricsService); 
 
 		staticPropertyService = injector.getInstance(IPropertyService.class);
+		
+		staticHmacAuthService = injector.getInstance(HmacAuthService.class);
 
 		staticSessionManagerService = injector.getInstance(SessionManagerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
@@ -229,6 +237,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
+		authProviderService = staticHmacAuthService;
 
 		radioController = null;
 		deviceManager = null;
@@ -299,6 +308,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		sessionManagerService = null;
 		propertyService = null;
 		metricsService = null;
+		authProviderService = null;
 
 		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
 			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
@@ -396,6 +406,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 				services.add(realTenantManagerService);
 			if (!realTenantPersistenceService.isRunning())
 				services.add(realTenantPersistenceService);
+			services.add(staticHmacAuthService);
 
 			persistenceServiceManager = new ServiceManager(services);
 			try {

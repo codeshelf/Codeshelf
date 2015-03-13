@@ -23,6 +23,7 @@ public interface ITenantManagerService extends ICodeshelfService {
 	User updateUser(User user);
 	User authenticate(String username,String password);
 	List<User> getUsers(Tenant tenant);
+	byte[] getHtpasswd();
 
 	// tenants
 	boolean canCreateTenant(String tenantName,String schemaName);	
@@ -38,5 +39,6 @@ public interface ITenantManagerService extends ICodeshelfService {
 
 	// misc
 	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
+
 
 }

@@ -168,4 +168,8 @@ public class MockTenantManagerService implements ITenantManagerService {
 	@Override
 	public void destroyTenant(Tenant tenant) {
 	}
+	@Override
+	public byte[] getHtpasswd() {
+		return "".getBytes();
+	}
 }
