@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.AisleDeviceLogic.LedCmd;
+import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.EffectEnum;
@@ -596,6 +598,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
 	}
+	
+	private void forceClearAllPosConControllersForThisCheDevice() {
+		List<PosManagerDeviceLogic> controllers = mDeviceManager.getPosConControllers();
+		for (PosManagerDeviceLogic controller : controllers) {
+			controller.removePosConInstrsForSource(getGuid());
+			controller.updatePosCons();
+		}		
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -843,6 +853,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		setState(CheStateEnum.IDLE);
 
 		forceClearAllLedsForThisCheDevice();
+		
+		//Clear PosConControllers
+		forceClearAllPosConControllersForThisCheDevice();
+		
 		clearAllPositionControllers();
 	}
 
@@ -944,6 +958,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Clear the existing LEDs.
 		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
 
+		//Clear PosConControllers
+		forceClearAllPosConControllersForThisCheDevice();
+		
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
@@ -988,8 +1005,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * @param inWi
 	 */
-	protected void clearLedControllersForWi(final WorkInstruction inWi) {
-
+	protected void clearLedAndPosConControllersForWi(final WorkInstruction inWi) {
+		//Clear LEDs
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(inWi.getLedCmdStream());
 
 		for (Iterator<LedCmdGroup> iterator = ledCmdGroups.iterator(); iterator.hasNext();) {
@@ -1000,6 +1017,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				ledControllerClearLeds(ledController.getGuid());
 			}
 		}
+		
+		//Clear PutWall PosCons
+		forceClearAllPosConControllersForThisCheDevice();
 	}
 
 	// --------------------------------------------------------------------------
@@ -1181,6 +1201,29 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 
 	}
+	
+	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
+		String wiCmdString = inFirstWi.getPosConCmdStream();
+		if (wiCmdString == null ||wiCmdString.equals("[]")) {
+			return;
+		}
+		NetGuid cheGuid = getGuid();
+		List<PosControllerInstr> instructions = PosConInstrGroupSerializer.deserializePosConInstrString(wiCmdString);
+		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
+		for (PosControllerInstr instruction : instructions) {
+			String controllerId = instruction.getControllerId();
+			INetworkDevice device = mDeviceManager.getDeviceByGuid(new NetGuid(controllerId));
+			if (device instanceof PosManagerDeviceLogic) {
+				PosManagerDeviceLogic controller = (PosManagerDeviceLogic) device;
+				controller.addPosConInstrFor(cheGuid, instruction);
+				controllers.add(controller);
+			}
+		}
+		
+		for (PosManagerDeviceLogic controller : controllers) {
+			controller.updatePosCons();
+		}
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1229,6 +1272,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 			// Tell aisle controller(s) what to light next
 			lightWiLocations(firstWi);
+			
+			forceClearAllPosConControllersForThisCheDevice();
+			lightWiPosConLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
 			doPosConDisplaysforActiveWis();

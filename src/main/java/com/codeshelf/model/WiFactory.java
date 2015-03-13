@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
@@ -29,6 +31,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.LightService;
 import com.codeshelf.util.SequenceNumber;
 import com.google.common.base.Strings;
 
@@ -187,6 +190,7 @@ public class WiFactory {
 					inLocation,
 					inOrderDetail.getUomMasterId(),
 					cheColor);
+				setPosConInstructions(resultWi, inLocation);
 			} else {
 				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
 				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
@@ -202,9 +206,11 @@ public class WiFactory {
 						inOrderDetail.getItemMasterId(),
 						inOrderDetail.getUomMasterId(),
 						cheColor);
+					setPosConInstructions(resultWi, inLocation);
 				} else {
 					// The cross batch situation. We want the leds for the order location(s)
 					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
+					setPosConInstructions(resultWi, passedInDetailParent.getActiveOrderLocations());
 				}
 			}
 		}
@@ -361,6 +367,29 @@ public class WiFactory {
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
+	
+	private static void setPosConInstructions(WorkInstruction wi, List<OrderLocation> locations) {
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		for (OrderLocation location : locations) {
+			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location.getLocation(), instructions);
+		}
+		setPosConInstructionsHelper(wi, instructions);
+	}
+	
+	private static void setPosConInstructions(WorkInstruction wi, Location location) {
+		System.out.println("Try to set poscon for " + location);
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions);
+		setPosConInstructionsHelper(wi, instructions);
+	}
+	
+	private static void setPosConInstructionsHelper(WorkInstruction wi, List<PosControllerInstr> instructions) {
+		if (!instructions.isEmpty()){
+			String instrStr = PosConInstrGroupSerializer.serializePosConInstrString(instructions);
+			wi.setPosConCmdStream(instrStr);
+		}		
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**

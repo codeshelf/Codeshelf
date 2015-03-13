@@ -92,6 +92,12 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		mPosInstructionBySource.remove(inNetGuid);
 	}
 
+	public final void removePosConInstrsForSourceAndPosition(NetGuid inNetGuid, Byte position) {
+		List<Byte> positions = new ArrayList<>();
+		positions.add(position);
+		removePosConInstrsForSourceAndPositions(inNetGuid, positions);
+	}
+	
 	/**
 	 * Remove PosCon instruction for a specific source device / position combination
 	 * Update PosCon displays
@@ -114,15 +120,15 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		addPosConInstrFor(inNetGuid, cmd);
 	}
 	
-	public final void addPosConInstrFor(NetGuid inNetGuid, PosControllerInstr cmd) {
+	public final void addPosConInstrFor(NetGuid inNetGuid, PosControllerInstr instruction) {
 		Map<Byte, PosControllerInstr> posConInstrs = mPosInstructionBySource.get(inNetGuid);
 		if (posConInstrs == null) {
 			posConInstrs = new HashMap<Byte, PosControllerInstr>();
 			mPosInstructionBySource.put(inNetGuid, posConInstrs);
 		}
-		cmd.setPostedToPosConController(System.currentTimeMillis());
+		instruction.setPostedToPosConController(System.currentTimeMillis());
 		try {Thread.sleep(2);} catch (InterruptedException e) {}
-		posConInstrs.put(cmd.getPosition(), cmd);
+		posConInstrs.put(instruction.getPosition(), instruction);
 	}
 	
 	

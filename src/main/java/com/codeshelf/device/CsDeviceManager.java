@@ -168,6 +168,15 @@ public class CsDeviceManager implements
 		}
 		return aList;
 	}
+	
+	public final List<PosManagerDeviceLogic> getPosConControllers() {
+		ArrayList<PosManagerDeviceLogic> aList = new ArrayList<PosManagerDeviceLogic>();
+		for (INetworkDevice theDevice : mDeviceMap.values()) {
+			if (theDevice instanceof PosManagerDeviceLogic)
+				aList.add((PosManagerDeviceLogic) theDevice);
+		}
+		return aList;
+	}
 
 	public final List<CheDeviceLogic> getCheControllers() {
 		ArrayList<CheDeviceLogic> aList = new ArrayList<CheDeviceLogic>();

@@ -202,6 +202,12 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String						ledCmdStream;
 
+	@Column(nullable = true,name="poscon_cmd_stream",columnDefinition="TEXT")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						posConCmdStream;
+
 	// The remote gateway controller will sort and group by this code, and then only send out one group to the radio network at a time.
 	@Column(nullable = true,name="group_and_sort_code")
 	@Getter
