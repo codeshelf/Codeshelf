@@ -77,6 +77,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter keepAliveCounter;
 	private final Counter applicationRequestCounter;
 	private final Counter systemRequestCounter;
+	private final Counter inventoryScanRequestCounter;
 	private final Timer requestProcessingTimer;
 	
 	private ServiceFactory	serviceFactory;
@@ -109,6 +110,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		keepAliveCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.keep-alive");
 		applicationRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.application");
 		systemRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.system");
+		inventoryScanRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-scan");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS,"requests.processing-time");
 		
 	}
@@ -200,9 +202,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof InventoryScanRequest) {
-				//TODO - huffa - Ask paul if this is the correct way to use this serviceFactory
 				command = new InventoryScanCommand(csSession, (InventoryScanRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
-				//TODO - huffa - do i need to add an "objectupdatecounter" here? Ask Paul what this is about
+				inventoryScanRequestCounter.inc();
 				applicationRequestCounter.inc();
 			}
 			// check if matching command was found

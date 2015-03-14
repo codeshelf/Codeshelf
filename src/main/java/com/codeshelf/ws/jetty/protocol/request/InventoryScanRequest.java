@@ -13,7 +13,9 @@ public class InventoryScanRequest extends DeviceRequest {
 	public InventoryScanRequest() {
 	}
 	
-	public InventoryScanRequest(String cheId, String gtin, String location) {
+	public InventoryScanRequest(String cheId, String inGtin, String inLocation) {
+		this.gtin = inGtin;
+		this.location = inLocation;
 		setDeviceId(cheId);
 	}
 }

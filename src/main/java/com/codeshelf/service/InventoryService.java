@@ -6,7 +6,10 @@ import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
@@ -27,9 +30,8 @@ import com.google.inject.Inject;
 
 public class InventoryService implements IApiService {
 
-	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
-	
 	LightService lightService;
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
 	
 	@Inject
 	public InventoryService(LightService inLightService){
@@ -57,12 +59,13 @@ public class InventoryService implements IApiService {
 		else if (!location.isActive()) {
 			location = facility;
 			response.setStatusMessage(response.getStatusMessage() + " Location: " + inLocation + " is inavtive." + //
-				". Setting location to facility");
+				". Setting location to facility.");
 			response.setFoundLocation(false);
 		}
 
 		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
 		
+		Timestamp createTime = null;
 		ItemMaster itemMaster = null;
 		UomMaster uomMaster = null;
 		Gtin gtin = null;
@@ -74,16 +77,21 @@ public class InventoryService implements IApiService {
 				"Attempting to create GTIN: " + inGtin);
 			response.setFoundGtin(false);
 			
-			Timestamp createTime = new Timestamp(System.currentTimeMillis());
+			createTime = new Timestamp(System.currentTimeMillis());
 			uomMaster = guessUomForItem(inGtin, facility);
-			itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
-			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			
+			itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
+			if (itemMaster == null) {
+				response.setStatusMessage(response.getStatusMessage() + " Failed to create item master for GTIN: " + inGtin);
+				LOGGER.error("Unable to create ItemMaster for GTIN: {}", inGtin);
+			}
+			
+			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			if (gtin != null) {
 				Gtin.staticGetDao().store(gtin);
-				
 			} else {
 				response.setStatusMessage(response.getStatusMessage() + " Could not create GTIN: " + inGtin);
+				LOGGER.error("Was unable to create GTIN for GTIN: {}", inGtin);
 			}
 
 		} else {
@@ -93,15 +101,27 @@ public class InventoryService implements IApiService {
 			response.setFoundGtin(true);
 		}
 		
-		// This will find/create. If found it will move if necessary
+		// This will find/create.
 		// Look in this function call for whether a item will be moved or created
-		Item result = itemMaster.findOrCreateItem(location, uomMaster);
+		Item result = null;
+		if (itemMaster != null ) {
+			result = itemMaster.findOrCreateItem(location, uomMaster);
+		}
 		
 		if (result != null) {
+			// TODO - huffa make a guesser function?
+			createTime = new Timestamp(System.currentTimeMillis());
+			
+			result.setQuantity(0.0);
+			result.setActive(true);
+			result.setUpdated(createTime);
+			Item.staticGetDao().store(result);
+			
 			// Light the item in its new location
 			lightService.lightItemSpecificColor(facility.getPersistentId().toString(), result.getPersistentId().toString(), che.getColor());
 			response.setStatus(ResponseStatus.Success);
 		} else {
+			LOGGER.error("Was unable to create/get item with GTIN: {} Loc: {} UOM: {}", inGtin, location.toString(), uomMaster.getDomainId());
 			response.setStatus(ResponseStatus.Fail);
 		}
 		
@@ -109,7 +129,7 @@ public class InventoryService implements IApiService {
 	}
 	
 	
-	public boolean lightInventory(String inGtin, UUID inChePersistentId){
+	public boolean lightInventoryByGtin(String inGtin, UUID inChePersistentId){
 		
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		ColorEnum color = che.getColor();
@@ -118,13 +138,13 @@ public class InventoryService implements IApiService {
 		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
 		if (gtins.isEmpty()) {
 			return false;
-			// TODO huffa - error message
 		}
 		
 		Gtin gtin = gtins.get(0);
 		ItemMaster itemMaster = gtin.getParent();
 		List<Item> items = itemMaster.getItemsOfUom(gtin.getUomMaster().getDomainId());
 		
+		// TODO - Light items only on CHE path
 		for (Item item : items) {
 			if (item.isLightable()){
 				lightService.lightItemSpecificColor(facility.getPersistentId().toString(), item.getPersistentId().toString(), color);
@@ -137,18 +157,18 @@ public class InventoryService implements IApiService {
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
+		
 		ItemMaster result = null;
-
-
 		result = new ItemMaster();
-		result.setDomainId(inItemId);
-		result.setItemId(inItemId);
-		inFacility.addItemMaster(result);
-
-
+		
 		// If we were able to get/create an item master then update it.
 		if (result != null) {
+			
+			result.setDomainId(inItemId);
+			result.setItemId(inItemId);
+			inFacility.addItemMaster(result);
 			result.setStandardUom(inUomMaster);
+			
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -157,6 +177,7 @@ public class InventoryService implements IApiService {
 				//LOGGER.error("updateItemMaster", e);
 			}
 		}
+		
 		return result;
 	}
 	

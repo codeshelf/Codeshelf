@@ -54,7 +54,13 @@ public enum CheStateEnum {
 	// @EnumValue("SCAN_SOMETHING")
 	SCAN_SOMETHING(CheStateNum.SCAN_SOMETHING, "SCAN_SOMETHING"),
 	// @EnumValue("SCAN_SOMTHING_SHORT")
-	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT");
+	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT"),
+	
+	// states used for inventory scan DEV-644
+	// @EnumValue("SCAN_LOCATION")
+	SCAN_LOCATION(CheStateNum.SCAN_LOCATION, "SCAN_LOCATION"),
+	// @EnumValue("SCAN_GTIN")
+	SCAN_GTIN(CheStateNum.SCAN_GTIN, "SCAN_GTIN");
 
 	private int		mValue;
 	private String	mName;
@@ -127,6 +133,14 @@ public enum CheStateEnum {
 			case CheStateNum.NO_CONTAINERS_SETUP:
 				result = CheStateEnum.NO_CONTAINERS_SETUP;
 				break;
+				
+			case CheStateNum.SCAN_LOCATION:
+				result = CheStateEnum.SCAN_LOCATION;
+				break;
+				
+			case CheStateNum.SCAN_GTIN:
+				result = CheStateEnum.SCAN_GTIN;
+				break;
 
 			default:
 				result = CheStateEnum.INVALID;
@@ -175,6 +189,9 @@ public enum CheStateEnum {
 		// states used in Setup_Orders mode if SCANPICK parameter is set.
 		static final byte	SCAN_SOMETHING				= 19;
 		static final byte	SCAN_SOMETHING_SHORT		= 20;
+		// states used for inventory scan
+		static final byte	SCAN_LOCATION				= 21;
+		static final byte	SCAN_GTIN					= 22;
 
 		private CheStateNum() {
 		};

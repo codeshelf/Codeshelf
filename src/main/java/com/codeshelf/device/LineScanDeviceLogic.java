@@ -41,6 +41,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private String				readyMsg;
+	
+	@Getter
+	@Setter
+	private String				lastScanedGTIN;
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -88,6 +92,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case CLEAR_ERROR_COMMAND:
 				clearErrorCommandReceived();
 				break;
+			case INVENTORY_SCAN_COMMAND:
+				inventoryScanCommandReceived();
+				break;
 
 			default:
 				break;
@@ -119,10 +126,28 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
+			case SCAN_GTIN:
+				LOGGER.info("Got a GTIN! {} ", inContent);
+				processGtinScan(inScanPrefixStr, inContent);
+				break;
+			case SCAN_LOCATION:
+				LOGGER.info("Got a location! {}", inContent);
+				processLocationScan(inScanPrefixStr, inContent);
+				break;
 			default:
 				break;
 		}
 
+	}
+	
+	private void processLocationScan(final String inScanPrefixStr, final String inScanStr){
+		processInventoryScan(inScanStr, lastScanedGTIN);
+		setState(CheStateEnum.READY);
+	}
+	
+	private void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
+		lastScanedGTIN = inScanStr;
+		setState(CheStateEnum.SCAN_LOCATION);
 	}
 
 	// --------------------------------------------------------------------------
@@ -258,6 +283,19 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			LOGGER.info("LineScanDeviceLogic.assignWork(): not 1 job");
 			setState(CheStateEnum.READY);
 		}
+	}
+	
+	protected void inventoryScanCommandReceived() {
+		CheStateEnum currentState = getCheStateEnum();
+		switch(currentState) {
+			case READY:
+			case IDLE:
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+			default:
+				break;
+		}
+		
 	}
 
 	// --------------------------------------------------------------------------
@@ -633,6 +671,12 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					}
 					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 					break;
+				case SCAN_LOCATION:
+					sendDisplayCommand(SCAN_LOCATION, EMPTY_MSG);
+					break;
+				case SCAN_GTIN:
+					sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
+					break;
 					
 				default:
 					break;
@@ -668,5 +712,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 		}
 		sendErrorCodeToAllPosCons();
+	}
+	
+	private void processInventoryScan(String inLocationId, String inGtin) {
+		mDeviceManager.inventoryScan(this.getPersistentId(), inLocationId, inGtin);
 	}
 }

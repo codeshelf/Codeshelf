@@ -10,13 +10,15 @@ public class ServiceFactory {
 	private HashMap<Class<? extends IApiService>, IApiService>	mServices;
 
 	@Inject
-	public ServiceFactory(WorkService workService, LightService lightService, IPropertyService propertyService, UiUpdateService uiUpdateService, OrderService orderService) {
+	public ServiceFactory(WorkService workService, LightService lightService, IPropertyService propertyService,
+			UiUpdateService uiUpdateService, OrderService orderService, InventoryService inventoryService) {
 		mServices = Maps.newHashMap();
 		mServices.put(WorkService.class, workService);
 		mServices.put(LightService.class, lightService);
 		mServices.put(PropertyService.class, propertyService);
 		mServices.put(UiUpdateService.class, uiUpdateService);
 		mServices.put(OrderService.class, orderService);
+		mServices.put(InventoryService.class, inventoryService);
 	}
 
 	@SuppressWarnings("unchecked")
