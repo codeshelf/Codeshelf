@@ -79,18 +79,7 @@ public class LightService implements IApiService {
 		Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
-		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
-		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
-		if (theItem == null) {
-			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
-			return;
-		}
-
-		if (theItem.isLightable()) {
-			sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(facility, defaultLedsToLight, color, theItem));
-		} else {
-			LOGGER.warn("The item is not lightable: " + theItem);
-		}
+		lightItemSpecificColor(facilityPersistentId, inItemPersistentId, color);
 	}
 	
 	// --------------------------------------------------------------------------

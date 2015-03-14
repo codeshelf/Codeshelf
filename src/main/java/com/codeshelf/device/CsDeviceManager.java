@@ -41,6 +41,7 @@ import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryScanRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.google.common.base.Preconditions;
@@ -274,6 +275,16 @@ public class CsDeviceManager implements
 	public void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
+		clientEndpoint.sendMessage(req);
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final String inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
+	 */
+	public void inventoryScan(final UUID inPersistentId, final String inLocationId, final String inGtin) {
+		LOGGER.debug("Inventory Scan: Che={}; Loc={}; GTIN={};");
+		InventoryScanRequest req = new InventoryScanRequest(inPersistentId.toString(), inGtin, inLocationId);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -658,6 +669,11 @@ public class CsDeviceManager implements
 
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
+	}
+	
+	public void processInventoryScanRespose(String inResponseMessage) {
+		LOGGER.info("Got inventoryscan response: {}", inResponseMessage);
+		// TODO - huffa DEV644
 	}
 
 	public void lightSomeLeds(NetGuid inGuid, int inSeconds, String inCommands) {
