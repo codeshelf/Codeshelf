@@ -74,6 +74,24 @@ public class FacilityResource {
 			persistenceService.commitTransaction();
 		}
 	}
+	
+	@GET
+	@Path("/work/topitems")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkByItem() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		try {
+			Session session = persistenceService.getSessionWithTransaction();
+			return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, mUUIDParam.getUUID()));
+		} catch (Exception e) {
+			ErrorResponse errors = new ErrorResponse();
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+		finally {
+			persistenceService.commitTransaction();
+		}
+	}
 
 	@GET
 	@Path("/blockedwork/shorts")

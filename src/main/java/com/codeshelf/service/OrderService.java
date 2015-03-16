@@ -71,7 +71,36 @@ public class OrderService implements IApiService {
 		}
 
 	}
+	
+	public static class ItemView {
+		public String getId() {
+			return String.format("%s:%s", getSku(), getUom()); 
+		}
+		@Getter @Setter
+		private String uom;
+		@Getter @Setter
+		private String sku;
+		@Getter @Setter
+		private String description;
+		@Getter @Setter
+		private long planQuantity;
+		
+	}
 
+	public Collection<ItemView> itemsInQuantityOrder(Session session, UUID facilityUUID) {
+		@SuppressWarnings("unchecked")
+		List<ItemView>  result = session.createQuery(
+			"select od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, sum(od.quantity) as planQuantity"
+				+ " from OrderDetail as od left join od.parent as oh where oh.parent.persistentId = :facilityId and od.active = true "
+				+ " GROUP BY od.itemMaster.domainId, od.uomMaster.domainId, od.description "
+				+ " ORDER BY planQuantity DESC")
+				.setParameter("facilityId", facilityUUID)
+				.setMaxResults(10)
+				.setResultTransformer(new AliasToBeanResultTransformer(ItemView.class))
+				.list();
+		return result;
+	}
+	
 	public Collection<OrderDetailView> orderDetailsNoLocation(Tenant tenant, Session session, UUID facilityUUID) {
 		HashSet<OrderDetailView> allOrderDetails = new HashSet<OrderDetailView>();
 		allOrderDetails.addAll(orderDetailNoPreferredLocation(tenant, session, facilityUUID));
