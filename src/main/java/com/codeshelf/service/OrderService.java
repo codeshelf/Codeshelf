@@ -100,7 +100,7 @@ public class OrderService implements IApiService {
 			+ " left join %s.order_header as oh on od.parent_persistentid = oh.persistentid"
 			+ " left join %s.item_master as im on od.item_master_persistentid = im.persistentid"
 			+ " left join %s.uom_master as um on od.uom_master_persistentid = um.persistentid"
-			+ " where CAST(oh.parent_persistentid AS varchar(50)) = :facilityId AND stored_location_persistentid IS NULL"
+			+ " where CAST(oh.parent_persistentid AS varchar(50)) = :facilityId AND od.active = true AND stored_location_persistentid IS NULL"
 			, schema, schema, schema, schema, schema ))
 				.setParameter("facilityId", facilityUUID.toString())
 				.setResultTransformer(new AliasToBeanResultTransformer(OrderDetailView.class))
