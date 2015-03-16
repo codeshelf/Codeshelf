@@ -75,7 +75,7 @@ public class PosConControllerTest extends ServerTest{
 	public final void runPutWallProcess() throws IOException{
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = setUpFacilityWithPutWallAndOrders();
+		setUpFacilityWithPutWallAndOrders();
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}

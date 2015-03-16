@@ -1,79 +1,184 @@
 package com.codeshelf.security;
 
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.Cookie;
-import javax.ws.rs.core.NewCookie;
-
-import lombok.Getter;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.Md5Crypt;
-import org.apache.commons.lang.mutable.MutableLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
+import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
+import com.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
 public class HmacAuthService extends AbstractCodeshelfIdleService implements AuthProviderService {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(HmacAuthService.class);
+	private static final Logger	LOGGER								= LoggerFactory.getLogger(HmacAuthService.class);
+	private static final String	HMAC_ALGORITHM						= "HmacSHA1";
 
-	private static final String	COOKIE_NAME							= "CSAUTHTOKEN";
-	private static final int	COOKIE_VERSION_NUMBER				= 1;
-	private static final char 	HMAC_TOKEN_SEPARATOR				= ':';
-	private static final String HMAC_ALGORITHM						= "HmacSHA1";
+	// token settings
+	private static final int	TOKEN_VERSION						= 1;
+	private byte[]				tokenXor;
 
-	@Getter
-	public int		defaultCookieExpirationSeconds	= 60 * 60 * 24 * 7;	// keep login cookie for a week
-	@Getter
-	public int		minCookieExpirationSeconds		= 60;
-	@Getter
-	public int		maxCookieExpirationSeconds		= 60 * 60 * 24 * 365;
+	// session settings
+	private static final int	SESSION_DEFAULT_MAX_FUTURE_SECONDS	= 30;												// do not allow timestamps significantly in the future
+	private static final int	SESSION_DEFAULT_MAX_IDLE_MINUTES	= 6;
+	private static final int	SESSION_DEFAULT_MIN_IDLE_MINUTES	= 5;
+	private int					sessionMaxFutureSeconds;
+	private int					sessionMaxIdleMinutes;
+	private int					sessionMinIdleMinutes;
 
-	private String domain;
-	private boolean	secureCookies;
-	private Mac mac;
+	// cookie settings
+	private static final String	COOKIE_NAME							= "CSTOK";
+	private static final int	COOKIE_DEFAULT_MAX_AGE_HOURS		= 24;
+	private String				cookieDomain = "";
+	private boolean				cookieSecure;
+	private int					cookieMaxAgeHours;
+
+	// reusable hash generator
+	private Mac					mac;
 
 	@Inject
-	static AuthProviderService theInstance;
-	
+	static AuthProviderService	theInstance;
+
 	public static AuthProviderService getInstance() {
 		return theInstance;
 	}
-	
-	public HmacAuthService() { // for testing
+
+	/**************************** token methods ****************************/
+
+	@Override
+	public String createToken(int id) {
+		long timestamp = System.currentTimeMillis();
+		byte[] rawHmac = createHmacBytes(id, timestamp);
+		return encodeToken(rawHmac);
 	}
 
-	private byte[] createHmac(int id,long timestamp) {
-		byte[] value = (Long.toString(id) + HMAC_TOKEN_SEPARATOR + Long.toString(timestamp) + HMAC_TOKEN_SEPARATOR).getBytes();
-		String result = "";
-
-		byte[] hmacBytes; 
-		synchronized(mac) {
-			hmacBytes = mac.doFinal(value);			
+	@Override
+	public AuthResponse checkToken(String value) {
+		AuthResponse resp = null;
+		ByteBuffer hmac = ByteBuffer.wrap(decodeToken(value));
+		if (hmac.remaining() > (4 + 4 + 8)) {
+			int version = hmac.getInt();
+			if (version == TOKEN_VERSION) {
+				int id = hmac.getInt();
+				long timestamp = hmac.getLong();
+				byte[] matchHmac = createHmacBytes(id, timestamp);
+				if (Arrays.equals(hmac.array(), matchHmac)) {
+					resp = respondToValidToken(id, timestamp);
+				} else {
+					LOGGER.warn("Invalid HMAC for user ID {} timestamp {}", id, timestamp);
+					resp = new AuthResponse(Status.INVALID_TOKEN);
+				}
+			} else {
+				LOGGER.warn("Failed to parse auth token, bad version {}", version);
+				resp = new AuthResponse(Status.INVALID_TOKEN);
+			}
+		} else {
+			LOGGER.warn("auth token was too short, {} bytes", hmac.remaining());
+			resp = new AuthResponse(Status.INVALID_TOKEN);
 		}
-		return concat(value, hmacBytes);
+		return resp;
 	}
 
-	private static byte[] concat(byte[] a1, byte[] a2) {
-		byte[] result = Arrays.copyOf(a1, a1.length + a2.length);
-		for (int i = 0; i < a2.length; i++) {
-			result[i + a1.length] = a2[i];
+	private byte[] createHmacBytes(int id, long timestamp) {
+		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 8);
+		hmac_data.putInt(TOKEN_VERSION);
+		hmac_data.putInt(id);
+		hmac_data.putLong(timestamp);
+
+		byte[] hmac_signature;
+		synchronized (mac) {
+			hmac_signature = mac.doFinal(hmac_data.array());
 		}
-		return result;
+		ByteBuffer hmac = ByteBuffer.allocate(hmac_data.position() + hmac_signature.length);
+		hmac.put(hmac_data.array());
+		hmac.put(hmac_signature);
+		return hmac.array();
 	}
 
-	public AuthCookieContents checkAuthCookie(Cookie[] cookies) {
+	private AuthResponse respondToValidToken(int id, long timestamp) {
+		AuthResponse response;
+		User user = TenantManagerService.getInstance().getUser(id);
+		if (user != null) {
+			if (user.isLoginAllowed()) {
+				long ageSeconds = (System.currentTimeMillis() - timestamp) / 1000L;
+				if (ageSeconds > (0 - this.sessionMaxFutureSeconds)) {
+					// timestamp is not in the future
+					if (ageSeconds < this.sessionMaxIdleMinutes* 60) {
+						// session is still active
+						String refreshToken = null;
+						if (ageSeconds > this.sessionMinIdleMinutes * 60) {
+							// if token is valid but getting old, offer an updated one
+							LOGGER.info("refreshing cookie for user {}", id);
+							refreshToken = this.createToken(id);
+						}
+						response = new AuthResponse(Status.ACCEPTED, user, timestamp, refreshToken);
+					} else {
+						LOGGER.warn("session timed out for user {}", id);
+						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, timestamp, null);
+					}
+				} else {
+					LOGGER.error("ALERT - future timestamp {} authenticated HMAC for user {}", timestamp, id);
+					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, timestamp, null);
+				}
+			} else {
+				LOGGER.error("ALERT - login not allowed for user {}", id);
+				response = new AuthResponse(Status.LOGIN_NOT_ALLOWED, user);
+			}
+		} else {
+			LOGGER.error("ALERT - invalid user id {} with authenticated HMAC", id);
+			response = new AuthResponse(Status.BAD_CREDENTIALS, null);
+		}
+		return response;
+	}
+
+	private String encodeToken(byte[] rawHmac) {
+		xor(rawHmac);
+		return new String(Base64.encodeBase64(rawHmac));
+	}
+
+	private byte[] decodeToken(String cookieValue) {
+		byte[] rawHmac = Base64.decodeBase64(cookieValue);
+		xor(rawHmac);
+		return rawHmac;
+	}
+
+	private void xor(byte[] buf) {
+		if (tokenXor != null) {
+			int xi = 0;
+			for (int i = 0; i < buf.length; i++) {
+				buf[i] ^= tokenXor[xi];
+				xi = ((xi + 1) % tokenXor.length);
+			}
+		}
+	}
+
+	/**************************** cookie methods ****************************/
+
+	public String getCookieName() {
+		return COOKIE_NAME;
+	}
+
+	@Override
+	public AuthResponse checkAuthCookie(Cookie[] cookies) {
+		if (cookies == null)
+			return null;
+
 		Cookie match = null;
 		for (Cookie cookie : cookies) {
-			if(cookie.getName().equals(COOKIE_NAME)) {
-				if(match == null) {
+			if (cookie.getName().equals(COOKIE_NAME)) {
+				if (match == null) {
 					match = cookie;
 				} else {
 					LOGGER.warn("more than one auth cookie found");
@@ -81,118 +186,55 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 				}
 			}
 		}
-		if(match != null) 
-			return checkAuthCookie(match);
+		if (match != null)
+			return checkToken(match.getValue());
 		//else
 		return null;
 	}
 
-	public AuthCookieContents checkAuthCookie(Cookie cookie) {
-		AuthCookieContents authCookieContents = null;
-		if (cookie.getName().equals(COOKIE_NAME)) {
-			if(cookie.getVersion() == COOKIE_VERSION_NUMBER) {
-				byte[] raw = Base64.decodeBase64(cookie.getValue());
-				MutableLong id = new MutableLong(0L);
-				int offset = scanLong(id,raw,0);
-				if(offset>0) {
-					if(id.longValue() < Integer.MAX_VALUE && id.longValue() >=0) {
-						MutableLong timestamp = new MutableLong(0L);
-						offset = scanLong(timestamp,raw,offset);
-						if(offset>0) {
-							//byte[] requestHmac = Arrays.copyOfRange(raw,offset,raw.length);
-							byte[] matchHmac = createHmac(id.intValue(),timestamp.longValue());
-							if(Arrays.equals(raw, matchHmac)) {
-								authCookieContents = new AuthCookieContents(id.intValue(),timestamp.longValue());
-							} else {
-								LOGGER.warn("Invalid HMAC for user ID {} timestamp {}",id,timestamp);
-							}
-						} else {
-							LOGGER.warn("Failed to parse auth token (2) for user ID {}",id);
-						}
-					} else {
-						LOGGER.warn("invalid user ID {}",id);
-					}
-				} else {
-					LOGGER.warn("Failed to parse auth token");
-				}
-			} else {
-				LOGGER.warn("Wrong version auth token (got {} expected {})",cookie.getVersion(),COOKIE_VERSION_NUMBER);
-			}
-		}
-		return authCookieContents;
-	}
-
-	private int scanLong(MutableLong id,byte[] raw,int offset) {
-		// TODO: wrap in ByteBuffer instead of using MutableLong and pass/return offset - forgot this was Java and wrote C
-		
-		if(offset+2 > raw.length) 
-			return -1;
-		while(offset<raw.length && raw[offset]>='0' && raw[offset]<='9') {
-			if(id.longValue() >= (Long.MAX_VALUE / 10)) {
-				return -1;
-			}
-			id.setValue(id.longValue() * 10 + (raw[offset]-'0'));
-			offset++;
-		}
-		if(offset<raw.length && raw[offset] == HMAC_TOKEN_SEPARATOR) {
-			return offset+1;			
-		}
-		//else
-		return -1;
-	}
-
-	public NewCookie createAuthCookie(int id, int maxAgeSeconds) {
-		if ((maxAgeSeconds < minCookieExpirationSeconds) || (maxAgeSeconds > maxCookieExpirationSeconds))
-			maxAgeSeconds = defaultCookieExpirationSeconds;
-
-		long timestamp = System.currentTimeMillis();
-		String hmacString = new String(Base64.encodeBase64(createHmac(id, timestamp)));
-		NewCookie cookie = new NewCookie(COOKIE_NAME,
-			hmacString,
-			"/",
-			domain,
-			COOKIE_VERSION_NUMBER,
-			"",
-			maxAgeSeconds,
-			secureCookies);
+	public Cookie createAuthCookie(String token) {
+		Cookie cookie = new Cookie(COOKIE_NAME, token);
+		cookie.setPath("/");
+		cookie.setDomain(this.cookieDomain);
+		cookie.setVersion(0);
+		cookie.setMaxAge(this.cookieMaxAgeHours * 24 * 60);
+		cookie.setSecure(this.cookieSecure);
 		return cookie;
 	}
+
+	public Cookie createAuthCookie(int id) {
+		String hmacToken = createToken(id);
+		return createAuthCookie(hmacToken);
+	}
+
+	/**************************** password hash methods ****************************/
 
 	public String hashPassword(final String password) {
 		return Md5Crypt.apr1Crypt(password);
 	}
-	
-	public boolean checkPassword(final String password,final String hash) {
-		return Md5Crypt.apr1Crypt(password,hash).equals(hash);
+
+	public boolean checkPassword(final String password, final String hash) {
+		return Md5Crypt.apr1Crypt(password, hash).equals(hash);
 	}
-	
+
 	public boolean passwordMeetsRequirements(String password) {
-		if(password == null) 
+		if (password == null)
 			return false;
-		if(password.isEmpty())
+		if (password.isEmpty())
 			return false;
-		
+
 		return true;
 	}
-	
+
 	public boolean hashIsValid(String hash) {
 		return hash.startsWith("$apr1$");
 	}
 
-	@Override
-	protected void startUp() throws Exception {
-		initialize();
-	}
+	/**************************** service methods ****************************/
 
 	public AuthProviderService initialize() {
-		this.domain = System.getProperty("auth.cookie.domain");
-		this.secureCookies = Boolean.getBoolean("auth.cookie.secure");
-		String secret = System.getProperty("auth.hmac.secret");
-		if(this.domain == null || secret == null) {
-			LOGGER.error("could not initialize authentication svc, configuration missing");
-			throw new RuntimeException("configuration missing");
-		}
 		// initialize Message Authentication Code
+		String secret = System.getProperty("auth.token.secret");
 		SecretKeySpec hmacKey = new SecretKeySpec(secret.getBytes(), HMAC_ALGORITHM);
 		try {
 			mac = Mac.getInstance(HMAC_ALGORITHM);
@@ -200,12 +242,41 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
 			throw new RuntimeException("Unexpected exception creating HMAC", e);
 		}
+
+		// set up optional XOR applied to token
+		String xorString = System.getProperty("auth.token.xor");
+		if (xorString != null && xorString.length() > 1) {
+			try {
+				this.tokenXor = StringUIConverter.hexStringToBytes(xorString);
+			} catch (NumberFormatException e) {
+				LOGGER.error("could not parse auth.cookie.xor value: {}", xorString);
+			}
+		}
+
+		// session settings
+		this.sessionMaxFutureSeconds = Integer.getInteger("auth.session.maxfutureseconds", SESSION_DEFAULT_MAX_FUTURE_SECONDS);
+		this.sessionMaxIdleMinutes = Integer.getInteger("auth.session.maxidleminutes", SESSION_DEFAULT_MAX_IDLE_MINUTES);
+		this.sessionMinIdleMinutes = Integer.getInteger("auth.session.minidleminutes", SESSION_DEFAULT_MIN_IDLE_MINUTES);
+
+		// cookie settings
+		String cookieDomain = System.getProperty("auth.cookie.domain");
+		if (cookieDomain != null)
+			this.cookieDomain = cookieDomain;
+		this.cookieSecure = Boolean.getBoolean("auth.cookie.secure");
+		this.cookieMaxAgeHours = Integer.getInteger("auth.cookie.maxagehours", COOKIE_DEFAULT_MAX_AGE_HOURS);
+
 		return this;
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		initialize();
 	}
 
 	@Override
 	protected void shutDown() throws Exception {
 		mac = null;
+		tokenXor = null;
 	}
 
 }

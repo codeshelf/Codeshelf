@@ -136,7 +136,7 @@ public class Tenant extends Schema {
 		return ("hibernate/"+System.getProperty("tenant.hibernateconfig"));
 	}
 	
-	protected void addUser(User u) {
+	public void addUser(User u) {
 		u.setTenant(this);
 		users.add(u);
 	}

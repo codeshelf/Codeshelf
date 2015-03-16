@@ -13,6 +13,7 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.UserSession;
 
 public class InventoryScanCommand extends CommandABC {
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
 	private InventoryScanRequest request;

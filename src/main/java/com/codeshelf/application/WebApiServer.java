@@ -31,6 +31,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.secnod.shiro.jersey.ShiroResourceFilterFactory;
+import org.secnod.shiro.jersey.SubjectInjectableProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,10 +45,13 @@ import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.RadioServlet;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.ServiceStatusHealthCheck;
+import com.codeshelf.security.AuthFilter;
+import com.codeshelf.security.AuthServlet;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
 import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
 import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 public class WebApiServer {
@@ -85,6 +90,7 @@ public class WebApiServer {
 				if(enableManagerApi) {
 					// manager API
 					contexts.addHandler(this.createManagerApiHandler());
+					contexts.addHandler(this.createAuthHandler());
 				}
 
 				if(enableApi) {
@@ -235,11 +241,22 @@ public class WebApiServer {
 		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 
-		ServletContainer container = new ServletContainer(new PackagesResourceConfig("com.codeshelf.manager.api"));
+		ResourceConfig rc = new PackagesResourceConfig("com.codeshelf.manager.api");
+		String[] filters = new String[]{"org.secnod.shiro.jersey.ShiroResourceFilterFactory"};
+		rc.getProperties().put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES, filters);
+		ServletContainer container = new ServletContainer(rc);
 		context.addServlet(new ServletHolder(container), "/*");
+		return context;
+	}
+	
+	private Handler createAuthHandler() {
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);		
+		context.setContextPath("/auth");
+		context.addServlet(new ServletHolder(new AuthServlet()),"/");
 		return context;
 	}
 	

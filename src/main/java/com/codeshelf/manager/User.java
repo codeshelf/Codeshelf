@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.UserType;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -132,6 +133,11 @@ public class User {
 	
 	protected String getHtpasswdEntry() {
 		return this.getUsername()+":"+this.hashedPassword;
+	}
+
+	@JsonIgnore
+	public boolean isLoginAllowed() {
+		return true;
 	}
 
 }
