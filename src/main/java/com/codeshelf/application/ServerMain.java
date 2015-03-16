@@ -6,10 +6,13 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
+import java.util.Collection;
+
 import org.apache.commons.beanutils.ConvertUtilsBean;
-import org.apache.shiro.authc.credential.CredentialsMatcher;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
-import org.apache.shiro.crypto.hash.Md5Hash;
+import org.apache.shiro.guice.ShiroModule;
+import org.apache.shiro.guice.aop.ShiroAopModule;
+import org.apache.shiro.mgt.DefaultSecurityManager;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +39,7 @@ import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
@@ -52,7 +56,7 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
+import com.google.inject.binder.AnnotatedBindingBuilder;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.sun.jersey.api.core.PackagesResourceConfig;
@@ -141,11 +145,9 @@ public final class ServerMain {
 				bind(ConvertUtilsBean.class).toProvider(ConverterProvider.class);
 				
 				// Shiro modules
+				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
 				bind(Realm.class).to(CodeshelfRealm.class);
-				bind(CredentialsMatcher.class).to(HashedCredentialsMatcher.class);
-				bind(HashedCredentialsMatcher.class);
-				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
-				
+
 				requestStaticInjection(HmacAuthService.class);
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
@@ -164,11 +166,27 @@ public final class ServerMain {
 				return sessionManagerService;				
 			}
 			
-		}, createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
+		}, /*createShiroModule(), new ShiroAopModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
 
 		return injector;
 	}
-	
+/*	
+	private static ShiroModule createShiroModule() {
+		return new ShiroModule() {
+
+			@Override
+			protected void configureShiro() {
+				bindRealm().to(CodeshelfRealm.class).asEagerSingleton();
+			}
+
+			@Override
+			protected void bindSecurityManager(AnnotatedBindingBuilder<? super SecurityManager> bind) {
+	            bind.to(CodeshelfSecurityManager.class).asEagerSingleton();
+			}
+			
+		};
+	}
+	*/
 	private static ServletModule createGuiceServletModuleForApi() {
 		return new ServletModule() {
 		    @Override

@@ -5,49 +5,49 @@
  *******************************************************************************/
 package com.codeshelf.security;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.realm.Realm;
+import org.apache.shiro.authz.AuthorizationInfo;
+import org.apache.shiro.authz.SimpleAuthorizationInfo;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.subject.PrincipalCollection;
+
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 
 /**
  * @author jeffw
  *
  */
-public class CodeshelfRealm implements Realm {
-
-	/**
-	 * 
-	 */
+public class CodeshelfRealm extends AuthorizingRealm {
+	
 	public CodeshelfRealm() {
-		// TODO Auto-generated constructor stub
+	}
+	
+	@Override
+	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
+		// look up user
+		Integer userId = (Integer)principals.getPrimaryPrincipal();
+		User user = TenantManagerService.getInstance().getUser(userId);
+		
+		// default role = usertype
+		Set<String> roles = new HashSet<String>();
+		roles.add(user.getType().toString());
+		SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
+
+		// no permissions etc yet
+		
+		info.setRoles(roles);
+		return info;
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see org.apache.shiro.realm.Realm#getName()
-	 */
-	public final String getName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see org.apache.shiro.realm.Realm#supports(org.apache.shiro.authc.AuthenticationToken)
-	 */
-	public final boolean supports(AuthenticationToken inToken) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see org.apache.shiro.realm.Realm#getAuthenticationInfo(org.apache.shiro.authc.AuthenticationToken)
-	 */
-	public final AuthenticationInfo getAuthenticationInfo(AuthenticationToken inToken) throws AuthenticationException {
-		// TODO Auto-generated method stub
-		return null;
+	@Override
+	protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+		return null; // authentication handled elsewhere
 	}
 
 }

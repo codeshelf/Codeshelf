@@ -73,6 +73,7 @@ dependencies {
 			'com.sun.jersey:jersey-servlet:1.18.1',
 			'com.sun.jersey.contribs:jersey-guice:1.18.1',
 			'com.sun.jersey.contribs:jersey-multipart:1.18.1',
+			'org.secnod.shiro:shiro-jersey:0.1.0',
 			
 			'org.hibernate:hibernate-entitymanager:4.3.8.Final',
 			'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final',

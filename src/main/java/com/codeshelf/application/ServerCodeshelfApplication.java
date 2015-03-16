@@ -9,6 +9,8 @@ package com.codeshelf.application;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +52,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IMetricsService metricsService,
 			final SessionManagerService sessionManagerService,
 			final IPropertyService propertyService,
-			final AuthProviderService authService) {
+			final AuthProviderService authService,
+			final SecurityManager securityManager) {
 			
 		super(inWebApiServer);
 	
@@ -58,6 +61,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		sessionManager = sessionManagerService;
 		this.metricsService = metricsService;
+		
+		SecurityUtils.setSecurityManager(securityManager);
 		
 		// if services already running e.g. in test, these will log an error and continue
 		this.registerService(tenantManagerService);

@@ -173,7 +173,6 @@ public class CrossBatchRunTest extends ServerTest {
 
 	}
 
-	@SuppressWarnings("unused")
 	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15

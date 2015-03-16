@@ -19,8 +19,16 @@ import com.google.common.util.concurrent.Service;
 
 public class MockTenantManagerService implements ITenantManagerService {
 	Tenant defaultTenant;
+	User defaultUser;
 	MockTenantManagerService(Tenant defaultTenant) {
 		this.defaultTenant = defaultTenant;
+		
+		defaultUser = new User();
+		defaultUser.setId(0);
+		defaultUser.setTenant(defaultTenant);
+		defaultUser.setType(UserType.SUPER);
+		defaultUser.setUsername("mock");
+		defaultTenant.addUser(defaultUser); // tenant is possibly a mock and this doesn't do anything
 	}
 	@Override
 	public ListenableFuture<State> start() {
@@ -83,15 +91,15 @@ public class MockTenantManagerService implements ITenantManagerService {
 	}
 	@Override
 	public User createUser(Tenant tenant, String username, String password, UserType type) {
-		return Mockito.mock(User.class);
+		return defaultUser;
 	}
 	@Override
 	public User getUser(String username) {
-		return Mockito.mock(User.class);
+		return defaultUser;
 	}
 	@Override
 	public User authenticate(String username, String password) {
-		return Mockito.mock(User.class);
+		return defaultUser;
 	}
 	@Override
 	public void resetTenant(Tenant tenant) {

@@ -1,6 +1,5 @@
 package com.codeshelf.manager.api;
 
-import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +14,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.annotation.RequiresRoles;
+import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,7 @@ public class UsersResource {
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(UsersResource.class);
 	private static final Set<String>	validCreateUserFields	= new HashSet<String>();
 	private static final Set<String>	validUpdateUserFields	= new HashSet<String>();
+
 	static {
 		validCreateUserFields.add("tenantid");
 		validCreateUserFields.add("username");
@@ -46,6 +49,7 @@ public class UsersResource {
 		validCreateUserFields.add("type");
 		validUpdateUserFields.add("password");
 		validUpdateUserFields.add("active");
+		validUpdateUserFields.add("type");
 	}
 	
 	public UsersResource() {
@@ -65,28 +69,9 @@ public class UsersResource {
 	@GET
 	@Path("htpasswd")
 	@Produces(MediaType.TEXT_PLAIN)
+	@RequiresRoles("SUPER")
 	public Response getHtpasswd() {
-		// TODO: extra authentication here
 		return Response.ok(new String(TenantManagerService.getInstance().getHtpasswd())).build();
-	}
-
-	@POST
-	@Path("auth")
-	@Produces(MediaType.TEXT_HTML)
-	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-	public Response auth(MultivaluedMap<String, String> userParams, 
-					@QueryParam("next") URI nextLocation) {
-		String username = userParams.getFirst("u");
-		String password = userParams.getFirst("p");
-		if(username != null && password != null) {
-			User user = TenantManagerService.getInstance().authenticate(username, password);
-			if(user != null) {
-				// auth succeeds, generate token
-				NewCookie cookie = authProviderService.createAuthCookie(user.getId(),authProviderService.getDefaultCookieExpirationSeconds());
-				return Response.seeOther(nextLocation).cookie(cookie).build();
-			}
-		}
-		return Response.status(Status.FORBIDDEN).build();
 	}
 
 	@POST
@@ -202,6 +187,13 @@ public class UsersResource {
 			if (user.isActive() != active) {
 				LOGGER.info("update user {} - set active = {}", user.getUsername(),active);
 				user.setActive(active);
+			} // else ignore if no change
+			success = true;
+		} else if (key.equals("type")) {
+			UserType type = UserType.valueOf(value);
+			if (!user.getType().equals(type)) {
+				LOGGER.info("update user {} - set type  = {}", user.getUsername(),type);
+				user.setType(type);
 			} // else ignore if no change
 			success = true;
 		}

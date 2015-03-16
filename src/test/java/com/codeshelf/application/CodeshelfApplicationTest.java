@@ -7,6 +7,7 @@ package com.codeshelf.application;
 
 import static org.mockito.Mockito.mock;
 
+import org.apache.shiro.mgt.AuthorizingSecurityManager;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -63,7 +64,8 @@ public class CodeshelfApplicationTest extends MockDaoTest {
 			this.metricsService,
 			this.sessionManagerService,
 			new DummyPropertyService(),
-			mock(AuthProviderService.class));
+			mock(AuthProviderService.class),
+			mock(AuthorizingSecurityManager.class));
 
 		final Result checkAppRunning = new Result();
 

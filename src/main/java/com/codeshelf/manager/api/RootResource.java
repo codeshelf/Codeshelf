@@ -1,5 +1,6 @@
 package com.codeshelf.manager.api;
 
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.User;
+import com.codeshelf.security.AuthFilter;
 
 @Path("/")
 public class RootResource {
@@ -35,13 +37,20 @@ public class RootResource {
 	public Response get(@Context HttpServletRequest request) {
 		// echo currently authenticated user for debugging
 
-		User user = (User) request.getAttribute("user");
+		User user = (User) request.getAttribute(AuthFilter.REQUEST_ATTR);
 		String response;
 		if(user != null) {
 			response = user.toString();
 		} else {
 			response = "unknown user";
 		}
+		response += " - ";
+		Enumeration<String> headers = request.getHeaderNames();
+		while(headers.hasMoreElements()) {
+			String header = headers.nextElement();
+			response += header + " ";
+		}
+				
 		return Response.ok(response).build();
 	}	
 	

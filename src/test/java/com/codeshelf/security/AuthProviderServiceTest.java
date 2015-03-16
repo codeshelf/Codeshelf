@@ -1,24 +1,26 @@
 package com.codeshelf.security;
 
 import javax.servlet.http.Cookie;
-import javax.ws.rs.core.NewCookie;
 
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.testframework.MinimalTest;
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
+import com.codeshelf.security.AuthResponse.Status;
+import com.codeshelf.testframework.MockDaoTest;
 
-public class AuthProviderServiceTest extends MinimalTest {
+public class AuthProviderServiceTest extends MockDaoTest {
 	@Test
 	public void cryptoCookieTest() {
 		AuthProviderService auth = new HmacAuthService().initialize();
+		User user = TenantManagerService.getInstance().getUser(0); // we are in mock dao, this should work
 		
 		// can create auth cookie
-		NewCookie newCookie = auth.createAuthCookie(123, auth.getDefaultCookieExpirationSeconds());
-		Assert.assertNotNull(newCookie);
+		Cookie authCookie = auth.createAuthCookie(user.getId());
+		Assert.assertNotNull(authCookie);
 		
-		Cookie authCookie = convert(newCookie); 
 		Cookie otherCookie = create("othercookie","asdfasdfasdf","/","test.com",1,"comment",86400,false);
 		Cookie[] cookies = new Cookie[2];
 		// String name, String value, String path, String domain, int version, String comment, int maxAge, boolean secure
@@ -26,40 +28,31 @@ public class AuthProviderServiceTest extends MinimalTest {
 		cookies[1] = authCookie;
 		
 		// can find and validate auth cookie
-		AuthCookieContents validContents = auth.checkAuthCookie(cookies);
-		Assert.assertNotNull(validContents);
-		Assert.assertEquals(123,validContents.getId());
+		AuthResponse resp = auth.checkAuthCookie(cookies);
+		Assert.assertNotNull(resp);
+		Assert.assertEquals(Status.ACCEPTED,resp.getStatus());
+		Assert.assertEquals(user,resp.getUser());
 
 		// has valid timestamp
-		Assert.assertTrue(validContents.getTimestamp() <= System.currentTimeMillis());
-		Assert.assertTrue(validContents.getTimestamp() > System.currentTimeMillis()-1000);
+		Assert.assertTrue(resp.getTokenTimestamp() <= System.currentTimeMillis());
+		Assert.assertTrue(resp.getTokenTimestamp() > System.currentTimeMillis()-1000);
 
 		// fail to validate if more than one
-		cookies[0] = convert(auth.createAuthCookie(0, 90));
-		validContents = auth.checkAuthCookie(cookies);
-		Assert.assertNull(validContents);
+		cookies[0] = auth.createAuthCookie(0);
+		resp = auth.checkAuthCookie(cookies);
+		Assert.assertNull(resp);
 		cookies[0] = otherCookie;
-		validContents = auth.checkAuthCookie(cookies);
-		Assert.assertNotNull(validContents);
+		resp = auth.checkAuthCookie(cookies);
+		Assert.assertNotNull(resp);
 		
-		// fail to validate if wrong version
-		int version = authCookie.getVersion();
-		authCookie.setVersion(999999);
-		validContents = auth.checkAuthCookie(cookies);
-		Assert.assertNull(validContents);
-		authCookie.setVersion(version);
-		validContents = auth.checkAuthCookie(cookies);
-		Assert.assertNotNull(validContents);
-		
-		// fail to validate if altered
+		// fail to validate if signature altered
 		String value = authCookie.getValue();
 		Assert.assertTrue(Base64.isBase64(value));
 		byte[] decoded = Base64.decodeBase64(value);
-		Assert.assertTrue(decoded[0] == '1'); // first character of uid
-		decoded[0] = '2';
+		decoded[decoded.length-2]++;
 		authCookie.setValue(Base64.encodeBase64(decoded).toString());
-		validContents = auth.checkAuthCookie(cookies);
-		Assert.assertNull(validContents);		
+		resp = auth.checkAuthCookie(cookies);
+		Assert.assertEquals(Status.INVALID_TOKEN,resp.getStatus());		
 	}
 	
 	@Test
@@ -76,12 +69,6 @@ public class AuthProviderServiceTest extends MinimalTest {
 		
 		Assert.assertTrue(auth.checkPassword(password, hash));
 		Assert.assertFalse(auth.checkPassword(password+"!", hash));
-	}
-
-	private Cookie convert(NewCookie newCookie) {
-		return create(newCookie.getName(),newCookie.getValue(),newCookie.getPath(),
-			newCookie.getDomain(),newCookie.getVersion(),newCookie.getComment(),
-			newCookie.getMaxAge(),newCookie.isSecure());
 	}
 
 	private Cookie create(String name, String value, String path, String domain, int version, String comment, int maxAge, boolean secure) {

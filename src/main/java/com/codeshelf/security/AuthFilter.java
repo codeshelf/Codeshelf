@@ -11,27 +11,22 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response.Status;
 
+import org.apache.shiro.util.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.inject.Inject;
 
 public class AuthFilter implements Filter {
 
 	private static final Logger	LOGGER						= LoggerFactory.getLogger(AuthFilter.class);
 	
-	private static final int	MAX_FUTURE_TIMESTAMP_SECONDS = 30; // do not allow timestamps significantly in the future
-	private static final int	MAX_IDLE_MINUTES = 5;
-	private static final int	MIN_IDLE_MINUTES = 1;
-
-	//private static final String	AUTHENTICATED_USER_HEADER	= "X-Codeshelf-User";
+	public static final String	REQUEST_ATTR	= "csuser";
 
 	AuthProviderService authProviderService;
 	
-	@Inject
-	public AuthFilter(AuthProviderService authProviderService) {
-		this.authProviderService = authProviderService;
+	public AuthFilter() {
+		this.authProviderService = HmacAuthService.getInstance();
 	}
 	
 	@Override
@@ -45,27 +40,26 @@ public class AuthFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) servletResponse; 
 
 		Cookie[] cookies = request.getCookies();
-		AuthCookieContents authCookieContents = authProviderService.checkAuthCookie(cookies);
-		
-		// TODO: finish authentication
-		
-//		if(authCookieContents.getTimestamp()+)
-
-		/* option: external authentication, header passed in:
-		 * 
-		String authUsername = request.getHeader(AUTHENTICATED_USER_HEADER);
-		if(authUsername != null) {
-			User user = TenantManagerService.getInstance().getUser(authUsername);
-			if(user != null) {
-				request.setAttribute("user",user);
-				LOGGER.debug("Externally authenticated user: {}",user);
-			} else {
-				LOGGER.warn("Unknown user: {}",authUsername);
+		AuthResponse authResponse = authProviderService.checkAuthCookie(cookies);
+		if(authResponse != null) {
+			if(authResponse.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
+				request.setAttribute(REQUEST_ATTR, authResponse.getUser());
+				String newToken = authResponse.getNewToken();
+				if(newToken != null) {
+					// offer updated token to keep session active
+					response.addCookie(authProviderService.createAuthCookie(newToken));
+				}
+				ThreadContext.put(REQUEST_ATTR, authResponse.getUser());
+				try {
+					chain.doFilter(request, response);
+				} finally {
+					ThreadContext.remove(REQUEST_ATTR);
+				}
 			}
+		} else {
+			LOGGER.warn("no valid auth cookie, access denied");
 		}
-		 * 
-		 */
-		chain.doFilter(request, response);
+		response.setStatus(Status.FORBIDDEN.getStatusCode());
 	}
 
 	@Override
