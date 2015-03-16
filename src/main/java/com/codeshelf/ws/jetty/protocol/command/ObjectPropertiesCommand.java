@@ -16,7 +16,7 @@ import com.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ObjectPropertiesCommand extends CommandABC {
 
@@ -24,7 +24,7 @@ public class ObjectPropertiesCommand extends CommandABC {
 
 	private ObjectPropertiesRequest request;
 		
-	public ObjectPropertiesCommand(UserSession session, ObjectPropertiesRequest request) {
+	public ObjectPropertiesCommand(WebSocketConnection session, ObjectPropertiesRequest request) {
 		super(session);
 		this.request = request;
 	}

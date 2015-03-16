@@ -52,7 +52,7 @@ public class InventoryServiceTest extends ServerTest {
 	@Test
 	public void createInventoryService() {
 		//FIXME - huffa - How to do this correctly?
-		LightService ls = new LightService(this.sessionManagerService);
+		LightService ls = new LightService(this.webSocketManagerService);
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		

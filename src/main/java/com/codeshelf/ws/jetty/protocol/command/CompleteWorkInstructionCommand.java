@@ -11,7 +11,7 @@ import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class CompleteWorkInstructionCommand extends CommandABC {
 
@@ -21,7 +21,7 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 
 	final private WorkService workService;
 	
-	public CompleteWorkInstructionCommand(UserSession session, CompleteWorkInstructionRequest request, WorkService workService) {
+	public CompleteWorkInstructionCommand(WebSocketConnection session, CompleteWorkInstructionRequest request, WorkService workService) {
 		super(session);
 		this.request = request;
 		this.workService = workService;

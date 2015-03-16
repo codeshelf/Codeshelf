@@ -78,6 +78,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
 
 	// The parent is the facility

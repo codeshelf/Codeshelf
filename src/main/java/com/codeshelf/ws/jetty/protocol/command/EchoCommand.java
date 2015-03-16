@@ -6,14 +6,14 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.codeshelf.ws.jetty.protocol.response.EchoResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class EchoCommand extends CommandABC {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(EchoCommand.class);
 	EchoRequest mRequest;
 	
-	public EchoCommand(UserSession session, EchoRequest request) {
+	public EchoCommand(WebSocketConnection session, EchoRequest request) {
 		super(session);
 		mRequest = request;
 	}

@@ -26,7 +26,7 @@ import com.codeshelf.ws.jetty.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.google.inject.Inject;
 
 public class SiteControllerMessageProcessor implements IMessageProcessor {
@@ -46,7 +46,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(UserSession session, ResponseABC response) {
+	public void handleResponse(WebSocketConnection session, ResponseABC response) {
 		LOGGER.debug("Response received:" + response);
 		if (response.getStatus() != ResponseStatus.Success) {
 			LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
@@ -145,7 +145,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public void handleMessage(UserSession session, MessageABC message) {
+	public void handleMessage(WebSocketConnection session, MessageABC message) {
 		//////////////////////////////////////////
 		// Handler for Network Update
 		if (message instanceof NetworkStatusMessage) {
@@ -178,7 +178,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public ResponseABC handleRequest(UserSession session, RequestABC request) {
+	public ResponseABC handleRequest(WebSocketConnection session, RequestABC request) {
 		LOGGER.info("Request received for processing: " + request);
 		CommandABC command = null;
 		ResponseABC response = null;

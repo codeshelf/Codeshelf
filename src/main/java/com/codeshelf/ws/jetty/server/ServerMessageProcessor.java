@@ -1,5 +1,9 @@
 package com.codeshelf.ws.jetty.server;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -12,6 +16,7 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
@@ -58,6 +63,13 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import edu.emory.mathcs.backport.java.util.Arrays;
+
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.authz.annotation.RequiresRoles;
+import org.apache.shiro.subject.Subject;
+
 @Singleton
 public class ServerMessageProcessor implements IMessageProcessor {
 
@@ -86,10 +98,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private ServiceFactory	serviceFactory;
 	private ConvertUtilsBean	converter;
 
-	private SessionManagerService	sessionManager;
+	private WebSocketManagerService	sessionManager;
 
 	@Inject
-	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter, SessionManagerService sessionManager) {
+	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter, WebSocketManagerService sessionManager) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
 		this.converter = converter;
@@ -124,7 +136,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(UserSession csSession, RequestABC request) {
+	public ResponseABC handleRequest(WebSocketConnection csSession, RequestABC request) {
+		
 		LOGGER.info("Request received for processing: "+request);
 		requestCounter.inc();
 		CommandABC command = null;
@@ -220,6 +233,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				LOGGER.warn("Unable to find matching command for request "+request+". Ignoring request.");
 		        timerContext.stop();
 			} else {
+				
+				// throw exception if not authorized
+				CodeshelfSecurityManager.authorizeAnnotatedClass(command.getClass());
+				
 				// execute command and generate response to be sent to client
 				response = command.exec();
 				if (response!=null) {
@@ -247,13 +264,13 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(UserSession session, ResponseABC response) {
+	public void handleResponse(WebSocketConnection session, ResponseABC response) {
 		responseCounter.inc();
 		LOGGER.warn("Unexpected response received on session "+session+": "+response);
 	}
 
 	@Override
-	public void handleMessage(UserSession session, MessageABC message) {
+	public void handleMessage(WebSocketConnection session, MessageABC message) {
 		if (message instanceof KeepAlive) {
 			keepAliveCounter.inc();
 			systemRequestCounter.inc();

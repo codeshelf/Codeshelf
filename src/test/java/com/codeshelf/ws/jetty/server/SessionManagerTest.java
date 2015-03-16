@@ -24,11 +24,11 @@ import com.google.common.util.concurrent.ServiceManager;
 
 public class SessionManagerTest extends MinimalTest {
 	ServiceManager serviceManager;
-	SessionManagerService sessionManager;
+	WebSocketManagerService sessionManager;
 	
 	@Before
 	public void doBefore() {	
-		sessionManager = new SessionManagerService();
+		sessionManager = new WebSocketManagerService();
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);
 
@@ -55,7 +55,7 @@ public class SessionManagerTest extends MinimalTest {
 		Assert.assertEquals(tenant, tenant);
 
 		User user = mockUser(tenant, 1, "testuser");
-		UserSession csSession = sessionManager.sessionStarted(session);
+		WebSocketConnection csSession = sessionManager.sessionStarted(session);
 		csSession.authenticated(user);
 
 		User userToSend = mockUser(tenant, 1, "testuser");

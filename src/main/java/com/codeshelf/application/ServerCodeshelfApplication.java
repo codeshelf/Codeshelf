@@ -30,7 +30,7 @@ import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends CodeshelfApplication {
@@ -40,7 +40,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private EdiProcessorService			ediProcessorService;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
-	private SessionManagerService sessionManager;
+	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
 	
 	@Inject
@@ -50,7 +50,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final ITenantManagerService tenantManagerService,
 			final WorkService workService,
 			final IMetricsService metricsService,
-			final SessionManagerService sessionManagerService,
+			final WebSocketManagerService webSocketManagerService,
 			final IPropertyService propertyService,
 			final AuthProviderService authService,
 			final SecurityManager securityManager) {
@@ -59,7 +59,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	
 		ediProcessorService = inEdiProcessorService;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		sessionManager = sessionManagerService;
+		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
 		
 		SecurityUtils.setSecurityManager(securityManager);
@@ -70,7 +70,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
 		this.registerService(workService);
 		this.registerService(metricsService);
-		this.registerService(sessionManagerService);
+		this.registerService(webSocketManagerService);
 		this.registerService(propertyService);
 		this.registerService(authService);
 

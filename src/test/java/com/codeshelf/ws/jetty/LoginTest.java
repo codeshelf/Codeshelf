@@ -15,7 +15,7 @@ import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class LoginTest extends HibernateTest {
 
@@ -26,7 +26,7 @@ public class LoginTest extends HibernateTest {
 	@Override
 	public void doBefore() {
 		super.doBefore();
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
 
 	}
 
@@ -42,7 +42,7 @@ public class LoginTest extends HibernateTest {
 		request.setUserId(user.getUsername());
 		request.setPassword(password);
 		
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		
@@ -66,7 +66,7 @@ public class LoginTest extends HibernateTest {
 		request.setUserId("user@invalid.com");
 		request.setPassword(password);
 		
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		
@@ -88,7 +88,7 @@ public class LoginTest extends HibernateTest {
 		request.setUserId(user.getUsername());
 		request.setPassword("invalid");
 		
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
 		Assert.assertTrue(response instanceof LoginResponse);
 		

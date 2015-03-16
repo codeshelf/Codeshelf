@@ -54,7 +54,7 @@ import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends ServerTest {
@@ -173,8 +173,8 @@ public class WorkServiceTest extends ServerTest {
 		WorkService workService = mock(WorkService.class);
 		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
-		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
+		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC responseABC = processor.handleRequest(mock(WebSocketConnection.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
 
@@ -185,8 +185,8 @@ public class WorkServiceTest extends ServerTest {
 		WorkService workService2 = mock(WorkService.class);
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
-		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
+		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC responseABC2 = processor2.handleRequest(mock(WebSocketConnection.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
 		this.getTenantPersistenceService().commitTransaction();

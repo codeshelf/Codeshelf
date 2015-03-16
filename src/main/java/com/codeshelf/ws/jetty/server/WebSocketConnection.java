@@ -22,7 +22,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
-import com.codeshelf.application.ContextLogging;
 import com.codeshelf.filter.ObjectEventListener;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
@@ -31,9 +30,10 @@ import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
-public class UserSession implements IDaoListener {
+public class WebSocketConnection implements IDaoListener {
 	public enum State {
 		ACTIVE,
 		IDLE_WARNING,
@@ -41,7 +41,7 @@ public class UserSession implements IDaoListener {
 		CLOSED
 	};
 
-	private static final Logger					LOGGER						= LoggerFactory.getLogger(UserSession.class);
+	private static final Logger					LOGGER						= LoggerFactory.getLogger(WebSocketConnection.class);
 
 	@Getter
 	@Setter
@@ -82,13 +82,13 @@ public class UserSession implements IDaoListener {
 
 	private ExecutorService						executorService;
 
-	public UserSession(Session session, ExecutorService sharedExecutor) {
+	public WebSocketConnection(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
 		this.executorService = sharedExecutor;
 	}
 
 	public void sendMessage(final MessageABC message) {
-		ContextLogging.setSession(UserSession.this);
+    	//CodeshelfSecurityManager.setCurrentUser(this.getUser());
 		try {
 			if (this.wsSession != null) {
 				this.wsSession.getBasicRemote().sendObject(message);
@@ -97,7 +97,7 @@ public class UserSession implements IDaoListener {
 		} catch (Exception e) {
 			LOGGER.warn("Failed to send message: {}", e.getMessage());
 		} finally {
-			ContextLogging.clearSession();
+	    	//CodeshelfSecurityManager.removeCurrentUser();
 		}
 	}
 

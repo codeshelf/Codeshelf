@@ -62,7 +62,7 @@ public class CodeshelfApplicationTest extends MockDaoTest {
 			TenantManagerService.getMaybeRunningInstance(),
 			new WorkService(),
 			this.metricsService,
-			this.sessionManagerService,
+			this.webSocketManagerService,
 			new DummyPropertyService(),
 			mock(AuthProviderService.class),
 			mock(AuthorizingSecurityManager.class));

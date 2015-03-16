@@ -17,7 +17,7 @@ import com.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 /*
 	Example Message:
@@ -40,7 +40,7 @@ public class RegisterFilterCommand extends CommandABC {
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 
-	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
+	public RegisterFilterCommand(WebSocketConnection session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.request = request;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;

@@ -1,16 +1,13 @@
 package com.codeshelf.manager.api;
 
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
@@ -19,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.User;
-import com.codeshelf.security.AuthFilter;
+import com.codeshelf.security.CodeshelfSecurityManager;
 
 @Path("/")
 public class RootResource {
@@ -34,23 +31,15 @@ public class RootResource {
 	@GET
 	@Path("/security")
 	@Produces(MediaType.TEXT_PLAIN)
-	public Response get(@Context HttpServletRequest request) {
+	public Response getSecurity() {
 		// echo currently authenticated user for debugging
-
-		User user = (User) request.getAttribute(AuthFilter.REQUEST_ATTR);
+		User user = CodeshelfSecurityManager.getCurrentUser();
 		String response;
 		if(user != null) {
 			response = user.toString();
 		} else {
 			response = "unknown user";
 		}
-		response += " - ";
-		Enumeration<String> headers = request.getHeaderNames();
-		while(headers.hasMoreElements()) {
-			String header = headers.nextElement();
-			response += header + " ";
-		}
-				
 		return Response.ok(response).build();
 	}	
 	

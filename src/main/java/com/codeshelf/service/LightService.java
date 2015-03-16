@@ -36,7 +36,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -49,7 +49,7 @@ public class LightService implements IApiService {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
 
-	private final SessionManagerService			sessionManagerService;
+	private final WebSocketManagerService			webSocketManagerService;
 	private final ScheduledExecutorService	mExecutorService;
 	private Future<Void>					mLastChaserFuture;
 
@@ -62,12 +62,12 @@ public class LightService implements IApiService {
 	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
-	public LightService(SessionManagerService sessionManagerService) {
-		this(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+	public LightService(WebSocketManagerService webSocketManagerService) {
+		this(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
 	}
 
-	LightService(SessionManagerService sessionManagerService, ScheduledExecutorService executorService) {
-		this.sessionManagerService = sessionManagerService;
+	LightService(WebSocketManagerService webSocketManagerService, ScheduledExecutorService executorService) {
+		this.webSocketManagerService = webSocketManagerService;
 		this.mExecutorService = executorService;
 	}
 
@@ -121,7 +121,7 @@ public class LightService implements IApiService {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		getInstructionsForPosConRange(facility, null, theLocation, instructions);
 		final PosControllerInstrList message = new PosControllerInstrList(instructions);
-		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+		webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 		//Modify all POS commands to clear their POSs instead.
 		new Timer().schedule(new TimerTask() {
 			@Override
@@ -130,7 +130,7 @@ public class LightService implements IApiService {
 				for (PosControllerInstr instructions : message.getInstructions()){
 					instructions.getRemovePos().add(instructions.getPosition());
 				}
-				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+				webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 			}
 		}, 20000);
 	}
@@ -276,7 +276,7 @@ public class LightService implements IApiService {
 					terminate();
 				} else {
 					for (LightLedsMessage message : messageSet) { //send "all at once" -> quick succession for now
-						sessionManagerService.sendMessage(siteControllerUsers, message);
+						webSocketManagerService.sendMessage(siteControllerUsers, message);
 					}
 				}
 			}
@@ -285,7 +285,7 @@ public class LightService implements IApiService {
 	}
 
 	private int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
-		return this.sessionManagerService.sendMessage(users, message);
+		return this.webSocketManagerService.sendMessage(users, message);
 	}
 
 	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {

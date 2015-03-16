@@ -12,7 +12,7 @@ import com.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectDeleteResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ObjectDeleteCommand extends CommandABC {
 	
@@ -20,7 +20,7 @@ public class ObjectDeleteCommand extends CommandABC {
 
 	private ObjectDeleteRequest	request;
 	
-	public ObjectDeleteCommand(UserSession session, ObjectDeleteRequest request) {
+	public ObjectDeleteCommand(WebSocketConnection session, ObjectDeleteRequest request) {
 		super(session);
 		this.request = request;
 	}

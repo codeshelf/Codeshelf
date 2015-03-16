@@ -13,16 +13,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.shiro.util.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AuthFilter implements Filter {
 
-	private static final Logger	LOGGER						= LoggerFactory.getLogger(AuthFilter.class);
+	static final private Logger	LOGGER						= LoggerFactory.getLogger(AuthFilter.class);
 	
-	public static final String	REQUEST_ATTR	= "csuser";
-
 	AuthProviderService authProviderService;
 	
 	public AuthFilter() {
@@ -43,17 +40,20 @@ public class AuthFilter implements Filter {
 		AuthResponse authResponse = authProviderService.checkAuthCookie(cookies);
 		if(authResponse != null) {
 			if(authResponse.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
+				
+				//User is on the thread, not in the request context
 				//request.setAttribute(REQUEST_ATTR, authResponse.getUser());
-				String newToken = authResponse.getNewToken();
+
+				String newToken = authResponse.getNewToken(); // auto refresh if enabled
 				if(newToken != null) {
 					// offer updated token to keep session active
 					response.addCookie(authProviderService.createAuthCookie(newToken));
 				}
-				ThreadContext.put(REQUEST_ATTR, authResponse.getUser());
+				CodeshelfSecurityManager.setCurrentUser(authResponse.getUser());
 				try {
 					chain.doFilter(request, response);
 				} finally {
-					ThreadContext.remove(REQUEST_ATTR);
+					CodeshelfSecurityManager.removeCurrentUser();
 				}
 			}
 		} else {

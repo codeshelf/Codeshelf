@@ -13,6 +13,10 @@ import javax.websocket.WebSocketContainer;
 
 import lombok.Getter;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.guice.aop.ShiroAopModule;
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.realm.Realm;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -53,6 +57,8 @@ import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.security.AuthProviderService;
+import com.codeshelf.security.CodeshelfRealm;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.InventoryService;
@@ -65,7 +71,7 @@ import com.codeshelf.ws.jetty.client.MessageCoordinator;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
@@ -99,7 +105,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static ServiceManager								siteconServiceManager		= null;
 
 	// app server static (reused) services
-	private static SessionManagerService						staticSessionManagerService;
+	private static WebSocketManagerService						staticWebSocketManagerService;
 	private static IMetricsService								staticMetricsService;
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
@@ -138,7 +144,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	@Getter
 	protected CsDeviceManager									deviceManager;
-	protected SessionManagerService								sessionManagerService;
+	protected WebSocketManagerService								webSocketManagerService;
 	protected IPropertyService									propertyService;
 	protected IMetricsService									metricsService;
 	protected AuthProviderService										authProviderService;
@@ -178,13 +184,17 @@ public abstract class FrameworkTest implements IntegrationTest {
 				
 				requestStaticInjection(HmacAuthService.class);
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
+				
+				// Shiro modules
+				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
+				bind(Realm.class).to(CodeshelfRealm.class);
 			}
 
 			@Provides
 			@Singleton
-			public SessionManagerService createSessionManagerService() {
-				SessionManagerService sessionManagerService = new SessionManagerService();
-				return sessionManagerService;
+			public WebSocketManagerService createWebSocketManagerService() {
+				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
+				return webSocketManagerService;
 			}
 
 			@Provides
@@ -202,7 +212,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		LOGGER = LoggerFactory.getLogger(FrameworkTest.class);
 
 		Injector injector = setupInjector();
-
+		
+		SecurityUtils.setSecurityManager(injector.getInstance(SecurityManager.class));
+		
 		realTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
 		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
 
@@ -214,7 +226,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		
 		staticHmacAuthService = injector.getInstance(HmacAuthService.class);
 
-		staticSessionManagerService = injector.getInstance(SessionManagerService.class);
+		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
 
 		// site controller services
@@ -233,7 +245,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			LOGGER.info("******************* Setting up test: " + this.testName.getMethodName() + " *******************");
 
 		// reset all services to defaults 
-		sessionManagerService = staticSessionManagerService;
+		webSocketManagerService = staticWebSocketManagerService;
 		propertyService = staticPropertyService;
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
@@ -306,7 +318,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			ephemeralServiceManager = null;
 		}
 
-		sessionManagerService = null;
+		webSocketManagerService = null;
 		propertyService = null;
 		metricsService = null;
 		authProviderService = null;
@@ -444,13 +456,13 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	private void startServer() {
-		if (staticSessionManagerService.isRunning())
-			staticSessionManagerService.reset();
+		if (staticWebSocketManagerService.isRunning())
+			staticWebSocketManagerService.reset();
 
 		if (serverServiceManager == null) {
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
-			services.add(staticSessionManagerService);
+			services.add(staticWebSocketManagerService);
 			services.add(staticPropertyService);
 
 			serverServiceManager = new ServiceManager(services);
@@ -463,7 +475,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		// [re]set up server endpoint 
 		try {
-			CsServerEndPoint.setSessionManagerService(staticSessionManagerService);
+			CsServerEndPoint.setWebSocketManagerService(staticWebSocketManagerService);
 			CsServerEndPoint.setMessageProcessor(staticServerMessageProcessor);
 		} catch (Exception e) {
 			LOGGER.debug("Exception setting session manager / message processor: " + e.toString());

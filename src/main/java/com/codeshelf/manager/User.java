@@ -27,7 +27,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -58,7 +57,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
 @EqualsAndHashCode(of={"username","type"})
-@ToString(of={"username"}, callSuper = false)
 public class User {
 
 	@SuppressWarnings("unused")
@@ -138,6 +136,11 @@ public class User {
 	@JsonIgnore
 	public boolean isLoginAllowed() {
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return this.getUsername();
 	}
 
 }

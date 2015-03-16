@@ -31,8 +31,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
-import org.secnod.shiro.jersey.ShiroResourceFilterFactory;
-import org.secnod.shiro.jersey.SubjectInjectableProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

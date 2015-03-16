@@ -3,7 +3,6 @@ package com.codeshelf.ws.jetty.protocol.command;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.application.ContextLogging;
 import com.codeshelf.filter.NetworkChangeListener;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
@@ -15,14 +14,15 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Organization;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 
 public class LoginCommand extends CommandABC {
 
@@ -32,9 +32,9 @@ public class LoginCommand extends CommandABC {
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 	
-	private SessionManagerService sessionManager;
+	private WebSocketManagerService sessionManager;
 
-	public LoginCommand(UserSession session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, SessionManagerService sessionManager) {
+	public LoginCommand(WebSocketConnection session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
 		super(session);
 		this.loginRequest = loginRequest;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
@@ -51,7 +51,7 @@ public class LoginCommand extends CommandABC {
 			if (authUser != null) {
 				Tenant tenant = TenantManagerService.getInstance().getTenantByUsername(authUser.getUsername());				
 				session.authenticated(authUser);
-				ContextLogging.setSession(session);
+				CodeshelfSecurityManager.setCurrentUser(session.getUser());
 				try {
 					LOGGER.info("User " + username + " of " + tenant.getName() + " authenticated on session "
 							+ session.getSessionId());
@@ -103,7 +103,7 @@ public class LoginCommand extends CommandABC {
 					}
 
 				} finally {
-					ContextLogging.clearSession();
+					CodeshelfSecurityManager.removeCurrentUser();
 				}
 			} else {
 				LOGGER.warn("Authentication failed: " + username);

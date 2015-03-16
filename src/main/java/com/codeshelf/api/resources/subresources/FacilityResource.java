@@ -38,7 +38,7 @@ import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -46,15 +46,15 @@ import com.google.inject.Inject;
 public class FacilityResource {
 
 	private final OrderService orderService;
-	private final SessionManagerService sessionManagerService;
+	private final WebSocketManagerService webSocketManagerService;
 
 	@Setter
 	private UUIDParam mUUIDParam;
 
 	@Inject
-	public FacilityResource(OrderService orderService, SessionManagerService sessionManagerService) {
+	public FacilityResource(OrderService orderService, WebSocketManagerService webSocketManagerService) {
 		this.orderService = orderService;
-		this.sessionManagerService = sessionManagerService;
+		this.webSocketManagerService = webSocketManagerService;
 	}
 
 	@GET
@@ -245,14 +245,14 @@ public class FacilityResource {
 
 				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
 				LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
-				sessionManagerService.sendMessage(users, lightMessage);
+				webSocketManagerService.sendMessage(users, lightMessage);
 			}
 
 			//CHE MESSAGES
 			if (req.getCheMessages() != null) {
 				for (CheDisplayRequest cheReq : req.getCheMessages()) {
 					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
-					sessionManagerService.sendMessage(users, cheMessage);
+					webSocketManagerService.sendMessage(users, cheMessage);
 				}
 			}
 
@@ -261,7 +261,7 @@ public class FacilityResource {
 				for (PosControllerInstr posInstr : req.getPosConInstructions()) {
 					posInstr.prepareObject();
 					Thread.sleep(1000);
-					sessionManagerService.sendMessage(users, posInstr);
+					webSocketManagerService.sendMessage(users, posInstr);
 				}
 			}
 

@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ClientConnectionManagerService extends AbstractCodeshelfScheduledService {
 
@@ -51,7 +51,7 @@ public class ClientConnectionManagerService extends AbstractCodeshelfScheduledSe
 
 	@Getter
 	@Setter
-	UserSession.State			lastState				= UserSession.State.INACTIVE;
+	WebSocketConnection.State			lastState				= WebSocketConnection.State.INACTIVE;
 
 	@Getter
 	CsClientEndpoint			clientEndpoint;
@@ -89,12 +89,12 @@ public class ClientConnectionManagerService extends AbstractCodeshelfScheduledSe
 						}
 					}
 
-					UserSession.State newSessionState = determineSessionState();
+					WebSocketConnection.State newSessionState = determineSessionState();
 					if (newSessionState != this.getLastState()) {
 						LOGGER.info("Session state changed from " + getLastState().toString() + " to " + newSessionState.toString());
 						setLastState(newSessionState);
 
-						if (isIdleKill() && newSessionState == UserSession.State.INACTIVE) {
+						if (isIdleKill() && newSessionState == WebSocketConnection.State.INACTIVE) {
 							LOGGER.warn("Server connection timed out.  Restarting session.");
 							clientEndpoint.disconnect();
 						}
@@ -151,16 +151,16 @@ public class ClientConnectionManagerService extends AbstractCodeshelfScheduledSe
 		}
 	}
 
-	private UserSession.State determineSessionState() {
+	private WebSocketConnection.State determineSessionState() {
 		long timeSinceLastReceived = System.currentTimeMillis() - clientEndpoint.getLastMessageReceived();
 
 		if (timeSinceLastReceived > siteControllerTimeout) {
-			return UserSession.State.INACTIVE;
+			return WebSocketConnection.State.INACTIVE;
 		}//else 
 		if (timeSinceLastReceived > idleWarningTimeout) {
-			return UserSession.State.IDLE_WARNING;
+			return WebSocketConnection.State.IDLE_WARNING;
 		}//else
-		return UserSession.State.ACTIVE;
+		return WebSocketConnection.State.ACTIVE;
 	}
 
 }

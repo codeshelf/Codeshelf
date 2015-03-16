@@ -6,12 +6,8 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
-import java.util.Collection;
-
 import org.apache.commons.beanutils.ConvertUtilsBean;
-import org.apache.shiro.guice.ShiroModule;
 import org.apache.shiro.guice.aop.ShiroAopModule;
-import org.apache.shiro.mgt.DefaultSecurityManager;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
@@ -48,7 +44,7 @@ import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -56,7 +52,6 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.binder.AnnotatedBindingBuilder;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.sun.jersey.api.core.PackagesResourceConfig;
@@ -94,7 +89,7 @@ public final class ServerMain {
 
 		application.startServices(); // this includes persistence and such, probably has to start before anything else
 
-		CsServerEndPoint.setSessionManagerService(dynamicInjector.getInstance(SessionManagerService.class));
+		CsServerEndPoint.setWebSocketManagerService(dynamicInjector.getInstance(WebSocketManagerService.class));
 		CsServerEndPoint.setMessageProcessor(dynamicInjector.getInstance(ServerMessageProcessor.class));
 		
 		application.startApplication();
@@ -161,12 +156,12 @@ public final class ServerMain {
 
 			@Provides
 			@Singleton
-			public SessionManagerService createSessionManagerService() {
-				SessionManagerService sessionManagerService = new SessionManagerService();
-				return sessionManagerService;				
+			public WebSocketManagerService createWebSocketManagerService() {
+				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
+				return webSocketManagerService;				
 			}
 			
-		}, /*createShiroModule(), new ShiroAopModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
+		}, /*createShiroModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
 
 		return injector;
 	}

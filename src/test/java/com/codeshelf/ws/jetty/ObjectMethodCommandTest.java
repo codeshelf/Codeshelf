@@ -21,7 +21,7 @@ import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectMethodCommandTest extends MockDaoTest {
@@ -79,8 +79,8 @@ public class ObjectMethodCommandTest extends MockDaoTest {
 		} catch (EncodeException e) {
 		}
 
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;

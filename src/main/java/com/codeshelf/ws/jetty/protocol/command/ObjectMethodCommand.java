@@ -20,7 +20,7 @@ import com.codeshelf.ws.jetty.protocol.request.ObjectMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ObjectMethodCommand extends CommandABC {
 
@@ -28,7 +28,7 @@ public class ObjectMethodCommand extends CommandABC {
 
 	private ObjectMethodRequest	request;
 	
-	public ObjectMethodCommand(UserSession session, ObjectMethodRequest request) {
+	public ObjectMethodCommand(WebSocketConnection session, ObjectMethodRequest request) {
 		super(session);
 		this.request = request;
 	}
