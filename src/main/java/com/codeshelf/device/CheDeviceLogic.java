@@ -88,7 +88,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 	
 	protected static final String		SCAN_GTIN								= cheLine("SCAN GTIN");
-	protected static final String		SCAN_LOCATION							= cheLine("SCAN_LOCATION");
+	protected static final String		SCAN_LOCATION							= cheLine("SCAN LOCATION");
 
 	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
 	protected static final String		SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
@@ -104,7 +104,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		YES_COMMAND								= "YES";
 	protected static final String		NO_COMMAND								= "NO";
 	protected static final String		CLEAR_ERROR_COMMAND						= "CLEAR";
-	protected static final String		INVENTORY_SCAN_COMMAND					= "INVENTORY_SCAN";
+	protected static final String		INVENTORY_UPDATE_COMMAND				= "INVENTORY_UPDATE";
+	protected static final String		INVENTORY_LIGHT_COMMAND					= "INVENTORY_LIGHT";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
