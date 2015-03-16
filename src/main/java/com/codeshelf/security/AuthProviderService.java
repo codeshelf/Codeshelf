@@ -9,13 +9,12 @@ public interface AuthProviderService extends Service {
 	
 	// tokens
 	AuthResponse checkToken(final String value);
-	String createToken(final int id);
+	String createToken(final int id, Long sessionStart, SessionFlags flags);
 
 	// tokens wrapped in cookies
 	String getCookieName();
 	AuthResponse checkAuthCookie(final Cookie[] cookies);
 	Cookie createAuthCookie(final String newToken);
-	Cookie createAuthCookie(final int id);
 	
 	// password hashing
 	String hashPassword(final String password);

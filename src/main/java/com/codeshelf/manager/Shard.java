@@ -151,13 +151,8 @@ public class Shard extends DatabaseConnection {
 				Session session = ManagerPersistenceService.getInstance().getSessionWithTransaction();
 
 				Shard thisShard = (Shard) session.load(Shard.class,this.id);
-				Tenant tenant = new Tenant();
-				tenant.setName(name);
-				tenant.setUsername(username);
-				tenant.setSchemaName(schemaName);
-				tenant.setPassword(password);
+				Tenant tenant = new Tenant(name,username,schemaName,password,thisShard);
 				thisShard.addTenant(name, tenant);
-				tenant.setShard(thisShard);
 
 				session.save(tenant);
 				session.save(thisShard);

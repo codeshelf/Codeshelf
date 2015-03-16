@@ -43,7 +43,7 @@ public class AuthFilter implements Filter {
 		AuthResponse authResponse = authProviderService.checkAuthCookie(cookies);
 		if(authResponse != null) {
 			if(authResponse.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
-				request.setAttribute(REQUEST_ATTR, authResponse.getUser());
+				//request.setAttribute(REQUEST_ATTR, authResponse.getUser());
 				String newToken = authResponse.getNewToken();
 				if(newToken != null) {
 					// offer updated token to keep session active

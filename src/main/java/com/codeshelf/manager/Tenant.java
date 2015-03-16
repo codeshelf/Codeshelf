@@ -37,6 +37,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.google.inject.Inject;
 
 @Entity
 @Table(name="tenant")
@@ -96,21 +97,18 @@ public class Tenant extends Schema {
 	@JsonProperty
 	String schemaName;
 
-	@Getter
-	@Setter
+	@Getter(AccessLevel.PROTECTED)
 	@NonNull
 	@Column(nullable=false,length=16,name="username")
 	String username;
 
-	@Getter
-	@Setter
+	@Getter(AccessLevel.PROTECTED)
 	@NonNull
 	@Column(nullable=false,length=36,name="password")
 	String password = UUID.randomUUID().toString();
 
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
+	@Getter(AccessLevel.PROTECTED)
 	@NonNull
 	//@JsonProperty
 	Shard shard;
@@ -129,6 +127,16 @@ public class Tenant extends Schema {
 	private EventListenerIntegrator eventListenerIntegrator = null;
 
 	public Tenant() {
+		super();
+	}
+	
+	public Tenant(String name, String username, String schemaName, String password, Shard shard) {
+		super();
+		this.name = name;
+		this.schemaName = schemaName;
+		this.username = username;
+		this.password = password;
+		this.shard = shard;
 	}
 
 	@Override

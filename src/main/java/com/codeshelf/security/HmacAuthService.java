@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.security.AuthResponse.Status;
+import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.util.StringUIConverter;
 import com.google.inject.Inject;
@@ -27,7 +28,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	private static final String	HMAC_ALGORITHM						= "HmacSHA1";
 
 	// token settings
-	private static final int	TOKEN_VERSION						= 1;
+	private static final int	TOKEN_VERSION						= 2; // increment whenever token parsing changes
 	private static final String	TOKEN_DEFAULT_XOR					= "00";
 	private byte[]				tokenXor;
 
@@ -57,12 +58,18 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		return theInstance;
 	}
 
-	/**************************** token methods ****************************/
+	/**************************** token methods 
+	 * @param sessionFlags 
+	 * @param sessionStart ****************************/
 
 	@Override
-	public String createToken(int id) {
+	public String createToken(int id, Long sessionStart, SessionFlags sessionFlags) {
 		long timestamp = System.currentTimeMillis();
-		byte[] rawHmac = createHmacBytes(id, timestamp);
+		if(sessionStart == null) 
+			sessionStart = timestamp;
+		if(sessionFlags == null)
+			sessionFlags = new SessionFlags();
+		byte[] rawHmac = createHmacBytes(id, timestamp, sessionStart, sessionFlags);
 		return encodeToken(rawHmac);
 	}
 
@@ -70,14 +77,16 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	public AuthResponse checkToken(String value) {
 		AuthResponse resp = null;
 		ByteBuffer hmac = ByteBuffer.wrap(decodeToken(value));
-		if (hmac.remaining() > (4 + 4 + 8)) {
+		if (hmac.remaining() > (4 + 4 + 8 + 8 + 1)) {
 			int version = hmac.getInt();
 			if (version == TOKEN_VERSION) {
 				int id = hmac.getInt();
 				long timestamp = hmac.getLong();
-				byte[] matchHmac = createHmacBytes(id, timestamp);
+				long sessionStart = hmac.getLong();
+				SessionFlags sessionFlags = new SessionFlags(hmac.get());
+				byte[] matchHmac = createHmacBytes(id, timestamp, sessionStart, sessionFlags);
 				if (Arrays.equals(hmac.array(), matchHmac)) {
-					resp = respondToValidToken(id, timestamp);
+					resp = respondToValidToken(id, timestamp, sessionStart, sessionFlags);
 				} else {
 					LOGGER.warn("Invalid HMAC for user ID {} timestamp {}", id, timestamp);
 					resp = new AuthResponse(Status.INVALID_TOKEN);
@@ -93,11 +102,13 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		return resp;
 	}
 
-	private byte[] createHmacBytes(int id, long timestamp) {
-		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 8);
+	private byte[] createHmacBytes(int id, long timestamp, Long sessionStart, SessionFlags sessionFlags) {
+		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 8 + 8 + 1);
 		hmac_data.putInt(TOKEN_VERSION);
 		hmac_data.putInt(id);
 		hmac_data.putLong(timestamp);
+		hmac_data.putLong(sessionStart);
+		hmac_data.put(sessionFlags.getPacked());
 
 		byte[] hmac_signature;
 		synchronized (mac) {
@@ -109,7 +120,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		return hmac.array();
 	}
 
-	private AuthResponse respondToValidToken(int id, long timestamp) {
+	private AuthResponse respondToValidToken(int id, long timestamp, long sessionStart, SessionFlags sessionFlags) {
 		AuthResponse response;
 		User user = TenantManagerService.getInstance().getUser(id);
 		if (user != null) {
@@ -118,21 +129,23 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 				if (ageSeconds > (0 - this.sessionMaxFutureSeconds)) {
 					// timestamp is not in the future
 					if (ageSeconds < this.sessionMaxIdleMinutes* 60) {
-						// session is still active
 						String refreshToken = null;
-						if (ageSeconds > this.sessionMinIdleMinutes * 60) {
-							// if token is valid but getting old, offer an updated one
-							LOGGER.info("refreshing cookie for user {}", id);
-							refreshToken = this.createToken(id);
+						if(sessionFlags.get(Flag.AUTO_REFRESH_SESSION)) {
+							// session is still active
+							if (ageSeconds > this.sessionMinIdleMinutes * 60) {
+								// if token is valid but getting old, offer an updated one
+								LOGGER.info("refreshing cookie for user {}", id);
+								refreshToken = this.createToken(id,sessionStart,sessionFlags);
+							}
 						}
-						response = new AuthResponse(Status.ACCEPTED, user, timestamp, refreshToken);
+						response = new AuthResponse(Status.ACCEPTED, user, timestamp, sessionStart, sessionFlags, refreshToken);
 					} else {
-						LOGGER.warn("session timed out for user {}", id);
-						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, timestamp, null);
+						LOGGER.warn("session timed out for user {} timestamp {} sessionStart {}", id, timestamp, sessionStart);
+						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, timestamp, sessionStart, sessionFlags, null);
 					}
 				} else {
-					LOGGER.error("ALERT - future timestamp {} authenticated HMAC for user {}", timestamp, id);
-					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, timestamp, null);
+					LOGGER.error("ALERT - future timestamp {} authenticated HMAC for user {} sessionStart {}", timestamp, id,sessionStart);
+					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, timestamp, sessionStart, sessionFlags, null);
 				}
 			} else {
 				LOGGER.error("ALERT - login not allowed for user {}", id);
@@ -200,11 +213,6 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		cookie.setMaxAge(this.cookieMaxAgeHours * 60 * 60);
 		cookie.setSecure(this.cookieSecure);
 		return cookie;
-	}
-
-	public Cookie createAuthCookie(int id) {
-		String hmacToken = createToken(id);
-		return createAuthCookie(hmacToken);
 	}
 
 	/**************************** password hash methods ****************************/

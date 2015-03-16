@@ -18,7 +18,8 @@ public class AuthProviderServiceTest extends MockDaoTest {
 		User user = TenantManagerService.getInstance().getUser(0); // we are in mock dao, this should work
 		
 		// can create auth cookie
-		Cookie authCookie = auth.createAuthCookie(user.getId());
+		String token = auth.createToken(0, null, null);
+		Cookie authCookie = auth.createAuthCookie(token);
 		Assert.assertNotNull(authCookie);
 		
 		Cookie otherCookie = create("othercookie","asdfasdfasdf","/","test.com",1,"comment",86400,false);
@@ -38,7 +39,8 @@ public class AuthProviderServiceTest extends MockDaoTest {
 		Assert.assertTrue(resp.getTokenTimestamp() > System.currentTimeMillis()-1000);
 
 		// fail to validate if more than one
-		cookies[0] = auth.createAuthCookie(0);
+		String token2 = auth.createToken(0,null,null);
+		cookies[0] = auth.createAuthCookie(token2);
 		resp = auth.checkAuthCookie(cookies);
 		Assert.assertNull(resp);
 		cookies[0] = otherCookie;

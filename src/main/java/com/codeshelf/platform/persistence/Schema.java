@@ -30,9 +30,9 @@ public abstract class Schema extends DatabaseConnection {
 
 	private Configuration hibernateConfiguration = null;
 	
-	public abstract String getSchemaName();
-	public abstract String getHibernateConfigurationFilename();
-	public abstract String getChangeLogName();
+	protected abstract String getSchemaName();
+	protected abstract String getHibernateConfigurationFilename();
+	protected abstract String getChangeLogName();
 
 	public synchronized Configuration getHibernateConfiguration() {
 		if(hibernateConfiguration == null) {

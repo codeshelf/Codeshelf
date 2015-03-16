@@ -50,7 +50,8 @@ public class AuthServlet extends HttpServlet {
 			User user = TenantManagerService.getInstance().authenticate(username, password);
 			if (user != null) {
 				// auth succeeds, generate token
-				Cookie cookie = authProviderService.createAuthCookie(user.getId());
+				String token = authProviderService.createToken(user.getId(), null, null);
+				Cookie cookie = authProviderService.createAuthCookie(token);
 				// redirect to requested location
 				resp.addCookie(cookie);
 				
