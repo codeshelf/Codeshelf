@@ -22,7 +22,7 @@ import com.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.jetty.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
-import com.codeshelf.ws.jetty.protocol.command.InventoryScanCommand;
+import com.codeshelf.ws.jetty.protocol.command.InventoryUpdateCommand;
 import com.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
@@ -41,7 +41,7 @@ import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.jetty.protocol.request.DeviceRequest;
 import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
-import com.codeshelf.ws.jetty.protocol.request.InventoryScanRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
@@ -201,8 +201,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				objectFilterCounter.inc();
 				applicationRequestCounter.inc();
 			}
-			else if (request instanceof InventoryScanRequest) {
-				command = new InventoryScanCommand(csSession, (InventoryScanRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+			else if (request instanceof InventoryUpdateRequest) {
+				command = new InventoryUpdateCommand(csSession, (InventoryUpdateRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
 				inventoryScanRequestCounter.inc();
 				applicationRequestCounter.inc();
 			}

@@ -2,7 +2,7 @@ package com.codeshelf.ws.jetty.protocol.request;
 
 import lombok.Getter;
 
-public class InventoryScanRequest extends DeviceRequest {
+public class InventoryUpdateRequest extends DeviceRequest {
 
 	@Getter
 	String gtin;
@@ -10,10 +10,10 @@ public class InventoryScanRequest extends DeviceRequest {
 	@Getter
 	String location;
 	
-	public InventoryScanRequest() {
+	public InventoryUpdateRequest() {
 	}
 	
-	public InventoryScanRequest(String cheId, String inGtin, String inLocation) {
+	public InventoryUpdateRequest(String cheId, String inGtin, String inLocation) {
 		this.gtin = inGtin;
 		this.location = inLocation;
 		setDeviceId(cheId);

@@ -22,7 +22,7 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.jetty.protocol.response.InventoryScanResponse;
+import com.codeshelf.ws.jetty.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -38,9 +38,9 @@ public class InventoryService implements IApiService {
 		this.lightService = inLightService;
 	}
 	
-	public InventoryScanResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId){
+	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId){
 		
-		InventoryScanResponse response = new InventoryScanResponse();
+		InventoryUpdateResponse response = new InventoryUpdateResponse();
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		Facility facility = che.getFacility();
 		

@@ -3,7 +3,7 @@ package com.codeshelf.ws.jetty.protocol.response;
 import lombok.Getter;
 import lombok.Setter;
 
-public class InventoryScanResponse extends ResponseABC {
+public class InventoryUpdateResponse extends ResponseABC {
 
 	@Getter
 	@Setter

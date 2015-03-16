@@ -22,7 +22,7 @@ import com.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
-import com.codeshelf.ws.jetty.protocol.response.InventoryScanResponse;
+import com.codeshelf.ws.jetty.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
@@ -125,8 +125,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		}
 		//////////////////////////////////////////
 		// Handler for Get Order Detail Work-- LINE_SCAN work flow
-		else if (response instanceof InventoryScanResponse) {
-			InventoryScanResponse inventoryScanResponse = (InventoryScanResponse) response;
+		else if (response instanceof InventoryUpdateResponse) {
+			InventoryUpdateResponse inventoryScanResponse = (InventoryUpdateResponse) response;
 			if (response.getStatus() == ResponseStatus.Success) {
 				this.deviceManager.processInventoryScanRespose(inventoryScanResponse.getStatusMessage());
 			}

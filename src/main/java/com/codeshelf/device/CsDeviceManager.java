@@ -41,7 +41,7 @@ import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
-import com.codeshelf.ws.jetty.protocol.request.InventoryScanRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.google.common.base.Preconditions;
@@ -297,7 +297,7 @@ public class CsDeviceManager implements
 	 */
 	public void inventoryScan(final UUID inPersistentId, final String inLocationId, final String inGtin) {
 		LOGGER.debug("Inventory Scan: Che={}; Loc={}; GTIN={};");
-		InventoryScanRequest req = new InventoryScanRequest(inPersistentId.toString(), inGtin, inLocationId);
+		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId);
 		clientEndpoint.sendMessage(req);
 	}
 
