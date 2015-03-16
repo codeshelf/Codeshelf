@@ -71,5 +71,9 @@ public abstract class BaseResponse {
 		public UUID getUUID(){
 			return uuid;
 		}
+		
+		public String toString() {
+			return getUUID().toString();
+		}
 	} 
 }

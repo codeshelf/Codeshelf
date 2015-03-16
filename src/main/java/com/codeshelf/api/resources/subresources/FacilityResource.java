@@ -28,6 +28,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.manager.User;
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
@@ -44,7 +45,7 @@ import com.google.inject.Inject;
 
 public class FacilityResource {
 
-	private final ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+	private static final Object	NOT_SET_FILTER	= "<NULL>";
 	private final OrderService orderService;
 	private final SessionManagerService sessionManagerService;
 
@@ -58,6 +59,42 @@ public class FacilityResource {
 	}
 
 	@GET
+	@Path("/blockedwork/nolocation")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getBlockedWorkNoLocation() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		try {
+			Session session = persistenceService.getSessionWithTransaction();
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(session, mUUIDParam.getUUID()));
+		} catch (Exception e) {
+			ErrorResponse errors = new ErrorResponse();
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+		finally {
+			persistenceService.commitTransaction();
+		}
+	}
+
+	@GET
+	@Path("/blockedwork/shorts")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getBlockedWorkShorts() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		try {
+			Session session = persistenceService.getSessionWithTransaction();
+			return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, mUUIDParam.getUUID(), OrderStatusEnum.SHORT));
+		} catch (Exception e) {
+			ErrorResponse errors = new ErrorResponse();
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+		finally {
+			persistenceService.commitTransaction();
+		}
+	}
+
+	@GET
 	@Path("/productivity")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getProductivitySummary() {
@@ -67,12 +104,13 @@ public class FacilityResource {
 		}
 
 		try {
-			ProductivitySummaryList summary = orderService.getProductivitySummary(persistence.getDefaultSchema(), mUUIDParam.getUUID(), false);
+			ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+			ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), mUUIDParam.getUUID(), false);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} 
+		}
 	}
 
 	@GET
@@ -84,18 +122,22 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
-			persistence.beginTransaction();
+			persistenceService.beginTransaction();
 			List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
 			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
+		}
+		finally {
+			persistenceService.commitTransaction();
 		}
 	}
+
+
 
 	@GET
 	@Path("/groupinstructions")
@@ -106,15 +148,17 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
-			persistence.beginTransaction();
+			persistenceService.beginTransaction();
 			List<WorkInstruction> instructions = orderService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
 			return BaseResponse.buildResponse(instructions);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
+		}
+		finally {
+			persistenceService.commitTransaction();
 		}
 	}
 
@@ -122,10 +166,16 @@ public class FacilityResource {
 	@Path("filters")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
-		Session session = persistence.getSessionWithTransaction();
-		Set<String> filterNames = orderService.getFilterNames(session);
-		persistence.commitTransaction();
-		return BaseResponse.buildResponse(filterNames);
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		try {
+			persistenceService.beginTransaction();
+			Session session = persistenceService.getSession();
+			Set<String> filterNames = orderService.getFilterNames(session);
+			return BaseResponse.buildResponse(filterNames);
+		}
+		finally {
+			persistenceService.commitTransaction();
+		}
 	}
 
 	@GET
@@ -136,19 +186,22 @@ public class FacilityResource {
 		if (Strings.isNullOrEmpty(filterName)) {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
-			Session session = persistence.getSessionWithTransaction();
-			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, aggregate, filterName);
+			persistenceService.beginTransaction();
+			Session session = persistenceService.getSession();
+			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, mUUIDParam.getUUID(), aggregate, filterName);
 
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
+		}
+		finally {
+			persistenceService.commitTransaction();
 		}
 	}
-	
+
 	@PUT
 	@Path("hardware")
 	@Consumes(MediaType.APPLICATION_JSON)
@@ -162,23 +215,22 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 		try {
-			persistence.beginTransaction();
 			Facility facility = Facility.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
 			Set<User> users = facility.getSiteControllerUsers();
-			
+
 			//LIGHTS
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
-			
+
 			if (req.getLights() != null) {
 				for (LightRequest light :req.getLights()){
-					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));				
+					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));
 				}
-				
+
 				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
 				LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
 				sessionManagerService.sendMessage(users, lightMessage);
 			}
-			
+
 			//CHE MESSAGES
 			if (req.getCheMessages() != null) {
 				for (CheDisplayRequest cheReq : req.getCheMessages()) {
@@ -186,7 +238,7 @@ public class FacilityResource {
 					sessionManagerService.sendMessage(users, cheMessage);
 				}
 			}
-			
+
 			//POSCON MESSAGES
 			if (req.getPosConInstructions() != null) {
 				for (PosControllerInstr posInstr : req.getPosConInstructions()) {
@@ -195,13 +247,11 @@ public class FacilityResource {
 					sessionManagerService.sendMessage(users, posInstr);
 				}
 			}
-			
+
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}		
+		}
 	}
 }
