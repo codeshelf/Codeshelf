@@ -50,7 +50,8 @@ public class AuthProviderServiceTest extends MockDaoTest {
 		Assert.assertTrue(Base64.isBase64(value));
 		byte[] decoded = Base64.decodeBase64(value);
 		decoded[decoded.length-2]++;
-		authCookie.setValue(Base64.encodeBase64(decoded).toString());
+		String reEncoded = new String(Base64.encodeBase64(decoded));
+		authCookie.setValue(reEncoded);
 		resp = auth.checkAuthCookie(cookies);
 		Assert.assertEquals(Status.INVALID_TOKEN,resp.getStatus());		
 	}

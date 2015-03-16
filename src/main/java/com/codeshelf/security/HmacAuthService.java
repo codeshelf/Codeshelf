@@ -28,6 +28,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 
 	// token settings
 	private static final int	TOKEN_VERSION						= 1;
+	private static final String	TOKEN_DEFAULT_XOR					= "00";
 	private byte[]				tokenXor;
 
 	// session settings
@@ -41,7 +42,8 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	// cookie settings
 	private static final String	COOKIE_NAME							= "CSTOK";
 	private static final int	COOKIE_DEFAULT_MAX_AGE_HOURS		= 24;
-	private String				cookieDomain = "";
+	private static final String	COOKIE_DEFAULT_DOMAIN				= "";
+	private String				cookieDomain;
 	private boolean				cookieSecure;
 	private int					cookieMaxAgeHours;
 
@@ -155,12 +157,10 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	}
 
 	private void xor(byte[] buf) {
-		if (tokenXor != null) {
-			int xi = 0;
-			for (int i = 0; i < buf.length; i++) {
-				buf[i] ^= tokenXor[xi];
-				xi = ((xi + 1) % tokenXor.length);
-			}
+		int xi = 0;
+		for (int i = 0; i < buf.length; i++) {
+			buf[i] ^= tokenXor[xi];
+			xi = ((xi + 1) % tokenXor.length);
 		}
 	}
 
@@ -197,7 +197,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		cookie.setPath("/");
 		cookie.setDomain(this.cookieDomain);
 		cookie.setVersion(0);
-		cookie.setMaxAge(this.cookieMaxAgeHours * 24 * 60);
+		cookie.setMaxAge(this.cookieMaxAgeHours * 60 * 60);
 		cookie.setSecure(this.cookieSecure);
 		return cookie;
 	}
@@ -243,7 +243,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 			throw new RuntimeException("Unexpected exception creating HMAC", e);
 		}
 
-		// set up optional XOR applied to token
+		// set up XOR applied to token
 		String xorString = System.getProperty("auth.token.xor");
 		if (xorString != null && xorString.length() > 1) {
 			try {
@@ -251,6 +251,8 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 			} catch (NumberFormatException e) {
 				LOGGER.error("could not parse auth.cookie.xor value: {}", xorString);
 			}
+		} else {
+			this.tokenXor = StringUIConverter.hexStringToBytes(TOKEN_DEFAULT_XOR);
 		}
 
 		// session settings
@@ -260,8 +262,10 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 
 		// cookie settings
 		String cookieDomain = System.getProperty("auth.cookie.domain");
-		if (cookieDomain != null)
+		if (cookieDomain != null) 
 			this.cookieDomain = cookieDomain;
+		else
+			this.cookieDomain = COOKIE_DEFAULT_DOMAIN;
 		this.cookieSecure = Boolean.getBoolean("auth.cookie.secure");
 		this.cookieMaxAgeHours = Integer.getInteger("auth.cookie.maxagehours", COOKIE_DEFAULT_MAX_AGE_HOURS);
 
