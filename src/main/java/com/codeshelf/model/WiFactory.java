@@ -373,10 +373,11 @@ public class WiFactory {
 	}
 
 	private static void setPosConInstructions(WorkInstruction wi, Location location) {
-		System.out.println("Try to set poscon for " + location);
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions);
-		setPosConInstructionsHelper(wi, instructions);
+		if (location.isLightablePoscon()) {
+			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions);
+			setPosConInstructionsHelper(wi, instructions);
+		}
 	}
 
 	private static void setPosConInstructionsHelper(WorkInstruction wi, List<PosControllerInstr> instructions) {

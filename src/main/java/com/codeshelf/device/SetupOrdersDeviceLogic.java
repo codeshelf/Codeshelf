@@ -1100,7 +1100,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		sendPositionControllerInstructions(instructions);
 	}
 
-	/** Shows the count feedback on the position controller during the cart run
+	/** Shows the count feedback on the position controller during the cart run.
+	 * If called for a specific position, will clear the position if there was no feedback. Avoids complex logic elsewhere.
 	 */
 	protected void showCartRunFeedbackIfNeeded(Byte inPosition) {
 		if (inPosition == null) {
@@ -1114,6 +1115,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		//Generate position controller commands
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
+		boolean specificPositionCalled = false;
 		if (PosControllerInstr.POSITION_ALL == inPosition) {
 			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 				String containerId = containerMapEntry.getValue();
@@ -1125,6 +1127,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 		} else {
+			specificPositionCalled = true;
 			String containerId = mPositionToContainerMap.get(inPosition.toString());
 			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 			PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, inPosition);
@@ -1133,9 +1136,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 
-		//Show counts on position controllers
+		//Show counts on position controllers. Or, if was called specifically, clears the poscon if there is no feedback to show.
 		if (!instructions.isEmpty()) {
 			sendPositionControllerInstructions(instructions);
+		} else if (specificPositionCalled) {
+			clearOnePositionController(inPosition);
 		}
 	}
 
@@ -1276,19 +1281,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 			count.decrementGoodCountAndIncrementCompleteCount();
 
-			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
-			Byte position = null;
-			// TODO
-			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
-				if (containerMapEntry.getValue().equals(containerId)) {
-					position = Byte.valueOf(containerMapEntry.getKey());
-					break;
-				}
+			Byte position = getPosconIndexOfContainerId(containerId);
+			// TODO unnecessary?
+			if (!position.equals(0)) {
+				this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific on if no feedback
 			}
-			this.showCartRunFeedbackIfNeeded(position);
 		}
 
-		clearLedAndPosConControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi); // includes putwall poscons, not CHE poscons
 
 		// If PICKMULT if on, there still might be other jobs in active pick list. If off, there should not be
 		if (mActivePickWiList.size() > 0) {
@@ -1380,9 +1380,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
+				
 				// TODO
-				clearOnePositionController(buttonPosition); // BUG!  if multiple flashing, we need to clear those. That is all on active job list.
-				// Do this in processShortPick?
+				// clearOnePositionController(buttonPosition); // BUG!  if multiple flashing, we need to clear those. That is all on active job list.
+				// Now handled in processNormalPick
 
 				String itemId = wi.getItemId();
 				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
@@ -1393,13 +1394,35 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					Integer planQuantity = wi.getPlanQuantity();
 					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
 						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
-					else
+					else {
 						processShortPick(wi, inQuantity);
+					}
 				}
 			}
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWi
+	 * @param inQuantity
+	 */
+	@Override
+	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
+		// This should be a corollary of processNormalPick, which has side effects of clearing the poscon for the pressed button if there is more work,
+		// Or not clearing, and just going to feedback
+		
+		// For short, we are always going to go to shortPickConfirm stage. User must scan. We put out the poscon the user pressed as feedback that something happened.
+		// If PICKMULT, there may be many lit poscons. All should be put out as we don't want to imply that the user can decrement and press others.
+		for (WorkInstruction wi: this.getActivePickWiList()) {
+			byte position = getPosconIndexOfWi(wi);
+			if (position != 0)
+				clearOnePositionController(position);
+		}
+		
+		// Then the inherited shorts part is the same
+		super.processShortPick(inWi, inQuantity);
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true

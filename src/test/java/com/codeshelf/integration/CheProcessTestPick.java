@@ -2224,11 +2224,9 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("4a: Short poscon 3. What do poscons show then? Counts there? Still flashing?");
 		picker.pick(3, 3);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
-		// Bug!  3 went out. 2 still flashing. Misleading to user.
+		// 3 went out. 2 also went out. Otherwise misleading to user.
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
-		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
-		// Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2)); // this would be correct BUG
-		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 
 		LOGGER.info("4b: Say no to confirm. Should be back at DO_PICK. Nothing flashing");
 		line2 = picker.getLastCheDisplayString(2);
