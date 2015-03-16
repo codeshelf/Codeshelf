@@ -194,7 +194,7 @@ public class PickSimulator {
 		// returns 0 if none
 		if (!getActivePickList().contains(inWorkInstruction))
 			return 0;
-		byte button = cheDeviceLogic.buttonFromContainer(inWorkInstruction.getContainerId());
+		byte button = cheDeviceLogic.getPosconIndexOfWi(inWorkInstruction);
 		return button;
 	}
 

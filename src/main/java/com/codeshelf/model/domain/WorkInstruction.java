@@ -536,9 +536,9 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 */
 	public void doSetPickInstruction(String inPickInstruction){
 		this.setPickInstruction(inPickInstruction);
-		if (inPickInstruction == null || inPickInstruction.isEmpty()) {
-			LOGGER.error("probable bug by caller of doSetPickInstruction");
-		}
+		// Common caller is the WiFactory.createWorkInstruction() , which is overloaded, calling each other.
+		// pickInstruction field is not nullable. Therefore, must be set to at least blank. But often, first set to blank
+		// then corrected later.  Would be nice to know if the final correction still had this as blank and report an error
 	}
 
 

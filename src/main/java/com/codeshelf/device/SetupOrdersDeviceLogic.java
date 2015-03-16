@@ -364,15 +364,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 			count.decrementGoodCountAndIncrementShortCount();
 
-			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
-			Byte position = null;
-			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
-				if (containerMapEntry.getValue().equals(containerId)) {
-					position = Byte.valueOf(containerMapEntry.getKey());
-					break;
-				}
-			}
-			this.showCartRunFeedbackIfNeeded(position);
+			// TODO
+			// Bug? This may have shorted ahead, so need to do more feedback
+			
+			Byte position = getPosconIndexOfContainerId(containerId);	
+			if (!position.equals(0))
+					this.showCartRunFeedbackIfNeeded(position);
+			
 		} else
 			LOGGER.error("unexpected housekeep in doShortTransaction");
 	}
@@ -432,25 +430,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void confirmSomethingShortPick(final String inScanStr) {
 		if (inScanStr.equals(YES_COMMAND)) {
-			List<WorkInstruction> wiList = this.getActivePickWiList();
-			WorkInstruction wi = null;
-			if (wiList.size() > 0)
-				wi = wiList.get(0);
-
+			WorkInstruction wi = mShortPickWi;
 			if (wi != null) {
-
-				// Need to clear poscon
-				String containerId = wi.getContainerId();
-				if (containerId != null) {
-					for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-						if (containerId.equals(entry.getValue())) {
-							Byte position = Byte.valueOf(entry.getKey());
-							clearOnePositionController(position);
-						}
-					}
-				}
-
-				processShortPickYes(wi, 0);
+				processShortPickYes(wi, mShortPickQty);
 			}
 		} else {
 			// Just return to showing the active picks.
@@ -511,14 +493,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private boolean wiContainerIdInMap(final WorkInstruction wi) {
-		String cntrId = wi.getContainerId();
-		return mPositionToContainerMap.containsValue(cntrId);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 */
 	private boolean selectNextActivePicks() {
 		boolean doMultipleWiPicks = mDeviceManager.getPickMultValue(); // DEV-451
 
@@ -530,7 +504,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if (!wiContainerIdInMap(wi)) {
+			if (getPosconIndexOfWi(wi) == 0) {
 				LOGGER.error("{} not in container map", wi.getContainerId());
 				break;
 			}
@@ -742,17 +716,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
-
 			// Check to see if this container is already setup in a position.
-			Iterator<Entry<String, String>> setIterator = mPositionToContainerMap.entrySet().iterator();
-			while (setIterator.hasNext()) {
-				Entry<String, String> entry = setIterator.next();
-				if (entry.getValue().equals(mContainerInSetup)) {
-					setIterator.remove();
-					this.clearOnePositionController(Byte.valueOf(entry.getKey()));
-					break;
-				}
+			
+			byte currentAssignment = getPosconIndexOfContainerId(mContainerInSetup);
+			if (currentAssignment != 0) {
+				// careful: 0 also equals PosControllerInstr.POSITION_ALL
+				clearContainerAssignmentAtIndex(currentAssignment);
+				this.clearOnePositionController(currentAssignment);		
 			}
+
 			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
 			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
 			// this is a "ride along" error. Would be nice if the user could see it immediately.
@@ -1135,6 +1107,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			LOGGER.error("showCartRunFeedbackIfNeeded was supplied a null position");
 			return;
 		}
+		
+		// Temporary
+		LOGGER.info("showCartRunFeedbackIfNeeded posconIndex {} called", inPosition);
 
 		//Generate position controller commands
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
@@ -1303,6 +1278,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
 			Byte position = null;
+			// TODO
 			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 				if (containerMapEntry.getValue().equals(containerId)) {
 					position = Byte.valueOf(containerMapEntry.getKey());
@@ -1337,6 +1313,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private String getContainerIdFromButtonNum(Integer inButtonNum) {
 		return mPositionToContainerMap.get(Integer.toString(inButtonNum));
 	}
+	
+	private void clearContainerAssignmentAtIndex(byte posconIndex){
+		// careful: POSITION_ALL is zero
+		if (PosControllerInstr.POSITION_ALL.equals(posconIndex))
+			LOGGER.error("Incorrect use of clearContainerAssignmentAtIndex"); // did you really intend mPositionToContainerMap.clear()?
+		else
+			mPositionToContainerMap.remove(Integer.toString(posconIndex));
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1395,10 +1380,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// Simply ignore button presses when there is no work instruction.
 				//invalidScanMsg(mCheStateEnum);
 			} else {
-				
+				// TODO
 				clearOnePositionController(buttonPosition); // BUG!  if multiple flashing, we need to clear those. That is all on active job list.
 				// Do this in processShortPick?
-				
+
 				String itemId = wi.getItemId();
 				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
@@ -1452,9 +1437,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
 			for (WorkInstruction wi : mActivePickWiList) {
-				Byte theIndex = getPosconIndexofWi(wi);
+				Byte theIndex = getPosconIndexOfWi(wi);
 				if (theIndex > 0) {
-					PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexofWi(wi));
+					PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexOfWi(wi));
 					instructions.add(instruction);
 				} else
 					LOGGER.error("unexpected missing poscon index for work instruction");
@@ -1468,13 +1453,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/** What poscon does this wi belong to?
 	 */
-	Byte getPosconIndexofWi(WorkInstruction wi) {
-		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
-			if (mapEntry.getValue().equals(wi.getContainerId())) {
-				return Byte.valueOf(mapEntry.getKey());
-			}
-		}
-		return 0;
+	public byte getPosconIndexOfWi(WorkInstruction wi) {
+		String cntrId = wi.getContainerId();
+		return getPosconIndexOfContainerId(cntrId);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1512,9 +1493,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * return the button for this container ID. Mostly private use, but public for unit test convenience
+	 * return the button for this container ID. Return 0 if not found, or for invalid input.
+	 * This is the main lookup function. Many calling contexts
+	 * careful: 0 also equals PosControllerInstr.POSITION_ALL
 	 */
-	public byte buttonFromContainer(String inContainerId) {
+	private byte getPosconIndexOfContainerId(String inContainerId) {
+		if (inContainerId == null || inContainerId.isEmpty())
+			return 0;
+		
 		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {

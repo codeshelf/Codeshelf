@@ -157,7 +157,6 @@ public class WiFactory {
 		Location inLocation,
 		final Timestamp inTime) throws DaoException {
 
-
 		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
 		if (resultWi == null) { //no more work to do
 			return null;
@@ -167,7 +166,7 @@ public class WiFactory {
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
-		if (inOrderDetail.isPreferredDetail()){
+		if (inOrderDetail.isPreferredDetail()) {
 			resultWi.doSetPickInstruction(inOrderDetail.getPreferredLocation());
 		} else if (locAlias != null) {
 			resultWi.doSetPickInstruction(locAlias.getAlias());
@@ -279,7 +278,6 @@ public class WiFactory {
 				isNewWi = true;
 			}
 
-
 			// Update the WI
 			long seq = SequenceNumber.generate();
 			String wiDomainId = Long.toString(seq);
@@ -303,16 +301,14 @@ public class WiFactory {
 			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
 
 			if (!isNewWi) {
-			// remove and add? Or just add? Not too elegant
+				// remove and add? Or just add? Not too elegant
 				Che oldChe = resultWi.getAssignedChe();
 				if (oldChe != null && !oldChe.equals(inChe)) {
 					oldChe.removeWorkInstruction(resultWi);
 					inChe.addWorkInstruction(resultWi);
-				}
-				else if (oldChe == null || !oldChe.equals(inChe)){
+				} else if (oldChe == null || !oldChe.equals(inChe)) {
 					inChe.addWorkInstruction(resultWi);
 				}
-
 
 			}
 
@@ -327,8 +323,9 @@ public class WiFactory {
 				// If LOCAPICK was true, the inventory was made at the preferred location, so the wi location works normally
 				// If LOCAPICK was false, use the preferred location for the pick instruction, even though there is no such location.
 				String locStr = resultWi.getLocationId();
-				if (locStr.isEmpty() && preferredLocation != null) 
+				if (locStr.isEmpty() && preferredLocation != null)
 					locStr = preferredLocation;
+				// pickInstruction is not nullable, so must set to something, even if still blank.
 				resultWi.doSetPickInstruction(locStr);
 			}
 
@@ -336,7 +333,6 @@ public class WiFactory {
 		}
 		return resultWi;
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -367,7 +363,7 @@ public class WiFactory {
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 	}
-	
+
 	private static void setPosConInstructions(WorkInstruction wi, List<OrderLocation> locations) {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (OrderLocation location : locations) {
@@ -375,21 +371,20 @@ public class WiFactory {
 		}
 		setPosConInstructionsHelper(wi, instructions);
 	}
-	
+
 	private static void setPosConInstructions(WorkInstruction wi, Location location) {
 		System.out.println("Try to set poscon for " + location);
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions);
 		setPosConInstructionsHelper(wi, instructions);
 	}
-	
+
 	private static void setPosConInstructionsHelper(WorkInstruction wi, List<PosControllerInstr> instructions) {
-		if (!instructions.isEmpty()){
+		if (!instructions.isEmpty()) {
 			String instrStr = PosConInstrGroupSerializer.serializePosConInstrString(instructions);
 			wi.setPosConCmdStream(instrStr);
-		}		
+		}
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -450,7 +445,8 @@ public class WiFactory {
 		// if the location does not have controller associated, we would NPE below. Might as well check now.
 		LedController theLedController = inLocation.getEffectiveLedController();
 		if (theLedController == null) {
-			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for location " + inLocation.getPrimaryAliasId());
+			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for location "
+					+ inLocation.getPrimaryAliasId());
 			// Note that is aisles are created with 0 LEDs, then this error is not hit. This denotes an intent to light, but probably forgot to assign controller.
 			return;
 		}

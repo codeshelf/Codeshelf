@@ -1080,8 +1080,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * return the button for this container ID. Mostly private use, but public for unit test convenience
 	 * we let CsDeviceManager call this generically for CheDeviceLogic
 	 */
-	public byte buttonFromContainer(String inContainerId) {
-		LOGGER.error("Inappropriate call to buttonFromContainer()");
+	public byte getPosconIndexOfWi(WorkInstruction wi)  {
+		LOGGER.error("Inappropriate call to getPosconIndexOfWi()");
 		return 0;
 	}
 
