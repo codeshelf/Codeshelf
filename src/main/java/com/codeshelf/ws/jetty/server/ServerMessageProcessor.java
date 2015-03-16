@@ -22,6 +22,7 @@ import com.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.jetty.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
+import com.codeshelf.ws.jetty.protocol.command.InventoryLightCommand;
 import com.codeshelf.ws.jetty.protocol.command.InventoryUpdateCommand;
 import com.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
@@ -41,6 +42,7 @@ import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.jetty.protocol.request.DeviceRequest;
 import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryLightRequest;
 import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
@@ -77,7 +79,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter keepAliveCounter;
 	private final Counter applicationRequestCounter;
 	private final Counter systemRequestCounter;
-	private final Counter inventoryScanRequestCounter;
+	private final Counter inventoryUpdateRequestCounter;
+	private final Counter inventoryLightRequestCounter;
 	private final Timer requestProcessingTimer;
 	
 	private ServiceFactory	serviceFactory;
@@ -110,7 +113,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		keepAliveCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.keep-alive");
 		applicationRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.application");
 		systemRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.system");
-		inventoryScanRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-scan");
+		inventoryUpdateRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-update");
+		inventoryLightRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS,"requests.processing-time");
 		
 	}
@@ -203,7 +207,12 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			}
 			else if (request instanceof InventoryUpdateRequest) {
 				command = new InventoryUpdateCommand(csSession, (InventoryUpdateRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
-				inventoryScanRequestCounter.inc();
+				inventoryUpdateRequestCounter.inc();
+				applicationRequestCounter.inc();
+			}
+			else if (request instanceof InventoryLightRequest) {
+				command = new InventoryLightCommand(csSession, (InventoryLightRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+				inventoryLightRequestCounter.inc();
 				applicationRequestCounter.inc();
 			}
 			// check if matching command was found

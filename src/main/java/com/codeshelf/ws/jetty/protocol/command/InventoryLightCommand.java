@@ -6,20 +6,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.service.InventoryService;
-import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
-import com.codeshelf.ws.jetty.protocol.response.InventoryUpdateResponse;
+import com.codeshelf.ws.jetty.protocol.request.InventoryLightRequest;
+import com.codeshelf.ws.jetty.protocol.response.InventoryLightResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.UserSession;
 
-public class InventoryUpdateCommand extends CommandABC {
+public class InventoryLightCommand extends CommandABC {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
-	private InventoryUpdateRequest request;
+	private InventoryLightRequest request;
 	private InventoryService inventoryService;
 	
-	public InventoryUpdateCommand(UserSession session, InventoryUpdateRequest request, InventoryService inventoryService) {
+	public InventoryLightCommand(UserSession session, InventoryLightRequest request, InventoryService inventoryService) {
 		super(session);
 		this.request = request;
 		this.inventoryService = inventoryService;
@@ -27,15 +27,13 @@ public class InventoryUpdateCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		InventoryUpdateResponse response = null;
+		InventoryLightResponse response = null;
 		
 		UUID cheUUID = UUID.fromString(request.getDeviceId());
 		if (cheUUID != null ) {
-			response = inventoryService.moveOrCreateInventory(request.getGtin(), request.getLocation(), cheUUID);
+			response = inventoryService.lightInventoryByGtin(request.getGtin(), cheUUID);
 		} else {
-			LOGGER.error("Unable to process CHE UUID: {}", request.getDeviceId());
-			response = new InventoryUpdateResponse();
-			response.appendStatusMessage("Unable to process CHE UUID");
+			response = new InventoryLightResponse();
 			response.setStatus(ResponseStatus.Fail);
 		}
 		

@@ -157,6 +157,26 @@ public class LightService implements IApiService {
 		}
 		return chaserLight(facility.getSiteControllerUsers(), messages);
 	}
+	
+	public Future<Void> lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
+		Facility facility = checkFacility(facilityPersistentId);
+
+		List<Set<LightLedsMessage>> messages = Lists.newArrayList();
+		for (Item item : items) {
+			try {
+				if (item.isLightable()) {
+					LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, item);
+					messages.add(ImmutableSet.of(message));
+				} else {
+					LOGGER.warn("unable to light item: " + item);
+				}
+			} catch (Exception e) {
+				LOGGER.warn("unable to light item: " + item, e);
+
+			}
+		}
+		return chaserLight(facility.getSiteControllerUsers(), messages);
+	}
 
 	// --------------------------------------------------------------------------
 	/**

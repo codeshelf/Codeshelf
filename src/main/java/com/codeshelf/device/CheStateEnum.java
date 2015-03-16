@@ -57,10 +57,12 @@ public enum CheStateEnum {
 	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT"),
 	
 	// states used for inventory scan DEV-644
-	// @EnumValue("SCAN_LOCATION")
-	SCAN_LOCATION(CheStateNum.SCAN_LOCATION, "SCAN_LOCATION"),
-	// @EnumValue("SCAN_GTIN")
-	SCAN_GTIN(CheStateNum.SCAN_GTIN, "SCAN_GTIN");
+	// @EnumValue("SCAN_UPDATE_LOCATION")
+	SCAN_UPDATE_LOCATION(CheStateNum.SCAN_UPDATE_LOCATION, "SCAN_UPDATE_LOCATION"),
+	// @EnumValue("SCAN_LIGHT_GTIN")
+	SCAN_LIGHT_GTIN(CheStateNum.SCAN_LIGHT_GTIN, "SCAN_LIGHT_GTIN"),
+	// @EnumValue("SCAN_UPDATE_GTIN")
+	SCAN_UPDATE_GTIN(CheStateNum.SCAN_UPDATE_GTIN, "SCAN_UPDATE_GTIN");
 
 	private int		mValue;
 	private String	mName;
@@ -134,14 +136,18 @@ public enum CheStateEnum {
 				result = CheStateEnum.NO_CONTAINERS_SETUP;
 				break;
 				
-			case CheStateNum.SCAN_LOCATION:
-				result = CheStateEnum.SCAN_LOCATION;
+			case CheStateNum.SCAN_UPDATE_LOCATION:
+				result = CheStateEnum.SCAN_UPDATE_LOCATION;
 				break;
 				
-			case CheStateNum.SCAN_GTIN:
-				result = CheStateEnum.SCAN_GTIN;
+			case CheStateNum.SCAN_UPDATE_GTIN:
+				result = CheStateEnum.SCAN_UPDATE_GTIN;
 				break;
-
+			
+			case CheStateNum.SCAN_LIGHT_GTIN:
+				result = CheStateEnum.SCAN_LIGHT_GTIN;
+				break;
+				
 			default:
 				result = CheStateEnum.INVALID;
 				break;
@@ -190,8 +196,9 @@ public enum CheStateEnum {
 		static final byte	SCAN_SOMETHING				= 19;
 		static final byte	SCAN_SOMETHING_SHORT		= 20;
 		// states used for inventory scan
-		static final byte	SCAN_LOCATION				= 21;
-		static final byte	SCAN_GTIN					= 22;
+		static final byte	SCAN_UPDATE_LOCATION		= 21;
+		static final byte	SCAN_UPDATE_GTIN			= 22;
+		static final byte	SCAN_LIGHT_GTIN				= 23;
 
 		private CheStateNum() {
 		};
