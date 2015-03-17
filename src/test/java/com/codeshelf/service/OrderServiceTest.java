@@ -1,8 +1,8 @@
 package com.codeshelf.service;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 
 import org.hibernate.Session;
 import org.junit.Assert;
@@ -10,7 +10,6 @@ import org.junit.Test;
 
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.service.OrderService.OrderDetailView;
 import com.codeshelf.testframework.ServerTest;
 
@@ -32,7 +31,7 @@ public class OrderServiceTest extends ServerTest{
 		this.getTenantPersistenceService().beginTransaction();
 		OrderService orderService = new OrderService();
 		Session session = this.getTenantPersistenceService().getSession();
-		List<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(session, facility.getPersistentId());
+		Collection<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(getTenantPersistenceService().getDefaultSchema(), session, facility.getPersistentId());
 		Assert.assertEquals(3, orderDetails.size());
 		int totalQuantity = 0;
 		for (OrderDetailView orderDetailView : orderDetails) {

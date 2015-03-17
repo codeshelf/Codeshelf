@@ -164,16 +164,8 @@ public class InventoryService implements IApiService {
 		Gtin gtin = gtins.get(0);
 		ItemMaster itemMaster = gtin.getParent();
 		List<Item> items = itemMaster.getItemsOfUom(gtin.getUomMaster().getDomainId());
+		lightService.lightItemsSpecificColor(facility.getPersistentId().toString(), items, color);
 		
-		Future<Void> sl = lightService.lightItemsSpecificColor(facility.getPersistentId().toString(), items, color);
-		try {
-			sl.get();
-		} catch (InterruptedException e) {
-			LOGGER.error("", e);
-		} catch (ExecutionException e) {
-			LOGGER.error("", e);
-		}
-				
 		response.setStatus(ResponseStatus.Success);
 		return response;
 	}

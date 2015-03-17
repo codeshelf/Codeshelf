@@ -45,7 +45,6 @@ import com.google.inject.Inject;
 
 public class FacilityResource {
 
-	private static final Object	NOT_SET_FILTER	= "<NULL>";
 	private final OrderService orderService;
 	private final SessionManagerService sessionManagerService;
 
@@ -65,7 +64,25 @@ public class FacilityResource {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
 			Session session = persistenceService.getSessionWithTransaction();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(session, mUUIDParam.getUUID()));
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(persistenceService.getDefaultSchema(), session, mUUIDParam.getUUID()));
+		} catch (Exception e) {
+			ErrorResponse errors = new ErrorResponse();
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+		finally {
+			persistenceService.commitTransaction();
+		}
+	}
+	
+	@GET
+	@Path("/work/topitems")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkByItem() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		try {
+			Session session = persistenceService.getSessionWithTransaction();
+			return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, mUUIDParam.getUUID()));
 		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);

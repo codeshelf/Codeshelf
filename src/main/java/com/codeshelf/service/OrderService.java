@@ -1,14 +1,17 @@
 package com.codeshelf.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,6 +44,7 @@ import com.sun.jersey.api.NotFoundException;
  */
 public class OrderService implements IApiService {
 
+	@EqualsAndHashCode(of={"orderId", "orderDetailId"})
 	public static class OrderDetailView {
 		@Getter @Setter
 		private String orderId;
@@ -55,18 +59,79 @@ public class OrderService implements IApiService {
 		private String description;
 		@Getter @Setter
 		private int planQuantity;
-		@Getter @Setter
+		@Getter
 		private OrderStatusEnum status;
+		
+		public void setStatusEnum(OrderStatusEnum statusEnum) {
+			status = statusEnum;
+		}
+		
+		public void setStatusString(String statusString) {
+			status = OrderStatusEnum.valueOf(statusString);
+		}
 
 	}
+	
+	public static class ItemView {
+		public String getId() {
+			return String.format("%s:%s", getSku(), getUom()); 
+		}
+		@Getter @Setter
+		private String uom;
+		@Getter @Setter
+		private String sku;
+		@Getter @Setter
+		private String description;
+		@Getter @Setter
+		private long planQuantity;
+		
+	}
 
-	public List<OrderDetailView> orderDetailsNoLocation(Session session, UUID facilityUUID) {
+	public Collection<ItemView> itemsInQuantityOrder(Session session, UUID facilityUUID) {
+		@SuppressWarnings("unchecked")
+		List<ItemView>  result = session.createQuery(
+			"select od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, sum(od.quantity) as planQuantity"
+				+ " from OrderDetail as od left join od.parent as oh where oh.parent.persistentId = :facilityId and od.active = true "
+				+ " GROUP BY od.itemMaster.domainId, od.uomMaster.domainId, od.description "
+				+ " ORDER BY planQuantity DESC")
+				.setParameter("facilityId", facilityUUID)
+				.setMaxResults(10)
+				.setResultTransformer(new AliasToBeanResultTransformer(ItemView.class))
+				.list();
+		return result;
+	}
+	
+	public Collection<OrderDetailView> orderDetailsNoLocation(Tenant tenant, Session session, UUID facilityUUID) {
+		HashSet<OrderDetailView> allOrderDetails = new HashSet<OrderDetailView>();
+		allOrderDetails.addAll(orderDetailNoPreferredLocation(tenant, session, facilityUUID));
+		allOrderDetails.retainAll(orderDetailsNoInventoryLocation(tenant, session, facilityUUID));
+		return allOrderDetails;
+	}
+	
+	private List<OrderDetailView> orderDetailNoPreferredLocation(Tenant tenant, Session session, UUID facilityUUID) {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView>  result = session.createQuery(
-			//	"select od "
-			"select oh.domainId as orderId, od.domainId as orderDetailId, od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, od.quantity as planQuantity, od.status as status"
+			"select oh.domainId as orderId, od.domainId as orderDetailId, od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, od.quantity as planQuantity, od.status as statusEnum"
 				+ " from OrderDetail as od left join od.parent as oh where oh.parent.persistentId = :facilityId and od.active = true and COALESCE(od.preferredLocation, '') = ''")
 				.setParameter("facilityId", facilityUUID)
+				.setResultTransformer(new AliasToBeanResultTransformer(OrderDetailView.class))
+				.list();
+		return result;
+	}
+	
+	private List<OrderDetailView> orderDetailsNoInventoryLocation(Tenant tenant, Session session, UUID facilityUUID) {
+		String schema = tenant.getSchemaName();
+		@SuppressWarnings("unchecked")
+		List<OrderDetailView>  result = session.createSQLQuery(String.format(
+			"select oh.domainid \"orderId\", od.domainId as \"orderDetailId\", im.domainId as \"sku\", um.domainId as \"uom\", od.description as \"description\", od.quantity as \"planQuantity\", od.status as \"statusString\""
+		    + " from %s.order_detail as od"
+			+ " left join %s.item as item on od.item_master_persistentid = item.parent_persistentid AND od.uom_master_persistentid = item.uom_master_persistentid"
+			+ " left join %s.order_header as oh on od.parent_persistentid = oh.persistentid"
+			+ " left join %s.item_master as im on od.item_master_persistentid = im.persistentid"
+			+ " left join %s.uom_master as um on od.uom_master_persistentid = um.persistentid"
+			+ " where CAST(oh.parent_persistentid AS varchar(50)) = :facilityId AND od.active = true AND stored_location_persistentid IS NULL"
+			, schema, schema, schema, schema, schema ))
+				.setParameter("facilityId", facilityUUID.toString())
 				.setResultTransformer(new AliasToBeanResultTransformer(OrderDetailView.class))
 				.list();
 		return result;
@@ -76,7 +141,7 @@ public class OrderService implements IApiService {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView>  result = session.createQuery(
 			//	"select od "
-			"select oh.domainId as orderId, od.domainId as orderDetailId, od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, od.quantity as planQuantity, od.status as status"
+			"select oh.domainId as orderId, od.domainId as orderDetailId, od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, od.quantity as planQuantity, od.status as statusEnum"
 				+ " from OrderDetail od left join od.parent as oh where od.parent.parent.persistentId = :facilityId and od.active = true "
 				+ " and od.status = :status"
 				)
@@ -89,6 +154,7 @@ public class OrderService implements IApiService {
 
 	public int archiveAllOrders(String facilityUUID) {
 		ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+		String schema = persistence.getDefaultSchema().getSchemaName();
 		Session session = persistence.getSession();
 		UUID uuid = UUID.fromString(facilityUUID);
 
@@ -99,7 +165,7 @@ public class OrderService implements IApiService {
 //				.executeUpdate();
 
 		@SuppressWarnings("unused")
-		int odResult = session.createSQLQuery("update order_detail od set active = false FROM order_header oh WHERE od.parent_persistentid = oh.persistentid AND CAST(oh.parent_persistentid AS VARCHAR(50)) =  :facilityUUIDString")
+		int odResult = session.createSQLQuery(String.format("update %s.order_detail od set active = false FROM %s.order_header oh WHERE od.parent_persistentid = oh.persistentid AND CAST(oh.parent_persistentid AS VARCHAR(50)) =  :facilityUUIDString", schema, schema))
 			.setParameter("facilityUUIDString", uuid.toString())
 			.executeUpdate();
 
