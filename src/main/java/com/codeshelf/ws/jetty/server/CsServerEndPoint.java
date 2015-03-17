@@ -11,6 +11,8 @@ import javax.websocket.server.ServerEndpoint;
 
 import lombok.Getter;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,6 +83,8 @@ public class CsServerEndPoint {
         			username = csSession.getUser().getUsername();
         		LOGGER.info("Got message {} and setting user context to {}", message.getClass().getSimpleName(), username);
             	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
+            	Subject subject = SecurityUtils.getSubject();
+            	LOGGER.info("Subject is {}",subject == null? "null":subject.getPrincipal().toString());
             	setUser = true;
         	} else {
         		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());

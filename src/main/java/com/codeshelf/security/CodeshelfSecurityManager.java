@@ -75,7 +75,10 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 			context.setPrincipals(principals);
 			context.setSessionCreationEnabled(false);
 			subject = this.subjectFactory.createSubject(context);
-		}		
+			LOGGER.info("created subject {}",user.getId());
+		} else {
+			LOGGER.warn("failed to create subject, no current user");
+		}
 		return subject;
 	}
 
@@ -139,6 +142,9 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
         // role checks
         RequiresRoles roles = clazz.getAnnotation(RequiresRoles.class);
         if (roles != null) {
+        	if(subject == null) {
+        		throw new AuthorizationException("Roles required, but no subject available");
+        	}
             @SuppressWarnings("unchecked")
 			List<String> roleList = Arrays.asList(roles.value());
 			subject.checkRoles(roleList);
@@ -147,9 +153,13 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
         // permission checks
         RequiresPermissions permissions = clazz.getAnnotation(RequiresPermissions.class);
         if (permissions != null) {
-             subject.checkPermissions(permissions.value());
+        	if(subject == null) {
+        		throw new AuthorizationException("Permissions required, but no subject available");
+        	}
+            subject.checkPermissions(permissions.value());
         }
-		
+
+        // passed all checks
 	}
 
 }
