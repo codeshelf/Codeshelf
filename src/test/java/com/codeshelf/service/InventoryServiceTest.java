@@ -50,8 +50,7 @@ public class InventoryServiceTest extends ServerTest {
 	}
 	
 	@Test
-	public void createInventoryService() {
-		//FIXME - huffa - How to do this correctly?
+	public void testInventoryService() {
 		LightService ls = new LightService(this.sessionManagerService);
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
@@ -71,22 +70,33 @@ public class InventoryServiceTest extends ServerTest {
 		Assert.assertNotNull(che1);
 		che1.setColor(ColorEnum.GREEN);
 		
-		// Try moving and existing item
+		// Try moving an existing item
 		inventoryService.moveOrCreateInventory("101", "D403", che1.getPersistentId());
 		Location locationD401 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD401);
 		Location locationD502 = facility.findSubLocationById("D502");
 		Assert.assertNotNull(locationD502);
+	
+		this.getTenantPersistenceService().commitTransaction();
 		
+		this.getTenantPersistenceService().beginTransaction();
+		facility  = Facility.staticGetDao().reload(facility);
+		locationD401 = facility.findSubLocationById("D403");
 		Item item1121D401 = locationD401.getStoredItemFromMasterIdAndUom("1121", "EA");
 		Assert.assertNotNull(item1121D401);
 		
+		locationD502 = facility.findSubLocationById("D502");
 		Item item1120D502 = locationD502.getStoredItemFromMasterIdAndUom("1121", "EA");
 		Assert.assertNull(item1120D502);
-		
+		this.getTenantPersistenceService().commitTransaction();
+	
+		this.getTenantPersistenceService().beginTransaction();
+		facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 		// Try creating a new item
 		inventoryService.moveOrCreateInventory("201", "D100", che1.getPersistentId());
 		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		Location locationD100 = facility.findSubLocationById("D100");
 		Assert.assertNotNull(locationD100);
 		

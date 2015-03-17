@@ -21,6 +21,7 @@ import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
@@ -51,6 +52,7 @@ public class InventoryService implements IApiService {
 		InventoryUpdateResponse response = new InventoryUpdateResponse();
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		if (che == null) {
+			LOGGER.error("Could not load che: {}", inChePersistentId.toString());
 			response.appendStatusMessage("moveOrCreateInventory ERROR: Could not find che: " + inChePersistentId.toString());
 			response.setFoundGtin(false);
 			response.setFoundLocation(false);
@@ -61,6 +63,7 @@ public class InventoryService implements IApiService {
 		Facility facility = che.getFacility();
 		
 		if (inLocation == null || inLocation.isEmpty()) {
+			LOGGER.error("Location not specified for GTIN: {}, CHE: {}", inGtin, che.getDomainId());
 			response.appendStatusMessage("moveOrCreateInventory ERROR: Location is not specified.");
 			response.setFoundGtin(false);
 			response.setFoundLocation(false);
@@ -70,6 +73,8 @@ public class InventoryService implements IApiService {
 		
 		Location location = findLocation(facility, inLocation);
 		if (location.equals(facility)) {
+			LOGGER.warn("Move request from CHE: {} for GTIN: {} could not resolve location: {}. Using facility as location.",
+				che.getDomainId(), inGtin, inLocation);
 			response.setFoundLocation(false);
 			response.appendStatusMessage("moveOrCreateInventory WARN: Could not find location: " + inLocation + ". Using facility.");
 		}
@@ -83,26 +88,29 @@ public class InventoryService implements IApiService {
 		
 		if (gtins.isEmpty()) {
 			// Creating a new item if we cannot find GTIN
+			LOGGER.info("GTIN {} was not found.", inGtin);
 			response.appendStatusMessage(" Could not find GTIN: " + inGtin + ". Attempting to create GTIN: " + inGtin);
 			response.setFoundGtin(false);
 			
 			createTime = new Timestamp(System.currentTimeMillis());
-			uomMaster = guessUomForItem(inGtin, facility);
+			String guessedUom = guessUomForItem(inGtin, facility);
+			uomMaster = upsertUomMaster(guessedUom, facility);
 			
 			itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
 			if (itemMaster == null) {
-				response.appendStatusMessage(" Failed to create item master for GTIN: " + inGtin);
 				LOGGER.error("Unable to create ItemMaster for GTIN: {}", inGtin);
+				response.appendStatusMessage(" Failed to create item master for GTIN: " + inGtin);
 				response.setStatus(ResponseStatus.Fail);
 				return response;
 			}
 			
 			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			if (gtin != null) {
+				LOGGER.info("Created new GTIN: {} with UOM: {}", inGtin, gtin.getUomMaster().toString());
 				Gtin.staticGetDao().store(gtin);
 			} else {
-				response.appendStatusMessage(" Could not create GTIN: " + inGtin);
 				LOGGER.error("Was unable to create GTIN for GTIN: {}", inGtin);
+				response.appendStatusMessage(" Could not create GTIN: " + inGtin);
 			}
 
 		} else {
@@ -116,6 +124,7 @@ public class InventoryService implements IApiService {
 		if (itemMaster != null ) {
 			// findOrdCreateItem determines if an item is created or moved 
 			result = itemMaster.findOrCreateItem(location, uomMaster);
+			LOGGER.info("Item: {} is in location(s): {}", result.getDomainId(), result.getParent().getItemLocations());
 		}
 		
 		if (result != null) {
@@ -130,7 +139,8 @@ public class InventoryService implements IApiService {
 			
 			createTime = new Timestamp(System.currentTimeMillis());
 			result.setActive(true);
-			result.setUpdated(createTime);
+			result.setUpdated(createTime);	
+
 			Item.staticGetDao().store(result);
 			
 			lightService.lightItemSpecificColor(facility.getPersistentId().toString(), result.getPersistentId().toString(), che.getColor());
@@ -148,11 +158,20 @@ public class InventoryService implements IApiService {
 		InventoryLightResponse response = new InventoryLightResponse();
 		
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
+		if (che == null) {
+			LOGGER.error("Could not load che: {}", inChePersistentId.toString());
+			response.appendStatusMessage("lightInventoryByGtin ERROR: Could not find che: " + inChePersistentId.toString());
+			response.setFoundGtin(false);
+			response.setFoundLocation(false);
+			response.setStatus(ResponseStatus.Fail);
+			return response;
+		}
 		ColorEnum color = che.getColor();
 		Facility facility = che.getFacility();
 		
 		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
 		if (gtins.isEmpty()) {
+			LOGGER.info("GTIN: {} requested to light by CHE: {} was not found.", inGtin, che.getDomainId());
 			response.setFoundGtin(false);
 			response.setStatus(ResponseStatus.Fail);
 			response.appendStatusMessage("Cound not find GTIN");
@@ -191,7 +210,7 @@ public class InventoryService implements IApiService {
 				result.setUpdated(inEdiProcessTime);
 				ItemMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
-				//LOGGER.error("updateItemMaster", e);
+				LOGGER.error("Error saving ItemMaster: {}", e);
 			}
 		}
 		
@@ -217,7 +236,7 @@ public class InventoryService implements IApiService {
 			try {
 				UomMaster.staticGetDao().store(result);
 			} catch (DaoException e) {
-				//LOGGER.error("upsertUomMaster save", e);
+				LOGGER.error("Error saving UOM: {}", e);
 			}
 			/*
 			catch (InputValidationException e) {
@@ -229,9 +248,8 @@ public class InventoryService implements IApiService {
 		return result;
 	}
 	
-	private UomMaster guessUomForItem(String inGtin, Facility inFacility){
-		String defaultUom = "EA";
-		return upsertUomMaster(defaultUom, inFacility);
+	private String guessUomForItem(String inGtin, Facility inFacility){
+		return "EA";
 	}
 	
 	private Location findLocation(Facility inFacility, String inLocation) {
@@ -240,11 +258,13 @@ public class InventoryService implements IApiService {
 		// Remember, findSubLocationById will find inactive locations.
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
 		if (location == null) {
+			LOGGER.warn("Could not find location: {}. Using facility.", inLocation);
 			location = inFacility;
 		}
 		// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
 		// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
 		else if (!location.isActive()) {
+			LOGGER.warn("Location {} is inactive. Using facility.", inLocation);
 			location = inFacility;
 		}
 		

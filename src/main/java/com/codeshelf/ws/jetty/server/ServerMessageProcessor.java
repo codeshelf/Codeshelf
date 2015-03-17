@@ -232,6 +232,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				}
 			}
     	} catch (Exception e) {
+    		LOGGER.error("Command:{} failed: {}", command.toString(), e);
     		response = new FailureResponse(ExceptionUtils.getMessage(e));
     		response.setRequestId(request.getMessageId());
     		if (request instanceof DeviceRequest) {
