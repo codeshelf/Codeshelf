@@ -76,8 +76,14 @@ public class CsServerEndPoint {
     	try{
         	WebSocketConnection csSession = webSocketManagerService.getSession(session);
         	if(csSession.getUser() != null) {
+        		String username = "null";
+        		if(csSession.getUser() != null) 
+        			username = csSession.getUser().getUsername();
+        		LOGGER.info("Got message {} and setting user context to {}", message.getClass().getSimpleName(), username);
             	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
             	setUser = true;
+        	} else {
+        		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());
         	}
 
         	webSocketManagerService.messageReceived(session);
