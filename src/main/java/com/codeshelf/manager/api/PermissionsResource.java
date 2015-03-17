@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.UserPermission;
-import com.codeshelf.manager.UserPermission;
 
 @Path("/permissions")
 public class PermissionsResource {

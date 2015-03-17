@@ -4,9 +4,9 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 
-import com.codeshelf.service.ICodeshelfService;
+import com.codeshelf.service.CodeshelfService;
 
-public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends ICodeshelfService {
+public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends CodeshelfService {
 
 	public SCHEMA_TYPE getDefaultSchema();
 	public Session getSession(SCHEMA_TYPE schema);

@@ -1,12 +1,12 @@
 package com.codeshelf.manager;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.subject.Subject;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -20,9 +20,6 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.Sets;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-
-import org.apache.shiro.authz.AuthorizationException;
-import org.apache.shiro.subject.Subject;
 
 public class TenantManagerTest extends HibernateTest {
 	final public static Logger LOGGER = LoggerFactory.getLogger(TenantManagerTest.class);
@@ -273,6 +270,18 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertTrue(apiTenant.isActive());
 		newUser = this.tenantManagerService.getUser(newUser.getId());
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+		
+		// password validation (default config has requireSymbol and requireMixed turned off)
+		// TODO: manipulate configuration and test other modes
+		// TODO: maybe support latin alpha too
+		Assert.assertFalse(this.authProviderService.passwordMeetsRequirements(""));
+		Assert.assertFalse(this.authProviderService.passwordMeetsRequirements("Aa.012345678901234567890123456789012345678901234567890123456789"));
+		Assert.assertFalse(this.authProviderService.passwordMeetsRequirements("a"));
+		Assert.assertFalse(this.authProviderService.passwordMeetsRequirements(null));
+		Assert.assertFalse(this.authProviderService.passwordMeetsRequirements("ネネネAa12%"));
+		Assert.assertFalse(this.authProviderService.passwordMeetsRequirements("Años123$"));
+		Assert.assertTrue(this.authProviderService.passwordMeetsRequirements("redball"));
+		Assert.assertTrue(this.authProviderService.passwordMeetsRequirements("red ball"));
 	}
 	
 	@Test

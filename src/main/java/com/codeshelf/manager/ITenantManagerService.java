@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.service.ICodeshelfService;
+import com.codeshelf.service.CodeshelfService;
 
 /**
  * API for Tenant Manager interface
@@ -12,7 +12,7 @@ import com.codeshelf.service.ICodeshelfService;
  * @author ivan
  *
  */
-public interface ITenantManagerService extends ICodeshelfService {
+public interface ITenantManagerService extends CodeshelfService {
 	// shards
 	Shard getDefaultShard();
 	

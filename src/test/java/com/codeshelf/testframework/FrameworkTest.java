@@ -74,7 +74,6 @@ import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
@@ -111,8 +110,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IMetricsService								staticMetricsService;
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
-	private static HmacAuthService								staticHmacAuthService;
-	//private static SecurityManager								staticSecurityManagerService;
+	private static AuthProviderService							staticAuthProviderService;
 
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
@@ -225,10 +223,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticMetricsService = injector.getInstance(IMetricsService.class);
 		staticMetricsService.startAsync(); // always running, outside of service manager
 		ServiceUtility.awaitRunningOrThrow(staticMetricsService); 
+		staticAuthProviderService = injector.getInstance(AuthProviderService.class);
+		staticAuthProviderService.startAsync();
+		ServiceUtility.awaitRunningOrThrow(staticAuthProviderService); 
 
 		staticPropertyService = injector.getInstance(IPropertyService.class);
-		
-		staticHmacAuthService = injector.getInstance(HmacAuthService.class);
 
 		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
@@ -254,7 +253,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
-		authProviderService = staticHmacAuthService;
+		authProviderService = staticAuthProviderService;
+		HmacAuthService.setInstance(staticAuthProviderService);
 		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
 		
 		// remove user/subject from main threadcontext 
@@ -434,7 +434,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 				services.add(realTenantManagerService);
 			if (!realTenantPersistenceService.isRunning())
 				services.add(realTenantPersistenceService);
-			services.add(staticHmacAuthService);
 
 			persistenceServiceManager = new ServiceManager(services);
 			try {

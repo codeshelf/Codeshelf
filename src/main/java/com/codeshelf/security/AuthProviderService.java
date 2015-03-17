@@ -2,9 +2,9 @@ package com.codeshelf.security;
 
 import javax.servlet.http.Cookie;
 
-import com.google.common.util.concurrent.Service;
+import com.codeshelf.service.CodeshelfService;
 
-public interface AuthProviderService extends Service {
+public interface AuthProviderService extends CodeshelfService {
 	AuthProviderService initialize(); // start outside of service manager for testing
 	
 	// tokens
@@ -21,5 +21,6 @@ public interface AuthProviderService extends Service {
 	boolean checkPassword(final String password,final String hash);
 	boolean passwordMeetsRequirements(final String password);
 	boolean hashIsValid(final String hash);
+	String describePasswordRequirements();
 
 }

@@ -10,6 +10,7 @@ import javax.servlet.http.Cookie;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.Md5Crypt;
+import org.apache.commons.lang.CharSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	private static final String	HMAC_ALGORITHM						= "HmacSHA1";
 
 	// token settings
-	private static final int	TOKEN_VERSION						= 2; // increment whenever token parsing changes
+	private static final int	TOKEN_VERSION						= 2;												// increment whenever token parsing changes
 	private static final String	TOKEN_DEFAULT_XOR					= "00";
 	private byte[]				tokenXor;
 
@@ -48,6 +49,15 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	private boolean				cookieSecure;
 	private int					cookieMaxAgeHours;
 
+	// password settings
+	private static final String	PASSWORD_SYMBOLS					= "!@#$%^&*()-_+={}[]<>:;,~`?/|\\ .";
+	private static final int	PASSWORD_DEFAULT_MIN_LEN			= 6;
+	private static final int	PASSWORD_DEFAULT_MAX_LEN			= 32;
+	private int					passwordMinLength;
+	private int					passwordMaxLength;
+	private boolean				passwordRequireSymbol; // defaults false
+	private boolean				passwordRequireMixed;
+
 	// reusable hash generator
 	private Mac					mac;
 
@@ -57,6 +67,11 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	public static AuthProviderService getInstance() {
 		return theInstance;
 	}
+	
+	public static void setInstance(AuthProviderService instance) {
+		theInstance = instance; // for testing only
+	}
+
 
 	/**************************** token methods 
 	 * @param sessionFlags 
@@ -65,9 +80,9 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	@Override
 	public String createToken(int id, Long sessionStart, SessionFlags sessionFlags) {
 		long timestamp = System.currentTimeMillis();
-		if(sessionStart == null) 
+		if (sessionStart == null)
 			sessionStart = timestamp;
-		if(sessionFlags == null)
+		if (sessionFlags == null)
 			sessionFlags = new SessionFlags();
 		byte[] rawHmac = createHmacBytes(id, timestamp, sessionStart, sessionFlags);
 		return encodeToken(rawHmac);
@@ -128,14 +143,14 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 				long ageSeconds = (System.currentTimeMillis() - timestamp) / 1000L;
 				if (ageSeconds > (0 - this.sessionMaxFutureSeconds)) {
 					// timestamp is not in the future
-					if (ageSeconds < this.sessionMaxIdleMinutes* 60) {
+					if (ageSeconds < this.sessionMaxIdleMinutes * 60) {
 						String refreshToken = null;
-						if(sessionFlags.get(Flag.AUTO_REFRESH_SESSION)) {
+						if (sessionFlags.get(Flag.AUTO_REFRESH_SESSION)) {
 							// session is still active
 							if (ageSeconds > this.sessionMinIdleMinutes * 60) {
 								// if token is valid but getting old, offer an updated one
 								LOGGER.info("refreshing cookie for user {}", id);
-								refreshToken = this.createToken(id,sessionStart,sessionFlags);
+								refreshToken = this.createToken(id, sessionStart, sessionFlags);
 							}
 						}
 						response = new AuthResponse(Status.ACCEPTED, user, timestamp, sessionStart, sessionFlags, refreshToken);
@@ -144,7 +159,10 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, timestamp, sessionStart, sessionFlags, null);
 					}
 				} else {
-					LOGGER.error("ALERT - future timestamp {} authenticated HMAC for user {} sessionStart {}", timestamp, id,sessionStart);
+					LOGGER.error("ALERT - future timestamp {} authenticated HMAC for user {} sessionStart {}",
+						timestamp,
+						id,
+						sessionStart);
 					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, timestamp, sessionStart, sessionFlags, null);
 				}
 			} else {
@@ -230,12 +248,46 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 			return false;
 		if (password.isEmpty())
 			return false;
+		if (password.length() < this.passwordMinLength || password.length() > this.passwordMaxLength) 
+			return false;
+		boolean hasSymbol=false;
+		boolean hasLowercase=false;
+		boolean hasUppercase=false;
+		boolean hasNumber=false;
+		for(int i=0; i<password.length(); i++) {
+			char ch = password.charAt(i);
+			boolean lowercase = CharSet.ASCII_ALPHA_LOWER.contains(ch);
+			boolean uppercase = CharSet.ASCII_ALPHA_UPPER.contains(ch);
+			boolean number = CharSet.ASCII_NUMERIC.contains(ch);
+			boolean symbol = PASSWORD_SYMBOLS.indexOf(ch) >= 0;
+			if(!lowercase && !uppercase && !number && !symbol)
+				return false;
+			hasLowercase |= lowercase;
+			hasUppercase |= uppercase;
+			hasSymbol |= symbol;
+			hasNumber |= number;
+		}
+		if(this.passwordRequireMixed) {
+			int mix = (hasUppercase?1:0) + (hasLowercase?1:0) + (hasNumber?1:0);
+			if(mix<2)
+				return false;
+		}
+		if(this.passwordRequireSymbol && !hasSymbol)
+			return false;
 
 		return true;
 	}
 
 	public boolean hashIsValid(String hash) {
 		return hash.startsWith("$apr1$");
+	}
+
+	@Override
+	public String describePasswordRequirements() {
+		return String.format("Password must be between %d and %d characters long, consisting of letters, numbers and punctuation.%s%s",
+			this.passwordMinLength,this.passwordMaxLength,
+			this.passwordRequireMixed?" It must contain a mix of upper case, lower case and/or numbers.":"",
+			this.passwordRequireSymbol?" It must contain at least one of these symbols: "+PASSWORD_SYMBOLS:"");
 	}
 
 	/**************************** service methods ****************************/
@@ -270,12 +322,18 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 
 		// cookie settings
 		String cookieDomain = System.getProperty("auth.cookie.domain");
-		if (cookieDomain != null) 
+		if (cookieDomain != null)
 			this.cookieDomain = cookieDomain;
 		else
 			this.cookieDomain = COOKIE_DEFAULT_DOMAIN;
 		this.cookieSecure = Boolean.getBoolean("auth.cookie.secure");
 		this.cookieMaxAgeHours = Integer.getInteger("auth.cookie.maxagehours", COOKIE_DEFAULT_MAX_AGE_HOURS);
+		
+		// password settings
+		this.passwordMinLength = Integer.getInteger("auth.password.length.min",PASSWORD_DEFAULT_MIN_LEN);
+		this.passwordMaxLength = Integer.getInteger("auth.password.length.max",PASSWORD_DEFAULT_MAX_LEN);
+		this.passwordRequireSymbol = Boolean.getBoolean("auth.password.require.symbol");
+		this.passwordRequireMixed = Boolean.getBoolean("auth.password.require.mixedcase");
 
 		return this;
 	}
