@@ -92,13 +92,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case CLEAR_ERROR_COMMAND:
 				clearErrorCommandReceived();
 				break;
-				
-			case INVENTORY_UPDATE_COMMAND:
-				inventoryUpdateCommandReceived();
-				break;
 			
-			case INVENTORY_LIGHT_COMMAND:
-				inventoryLightCommandReveived();
+			case INVENTORY_COMMAND:
+				inventoryScanCommandReveived();
 				break;
 
 			default:
@@ -131,34 +127,26 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
-			case SCAN_UPDATE_GTIN:
+			case SCAN_GTIN:
 				processGtinScan(inScanPrefixStr, inContent);
-				break;
-			case SCAN_UPDATE_LOCATION:
-				processLocationUpdateScan(inScanPrefixStr, inContent);
-				break;
-			case SCAN_LIGHT_GTIN:
-				processLightLocationScan(inScanPrefixStr, inContent);
 				break;
 			default:
 				break;
 		}
 
 	}
-	
-	public void processLightLocationScan(final String inScanPrefixStr, final String inScanStr) {
-		processInventoryLightScan(inScanStr);
-		setState(CheStateEnum.READY);
-	}
-	
-	private void processLocationUpdateScan(final String inScanPrefixStr, final String inScanStr){
-		processInventoryUpdateScan(inScanStr, lastScanedGTIN);
-		setState(CheStateEnum.READY);
-	}
-	
+
 	private void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-		lastScanedGTIN = inScanStr;
-		setState(CheStateEnum.SCAN_UPDATE_LOCATION);
+		
+		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
+			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
+		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
+			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
+		} else {
+			mDeviceManager.inventoryLightScan(this.getPersistentId(), inScanStr);
+			lastScanedGTIN = inScanStr;
+		}
+		setState(CheStateEnum.SCAN_GTIN);
 	}
 
 	// --------------------------------------------------------------------------
@@ -296,30 +284,17 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 	}
 	
-	protected void inventoryLightCommandReveived() {
+	protected void inventoryScanCommandReveived() {
 		CheStateEnum currentState = getCheStateEnum();
 		
 		switch(currentState) {
 			case READY:
-			case IDLE:
-				setState(CheStateEnum.SCAN_LIGHT_GTIN);
+				// In setup orders. Only want to respect this just after login
+				setState(CheStateEnum.SCAN_GTIN);
 				break;
 			default:
 				break;
 		}
-	}
-	
-	protected void inventoryUpdateCommandReceived() {
-		CheStateEnum currentState = getCheStateEnum();
-		switch(currentState) {
-			case READY:
-			case IDLE:
-				setState(CheStateEnum.SCAN_UPDATE_GTIN);
-				break;
-			default:
-				break;
-		}
-		
 	}
 
 	// --------------------------------------------------------------------------
@@ -351,6 +326,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 			case SCAN_SOMETHING:
 				setState(currentState);
+				break;
+			case SCAN_GTIN:
+				lastScanedGTIN = null;
+				setReadyMsg("");
+				setState(CheStateEnum.READY);
 				break;
 			default:
 				break;
@@ -695,17 +675,13 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					}
 					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 					break;
-					
-				case SCAN_UPDATE_LOCATION:
-					sendDisplayCommand(SCAN_LOCATION, EMPTY_MSG);
-					break;
-					
-				case SCAN_UPDATE_GTIN:
-					sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
-					break;
 				
-				case SCAN_LIGHT_GTIN:
-					sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
+				case SCAN_GTIN:
+					if (lastScanedGTIN == null) {
+						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
+					} else {
+						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
+					}
 					break;
 					
 				default:
@@ -742,13 +718,5 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 		}
 		sendErrorCodeToAllPosCons();
-	}
-	
-	private void processInventoryUpdateScan(String inLocationId, String inGtin) {
-		mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inLocationId, inGtin);
-	}
-	
-	private void processInventoryLightScan(String inGtin) {
-		mDeviceManager.inventoryLightScan(this.getPersistentId(), inGtin);
 	}
 }
