@@ -162,6 +162,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
+	public List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs, int maxRecords) {
+		// TODO Auto-generated method stub
+		throw new NotImplementedException();
+	}
+	
+	@Override
 	public T findByPersistentId(String inPersistentIdAsString) {
 		UUID persistentId = UUID.fromString(inPersistentIdAsString);
 		return this.findByPersistentId(persistentId);
@@ -187,5 +193,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public Criteria createCriteria() {
 		throw new NotImplementedException();
 	}
+
 
 }

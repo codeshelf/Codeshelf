@@ -4,11 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.ToString;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-
+@ToString(of={"query"})
 public class TypedCriteria {
 
 	@Getter
