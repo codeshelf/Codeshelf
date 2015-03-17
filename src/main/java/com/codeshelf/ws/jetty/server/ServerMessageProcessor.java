@@ -2,6 +2,8 @@ package com.codeshelf.ws.jetty.server;
 
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,8 +128,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	
 	@Override
 	public ResponseABC handleRequest(WebSocketConnection csSession, RequestABC request) {
+		Subject subject = SecurityUtils.getSubject();
 		
-		LOGGER.info("Request received for processing: "+request);
+		LOGGER.info("Request received for processing: {} and subject is {}",request,subject==null?"null":subject.getPrincipal().toString());
+
 		requestCounter.inc();
 		CommandABC command = null;
 		ResponseABC response = null;
