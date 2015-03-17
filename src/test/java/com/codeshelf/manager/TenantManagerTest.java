@@ -275,7 +275,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
 	}
 	
-	//@Test
+	@Test
 	public void rolesAndPermissions() {
 		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "p", UserType.APPUSER, null);		
 		UserPermission view = this.tenantManagerService.createPermission("view");
@@ -305,6 +305,7 @@ public class TenantManagerTest extends HibernateTest {
 		// permissions can be checked by Shiro
 		CodeshelfSecurityManager.setCurrentUser(user);
 		Subject subject = SecurityUtils.getSubject();
+
 		try {
 			subject.checkPermissions(new String[]{"print"});
 			Assert.fail("should have thrown");
@@ -328,7 +329,7 @@ public class TenantManagerTest extends HibernateTest {
 			Assert.fail("should not have thrown");
 		}
 		CodeshelfSecurityManager.removeCurrentUser();
-		
+
 		// ought to have REST API call checks and check behavior of renaming roles and editing permissions here!
 	}
 

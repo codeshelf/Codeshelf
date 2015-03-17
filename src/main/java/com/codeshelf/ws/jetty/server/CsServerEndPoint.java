@@ -77,11 +77,9 @@ public class CsServerEndPoint {
     	this.getTenantPersistenceService().beginTransaction();
     	try{
         	WebSocketConnection csSession = webSocketManagerService.getSession(session);
-        	if(csSession.getUser() != null) {
-        		String username = "null";
-        		if(csSession.getUser() != null) 
-        			username = csSession.getUser().getUsername();
-        		LOGGER.info("Got message {} and setting user context to {}", message.getClass().getSimpleName(), username);
+        	User user = csSession.getUser();
+        	if(user != null) {
+        		LOGGER.info("Got message {} and setting user context to {} {}", message.getClass().getSimpleName(), user.getId(), user.getUsername());
             	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
             	setUser = true;
         	} else {

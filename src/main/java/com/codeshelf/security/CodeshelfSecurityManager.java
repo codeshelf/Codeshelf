@@ -107,6 +107,8 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	}
 
 	public static void setCurrentUser(User user) {
+		// Shiro will call the SecurityManager to get the current subject, which will determine it from this key
+		// Also used for context logging.
 		User oldUser=getCurrentUser();
 		if(oldUser != null) {
 			LOGGER.error("setCurrentUser {} called but there was already a current user {}",user,oldUser.getId());
@@ -115,15 +117,18 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	}
 
 	public static void removeCurrentUser() {
+		// Remove both the User and Shiro Subject from ThreadContext.
+		// It is an error if there is no User present.
 		if(getCurrentUser() == null) {
 			LOGGER.error("removeCurrentUser called but no current user existed");
 		}
-		ThreadContext.remove(ThreadContext.SECURITY_MANAGER_KEY);
+		ThreadContext.remove(ThreadContext.SUBJECT_KEY); // TODO: merge User and Subject somehow
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 
 	public static void removeCurrentUserIfPresent() {
-		ThreadContext.remove(ThreadContext.SECURITY_MANAGER_KEY);
+		// Remove both the User and Shiro Subject from ThreadContext if present.
+		ThreadContext.remove(ThreadContext.SUBJECT_KEY);
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 

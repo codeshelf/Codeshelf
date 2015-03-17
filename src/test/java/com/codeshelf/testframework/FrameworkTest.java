@@ -255,8 +255,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
 		authProviderService = staticHmacAuthService;
-		CodeshelfSecurityManager.removeCurrentUserIfPresent();
 		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
+		
+		// remove user/subject from main threadcontext 
+		// we cannot access other threads' contexts so we hope they cleaned up!
+		CodeshelfSecurityManager.removeCurrentUserIfPresent();
 		
 		radioController = null;
 		deviceManager = null;
