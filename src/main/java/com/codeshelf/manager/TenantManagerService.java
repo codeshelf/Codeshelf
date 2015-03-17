@@ -240,18 +240,21 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			Session session = managerPersistenceService.getSessionWithTransaction();
 
 			// reload detached tenant (might've added more users)
-			tenant = inflate((Tenant) session.load(Tenant.class, tenant.getId()));
+			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
 
 			// remove all users except site controller
 			List<User> users = new ArrayList<User>();
 			users.addAll(tenant.getUsers());
 			for (User u : users) {
 				u = (User) session.load(User.class, u.getId());
+				//u.setRoles(Sets.<UserRole>newHashSet());
+				//session.save(u);
 				if (u.getType() != UserType.SITECON || !u.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
 					tenant.removeUser(u);
 					session.delete(u);
 				}
 			}
+			session.save(tenant);
 
 		} finally {
 			managerPersistenceService.commitTransaction();
@@ -673,6 +676,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
 			for (User user : tenant.getUsers()) {
 				user = (User) session.load(User.class, user.getId());
+				if(!user.getRoles().isEmpty()) {
+					user.setRoles(Sets.<UserRole>newHashSet());
+				}
+				session.save(user);
 				session.delete(user);
 			}
 
@@ -683,6 +690,8 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 			this.dropSchema(tenant);
 			tenant = null;
+		} catch(Exception e) {
+			LOGGER.error("unexpected exception deleting tenant",e);
 		} finally {
 			if (tenant == null) { // finished ok
 				ManagerPersistenceService.getInstance().commitTransaction();

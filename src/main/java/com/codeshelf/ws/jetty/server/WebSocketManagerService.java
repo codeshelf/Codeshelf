@@ -378,4 +378,10 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		//return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 	}
+
+	public boolean hasAnySessions() {
+		if(this.activeSessions==null)
+			return false;
+		return !this.activeSessions.isEmpty();
+	}
 }

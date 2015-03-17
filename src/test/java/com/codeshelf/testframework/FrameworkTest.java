@@ -112,7 +112,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
 	private static HmacAuthService								staticHmacAuthService;
-	private static SecurityManager								staticSecurityManagerService;
+	//private static SecurityManager								staticSecurityManagerService;
 
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
@@ -216,8 +216,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		Injector injector = setupInjector();
 		
-		staticSecurityManagerService = injector.getInstance(SecurityManager.class);
-		SecurityUtils.setSecurityManager(staticSecurityManagerService);
+		//staticSecurityManagerService = injector.getInstance(SecurityManager.class);
+		//SecurityUtils.setSecurityManager(staticSecurityManagerService);
 		
 		realTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
 		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
@@ -255,7 +255,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
 		authProviderService = staticHmacAuthService;
-		SecurityUtils.setSecurityManager(staticSecurityManagerService);
+		CodeshelfSecurityManager.removeCurrentUserIfPresent();
+		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
 		
 		radioController = null;
 		deviceManager = null;
@@ -267,6 +268,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		networkPersistentId = null;
 		che1PersistentId = null;
 		che2PersistentId = null;
+
+		if (staticWebSocketManagerService.hasAnySessions())
+			staticWebSocketManagerService.reset();
 
 		if (this.getFrameworkType().equals(Type.MINIMAL)) {
 			disablePersistence();
@@ -292,6 +296,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		if (staticClientConnectionManagerService != null) {
 			staticClientConnectionManagerService.setDisconnected();
+			for(int i=0;i<500 && staticWebSocketManagerService.hasAnySessions();i++) {
+				ThreadUtils.sleep(2);;
+			}
 		}
 		if (radioController != null) {
 			radioController.stopController();
@@ -443,8 +450,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		} else {
 			// not 1st persistence run. need to reset
 			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
-			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
-			realTenantManagerService.resetTenant(realDefaultTenant);
 			// destroy any non-default tenants we created
 			List<Tenant> tenants = realTenantManagerService.getTenants();
 			for(Tenant tenant : tenants) {
@@ -452,7 +457,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 					realTenantManagerService.deleteTenant(tenant);
 				}
 			}
-			List<UserRole> roles = Lists.newArrayList(realTenantManagerService.getRoles());
+			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
+			realTenantManagerService.resetTenant(realDefaultTenant);
+			List<UserRole> roles = realTenantManagerService.getRoles();
 			for(UserRole role : roles) {
 				realTenantManagerService.deleteRole(role);
 			}
@@ -469,9 +476,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	private void startServer() {
-		if (staticWebSocketManagerService.isRunning())
-			staticWebSocketManagerService.reset();
-
 		if (serverServiceManager == null) {
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();

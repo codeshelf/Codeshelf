@@ -240,6 +240,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				}
 			}
     	} catch (Exception e) {
+    		if(e instanceof NullPointerException) {
+    			LOGGER.error("Unexpected exception in ServerMessageProcessor",e);
+    		}
     		response = new FailureResponse(ExceptionUtils.getMessage(e));
     		response.setRequestId(request.getMessageId());
     		if (request instanceof DeviceRequest) {

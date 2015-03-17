@@ -34,16 +34,17 @@ public class CodeshelfRealm extends AuthorizingRealm {
 		Integer userId = (Integer)principals.getPrimaryPrincipal();
 		User user = TenantManagerService.getInstance().getUser(userId);
 		
-		// default role = usertype
-		Set<String> roles = new HashSet<String>();
-		roles.add(user.getType().toString());
-		roles.addAll(user.getRoleNames());
+		SimpleAuthorizationInfo info = null;
+		if(user != null) {
+			Set<String> roles = new HashSet<String>();
+			roles.add(user.getType().toString()); // temporarily, UserType = default role
+			roles.addAll(user.getRoleNames());
+			
+			info = new SimpleAuthorizationInfo();
+			info.setStringPermissions(user.getPermissions());
+			info.setRoles(roles);
+		} // else getUser logged error
 		
-		SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-
-		info.setStringPermissions(user.getPermissions());
-		
-		info.setRoles(roles);
 		return info;
 	}
 

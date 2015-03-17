@@ -44,7 +44,7 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	public static final String	THREAD_CONTEXT_USER_KEY	= "user";
 
 	@Inject
-	CodeshelfSecurityManager(Realm realm) {
+	public CodeshelfSecurityManager(Realm realm) {
 		super();
 
 		this.oneRealm = realm;
@@ -109,7 +109,7 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	public static void setCurrentUser(User user) {
 		User oldUser=getCurrentUser();
 		if(oldUser != null) {
-			LOGGER.error("setCurrentUser {} called but there was already a current user {}",oldUser.getId(),user.getId());
+			LOGGER.error("setCurrentUser {} called but there was already a current user {}",user,oldUser.getId());
 		}
 		ThreadContext.put(THREAD_CONTEXT_USER_KEY,user);
 	}
@@ -118,10 +118,12 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		if(getCurrentUser() == null) {
 			LOGGER.error("removeCurrentUser called but no current user existed");
 		}
+		ThreadContext.remove(ThreadContext.SECURITY_MANAGER_KEY);
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 
 	public static void removeCurrentUserIfPresent() {
+		ThreadContext.remove(ThreadContext.SECURITY_MANAGER_KEY);
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 

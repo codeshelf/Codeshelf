@@ -13,8 +13,10 @@ import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.UUID;
 
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -271,6 +273,9 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 
+		for(Entry<String, String> entry : ThreadContext.getContext().entrySet()) {
+			LOGGER.info("ThreadContext: {} = {}",entry.getKey(),entry.getValue());
+		}
 		this.startSiteController();
 
 		//For this data set

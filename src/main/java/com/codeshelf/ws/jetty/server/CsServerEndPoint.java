@@ -138,19 +138,13 @@ public class CsServerEndPoint {
     
     @OnError
     public void onError(Session session, Throwable cause) {
-    	User user = webSocketManagerService.getSession(session).getUser();
-    	CodeshelfSecurityManager.setCurrentUser(user);
-    	try {
-        	LOGGER.error("WebSocket error", cause);
-    	} finally {
-        	CodeshelfSecurityManager.removeCurrentUserIfPresent();
-    	}
+    	LOGGER.error("WebSocket error", cause);
     }
 
     //Injected see ServerMain
 	public static void setWebSocketManagerService(WebSocketManagerService instance) {
 		if (webSocketManagerService != null) {
-			throw new IllegalArgumentException("SessionManager should only be initialized once");
+			throw new IllegalArgumentException("WebSocketManagerService should only be initialized once");
 		}
 		webSocketManagerService = instance;
 	}
