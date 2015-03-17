@@ -177,7 +177,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return true;
 	}
 	@Override
-	public void destroyTenant(Tenant tenant) {
+	public void deleteTenant(Tenant tenant) {
 	}
 	@Override
 	public byte[] getHtpasswd() {
@@ -209,7 +209,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return null;
 	}
 	@Override
-	public void destroyRole(UserRole role) {
+	public void deleteRole(UserRole role) {
 		// TODO Auto-generated method stub
 		
 	}
@@ -239,7 +239,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return null;
 	}
 	@Override
-	public void destroyPermission(UserPermission permission) {
+	public void deletePermission(UserPermission permission) {
 		// TODO Auto-generated method stub
 		
 	}

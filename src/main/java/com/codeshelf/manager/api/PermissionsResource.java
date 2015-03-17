@@ -3,6 +3,7 @@ package com.codeshelf.manager.api;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserPermission;
 
 @Path("/permissions")
@@ -84,6 +86,22 @@ public class PermissionsResource {
 			return Response.status(Status.NOT_FOUND).build(); // must create first
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception",e);
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+
+	@Path("{id}")
+	@DELETE
+	public Response deletePermission(@PathParam("id") Integer id) {
+		try {
+			UserPermission permission = TenantManagerService.getInstance().getPermission(id);
+			if (permission != null) {
+				TenantManagerService.getInstance().deletePermission(permission);
+				return Response.ok().build();
+			}
+			return Response.status(Status.NOT_FOUND).build(); // must create first
+		} catch (Exception e) {
+			LOGGER.error("Unexpected exception", e);
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}

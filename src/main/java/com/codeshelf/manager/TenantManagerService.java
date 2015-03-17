@@ -26,6 +26,7 @@ import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
 public class TenantManagerService extends AbstractCodeshelfIdleService implements ITenantManagerService {
@@ -661,7 +662,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public void destroyTenant(Tenant tenant) {
+	public void deleteTenant(Tenant tenant) {
 		if (tenant.equals(this.getDefaultTenant())) {
 			throw new UnsupportedOperationException("cannot destroy default tenant");
 		}
@@ -760,6 +761,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		try {
 			session.save(newRole);
+			LOGGER.info("created role {}",newRole.getName());
 			result = newRole;
 		} finally {
 			if (result == null)
@@ -778,6 +780,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			UserRole mergeResult = (UserRole) session.merge(role);
 			managerPersistenceService.commitTransaction();
+			LOGGER.info("saved changes to role {} {}",role.getId(),role.getName());
 			persistentRole = mergeResult;
 		} finally {
 			if (persistentRole == null)
@@ -787,14 +790,20 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public void destroyRole(UserRole role) {
+	public void deleteRole(UserRole role) {
+		// remove existing permissions from role 1st
+		role.setPermissions(Sets.<UserPermission>newHashSet());
+		role = this.updateRole(role);
+
 		// assume input is an existing detached role
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		boolean deleted = false;
+		
 		try {
 			UserRole loadResult = (UserRole) session.load(UserRole.class, role.getId());
 			session.delete(loadResult);
 			managerPersistenceService.commitTransaction();
+			LOGGER.info("deleted role {} {}",role.getId(),role.getName());
 			deleted = true;
 		} finally {
 			if (!deleted)
@@ -870,6 +879,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		try {
 			session.save(newPermission);
+			LOGGER.info("created permission {}",newPermission.getDescriptor());
 			result = newPermission;
 		} finally {
 			if (result == null)
@@ -888,6 +898,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			UserPermission mergeResult = (UserPermission) session.merge(permission);
 			managerPersistenceService.commitTransaction();
+			LOGGER.info("saved changes to permission {} {}",permission.getId(),permission.getDescriptor());
 			persistentRole = mergeResult;
 		} finally {
 			if (persistentRole == null)
@@ -897,7 +908,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public void destroyPermission(UserPermission permission) {
+	public void deletePermission(UserPermission permission) {
 		// assume input is an existing detached permission
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		boolean deleted = false;
@@ -905,6 +916,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			UserPermission loadResult = (UserPermission) session.load(UserPermission.class, permission.getId());
 			session.delete(loadResult);
 			managerPersistenceService.commitTransaction();
+			LOGGER.info("deleted permission {} {}",permission.getId(),permission.getDescriptor());
 			deleted = true;
 		} finally {
 			if (!deleted)

@@ -36,7 +36,7 @@ public interface ITenantManagerService extends ICodeshelfService {
 	Tenant updateTenant(Tenant tenant);
 	Tenant getDefaultTenant();
 	List<Tenant> getTenants();
-	void destroyTenant(Tenant tenant); // needed for testing
+	void deleteTenant(Tenant tenant); // needed for testing
 
 	// roles
 	List<UserRole> getRoles();
@@ -44,7 +44,7 @@ public interface ITenantManagerService extends ICodeshelfService {
 	UserRole getRoleByName(String name);
 	UserRole createRole(String name);
 	UserRole updateRole(UserRole role);
-	void destroyRole(UserRole role);
+	void deleteRole(UserRole role);
 	
 	// permissions
 	List<UserPermission> getPermissions();
@@ -52,9 +52,10 @@ public interface ITenantManagerService extends ICodeshelfService {
 	UserPermission getPermissionByDescriptor(String name);
 	UserPermission createPermission(String name);
 	UserPermission updatePermission(UserPermission permission);
-	void destroyPermission(UserPermission permission);
+	void deletePermission(UserPermission permission);
 	
 	// misc
 	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
+
 
 }

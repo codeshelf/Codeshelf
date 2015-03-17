@@ -41,6 +41,8 @@ import com.codeshelf.manager.ManagerPersistenceService;
 import com.codeshelf.manager.ManagerSchema;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.UserPermission;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
@@ -72,6 +74,7 @@ import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
@@ -446,8 +449,16 @@ public abstract class FrameworkTest implements IntegrationTest {
 			List<Tenant> tenants = realTenantManagerService.getTenants();
 			for(Tenant tenant : tenants) {
 				if(!tenant.equals(realDefaultTenant)) {
-					realTenantManagerService.destroyTenant(tenant);
+					realTenantManagerService.deleteTenant(tenant);
 				}
+			}
+			List<UserRole> roles = Lists.newArrayList(realTenantManagerService.getRoles());
+			for(UserRole role : roles) {
+				realTenantManagerService.deleteRole(role);
+			}
+			List<UserPermission> permissions = realTenantManagerService.getPermissions();
+			for(UserPermission perm : permissions) {
+				realTenantManagerService.deletePermission(perm);
 			}
 		}
 
