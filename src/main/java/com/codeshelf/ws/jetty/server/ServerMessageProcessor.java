@@ -238,7 +238,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				}
 			}
     	} catch (Exception e) {
-    		LOGGER.error("Command:{} failed: {}", command.toString(), e);
+    		if(e instanceof NullPointerException) {
     			LOGGER.error("Unexpected exception in ServerMessageProcessor",e);
     		}
     		response = new FailureResponse(ExceptionUtils.getMessage(e));
