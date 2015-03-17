@@ -238,6 +238,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				}
 			}
     	} catch (Exception e) {
+    		if(e instanceof RuntimeException) {
+    			LOGGER.error("Unexpected exception handling request",e);
+    		}
     		response = new FailureResponse(ExceptionUtils.getMessage(e));
     		response.setRequestId(request.getMessageId());
     		if (request instanceof DeviceRequest) {
