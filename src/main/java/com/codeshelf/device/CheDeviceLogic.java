@@ -363,6 +363,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (matchItem == null || matchPickLocation == null) // this clause used for DEV-451 in selectNextActivePicks()
 			return false;
 
+		if (wiToCheck.isHousekeeping()) // they actually may match the getItemId and getPickInstruction values
+			return false;
+		
 		if (matchItem.equals(wiToCheck.getItemId()))
 			if (matchPickLocation.equals(wiToCheck.getPickInstruction()))
 				return true;
@@ -1301,8 +1304,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
 			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
-		byte freq = PosControllerInstr.SOLID_FREQ;
+		byte freq = PosControllerInstr.SOLID_FREQ;		
 		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		if (this.getCheStateEnum().equals(CheStateEnum.SCAN_SOMETHING)) { // a little weak feedback that the poscon button press will not work
+			brightness = PosControllerInstr.MIDDIM_DUTYCYCLE;
+		}
+		
 		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 		if (planQuantityForPositionController != minQuantityForPositionController
 				|| planQuantityForPositionController != maxQuantityForPositionController) {

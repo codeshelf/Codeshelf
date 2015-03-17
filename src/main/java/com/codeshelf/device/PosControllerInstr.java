@@ -68,6 +68,7 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 
 	//Display Brightness
 	public static final Byte	DIM_DUTYCYCLE					= (byte) 0xFD;
+	public static final Byte	MIDDIM_DUTYCYCLE				= (byte) 0xF6;
 	public static final Byte	MED_DUTYCYCLE					= (byte) 0xF0;
 	public static final Byte	BRIGHT_DUTYCYCLE				= (byte) 0x40;
 
