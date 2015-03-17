@@ -56,7 +56,7 @@ public class CsServerEndPoint {
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
-		WebSocketConnection conn = webSocketManagerService.getSession(session);
+		WebSocketConnection conn = webSocketManagerService.getWebSocketConnectionForSession(session);
 		if(conn != null) {
 			User user = conn.getUser();
 			if(user != null) {
@@ -71,15 +71,14 @@ public class CsServerEndPoint {
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
-    	boolean setUser = false;
+    	User setUserContext = null;
     	this.getTenantPersistenceService().beginTransaction();
     	try{
-        	WebSocketConnection csSession = webSocketManagerService.getSession(session);
-        	User user = csSession.getUser();
-        	if(user != null) {
-        		LOGGER.info("Got message {} and setting user context to {} {}", message.getClass().getSimpleName(), user.getId(), user.getUsername());
+        	WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
+        	setUserContext = csSession.getUser();
+        	if(setUserContext != null) {
             	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
-            	setUser = true;
+        		LOGGER.info("Got message {}", message.getClass().getSimpleName());
         	} else {
         		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());
         	}
@@ -115,7 +114,7 @@ public class CsServerEndPoint {
 			LOGGER.error("Unable to persist during message handling: " + message, e);
 		}
     	finally {
-    		if(setUser) {
+    		if(setUserContext != null) {
     			CodeshelfSecurityManager.removeCurrentUser();
     		}
 		}
@@ -123,7 +122,7 @@ public class CsServerEndPoint {
     
 	@OnClose
     public void onClose(Session session, CloseReason reason) {
-		User user = webSocketManagerService.getSession(session).getUser();
+		User user = webSocketManagerService.getWebSocketConnectionForSession(session).getUser();
 		try {
 	    	LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user.toString(), reason));
 			webSocketManagerService.sessionEnded(session);		

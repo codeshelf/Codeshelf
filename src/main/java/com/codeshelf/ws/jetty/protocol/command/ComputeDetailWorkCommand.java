@@ -21,8 +21,8 @@ public class ComputeDetailWorkCommand extends CommandABC {
 
 	private WorkService	workService;
 	
-	public ComputeDetailWorkCommand(WebSocketConnection session, ComputeDetailWorkRequest request, WorkService workService) {
-		super(session);
+	public ComputeDetailWorkCommand(WebSocketConnection connection, ComputeDetailWorkRequest request, WorkService workService) {
+		super(connection);
 		this.request = request;
 		this.workService = workService;
 	}

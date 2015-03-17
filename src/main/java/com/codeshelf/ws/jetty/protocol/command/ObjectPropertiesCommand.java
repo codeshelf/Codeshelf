@@ -24,8 +24,8 @@ public class ObjectPropertiesCommand extends CommandABC {
 
 	private ObjectPropertiesRequest request;
 		
-	public ObjectPropertiesCommand(WebSocketConnection session, ObjectPropertiesRequest request) {
-		super(session);
+	public ObjectPropertiesCommand(WebSocketConnection connection, ObjectPropertiesRequest request) {
+		super(connection);
 		this.request = request;
 	}
 	

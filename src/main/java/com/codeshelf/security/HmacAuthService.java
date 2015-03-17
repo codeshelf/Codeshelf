@@ -49,13 +49,15 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	private boolean				cookieSecure;
 	private int					cookieMaxAgeHours;
 
-	// password settings
-	private static final String	PASSWORD_SYMBOLS					= "!@#$%^&*()-_+={}[]<>:;,~`?/|\\ .";
+	// username/password settings
+	private static final int	USERNAME_MIN_LEN					= 1;
+	private static final int	USERNAME_MAX_LEN					= 254; // probably shouldn't be more than this
+	private static final String	ALLOWED_SYMBOLS						= "!@#$%^&*()-_+={}[]<>:;,~`?/|\\ .";
 	private static final int	PASSWORD_DEFAULT_MIN_LEN			= 6;
 	private static final int	PASSWORD_DEFAULT_MAX_LEN			= 32;
 	private int					passwordMinLength;
 	private int					passwordMaxLength;
-	private boolean				passwordRequireSymbol; // defaults false
+	private boolean				passwordRequireSymbol;																	// defaults false
 	private boolean				passwordRequireMixed;
 
 	// reusable hash generator
@@ -67,11 +69,10 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	public static AuthProviderService getInstance() {
 		return theInstance;
 	}
-	
+
 	public static void setInstance(AuthProviderService instance) {
 		theInstance = instance; // for testing only
 	}
-
 
 	/**************************** token methods 
 	 * @param sessionFlags 
@@ -197,6 +198,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 
 	/**************************** cookie methods ****************************/
 
+	@Override
 	public String getCookieName() {
 		return COOKIE_NAME;
 	}
@@ -223,6 +225,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		return null;
 	}
 
+	@Override
 	public Cookie createAuthCookie(String token) {
 		Cookie cookie = new Cookie(COOKIE_NAME, token);
 		cookie.setPath("/");
@@ -235,49 +238,17 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 
 	/**************************** password hash methods ****************************/
 
+	@Override
 	public String hashPassword(final String password) {
 		return Md5Crypt.apr1Crypt(password);
 	}
 
+	@Override
 	public boolean checkPassword(final String password, final String hash) {
 		return Md5Crypt.apr1Crypt(password, hash).equals(hash);
 	}
 
-	public boolean passwordMeetsRequirements(String password) {
-		if (password == null)
-			return false;
-		if (password.isEmpty())
-			return false;
-		if (password.length() < this.passwordMinLength || password.length() > this.passwordMaxLength) 
-			return false;
-		boolean hasSymbol=false;
-		boolean hasLowercase=false;
-		boolean hasUppercase=false;
-		boolean hasNumber=false;
-		for(int i=0; i<password.length(); i++) {
-			char ch = password.charAt(i);
-			boolean lowercase = CharSet.ASCII_ALPHA_LOWER.contains(ch);
-			boolean uppercase = CharSet.ASCII_ALPHA_UPPER.contains(ch);
-			boolean number = CharSet.ASCII_NUMERIC.contains(ch);
-			boolean symbol = PASSWORD_SYMBOLS.indexOf(ch) >= 0;
-			if(!lowercase && !uppercase && !number && !symbol)
-				return false;
-			hasLowercase |= lowercase;
-			hasUppercase |= uppercase;
-			hasSymbol |= symbol;
-			hasNumber |= number;
-		}
-		if(this.passwordRequireMixed) {
-			int mix = (hasUppercase?1:0) + (hasLowercase?1:0) + (hasNumber?1:0);
-			if(mix<2)
-				return false;
-		}
-		if(this.passwordRequireSymbol && !hasSymbol)
-			return false;
-
-		return true;
-	}
-
+	@Override
 	public boolean hashIsValid(String hash) {
 		return hash.startsWith("$apr1$");
 	}
@@ -285,9 +256,64 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	@Override
 	public String describePasswordRequirements() {
 		return String.format("Password must be between %d and %d characters long, consisting of letters, numbers and punctuation.%s%s",
-			this.passwordMinLength,this.passwordMaxLength,
-			this.passwordRequireMixed?" It must contain a mix of upper case, lower case and/or numbers.":"",
-			this.passwordRequireSymbol?" It must contain at least one of these symbols: "+PASSWORD_SYMBOLS:"");
+			this.passwordMinLength,
+			this.passwordMaxLength,
+			this.passwordRequireMixed ? " It must contain a mix of upper case, lower case and/or numbers." : "",
+			this.passwordRequireSymbol ? " It must contain at least one of these symbols: " + ALLOWED_SYMBOLS : "");
+	}
+
+	@Override
+	public boolean passwordMeetsRequirements(String password) {
+		if (password == null)
+			return false;
+		if (password.isEmpty())
+			return false;
+		if (password.length() < this.passwordMinLength || password.length() > this.passwordMaxLength)
+			return false;
+		boolean hasSymbol = false;
+		boolean hasLowercase = false;
+		boolean hasUppercase = false;
+		boolean hasNumber = false;
+		for (int i = 0; i < password.length(); i++) {
+			char ch = password.charAt(i);
+			boolean lowercase = CharSet.ASCII_ALPHA_LOWER.contains(ch);
+			boolean uppercase = CharSet.ASCII_ALPHA_UPPER.contains(ch);
+			boolean number = CharSet.ASCII_NUMERIC.contains(ch);
+			boolean symbol = ALLOWED_SYMBOLS.indexOf(ch) >= 0;
+			if (!lowercase && !uppercase && !number && !symbol)
+				return false;
+			hasLowercase |= lowercase;
+			hasUppercase |= uppercase;
+			hasSymbol |= symbol;
+			hasNumber |= number;
+		}
+		if (this.passwordRequireMixed) {
+			int mix = (hasUppercase ? 1 : 0) + (hasLowercase ? 1 : 0) + (hasNumber ? 1 : 0);
+			if (mix < 2)
+				return false;
+		}
+		if (this.passwordRequireSymbol && !hasSymbol)
+			return false;
+
+		return true;
+	}
+
+	@Override
+	public boolean usernameMeetsRequirements(String username) {
+		if (username == null)
+			return false;
+		if (username.isEmpty())
+			return false;
+		if (username.length() < USERNAME_MIN_LEN || username.length() > USERNAME_MAX_LEN)
+			return false;
+		for (int i = 0; i < username.length(); i++) {
+			char ch = username.charAt(i);
+			if (!CharSet.ASCII_ALPHA.contains(ch) 
+					&& !CharSet.ASCII_NUMERIC.contains(ch) 
+					&& ALLOWED_SYMBOLS.indexOf(ch) < 0)
+				return false;
+		}
+		return true;
 	}
 
 	/**************************** service methods ****************************/
@@ -328,10 +354,10 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 			this.cookieDomain = COOKIE_DEFAULT_DOMAIN;
 		this.cookieSecure = Boolean.getBoolean("auth.cookie.secure");
 		this.cookieMaxAgeHours = Integer.getInteger("auth.cookie.maxagehours", COOKIE_DEFAULT_MAX_AGE_HOURS);
-		
+
 		// password settings
-		this.passwordMinLength = Integer.getInteger("auth.password.length.min",PASSWORD_DEFAULT_MIN_LEN);
-		this.passwordMaxLength = Integer.getInteger("auth.password.length.max",PASSWORD_DEFAULT_MAX_LEN);
+		this.passwordMinLength = Integer.getInteger("auth.password.length.min", PASSWORD_DEFAULT_MIN_LEN);
+		this.passwordMaxLength = Integer.getInteger("auth.password.length.max", PASSWORD_DEFAULT_MAX_LEN);
 		this.passwordRequireSymbol = Boolean.getBoolean("auth.password.require.symbol");
 		this.passwordRequireMixed = Boolean.getBoolean("auth.password.require.mixedcase");
 

@@ -21,8 +21,8 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 
 	final private WorkService workService;
 	
-	public CompleteWorkInstructionCommand(WebSocketConnection session, CompleteWorkInstructionRequest request, WorkService workService) {
-		super(session);
+	public CompleteWorkInstructionCommand(WebSocketConnection connection, CompleteWorkInstructionRequest request, WorkService workService) {
+		super(connection);
 		this.request = request;
 		this.workService = workService;
 	}

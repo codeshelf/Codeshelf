@@ -17,7 +17,7 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
 	
     @Override
     protected Result check() throws Exception {
-    	Collection<WebSocketConnection> sessions = sessionManager.getSessions();
+    	Collection<WebSocketConnection> sessions = sessionManager.getWebSocketConnections();
     	int c=0;
     	for (WebSocketConnection session : sessions) {
     		if (session.getLastState()==State.ACTIVE && session.isSiteController()) {

@@ -10,10 +10,10 @@ public abstract class CommandABC {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CommandABC.class);
 
-	WebSocketConnection session;
+	WebSocketConnection wsConnection;
 	
-	public CommandABC(WebSocketConnection session) {
-		this.session = session;
+	public CommandABC(WebSocketConnection connection) {
+		this.wsConnection = connection;
 	}
 	
 	public abstract ResponseABC exec();

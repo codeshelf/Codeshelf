@@ -20,8 +20,8 @@ public class GetWorkCommand extends CommandABC {
 	GetWorkRequest request;
 	WorkService workService;
 	
-	public GetWorkCommand(WebSocketConnection session, GetWorkRequest request, WorkService workService) {
-		super(session);
+	public GetWorkCommand(WebSocketConnection connection, GetWorkRequest request, WorkService workService) {
+		super(connection);
 		this.request = request;
 		this.workService = workService;
 	}

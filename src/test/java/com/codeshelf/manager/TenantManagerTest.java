@@ -63,8 +63,13 @@ public class TenantManagerTest extends HibernateTest {
 		// cannot create user that already exists
 		Assert.assertFalse(this.tenantManagerService.canCreateUser(existingUsername));
 		
-		// fails cleanly if you try
-		Assert.assertNull(this.tenantManagerService.createUser(this.getDefaultTenant(), existingUsername, "12345", UserType.SITECON, null));
+		// THROWS if you try
+		try {
+			Assert.assertNull(this.tenantManagerService.createUser(this.getDefaultTenant(), existingUsername, "passw0rD!", UserType.SITECON, null));
+			Assert.fail("should have thrown");
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		}
 		
 		// can authenticate default
 		Assert.assertNotNull(this.tenantManagerService.authenticate(existingUsername,CodeshelfNetwork.DEFAULT_SITECON_PASS));
@@ -286,7 +291,7 @@ public class TenantManagerTest extends HibernateTest {
 	
 	@Test
 	public void rolesAndPermissions() {
-		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "p", UserType.APPUSER, null);		
+		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "passw0rd!", UserType.APPUSER, null);		
 		UserPermission view = this.tenantManagerService.createPermission("view");
 		UserPermission edit = this.tenantManagerService.createPermission("edit");
 		UserPermission control = this.tenantManagerService.createPermission("control");

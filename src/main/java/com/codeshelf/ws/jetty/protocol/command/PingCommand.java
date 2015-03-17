@@ -10,8 +10,8 @@ public class PingCommand extends CommandABC {
 
 	private PingRequest request;
 	
-	public PingCommand(WebSocketConnection session, PingRequest pingRequest) {
-		super(session);
+	public PingCommand(WebSocketConnection connection, PingRequest pingRequest) {
+		super(connection);
 		this.request = pingRequest;
 	}
 

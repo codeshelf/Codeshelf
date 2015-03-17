@@ -30,8 +30,8 @@ public class ServiceMethodCommand extends CommandABC {
 
 	private ConvertUtilsBean	converter;
 
-	public ServiceMethodCommand(WebSocketConnection session, ServiceMethodRequest request, ServiceFactory serviceFactory, ConvertUtilsBean converter) {
-		super(session);
+	public ServiceMethodCommand(WebSocketConnection connection, ServiceMethodRequest request, ServiceFactory serviceFactory, ConvertUtilsBean converter) {
+		super(connection);
 		this.request = request;
 		this.serviceFactory = serviceFactory;
 		this.converter = converter;

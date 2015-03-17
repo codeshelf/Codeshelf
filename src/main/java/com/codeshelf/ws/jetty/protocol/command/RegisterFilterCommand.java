@@ -69,7 +69,7 @@ public class RegisterFilterCommand extends CommandABC {
 			@SuppressWarnings("unchecked")
 			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				this.objectChangeBroadcaster.registerDAOListener(session, classObject);
+				this.objectChangeBroadcaster.registerDAOListener(wsConnection, classObject);
 
 				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// create listener
@@ -81,7 +81,7 @@ public class RegisterFilterCommand extends CommandABC {
 				filter.setParams(processedParams);
 				filter.setCriteriaName(filterClause);
 				List<? extends IDomainObject> objectMatchList = filter.refreshMatchList();
-				this.session.registerObjectEventListener(filter);
+				this.wsConnection.registerObjectEventListener(filter);
 
 				// generate response
 				List<Map<String, Object>> results = filter.getProperties(objectMatchList, EventType.Update);

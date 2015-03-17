@@ -19,8 +19,8 @@ public class InventoryUpdateCommand extends CommandABC {
 	private InventoryUpdateRequest request;
 	private InventoryService inventoryService;
 	
-	public InventoryUpdateCommand(WebSocketConnection session, InventoryUpdateRequest request, InventoryService inventoryService) {
-		super(session);
+	public InventoryUpdateCommand(WebSocketConnection connection, InventoryUpdateRequest request, InventoryService inventoryService) {
+		super(connection);
 		this.request = request;
 		this.inventoryService = inventoryService;
 	}

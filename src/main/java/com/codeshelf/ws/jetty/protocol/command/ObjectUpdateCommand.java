@@ -26,8 +26,8 @@ public class ObjectUpdateCommand extends CommandABC {
 	
 	private PropertyUtilsBean propertyUtil = new PropertyUtilsBean();
 	
-	public ObjectUpdateCommand(WebSocketConnection session, ObjectUpdateRequest request) {
-		super(session);
+	public ObjectUpdateCommand(WebSocketConnection connection, ObjectUpdateRequest request) {
+		super(connection);
 		this.request = request;
 	}
 	

@@ -182,7 +182,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		return result;
 	}
 
-	public boolean checkUsername(Session session, String username) {
+	private boolean isUsernameAvailable(Session session, String username) {
 		User user = getUser(session, username);
 		return (user == null);
 	}
@@ -191,11 +191,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Override
 	public boolean canCreateUser(String username) {
-		// for UI
+		if(!authProviderService.usernameMeetsRequirements(username)) 
+			return false;
+
 		boolean result = false;
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
-			result = checkUsername(session, username);
+			result = isUsernameAvailable(session, username);
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}
@@ -204,27 +206,32 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Override
 	public User createUser(Tenant tenant, String username, String password, UserType type, Set<UserRole> roles) {
-		User result = null;
+		if(!authProviderService.usernameMeetsRequirements(username))
+			throw new IllegalArgumentException("tried to create user with invalid username (caller must prevalidate)");
+		if(!authProviderService.passwordMeetsRequirements(password))
+			throw new IllegalArgumentException("tried to create user with invalid password (caller must prevalidate)");
+		
 
+		User result = null;
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
-			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
-			if (checkUsername(session, username)) {
-				// ok to create
-				User user = new User();
-				user.setUsername(username);
-				user.setHashedPassword(authProviderService.hashPassword(password));
-				user.setType(type);
-				if(roles != null)
-					user.setRoles(roles);
-				tenant.addUser(user);
-				session.save(tenant);
-				session.save(user);
-				result = user;
-				LOGGER.info("Created user {} for tenant {}", username, tenant.getName());
-			} else {
-				LOGGER.error("Tried to create duplicate username " + username);
+			if (!isUsernameAvailable(session, username)) {
+				throw new IllegalArgumentException("Tried to create duplicate username " + username + " (caller must prevalidate)");
 			}
+			
+			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
+
+			User user = new User();
+			user.setUsername(username);
+			user.setHashedPassword(authProviderService.hashPassword(password));
+			user.setType(type);
+			if(roles != null)
+				user.setRoles(roles);
+			tenant.addUser(user);
+			session.save(tenant);
+			session.save(user);
+			result = user;
+			LOGGER.info("Created user {} for tenant {}", username, tenant.getName());
 		} finally {
 			managerPersistenceService.commitTransaction();
 		}

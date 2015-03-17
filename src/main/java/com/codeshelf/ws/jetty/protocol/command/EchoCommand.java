@@ -13,8 +13,8 @@ public class EchoCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(EchoCommand.class);
 	EchoRequest mRequest;
 	
-	public EchoCommand(WebSocketConnection session, EchoRequest request) {
-		super(session);
+	public EchoCommand(WebSocketConnection connection, EchoRequest request) {
+		super(connection);
 		mRequest = request;
 	}
 

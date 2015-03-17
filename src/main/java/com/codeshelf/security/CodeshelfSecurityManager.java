@@ -107,6 +107,9 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	}
 
 	public static void setCurrentUser(User user) {
+		if(user == null)
+			throw new NullPointerException("Attempt to set current user to null");
+		
 		// Shiro will call the SecurityManager to get the current subject, which will determine it from this key
 		// Also used for context logging.
 		User oldUser=getCurrentUser();
@@ -114,6 +117,7 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 			LOGGER.error("setCurrentUser {} called but there was already a current user {}",user,oldUser.getId());
 		}
 		ThreadContext.put(THREAD_CONTEXT_USER_KEY,user);
+		org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_USER_KEY,user.getUsername());
 	}
 
 	public static void removeCurrentUser() {
@@ -124,12 +128,14 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		}
 		ThreadContext.remove(ThreadContext.SUBJECT_KEY); // TODO: merge User and Subject somehow
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
+		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 
 	public static void removeCurrentUserIfPresent() {
 		// Remove both the User and Shiro Subject from ThreadContext if present.
 		ThreadContext.remove(ThreadContext.SUBJECT_KEY);
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
+		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 
 	public static void authorizeAnnotatedClass(Class<?> clazz) throws AuthorizationException {		

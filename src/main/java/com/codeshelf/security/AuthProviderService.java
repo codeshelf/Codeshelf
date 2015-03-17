@@ -17,10 +17,12 @@ public interface AuthProviderService extends CodeshelfService {
 	Cookie createAuthCookie(final String newToken);
 	
 	// password hashing
+	boolean passwordMeetsRequirements(final String password);
 	String hashPassword(final String password);
 	boolean checkPassword(final String password,final String hash);
-	boolean passwordMeetsRequirements(final String password);
 	boolean hashIsValid(final String hash);
 	String describePasswordRequirements();
 
+	// etc
+	boolean usernameMeetsRequirements(String username);
 }

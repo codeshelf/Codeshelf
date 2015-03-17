@@ -34,8 +34,8 @@ public class LoginCommand extends CommandABC {
 	
 	private WebSocketManagerService sessionManager;
 
-	public LoginCommand(WebSocketConnection session, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
-		super(session);
+	public LoginCommand(WebSocketConnection wsConnection, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
+		super(wsConnection);
 		this.loginRequest = loginRequest;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
 		this.sessionManager = sessionManager;
@@ -46,15 +46,16 @@ public class LoginCommand extends CommandABC {
 		LoginResponse response = new LoginResponse();
 		String username = loginRequest.getUserId();
 		String password = loginRequest.getPassword();
-		if (session != null) {
+		if (wsConnection != null) {
 			User authUser = TenantManagerService.getInstance().authenticate(username, password);
 			if (authUser != null) {
+				// successfully authenticated user with password
 				Tenant tenant = TenantManagerService.getInstance().getTenantByUsername(authUser.getUsername());				
-				session.authenticated(authUser);
-				CodeshelfSecurityManager.setCurrentUser(session.getUser());
+				wsConnection.authenticated(authUser);
+				CodeshelfSecurityManager.setCurrentUser(authUser);
 				try {
 					LOGGER.info("User " + username + " of " + tenant.getName() + " authenticated on session "
-							+ session.getSessionId());
+							+ wsConnection.getSessionId());
 
 					// determine if site controller
 					SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
@@ -63,7 +64,7 @@ public class LoginCommand extends CommandABC {
 						network = TenantPersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());
 					
 						// send all network updates to this session for this network 
-						NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, session, network);
+						NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
 					} // else regular user session
 
 					// update session counters

@@ -17,8 +17,8 @@ public class CreatePathCommand extends CommandABC {
 
 	CreatePathRequest request;
 	
-	public CreatePathCommand(WebSocketConnection session, CreatePathRequest request) {
-		super(session);
+	public CreatePathCommand(WebSocketConnection connection, CreatePathRequest request) {
+		super(connection);
 		this.request = request;
 	}
 

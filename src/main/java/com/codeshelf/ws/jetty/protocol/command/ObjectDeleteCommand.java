@@ -20,8 +20,8 @@ public class ObjectDeleteCommand extends CommandABC {
 
 	private ObjectDeleteRequest	request;
 	
-	public ObjectDeleteCommand(WebSocketConnection session, ObjectDeleteRequest request) {
-		super(session);
+	public ObjectDeleteCommand(WebSocketConnection connection, ObjectDeleteRequest request) {
+		super(connection);
 		this.request = request;
 	}
 	

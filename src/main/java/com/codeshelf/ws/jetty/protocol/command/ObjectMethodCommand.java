@@ -28,8 +28,8 @@ public class ObjectMethodCommand extends CommandABC {
 
 	private ObjectMethodRequest	request;
 	
-	public ObjectMethodCommand(WebSocketConnection session, ObjectMethodRequest request) {
-		super(session);
+	public ObjectMethodCommand(WebSocketConnection connection, ObjectMethodRequest request) {
+		super(connection);
 		this.request = request;
 	}
 	

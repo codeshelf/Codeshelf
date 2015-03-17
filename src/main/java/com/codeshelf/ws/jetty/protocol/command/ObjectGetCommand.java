@@ -22,8 +22,8 @@ public class ObjectGetCommand extends CommandABC {
 
 	private ObjectGetRequest request;
 	
-	public ObjectGetCommand(WebSocketConnection session, ObjectGetRequest request) {
-		super(session);
+	public ObjectGetCommand(WebSocketConnection connection, ObjectGetRequest request) {
+		super(connection);
 		this.request = request;
 	}
 
