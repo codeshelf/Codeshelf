@@ -109,6 +109,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
 	private static HmacAuthService								staticHmacAuthService;
+	private static SecurityManager								staticSecurityManagerService;
 
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
@@ -212,7 +213,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		Injector injector = setupInjector();
 		
-		SecurityUtils.setSecurityManager(injector.getInstance(SecurityManager.class));
+		staticSecurityManagerService = injector.getInstance(SecurityManager.class);
+		SecurityUtils.setSecurityManager(staticSecurityManagerService);
 		
 		realTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
 		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
@@ -250,7 +252,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
 		authProviderService = staticHmacAuthService;
-
+		SecurityUtils.setSecurityManager(staticSecurityManagerService);
+		
 		radioController = null;
 		deviceManager = null;
 		apiServer = null;

@@ -128,9 +128,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	
 	@Override
 	public ResponseABC handleRequest(WebSocketConnection csSession, RequestABC request) {
-		Subject subject = SecurityUtils.getSubject();
-		
-		LOGGER.info("Request received for processing: {} and subject is {}",request,subject==null?"null":subject.getPrincipal().toString());
+		LOGGER.info("Request received for processing: {}",request);
 
 		requestCounter.inc();
 		CommandABC command = null;
@@ -242,9 +240,6 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				}
 			}
     	} catch (Exception e) {
-    		if(e instanceof RuntimeException) {
-    			LOGGER.error("Unexpected exception handling request",e);
-    		}
     		response = new FailureResponse(ExceptionUtils.getMessage(e));
     		response.setRequestId(request.getMessageId());
     		if (request instanceof DeviceRequest) {

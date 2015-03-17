@@ -75,9 +75,9 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 			context.setPrincipals(principals);
 			context.setSessionCreationEnabled(false);
 			subject = this.subjectFactory.createSubject(context);
-			LOGGER.info("created subject {}",user.getId());
+			LOGGER.debug("created subject {}",user.getId());
 		} else {
-			LOGGER.warn("failed to create subject, no current user");
+			LOGGER.debug("failed to create subject, no current user");
 		}
 		return subject;
 	}
