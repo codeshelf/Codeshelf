@@ -20,6 +20,7 @@ public class CriteriaRegistry {
 	private CriteriaRegistry() {
 		indexedCriteria = Maps.newHashMap();
 
+		
 		indexedCriteria.put("orderDetailByFacilityAndDomainId", 
 			new TypedCriteria("from OrderDetail where active = true and parent.parent.persistentId = :facilityId and domainId = :domainId", 
 					"facilityId", UUID.class,
@@ -128,7 +129,11 @@ public class CriteriaRegistry {
 			new TypedCriteria("from OrderDetail where parent.persistentId = :theId and active = true",
 				"theId", UUID.class)); //the UI dynamically sets the "parent" with theId
 
-		
+		indexedCriteria.put("orderHeadersByFacilityAndPartialDomainId", 
+			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and domainId LIKE :partialDomainId", 
+					"facilityId", UUID.class,
+					"partialDomainId", String.class));
+
 		indexedCriteria.put("orderHeadersByFacilityAndType",
 			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and orderType = :orderType",
 				"facilityId", UUID.class,
