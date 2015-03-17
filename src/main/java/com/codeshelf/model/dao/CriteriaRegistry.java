@@ -139,6 +139,11 @@ public class CriteriaRegistry {
 				"facilityId", UUID.class,
 				"orderType", OrderTypeEnum.class));
 		
+		indexedCriteria.put("orderGroupsByOrderHeaderId",
+			new TypedCriteria("from OrderGroup as og join fetch og.orderHeaders oh where og.active = true and og.parent.persistentId = :parentId and oh.domainId LIKE :partialDomainId",
+				"parentId", UUID.class, //the UI dynamically sets the "parent" with theId
+				"partialDomainId", String.class));
+		
 		indexedCriteria.put("orderHeadersByGroupAndType",
 			new TypedCriteria("from OrderHeader where active = true and orderGroup.persistentId = :theId and orderType = :orderType",
 				"theId", UUID.class, //the UI dynamically sets the "parent" with theId
