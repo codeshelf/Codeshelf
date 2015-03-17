@@ -1,9 +1,12 @@
 package com.codeshelf.manager;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ws.rs.core.MultivaluedMap;
 
+import org.apache.shiro.SecurityUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -13,8 +16,13 @@ import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.HibernateTest;
+import com.google.common.collect.Sets;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+
+import org.apache.shiro.authz.AuthorizationException;
+import org.apache.shiro.subject.Subject;
 
 public class TenantManagerTest extends HibernateTest {
 	final public static Logger LOGGER = LoggerFactory.getLogger(TenantManagerTest.class);
@@ -265,6 +273,62 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertTrue(apiTenant.isActive());
 		newUser = this.tenantManagerService.getUser(newUser.getId());
 		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+	}
+	
+	@Test
+	public void rolesAndPermissions() {
+		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "p", UserType.APPUSER, null);		
+		UserPermission view = this.tenantManagerService.createPermission("view");
+		UserPermission edit = this.tenantManagerService.createPermission("edit");
+		UserPermission control = this.tenantManagerService.createPermission("control");
+		UserPermission print = this.tenantManagerService.createPermission("print");
+		UserRole local = this.tenantManagerService.createRole("local");
+		UserRole guest = this.tenantManagerService.createRole("guest");
+		UserRole admin = this.tenantManagerService.createRole("admin");
+		local.setPermissions(Sets.newHashSet(print,view));
+		guest.setPermissions(Sets.newHashSet(view));
+		admin.setPermissions(Sets.newHashSet(view,edit,control));
+		this.tenantManagerService.updateRole(local);
+		this.tenantManagerService.updateRole(guest);
+		this.tenantManagerService.updateRole(admin);
+
+		// basic assignment, reassignment and retrieval 
+		user.setRoles(Sets.newHashSet(admin,local,guest));
+		Assert.assertEquals(Sets.newHashSet("view","edit","control","print"),user.getPermissions());
+		user.setRoles(Sets.newHashSet(guest,local));
+		Assert.assertEquals(Sets.newHashSet("view","print"),user.getPermissions());
+		Assert.assertEquals(Sets.newHashSet(local,guest),user.getRoles());
+		user.setRoles(Sets.newHashSet(admin));
+		Assert.assertEquals(Sets.newHashSet("view","edit","control"),user.getPermissions());
+		this.tenantManagerService.updateUser(user);
+
+		// permissions can be checked by Shiro
+		CodeshelfSecurityManager.setCurrentUser(user);
+		Subject subject = SecurityUtils.getSubject();
+		try {
+			subject.checkPermissions(new String[]{"print"});
+			Assert.fail("should have thrown");
+		} catch(AuthorizationException e) {
+		}
+		try {
+			subject.checkPermissions(new String[]{"control"});
+		} catch(AuthorizationException e) {
+			Assert.fail("should not have thrown");
+		}
+		
+		// roles can be checked
+		try {
+			subject.checkRole("guest");
+			Assert.fail("should have thrown");
+		} catch(AuthorizationException e) {
+		}
+		try {
+			subject.checkRole("admin");
+		} catch(AuthorizationException e) {
+			Assert.fail("should not have thrown");
+		}
+		
+		// ought to have REST API call checks and check behavior of renaming roles and editing permissions here!
 	}
 
 }
