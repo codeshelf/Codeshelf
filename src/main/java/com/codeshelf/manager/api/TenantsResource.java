@@ -62,7 +62,6 @@ public class TenantsResource {
 			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
 		}
 	}
-
 	
 	@Path("{id}")
 	@GET

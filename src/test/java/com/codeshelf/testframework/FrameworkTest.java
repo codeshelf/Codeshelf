@@ -14,7 +14,6 @@ import javax.websocket.WebSocketContainer;
 import lombok.Getter;
 
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.junit.After;

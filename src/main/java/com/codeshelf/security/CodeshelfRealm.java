@@ -37,9 +37,11 @@ public class CodeshelfRealm extends AuthorizingRealm {
 		// default role = usertype
 		Set<String> roles = new HashSet<String>();
 		roles.add(user.getType().toString());
+		roles.addAll(user.getRoleNames());
+		
 		SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
 
-		// no permissions etc yet
+		info.setStringPermissions(user.getPermissions());
 		
 		info.setRoles(roles);
 		return info;

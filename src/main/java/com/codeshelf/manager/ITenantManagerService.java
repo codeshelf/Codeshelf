@@ -1,6 +1,7 @@
 package com.codeshelf.manager;
 
 import java.util.List;
+import java.util.Set;
 
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.service.ICodeshelfService;
@@ -17,7 +18,7 @@ public interface ITenantManagerService extends ICodeshelfService {
 	
 	// users
 	boolean canCreateUser(String username);	
-	User createUser(Tenant tenant,String username,String password,UserType type);
+	User createUser(Tenant tenant,String username,String password,UserType type, Set<UserRole> roles);
 	User getUser(Integer id);
 	User getUser(String username);
 	User updateUser(User user);
@@ -37,8 +38,23 @@ public interface ITenantManagerService extends ICodeshelfService {
 	List<Tenant> getTenants();
 	void destroyTenant(Tenant tenant); // needed for testing
 
+	// roles
+	List<UserRole> getRoles();
+	UserRole getRole(Integer id);
+	UserRole getRoleByName(String name);
+	UserRole createRole(String name);
+	UserRole updateRole(UserRole role);
+	void destroyRole(UserRole role);
+	
+	// permissions
+	List<UserPermission> getPermissions();
+	UserPermission getPermission(Integer id);
+	UserPermission getPermissionByDescriptor(String name);
+	UserPermission createPermission(String name);
+	UserPermission updatePermission(UserPermission permission);
+	void destroyPermission(UserPermission permission);
+	
 	// misc
 	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
-
 
 }

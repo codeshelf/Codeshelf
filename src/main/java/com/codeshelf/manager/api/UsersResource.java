@@ -25,6 +25,7 @@ import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.HmacAuthService;
@@ -44,9 +45,11 @@ public class UsersResource {
 		validCreateUserFields.add("username");
 		validCreateUserFields.add("password");
 		validCreateUserFields.add("type");
+		validCreateUserFields.add("roles");
 		validUpdateUserFields.add("password");
 		validUpdateUserFields.add("active");
 		validUpdateUserFields.add("type");
+		validUpdateUserFields.add("roles");
 	}
 	
 	public UsersResource() {
@@ -177,7 +180,7 @@ public class UsersResource {
 				user.setHashedPassword(authProviderService.hashPassword(value));
 				success = true;
 			} else {
-				LOGGER.warn("update user {} - invalid password specified", user.getUsername(), key);
+				LOGGER.warn("update user {} - invalid password specified", user.getUsername());
 			}
 		} else if (key.equals("active")) {
 			Boolean active = Boolean.valueOf(value);
@@ -189,12 +192,42 @@ public class UsersResource {
 		} else if (key.equals("type")) {
 			UserType type = UserType.valueOf(value);
 			if (!user.getType().equals(type)) {
-				LOGGER.info("update user {} - set type  = {}", user.getUsername(),type);
+				LOGGER.info("update user {} - set type = {}", user.getUsername(),type);
 				user.setType(type);
 			} // else ignore if no change
 			success = true;
+		} else if (key.equals("roles")) {
+			Set<UserRole> roles = userRoles(value);
+			if(roles != null) {
+				if(!user.getRoles().equals(roles)) {
+					LOGGER.info("update user {} - set roles = {}", user.getUsername(),value);
+					user.setRoles(roles);
+				} // else ignore
+				success=true;
+			} else {
+				LOGGER.warn("invalid roles specified: {}",value);
+			}
 		}
 		return success;
+	}
+
+	private Set<UserRole> userRoles(String value) {
+		Set<UserRole> result = new HashSet<UserRole>();
+		if(value == null || value.isEmpty())
+			return result;
+		
+		ITenantManagerService manager = TenantManagerService.getInstance();
+		String[] roleNames = value.split(UserRole.TOKEN_SEPARATOR);
+		for(int i=0;i<roleNames.length;i++) {
+			UserRole role = manager.getRoleByName(roleNames[i]);
+			if(role != null) {
+				result.add(role);
+			} else {
+				LOGGER.warn("invalid role name in list: {}",value);
+				return null;
+			}
+		}
+		return result;
 	}
 
 	private User doCreateUser(MultivaluedMap<String, String> userParams) {
@@ -219,8 +252,9 @@ public class UsersResource {
 			} catch(NumberFormatException e) {
 				LOGGER.warn("count not convert value to tenantId: {}", tenantIdString);
 			}
+			Set<UserRole> roles = userRoles(cleanInput.get("roles"));
 
-			if (username != null && password != null && type != null) {
+			if (username != null && password != null && type != null && roles != null) {
 				if (manager.canCreateUser(username)) {
 					if (authProviderService.passwordMeetsRequirements(password)) {
 						Tenant tenant;
@@ -230,7 +264,7 @@ public class UsersResource {
 							tenant = manager.getTenant(tenantId);
 						
 						if(tenant != null) {
-							newUser = manager.createUser(tenant, username, password, type);
+							newUser = manager.createUser(tenant, username, password, type, roles);
 							if (newUser == null)
 								LOGGER.warn("failed to create user {}", username);
 							// else success

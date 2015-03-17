@@ -2,6 +2,7 @@ package com.codeshelf.testframework;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -13,6 +14,8 @@ import com.codeshelf.manager.Shard;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.UserPermission;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.model.domain.UserType;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
@@ -90,7 +93,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return false;
 	}
 	@Override
-	public User createUser(Tenant tenant, String username, String password, UserType type) {
+	public User createUser(Tenant tenant, String username, String password, UserType type, Set<UserRole> roles) {
 		return defaultUser;
 	}
 	@Override
@@ -179,5 +182,65 @@ public class MockTenantManagerService implements ITenantManagerService {
 	@Override
 	public byte[] getHtpasswd() {
 		return "".getBytes();
+	}
+	@Override
+	public List<UserRole> getRoles() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole getRole(Integer id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole getRoleByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole createRole(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole updateRole(UserRole role) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void destroyRole(UserRole role) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public List<UserPermission> getPermissions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission getPermission(Integer id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission getPermissionByDescriptor(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission createPermission(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission updatePermission(UserPermission permission) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void destroyPermission(UserPermission permission) {
+		// TODO Auto-generated method stub
+		
 	}
 }

@@ -10,7 +10,7 @@ import com.codeshelf.ws.jetty.protocol.request.InventoryLightRequest;
 import com.codeshelf.ws.jetty.protocol.response.InventoryLightResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class InventoryLightCommand extends CommandABC {
 	@SuppressWarnings("unused")
@@ -19,7 +19,7 @@ public class InventoryLightCommand extends CommandABC {
 	private InventoryLightRequest request;
 	private InventoryService inventoryService;
 	
-	public InventoryLightCommand(UserSession session, InventoryLightRequest request, InventoryService inventoryService) {
+	public InventoryLightCommand(WebSocketConnection session, InventoryLightRequest request, InventoryService inventoryService) {
 		super(session);
 		this.request = request;
 		this.inventoryService = inventoryService;

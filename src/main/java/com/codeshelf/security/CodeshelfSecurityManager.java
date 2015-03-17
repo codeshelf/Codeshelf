@@ -32,7 +32,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.User;
-import com.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.google.inject.Inject;
 
 import edu.emory.mathcs.backport.java.util.Arrays;

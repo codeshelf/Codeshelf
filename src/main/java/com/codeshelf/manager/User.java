@@ -5,7 +5,12 @@
  *******************************************************************************/
 package com.codeshelf.manager;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -16,6 +21,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -124,6 +131,13 @@ public class User {
 	@Column(nullable = false,name="active")
 	@JsonProperty
 	private boolean				active;
+	
+	// roles assigned to user
+	@ManyToMany(targetEntity=UserRole.class, fetch=FetchType.EAGER)
+	@JoinTable(name="users_roles")
+	@Getter
+	@JsonProperty
+	Set<UserRole> roles = new HashSet<UserRole>();
 
 	public User() {
 		active = true;
@@ -141,6 +155,28 @@ public class User {
 	@Override
 	public String toString() {
 		return this.getUsername();
+	}
+	
+	public void setRoles(Set<UserRole> newRoles) {
+		if(!this.roles.equals(newRoles)) {
+			this.roles.clear();
+			this.roles.addAll(newRoles);
+		}
+	}
+	
+	public Collection<String> getRoleNames() {
+		List<String> roleNames = new ArrayList<String>(this.getRoles().size());
+		for(UserRole role : this.getRoles()) {
+			roleNames.add(role.getName());
+		}
+		return roleNames;
+	}
+	public Set<String> getPermissions() {
+		Set<String> permissionStrings = new HashSet<String>();
+		for(UserRole role : this.getRoles()) {
+			permissionStrings.addAll(role.getPermissionStrings());
+		}
+		return permissionStrings;
 	}
 
 }

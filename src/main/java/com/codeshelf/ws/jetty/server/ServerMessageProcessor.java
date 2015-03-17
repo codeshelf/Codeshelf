@@ -1,9 +1,5 @@
 package com.codeshelf.ws.jetty.server;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -62,13 +58,6 @@ import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
-import edu.emory.mathcs.backport.java.util.Arrays;
-
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authz.AuthorizationException;
-import org.apache.shiro.authz.annotation.RequiresRoles;
-import org.apache.shiro.subject.Subject;
 
 @Singleton
 public class ServerMessageProcessor implements IMessageProcessor {

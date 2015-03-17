@@ -59,7 +59,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertFalse(this.tenantManagerService.canCreateUser(existingUsername));
 		
 		// fails cleanly if you try
-		Assert.assertNull(this.tenantManagerService.createUser(this.getDefaultTenant(), existingUsername, "12345", UserType.SITECON));
+		Assert.assertNull(this.tenantManagerService.createUser(this.getDefaultTenant(), existingUsername, "12345", UserType.SITECON, null));
 		
 		// can authenticate default
 		Assert.assertNotNull(this.tenantManagerService.authenticate(existingUsername,CodeshelfNetwork.DEFAULT_SITECON_PASS));
@@ -70,7 +70,7 @@ public class TenantManagerTest extends HibernateTest {
 		// (note: don't alter site controller user for this test, could have side effects)
 		
 		// can create new user		
-		User newUser = this.tenantManagerService.createUser(this.getDefaultTenant(), "testuser", "goodpassword", UserType.APPUSER);		
+		User newUser = this.tenantManagerService.createUser(this.getDefaultTenant(), "testuser", "goodpassword", UserType.APPUSER, null);		
 
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getId()).equals(newUser));
@@ -181,7 +181,7 @@ public class TenantManagerTest extends HibernateTest {
 		Tenant newTenant = this.tenantManagerService.createTenant("New Tenant", shardName, "alice");
 		Assert.assertNotNull(newTenant);
 		// with user
-		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", UserType.APPUSER);		
+		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", UserType.APPUSER, null);		
 		// can authenticate 
 		Assert.assertNotNull(this.tenantManagerService.authenticate("tenantuser", "goodpassword"));
 
@@ -214,7 +214,7 @@ public class TenantManagerTest extends HibernateTest {
 		Tenant apiTenant = (Tenant) this.tenantsResource.createTenant(params).getEntity();
 		Assert.assertTrue(apiTenant.getName().equals("mytenant"));
 		// TODO: create user by API 
-		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", UserType.APPUSER);		
+		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", UserType.APPUSER, null);		
 		// can authenticate 
 		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser", "goodpassword"));
 

@@ -30,7 +30,6 @@ import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 
 public class WebSocketConnection implements IDaoListener {

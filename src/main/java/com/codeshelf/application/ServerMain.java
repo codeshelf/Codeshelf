@@ -7,7 +7,6 @@ CodeshelfWebSocketServer *  CodeShelf
 package com.codeshelf.application;
 
 import org.apache.commons.beanutils.ConvertUtilsBean;
-import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;

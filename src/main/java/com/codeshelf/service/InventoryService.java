@@ -2,10 +2,7 @@ package com.codeshelf.service;
 
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -25,14 +22,11 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.response.InventoryLightResponse;
 import com.codeshelf.ws.jetty.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class InventoryService implements IApiService {
