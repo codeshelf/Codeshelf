@@ -18,7 +18,6 @@ import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
@@ -34,7 +33,6 @@ public class InventoryService implements IApiService {
 
 	LightService lightService;
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
-	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 	
 	@Inject
 	public InventoryService(LightService inLightService){
