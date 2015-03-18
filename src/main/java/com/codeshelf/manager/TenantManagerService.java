@@ -607,7 +607,6 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	@Override
 	protected void shutDown() throws Exception {
 		if (!this.shutdownCleanupRequest.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
-			ServiceUtility.awaitTerminatedOrThrow(theInstance);
 			switch (shutdownCleanupRequest) {
 				case DROP_SCHEMA:
 					dropDefaultSchema();
