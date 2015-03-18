@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.apache.commons.lang.StringUtils;
@@ -54,6 +55,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	private String								mLocationId;
+	
+	@Getter
+	@Setter
+	private boolean								mInventoryCommandAllowed = true;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -62,7 +67,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
-
+		
 		updateConfigurationFromManager();
 	}
 
@@ -193,6 +198,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
+					
+				case SCAN_GTIN:
+					if (lastScanedGTIN == null) {
+						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
+					} else {
+						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
+					}
+					break;
 
 				default:
 					break;
@@ -207,6 +220,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void processCommandScan(final String inScanStr) {
 
+		updateInventoryCommandAccess(inScanStr);
+		
 		switch (inScanStr) {
 
 			case LOGOUT_COMMAND:
@@ -236,6 +251,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CLEAR_ERROR_COMMAND:
 				clearErrorCommandReceived();
 				break;
+			
+			case INVENTORY_COMMAND:
+				inventoryCommandReceived();
+				break;
 
 			default:
 
@@ -246,7 +265,38 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 		}
 	}
+	
+	protected void resetInventoryCommandAllowed() {
+		lastScanedGTIN = null;
+		setMInventoryCommandAllowed(true);
+	}
+	
+	protected void updateInventoryCommandAccess(String inCommandStr) {
+		if (!inCommandStr.equals(INVENTORY_COMMAND)) {
+			setMInventoryCommandAllowed(false);
+		}
+		
+		else if ( inCommandStr.equals(LOGOUT_COMMAND)) {
+			setMInventoryCommandAllowed(true);
+		}
+	}
 
+	protected void inventoryCommandReceived() {
+		
+		switch (mCheStateEnum) {
+			case CONTAINER_SELECT:
+				if (isMInventoryCommandAllowed()) {
+					setState(CheStateEnum.SCAN_GTIN);
+				} else {
+					LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
+				}
+				break;
+			default:
+				break;
+		}
+		
+	}
+	
 	protected void clearErrorCommandReceived() {
 		//Split it out by state
 		switch (mCheStateEnum) {
@@ -257,6 +307,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
 				clearAllPositionControllers();
+				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+			case SCAN_GTIN:
+				resetInventoryCommandAllowed();
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 
@@ -300,6 +354,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SCAN_SOMETHING_SHORT:
 				confirmSomethingShortPick(inScanStr);
+				break;
+				
+			case SCAN_GTIN:
 				break;
 
 			default:
@@ -771,7 +828,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_SOMETHING:
 				setState(CheStateEnum.SCAN_SOMETHING_SHORT);
 				break;
+			
 			case SCAN_SOMETHING_SHORT:
+				break;
+			
+			case SCAN_GTIN:
 				break;
 
 			//Anywhere else we can start work if there's anything setup
@@ -818,7 +879,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				processContainerSelectScan(COMMAND_PREFIX, SETUP_COMMAND);
 				break;
-
+			
+			case SCAN_GTIN:
 			default:
 				//DEV-577 Do nothing
 				break;
@@ -928,6 +990,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
+				break;
+				
+			case SCAN_GTIN:
+				processGtinScan(inScanPrefixStr, inContent);
 				break;
 
 			default:
@@ -1210,6 +1276,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						setState(CheStateEnum.NO_CONTAINERS_SETUP);
 					}
 				}
+				break;
+				
+			case SCAN_GTIN:
 				break;
 
 			//Anywhere else we can start work if there's anything setup
@@ -1567,6 +1636,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void logout() {
 		super.logout();
+		resetInventoryCommandAllowed();
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";

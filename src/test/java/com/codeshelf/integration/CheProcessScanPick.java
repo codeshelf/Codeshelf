@@ -28,6 +28,7 @@ import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
@@ -261,6 +262,223 @@ public class CheProcessScanPick extends ServerTest {
 		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
+	private void setUpLineScanOrdersNoCntrWithGtin(Facility inFacility) throws IOException {
+		// Outbound order. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
+		// Locations D301-303, 401-403, 501-503 are modeled. 600s and 700s are not.
+
+		String csvOrders = "gtin,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
+				+ "\r\n100,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
+				+ "\r\n101,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
+				+ "\r\n102,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,3,each, D303"
+				+ "\r\n103,USF314,COSTCO,11111,11111.1,1122,8 oz Bowl Lids -PLA Compostable,2,each, D401"
+				+ "\r\n104,USF314,COSTCO,11111,11111.2,1522,Butterfly Yoyo,1,each, D402"
+				+ "\r\n105,USF314,COSTCO,11111,11111.3,1523,SJJ BPP,1,each, D403"
+				+ "\r\n106,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D501"
+				+ "\r\n107,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D502";
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter orderImporter = createOrderImporter();
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+	}
+	
+	/**
+	 * Simple test of INVENTORY command
+	 */
+	@Test
+	public final void testInventoryCommand() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+
+		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId.");
+
+		this.getTenantPersistenceService().beginTransaction();
+
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+
+		setUpLineScanOrdersNoCntrWithGtin(facility);
+		propertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+	
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		
+		LOGGER.info("1b: Scan INVENTORY command");
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1c: scan a GTIN and check item location is correct");
+		picker.scanSomething("100");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1d: scan another GTIN");
+		picker.scanSomething("103");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1e: scan location");
+		picker.scanLocation("D302");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1f: scan a new GTIN");
+		picker.scanSomething("101");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1g: scan another GTIN");
+		picker.scanSomething("102");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1h: scan location");
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1i: scan another location. should move here.");
+		picker.scanLocation("D302");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1j: scan X%CLEAR and get back to READY state");
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		
+		LOGGER.info("1k: scan X%INVENTORY");
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1l: logout");
+		picker.scanCommand("LOGOUT");
+		picker.waitForCheState(CheStateEnum.IDLE, 1000);
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility  = Facility.staticGetDao().reload(facility);
+		
+		LOGGER.info("2a: check that item 100 stayed in it's original location");
+		Location locationD301 = facility.findSubLocationById("D301");
+		Assert.assertNotNull(locationD301);
+		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
+		Assert.assertNotNull(item1123locD301);
+		
+		LOGGER.info("2b: check that item 1123 moved from D301 to D302");
+		Location locationD302 = facility.findSubLocationById("D302");
+		Assert.assertNotNull(locationD302);
+		locationD301 = facility.findSubLocationById("D301");
+		Assert.assertNotNull(locationD301);
+		
+		Item item1122locD302 = locationD302.getStoredItemFromMasterIdAndUom("1122", "ea");
+		Assert.assertNotNull("Item 1122 (GTIN 103) should have moved to this location", item1122locD302);
+		Item item1122locD301 = locationD301.getStoredItemFromMasterIdAndUom("1122", "ea");
+		Assert.assertNull("Item 1122 should no longer be at this location", item1122locD301);
+		
+		LOGGER.info("2c: check that item 1522 moved to D302 and not D301");
+		Item gtin102itemLocD302 = locationD302.getStoredItemFromMasterIdAndUom("1522", "ea");
+		Assert.assertNotNull(gtin102itemLocD302);
+		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
+		Assert.assertNull(item1522LocD301);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		
+	}
+	
+	/**
+	 * Simple test of INVENTORY command
+	 */
+	@Test
+	public final void testInventoryCommand2() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		setUpLineScanOrdersNoCntr(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+
+		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+
+		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId.");
+
+		this.getTenantPersistenceService().beginTransaction();
+
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+
+		setUpLineScanOrdersNoCntrWithGtin(facility);
+		propertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+	
+		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.IDLE, 1000);
+		
+		LOGGER.info("1a: login, should go to READY state");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		
+		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+	
+		LOGGER.info("1c: scan GTIN that does not exist - 200");
+		picker.scanSomething("200");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
+		picker.scanLocation("D302");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
+		Location D302 = facility.findSubLocationById("D302");
+		Assert.assertNotNull(D302);
+		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
+		Assert.assertNotNull(item200);
+		this.getTenantPersistenceService().commitTransaction();
+		
+		LOGGER.info("2a: scan invalid commands");
+		picker.scanCommand("SETUP");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		picker.scanSomething("U%USER1");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("2b: scan GTIN that exists - 100");
+		picker.scanSomething("100");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("2c: clear");
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		
+		LOGGER.info("3a: scan inventory command");
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+		LOGGER.info("3b: scan location before scanning GTIN");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		
+	}
+	
 	/**
 	 * A trivial reference test of Setup_Orders
 	 */

@@ -42,9 +42,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private String				readyMsg;
 	
-	@Getter
-	@Setter
-	private String				lastScanedGTIN;
+	
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -134,19 +132,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 		}
 
-	}
-
-	private void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-		
-		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
-			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
-		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
-			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
-		} else {
-			mDeviceManager.inventoryLightScan(this.getPersistentId(), inScanStr);
-			lastScanedGTIN = inScanStr;
-		}
-		setState(CheStateEnum.SCAN_GTIN);
 	}
 
 	// --------------------------------------------------------------------------

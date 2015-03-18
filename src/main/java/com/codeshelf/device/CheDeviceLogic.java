@@ -166,6 +166,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	protected Boolean					mReversePickOrder						= false;
 
+	@Getter
+	@Setter
+	protected String					lastScanedGTIN;
+	
+	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
+		
+		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
+			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
+		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
+			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
+		} else {
+			mDeviceManager.inventoryLightScan(this.getPersistentId(), inScanStr);
+			lastScanedGTIN = inScanStr;
+		}
+		setState(CheStateEnum.SCAN_GTIN);
+	}
+	
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
 		UPC_SCAN_TO_VERIFY("UPC"),

@@ -227,8 +227,6 @@ public class CheProcessLineScan extends ServerTest {
 	private void setUpLineScanOrdersNoCntrWithGtin(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
 		// Locations D301-303, 401-403, 501-503 are modeled. 600s and 700s are not.
-		// Order 12345 has 2 modeled locations and one not.
-		// Order 11111 has 4 unmodeled locations and one modeled.
 
 		String csvOrders = "gtin,shipmentId,customerId,orderId,orderDetailId,itemId,description,quantity,uom, locationId"
 				+ "\r\n100,USF314,COSTCO,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301"
