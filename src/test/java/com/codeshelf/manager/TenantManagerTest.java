@@ -16,6 +16,8 @@ import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.security.AuthResponse.Status;
+import com.codeshelf.security.AuthResponse;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.Sets;
@@ -72,10 +74,10 @@ public class TenantManagerTest extends HibernateTest {
 		}
 		
 		// can authenticate default
-		Assert.assertNotNull(this.tenantManagerService.authenticate(existingUsername,CodeshelfNetwork.DEFAULT_SITECON_PASS));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate(existingUsername,CodeshelfNetwork.DEFAULT_SITECON_PASS).getStatus());
 		
 		// can fail to authenticate on wrong password
-		Assert.assertNull(this.tenantManagerService.authenticate(existingUsername,"badpassword"));
+		Assert.assertEquals(Status.BAD_CREDENTIALS,this.authProviderService.authenticate(existingUsername,"badpassword").getStatus());
 
 		// (note: don't alter site controller user for this test, could have side effects)
 		
@@ -89,23 +91,23 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertTrue(this.tenantManagerService.getUsers(newUser.getTenant()).contains(newUser));
 
 		// can authenticate
-		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// can disable
 		newUser.setActive(false);
 		newUser = this.tenantManagerService.updateUser(newUser);
-		Assert.assertNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+		Assert.assertEquals(Status.LOGIN_NOT_ALLOWED,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// can reenable
 		newUser.setActive(true);
 		newUser = this.tenantManagerService.updateUser(newUser);
-		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// can change password
 		newUser.setHashedPassword(authProviderService.hashPassword("newpassword"));
 		newUser = this.tenantManagerService.updateUser(newUser);
-		Assert.assertNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
-		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"newpassword"));
+		Assert.assertEquals(Status.BAD_CREDENTIALS,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate(newUser.getUsername(),"newpassword").getStatus());
 		
 		// can look up via REST API several ways
 		List<User> users = (List<User>) this.usersResource.get(null,null).getEntity();
@@ -134,7 +136,7 @@ public class TenantManagerTest extends HibernateTest {
 		User apiUser = (User) this.usersResource.createUser(params).getEntity();
 		Assert.assertTrue(apiUser.getUsername().equals("apiuser"));
 		// TODO: secure auth over REST
-		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","goodpassword"));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate("apiuser","goodpassword").getStatus());
 
 		// create fails if user already exists
 		Assert.assertNull(this.usersResource.createUser(params).getEntity());
@@ -162,19 +164,19 @@ public class TenantManagerTest extends HibernateTest {
 		
 		// succeeds update with clean map
 		Assert.assertNotNull(this.usersResource.updateUser(apiUser.getId(), params).getEntity());
-		Assert.assertNull(this.tenantManagerService.authenticate("apiuser","goodpassword"));
-		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","newpassword"));
+		Assert.assertEquals(Status.BAD_CREDENTIALS,this.authProviderService.authenticate("apiuser","goodpassword").getStatus());
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate("apiuser","newpassword").getStatus());
 
 		// can disable
 		params.clear();
 		params.putSingle("active", "false");
 		Assert.assertNotNull(this.usersResource.updateUser(apiUser.getId(), params).getEntity());
-		Assert.assertNull(this.tenantManagerService.authenticate("apiuser","newpassword"));
+		Assert.assertEquals(Status.LOGIN_NOT_ALLOWED,this.authProviderService.authenticate("apiuser","newpassword").getStatus());
 		
 		// and reenable
 		params.putSingle("active", "true");
 		Assert.assertNotNull(this.usersResource.updateUser(apiUser.getId(), params).getEntity());
-		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser","newpassword"));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate("apiuser","newpassword").getStatus());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -193,22 +195,25 @@ public class TenantManagerTest extends HibernateTest {
 		// with user
 		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", UserType.APPUSER, null);		
 		// can authenticate 
-		Assert.assertNotNull(this.tenantManagerService.authenticate("tenantuser", "goodpassword"));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate("tenantuser", "goodpassword").getStatus());
 
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getTenant(newTenant.getId()).equals(newTenant));
 		Assert.assertTrue(this.tenantManagerService.getTenantByName(newTenant.getName()).equals(newTenant));
-		Assert.assertTrue(this.tenantManagerService.getTenantByUsername(newUser.getUsername()).equals(newTenant));
+		Assert.assertTrue(this.tenantManagerService.getTenantByUser(newUser).equals(newTenant));
 
 		// can disable
 		newTenant.setActive(false);
 		newTenant = this.tenantManagerService.updateTenant(newTenant);
-		Assert.assertNull(this.tenantManagerService.authenticate("tenantuser", "goodpassword"));
+		AuthResponse response = this.authProviderService.authenticate("tenantuser", "goodpassword");
+		Assert.assertNotNull(response);
+		Assert.assertEquals(Status.LOGIN_NOT_ALLOWED,response.getStatus());
 		
 		// can reenable
 		newTenant.setActive(true);
 		newTenant = this.tenantManagerService.updateTenant(newTenant);
-		Assert.assertNotNull(this.tenantManagerService.authenticate("tenantuser", "goodpassword"));
+		response = this.authProviderService.authenticate("tenantuser", "goodpassword");
+		Assert.assertEquals(Status.ACCEPTED,response.getStatus());
 		
 		// can look up via REST API couple of ways
 		List<Tenant> tenants = (List<Tenant>) this.tenantsResource.get().getEntity();
@@ -226,7 +231,7 @@ public class TenantManagerTest extends HibernateTest {
 		// TODO: create user by API 
 		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", UserType.APPUSER, null);		
 		// can authenticate 
-		Assert.assertNotNull(this.tenantManagerService.authenticate("apiuser", "goodpassword"));
+		Assert.assertNotNull(this.authProviderService.authenticate("apiuser", "goodpassword"));
 
 		// create fails if tenant already exists
 		Assert.assertNull(this.tenantsResource.createTenant(params).getEntity());
@@ -266,7 +271,7 @@ public class TenantManagerTest extends HibernateTest {
 		apiTenant = this.tenantManagerService.getTenantByName(apiTenant.getName());
 		Assert.assertNotNull(apiTenant);
 		Assert.assertFalse(apiTenant.isActive());
-		Assert.assertNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+		Assert.assertEquals(Status.LOGIN_NOT_ALLOWED,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// and reenable
 		params.putSingle("active", "true");
@@ -274,7 +279,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(apiTenant);
 		Assert.assertTrue(apiTenant.isActive());
 		newUser = this.tenantManagerService.getUser(newUser.getId());
-		Assert.assertNotNull(this.tenantManagerService.authenticate(newUser.getUsername(),"goodpassword"));
+		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// password validation (default config has requireSymbol and requireMixed turned off)
 		// TODO: manipulate configuration and test other modes

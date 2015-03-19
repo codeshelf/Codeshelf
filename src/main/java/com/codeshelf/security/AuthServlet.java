@@ -15,7 +15,6 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 
 @SuppressWarnings("serial")
@@ -44,13 +43,14 @@ public class AuthServlet extends HttpServlet {
 		String password = req.getParameter("p");
 		URI nextUri = uri(req.getParameter("next"));
 		URI retryUri = uri(req.getParameter("retry"));
-		boolean auth = false;
+		boolean authSuccess = false;
 		
 		if (username != null && password != null) {
-			User user = TenantManagerService.getInstance().authenticate(username, password);
-			if (user != null) {
+			AuthResponse auth = HmacAuthService.getInstance().authenticate(username, password);
+			if (auth.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
+				User user = auth.getUser();
 				// auth succeeds, generate token
-				String token = authProviderService.createToken(user.getId(), null, null);
+				String token = authProviderService.createToken(user.getId());
 				Cookie cookie = authProviderService.createAuthCookie(token);
 				// redirect to requested location
 				resp.addCookie(cookie);
@@ -60,13 +60,12 @@ public class AuthServlet extends HttpServlet {
 				} else {
 					resp.sendRedirect("/");
 				}
-				auth=true;
+				authSuccess=true;
 			} // else authenticate logged reason if failed
 		} else {
 			LOGGER.warn("Login failed: information not submitted");
 		}
-		if(!auth) {
-			// TODO: clear token cookie here
+		if(!authSuccess) { // TODO: clear token cookie here
 			if(retryUri != null) {
 				resp.sendRedirect(retryUri.toASCIIString());
 			} else {

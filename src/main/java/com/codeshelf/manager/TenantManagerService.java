@@ -298,32 +298,6 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public User authenticate(String username, String password) {
-		User user = getUser(username);
-		if (user != null) {
-			boolean passwordValid = authProviderService.checkPassword(password, user.getHashedPassword());
-			if (user.getTenant().isActive()) {
-				if (user.isActive()) {
-					if (passwordValid) {
-						LOGGER.debug("Password valid for user {}", user);
-						return user;
-					} else {
-						LOGGER.info("Invalid password for user {}", user);
-					}
-				} else {
-					LOGGER.warn("Inactive user {} attempted login, password correct = {}", user, passwordValid);
-				}
-			} else {
-				LOGGER.warn("User of {} inactive tenant {} attempted login, password correct = {}", user, user.getTenant()
-					.getName(), passwordValid);
-			}
-		} else {
-			LOGGER.info("User not found {}", user);
-		}
-		return null;
-	}
-
-	@Override
 	public User getUser(Integer id) {
 		User result = null;
 
@@ -432,12 +406,12 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public Tenant getTenantByUsername(String username) {
+	public Tenant getTenantByUser(User user) {
 		Tenant result = null;
 
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
-			User user = getUser(session, username);
+			user = (User) session.load(User.class, user.getId());
 			if (user != null) {
 				result = inflate(user.getTenant());
 			}
@@ -445,7 +419,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			managerPersistenceService.commitTransaction();
 		}
 		if (result == null) {
-			LOGGER.warn("failed to get tenant for username {}", username);
+			LOGGER.warn("failed to get tenant for user {}", user.getUsername());
 		}
 		return result;
 	}

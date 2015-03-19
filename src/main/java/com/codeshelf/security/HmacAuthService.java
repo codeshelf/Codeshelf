@@ -79,14 +79,20 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	 * @param sessionStart ****************************/
 
 	@Override
-	public String createToken(int id, Long sessionStart, SessionFlags sessionFlags) {
-		long timestamp = System.currentTimeMillis();
+	public String createToken(int id, Long timestamp, Long sessionStart, SessionFlags sessionFlags) {
+		if (timestamp == null)
+			timestamp = System.currentTimeMillis();
 		if (sessionStart == null)
 			sessionStart = timestamp;
 		if (sessionFlags == null)
 			sessionFlags = new SessionFlags();
 		byte[] rawHmac = createHmacBytes(id, timestamp, sessionStart, sessionFlags);
 		return encodeToken(rawHmac);
+	}
+	
+	@Override
+	public String createToken(int id) {
+		return createToken(id,null,null,null);
 	}
 
 	@Override
@@ -141,7 +147,8 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		User user = TenantManagerService.getInstance().getUser(id);
 		if (user != null) {
 			if (user.isLoginAllowed()) {
-				long ageSeconds = (System.currentTimeMillis() - timestamp) / 1000L;
+				long now = System.currentTimeMillis();
+				long ageSeconds = (now - timestamp) / 1000L;
 				if (ageSeconds > (0 - this.sessionMaxFutureSeconds)) {
 					// timestamp is not in the future
 					if (ageSeconds < this.sessionMaxIdleMinutes * 60) {
@@ -151,7 +158,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 							if (ageSeconds > this.sessionMinIdleMinutes * 60) {
 								// if token is valid but getting old, offer an updated one
 								LOGGER.info("refreshing cookie for user {}", id);
-								refreshToken = this.createToken(id, sessionStart, sessionFlags);
+								refreshToken = this.createToken(id, now, sessionStart, sessionFlags);
 							}
 						}
 						response = new AuthResponse(Status.ACCEPTED, user, timestamp, sessionStart, sessionFlags, refreshToken);
@@ -172,7 +179,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 			}
 		} else {
 			LOGGER.error("ALERT - invalid user id {} with authenticated HMAC", id);
-			response = new AuthResponse(Status.BAD_CREDENTIALS, null);
+			response = new AuthResponse(Status.INVALID_USER_ID, null);
 		}
 		return response;
 	}
@@ -239,12 +246,50 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	/**************************** password hash methods ****************************/
 
 	@Override
+	public AuthResponse authenticate(String username, String password) {
+		AuthResponse response = null;
+		User user = TenantManagerService.getInstance().getUser(username);
+		if (user != null) {
+			boolean passwordValid = checkPassword(password, user.getHashedPassword());
+			if (user.getTenant().isActive()) {
+				if (user.isLoginAllowed()) {
+					if (passwordValid) {
+						LOGGER.debug("Password valid for user {}", user);
+						long timestamp = System.currentTimeMillis();
+						String token = this.createToken(user.getId(), timestamp, timestamp, null); // create default token for new session
+						response = new AuthResponse(Status.ACCEPTED,
+							user,
+							timestamp, 
+							timestamp, 
+							null, // no flags specified
+							token); // offer token
+					} else {
+						LOGGER.info("Invalid password for user {}", user);
+						response = new AuthResponse(Status.BAD_CREDENTIALS, user);
+					}
+				} else {
+					LOGGER.warn("user {} attempted login, login not allowed (password correct = {})", user, passwordValid);
+					response = new AuthResponse(Status.LOGIN_NOT_ALLOWED, user);
+				}
+			} else {
+				LOGGER.warn("User of {} inactive tenant {} attempted login, password correct = {}", user, user.getTenant()
+					.getName(), passwordValid);
+				response = new AuthResponse(Status.LOGIN_NOT_ALLOWED, user);
+			}
+		} else {
+			LOGGER.info("User not found {}", user);
+			response = new AuthResponse(Status.BAD_CREDENTIALS, null);
+		}
+		
+		return response; // never null 
+	}
+
+	@Override
 	public String hashPassword(final String password) {
 		return Md5Crypt.apr1Crypt(password);
 	}
 
-	@Override
-	public boolean checkPassword(final String password, final String hash) {
+	private boolean checkPassword(final String password, final String hash) {
 		return Md5Crypt.apr1Crypt(password, hash).equals(hash);
 	}
 

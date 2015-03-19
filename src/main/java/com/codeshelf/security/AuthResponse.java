@@ -12,11 +12,11 @@ public class AuthResponse {
 	public static enum Status {
 		ACCEPTED,
 		LOGIN_NOT_ALLOWED,
+		INVALID_USER_ID,
 		INVALID_TOKEN,
 		INVALID_TIMESTAMP,
 		BAD_CREDENTIALS,
-		SESSION_IDLE_TIMEOUT,
-		LOGGED_OFF
+		SESSION_IDLE_TIMEOUT
 	};
 	@Getter
 	private Status status; 

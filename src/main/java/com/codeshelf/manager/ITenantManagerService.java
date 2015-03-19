@@ -22,7 +22,6 @@ public interface ITenantManagerService extends CodeshelfService {
 	User getUser(Integer id);
 	User getUser(String username);
 	User updateUser(User user);
-	User authenticate(String username,String password);
 	List<User> getUsers(Tenant tenant);
 	byte[] getHtpasswd();
 
@@ -30,7 +29,7 @@ public interface ITenantManagerService extends CodeshelfService {
 	boolean canCreateTenant(String tenantName,String schemaName);	
 	void resetTenant(Tenant tenant);
 	Tenant getTenant(Integer id);
-	Tenant getTenantByUsername(String username);
+	Tenant getTenantByUser(User user);
 	Tenant getTenantByName(String name);
 	Tenant createTenant(String name,String shardName,String dbUsername);
 	Tenant updateTenant(Tenant tenant);
@@ -56,6 +55,7 @@ public interface ITenantManagerService extends CodeshelfService {
 	
 	// misc
 	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
+
 
 
 }
