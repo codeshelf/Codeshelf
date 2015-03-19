@@ -14,7 +14,7 @@ import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
-@RequiresRoles("SITECON")
+//@RequiresRoles("SITECON")
 public class GetWorkCommand extends CommandABC {
 
 	GetWorkRequest request;
