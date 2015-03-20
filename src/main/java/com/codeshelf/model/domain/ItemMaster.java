@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -136,12 +137,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Getter
 	private List<Item>						items						= new ArrayList<Item>();
 	
-	//@OneToMany(mappedBy = "parent")
-	//@Getter
-	//private List<GtinMap>					gtinMaps					= new ArrayList<GtinMap>();
-	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
+	@Getter
 	private Map<String, Gtin>			gtins					= new HashMap<String, Gtin>();
 
 	public ItemMaster() {
@@ -378,6 +376,21 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		}
 		Collections.sort(itemLocationIds, asciiAlphanumericComparator);
 		return Joiner.on(",").join(itemLocationIds);
+	}
+	
+
+	public String getItemGtins() {
+		
+		List<String> gtinValues = new ArrayList<String>();
+		Map<String, Gtin> gtins = getGtins();
+
+		for (Gtin gtin : gtins.values()) {
+			String gtinValue= gtin.getDomainId();
+			gtinValues.add(gtinValue);
+		}
+		
+		Collections.sort(gtinValues, asciiAlphanumericComparator);
+		return Joiner.on(",").join(gtinValues);
 	}
 
 	/*

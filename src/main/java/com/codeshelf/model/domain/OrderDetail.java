@@ -496,4 +496,15 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public boolean isPreferredDetail(){
 		return getPreferredLocation() != null && getWorkSequence() != null;
 	}
+	
+	public String getGtinId(){
+		ItemMaster im = getItemMaster();
+		UomMaster um = getUomMaster();
+		
+		if (im != null && um != null) {
+			return im.getGtinForUom(um).getDomainId();
+		} else {
+			return "";
+		}
+	}
 }

@@ -576,4 +576,15 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return null;
 		}
 	}
+	
+	public String getGtinId(){
+		ItemMaster im = getItemMaster();
+		UomMaster um = orderDetail.getUomMaster();
+		
+		if (im != null && um != null) {
+			return im.getGtinForUom(um).getDomainId();
+		} else {
+			return "";
+		}
+	}
 }
