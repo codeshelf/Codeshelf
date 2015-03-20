@@ -78,6 +78,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 	public final static String						Default_SCANPICK	= "Disabled";
 	public final static String						PICKMULT			= "PICKMULT";
 	public final static String						Default_PICKMULT	= "false";
+	public final static String						INVTMENU			= "INVTMENU";
+	public final static String						Default_INVTMENU	= "false";
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -128,6 +130,9 @@ public class DomainObjectProperty extends DomainObjectABC {
 		}
 		if (inParameterName.equals(PICKMULT)) {
 			return Default_PICKMULT;
+		}
+		if (inParameterName.equals(INVTMENU)) {
+			return Default_INVTMENU;
 		}
 		// Do not log an error if not pre-known
 		return null;
@@ -270,6 +275,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 			return "Disabled, SKU, UPC";
 		else if (myName.equals(PICKMULT))
 			return "true, false";
+		else if (myName.equals(INVTMENU))
+			return "true, false";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -313,6 +320,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 		else if (myName.equals(SCANPICK))
 			return validate_scantype(trimmedValue);
 		else if (myName.equals(PICKMULT))
+			return validate_boolean(trimmedValue);
+		else if (myName.equals(INVTMENU))
 			return validate_boolean(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
