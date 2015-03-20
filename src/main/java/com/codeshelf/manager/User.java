@@ -149,7 +149,8 @@ public class User {
 
 	@JsonIgnore
 	public boolean isLoginAllowed() {
-		return true;
+		// TODO: also check user flag 
+		return this.isActive();
 	}
 	
 	@Override

@@ -14,7 +14,10 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Organization;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.AuthResponse;
+import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
@@ -47,10 +50,11 @@ public class LoginCommand extends CommandABC {
 		String username = loginRequest.getUserId();
 		String password = loginRequest.getPassword();
 		if (wsConnection != null) {
-			User authUser = TenantManagerService.getInstance().authenticate(username, password);
-			if (authUser != null) {
+			AuthResponse authResponse = HmacAuthService.getInstance().authenticate(username, password);
+			if (authResponse.getStatus().equals(Status.ACCEPTED)) {
+				User authUser = authResponse.getUser();
 				// successfully authenticated user with password
-				Tenant tenant = TenantManagerService.getInstance().getTenantByUsername(authUser.getUsername());				
+				Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);				
 				wsConnection.authenticated(authUser);
 				CodeshelfSecurityManager.setCurrentUser(authUser);
 				try {

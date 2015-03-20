@@ -9,20 +9,23 @@ public interface AuthProviderService extends CodeshelfService {
 	
 	// tokens
 	AuthResponse checkToken(final String value);
-	String createToken(final int id, Long sessionStart, SessionFlags flags);
+	String createToken(int id, Long timestamp, Long sessionStart, SessionFlags sessionFlags);
+	String createToken(int id);
 
 	// tokens wrapped in cookies
 	String getCookieName();
 	AuthResponse checkAuthCookie(final Cookie[] cookies);
 	Cookie createAuthCookie(final String newToken);
 	
-	// password hashing
+	// password authentication
+	AuthResponse authenticate(String username, String password);
 	boolean passwordMeetsRequirements(final String password);
 	String hashPassword(final String password);
-	boolean checkPassword(final String password,final String hash);
+//	boolean checkPassword(final String password,final String hash);
 	boolean hashIsValid(final String hash);
 	String describePasswordRequirements();
 
 	// etc
 	boolean usernameMeetsRequirements(String username);
+
 }

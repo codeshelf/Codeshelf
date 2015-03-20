@@ -101,14 +101,10 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return defaultUser;
 	}
 	@Override
-	public User authenticate(String username, String password) {
-		return defaultUser;
-	}
-	@Override
 	public void resetTenant(Tenant tenant) {
 	}
 	@Override
-	public Tenant getTenantByUsername(String username) {
+	public Tenant getTenantByUser(User user) {
 		return this.defaultTenant;
 	}
 	@Override
