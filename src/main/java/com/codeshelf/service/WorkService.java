@@ -63,6 +63,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
@@ -963,12 +964,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
+	public List<WiSetSummary> workAssignedSummary(UUID cheId, UUID facilityId) {
+		return workAssignedSummary(CodeshelfSecurityManager.getCurrentTenant(),cheId,facilityId);
+	}
 	public List<WiSetSummary> workAssignedSummary(Tenant tenant,UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeAssignedWiSummariesForChe(tenant,cheId, facilityId);
 		return summarizer.getSummaries();
 	}
 
+	public List<WiSetSummary> workCompletedSummary(UUID cheId, UUID facilityId) {
+		return workCompletedSummary(CodeshelfSecurityManager.getCurrentTenant(),cheId,facilityId);
+	}
 	public List<WiSetSummary> workCompletedSummary(Tenant tenant,UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeCompletedWiSummariesForChe(tenant,cheId, facilityId);

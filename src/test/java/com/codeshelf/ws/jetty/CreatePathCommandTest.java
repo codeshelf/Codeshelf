@@ -18,12 +18,17 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codeshelf.filter.Filter;
+import com.codeshelf.manager.ManagerPersistenceService;
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
@@ -70,6 +75,8 @@ public class CreatePathCommandTest extends HibernateTest {
 
 		try {
 			/* register a filter like the UI does */
+			User user = TenantManagerService.getInstance().getUser(CodeshelfNetwork.DEFAULT_SITECON_USERNAME);
+			viewSession.authenticated(user);
 			viewSession.registerObjectEventListener(new Filter(getDefaultTenant(),TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
 			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
 			
@@ -87,6 +94,7 @@ public class CreatePathCommandTest extends HibernateTest {
 			
 			WebSocketConnection requestSession = new WebSocketConnection(mock(Session.class), Executors.newSingleThreadExecutor());
 			requestSession.setSessionId("test-session");
+			requestSession.authenticated(user);
 			
 			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
 			ResponseABC response = processor.handleRequest(requestSession, request);
@@ -122,10 +130,10 @@ public class CreatePathCommandTest extends HibernateTest {
 		request.setMethodName("createPath");
 		request.setMethodArgs(args);
 		
-		WebSocketConnection session = Mockito.mock(WebSocketConnection.class);
-		session.setSessionId("test-session");
-
+		WebSocketConnection session = this.createMockWsConnection();
 		
+		session.setSessionId("test-session");
+	
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
 
 		ResponseABC response = processor.handleRequest(session, request);

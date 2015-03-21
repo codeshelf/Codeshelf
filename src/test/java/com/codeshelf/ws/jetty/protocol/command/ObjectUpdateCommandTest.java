@@ -15,6 +15,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.MockModel;
 import com.codeshelf.testframework.HibernateTest;
@@ -113,7 +114,7 @@ public class ObjectUpdateCommandTest extends HibernateTest {
 	@Test
 	public void shouldReturnErrorResponseWhenInstanceNotFound() throws JsonProcessingException, IOException {
 
-		when(mockTypedDao.findByPersistentId(getDefaultTenant(),any(UUID.class))).thenReturn(null);
+		when(mockTypedDao.findByPersistentId(any(Tenant.class),any(UUID.class))).thenReturn(null);
 
 		ObjectUpdateRequest objectUpdateRequest = createReq();
 		
@@ -126,22 +127,23 @@ public class ObjectUpdateCommandTest extends HibernateTest {
 	
 	private ResponseABC testSetterFail(String testProperty, String testValue) throws JsonParseException, JsonMappingException, IOException {
 		MockModel mockModel = new MockModel();
-		when(mockTypedDao.findByPersistentId(getDefaultTenant(),any(UUID.class))).thenReturn(mockModel);
+		when(mockTypedDao.findByPersistentId(any(Tenant.class),any(UUID.class))).thenReturn(mockModel);
 		
 		ObjectUpdateRequest objectUpdateRequest = createReqCmdJsonNode(testProperty, testValue);
 		
-		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
+		ObjectUpdateCommand subject = new ObjectUpdateCommand(this.createMockWsConnection(), objectUpdateRequest);
 		ResponseABC respCmd = subject.exec();
 		return respCmd;
 	}
 	
 	private MockModel testSetter(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
 		MockModel mockModel = new MockModel();
-		when(mockTypedDao.findByPersistentId(getDefaultTenant(),any(UUID.class))).thenReturn(mockModel);
+		when(mockTypedDao.findByPersistentId(any(Tenant.class),any(UUID.class))).thenReturn(mockModel);
 		
 		ObjectUpdateRequest objectUpdateRequest = createReqCmdJsonNode(testProperty, testValue);
 		
-		ObjectUpdateCommand subject = new ObjectUpdateCommand(null, objectUpdateRequest);
+		ObjectUpdateCommand subject = new ObjectUpdateCommand(this.createMockWsConnection(), objectUpdateRequest);
+		
 		ResponseABC respCmd = subject.exec();
 		Assert.assertEquals(respCmd.toString(), false, respCmd.getStatus().equals(ResponseStatus.Fail));
 		return mockModel;

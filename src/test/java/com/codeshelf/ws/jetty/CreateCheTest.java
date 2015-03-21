@@ -39,6 +39,7 @@ public class CreateCheTest extends MockDaoTest {
 	public void doBefore() {
 		super.doBefore();
 		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		mSession = this.createMockWsConnection();
 	}
 
 	
@@ -107,7 +108,7 @@ public class CreateCheTest extends MockDaoTest {
 		HashMap<String,Object> properties = new HashMap<String,Object>();
 		properties.put("description", description2);
 		req.setProperties(properties);
-		
+
 		ResponseABC response = processor.handleRequest(mSession, req);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
@@ -154,7 +155,6 @@ public class CreateCheTest extends MockDaoTest {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-
 		ResponseABC response = processor.handleRequest(mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
@@ -211,10 +211,7 @@ public class CreateCheTest extends MockDaoTest {
 	
 	
 	@Test
-	public final void testInvalidClass() {	
-		WebSocketConnection session = Mockito.mock(WebSocketConnection.class);
-		session.setSessionId("test-session");
-	
+	public final void testInvalidClass() {		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Foobar");
 		req.setPersistentId("bogus-id");
@@ -223,7 +220,7 @@ public class CreateCheTest extends MockDaoTest {
 		properties.put("foo", "bar");
 		req.setProperties(properties);
 		
-		ResponseABC response = processor.handleRequest(session, req);
+		ResponseABC response = processor.handleRequest(this.mSession, req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;

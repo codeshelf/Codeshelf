@@ -108,7 +108,11 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	}
 	
 	public static Tenant getCurrentTenant() {
-		return getCurrentUser().getTenant();
+		User user = getCurrentUser();
+		if (user == null) {
+			throw new AuthorizationException("No user available");
+		}
+		return user.getTenant();
 	}
 
 	public static void setCurrentUser(User user) {

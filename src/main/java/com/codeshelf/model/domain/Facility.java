@@ -42,6 +42,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -575,6 +576,10 @@ public class Facility extends Location {
 		return path;
 	}
 
+	public Path createPath(String domainId, PathSegment[] pathSegments) {
+		return createPath(CodeshelfSecurityManager.getCurrentTenant(),domainId, pathSegments);
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a path
@@ -644,16 +649,26 @@ public class Facility extends Location {
 	 * @param inPosY
 	 * @param inDrawOrder
 	 */
-	public void createVertex(Tenant tenant,final String inDomainId,
-		final String inPosTypeByStr,
-		final Double inPosX,
-		final Double inPosY,
-		final Integer inDrawOrder) {
+	public void createVertex(final String domainId,
+		final String posTypeByStr,
+		final Double posX,
+		final Double posY,
+		final Integer drawOrder) {
+		
+		createVertex(CodeshelfSecurityManager.getCurrentTenant(),
+			domainId,posTypeByStr,posX,posY,drawOrder);
+	}
+	
+	public void createVertex(Tenant tenant,final String domainId,
+		final String posTypeByStr,
+		final Double posX,
+		final Double posY,
+		final Integer drawOrder) {
 
 		Vertex vertex = new Vertex();
-		vertex.setDomainId(inDomainId);
-		vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY, null));
-		vertex.setDrawOrder(inDrawOrder);
+		vertex.setDomainId(domainId);
+		vertex.setPoint(new Point(PositionTypeEnum.valueOf(posTypeByStr), posX, posY, null));
+		vertex.setDrawOrder(drawOrder);
 		this.addVertex(vertex);
 
 		Vertex.staticGetDao().store(tenant,vertex);
@@ -1079,7 +1094,8 @@ public class Facility extends Location {
 	 * The UI needs this answer. UI gets it at login. Does not live update to the UI.
 	 */
 	@JsonProperty("hasCrossBatchOrders")
-	public boolean hasCrossBatchOrders(Tenant tenant) {
+	public boolean hasCrossBatchOrders() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
 		String theValue = PropertyService.getInstance().getPropertyFromConfig(tenant,this, DomainObjectProperty.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);

@@ -46,8 +46,13 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 	public void testSerializationOfExtraFields() {
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
+
+		// serializing requires a user context because it depends on tenant specific property configuration
+		this.createMockWsConnection();
+		
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
+		
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));
 		Assert.assertNotNull(objectNode.findValue("hasCrossBatchOrders"));
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());

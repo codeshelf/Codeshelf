@@ -16,11 +16,13 @@ import lombok.Getter;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.eclipse.jetty.websocket.common.WebSocketSession;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ import com.codeshelf.manager.ManagerPersistenceService;
 import com.codeshelf.manager.ManagerSchema;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
 import com.codeshelf.metrics.DummyMetricsService;
@@ -73,6 +76,7 @@ import com.codeshelf.ws.jetty.client.MessageCoordinator;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.util.concurrent.Service;
@@ -620,7 +624,23 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected final Tenant getDefaultTenant() {
-		return realTenantManagerService.getInitialTenant();
+		return this.tenantManagerService.getInitialTenant();
+	}
+	
+	public WebSocketConnection createMockWsConnection () {
+		Tenant tenant = getDefaultTenant();
+		
+		User user = Mockito.mock(User.class);
+		Mockito.when(user.getTenant()).thenReturn(tenant);
+
+		WebSocketConnection connection = Mockito.mock(WebSocketConnection.class);
+		Mockito.when(connection.getUser()).thenReturn(user);
+		
+		CodeshelfSecurityManager.setCurrentUser(user);
+
+		// TODO: more advanced user connection setups for tests (real/mock, roles etc)
+		
+		return connection;
 	}
 
 }

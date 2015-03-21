@@ -81,14 +81,14 @@ public class NetworkChangeListener implements ObjectEventListener {
 		return null;
 	}
 	
-	public static void registerWithSession(Tenant tenant, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketConnection session, CodeshelfNetwork network) {
+	public static void registerWithSession(Tenant tenant, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketConnection connection, CodeshelfNetwork network) {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(tenant,network,"network-change-listener");
-		session.registerObjectEventListener(listener);
+		connection.registerObjectEventListener(listener);
 		// register DAOs
-		objectChangeBroadcaster.registerDAOListener(session, Che.class);
-		objectChangeBroadcaster.registerDAOListener(session, LedController.class);
-		objectChangeBroadcaster.registerDAOListener(session, SiteController.class);
-		objectChangeBroadcaster.registerDAOListener(session, CodeshelfNetwork.class);
+		objectChangeBroadcaster.registerDAOListener(connection, Che.class);
+		objectChangeBroadcaster.registerDAOListener(connection, LedController.class);
+		objectChangeBroadcaster.registerDAOListener(connection, SiteController.class);
+		objectChangeBroadcaster.registerDAOListener(connection, CodeshelfNetwork.class);
 	}
 }

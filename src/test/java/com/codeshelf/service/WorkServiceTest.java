@@ -175,7 +175,7 @@ public class WorkServiceTest extends ServerTest {
 		when(workService.workAssignedSummary(any(Tenant.class), eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
 		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC responseABC = processor.handleRequest(mock(WebSocketConnection.class), request);
+		ResponseABC responseABC = processor.handleRequest(this.createMockWsConnection(), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
 
@@ -187,7 +187,7 @@ public class WorkServiceTest extends ServerTest {
 		when(workService2.workCompletedSummary(any(Tenant.class), eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC responseABC2 = processor2.handleRequest(mock(WebSocketConnection.class), request2);
+		ResponseABC responseABC2 = processor2.handleRequest(this.createMockWsConnection(), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
@@ -253,7 +253,7 @@ public class WorkServiceTest extends ServerTest {
 			Assert.assertNotNull(e.getErrors().getFieldErrors("persistentId"));
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
-		verify(WorkInstruction.staticGetDao(), never()).store(getDefaultTenant(),any(WorkInstruction.class));
+		verify(WorkInstruction.staticGetDao(), never()).store(any(Tenant.class),any(WorkInstruction.class));
 				
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}

@@ -11,6 +11,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
@@ -59,7 +63,9 @@ public class ObjectMethodCommandTest extends MockDaoTest {
 		request.setClassName("Organization");
 		request.setPersistentId("deprecated"); // organization id is ignored
 		request.setMethodName("createFacilityUi");
-
+		
+		WebSocketConnection connection = createMockWsConnection();
+		
 		List<ArgsClass> methodArgs = new LinkedList<ArgsClass>();
 		ArgsClass ac1 = new ArgsClass("domainId", "F1", String.class.getName());
 		methodArgs.add(ac1);
@@ -80,7 +86,7 @@ public class ObjectMethodCommandTest extends MockDaoTest {
 		}
 
 		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+		ResponseABC response = processor.handleRequest(connection, request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;

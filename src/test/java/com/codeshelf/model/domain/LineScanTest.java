@@ -74,7 +74,7 @@ public class LineScanTest extends ServerTest {
 		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+		ResponseABC response = processor.handleRequest(this.createMockWsConnection(), request);
 		Assert.assertTrue(response instanceof GetOrderDetailWorkResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
 		
@@ -109,7 +109,7 @@ public class LineScanTest extends ServerTest {
 		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(this.createMockWsConnection(), request);
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);

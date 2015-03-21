@@ -54,7 +54,7 @@ public class ObjectPropertyCommandTest extends HibernateTest {
 		req.setClassName(network.getClassName());
 		req.setPersistentId(network.getPersistentId().toString());
 		
-		ObjectPropertiesCommand command = new ObjectPropertiesCommand(null, req);
+		ObjectPropertiesCommand command = new ObjectPropertiesCommand(this.createMockWsConnection(), req);
 		ObjectPropertiesResponse resp = (ObjectPropertiesResponse) command.exec();
 		assertNotNull(resp);
 		assertEquals(ResponseStatus.Success, resp.getStatus());
