@@ -14,12 +14,12 @@ import com.codeshelf.testframework.MockDaoTest;
 public class OptimisticLockExceptionTest extends MockDaoTest {
 	@Test
 	public final void optimisticLockExceptionTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = new Facility();
 		facility.setFacilityId("OPTIMISTIC-F1");
 		facility.setAnchorPoint(new Point(PositionTypeEnum.GPS, 0.0, 0.0, 0.0));
-		Facility.staticGetDao().store(facility);
+		Facility.staticGetDao().store(getDefaultTenant(),facility);
 
 		OrderHeader order1 = new OrderHeader();
 		order1.setDomainId("OPTIMISTIC-123");
@@ -31,19 +31,19 @@ public class OptimisticLockExceptionTest extends MockDaoTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.staticGetDao().store(order1);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),order1);
 
-		OrderHeader foundOrder = OrderHeader.staticGetDao().findByDomainId(facility, "OPTIMISTIC-123");
+		OrderHeader foundOrder = OrderHeader.staticGetDao().findByDomainId(getDefaultTenant(),facility, "OPTIMISTIC-123");
 		foundOrder.setStatus(OrderStatusEnum.INPROGRESS);
-		OrderHeader.staticGetDao().store(foundOrder);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),foundOrder);
 
 		order1.setStatus(OrderStatusEnum.COMPLETE);
 		order1.setVersion(order1.getVersion() + 1);
-		OrderHeader.staticGetDao().store(order1);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),order1);
 
-		foundOrder = OrderHeader.staticGetDao().findByDomainId(facility, "OPTIMISTIC-123");
+		foundOrder = OrderHeader.staticGetDao().findByDomainId(getDefaultTenant(),facility, "OPTIMISTIC-123");
 		Assert.assertEquals(foundOrder.getStatus(), order1.getStatus());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

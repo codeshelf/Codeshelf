@@ -44,28 +44,28 @@ public class PosConControllerTest extends ServerTest{
 		String newControllerId = "10000001";
 		
 		//Create facility
-		TenantPersistenceService.getInstance().beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(getDefaultTenant());
 		Facility facility = setUpOneAisleFourBaysFlatFacilityWithOrders();
 		facilityId = facility.getPersistentId();
-		TenantPersistenceService.getInstance().commitTransaction();
+		TenantPersistenceService.getInstance().commitTransaction(getDefaultTenant());
 		
 		super.startSiteController();
 		waitAndGetAisleDeviceLogic(this, new NetGuid(DEF_CONTROLLER_ID));
 		
 		//Get and modify controller
-		TenantPersistenceService.getInstance().beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(getDefaultTenant());
 		LedController controller = getController(facilityId, DEF_CONTROLLER_ID);
 		Assert.assertEquals(controller.getDomainId(), DEF_CONTROLLER_ID);
 		Assert.assertEquals(DeviceType.Lights, controller.getDeviceType());
-		controller.updateFromUI(newControllerId, "Poscons");
-		TenantPersistenceService.getInstance().commitTransaction();
+		controller.update(getDefaultTenant(),newControllerId, "Poscons");
+		TenantPersistenceService.getInstance().commitTransaction(getDefaultTenant());
 		
 		//Confirm the change through DB access
-		TenantPersistenceService.getInstance().beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(getDefaultTenant());
 		controller = getController(facilityId, newControllerId);
 		Assert.assertEquals(controller.getDomainId(), newControllerId);
 		Assert.assertEquals(DeviceType.Poscons, controller.getDeviceType());
-		TenantPersistenceService.getInstance().commitTransaction();
+		TenantPersistenceService.getInstance().commitTransaction(getDefaultTenant());
 		
 		//Confirm the change through site controller
 		waitAndGetPosConController(this, new NetGuid(newControllerId));
@@ -73,15 +73,15 @@ public class PosConControllerTest extends ServerTest{
 	
 	@Test
 	public final void runPutWallProcess() throws IOException{
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		setUpFacilityWithPutWallAndOrders();
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	private LedController getController(UUID facilityId, String controllerId) {
-		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 		List<CodeshelfNetwork> networks = facility.getNetworks();
 		Assert.assertFalse(networks.isEmpty());
 		Map<String, LedController> ledControllers = networks.get(0).getLedControllers();
@@ -131,17 +131,17 @@ public class PosConControllerTest extends ServerTest{
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(aislesCsvString), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 		
 		//Assign path to aisle
-		Path aPath = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 3d, 6d, 5d, 6d);
+		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 3d, 6d, 5d, 6d);
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 		
 		//Import locations
 		String csvLocationAliases = "mappedLocationId,locationAlias\n" + 
@@ -164,13 +164,13 @@ public class PosConControllerTest extends ServerTest{
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
+		locationAliasImporter.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
 		//Change LED controller to PosManager
-		LedController controller = network.findOrCreateLedController("LED1", new NetGuid(DEF_CONTROLLER_ID));
-		controller.updateFromUI(DEF_CONTROLLER_ID, "Poscons");
+		LedController controller = network.findOrCreateLedController(getDefaultTenant(),"LED1", new NetGuid(DEF_CONTROLLER_ID));
+		controller.update(getDefaultTenant(),DEF_CONTROLLER_ID, "Poscons");
 		Assert.assertEquals(DeviceType.Poscons, controller.getDeviceType());
 
 		//Assign PosCon controller and indexies to tiers
@@ -181,11 +181,11 @@ public class PosConControllerTest extends ServerTest{
 			controller.addLocation(tier);
 			tier.setLedChannel((short)1);
 			tier.setPosconIndex(posconIndex);
-			tier.getDao().store(tier);
+			tier.getDao().store(getDefaultTenant(),tier);
 			posconIndex += 4;
 		}
 		
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(getDefaultTenant(),getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		
 		//Import Cross-Batch orders
 		String orderCsvString = "orderGroupId,orderId,orderDetailId,itemId,description,quantity,uom\n" + 

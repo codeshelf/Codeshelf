@@ -48,7 +48,7 @@ public class ObjectGetCommand extends CommandABC {
 				Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(parentClassName);
 				if (IDomainObject.class.isAssignableFrom(classObject)) {				
 					ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);				
-					IDomainObject parentObject = dao.findByPersistentId(parentId);
+					IDomainObject parentObject = dao.findByPersistentId(getTenant(),parentId);
 					
 					return doGetCommand(parentObject, getterMethodName);
 				}

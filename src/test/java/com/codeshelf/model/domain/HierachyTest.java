@@ -16,15 +16,15 @@ public class HierachyTest extends MockDaoTest {
 	@Test
 	public void testHierachy() {
 		// create facility, aisle, bay & tier
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();		
 		Aisle aisle = getDefaultAisle(facility, "A1");
 		Bay bay = getDefaultBay(aisle, "B1");
 		Tier tier1 = getDefaultTier(bay, "T1");
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 				
 		// traverse hierarchy
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 		Aisle a1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertNotNull("Aisle is undefined",a1);
@@ -35,6 +35,6 @@ public class HierachyTest extends MockDaoTest {
 		Tier t1 = (Tier) facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull("Tier is undefined",t1);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

@@ -1,5 +1,6 @@
 package com.codeshelf.model.domain;
 
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
@@ -8,6 +9,7 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.Mockito;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.ITypedDao;
@@ -33,7 +35,7 @@ public class OrderDetailTest extends MockDaoTest {
 	}
 	
 	private void verifyStorage() {
-		verify(mockDao, atLeastOnce()).store(Matchers.<OrderDetail>any(OrderDetail.class));
+		verify(mockDao, atLeastOnce()).store((Tenant)any(),Matchers.<OrderDetail>any(OrderDetail.class));
 	}
 	
 	/**
@@ -48,7 +50,7 @@ public class OrderDetailTest extends MockDaoTest {
 		wi.setStatus(WorkInstructionStatusEnum.NEW);
 		subject.addWorkInstruction(wi);
 		
-		subject.reevaluateStatus();
+		subject.reevaluateStatus(getDefaultTenant());
 		
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, subject.getStatus());
 		verifyStorage();
@@ -66,7 +68,7 @@ public class OrderDetailTest extends MockDaoTest {
 		wi.setActualQuantity(testQuantity - 1);
 		subject.addWorkInstruction(wi);
 		
-		subject.reevaluateStatus();
+		subject.reevaluateStatus(getDefaultTenant());
 		
 		Assert.assertEquals(OrderStatusEnum.SHORT, subject.getStatus());
 		verifyStorage();
@@ -85,7 +87,7 @@ public class OrderDetailTest extends MockDaoTest {
 		wi.setActualQuantity(testQuantity);
 		subject.addWorkInstruction(wi);
 		
-		subject.reevaluateStatus();
+		subject.reevaluateStatus(getDefaultTenant());
 		
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, subject.getStatus());
 		verifyStorage();
@@ -102,7 +104,7 @@ public class OrderDetailTest extends MockDaoTest {
 	@Test
 	public void noWI() {
 		OrderStatusEnum priorStatus = subject.getStatus();
-		subject.reevaluateStatus();
+		subject.reevaluateStatus(getDefaultTenant());
 		
 		Assert.assertEquals(priorStatus, subject.getStatus());
 	}
@@ -125,7 +127,7 @@ public class OrderDetailTest extends MockDaoTest {
 		subject.addWorkInstruction(newWi);
 		
 		
-		subject.reevaluateStatus();
+		subject.reevaluateStatus(getDefaultTenant());
 		
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, subject.getStatus());
 		verifyStorage();
@@ -151,7 +153,7 @@ public class OrderDetailTest extends MockDaoTest {
 		subject.addWorkInstruction(completeWi);
 		
 		
-		subject.reevaluateStatus();
+		subject.reevaluateStatus(getDefaultTenant());
 		
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, subject.getStatus());
 		verifyStorage();

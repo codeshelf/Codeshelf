@@ -1,38 +1,30 @@
 package com.codeshelf.manager;
 
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.PersistenceService;
-import com.codeshelf.platform.persistence.PersistenceServiceImpl;
+import com.codeshelf.platform.persistence.SingleTenantPersistenceService;
 
-public class ManagerPersistenceService extends PersistenceServiceImpl<ManagerSchema> {
-	private static PersistenceService<ManagerSchema> theInstance = null;
-
-	private ManagerSchema managerSchema = new ManagerSchema();
+public class ManagerPersistenceService extends SingleTenantPersistenceService<ManagerSchema> {
+	private static SingleTenantPersistenceService<ManagerSchema> theInstance = null;
 
 	private ManagerPersistenceService() {
-		super();
+		super(new ManagerSchema());
 	}
 	
-	public final synchronized static PersistenceService<ManagerSchema> getMaybeRunningInstance() {
+	public final synchronized static SingleTenantPersistenceService<ManagerSchema> getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new ManagerPersistenceService();
 		}
 		return theInstance;
 	}
-	public final synchronized static PersistenceService<ManagerSchema> getNonRunningInstance() {
+	public final synchronized static SingleTenantPersistenceService<ManagerSchema> getNonRunningInstance() {
 		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
 			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
 	}
-	public final static PersistenceService<ManagerSchema> getInstance() {
+	public final static SingleTenantPersistenceService<ManagerSchema> getInstance() {
 		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
-	}
-
-	@Override
-	public ManagerSchema getDefaultSchema() {
-		return this.managerSchema;
 	}
 
 	@Override

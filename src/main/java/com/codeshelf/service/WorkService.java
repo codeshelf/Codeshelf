@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.HousekeepingInjector;
@@ -122,8 +123,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public WorkService() {
 		this(new IEdiExportServiceProvider() {
 			@Override
-			public IEdiService getWorkInstructionExporter(Facility facility) {
-				return facility.getEdiExportService();
+			public IEdiService getWorkInstructionExporter(Tenant tenant,Facility facility) {
+				return facility.getEdiExportService(tenant);
 			}
 		});
 	}
@@ -151,14 +152,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inContainerIdList
 	 * @return
 	 */
-	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
-		return computeWorkInstructions(inChe, inContainerIdList, false);
+	public final WorkList computeWorkInstructions(Tenant tenant,final Che inChe, final List<String> inContainerIdList) {
+		return computeWorkInstructions(tenant,inChe, inContainerIdList, false);
 	}
 
-	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
+	public final WorkList computeWorkInstructions(Tenant tenant,final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		inChe.clearChe();
+		inChe.clearChe(tenant);
 
 		Facility facility = inChe.getFacility();
 		// DEV-492 identify previous container uses
@@ -189,7 +190,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					}
 
 					try {
-						ContainerUse.staticGetDao().store(thisUse);
+						ContainerUse.staticGetDao().store(tenant,thisUse);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -210,7 +211,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			if (!newCntrUses.contains(oldUse)) {
 				inChe.removeContainerUse(oldUse);
 				try {
-					ContainerUse.staticGetDao().store(oldUse);
+					ContainerUse.staticGetDao().store(tenant,oldUse);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
@@ -220,18 +221,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Timestamp theTime = now();
 
 		// Get all of the OUTBOUND work instructions.
-		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);
+		WorkList workList = generateOutboundInstructions(tenant,facility, inChe, containerList, theTime);
 		//wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
 		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
-		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
+		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(tenant,facility, inChe, containerList, theTime);
 		workList.getInstructions().addAll(crossInstructions);
 
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		//sortAndSaveActionableWIs(facility, wiResultList);
-		sortAndSaveActionableWIs(facility, workList.getInstructions(), reverse);
+		sortAndSaveActionableWIs(tenant,facility, workList.getInstructions(), reverse);
 
 		LOGGER.info("TOTAL WIs {}", workList.getInstructions());
 
@@ -246,9 +247,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 
 	// just a call through to facility, but convenient for the UI
-	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
+	public final void fakeSetupUpContainersOnChe(Tenant tenant,UUID cheId, String inContainers) {
 		final boolean doThrowInstead = false;
-		Che che = Che.staticGetDao().findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 		if (che == null)
 			return;
 
@@ -257,9 +258,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			// do the testing only, set up containers.  Should need "simulate" login for this, although as of V11, works with "configure".
 			// DEV-532 shows what used to happen before the error was caught and the transaction rolled back.
 
-			doIntentionalPersistenceError(che);
+			doIntentionalPersistenceError(tenant,che);
 		else
-			setUpCheContainerFromString(che, inContainers);
+			setUpCheContainerFromString(tenant,che, inContainers);
 	}
 
 	// --------------------------------------------------------------------------
@@ -269,7 +270,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
 	 *
 	 */
-	public final WorkList setUpCheContainerFromString(Che inChe, String inContainers) {
+	public final WorkList setUpCheContainerFromString(Tenant tenant,Che inChe, String inContainers) {
 		if (inChe == null)
 			return null;
 
@@ -277,19 +278,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
 
 		if (containersIdList.size() > 0) {
-			return this.computeWorkInstructions(inChe, containersIdList);
+			return this.computeWorkInstructions(tenant,inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 		}
 		return null;
 	}
 
-	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
-		Che che = Che.staticGetDao().findByPersistentId(cheId);
+	public void completeWorkInstruction(Tenant tenant,UUID cheId, WorkInstruction incomingWI) {
+		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 		if (che != null) {
 			try {
-				final WorkInstruction storedWi = persistWorkInstruction(incomingWI);
-				exportWorkInstruction(storedWi);
+				final WorkInstruction storedWi = persistWorkInstruction(tenant,incomingWI);
+				exportWorkInstruction(tenant,storedWi);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
 			} catch (IOException e) {
@@ -305,8 +306,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For a UI simulation
 	 * @return
 	 */
-	public final void fakeCompleteWi(String wiPersistentId, String inCompleteStr) {
-		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiPersistentId);
+	public final void fakeCompleteWi(Tenant tenant,String wiPersistentId, String inCompleteStr) {
+		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(tenant,wiPersistentId);
 		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
 		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
 
@@ -329,7 +330,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		wi.setType(WorkInstructionTypeEnum.ACTUAL);
 
 		//send in in like in came from SiteController
-		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
+		completeWorkInstruction(tenant,wi.getAssignedChe().getPersistentId(), wi);
 	}
 
 	/**
@@ -338,7 +339,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inScannedOrderDetailId
 	 * @return
 	 */
-	public GetOrderDetailWorkResponse getWorkInstructionsForOrderDetail(final Che inChe, final String inScannedOrderDetailId) {
+	public GetOrderDetailWorkResponse getWorkInstructionsForOrderDetail(Tenant tenant,
+			final Che inChe, final String inScannedOrderDetailId) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		GetOrderDetailWorkResponse response = new GetOrderDetailWorkResponse();
 		if (inChe == null) {
@@ -354,7 +356,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			"facilityId", inChe.getFacility().getPersistentId(),
 			"domainId", inScannedOrderDetailId
 		);
-		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByFilter("orderDetailByFacilityAndDomainId", filterArgs);
+		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByFilter(tenant,"orderDetailByFacilityAndDomainId", filterArgs);
 
 		if (orderDetails.isEmpty()) {
 			// temporary: just return empty list instead of throwing
@@ -370,19 +372,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		OrderDetail orderDetail = orderDetails.get(0);
-		inChe.clearChe();
+		inChe.clearChe(tenant);
 		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
 		// Pass facility as the default location of a short WI..
-		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+		WorkInstruction aWi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.NEW,
 			WorkInstructionTypeEnum.PLAN,
 			orderDetail,
 			inChe,
 			null); // Could be normal WI, or a short WI
 		if (aWi != null) {
 			wiResultList.add(aWi);
-			orderDetail.reevaluateStatus();
+			orderDetail.reevaluateStatus(tenant);
 		} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 			//As of DEV-561 we are adding completed WIs to the list in order to be able
 			//give feedback on complete orders (and differentiate a 100% complete order from
@@ -410,11 +412,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * for that CHE are assumed be on the path of the scanned location.
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
-		return getWorkInstructions(inChe, inScannedLocationId, false, false);
+	public final List<WorkInstruction> getWorkInstructions(Tenant tenant,final Che inChe, final String inScannedLocationId) {
+		return getWorkInstructions(tenant,inChe, inScannedLocationId, false, false);
 	}
 
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
+	public final List<WorkInstruction> getWorkInstructions(Tenant tenant,final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
@@ -422,7 +424,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
 		//Get current complete list of WIs
-		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
+		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(tenant,inChe, 0.0, false);
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -431,7 +433,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			WorkInstruction wi = wiIter.next();
 			if (wi.isHousekeeping()) {
 				LOGGER.info("Removing exisiting HK WI={}", wi);
-				WorkInstruction.staticGetDao().delete(wi);
+				WorkInstruction.staticGetDao().delete(tenant,wi);
 				wiIter.remove();
 			}
 		}
@@ -454,14 +456,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				preferredInstructions = Lists.reverse(preferredInstructions);
 			}
 			if (preferredInstructions.size() > 0) {
-				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
+				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(tenant,facility, preferredInstructions);
 			}
 
 			return preferredInstructions;
 		}
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
-		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos, reversePickOrder);
+		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(tenant,inChe, startingPathPos, reversePickOrder);
 
 
 		// Make sure sorted correctly. The query just got the work instructions.
@@ -497,7 +499,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
-			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
+			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(tenant,facility, wrappedRouteWiList);
 		}
 
 		//Log time if over 2 seconds
@@ -511,7 +513,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return wrappedRouteWiList;
 	}
 
-	private void deleteExistingShortWiToFacility(final OrderDetail inOrderDetail) {
+	private void deleteExistingShortWiToFacility(Tenant tenant,final OrderDetail inOrderDetail) {
 		// Do we have short work instruction already for this orderDetail, for any CHE, going to facility?
 		// Note, that leaves the shorts around that a user shorted.  This only delete the shorts created immediately upon scan if there is no product.
 
@@ -532,7 +534,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				if (assignedChe != null)
 					assignedChe.removeWorkInstruction(wi); // necessary?
 				inOrderDetail.removeWorkInstruction(wi); // necessary?
-				WorkInstruction.staticGetDao().delete(wi);
+				WorkInstruction.staticGetDao().delete(tenant,wi);
 
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work SHORT instruction", e);
@@ -602,7 +604,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inOrder
 	 * @return
 	 */
-	private void setWiPickInstruction(WorkInstruction inWi, OrderHeader inOrder) {
+	private void setWiPickInstruction(Tenant tenant,WorkInstruction inWi, OrderHeader inOrder) {
 		String locationString = "";
 
 		// For DEV-315, if more than one location, sort them.
@@ -624,7 +626,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		inWi.doSetPickInstruction(locationString);
 
 		try {
-			WorkInstruction.staticGetDao().store(inWi);
+			WorkInstruction.staticGetDao().store(tenant,inWi);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -638,7 +640,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @return
 	 */
 	@SuppressWarnings("unused")
-	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(final List<WorkInstruction> inCrosswallWiList,
+	private List<WorkInstruction> sortCrosswallInstructionsInLocationOrder(Tenant tenant,
+		final List<WorkInstruction> inCrosswallWiList,
 		final List<Location> inSubLocations) {
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
@@ -652,7 +655,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					if (wi.getLocation().equals(workLocation)) {
 						wiResultList.add(wi);
 						wi.setGroupAndSortCode(String.format("%04d", wiResultList.size()));
-						WorkInstruction.staticGetDao().store(wi);
+						WorkInstruction.staticGetDao().store(tenant,wi);
 						wiIterator.remove();
 					}
 				}
@@ -669,7 +672,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inTime
 	 * @return
 	 */
-	private WorkList generateOutboundInstructions(final Facility facility,
+	private WorkList generateOutboundInstructions(Tenant tenant,final Facility facility,
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
@@ -694,7 +697,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
 						try {
 							// Pass facility as the default location of a short WI..
-							SingleWorkItem workItem = makeWIForOutbound(orderDetail,
+							SingleWorkItem workItem = makeWIForOutbound(tenant,orderDetail,
 								inChe,
 								container,
 								inTime,
@@ -706,7 +709,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 							WorkInstruction aWi = workItem.getInstruction();
 							if (aWi != null) {
 								wiResultList.add(aWi);
-								orderDetailChanged |= orderDetail.reevaluateStatus();
+								orderDetailChanged |= orderDetail.reevaluateStatus(tenant);
 							} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 								//As of DEV-561 we are adding completed WIs to the list in order to be able
 								//give feedback on complete orders (and differentiate a 100% complete order from
@@ -726,7 +729,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						}
 					}
 					if (orderDetailChanged) {
-						order.reevaluateStatus();
+						order.reevaluateStatus(tenant);
 					}
 
 				}
@@ -748,7 +751,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(final Facility facility,
+	private List<WorkInstruction> generateCrossWallInstructions(Tenant tenant,final Facility facility,
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
@@ -758,7 +761,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			BatchResult<Work> result = determineWorkForContainer(facility, container);
 			for (Work work : result.getResult()) {
 				try {
-					WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+					WorkInstruction wi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.NEW,
 						WorkInstructionTypeEnum.PLAN,
 						work.getOutboundOrderDetail(),
 						work.getContainer(),
@@ -768,7 +771,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 					// If we created a WI then add it to the list.
 					if (wi != null) {
-						setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
+						setWiPickInstruction(tenant,wi, work.getOutboundOrderDetail().getParent());
 						wiList.add(wi);
 					}
 				} catch(DaoException e) {
@@ -816,7 +819,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inTime
 	 * @return
 	 */
-	private SingleWorkItem makeWIForOutbound(final OrderDetail inOrderDetail,
+	private SingleWorkItem makeWIForOutbound(Tenant tenant,final OrderDetail inOrderDetail,
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime,
@@ -830,17 +833,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence,
 		// we can make the work instruction anyway.
 		Location location = null;
-		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(tenant,inFacility, DomainObjectProperty.WORKSEQR);
 		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
 			if (inOrderDetail.getWorkSequence() != null) {
 				String preferredLocationStr = inOrderDetail.getPreferredLocation();
 				if (!Strings.isNullOrEmpty(preferredLocationStr)) {
 					location = inFacility.findLocationById(preferredLocationStr);
 					if (location == null) {
-						location = inFacility.getUnspecifiedLocation();
+						location = inFacility.getUnspecifiedLocation(tenant);
 					} else if (!location.isActive()){
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
-						location = inFacility.getUnspecifiedLocation();
+						location = inFacility.getUnspecifiedLocation(tenant);
 					}					
 				} else {
 					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
@@ -870,12 +873,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
-			deleteExistingShortWiToFacility(inOrderDetail);
+			deleteExistingShortWiToFacility(tenant,inOrderDetail);
 
 			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list
 			if (doAutoShortInstructions()) {
 				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
-				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
+				resultWi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
 					inOrderDetail,
 					inContainer,
@@ -886,14 +889,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					resultWi.setPlanQuantity(0);
 					resultWi.setPlanMinQuantity(0);
 					resultWi.setPlanMaxQuantity(0);
-					WorkInstruction.staticGetDao().store(resultWi);
+					WorkInstruction.staticGetDao().store(tenant,resultWi);
 				}
 				resultWork.setInstruction(resultWi);
 			} else {
 				resultWork.setDetail(inOrderDetail);
 			}
 		} else {
-			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+			resultWi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
 				inOrderDetail,
 				inContainer,
@@ -910,7 +913,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return false;
 	}
 
-	private void sortAndSaveActionableWIs(Facility facility, List<WorkInstruction> allWIs, Boolean reverse) {
+	private void sortAndSaveActionableWIs(Tenant tenant,Facility facility, List<WorkInstruction> allWIs, Boolean reverse) {
 		//Create a copy of the list to prevent unintended side effects from filtering
 		allWIs = Lists.newArrayList(allWIs);
 		//Now we want to filer/sort and save the work instructions that are actionable
@@ -926,7 +929,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//This will sort and also FILTER out WI's that have no location (i.e. SHORTS)
 		//It uses the iterater or remove items from the existing list and add it to the new one
 		//If all we care about are the counts. Why do we even sort them now?
-		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
+		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(tenant,facility);
 
 		List<WorkInstruction> sortedWIResults = sequencer.sort(facility, allWIs);
 		if (reverse) {
@@ -934,7 +937,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		//Save sort
-		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
+		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(tenant,sortedWIResults);
 	}
 
 	// --------------------------------------------------------------------------
@@ -943,7 +946,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	void exportWorkInstruction(WorkInstruction inWorkInstruction) throws IOException {
+	void exportWorkInstruction(Tenant tenant,WorkInstruction inWorkInstruction) throws IOException {
 		// jr/hibernate  tracking down an error
 		if (completedWorkInstructions == null) {
 			// if queue not defined, just don't queue it
@@ -954,21 +957,21 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
 			String messageBody = wiCSVExporter.exportWorkInstructions(ImmutableList.of(inWorkInstruction));
 			Facility facility = inWorkInstruction.getParent();
-			IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-			WIMessage wiMessage = new WIMessage(ediExportService, messageBody);
+			IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(tenant,facility);
+			WIMessage wiMessage = new WIMessage(tenant,ediExportService, messageBody);
 			completedWorkInstructions.add(wiMessage);
 		}
 	}
 
-	public List<WiSetSummary> workAssignedSummary(UUID cheId, UUID facilityId) {
+	public List<WiSetSummary> workAssignedSummary(Tenant tenant,UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
-		summarizer.computeAssignedWiSummariesForChe(cheId, facilityId);
+		summarizer.computeAssignedWiSummariesForChe(tenant,cheId, facilityId);
 		return summarizer.getSummaries();
 	}
 
-	public List<WiSetSummary> workCompletedSummary(UUID cheId, UUID facilityId) {
+	public List<WiSetSummary> workCompletedSummary(Tenant tenant,UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
-		summarizer.computeCompletedWiSummariesForChe(cheId, facilityId);
+		summarizer.computeCompletedWiSummariesForChe(tenant,cheId, facilityId);
 		return summarizer.getSummaries();
 	}
 
@@ -980,9 +983,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private static class WIMessage {
 		private IEdiService	exportService;
 		private String		messageBody;
+		private Tenant		tenant;
 
-		public WIMessage(IEdiService exportService, String messageBody) {
+		public WIMessage(Tenant tenant, IEdiService exportService, String messageBody) {
 			super();
+			this.tenant = tenant;
 			this.exportService = exportService;
 			this.messageBody = messageBody;
 		}
@@ -1065,7 +1070,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inWiList
 	 * May return empty list, but never null
 	 */
-	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition, final Boolean getBeforePosition) {
+	private List<WorkInstruction> findCheInstructionsFromPosition(Tenant tenant,final Che inChe, final Double inFromStartingPosition, final Boolean getBeforePosition) {
 		List<WorkInstruction> cheWorkInstructions = new ArrayList<>();
 		if (inChe == null || inFromStartingPosition == null) {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
@@ -1091,7 +1096,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//throw new NotImplementedException("Needs to be implemented with a custom query");
 
 		// Hibernate version has test failing with database lock here, so pull out the query
-		List<WorkInstruction> filterWiList = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		List<WorkInstruction> filterWiList = WorkInstruction.staticGetDao().findByFilter(tenant,filterParams);
 
 		for (WorkInstruction wi : filterWiList) {
 			// Very unlikely. But if some wLocationABCs were deleted between start work and scan starting location, let's not give out the "deleted" wis
@@ -1112,20 +1117,20 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	/**
 	 * Support method to force an exception for testing
 	 */
-	private void doIntentionalPersistenceError(Che che) {
+	private void doIntentionalPersistenceError(Tenant tenant,Che che) {
 		String desc = "";
 		for (int count = 0; count < 500; count++) {
 			desc += "X";
 		}
 		// No try/catch here. The intent is to fail badly and see how the system handles it.
 		che.setDescription(desc);
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(tenant,che);
 		LOGGER.warn("Intentional database persistence error. Setting too long description on " + che.getDomainId());
 	}
 
-	private WorkInstruction persistWorkInstruction(WorkInstruction updatedWi) throws DaoException {
+	private WorkInstruction persistWorkInstruction(Tenant tenant,WorkInstruction updatedWi) throws DaoException {
 		UUID wiId = updatedWi.getPersistentId();
-		WorkInstruction storedWi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
+		WorkInstruction storedWi = WorkInstruction.staticGetDao().findByPersistentId(tenant,wiId);
 		if (storedWi == null) {
 			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
@@ -1135,16 +1140,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
 		storedWi.setStarted(updatedWi.getStarted());
 		storedWi.setCompleted(updatedWi.getCompleted());
-		WorkInstruction.staticGetDao().store(storedWi);
+		WorkInstruction.staticGetDao().store(tenant,storedWi);
 
 		// Find the order detail for this WI and mark it.
 		OrderDetail orderDetail = storedWi.getOrderDetail();
 		// from v5 housekeeping WI may have null orderDetail
 		if (orderDetail != null) {
-			orderDetail.reevaluateStatus();
+			orderDetail.reevaluateStatus(tenant);
 			OrderHeader order = orderDetail.getParent();
 			if (order != null) {
-				order.reevaluateStatus();
+				order.reevaluateStatus(tenant);
 			}
 		}
 		return storedWi;
@@ -1177,7 +1182,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	private void processExportMessage(WIMessage exportMessage) {
-		TenantPersistenceService.getInstance().beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(exportMessage.tenant);
 		try {
 			//transaction begun and closed after blocking call so that it is not held open
 			boolean sent = false;
@@ -1191,16 +1196,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					Thread.sleep(retryDelay);
 				}
 			}
-			TenantPersistenceService.getInstance().commitTransaction();
+			TenantPersistenceService.getInstance().commitTransaction(exportMessage.tenant);
 		} catch (Exception e) {
-			TenantPersistenceService.getInstance().rollbackTransaction();
+			TenantPersistenceService.getInstance().rollbackTransaction(exportMessage.tenant);
 			LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 		}
 	}
 
 	@Override
 	protected void triggerShutdown() {
-		WIMessage poison = new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE);
+		WIMessage poison = new WorkService.WIMessage(null,null,WorkService.SHUTDOWN_MESSAGE);
 		this.completedWorkInstructions.offer(poison);
 	}
 
@@ -1210,8 +1215,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
 	}
 
-	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
-		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
+	public boolean willOrderDetailGetWi(Tenant tenant,OrderDetail inOrderDetail) {
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(tenant,inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 
 		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();

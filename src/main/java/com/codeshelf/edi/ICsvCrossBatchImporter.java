@@ -8,6 +8,7 @@ package com.codeshelf.edi;
 import java.io.Reader;
 import java.sql.Timestamp;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 
 /**
@@ -19,6 +20,6 @@ public interface ICsvCrossBatchImporter {
 	/**
 	 * @return the number of successfully imported records
 	 */
-	int importCrossBatchesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	int importCrossBatchesFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

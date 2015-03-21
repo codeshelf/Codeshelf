@@ -32,6 +32,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
@@ -152,7 +153,7 @@ public class IronMqService extends EdiServiceABC {
 		setProviderCredentials(json);
 	}
 
-	public void storeCredentials(String projectId,  String token) {
+	public void storeCredentials(Tenant tenant,String projectId,  String token) {
 		setCredentials(projectId, token);
 		if(getHasCredentials()) {
 			try {
@@ -174,10 +175,11 @@ public class IronMqService extends EdiServiceABC {
 				LOGGER.warn("IronMqService is unlinked, will not export work instructions");
 			}
 		}
-		IronMqService.staticGetDao().store(this); //This is the DAO the UI is listening to
+		IronMqService.staticGetDao().store(tenant,this); //This is the DAO the UI is listening to
 	}
 
-	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
+	public boolean getUpdatesFromHost(Tenant tenant,
+		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,

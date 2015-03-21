@@ -14,6 +14,7 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -63,7 +64,7 @@ public class Aisle extends Location {
 	/**
 	 * this is for callMethod from the UI.  The main complexity is that this aisle may have been set to different path segment earlier. If so, that should be removed first.
 	 */
-	public void associatePathSegment(String inPathSegPersistentID) {
+	public void associatePathSegment(Tenant tenant,String inPathSegPersistentID) {
 		/* In all cases, the result should be aisle has its pathseg field set, the pathseg should have this aisle in its list.  AND this aisle should not be in other path seg lists.
 		 * 1a) Simple. No path association yet. Normal add. 
 		 * 1b) Simple error. No path association yet. Throws. Covered in test updateNonexistantPathSegment()
@@ -72,15 +73,15 @@ public class Aisle extends Location {
 		 * 3b) Aisle associated to different segment, but this add does not resolve. No actions aside from Throw. Covered in test associatePathSegment()
 		 */
 		UUID persistentId = UUID.fromString(inPathSegPersistentID);
-		PathSegment newPathSegment = PathSegment.staticGetDao().findByPersistentId(persistentId);
+		PathSegment newPathSegment = PathSegment.staticGetDao().findByPersistentId(tenant,persistentId);
 		if (newPathSegment == null) {
 			throw new DaoException("Could not associate path segment, segment not found: " + inPathSegPersistentID);
 		}
 
-		associatePathSegment(newPathSegment);
+		associatePathSegment(tenant,newPathSegment);
 	}
 
-	public void associatePathSegment(PathSegment inPathSegment) {
+	public void associatePathSegment(Tenant tenant,PathSegment inPathSegment) {
 
 		if (inPathSegment == null) {
 			throw new DaoException("null call to associatePathSegment");
@@ -98,8 +99,8 @@ public class Aisle extends Location {
 		// Just an extra check on locations Array maintenance. Barely worth it.
 		int initialLocationCount = inPathSegment.getLocations().size();
 		inPathSegment.addLocation(this);
-		this.computePosAlongPath(inPathSegment);
-		this.getDao().store(this);
+		this.computePosAlongPath(tenant,inPathSegment);
+		this.getDao().store(tenant,this);
 
 		int afterLocationCount = inPathSegment.getLocations().size();
 		if (initialLocationCount == afterLocationCount)
@@ -111,12 +112,12 @@ public class Aisle extends Location {
 	 * This fixes the possible perceived bug of set tier controller. Oops, this is zigzag aisle. Set aisle controller correctly. Some tiers never set.
 	 * This makes the getEffectiveXXX() calls work, searching upward until they find the aisle value
 	 */
-	public void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
-		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
+	public void setControllerChannel(Tenant tenant,String inControllerPersistentIDStr, String inChannelStr) {
+		doSetControllerChannel(tenant,inControllerPersistentIDStr, inChannelStr);
 
 		List<Tier> aList = getActiveChildrenAtLevel(Tier.class);
 		for (Tier aTier : aList) {
-			aTier.clearControllerChannel();
+			aTier.clearControllerChannel(tenant);
 		}
 	}
 
@@ -177,7 +178,7 @@ public class Aisle extends Location {
 		return bay;
 	}
 	
-	public void setPoscons(int startingIndex) {
+	public void setPoscons(Tenant tenant,int startingIndex) {
 		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
 		Bay.sortByDomainId(bays);
 		int posconIndex = startingIndex;
@@ -189,14 +190,14 @@ public class Aisle extends Location {
 				Slot.sortByDomainId(slots);
 				for (Slot slot  : slots) {
 					slot.setPosconIndex(posconIndex);
-					Slot.staticGetDao().store(slot);
+					Slot.staticGetDao().store(tenant,slot);
 					posconIndex++;	
 				}
 			}
 		}		
 	}
 	
-	public void resetPoscons() {
+	public void resetPoscons(Tenant tenant) {
 		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
 		for (Bay bay : bays) {
 			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
@@ -204,7 +205,7 @@ public class Aisle extends Location {
 				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
 				for (Slot slot  : slots) {
 					slot.setPosconIndex(null);
-					Slot.staticGetDao().store(slot);
+					Slot.staticGetDao().store(tenant,slot);
 				}
 			}
 		}		

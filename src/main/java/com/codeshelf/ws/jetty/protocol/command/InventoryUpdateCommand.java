@@ -31,7 +31,7 @@ public class InventoryUpdateCommand extends CommandABC {
 		
 		UUID cheUUID = UUID.fromString(request.getDeviceId());
 		if (cheUUID != null ) {
-			response = inventoryService.moveOrCreateInventory(request.getGtin(), request.getLocation(), cheUUID);
+			response = inventoryService.moveOrCreateInventory(getTenant(),request.getGtin(), request.getLocation(), cheUUID);
 		} else {
 			LOGGER.error("Unable to process CHE UUID: {}", request.getDeviceId());
 			response = new InventoryUpdateResponse();

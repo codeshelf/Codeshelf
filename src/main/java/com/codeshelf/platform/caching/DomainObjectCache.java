@@ -14,6 +14,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.IDomainObject;
@@ -32,13 +33,15 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	final ITypedDao<T> dao;
 	
 	IDomainObject parent = null;
+	Tenant tenant;
 	
-	public DomainObjectCache(ITypedDao<T> dao) {		
+	public DomainObjectCache(Tenant tenant, ITypedDao<T> dao) {
+		this.tenant = tenant;
 		this.dao = dao;
 	}
 		
 	public void loadAll() {
-		Criteria crit = this.dao.createCriteria();
+		Criteria crit = this.dao.createCriteria(tenant);
 		if (this.dao.getDaoClass().equals(ItemMaster.class)) {
 			crit.addOrder(Property.forName("updated").desc());
 		}
@@ -52,7 +55,7 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	public void load(IDomainObject parent) {
 		this.parent = parent;
 		UUID persistentId = parent.getPersistentId();
-		Criteria crit = this.dao.createCriteria();
+		Criteria crit = this.dao.createCriteria(tenant);
 		crit.add(Restrictions.eq("parent.persistentId", persistentId));
 		// little bit of a hack: sort by update time stamp for item
 		// master to implement LRU prefetching.  would be better to have 
@@ -71,7 +74,7 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		T obj = this.objectCache.get(domainId); 
 		if (obj==null) {
 			// try to retrieve from database on miss
-			obj = this.dao.findByDomainId(this.parent, domainId);
+			obj = this.dao.findByDomainId(tenant, this.parent, domainId);
 			if (obj!=null) {
 				// add to cache
 				objectCache.put(obj.getDomainId(), obj);

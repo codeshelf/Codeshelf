@@ -23,20 +23,20 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 	
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
 		Tier nullParent = facility.getParentAtLevel(Tier.class);
 		Assert.assertNull(nullParent);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public final void testGetLocationIdWithInvalidSublevel() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
 		String locationId = facility.getLocationIdToParentLevel(Tier.class);
 		Assert.assertEquals("", locationId);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	/**
@@ -44,18 +44,18 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 	 */
 	@Test
 	public void testSerializationOfExtraFields() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		Assert.assertNotNull(objectNode.findValue("hasMeaningfulOrderGroups"));
 		Assert.assertNotNull(objectNode.findValue("hasCrossBatchOrders"));
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testVerticesDeletion() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
 		facility.setDomainId("Vertex Test Facility");
 		UUID id = facility.getPersistentId();
@@ -64,17 +64,17 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		createAndSaveVertex(facility, "V02", 1, -120d, 30d);
 		createAndSaveVertex(facility, "V03", 2, -119.999d, 29.999d);
 		createAndSaveVertex(facility, "V04", 2, -120d, 29.999d);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().findByPersistentId(id);
-		facility.removeAllVertices();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
+		facility.removeAllVertices(getDefaultTenant());
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().findByPersistentId(id);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
@@ -84,6 +84,6 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		v.setDrawOrder(drawOrder);
 		v.setPoint(new Point(PositionTypeEnum.GPS, inX, inY, 0d));
 		facility.addVertex(v);
-		Vertex.staticGetDao().store(v);		
+		Vertex.staticGetDao().store(getDefaultTenant(),v);		
 	}
 }

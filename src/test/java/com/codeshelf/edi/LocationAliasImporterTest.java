@@ -43,7 +43,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void successEventsProduced() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -51,28 +51,28 @@ public class LocationAliasImporterTest extends MockDaoTest {
 	
 		Facility facility = createFacility();
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		aisleA1.getDao().store(aisleA1);
+		aisleA1.getDao().store(getDefaultTenant(),aisleA1);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		aisleA2.getDao().store(aisleA2);
+		aisleA2.getDao().store(getDefaultTenant(),aisleA2);
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		bay2.getDao().store(bay2);
+		bay2.getDao().store(getDefaultTenant(),bay2);
 		
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void violationEventProducedWhenLocationInactive() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n";
@@ -80,22 +80,22 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Facility facility = createFacility();
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		aisleA1.setActive(false);
-		aisleA1.getDao().store(aisleA1);
+		aisleA1.getDao().store(getDefaultTenant(),aisleA1);
 				
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public final void violationEventProducedWhenLocationNotFound() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "ANOTTHERE, AisleA\r\n";
@@ -105,17 +105,17 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	
 	@Test
 	public final void findLocationByIdAfterImport() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -127,24 +127,24 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Facility facility = createFacility();
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisleA1);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisleA1);
 
 		Bay bay1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(bay1);
+		Bay.staticGetDao().store(getDefaultTenant(),bay1);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisleA2);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisleA2);
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(bay2);
+		Bay.staticGetDao().store(getDefaultTenant(),bay2);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		// Make sure we can still look up an aisle by it's FQN.
 		Location location = facility.findLocationById("A1");
@@ -170,34 +170,34 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		location = facility.findLocationById("AisleC");
 		Assert.assertNull(location);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 	
 	@Test
 	public final void rereadLocationsTest() {
 		// With the hibernate change, DEV-595 bug found. Alias reread violated parent-child pattern.
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = createFacility();
 		String facilityDomainId = facility.getDomainId();
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisleA1);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisleA1);
 
 		Bay bay1 = aisleA1.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(bay1);
+		Bay.staticGetDao().store(getDefaultTenant(),bay1);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisleA2);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisleA2);
 
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(bay2);
-		this.getTenantPersistenceService().commitTransaction();
+		Bay.staticGetDao().store(getDefaultTenant(),bay2);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		
 		LOGGER.info("1: Read the locations file");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		String csvString = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
 				+ "A2, AisleB\r\n" //
@@ -206,20 +206,20 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A3, AisleC\r\n";
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTransaction();
+		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		LOGGER.info("2: Normal lookups by alias");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Location aisleA2a = facility.findLocationById("AisleA");
 		Assert.assertNotNull(aisleA2a);
 
 		Location bay2a = facility.findLocationById("B34");
 		Assert.assertNotNull(bay2a);
-		this.getTenantPersistenceService().commitTransaction();		
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());		
 		
 		LOGGER.info("3: Reread the locations file, changing some aliases");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleAx\r\n" //
 				+ "A2, AisleBx\r\n" //
@@ -228,11 +228,11 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A3, AisleC\r\n";
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTransaction();
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime2);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("4: Normal lookups by the new alias found. Old not");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Location aisleA2b = facility.findLocationById("AisleA");
 		Assert.assertNull(aisleA2b);
 		aisleA2b = facility.findLocationById("AisleAx");
@@ -249,23 +249,23 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		bay2b = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay2b);
 		Assert.assertEquals(bay2b.getDomainId(), "B2");
-		this.getTenantPersistenceService().commitTransaction();		
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());		
 		
 		LOGGER.info("5: Read exactly same locations file again");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer3 = createLocationAliasImporter();
-		importer3.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime3);
-		this.getTenantPersistenceService().commitTransaction();
+		importer3.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime3);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("6: Lookups still work");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Location aisleA2c = facility.findLocationById("AisleAx");
 		Assert.assertNotNull(aisleA2c);
 
 		Location bay2c = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay2c);
-		this.getTenantPersistenceService().commitTransaction();		
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());		
 
 		LOGGER.info("7: Reread the locations file, swapping two aliases"); 
 		/* This was the actual DEV-594 situation, inverting the names for a tier.
@@ -273,7 +273,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		java.lang.Exception
 			at com.codeshelf.model.domain.Location.addAlias(Location.java:694)
 		*/		
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		String csvString4 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleAx\r\n" //
 				+ "A2, AisleBx\r\n" //
@@ -282,18 +282,18 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A3, AisleC\r\n";
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer4 = createLocationAliasImporter();
-		importer4.importLocationAliasesFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
-		this.getTenantPersistenceService().commitTransaction();
+		importer4.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString4), facility, ediProcessTime4);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("8: See that the swapped aliases resolve correctly");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Location bay1d = facility.findLocationById("B34x");
 		Assert.assertNotNull(bay1d);
 		String bay1dDomainId = bay1d.getDomainId();
 		Assert.assertEquals(bay1dDomainId, "B1"); // works, even though facility reference is stale
 		
 		// Let's get the facility again within this transaction.
-		Facility facility2 = Facility.staticGetDao().findByDomainId(null, facilityDomainId);
+		Facility facility2 = Facility.staticGetDao().findByDomainId(getDefaultTenant(),null, facilityDomainId);
 		Location bay1e = facility2.findLocationById("B34x");
 		Assert.assertNotNull(bay1e);
 		String bay1eDomainId = bay1e.getDomainId();
@@ -303,7 +303,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Assert.assertNotNull(bay2d);
 		Assert.assertEquals(bay2d.getDomainId(), "B2"); // fails!
 
-		this.getTenantPersistenceService().commitTransaction();		
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());		
 
 	}
 

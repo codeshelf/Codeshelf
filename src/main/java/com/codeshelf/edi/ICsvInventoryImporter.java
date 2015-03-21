@@ -8,6 +8,7 @@ package com.codeshelf.edi;
 import java.io.Reader;
 import java.sql.Timestamp;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 
 /**
@@ -16,7 +17,7 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvInventoryImporter {
 
-	boolean importSlottedInventoryFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importSlottedInventoryFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 	//boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 

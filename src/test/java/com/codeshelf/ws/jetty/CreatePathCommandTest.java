@@ -57,25 +57,25 @@ public class CreatePathCommandTest extends HibernateTest {
 	
 	@Test
 	public void testCreatePathWithCommand() throws JsonGenerationException, JsonMappingException, IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID-2";
 		
 		Facility testFacility = this.createFacility();
 
-		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
+		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getEventListenerIntegrator(getDefaultTenant()).getChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
 		WebSocketConnection viewSession = new WebSocketConnection(websocketSession, Executors.newSingleThreadExecutor());
 
 		try {
 			/* register a filter like the UI does */
-			viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
+			viewSession.registerObjectEventListener(new Filter(getDefaultTenant(),TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
 			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
 			
 			
 			
-			Path noPath = Path.staticGetDao().findByDomainId(testFacility, testPathDomainId);
+			Path noPath = Path.staticGetDao().findByDomainId(getDefaultTenant(),testFacility, testPathDomainId);
 			Assert.assertNull(noPath);
 			
 			PathSegment[] segments = createPathSegment(numberOfSegments);
@@ -94,14 +94,14 @@ public class CreatePathCommandTest extends HibernateTest {
 		}
 		finally {
 			objectChangeBroadcaster.unregisterDAOListener(viewSession);
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		}
 
 	}
 	
 	@Test
 	public void testCreatePathViaObjectMethod() throws JsonParseException, JsonMappingException, IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		int numberOfSegments = 3;
 		String testPathDomainId = "DOMID";
@@ -138,7 +138,7 @@ public class CreatePathCommandTest extends HibernateTest {
 		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

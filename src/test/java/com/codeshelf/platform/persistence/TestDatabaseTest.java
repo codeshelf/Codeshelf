@@ -35,40 +35,40 @@ public class TestDatabaseTest extends HibernateTest {
 		LOGGER.info("Test Database sequence #"+TestDatabaseTest.sequence_static);
 		
 		assertFalse(this.getTenantPersistenceService().hasAnyActiveTransactions());
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		if(TestDatabaseTest.sequence_static == 1) {
 			// create an org to look for in future steps
 			Facility fac = this.createFacility();
 			fac.setDomainId("org_create");
-			Facility.staticGetDao().store(fac);
+			Facility.staticGetDao().store(getDefaultTenant(),fac);
 			
 			// new transaction
-			this.getTenantPersistenceService().commitTransaction();
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 			// org just created should still exist
-			assertNotNull(Facility.staticGetDao().findByDomainId(null,"org_create"));			
+			assertNotNull(Facility.staticGetDao().findByDomainId(getDefaultTenant(),null,"org_create"));			
 			
 			// create another org
 			fac= this.createFacility();
 			fac.setDomainId("org_rollback");
-			Facility.staticGetDao().store(fac);			
+			Facility.staticGetDao().store(getDefaultTenant(),fac);			
 			
 			// rollback and new transaction
-			this.getTenantPersistenceService().rollbackTransaction();
+			this.getTenantPersistenceService().rollbackTransaction(getDefaultTenant());
 			assertFalse(this.getTenantPersistenceService().hasAnyActiveTransactions());
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 			// last step rolled back new org, so it should not exist
-			assertNull(Facility.staticGetDao().findByDomainId(null,"org_rollback"));
+			assertNull(Facility.staticGetDao().findByDomainId(getDefaultTenant(),null,"org_rollback"));
 
 		} else if(TestDatabaseTest.sequence_static == 2) {
 			// confirm test object was recreated by JUnit (not reused)
 			assertEquals(this.sequence_member,1);
 			
 			// org created in prior step should not exist
-			assertNull(Facility.staticGetDao().findByDomainId(null,"org_create"));			
+			assertNull(Facility.staticGetDao().findByDomainId(getDefaultTenant(),null,"org_create"));			
 		}		
 		
 		this.sequence_member++;
@@ -80,22 +80,22 @@ public class TestDatabaseTest extends HibernateTest {
 	
 	@Test
 	public void testOutOfTransactionUpdate() {
-		beginTransaction();
+		this.tenantPersistenceService.beginTransaction(getDefaultTenant());
 		Facility org = new Facility();
 		org.setDomainId("an org");
 		org.setDescription("foo");
-		Facility.staticGetDao().store(org);					
-		commitTransaction();
+		Facility.staticGetDao().store(getDefaultTenant(),org);					
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
-		beginTransaction();
+		this.tenantPersistenceService.beginTransaction(getDefaultTenant());
 		org.setDescription("bar");
-		Facility.staticGetDao().store(org);					
-		commitTransaction();		
+		Facility.staticGetDao().store(getDefaultTenant(),org);					
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 
-		beginTransaction();
-		Facility org2 = Facility.staticGetDao().findByDomainId(null,"an org");
+		this.tenantPersistenceService.beginTransaction(getDefaultTenant());
+		Facility org2 = Facility.staticGetDao().findByDomainId(getDefaultTenant(),null,"an org");
 		assertNotNull(org2);
 		assertEquals("bar", org2.getDescription());
-		commitTransaction();		
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 }

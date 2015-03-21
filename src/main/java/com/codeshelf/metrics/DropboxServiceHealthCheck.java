@@ -2,6 +2,8 @@ package com.codeshelf.metrics;
 
 import java.util.List;
 
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
@@ -15,12 +17,16 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 
 	@Override
 	protected Result check() throws Exception {
+		
+		// TODO: what do we check on multitenant server?
+		Tenant tenant = TenantManagerService.getInstance().getInitialTenant();		
+		
 		List<Facility> failedFacilities = Lists.newArrayList();
 		
-		TenantPersistenceService.getInstance().beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(tenant);
 		int numFacilities = -1;
 		try {
-			List<Facility> allFacilities = Facility.staticGetDao().getAll();
+			List<Facility> allFacilities = Facility.staticGetDao().getAll(tenant);
 			for (Facility facility : allFacilities) {
 				DropboxService service = facility.getDropboxService();
 				if (service != null) {
@@ -31,7 +37,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 			}
 			numFacilities = allFacilities.size();
 		} finally {
-			TenantPersistenceService.getInstance().commitTransaction();
+			TenantPersistenceService.getInstance().commitTransaction(tenant);
 		}
 		
 		if(failedFacilities.isEmpty()) {

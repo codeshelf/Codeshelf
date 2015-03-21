@@ -23,10 +23,10 @@ public class CheProcessScanPickReversable extends ServerTest {
 	private static final int WAIT_TIME = 4000;
 	
 	private PickSimulator setupTestPicker() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpOneAisleFourBaysFlatFacilityWithOrders();
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
@@ -36,15 +36,15 @@ public class CheProcessScanPickReversable extends ServerTest {
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set BayDistance");
 
 		
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "Disabled");
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.SCANPICK, "Disabled");
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();	
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());	
 		
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);

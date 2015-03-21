@@ -37,7 +37,7 @@ public class VirtualSlottedFacilityGenerator {
 		this.orderImporter = orderImporter;
 	}
 	
-	public Facility generateFacilityForVirtualSlotting(String inOrganizationName) {
+	public Facility generateFacilityForVirtualSlotting(Tenant tenant, String inOrganizationName) {
 		// This returns a facility with aisle A1, with two bays with one tier each. No slots. With a path, associated to the aisle.
 		//   With location alias for first baytier only, not second.
 		// The organization will get "O-" prepended to the name. Facility F-
@@ -75,32 +75,32 @@ public class VirtualSlottedFacilityGenerator {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(tenant,fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		aisleImporter.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		aisleImporter.importAislesFileFromCsvStream(tenant,reader, facility, ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(tenant,facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(facility);
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		Path aPath = createPathForTest(tenant,facility);
+		PathSegment segment0 = addPathSegmentForTest(tenant,aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(tenant,persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(tenant,facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(tenant,persistStr);
 
-		Path path2 = createPathForTest(facility);
-		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 10.85, 58.45);
+		Path path2 = createPathForTest(tenant,facility);
+		PathSegment segment02 = addPathSegmentForTest(tenant,path2, 0, 22.0, 58.45, 10.85, 58.45);
 
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(tenant,facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr2);
+		aisle3.associatePathSegment(tenant,persistStr2);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -120,26 +120,26 @@ public class VirtualSlottedFacilityGenerator {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		locationAliasImporter.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		locationAliasImporter.importLocationAliasesFromCsvStream(tenant,reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController(tenant,inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(tenant,inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(tenant,inOrganizationName, new NetGuid("0x00000013"));
 		String uuid1 = controller1.getPersistentId().toString();
 		String uuid2 = controller2.getPersistentId().toString();
 		String uuid3 = controller3.getPersistentId().toString();
 
 		Location tier = facility.findSubLocationById("A1.B1.T1");
 
-		((Tier) tier).setControllerChannel(uuid1, "1", "aisle"); // all A1 T1
+		((Tier) tier).setControllerChannel(tenant,uuid1, "1", "aisle"); // all A1 T1
 
 		tier = facility.findSubLocationById("A2.B1.T1");
-		((Tier) tier).setControllerChannel(uuid2, "1", "aisle"); // all A2 T1
+		((Tier) tier).setControllerChannel(tenant,uuid2, "1", "aisle"); // all A2 T1
 
 		tier = facility.findSubLocationById("A3.B1.T1");
-		((Tier) tier).setControllerChannel(uuid3, "1", "aisle"); // all A3 T1
+		((Tier) tier).setControllerChannel(tenant,uuid3, "1", "aisle"); // all A3 T1
 
 		return facility;
 
@@ -168,17 +168,17 @@ public class VirtualSlottedFacilityGenerator {
 			InputStreamReader reader = new InputStreamReader(stream);
 
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-			orderImporter.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+			orderImporter.importOrdersFromCsvStream(tenant,reader, facility, ediProcessTime);
 		}
 	}
 	
 	
-	protected Path createPathForTest(Facility inFacility) {
-		return inFacility.createPath("");
+	protected Path createPathForTest(Tenant tenant,Facility inFacility) {
+		return inFacility.createPath(tenant,"");
 	}
 	
 	
-	protected PathSegment addPathSegmentForTest(final Path inPath,
+	protected PathSegment addPathSegmentForTest(Tenant tenant,final Path inPath,
 		final Integer inSegmentOrder,
 		Double inStartX,
 		Double inStartY,
@@ -187,7 +187,7 @@ public class VirtualSlottedFacilityGenerator {
 
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
 		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentOrder, head, tail);
+		PathSegment returnSeg = inPath.createPathSegment(tenant,inSegmentOrder, head, tail);
 		return returnSeg;
 	}
 

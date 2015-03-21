@@ -21,6 +21,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -115,11 +116,11 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 		return "V";
 	}
 
-	public void updatePoint(Double x, Double y, Double z) {
+	public void updatePoint(Tenant tenant,Double x, Double y, Double z) {
 		posX = x;
 		posY = y;
 		posZ = z;
-		getDao().store(this);
+		getDao().store(tenant,this);
 	}
 	
 	public void setPoint(final Point inPoint) {

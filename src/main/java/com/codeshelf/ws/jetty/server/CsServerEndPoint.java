@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -72,12 +73,14 @@ public class CsServerEndPoint {
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
     	User setUserContext = null;
-    	this.getTenantPersistenceService().beginTransaction();
+    	Tenant tenant = null;
     	try{
         	WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
         	setUserContext = csSession.getUser();
         	if(setUserContext != null) {
-            	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
+            	CodeshelfSecurityManager.setCurrentUser(setUserContext);
+            	tenant = setUserContext.getTenant();
+               	this.getTenantPersistenceService().beginTransaction(tenant);
         		LOGGER.info("Got message {}", message.getClass().getSimpleName());
         	} else {
         		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());
@@ -108,14 +111,18 @@ public class CsServerEndPoint {
             	LOGGER.debug("Received message on session "+csSession+": "+message);
             	iMessageProcessor.handleMessage(csSession, message);
         	}
-			this.getTenantPersistenceService().commitTransaction();
-		} catch (RuntimeException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
-			LOGGER.error("Unable to persist during message handling: " + message, e);
-		}
-    	finally {
+			if(tenant != null) {
+				this.getTenantPersistenceService().commitTransaction(tenant);
+				tenant=null;
+			}
+		} catch (Exception e) {
+			LOGGER.error("Unexpected exception during message handling: " + message, e);
+		} finally {
     		if(setUserContext != null) {
     			CodeshelfSecurityManager.removeCurrentUser();
+    		}
+    		if(tenant != null) {
+    			this.getTenantPersistenceService().rollbackTransaction(tenant);
     		}
 		}
     }

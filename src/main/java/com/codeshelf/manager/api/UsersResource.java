@@ -257,10 +257,8 @@ public class UsersResource {
 			if (username != null && password != null && type != null && roles != null) {
 				if (manager.canCreateUser(username)) {
 					if (authProviderService.passwordMeetsRequirements(password)) {
-						Tenant tenant;
-						if(tenantId == null)
-							tenant = manager.getDefaultTenant();
-						else 
+						Tenant tenant = null;
+						if(tenantId != null)
 							tenant = manager.getTenant(tenantId);
 						
 						if(tenant != null) {

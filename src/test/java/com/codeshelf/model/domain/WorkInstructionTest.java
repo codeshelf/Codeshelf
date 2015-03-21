@@ -86,25 +86,25 @@ public class WorkInstructionTest extends HibernateTest {
 	@SuppressWarnings("unused")
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = Facility.createFacility( "F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(), "F1", "test", Point.getZeroPoint());
 
 		Aisle aisle1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisle1);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle1);
 
 		Bay baya1b1 = aisle1.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(baya1b1);
+		Bay.staticGetDao().store(getDefaultTenant(),baya1b1);
 		Bay baya1b2 = aisle1.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(baya1b2);
+		Bay.staticGetDao().store(getDefaultTenant(),baya1b2);
 
 		Aisle aisle2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisle2);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle2);
 
 		Bay baya2b1 = aisle2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(baya2b1);
+		Bay.staticGetDao().store(getDefaultTenant(),baya2b1);
 		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
-		Bay.staticGetDao().store(baya2b2);
+		Bay.staticGetDao().store(getDefaultTenant(),baya2b2);
 
 		Container container = new Container();
 		container.setDomainId("C1");
@@ -112,12 +112,12 @@ public class WorkInstructionTest extends HibernateTest {
 		container.setKind(facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		container.setActive(true);
 		container.setUpdated(new Timestamp(System.currentTimeMillis()));
-		Container.staticGetDao().store(container);
+		Container.staticGetDao().store(getDefaultTenant(),container);
 
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId("EA");
 		uomMaster.setParent(facility);
-		UomMaster.staticGetDao().store(uomMaster);
+		UomMaster.staticGetDao().store(getDefaultTenant(),uomMaster);
 		facility.addUomMaster(uomMaster);
 
 		ItemMaster itemMaster = new ItemMaster();
@@ -126,7 +126,7 @@ public class WorkInstructionTest extends HibernateTest {
 		itemMaster.setStandardUom(uomMaster);
 		itemMaster.setActive(true);
 		itemMaster.setUpdated(new Timestamp(System.currentTimeMillis()));
-		ItemMaster.staticGetDao().store(itemMaster);
+		ItemMaster.staticGetDao().store(getDefaultTenant(),itemMaster);
 
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -136,7 +136,7 @@ public class WorkInstructionTest extends HibernateTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.staticGetDao().store(order1);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),order1);
 
 		OrderDetail orderDetail = createOrderDetail(order1, itemMaster);
 
@@ -164,7 +164,7 @@ public class WorkInstructionTest extends HibernateTest {
 		wi.setPlanMaxQuantity(5);
 		wi.setActualQuantity(0);
 		wi.setAssigned(new Timestamp(System.currentTimeMillis()));
-		WorkInstruction.staticGetDao().store(wi);
+		WorkInstruction.staticGetDao().store(getDefaultTenant(),wi);
 
 		// Check if the work instruction is contained by the facility, aisle and bay
 		Assert.assertTrue(wi.isContainedByLocation(facility));
@@ -186,43 +186,43 @@ public class WorkInstructionTest extends HibernateTest {
 		theString = facility.toString();
 		// no containerUse in this test case
 	
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void filterTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
 		
-		WorkInstruction wi = generator.generateWithNewStatus(facility);
-		wi.getLocation().getDao().store(wi.getLocation());
-		wi.getAssignedChe().getParent().getDao().store(wi.getAssignedChe().getParent());
-		wi.getAssignedChe().getDao().store(wi.getAssignedChe());
-		wi.getContainer().getDao().store(wi.getContainer());
+		WorkInstruction wi = generator.generateWithNewStatus(getDefaultTenant(),facility);
+		wi.getLocation().getDao().store(getDefaultTenant(),wi.getLocation());
+		wi.getAssignedChe().getParent().getDao().store(getDefaultTenant(),wi.getAssignedChe().getParent());
+		wi.getAssignedChe().getDao().store(getDefaultTenant(),wi.getAssignedChe());
+		wi.getContainer().getDao().store(getDefaultTenant(),wi.getContainer());
 		
-		wi.getItemMaster().getStandardUom().getDao().store(wi.getItemMaster().getStandardUom());
-		wi.getItemMaster().getDao().store(wi.getItemMaster());
+		wi.getItemMaster().getStandardUom().getDao().store(getDefaultTenant(),wi.getItemMaster().getStandardUom());
+		wi.getItemMaster().getDao().store(getDefaultTenant(),wi.getItemMaster());
 		
-		wi.getOrderDetail().getParent().getOrderGroup().getDao().store(wi.getOrderDetail().getParent().getOrderGroup());
-		wi.getOrderDetail().getParent().getDao().store(wi.getOrderDetail().getParent());
-		wi.getOrderDetail().getDao().store(wi.getOrderDetail());
+		wi.getOrderDetail().getParent().getOrderGroup().getDao().store(getDefaultTenant(),wi.getOrderDetail().getParent().getOrderGroup());
+		wi.getOrderDetail().getParent().getDao().store(getDefaultTenant(),wi.getOrderDetail().getParent());
+		wi.getOrderDetail().getDao().store(getDefaultTenant(),wi.getOrderDetail());
 		
-		WorkInstruction.staticGetDao().store(wi);
-		this.getTenantPersistenceService().commitTransaction();
+		WorkInstruction.staticGetDao().store(getDefaultTenant(),wi);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Map<String, Object> params = ImmutableMap.<String, Object>of(
 			"cheId", wi.getAssignedChe().getPersistentId().toString(),
 			"assignedTimestamp", wi.getAssigned().getTime());
-		List<WorkInstruction> foundInstructions = WorkInstruction.staticGetDao().findByFilter("workInstructionByCheAndAssignedTime", params);
+		List<WorkInstruction> foundInstructions = WorkInstruction.staticGetDao().findByFilter(getDefaultTenant(),"workInstructionByCheAndAssignedTime", params);
 		Assert.assertEquals(ImmutableList.of(wi), foundInstructions);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	/*
 	private final boolean wiExistsForOrder(final OrderHeader inOrderHeader) {
 		boolean result = false;
-		for (WorkInstruction wi : WorkInstruction.staticGetDao().getAll()) {
+		for (WorkInstruction wi : WorkInstruction.staticGetDao().getAll(getDefaultTenant())) {
 			if (wi.getOrderId().equals(inOrderHeader.getOrderId())) {
 				result = true;
 			}

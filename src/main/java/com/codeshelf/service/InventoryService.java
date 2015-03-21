@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
@@ -39,10 +40,10 @@ public class InventoryService implements IApiService {
 		this.lightService = inLightService;
 	}
 	
-	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId){
+	public InventoryUpdateResponse moveOrCreateInventory(Tenant tenant,String inGtin, String inLocation, UUID inChePersistentId){
 		
 		InventoryUpdateResponse response = new InventoryUpdateResponse();
-		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
+		Che che = Che.staticGetDao().findByPersistentId(tenant,inChePersistentId);
 		if (che == null) {
 			LOGGER.error("Could not load che: {}", inChePersistentId.toString());
 			response.appendStatusMessage("moveOrCreateInventory ERROR: Could not find che: " + inChePersistentId.toString());
@@ -71,7 +72,7 @@ public class InventoryService implements IApiService {
 			response.appendStatusMessage("moveOrCreateInventory WARN: Could not find location: " + inLocation + ". Using facility.");
 		}
 
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(tenant,ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
 		
 		Timestamp createTime = null;
 		ItemMaster itemMaster = null;
@@ -86,9 +87,9 @@ public class InventoryService implements IApiService {
 			
 			createTime = new Timestamp(System.currentTimeMillis());
 			String guessedUom = guessUomForItem(inGtin, facility);
-			uomMaster = upsertUomMaster(guessedUom, facility);
+			uomMaster = upsertUomMaster(tenant,guessedUom, facility);
 			
-			itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
+			itemMaster = createItemMaster(tenant,inGtin, facility, createTime, uomMaster);
 			if (itemMaster == null) {
 				LOGGER.error("Unable to create ItemMaster for GTIN: {}", inGtin);
 				response.appendStatusMessage(" Failed to create item master for GTIN: " + inGtin);
@@ -99,7 +100,7 @@ public class InventoryService implements IApiService {
 			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			if (gtin != null) {
 				LOGGER.info("Created new GTIN: {} with UOM: {}", inGtin, gtin.getUomMaster().toString());
-				Gtin.staticGetDao().store(gtin);
+				Gtin.staticGetDao().store(tenant,gtin);
 			} else {
 				LOGGER.error("Was unable to create GTIN for GTIN: {}", inGtin);
 				response.appendStatusMessage(" Could not create GTIN: " + inGtin);
@@ -115,7 +116,7 @@ public class InventoryService implements IApiService {
 		Item result = null;
 		if (itemMaster != null ) {
 			// findOrdCreateItem determines if an item is created or moved 
-			result = itemMaster.findOrCreateItem(location, uomMaster);
+			result = itemMaster.findOrCreateItem(tenant,location, uomMaster);
 			LOGGER.info("Item: {} is in location(s): {}", result.getDomainId(), result.getParent().getItemLocations());
 		}
 		
@@ -133,9 +134,9 @@ public class InventoryService implements IApiService {
 			result.setActive(true);
 			result.setUpdated(createTime);	
 
-			Item.staticGetDao().store(result);
+			Item.staticGetDao().store(tenant,result);
 			
-			lightService.lightItemSpecificColor(facility.getPersistentId().toString(), result.getPersistentId().toString(), che.getColor());
+			lightService.lightItemSpecificColor(tenant,facility.getPersistentId().toString(), result.getPersistentId().toString(), che.getColor());
 			response.setStatus(ResponseStatus.Success);
 		} else {
 			LOGGER.error("Was unable to create/get item with GTIN: {} Loc: {} UOM: {}", inGtin, location.toString(), uomMaster.getDomainId());
@@ -146,10 +147,10 @@ public class InventoryService implements IApiService {
 	}
 	
 	
-	public InventoryLightResponse lightInventoryByGtin(String inGtin, UUID inChePersistentId){
+	public InventoryLightResponse lightInventoryByGtin(Tenant tenant,String inGtin, UUID inChePersistentId){
 		InventoryLightResponse response = new InventoryLightResponse();
 		
-		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
+		Che che = Che.staticGetDao().findByPersistentId(tenant,inChePersistentId);
 		if (che == null) {
 			LOGGER.error("Could not load che: {}", inChePersistentId.toString());
 			response.appendStatusMessage("lightInventoryByGtin ERROR: Could not find che: " + inChePersistentId.toString());
@@ -161,7 +162,7 @@ public class InventoryService implements IApiService {
 		ColorEnum color = che.getColor();
 		Facility facility = che.getFacility();
 		
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(tenant,ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
 		if (gtins.isEmpty()) {
 			LOGGER.info("GTIN: {} requested to light by CHE: {} was not found.", inGtin, che.getDomainId());
 			response.setFoundGtin(false);
@@ -175,13 +176,13 @@ public class InventoryService implements IApiService {
 		Gtin gtin = gtins.get(0);
 		ItemMaster itemMaster = gtin.getParent();
 		List<Item> items = itemMaster.getItemsOfUom(gtin.getUomMaster().getDomainId());
-		lightService.lightItemsSpecificColor(facility.getPersistentId().toString(), items, color);
+		lightService.lightItemsSpecificColor(tenant,facility.getPersistentId().toString(), items, color);
 		
 		response.setStatus(ResponseStatus.Success);
 		return response;
 	}
 	
-	private ItemMaster createItemMaster(final String inItemId,
+	private ItemMaster createItemMaster(Tenant tenant,final String inItemId,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
@@ -200,7 +201,7 @@ public class InventoryService implements IApiService {
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				ItemMaster.staticGetDao().store(result);
+				ItemMaster.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("Error saving ItemMaster: {}", e);
 			}
@@ -209,7 +210,7 @@ public class InventoryService implements IApiService {
 		return result;
 	}
 	
-	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
+	public UomMaster upsertUomMaster(Tenant tenant,final String inUomId, final Facility inFacility) {
 		DefaultErrors errors = new DefaultErrors(UomMaster.class);
 		if (Strings.emptyToNull(inUomId) == null) {
 			errors.rejectValue("uomMasterId", inUomId, ErrorCode.FIELD_REQUIRED);
@@ -226,7 +227,7 @@ public class InventoryService implements IApiService {
 			inFacility.addUomMaster(result);
 
 			try {
-				UomMaster.staticGetDao().store(result);
+				UomMaster.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("Error saving UOM: {}", e);
 			}

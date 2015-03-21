@@ -26,171 +26,171 @@ public class DomainObjectPropertyTest extends HibernateTest {
 	public void testPropertyDefaultOperations() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 
 		Facility facilityx = createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
-		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(network);
+		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(0, types.size());
-		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
+		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(getDefaultTenant(),network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// add config type
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("test-prop",network.getClassName(),"Default-Value-1","Property-Description-1");
-		cfgServ.store(type1);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),type1);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// retrieve data, check value and delete it
-		beginTransaction();
-		types = cfgServ.getPropertyDefaults(network);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(1, types.size());
-		type = cfgServ.getPropertyDefault(network,"test-prop");
+		type = cfgServ.getPropertyDefault(getDefaultTenant(),network,"test-prop");
 		assertNotNull(type);
 		assertEquals("Property-Description-1", type.getDescription());
-		cfgServ.delete(type);
-		commitTransaction();
+		cfgServ.delete(getDefaultTenant(),type);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
 		// make sure data is deleted
-		beginTransaction();
-		types = cfgServ.getPropertyDefaults(network);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(0, types.size());
-		type = cfgServ.getPropertyDefault(network,"test-prop");
+		type = cfgServ.getPropertyDefault(getDefaultTenant(),network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testPropertyOperations() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 		// create organization and set one config value
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 
 		Facility facility = createFacility();
 		// create three property types in the database
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("Some-Property-1",facility.getClassName(),"Default-Value-1","Property-Description-1");
-		cfgServ.store(type1);
+		cfgServ.store(getDefaultTenant(),type1);
 		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("Some-Property-2",facility.getClassName(),"Default-Value-2","Property-Description-2");
-		cfgServ.store(type2);
+		cfgServ.store(getDefaultTenant(),type2);
 		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("Some-Property-3",facility.getClassName(),"Default-Value-3","Property-Description-3");
-		cfgServ.store(type3);
+		cfgServ.store(getDefaultTenant(),type3);
 		
 		DomainObjectProperty config = new DomainObjectProperty(facility,type1,"value");
-		cfgServ.store(config);		
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),config);		
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
 		// retrieve data, check value and delete it
-		beginTransaction();
-		config = cfgServ.getProperty(facility, "Some-Property-1");
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		config = cfgServ.getProperty(getDefaultTenant(),facility, "Some-Property-1");
 		assertNotNull(config);
 		assertEquals("value", config.getValue());
-		cfgServ.delete(config);
-		commitTransaction();
+		cfgServ.delete(getDefaultTenant(),config);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
 		// make sure config can't be found
-		beginTransaction();
-		config = cfgServ.getProperty(facility, "Some-Property-1");
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		config = cfgServ.getProperty(getDefaultTenant(),facility, "Some-Property-1");
 		assertNull(config);
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// add two configs
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 		DomainObjectProperty config2 = new DomainObjectProperty(facility,type2,"Some-Property-2");
 		DomainObjectProperty config3 = new DomainObjectProperty(facility,type3,"Some-Property-3");
-		cfgServ.store(config2);		
-		cfgServ.store(config3);		
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),config2);		
+		cfgServ.store(getDefaultTenant(),config3);		
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
-		beginTransaction();
-		List<DomainObjectProperty> configs = cfgServ.getProperties(facility);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		List<DomainObjectProperty> configs = cfgServ.getProperties(getDefaultTenant(),facility);
 		assertNotNull(configs);
 		assertEquals(2,configs.size());
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testTypedConvenienceMethods() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 	
 		Facility facility = createFacility();
 		// create three property types in the database
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("string-config",facility.getClassName(),"Default-Value-1","Property-Description-1");
-		cfgServ.store(type1);
+		cfgServ.store(getDefaultTenant(),type1);
 		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("int-config",facility.getClassName(),"Default-Value-2","Property-Description-2");
-		cfgServ.store(type2);
+		cfgServ.store(getDefaultTenant(),type2);
 		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("double-config",facility.getClassName(),"Default-Value-3","Property-Description-3");
-		cfgServ.store(type3);
+		cfgServ.store(getDefaultTenant(),type3);
 
 		DomainObjectProperty config1 = new DomainObjectProperty(facility,type1,"value");
 		DomainObjectProperty config2 = new DomainObjectProperty(facility,type2).setValue(123);
 		DomainObjectProperty config3 = new DomainObjectProperty(facility,type3).setValue(123.456);
 
-		cfgServ.store(config1);
-		cfgServ.store(config2);
-		cfgServ.store(config3);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),config1);
+		cfgServ.store(getDefaultTenant(),config2);
+		cfgServ.store(getDefaultTenant(),config3);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 
-		String stringValue = cfgServ.getProperty(facility, "string-config").getValue();
+		String stringValue = cfgServ.getProperty(getDefaultTenant(),facility, "string-config").getValue();
 		assertEquals("value", stringValue);
 		
-		int intValue = cfgServ.getProperty(facility, "int-config").getIntValue();
+		int intValue = cfgServ.getProperty(getDefaultTenant(),facility, "int-config").getIntValue();
 		assertEquals(123,intValue);
 
-		double doubleValue = cfgServ.getProperty(facility, "double-config").getDoubleValue();
+		double doubleValue = cfgServ.getProperty(getDefaultTenant(),facility, "double-config").getDoubleValue();
 		assertEquals(123.456,doubleValue,0.00001);
 		
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testPropertiesWithDefaults() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 
 		Facility facilityx = createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
-		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(network);
+		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(0, types.size());
-		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
+		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(getDefaultTenant(),network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// create three property types in the database
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("Some-Property-1",network.getClassName(),"Default-Value","Default-Description");
-		cfgServ.store(type1);
+		cfgServ.store(getDefaultTenant(),type1);
 		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("Some-Property-2",network.getClassName(),"Default-Value","Default-Description");
-		cfgServ.store(type2);
+		cfgServ.store(getDefaultTenant(),type2);
 		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("Some-Property-3",network.getClassName(),"Default-Value","Default-Description");
-		cfgServ.store(type3);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),type3);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
 		// check config types
-		beginTransaction();
-		types = cfgServ.getPropertyDefaults(network);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(3,types.size());
 
 		// get raw config properties. should be empty set.
-		List<DomainObjectProperty> configs = cfgServ.getProperties(network);
+		List<DomainObjectProperty> configs = cfgServ.getProperties(getDefaultTenant(),network);
 		assertNotNull(configs);
 		assertEquals(0,configs.size());
 
 		// now get properties with default values. should be three.
-		configs = cfgServ.getPropertiesWithDefaults(network);
+		configs = cfgServ.getPropertiesWithDefaults(getDefaultTenant(),network);
 		assertNotNull(configs);
 		assertEquals(3,configs.size());
 		for (DomainObjectProperty c : configs) {
@@ -200,12 +200,12 @@ public class DomainObjectPropertyTest extends HibernateTest {
 		// add a property with a different value
 		DomainObjectProperty config = new DomainObjectProperty(network, type2);
 		config.setValue("Modified description");
-		cfgServ.store(config);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),config);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// check description
-		beginTransaction();
-		configs = cfgServ.getPropertiesWithDefaults(network);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		configs = cfgServ.getPropertiesWithDefaults(getDefaultTenant(),network);
 		assertNotNull(configs);
 		assertEquals(3,configs.size());
 		for (DomainObjectProperty c : configs) {
@@ -216,47 +216,47 @@ public class DomainObjectPropertyTest extends HibernateTest {
 				assertEquals("Default-Value", c.getValue());				
 			}
 		}
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testPropertyCascadeDelete() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 		Facility facilityx = createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
-		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(network);
+		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(0, types.size());
-		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
+		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(getDefaultTenant(),network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// create three property types in the database
-		beginTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("Some-Property-1",network.getClassName(),"Default-Value","Default-Description");
-		cfgServ.store(type1);
+		cfgServ.store(getDefaultTenant(),type1);
 		DomainObjectPropertyDefault type2 = new DomainObjectPropertyDefault("Some-Property-2",network.getClassName(),"Default-Value","Default-Description");
-		cfgServ.store(type2);
+		cfgServ.store(getDefaultTenant(),type2);
 		DomainObjectPropertyDefault type3 = new DomainObjectPropertyDefault("Some-Property-3",network.getClassName(),"Default-Value","Default-Description");
-		cfgServ.store(type3);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),type3);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
 		// check defaults
-		beginTransaction();
-		types = cfgServ.getPropertyDefaults(network);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(3,types.size());
 
 		// get raw config properties. should be empty set.
-		List<DomainObjectProperty> configs = cfgServ.getProperties(network);
+		List<DomainObjectProperty> configs = cfgServ.getProperties(getDefaultTenant(),network);
 		assertNotNull(configs);
 		assertEquals(0,configs.size());
 
 		// now get properties with default values. should be three.
-		configs = cfgServ.getPropertiesWithDefaults(network);
+		configs = cfgServ.getPropertiesWithDefaults(getDefaultTenant(),network);
 		assertNotNull(configs);
 		assertEquals(3,configs.size());
 		for (DomainObjectProperty c : configs) {
@@ -266,32 +266,32 @@ public class DomainObjectPropertyTest extends HibernateTest {
 		// add a property with a different value
 		DomainObjectProperty config = new DomainObjectProperty(network, type2);
 		config.setValue("Modified description");
-		cfgServ.store(config);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),config);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// should be one explicit property
-		beginTransaction();
-		configs = cfgServ.getProperties(network);
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		configs = cfgServ.getProperties(getDefaultTenant(),network);
 		assertNotNull(configs);
 		assertEquals(1,configs.size());
-		type2 = cfgServ.getPropertyDefault(network, "Some-Property-2");
+		type2 = cfgServ.getPropertyDefault(getDefaultTenant(),network, "Some-Property-2");
 		List<DomainObjectProperty> props = type2.getProperties();
 		assertEquals(1,props.size());
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// delete default
-		beginTransaction();
-		type2 = cfgServ.getPropertyDefault(network,type2.getName()); // will throw on try to delete detached instance in Hibernate 4.3.8
-		cfgServ.delete(type2);
-		commitTransaction();
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		type2 = cfgServ.getPropertyDefault(getDefaultTenant(),network,type2.getName()); // will throw on try to delete detached instance in Hibernate 4.3.8
+		cfgServ.delete(getDefaultTenant(),type2);
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 		
 		// make sure default and instance are deleted
-		beginTransaction();
-		DomainObjectPropertyDefault deletedDefault = cfgServ.getPropertyDefault(network,type2.getName());
+		tenantPersistenceService.beginTransaction(getDefaultTenant());
+		DomainObjectPropertyDefault deletedDefault = cfgServ.getPropertyDefault(getDefaultTenant(),network,type2.getName());
 		assertNull(deletedDefault);
-		DomainObjectProperty deletedProp = cfgServ.getProperty(network, "Some-Property-2");
+		DomainObjectProperty deletedProp = cfgServ.getProperty(getDefaultTenant(),network, "Some-Property-2");
 		assertNull(deletedProp);
-		commitTransaction();
+		tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 }

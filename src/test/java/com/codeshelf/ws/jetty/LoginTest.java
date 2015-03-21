@@ -32,7 +32,7 @@ public class LoginTest extends HibernateTest {
 
 	@Test
 	public final void testLoginSucceed() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 		// Create a user for the organization.
 		String password = "password";
@@ -50,13 +50,13 @@ public class LoginTest extends HibernateTest {
 		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
 		Assert.assertEquals(user.getUsername(), loginResponse.getUser().getUsername());
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testUserIdFail() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		// Create a user for the organization.
 		String password = "password";
@@ -73,12 +73,12 @@ public class LoginTest extends HibernateTest {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void testPasswordFail() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		// Create a user for the organization.
 		String password = "password";
@@ -95,6 +95,6 @@ public class LoginTest extends HibernateTest {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

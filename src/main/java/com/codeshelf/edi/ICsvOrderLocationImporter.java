@@ -8,6 +8,7 @@ package com.codeshelf.edi;
 import java.io.Reader;
 import java.sql.Timestamp;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 
 /**
@@ -16,6 +17,6 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderLocationImporter {
 
-	boolean importOrderLocationsFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importOrderLocationsFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

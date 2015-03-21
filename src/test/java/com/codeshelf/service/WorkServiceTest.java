@@ -34,6 +34,7 @@ import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -104,11 +105,11 @@ public class WorkServiceTest extends ServerTest {
 		
 		String containerId = "CONT1";
 		
-		//this.getTenantPersistenceService().beginTransaction();// TEMP
+		//this.getTenantPersistenceService().beginTransaction(getDefaultTenant());// TEMP
 		WorkList workList = this.workService.computeWorkInstructions(che, ImmutableList.of(containerId));
 		Assert.assertEquals(preferredLocation, workList.getInstructions().get(0).getLocationId());
 
-		//this.getTenantPersistenceService().commitTransaction();// TEMP
+		//this.getTenantPersistenceService().commitTransaction(getDefaultTenant());// TEMP
 	}*/
 /*
 	@Test
@@ -136,34 +137,34 @@ public class WorkServiceTest extends ServerTest {
 		this.workService = new WorkService();
 		this.initializeEphemeralServiceManager();
 		
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = facilityGenerator.generateValid();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
 		UUID detailId = wiToRecord.getOrderDetail().getPersistentId();
 		UUID cheId = wiToRecord.getAssignedChe().getPersistentId();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		
 		wiToRecord.setStatus(WorkInstructionStatusEnum.SHORT);
 
-		this.getTenantPersistenceService().beginTransaction();
-		OrderDetail priorOrderDetail = OrderDetail.staticGetDao().findByPersistentId(detailId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		OrderDetail priorOrderDetail = OrderDetail.staticGetDao().findByPersistentId(getDefaultTenant(),detailId);
 		Assert.assertNotEquals(OrderStatusEnum.SHORT, priorOrderDetail.getStatus());
 
-		workService.completeWorkInstruction(cheId,	wiToRecord);
-		this.getTenantPersistenceService().commitTransaction();
+		workService.completeWorkInstruction(getDefaultTenant(),cheId,	wiToRecord);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
-		OrderDetail updatedOrderDetail = OrderDetail.staticGetDao().findByPersistentId(detailId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		OrderDetail updatedOrderDetail = OrderDetail.staticGetDao().findByPersistentId(getDefaultTenant(),detailId);
 		Assert.assertEquals(OrderStatusEnum.SHORT, updatedOrderDetail.getStatus());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void workSummaryRequest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		UUID cheId = firstChe(facility);
 		
 		ServiceMethodRequest request = new ServiceMethodRequest();
@@ -171,7 +172,7 @@ public class WorkServiceTest extends ServerTest {
 		request.setMethodName("workAssignedSummary");
 		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService = mock(WorkService.class);
-		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
+		when(workService.workAssignedSummary(any(Tenant.class), eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
 		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.webSocketManagerService);
 		ResponseABC responseABC = processor.handleRequest(mock(WebSocketConnection.class), request);
@@ -183,13 +184,13 @@ public class WorkServiceTest extends ServerTest {
 		request2.setMethodName("workCompletedSummary");
 		request2.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService2 = mock(WorkService.class);
-		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
+		when(workService2.workCompletedSummary(any(Tenant.class), eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.webSocketManagerService);
 		ResponseABC responseABC2 = processor2.handleRequest(mock(WebSocketConnection.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 	
@@ -201,9 +202,9 @@ public class WorkServiceTest extends ServerTest {
 		this.workService = new WorkService();
 		this.initializeEphemeralServiceManager();
 		
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 
 		ITypedDao<WorkInstruction> workInstructionDao = mock(ITypedDao.class);
 		this.useCustomDao(WorkInstruction.class, workInstructionDao);
@@ -212,10 +213,10 @@ public class WorkServiceTest extends ServerTest {
 		for (int i = 0; i < 4; i++) {
 			inputs.add(generateValidWorkInstruction(facility, nextUniquePastTimestamp()));
 		}
-		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
+		when(workInstructionDao.findByFilter((Tenant) any(),anyList())).thenReturn(inputs);
 
 		UUID cheId = firstChe(facility);
-		List<WiSetSummary> workSummaries  = workService.workAssignedSummary(cheId, facility.getPersistentId());
+		List<WiSetSummary> workSummaries  = workService.workAssignedSummary(getDefaultTenant(),cheId, facility.getPersistentId());
 
 		//since each timestamp is unique they will each get summarized into their own summary object
 		Assert.assertEquals(inputs.size(), workSummaries.size());
@@ -226,52 +227,52 @@ public class WorkServiceTest extends ServerTest {
 			lastTimestamp = wiSetSummary.getAssignedTime();
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void completeWorkInstructionExceptionIfNotFound() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		UUID cheId = UUID.randomUUID();
 
 		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
-		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
+		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(getDefaultTenant()), new Timestamp(0));
 
 		this.<Che>useCustomDao(Che.class, mock(ITypedDao.class));
-		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
+		when(Che.staticGetDao().findByPersistentId((Tenant)any(),eq(cheId))).thenReturn(new Che());
 
 		this.<WorkInstruction>useCustomDao(WorkInstruction.class,mock(ITypedDao.class));
-		when(WorkInstruction.staticGetDao().findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(null);
+		when(WorkInstruction.staticGetDao().findByPersistentId((Tenant)any(),eq(wiToRecord.getPersistentId()))).thenReturn(null);
 
 		try {
-			workService.completeWorkInstruction(cheId, wiToRecord);
+			workService.completeWorkInstruction(getDefaultTenant(),cheId, wiToRecord);
 			Assert.fail("recordCompletedWorkInstruction should have thrown an exception if WI cannot be found");
 		} catch (InputValidationException e) {
 			Assert.assertNotNull(e.getErrors().getFieldErrors("persistentId"));
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
 		}
-		verify(WorkInstruction.staticGetDao(), never()).store(any(WorkInstruction.class));
+		verify(WorkInstruction.staticGetDao(), never()).store(getDefaultTenant(),any(WorkInstruction.class));
 				
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Test
 	public void doesNotExportIfWICannotBeStored() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = facilityGenerator.generateValid();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		WorkInstruction existingWi = generateValidWorkInstruction(facility, new Timestamp(0));
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
 		this.<Che>useCustomDao(Che.class, mock(ITypedDao.class));
-		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
+		when(Che.staticGetDao().findByPersistentId((Tenant)any(),eq(cheId))).thenReturn(new Che());
 
 		UUID testId = UUID.randomUUID();
 
@@ -282,18 +283,18 @@ public class WorkServiceTest extends ServerTest {
 		useCustomDao(WorkInstruction.class,wiDao);
 		this.<OrderDetail>useCustomDao(OrderDetail.class,mock(ITypedDao.class));
 		this.<OrderHeader>useCustomDao(OrderHeader.class,mock(ITypedDao.class));
-		when(wiDao.findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(existingWi);
+		when(wiDao.findByPersistentId((Tenant)any(),eq(wiToRecord.getPersistentId()))).thenReturn(existingWi);
 
-		doThrow(new DaoException("test")).when(WorkInstruction.staticGetDao()).store(eq(wiToRecord));
+		doThrow(new DaoException("test")).when(WorkInstruction.staticGetDao()).store((Tenant)any(),eq(wiToRecord));
 
-		workService.completeWorkInstruction(cheId, wiToRecord);
+		workService.completeWorkInstruction(getDefaultTenant(),cheId, wiToRecord);
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
 	}
 
 	@Test
 	public void allWorkInstructionsSent() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		IEdiService mockEdiExportService = mock(IEdiService.class);
 
@@ -301,21 +302,21 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(total+1, mockEdiExportService, 1L);
 		List<WorkInstruction> wiList = generateValidWorkInstructions(total);
 		for (WorkInstruction wi: wiList) {
-			workService.exportWorkInstruction(wi);
+			workService.exportWorkInstruction(getDefaultTenant(),wi);
 
 		}
 
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void workInstructionExportIsRetried() throws IOException, InterruptedException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		long expectedRetryDelay = 1L;
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 
 		String messageBody = format(wi);
@@ -326,12 +327,12 @@ public class WorkServiceTest extends ServerTest {
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(messageBody);
 
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
-		workService.exportWorkInstruction(wi);
+		workService.exportWorkInstruction(getDefaultTenant(),wi);
 
 		//Wait up to a second per invocation to verify
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 5000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	private String format(WorkInstruction wi) throws IOException {
@@ -342,9 +343,9 @@ public class WorkServiceTest extends ServerTest {
 
 	@Test
 	public void workInstructionExportRetriesAreDelayed() throws IOException, InterruptedException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		String testMessage = format(wi);
 
@@ -358,7 +359,7 @@ public class WorkServiceTest extends ServerTest {
 
 		long expectedRetryDelay = 2000;
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
-		workService.exportWorkInstruction(wi);
+		workService.exportWorkInstruction(getDefaultTenant(),wi);
 
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(testMessage));
 		long previousTimestamp = timings.remove(0);
@@ -368,15 +369,15 @@ public class WorkServiceTest extends ServerTest {
 			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff >= expectedRetryDelay);
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		long expectedRetryDelay = 1L;
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		WorkInstruction wi1 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		WorkInstruction wi2 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		IEdiService mockEdiExportService = mock(IEdiService.class);
@@ -384,8 +385,8 @@ public class WorkServiceTest extends ServerTest {
 		doNothing().when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
-		workService.exportWorkInstruction(wi1);
-		workService.exportWorkInstruction(wi2);
+		workService.exportWorkInstruction(getDefaultTenant(),wi1);
+		workService.exportWorkInstruction(getDefaultTenant(),wi2);
 
 		//Wait up to a second per invocation to verify
 		// Normal behavior is to keep retrying the first on IOException
@@ -397,13 +398,13 @@ public class WorkServiceTest extends ServerTest {
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(export1));
 		verify(mockEdiExportService, timeout((int)(expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(export2));
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 		final int total = 100;
 		Lock callBlocker = new ReentrantLock();
@@ -413,25 +414,25 @@ public class WorkServiceTest extends ServerTest {
 
 		createWorkService(total +1, mockEdiExportService, 1L);
 		final WorkService workService = spy(this.workService);
-		doCallRealMethod().when(workService).exportWorkInstruction(any(WorkInstruction.class));
+		doCallRealMethod().when(workService).exportWorkInstruction(any(Tenant.class),any(WorkInstruction.class));
 
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		for(int i = 0; i < total; i++) {
 			WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-			workService.exportWorkInstruction(wi);
+			workService.exportWorkInstruction(getDefaultTenant(),wi);
 		}
 
-		verify(workService, Mockito.timeout(2000).times(total)).exportWorkInstruction(any(WorkInstruction.class));
+		verify(workService, Mockito.timeout(2000).times(total)).exportWorkInstruction(any(Tenant.class),any(WorkInstruction.class));
 		verify(mockEdiExportService, Mockito.times(1)).sendWorkInstructionsToHost(any(String.class));
 		callBlocker.unlock();
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void throwsExceptionWhenAtCapacity() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		int capacity = 10;
 		int inflight = capacity + 1; //1 for the blocked work instruction
@@ -445,7 +446,7 @@ public class WorkServiceTest extends ServerTest {
 		int exportAttempts = 0;
 		for (WorkInstruction workInstruction : wiList) {
 			try {
-				workService.exportWorkInstruction(workInstruction);
+				workService.exportWorkInstruction(getDefaultTenant(),workInstruction);
 				exportAttempts++;
 				if (exportAttempts > inflight) {
 					Assert.fail("Should have thrown an exception if capacity is reached");
@@ -456,13 +457,13 @@ public class WorkServiceTest extends ServerTest {
 			}
 		}
 		callBlocker.unlock();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	private void createWorkService(int capacity, IEdiService ediService, long retryDelay) {
 		
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
-		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
+		when(provider.getWorkInstructionExporter(any(Tenant.class),any(Facility.class))).thenReturn(ediService);
 
 		this.workService = new WorkService(provider);
 		this.workService.setCapacity(capacity);
@@ -528,7 +529,7 @@ public class WorkServiceTest extends ServerTest {
 
 	private List<WorkInstruction> generateValidWorkInstructions(int total) {
 		ArrayList<WorkInstruction> wiList = new ArrayList<WorkInstruction>();
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		for (int i = 0; i < total; i++) {
 			WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 			wiList.add(wi);
@@ -537,7 +538,7 @@ public class WorkServiceTest extends ServerTest {
 	}
 
 	private WorkInstruction generateValidWorkInstruction(Facility facility, Timestamp timestamp) {
-		WorkInstruction wi = wiGenerator.generateValid(facility);
+		WorkInstruction wi = wiGenerator.generateValid(getDefaultTenant(),facility);
 		wi.setAssigned(timestamp);
 		return wi;
 	}

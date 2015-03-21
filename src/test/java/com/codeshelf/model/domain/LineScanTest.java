@@ -36,7 +36,7 @@ public class LineScanTest extends ServerTest {
 
 	@Before
 	public void initTest() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		importer = createOrderImporter();
 		Facility facility = createFacility(); 
 		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null, null, null);
@@ -50,28 +50,28 @@ public class LineScanTest extends ServerTest {
 				+ "\r\n11,11,10.1,SKU0005,Mars Bars,20,EA,,pick,D36,10";
 		importCsvString(facility, csvString);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testGetWorkInstructionDirect() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.staticGetDao().getAll().get(0);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 
-		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(che, "11.1");
+		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(getDefaultTenant(),che, "11.1");
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getDescription(), "Spoon 6in.");
 		Assert.assertEquals(instruction.getItemId(), "SKU0003");
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testGetWorkInstruction() {
-		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.staticGetDao().getAll().get(0);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
 		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
@@ -84,14 +84,14 @@ public class LineScanTest extends ServerTest {
 		Assert.assertEquals(instruction.getItemId(), "SKU0003");
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	
 	@Test
 	public void testGetWorkInstructionDuplicate() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.staticGetDao().getAll().get(0);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "10.1");
 			processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
@@ -99,14 +99,14 @@ public class LineScanTest extends ServerTest {
 		} catch (MethodArgumentException e) {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
 		} finally {
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		}
 	}
 
 	@Test
 	public void testGetWorkInstructionCompletedInstruction() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.staticGetDao().getAll().get(0);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
 		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
@@ -118,18 +118,18 @@ public class LineScanTest extends ServerTest {
 		instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 		instruction.setType(WorkInstructionTypeEnum.ACTUAL);
 		instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
-		workService.completeWorkInstruction(che.getPersistentId(), instruction);
+		workService.completeWorkInstruction(getDefaultTenant(),che.getPersistentId(), instruction);
 
-		response = workService.getWorkInstructionsForOrderDetail(che, "11.1"); 
+		response = workService.getWorkInstructionsForOrderDetail(getDefaultTenant(),che, "11.1"); 
 		instructions = response.getWorkInstructions();
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testGetWorkInstructionBadDetailId() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.staticGetDao().getAll().get(0);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 		
 		try {
 			ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "xxx");
@@ -138,12 +138,12 @@ public class LineScanTest extends ServerTest {
 		} catch (MethodArgumentException e) {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		BatchResult<Object> results = importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		BatchResult<Object> results = importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 		return results;
 	}
 }

@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -390,7 +391,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
 		TenantPersistenceService.setInstance(tenantPersistenceService);
 
-		tenantManagerService = new MockTenantManagerService(tenantPersistenceService.getDefaultSchema());
+		tenantManagerService = new MockTenantManagerService(Mockito.mock(Tenant.class));
 		TenantManagerService.setInstance(tenantManagerService);
 	}
 
@@ -451,7 +452,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		} else {
 			// not 1st persistence run. need to reset
-			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
+			Tenant realDefaultTenant = realTenantManagerService.getInitialTenant();
 			// destroy any non-default tenants we created
 			List<Tenant> tenants = realTenantManagerService.getTenants();
 			for(Tenant tenant : tenants) {
@@ -472,9 +473,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		}
 
 		// make sure default properties are in the database
-		TenantPersistenceService.getInstance().beginTransaction();
-		PropertyDao.getInstance().syncPropertyDefaults();
-		TenantPersistenceService.getInstance().commitTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(getDefaultTenant());
+		PropertyDao.getInstance().syncPropertyDefaults(getDefaultTenant());
+		TenantPersistenceService.getInstance().commitTransaction(getDefaultTenant());
 	}
 
 	private void startServer() {
@@ -563,7 +564,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return new WorkService();
 	}
 
-	protected final Facility generateTestFacility() {
+	protected final Facility generateTestFacility(Tenant tenant) {
 		String useFacilityId;
 		if (this.facilitiesGenerated > 0) {
 			useFacilityId = facilityId + Integer.toString(facilitiesGenerated);
@@ -574,12 +575,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		boolean inTransaction = this.tenantPersistenceService.hasActiveTransaction(this.getDefaultTenant());
 		if (!inTransaction)
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = Facility.staticGetDao().findByDomainId(null, useFacilityId);
+		Facility facility = Facility.staticGetDao().findByDomainId(getDefaultTenant(),null, useFacilityId);
 		if (facility == null) {
-			facility = Facility.createFacility( useFacilityId, "", Point.getZeroPoint());
-			Facility.staticGetDao().store(facility);
+			facility = Facility.createFacility(getDefaultTenant(), useFacilityId, "", Point.getZeroPoint());
+			Facility.staticGetDao().store(tenant,facility);
 		}
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
@@ -599,14 +600,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 		this.che2PersistentId = che2.getPersistentId();
 
 		if (!inTransaction)
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		return facility;
 	}
 
 	protected final Facility getFacility() {
 		if (facility == null) {
-			facility = generateTestFacility();
+			facility = generateTestFacility(getDefaultTenant());
 		}
 		return facility;
 	}
@@ -615,11 +616,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (facility == null)
 			return getFacility();
 		//else actually create another one
-		return generateTestFacility();
+		return generateTestFacility(getDefaultTenant());
 	}
 
 	protected final Tenant getDefaultTenant() {
-		return TenantPersistenceService.getInstance().getDefaultSchema();
+		return realTenantManagerService.getInitialTenant();
 	}
 
 }

@@ -31,6 +31,7 @@ import org.apache.shiro.util.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.google.inject.Inject;
 
@@ -104,6 +105,10 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 			}
 		}
 		return user;
+	}
+	
+	public static Tenant getCurrentTenant() {
+		return getCurrentUser().getTenant();
 	}
 
 	public static void setCurrentUser(User user) {

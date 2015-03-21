@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
@@ -66,8 +68,8 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 		mCsvCrossBatchImporter = inCsvCrossBatchImporter;
 	}
 	
-	List<Facility> getFacilities() {
-		return Facility.staticGetDao().getAll();
+	List<Facility> getFacilities(Tenant tenant) {
+		return Facility.staticGetDao().getAll(tenant);
 	}
 
 	@Override
@@ -78,31 +80,32 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 			//throw new NullPointerException("couldn't start EDI processer, signal queue is null");
 		}
 		ediProcessingTimer		= MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
-		
-		TenantPersistenceService.getInstance().beginTransaction();
-		try {
-			LOGGER.info("starting ediProcessorService with default tenant and currently {} facilities", getFacilities().size());
-		} finally {
-			TenantPersistenceService.getInstance().commitTransaction();
-		}
+		LOGGER.debug("starting ediProcessorService");
 	}
 
 	@Override
 	protected void runOneIteration() throws Exception {
+		for(Tenant tenant : TenantManagerService.getInstance().getTenants()) {
+			doEdiForTenant(tenant);
+		}
+
+	}
+
+	private void doEdiForTenant(Tenant tenant) {
+		LOGGER.trace("Begin EDI process for tenant {}",tenant.getName());
+		final Timer.Context context = ediProcessingTimer.time();
+
 		boolean completed = false;
 		int numChecked = 0;
 
-		LOGGER.trace("Begin EDI process.");
-		final Timer.Context context = ediProcessingTimer.time();
 		try {
-			TenantPersistenceService.getInstance().beginTransaction();
-
+			TenantPersistenceService.getInstance().beginTransaction(tenant);
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
-			for (Facility facility : this.getFacilities()) {
+			for (Facility facility : this.getFacilities(tenant)) {
 				for (IEdiService ediService : facility.getEdiServices()) {
 					if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
-						if (ediService.getUpdatesFromHost(mCsvOrderImporter,
+						if (ediService.getUpdatesFromHost(tenant,mCsvOrderImporter,
 							mCsvOrderLocationImporter,
 							mCsvInventoryImporter,
 							mCsvLocationAliasImporter,
@@ -122,22 +125,21 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 					}
 				}
 			}
-			TenantPersistenceService.getInstance().commitTransaction();
+			TenantPersistenceService.getInstance().commitTransaction(tenant);
 			completed = true;
 		} catch (RuntimeException e) {
-			TenantPersistenceService.getInstance().rollbackTransaction();
+			TenantPersistenceService.getInstance().rollbackTransaction(tenant);
 			LOGGER.error("Unable to process edi", e);
 		} finally {
 			if(context != null) 
 				context.stop();
 			
 			if(completed) {
-				LOGGER.info("Checked for updates from "+numChecked+" EDI services");
+				LOGGER.info("Checked for updates from {} EDI services for tenant {}",numChecked,tenant.getName());
 			} else {
-				LOGGER.warn("EDI process did not complete successfully.");
+				LOGGER.warn("EDI process did not complete successfully for tenant {}",tenant.getName());
 			}
 		}
-
 	}
 
 	@Override

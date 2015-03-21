@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
@@ -52,7 +53,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importOrderLocationsFromCsvStream(Tenant tenant,Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 		boolean result = true;
 		List<OrderLocationCsvBean> orderLocationBeanList = toCsvBean(inCsvReader, OrderLocationCsvBean.class);
 		//Sort to put orders with same id together
@@ -66,7 +67,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			// Iterate over the order location map import beans.
 			for (OrderLocationCsvBean orderLocationBean : orderLocationBeanList) {
 				try {
-					lastOrderId = orderLocationCsvBeanImport(lastOrderId, orderLocationBean, inFacility, inProcessTime);
+					lastOrderId = orderLocationCsvBeanImport(tenant,lastOrderId, orderLocationBean, inFacility, inProcessTime);
 					produceRecordSuccessEvent(orderLocationBean);
 				} catch (DaoException | EdiFileReadException | InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, orderLocationBean);
@@ -77,7 +78,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				}
 			}
 
-			archiveCheckOrderLocations(inFacility, inProcessTime);
+			archiveCheckOrderLocations(tenant,inFacility, inProcessTime);
 
 			LOGGER.debug("End order location import.");
 		}
@@ -89,7 +90,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveCheckOrderLocations(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckOrderLocations(Tenant tenant,final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced order location data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
@@ -99,7 +100,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 					if (!orderLocation.getUpdated().equals(inProcessTime)) {
 						LOGGER.debug("Archive old orderLocation: " + orderLocation.getDomainId());
 						orderLocation.setActive(false);
-						OrderLocation.staticGetDao().store(orderLocation);
+						OrderLocation.staticGetDao().store(tenant,orderLocation);
 					}
 				}
 			}
@@ -116,7 +117,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private String orderLocationCsvBeanImport(final String lastOrderId,
+	private String orderLocationCsvBeanImport(Tenant tenant,final String lastOrderId,
 		final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
@@ -127,15 +128,15 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			throw new InputValidationException(inCsvBean, errorMsg);
 		}
 		if (!inCsvBean.getOrderId().equals(lastOrderId)) {
-			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			deleteOrderLocations(tenant,inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
 		}
 
 		if ((inCsvBean.getLocationId() == null) || inCsvBean.getLocationId().length() == 0) {
-			deleteOrderLocations(inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
+			deleteOrderLocations(tenant,inCsvBean.getOrderId(), inFacility, inEdiProcessTime);
 		} else if ((inCsvBean.getOrderId() == null) || inCsvBean.getOrderId().length() == 0) {
-			deleteLocation(inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
+			deleteLocation(tenant,inCsvBean.getLocationId(), inFacility, inEdiProcessTime);
 		} else {
-			updateOrderLocation(inCsvBean, inFacility, inEdiProcessTime);
+			updateOrderLocation(tenant,inCsvBean, inFacility, inEdiProcessTime);
 		}
 		return inCsvBean.getOrderId();
 	}
@@ -150,7 +151,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private OrderLocation updateOrderLocation(final OrderLocationCsvBean inCsvBean,
+	private OrderLocation updateOrderLocation(Tenant tenant,final OrderLocationCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 
@@ -174,7 +175,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 		else {
 			OrderHeader order = inFacility.getOrderHeader(orderId);
 			if (order == null) {
-				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId); // I have not yet figured out why FindBugs flags this -ic
+				order = OrderHeader.createEmptyOrderHeader(tenant,inFacility, orderId); // I have not yet figured out why FindBugs flags this -ic
 			}
 
 			String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
@@ -192,7 +193,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				result.setLocation(mappedLocation);
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				OrderLocation.staticGetDao().store(result);
+				OrderLocation.staticGetDao().store(tenant,result);
 			}
 
 		}
@@ -206,7 +207,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void deleteOrderLocations(final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void deleteOrderLocations(Tenant tenant,final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		OrderHeader order = inFacility.getOrderHeader(inOrderId);
 		if (order != null) {
@@ -215,7 +216,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 			while (iter.hasNext()) {
 				OrderLocation orderLocation = iter.next();
 				order.removeOrderLocation(orderLocation);
-				OrderLocation.staticGetDao().delete(orderLocation);
+				OrderLocation.staticGetDao().delete(tenant,orderLocation);
 			}
 		}
 	}
@@ -226,7 +227,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private void deleteLocation(final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
+	private void deleteLocation(Tenant tenant,final String inLocationId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
 		Location location = inFacility.findSubLocationById(inLocationId);
 
@@ -237,7 +238,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 				OrderLocation orderLocation = iter.next();
 				if (orderLocation.getLocation().equals(location)) {
 					order.removeOrderLocation(orderLocation);
-					OrderLocation.staticGetDao().delete(orderLocation);
+					OrderLocation.staticGetDao().delete(tenant,orderLocation);
 				}
 			}
 		}

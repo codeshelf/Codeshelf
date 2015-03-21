@@ -3,10 +3,12 @@ package com.codeshelf.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -44,18 +46,20 @@ public class PropertyService extends AbstractPropertyService {
 	 */
 	public void changePropertyValueUI(final String inFacilityPersistId, final String inPropertyName, final String inNewStringValue) {
 		LOGGER.info("call to update property " + inPropertyName + " to " + inNewStringValue);
-		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityPersistId);
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		
+		Facility facility = Facility.staticGetDao().findByPersistentId(tenant,inFacilityPersistId);
 		if (facility == null) {
 			DefaultErrors errors = new DefaultErrors(DomainObjectProperty.class);
 			String instruction = "unknown facility";
 			errors.rejectValue(inNewStringValue, instruction, ErrorCode.FIELD_INVALID); // "{0} invalid. {1}"
 			throw new InputValidationException(errors);
 		}
-		changePropertyValue(facility, inPropertyName, inNewStringValue);
+		changePropertyValue(tenant,facility, inPropertyName, inNewStringValue);
 	}	
 	
 	@Override
-	public DomainObjectProperty getProperty(IDomainObject object, String name) {
+	public DomainObjectProperty getProperty(Tenant tenant,IDomainObject object, String name) {
 		if(object == null) {
 			LOGGER.error("getProperty object was null");
 			return null;
@@ -65,7 +69,7 @@ public class PropertyService extends AbstractPropertyService {
 			LOGGER.error("getPropertyObject called before DAO exists");
 			return null;
 		}
-		DomainObjectProperty prop = theDao.getPropertyWithDefault(object, name);
+		DomainObjectProperty prop = theDao.getPropertyWithDefault(tenant,object, name);
 		if (prop == null) {
 			LOGGER.error("Unknown property {} in getPropertyObject()",name);
 			return null;
@@ -79,10 +83,10 @@ public class PropertyService extends AbstractPropertyService {
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
 	@Override
-	public void changePropertyValue(final Facility inFacility, final String inPropertyName, final String inNewStringValue) {		
+	public void changePropertyValue(Tenant tenant,final Facility inFacility, final String inPropertyName, final String inNewStringValue) {		
 		PropertyDao theDao = PropertyDao.getInstance();
 
-		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(inFacility, inPropertyName);
+		DomainObjectProperty theProperty = theDao.getPropertyWithDefault(tenant,inFacility, inPropertyName);
 		if (theProperty == null) {
 			LOGGER.error("Unknown property");
 			return;
@@ -103,7 +107,7 @@ public class PropertyService extends AbstractPropertyService {
 
 		// storing the string version, so type does not matter. We assume all validation happened so the value is ok to go to the database.
 		theProperty.setValue(canonicalForm);
-		theDao.store(theProperty);
+		theDao.store(tenant,theProperty);
 	}
 
 }

@@ -19,6 +19,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -44,7 +45,7 @@ public class WiSummarizer {
 	/**
 	 * Cart runs all have the same assign time, so this groups by assign times
 	 */
-	public void computeAssignedWiSummariesForChe(UUID inCheId, UUID inFacilityId) {
+	public void computeAssignedWiSummariesForChe(Tenant tenant,UUID inCheId, UUID inFacilityId) {
 		if (inCheId == null || inFacilityId == null) {
 			return;
 		}
@@ -52,7 +53,7 @@ public class WiSummarizer {
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
 		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
-		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(tenant,filterParams);
 		for (WorkInstruction wi : wis) {
 			Timestamp wiAssignTime = wi.getAssigned();
 			WiSetSummary theSummary = getOrCreateSummaryForTime(wiAssignTime);
@@ -65,7 +66,7 @@ public class WiSummarizer {
 	 * Line_Scan mode has null assign time by design. (Would be different for each anyway.)
 	 * We want to group by complete time, but day by day.
 	 */
-	public void computeCompletedWiSummariesForChe(UUID inCheId, UUID inFacilityId) {
+	public void computeCompletedWiSummariesForChe(Tenant tenant,UUID inCheId, UUID inFacilityId) {
 		if (inCheId == null || inFacilityId == null) {
 			return;
 		}
@@ -74,7 +75,7 @@ public class WiSummarizer {
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", inCheId));
 		filterParams.add(Restrictions.eq("parent.persistentId", inFacilityId));
 		// wi -> facility
-		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(tenant,filterParams);
 		int wiCount = 0;
 		for (WorkInstruction wi : wis) {
 			Timestamp wiCompleteTime = wi.getCompleted();

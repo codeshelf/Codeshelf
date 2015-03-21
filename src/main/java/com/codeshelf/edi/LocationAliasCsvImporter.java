@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
@@ -44,7 +45,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importLocationAliasesFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importLocationAliasesFromCsvStream(Tenant tenant,Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 
 		boolean result = true;
 		List<LocationAliasCsvBean> locationAliasBeanList = toCsvBean(inCsvReader, LocationAliasCsvBean.class);
@@ -56,7 +57,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			// Iterate over the location alias import beans.
 			for (LocationAliasCsvBean locationAliasBean : locationAliasBeanList) {
 				try {
-					LocationAlias locationAlias = locationAliasCsvBeanImport(locationAliasBean, inFacility, inProcessTime);
+					LocationAlias locationAlias = locationAliasCsvBeanImport(tenant,locationAliasBean, inFacility, inProcessTime);
 					if (locationAlias != null) {
 						produceRecordSuccessEvent(locationAliasBean);
 					}
@@ -69,7 +70,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 				}
 			}
 
-			archiveCheckLocationAliases(inFacility, inProcessTime);
+			archiveCheckLocationAliases(tenant,inFacility, inProcessTime);
 
 			LOGGER.debug("End location alias import.");
 		}
@@ -81,7 +82,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveCheckLocationAliases(final Facility inFacility, final Timestamp inProcessTime) {
+	private void archiveCheckLocationAliases(Tenant tenant,final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced location alias data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
@@ -89,7 +90,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			if (!locationAlias.getUpdated().equals(inProcessTime)) {
 				LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
 				locationAlias.setActive(false);
-				locationAlias.getDao().store(locationAlias);
+				locationAlias.getDao().store(tenant,locationAlias);
 			}
 		}
 	}
@@ -101,7 +102,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	 * @param inEdiProcessTime
 	 * @throws ViolationException 
 	 */
-	private LocationAlias locationAliasCsvBeanImport(final LocationAliasCsvBean inCsvBean,
+	private LocationAlias locationAliasCsvBeanImport(Tenant tenant,final LocationAliasCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException, DaoException {
 
@@ -156,7 +157,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			LocationAlias.staticGetDao().store(result);
+			LocationAlias.staticGetDao().store(tenant,result);
 		}
 		return result;
 	}

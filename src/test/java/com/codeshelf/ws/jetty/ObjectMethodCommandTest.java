@@ -30,7 +30,7 @@ public class ObjectMethodCommandTest extends MockDaoTest {
 	// this should really be an integration test
 	public final void testCreateFacilityOK() {
 
-		getTenantPersistenceService().beginTransaction();
+		getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 		// "ObjectMethodRequest":{"className":"Organization","persistentId":"77fdd850-2245-11e4-822c-48d705ccef0f","methodName":"createFacility",
 		// "methodArgs":[{"name":"domainId","value":"F1","classType":"java.lang.String"},
@@ -86,6 +86,6 @@ public class ObjectMethodCommandTest extends MockDaoTest {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(updateResponse.toString(), ResponseStatus.Success, updateResponse.getStatus());
 		
-		getTenantPersistenceService().commitTransaction();
+		getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

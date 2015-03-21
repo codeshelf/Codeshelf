@@ -8,6 +8,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
@@ -29,56 +30,56 @@ import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {
 	
-	public List<WorkInstruction> generateCombinations(Facility facility, Timestamp assignedTime) {
+	public List<WorkInstruction> generateCombinations(Tenant tenant, Facility facility, Timestamp assignedTime) {
 		ArrayList<WorkInstruction> wiCombos = new ArrayList<>();
 		for (WorkInstructionStatusEnum statusEnum : WorkInstructionStatusEnum.values()) {
 			for (WorkInstructionTypeEnum typeEnum : WorkInstructionTypeEnum.values()) {
-				wiCombos.add(generateWithStatusAndType(facility, statusEnum, typeEnum, assignedTime));
+				wiCombos.add(generateWithStatusAndType(tenant, facility, statusEnum, typeEnum, assignedTime));
 			}
 			
 		}
 		//housekeeping
-		wiCombos.addAll(generateAllHousekeeping(facility, wiCombos.get(0), wiCombos.get(1)));
+		wiCombos.addAll(generateAllHousekeeping(tenant,facility, wiCombos.get(0), wiCombos.get(1)));
 		
 		return wiCombos;
 	}
 
-	public WorkInstruction generateWithNewStatus(Facility facility) {
+	public WorkInstruction generateWithNewStatus(Tenant tenant,Facility facility) {
 		Timestamp assignedTime = new Timestamp(System.currentTimeMillis()-10000);
-		return generateWithStatusAndType(facility, WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, assignedTime);
+		return generateWithStatusAndType(tenant,facility, WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, assignedTime);
 	}
 	
-	public List<WorkInstruction> generateAllHousekeeping(Facility facility, WorkInstruction prevWi, WorkInstruction nextWi) {
+	public List<WorkInstruction> generateAllHousekeeping(Tenant tenant,Facility facility, WorkInstruction prevWi, WorkInstruction nextWi) {
 		ArrayList<WorkInstruction> wiCombos = new ArrayList<>();
 		for (WorkInstructionTypeEnum typeEnum : WorkInstructionTypeEnum.getHousekeepingTypeEnums()) {		
-			WorkInstruction workInstruction = WiFactory.createHouseKeepingWi(typeEnum, facility, prevWi, nextWi);
+			WorkInstruction workInstruction = WiFactory.createHouseKeepingWi(tenant,typeEnum, facility, prevWi, nextWi);
 			wiCombos.add(workInstruction);
 		}
 		return wiCombos;
 	}
 	
-	private WorkInstruction generateWithStatusAndType(Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
+	private WorkInstruction generateWithStatusAndType(Tenant tenant, Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
 		Aisle aisle=facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
-		Aisle.staticGetDao().store(aisle);
+		Aisle.staticGetDao().store(tenant,aisle);
 		
 		UomMaster uomMaster = facility.createUomMaster("UOMID");
-		UomMaster.staticGetDao().store(uomMaster);
+		UomMaster.staticGetDao().store(tenant,uomMaster);
 		ItemMaster itemMaster = facility.createItemMaster("ITEMID", "ITEMDESCRIPTION", uomMaster);
-		ItemMaster.staticGetDao().store(itemMaster);
-		OrderDetail orderDetail = generateValidOrderDetail(facility, itemMaster, uomMaster);
-		OrderDetail.staticGetDao().store(orderDetail);
+		ItemMaster.staticGetDao().store(tenant,itemMaster);
+		OrderDetail orderDetail = generateValidOrderDetail(tenant,facility, itemMaster, uomMaster);
+		OrderDetail.staticGetDao().store(tenant,orderDetail);
 
 		Container container = 	
 				new Container("CONTID",
 							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
 							  true);
 		facility.addContainer(container);
-		Container.staticGetDao().store(container);
+		Container.staticGetDao().store(tenant,container);
 
-		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
-		Che che1 = Che.staticGetDao().findByDomainId(null, "CHE1");
+		//Che che1 = Che.staticGetDao().findByDomainId(tenant,facility.getNetworks().get(0), "CHE1");
+		Che che1 = Che.staticGetDao().findByDomainId(tenant,null, "CHE1");
 		
-		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
+		WorkInstruction workInstruction = WiFactory.createWorkInstruction(tenant,statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
 		
 		
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
@@ -90,21 +91,21 @@ public class WorkInstructionGenerator {
 		return workInstruction;
 	}
 	
-	public WorkInstruction generateValid(Facility facility) {
-		return generateWithNewStatus(facility);
+	public WorkInstruction generateValid(Tenant tenant,Facility facility) {
+		return generateWithNewStatus(tenant,facility);
 	}
 	
 	//Move to order detail generator
-	private OrderDetail generateValidOrderDetail(Facility facility, ItemMaster itemMaster, UomMaster uom) {
+	private OrderDetail generateValidOrderDetail(Tenant tenant,Facility facility, ItemMaster itemMaster, UomMaster uom) {
 		OrderGroup orderGroup = new OrderGroup("OG1");
 		facility.addOrderGroup(orderGroup);
-		OrderGroup.staticGetDao().store(orderGroup);
+		OrderGroup.staticGetDao().store(tenant,orderGroup);
 		
 		OrderHeader orderHeader = new OrderHeader("OH1", OrderTypeEnum.OUTBOUND);
 		facility.addOrderHeader(orderHeader);
 		
 		orderGroup.addOrderHeader(orderHeader);
-		OrderHeader.staticGetDao().store(orderHeader);
+		OrderHeader.staticGetDao().store(tenant,orderHeader);
 
 		OrderDetail detail = new OrderDetail("OD1", true);
 		detail.setStatus(OrderStatusEnum.RELEASED);

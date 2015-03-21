@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
@@ -19,7 +20,7 @@ public class InventoryGenerator {
 		this.itemImporter = itemImporter;
 	}
 	
-	public void setupVirtuallySlottedInventory(Aisle aisle, int itemsPerTier) {
+	public void setupVirtuallySlottedInventory(Tenant tenant,Aisle aisle, int itemsPerTier) {
 		List<InventorySlottedCsvBean> inventoryRecords = Lists.newArrayList();
 		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
 		for (Tier tier : tiers) {
@@ -30,7 +31,7 @@ public class InventoryGenerator {
 				inventoryRecords.add(record);
 			}
 		}
-		itemImporter.importSlottedInventory(inventoryRecords, aisle.<Facility>getParentAtLevel(Facility.class), new Timestamp(System.currentTimeMillis()));
+		itemImporter.importSlottedInventory(tenant,inventoryRecords, aisle.<Facility>getParentAtLevel(Facility.class), new Timestamp(System.currentTimeMillis()));
 	}
 
 	

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.EdiProviderEnum;
@@ -70,8 +71,8 @@ public class Facility extends Location {
 		}
 
 		@Override
-		public Facility findByDomainId(final IDomainObject parentObject, final String domainId) {
-			return super.findByDomainId(null, domainId);
+		public Facility findByDomainId(Tenant tenant,final IDomainObject parentObject, final String domainId) {
+			return super.findByDomainId(tenant,null, domainId);
 		}
 	}
 
@@ -512,10 +513,10 @@ public class Facility extends Location {
 	}
 
 	@JsonProperty("primaryChannel")
-	public void setPrimaryChannel(Short channel) {
+	public void setPrimaryChannel(Tenant tenant,Short channel) {
 		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		network.setChannel(channel);
-		network.getDao().store(network);
+		network.getDao().store(tenant,network);
 	}
 
 	// --------------------------------------------------------------------------
@@ -536,7 +537,7 @@ public class Facility extends Location {
 		return result;
 	}
 
-	private String nextPathDomainId() {
+	private String nextPathDomainId(Tenant tenant) {
 		// The first path is domainId.1, etc.
 		// Currently, path are deleted, and not merely inactivated. So no need to worry about reactivating paths
 		String facilityID = getDomainId();
@@ -545,7 +546,7 @@ public class Facility extends Location {
 		while (true) {
 			index++;
 			pathId = facilityID + "." + index;
-			Path existingPath = Path.staticGetDao().findByDomainId(this, pathId);
+			Path existingPath = Path.staticGetDao().findByDomainId(tenant,this, pathId);
 			if (existingPath == null)
 				break;
 			// just fear of infinite loops
@@ -558,19 +559,19 @@ public class Facility extends Location {
 		return pathId;
 	}
 
-	public Path createPath(String inDomainId) {
+	public Path createPath(Tenant tenant,String inDomainId) {
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
-		String pathDomainId = nextPathDomainId();
+		String pathDomainId = nextPathDomainId(tenant);
 		if (!inDomainId.isEmpty() && !pathDomainId.equals(inDomainId)) {
 			LOGGER.warn("revise createPath() caller or API");
 		}
 		path.setDomainId(pathDomainId);
 
 		this.addPath(path);
-		Path.staticGetDao().store(path);
+		Path.staticGetDao().store(tenant,path);
 
-		path.createDefaultWorkArea(); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
+		path.createDefaultWorkArea(tenant); //TODO an odd way to construct, but it is a way to make sure the Path is persisted before the work area
 		return path;
 	}
 
@@ -579,8 +580,8 @@ public class Facility extends Location {
 	 * Create a path
 	 *
 	 */
-	public Path createPath(String inDomainId, PathSegment[] inPathSegments) {
-		Path path = createPath(inDomainId);
+	public Path createPath(Tenant tenant,String inDomainId, PathSegment[] inPathSegments) {
+		Path path = createPath(tenant,inDomainId);
 		// Started above by keeping the API, but not respecting the suggested domainId. See what domainId we actually got
 		String pathDomainId = path.getDomainId();
 		String segmentDomainId;
@@ -595,7 +596,7 @@ public class Facility extends Location {
 			pathSegment.setDomainId(segmentDomainId);
 
 			path.addPathSegment(pathSegment);
-			PathSegment.staticGetDao().store(pathSegment);
+			PathSegment.staticGetDao().store(tenant,pathSegment);
 		}
 		return path;
 	}
@@ -604,7 +605,7 @@ public class Facility extends Location {
 	/**
 	 * A sample routine to show the distance of locations along a path.
 	 */
-	public void recomputeLocationPathDistances(Path inPath) {
+	public void recomputeLocationPathDistances(Tenant tenant, Path inPath) {
 		// This used to do all paths. Now as advertised only the passed in path
 
 		// Paul: uncomment this block, then run AisleTest.java
@@ -627,7 +628,7 @@ public class Facility extends Location {
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				for (Location location : segment.getLocations()) {
-					location.computePosAlongPath(segment);
+					location.computePosAlongPath(tenant,segment);
 				}
 			}
 		}
@@ -643,7 +644,7 @@ public class Facility extends Location {
 	 * @param inPosY
 	 * @param inDrawOrder
 	 */
-	public void createVertex(final String inDomainId,
+	public void createVertex(Tenant tenant,final String inDomainId,
 		final String inPosTypeByStr,
 		final Double inPosX,
 		final Double inPosY,
@@ -655,7 +656,7 @@ public class Facility extends Location {
 		vertex.setDrawOrder(inDrawOrder);
 		this.addVertex(vertex);
 
-		Vertex.staticGetDao().store(vertex);
+		Vertex.staticGetDao().store(tenant,vertex);
 	}
 
 	// --------------------------------------------------------------------------
@@ -663,7 +664,7 @@ public class Facility extends Location {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public void createOrUpdateVertices(Location inLocation, Point inDimMeters) {
+	public void createOrUpdateVertices(Tenant tenant,Location inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
@@ -695,7 +696,7 @@ public class Facility extends Location {
 
 					// Interesting bug. Drop aisle works. Redrop while still running lead to error if addVertex not there. Subsequent redrops after application start ok.
 					inLocation.addVertex(vertexN);
-					Vertex.staticGetDao().store(vertexN);
+					Vertex.staticGetDao().store(tenant,vertexN);
 				}
 			} catch (DaoException e) {
 				LOGGER.error("", e);
@@ -716,7 +717,7 @@ public class Facility extends Location {
 							LOGGER.error("Wrong vertex name. How?");
 						}
 						theVertex.setPoint(points[n]);
-						Vertex.staticGetDao().store(theVertex);
+						Vertex.staticGetDao().store(tenant,theVertex);
 					}
 				}
 
@@ -726,26 +727,26 @@ public class Facility extends Location {
 		}
 	}
 
-	private Location createUnspecifiedLocation(String domainId) {
+	private Location createUnspecifiedLocation(Tenant tenant,String domainId) {
 		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
 		location.setFirstLedNumAlongPath((short)0);
 		this.addLocation(location);
-		UnspecifiedLocation.staticGetDao().store(location);
+		UnspecifiedLocation.staticGetDao().store(tenant,location);
 		return location;
 	}
 	
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public void createDefaultContainerKind() {
+	public void createDefaultContainerKind(Tenant tenant) {
 		//ContainerKind containerKind = 
-		createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
+		createContainerKind(tenant,ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public ContainerKind createContainerKind(String inDomainId,
+	public ContainerKind createContainerKind(Tenant tenant,String inDomainId,
 		Double inLengthMeters,
 		Double inWidthMeters,
 		Double inHeightMeters) {
@@ -760,7 +761,7 @@ public class Facility extends Location {
 
 		this.addContainerKind(result);
 		try {
-			ContainerKind.staticGetDao().store(result);
+			ContainerKind.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -772,15 +773,15 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public IEdiService getEdiExportService() {
-		return IronMqService.staticGetDao().findByDomainId(this, IRONMQ_DOMAINID);
+	public IEdiService getEdiExportService(Tenant tenant) {
+		return IronMqService.staticGetDao().findByDomainId(tenant,this, IRONMQ_DOMAINID);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
-	public IronMqService createIronMqService() throws PSQLException {
+	public IronMqService createIronMqService(Tenant tenant) throws PSQLException {
 		// we saw the PSQL exception in staging test when the record could not be added
 		IronMqService result = null;
 
@@ -789,9 +790,9 @@ public class Facility extends Location {
 		result.setProvider(EdiProviderEnum.IRONMQ);
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 		this.addEdiService(result);
-		result.storeCredentials("", ""); // non-null credentials
+		result.storeCredentials(tenant,"", ""); // non-null credentials
 		try {
-			IronMqService.staticGetDao().store(result);
+			IronMqService.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("Failed to save IronMQ service", e);
 		}
@@ -819,7 +820,7 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public DropboxService createDropboxService() {
+	public DropboxService createDropboxService(Tenant tenant) {
 
 		DropboxService result = null;
 
@@ -830,7 +831,7 @@ public class Facility extends Location {
 
 		this.addEdiService(result);
 		try {
-			DropboxService.staticGetDao().store(result);
+			DropboxService.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -841,7 +842,7 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public CodeshelfNetwork createNetwork(final String inNetworkName) {
+	public CodeshelfNetwork createNetwork(Tenant tenant,final String inNetworkName) {
 
 		CodeshelfNetwork result = null;
 
@@ -855,7 +856,7 @@ public class Facility extends Location {
 		this.addNetwork(result);
 
 		try {
-			CodeshelfNetwork.staticGetDao().store(result);
+			CodeshelfNetwork.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("DaoException persistence error storing CodeshelfNetwork", e);
 		}
@@ -891,7 +892,7 @@ public class Facility extends Location {
 	 * After a change in DDC items we call this routine to recompute the path-relative positions of the items.
 	 *
 	 */
-	public void recomputeDdcPositions() {
+	public void recomputeDdcPositions(Tenant tenant) {
 
 		LOGGER.debug("Begin DDC position recompute");
 
@@ -909,14 +910,14 @@ public class Facility extends Location {
 		for (Location location : ddcLocations) {
 			// Delete all of the old DDC groups from this location.
 			for (ItemDdcGroup ddcGroup : location.getDdcGroups()) {
-				ItemDdcGroup.staticGetDao().delete(ddcGroup);
+				ItemDdcGroup.staticGetDao().delete(tenant,ddcGroup);
 			}
 
 			locationItemsQuantity = getLocationDdcItemsAndTotalQuantity(ddcItemMasters, locationItems, location);
 
 			Double locationLen = computeLengthOfLocationFace(location);
 
-			putDdcItemsInPositionOrder(locationItems, locationItemsQuantity, location, locationLen);
+			putDdcItemsInPositionOrder(tenant,locationItems, locationItemsQuantity, location, locationLen);
 		}
 
 		LOGGER.debug("End DDC position recompute");
@@ -930,7 +931,7 @@ public class Facility extends Location {
 	 * @param inLocation
 	 * @param inLocationLen
 	 */
-	private void putDdcItemsInPositionOrder(List<Item> inLocationItems,
+	private void putDdcItemsInPositionOrder(Tenant tenant,List<Item> inLocationItems,
 		Double inLocationItemsQuantity,
 		Location inLocation,
 		Double inLocationLen) {
@@ -943,7 +944,7 @@ public class Facility extends Location {
 			ddcPos += distPerItem * item.getQuantity();
 			item.setPosAlongPath(ddcPos);
 			try {
-				Item.staticGetDao().store(item);
+				Item.staticGetDao().store(tenant,item);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -953,7 +954,7 @@ public class Facility extends Location {
 
 				// Finish the end position of the last DDC group and store it.
 				if (lastDdcGroup != null) {
-					ItemDdcGroup.staticGetDao().store(lastDdcGroup);
+					ItemDdcGroup.staticGetDao().store(tenant,lastDdcGroup);
 				}
 
 				// Start the next DDC group.
@@ -967,7 +968,7 @@ public class Facility extends Location {
 		}
 		// Store the last DDC
 		if (lastDdcGroup != null) {
-			ItemDdcGroup.staticGetDao().store(lastDdcGroup);
+			ItemDdcGroup.staticGetDao().store(tenant,lastDdcGroup);
 		}
 	}
 
@@ -1078,9 +1079,9 @@ public class Facility extends Location {
 	 * The UI needs this answer. UI gets it at login. Does not live update to the UI.
 	 */
 	@JsonProperty("hasCrossBatchOrders")
-	public boolean hasCrossBatchOrders() {
+	public boolean hasCrossBatchOrders(Tenant tenant) {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
-		String theValue = PropertyService.getInstance().getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		String theValue = PropertyService.getInstance().getPropertyFromConfig(tenant,this, DomainObjectProperty.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}
@@ -1254,10 +1255,10 @@ public class Facility extends Location {
 	}
 
 	synchronized
-	public Location getUnspecifiedLocation() {
+	public Location getUnspecifiedLocation(Tenant tenant) {
 		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
 		if (unspecifiedLocation == null) {
-			unspecifiedLocation = createUnspecifiedLocation(UNSPECIFIED_LOCATION_DOMAINID);
+			unspecifiedLocation = createUnspecifiedLocation(tenant,UNSPECIFIED_LOCATION_DOMAINID);
 		}
 		return unspecifiedLocation;
 	}
@@ -1270,44 +1271,44 @@ public class Facility extends Location {
 	 * @param inAnchorPosY
 	 */
 	// @Transactional
-	public static Facility createFacility(final String inDomainId, final String inDescription, final Point inAnchorPoint) {
+	public static Facility createFacility(Tenant tenant,final String inDomainId, final String inDescription, final Point inAnchorPoint) {
 
 		Facility facility = new Facility();
 		facility.setDomainId(inDomainId);
 		facility.setDescription(inDescription);
 		facility.setAnchorPoint(inAnchorPoint);
-		facility.store();
+		facility.store(tenant);
 
 		LOGGER.info("Creating facility "+inDomainId+" w/ dropbox, ironmq, network, sitecon, sitecon user, generic container and 2 CHEs");
 
 		// Create a first Dropbox Service entry for this facility.
 		@SuppressWarnings("unused")
-		DropboxService dropboxService = facility.createDropboxService();
+		DropboxService dropboxService = facility.createDropboxService(tenant);
 
 		// Create a first IronMQ Service entry for this facility.
 		try {
 			@SuppressWarnings("unused")
-			IronMqService ironMqService = facility.createIronMqService();
+			IronMqService ironMqService = facility.createIronMqService(tenant);
 		}
 		catch (PSQLException e) {
 			LOGGER.error("failed to create ironMQ service");			
 		}
 
 		// Create the default network for the facility.
-		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = facility.createNetwork(tenant,CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		// Create a site controller & associated user
-		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+		network.createSiteController(tenant,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
 		
 		// Create the generic container kind (for all unspecified containers)
-		facility.createDefaultContainerKind();
+		facility.createDefaultContainerKind(tenant);
 		
 		// Setup two dummy CHEs
 		for (int cheNum = 1; cheNum <= 2; cheNum++) {
 			String cheName = "CHE" + cheNum;
 			Che che = network.getChe(cheName);
 			if (che == null) {
-				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
+				che = network.createChe(tenant,cheName, new NetGuid("0x0000999" + cheNum));
 			}
 		}
 		

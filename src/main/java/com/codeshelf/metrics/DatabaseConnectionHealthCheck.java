@@ -14,7 +14,7 @@ public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
     protected Result check() throws Exception {
     	SQLException ex = null;
     	try {
-			TenantManagerService.getInstance().getDefaultTenant().executeSQL("SELECT 1;");
+			TenantManagerService.getInstance().getInitialTenant().executeSQL("SELECT 1;");
 		} catch (SQLException e) {
 			ex = e;
 		}

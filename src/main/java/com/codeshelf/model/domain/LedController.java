@@ -22,10 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -109,6 +111,11 @@ public class LedController extends WirelessDeviceABC {
 	// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 	// Therefore, see  and consider declone from Che::changeControllerId()
 	public void updateFromUI(String inNewControllerId, String inNewDeviceType) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		update(tenant,inNewControllerId,inNewDeviceType);
+	}
+
+	public void update(Tenant tenant,String inNewControllerId, String inNewDeviceType) {
 		NetGuid currentGuid = this.getDeviceNetGuid();
 		NetGuid newGuid = null;
 		boolean modified = false;
@@ -133,7 +140,7 @@ public class LedController extends WirelessDeviceABC {
 			}
 			// persist, if changed
 			if (modified) {
-				getDao().store(this);
+				getDao().store(tenant,this);
 			}
 		}
 		catch (Exception e) {

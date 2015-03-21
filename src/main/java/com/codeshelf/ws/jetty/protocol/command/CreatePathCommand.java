@@ -26,13 +26,13 @@ public class CreatePathCommand extends CommandABC {
 	public ResponseABC exec() {
 		CreatePathResponse response = new CreatePathResponse();
 		try {
-			Facility facility = Facility.staticGetDao().findByPersistentId(request.getFacilityId());
+			Facility facility = Facility.staticGetDao().findByPersistentId(getTenant(),request.getFacilityId());
 			if (facility==null) {
 				response.setStatus(ResponseStatus.Fail);
 				response.setStatusMessage("Facility not found");
 				return response;
 			}
-			Path path = facility.createPath(request.getDomainId(), request.getPathSegments());
+			Path path = facility.createPath(getTenant(),request.getDomainId(), request.getPathSegments());
 			response.setPath(path);
 			response.setStatus(ResponseStatus.Success);
 			return response;

@@ -6,7 +6,6 @@
 
 package com.codeshelf.application;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 import org.apache.shiro.SecurityUtils;
@@ -127,16 +126,15 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		// Recompute path positions
 		
 		//Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
-		Collection<Tenant> tenants = new ArrayList<Tenant>(1);
-		tenants.add(TenantManagerService.getInstance().getDefaultTenant());
+		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
 
 		for(Tenant tenant : tenants) {
 			try {
 				TenantPersistenceService.getInstance().beginTransaction(tenant);
-				for (Facility facility : Facility.staticGetDao().getAll()) {
+				for (Facility facility : Facility.staticGetDao().getAll(tenant)) {
 					for (Path path : facility.getPaths()) {
 						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
-						facility.recomputeLocationPathDistances(path);
+						facility.recomputeLocationPathDistances(tenant,path);
 					}
 				}
 				TenantPersistenceService.getInstance().commitTransaction(tenant);

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -64,7 +65,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final int importCrossBatchesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final int importCrossBatchesFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 
 		LOGGER.debug("Begin cross batch import.");
 		List<CrossBatchCsvBean> crossBatchBeanList = toCsvBean(inCsvStreamReader, CrossBatchCsvBean.class);
@@ -74,7 +75,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		// Iterate over the put batch import beans.
 		for (CrossBatchCsvBean crossBatchBean : crossBatchBeanList) {
 			try {
-				Container container = crossBatchCsvBeanImport(crossBatchBean, inFacility, inProcessTime);
+				Container container = crossBatchCsvBeanImport(tenant,crossBatchBean, inFacility, inProcessTime);
 				importedContainerIds.add(container.getContainerId());
 				BatchResult<Work> workResults = mWorkService.determineWorkForContainer(inFacility, container);
 				//				produceRecordSuccessEvent(crossBatchBean);
@@ -92,7 +93,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			}
 		}
 
-		archiveCheckCrossBatches(inFacility, inProcessTime, importedContainerIds);
+		archiveCheckCrossBatches(tenant,inFacility, inProcessTime, importedContainerIds);
 
 		LOGGER.debug("End cross batch import.");
 		return importedRecords;
@@ -103,7 +104,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
-	private void archiveCheckCrossBatches(final Facility inFacility,
+	private void archiveCheckCrossBatches(Tenant tenant,final Facility inFacility,
 		final Timestamp inProcessTime,
 		final Set<String> inImportedContainerIds) {
 		LOGGER.debug("Archive unreferenced put batch data");
@@ -125,7 +126,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 							} else {
 								LOGGER.debug("Archive old wonderwall order detail: " + orderDetail.getDomainId());
 								orderDetail.setActive(false);
-								OrderDetail.staticGetDao().store(orderDetail);
+								OrderDetail.staticGetDao().store(tenant,orderDetail);
 							}
 						}
 					}
@@ -137,12 +138,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 					try {
 
 						order.setActive(false);
-						OrderHeader.staticGetDao().store(order);
+						OrderHeader.staticGetDao().store(tenant,order);
 
 						ContainerUse containerUse = order.getContainerUse();
 						if (containerUse != null) {
 							containerUse.setActive(false);
-							ContainerUse.staticGetDao().store(containerUse);
+							ContainerUse.staticGetDao().store(tenant,containerUse);
 						}
 					} catch (PersistenceException e) {
 						LOGGER.error("Caught exception archiving order or containerUse in archiveCheckCrossBatches", e);
@@ -160,7 +161,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inFacility
 	 * @param inEdiProcessTime
 	 */
-	private Container crossBatchCsvBeanImport(final CrossBatchCsvBean inCsvBean,
+	private Container crossBatchCsvBeanImport(Tenant tenant,final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException {
 
@@ -188,12 +189,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			}
 
 			if (!errors.hasErrors()) {
-				OrderGroup group = updateOptionalOrderGroup(inCsvBean, inFacility, inEdiProcessTime);
-				OrderHeader order = updateOrderHeader(inCsvBean, inFacility, inEdiProcessTime, group);
-				UomMaster uomMaster = updateUomMaster(inCsvBean, inFacility);
+				OrderGroup group = updateOptionalOrderGroup(tenant,inCsvBean, inFacility, inEdiProcessTime);
+				OrderHeader order = updateOrderHeader(tenant,inCsvBean, inFacility, inEdiProcessTime, group);
+				UomMaster uomMaster = updateUomMaster(tenant,inCsvBean, inFacility);
 				@SuppressWarnings("unused")
-				OrderDetail detail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, itemMaster, uomMaster);
-				Container container = updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
+				OrderDetail detail = updateOrderDetail(tenant,inCsvBean, inFacility, inEdiProcessTime, order, itemMaster, uomMaster);
+				Container container = updateContainer(tenant,inCsvBean, inFacility, inEdiProcessTime, order);
 				//OrderHeader.staticGetDao().commitTransaction();
 				return container;
 			}
@@ -212,7 +213,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inEdiProcessTime
 	 * @return
 	 */
-	private OrderGroup updateOptionalOrderGroup(final CrossBatchCsvBean inCsvBean,
+	private OrderGroup updateOptionalOrderGroup(Tenant tenant,final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 		OrderGroup result = null;
@@ -230,7 +231,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				OrderGroup.staticGetDao().store(result);
+				OrderGroup.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -246,7 +247,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inOrderGroup
 	 * @return
 	 */
-	private OrderHeader updateOrderHeader(final CrossBatchCsvBean inCsvBean,
+	private OrderHeader updateOrderHeader(Tenant tenant,final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderGroup inOrderGroup) {
@@ -277,7 +278,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			OrderHeader.staticGetDao().store(result);
+			OrderHeader.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -295,7 +296,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inItemMaster
 	 * @return
 	 */
-	private OrderDetail updateOrderDetail(final CrossBatchCsvBean inCsvBean,
+	private OrderDetail updateOrderDetail(Tenant tenant,final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder,
@@ -326,7 +327,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		}
 
 		try {
-			OrderDetail.staticGetDao().store(result);
+			OrderDetail.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -341,7 +342,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inOrder
 	 * @return
 	 */
-	private Container updateContainer(final CrossBatchCsvBean inCsvBean,
+	private Container updateContainer(Tenant tenant,final CrossBatchCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final OrderHeader inOrder) {
@@ -360,7 +361,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			result.setUpdated(inEdiProcessTime);
 			result.setActive(true);
 			try {
-				Container.staticGetDao().store(result);
+				Container.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -389,9 +390,9 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			use.setUpdated(inEdiProcessTime);
 
 			try {
-				ContainerUse.staticGetDao().store(use);
+				ContainerUse.staticGetDao().store(tenant,use);
 				// order-containerUse is one-to-one, so add above set a persistable field on the orderHeader
-				OrderHeader.staticGetDao().store(inOrder);
+				OrderHeader.staticGetDao().store(tenant,inOrder);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -407,7 +408,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	 * @param inFacility
 	 * @return
 	 */
-	private UomMaster updateUomMaster(final CrossBatchCsvBean inCsvBean, final Facility inFacility) {
+	private UomMaster updateUomMaster(Tenant tenant,final CrossBatchCsvBean inCsvBean, final Facility inFacility) {
 		UomMaster result = null;
 
 		String uomId = inCsvBean.getUom();
@@ -419,7 +420,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 			inFacility.addUomMaster(result);
 
 			try {
-				UomMaster.staticGetDao().store(result);
+				UomMaster.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}

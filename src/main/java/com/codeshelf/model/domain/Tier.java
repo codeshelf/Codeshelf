@@ -22,6 +22,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -216,10 +217,10 @@ public class Tier extends Location {
 		return resultStr;
 	}
 
-	public void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
+	public void setControllerChannel(Tenant tenant, String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// this is for callMethod from the UI
 		// This, or all of this tier in aisle
-		doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
+		doSetControllerChannel(tenant, inControllerPersistentIDStr, inChannelStr);
 		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase(ALL_TIERS_IN_AISLE);
 		// if "aisle", then the rest of tiers at same level
 		if (allTiers) {
@@ -237,7 +238,7 @@ public class Tier extends Location {
 				// same domainID?
 				if (iterTier.getDomainId().equals(thisDomainId)) {
 					if (!iterTier.getPersistentId().equals(thisPersistId)) {
-						iterTier.setControllerChannel(inControllerPersistentIDStr, inChannelStr, THIS_TIER_ONLY);
+						iterTier.setControllerChannel(tenant, inControllerPersistentIDStr, inChannelStr, THIS_TIER_ONLY);
 					}
 				}
 
@@ -245,11 +246,11 @@ public class Tier extends Location {
 		}
 	}
 
-	public void setPoscons(int startingIndex) {
-		setPoscons(startingIndex, false);
+	public void setPoscons(Tenant tenant,int startingIndex) {
+		setPoscons(tenant,startingIndex, false);
 	}
 	
-	public void setPoscons(int startingIndex, boolean reverseOrder) {
+	public void setPoscons(Tenant tenant,int startingIndex, boolean reverseOrder) {
 		LedController ledController = this.getLedController();
 		if (ledController==null) {
 			LOGGER.warn("Failed to set poscons on "+this+": Tier has no LedController.");
@@ -281,7 +282,7 @@ public class Tier extends Location {
 			Slot slot = (Slot) li.next();
 			slot.setLedController(ledController);
 			slot.setPosconIndex(posconIndex);
-			Slot.staticGetDao().store(slot);
+			Slot.staticGetDao().store(tenant,slot);
 			posconIndex++;	
 		}
 	}

@@ -15,6 +15,7 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;
@@ -59,10 +60,13 @@ public class Filter implements ObjectEventListener {
 	
 	PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 
-	public Filter(ITypedDao<? extends IDomainObject> dao, Class<? extends IDomainObject> persistenceClass, String id) {
+	private Tenant	tenant;
+
+	public Filter(Tenant tenant, ITypedDao<? extends IDomainObject> dao, Class<? extends IDomainObject> persistenceClass, String id) {
 		this.persistenceClass = persistenceClass;
 		this.id = id;
 		this.dao = dao;
+		this.tenant = tenant;
 	}
 
 	@Override
@@ -88,7 +92,7 @@ public class Filter implements ObjectEventListener {
 			Preconditions.checkNotNull(dao, "dao is null for class " + domainClass);
 			Preconditions.checkNotNull(params, "params is null for class " + domainClass); // could null be ok for this?
 			
-			boolean matches = dao.matchesFilter(criteriaName,params,domainPersistentId);
+			boolean matches = dao.matchesFilter(tenant,criteriaName,params,domainPersistentId);
 			if (matches) {
 				if (this.matchList.contains(domainPersistentId)) {
 					return this.processEvent(domainClass, domainPersistentId,  EventType.Update);
@@ -117,7 +121,7 @@ public class Filter implements ObjectEventListener {
 	private ResponseABC processEvent(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, EventType type) {
 		List<IDomainObject> domainObjectList = new ArrayList<IDomainObject>();
 		if (this.matchList.contains(domainPersistentId)) {
-			IDomainObject domainObject = TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(domainPersistentId);
+			IDomainObject domainObject = TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(tenant,domainPersistentId);
 			if (domainObject != null) {
 				domainObjectList.add(domainObject);
 			} else {
@@ -185,7 +189,7 @@ public class Filter implements ObjectEventListener {
 	}			
 
 	public List<? extends IDomainObject> refreshMatchList() {
-		List<? extends IDomainObject> objectMatchList = dao.findByFilter(criteriaName,params, MAX_FILTER_RECORDS);
+		List<? extends IDomainObject> objectMatchList = dao.findByFilter(tenant,criteriaName,params, MAX_FILTER_RECORDS);
 		List<UUID> objectIds = new LinkedList<UUID>();
 		for (IDomainObject object : objectMatchList) {
 			objectIds.add(object.getPersistentId());

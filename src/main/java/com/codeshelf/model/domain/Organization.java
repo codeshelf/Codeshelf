@@ -6,6 +6,7 @@ import java.util.UUID;
 import lombok.Getter;
 
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,14 +23,16 @@ public class Organization {
 
 	public boolean createFacilityUi(String domainId, String description, Double x, Double y) {
 		Point point = new Point(PositionTypeEnum.GPS, x, y, null);
-		return (null != Facility.createFacility( domainId, description, point));
+		return (null != Facility.createFacility( CodeshelfSecurityManager.getCurrentTenant(),
+			domainId, description, point));
 	}
 
 	public Facility getFacility(final String inFacilityDomainId) {
-		return Facility.staticGetDao().findByDomainId(null, inFacilityDomainId);
+		return Facility.staticGetDao().findByDomainId(CodeshelfSecurityManager.getCurrentTenant(),
+			null, inFacilityDomainId);
 	}
 
 	public List<Facility> getFacilities() {
-		return Facility.staticGetDao().getAll();
+		return Facility.staticGetDao().getAll(CodeshelfSecurityManager.getCurrentTenant());
 	}
 }

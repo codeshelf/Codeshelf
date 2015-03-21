@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.validation.BatchResult;
 
@@ -18,7 +19,7 @@ import com.codeshelf.validation.BatchResult;
  */
 public interface ICsvOrderImporter {
 
-	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
+	BatchResult<Object> importOrdersFromCsvStream(Tenant tenant, Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
 
 	// here for easier testablity
 	int toInteger(final String inString);

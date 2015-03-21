@@ -14,17 +14,17 @@ public class DomainObjectCacheTest extends HibernateTest {
 
 	@Test
 	public void testReturnActiveLocationsOnly() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = this.createFacility();
 		
-		DomainObjectCache<ItemMaster> cache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
+		DomainObjectCache<ItemMaster> cache = new DomainObjectCache<ItemMaster>(getDefaultTenant(),ItemMaster.staticGetDao());
 		cache.loadAll();
 		Assert.assertEquals(0, cache.size());
 		
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId("EA");
 		uomMaster.setParent(facility);
-		UomMaster.staticGetDao().store(uomMaster);
+		UomMaster.staticGetDao().store(getDefaultTenant(),uomMaster);
 		facility.addUomMaster(uomMaster);
 		ItemMaster im = new ItemMaster();
 		im.setParent(facility);
@@ -32,10 +32,10 @@ public class DomainObjectCacheTest extends HibernateTest {
 		im.setItemId("IM#1");
 		im.setStandardUom(uomMaster);
 		im.setUpdated(new Timestamp(System.currentTimeMillis()));
-		ItemMaster.staticGetDao().store(im);
-		this.getTenantPersistenceService().commitTransaction();
+		ItemMaster.staticGetDao().store(getDefaultTenant(),im);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		cache.loadAll();
 		Assert.assertEquals(1, cache.size());
 		ItemMaster im2 = new ItemMaster();
@@ -44,14 +44,14 @@ public class DomainObjectCacheTest extends HibernateTest {
 		im2.setItemId("IM#2");
 		im2.setStandardUom(uomMaster);
 		im2.setUpdated(new Timestamp(System.currentTimeMillis()));
-		ItemMaster.staticGetDao().store(im2);
-		this.getTenantPersistenceService().commitTransaction();
+		ItemMaster.staticGetDao().store(getDefaultTenant(),im2);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		cache.get("IM#MISS");
 		Assert.assertEquals(1, cache.size());
 		cache.get("IM#2");
 		Assert.assertEquals(2, cache.size());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

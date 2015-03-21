@@ -64,7 +64,7 @@ public class CheProcessScanPick extends ServerTest {
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
 		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
+		mOrganizationDao.store(getDefaultTenant(),organization);
 		*/
 
 		/*
@@ -98,29 +98,29 @@ public class CheProcessScanPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvString), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvString), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Path path2 = createPathForTest(getFacility());
-		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment02 = addPathSegmentForTest(getDefaultTenant(),path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr2);
+		aisle3.associatePathSegment(getDefaultTenant(),persistStr2);
 
 		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
@@ -138,21 +138,21 @@ public class CheProcessScanPick extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases),
+		locationAliasImporter.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvLocationAliases),
 			getFacility(),
 			ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"LED1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),"LED2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),"LED3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		// Make sure we also got the alias
 		String tierName = tier.getPrimaryAliasId();
 		if (!tierName.equals("D301"))
@@ -161,29 +161,29 @@ public class CheProcessScanPick extends ServerTest {
 		tier = getFacility().findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A1.B3.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 
-		propertyService.changePropertyValue(getFacility(),
+		propertyService.changePropertyValue(getDefaultTenant(),getFacility(),
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.BayDistance.toString());
 
@@ -209,7 +209,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 	private void setUpOrdersItemsOnSamePath(Facility inFacility) throws IOException {
@@ -222,7 +222,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
@@ -240,7 +240,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 	private void setUpOrdersWithCntrAndSequence(Facility inFacility) throws IOException {
@@ -258,7 +258,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 	/**
@@ -267,32 +267,32 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testNotScanPick() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
@@ -327,10 +327,10 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testScanPick() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
@@ -340,16 +340,16 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		facility = Facility.staticGetDao().reload(facility);
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.SCANPICK, "SKU");
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
@@ -561,9 +561,9 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testScanPickError() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
@@ -572,15 +572,15 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.SCANPICK, "SKU");
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		CsDeviceManager manager = this.getDeviceManager();
 		// We would rather have the device manager know from the SCANPICK parameter update,
@@ -620,27 +620,27 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void missingLocationIdShouldHaveNoWork() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
 		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, , 4000";
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), facility, ediProcessTime);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility,
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(getDefaultTenant(),facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
 
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
@@ -667,17 +667,17 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void preferredLocationGetsSecondItemInPath() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 		this.setUpOrdersItemsOnSamePath(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
@@ -762,24 +762,24 @@ public class CheProcessScanPick extends ServerTest {
 	 * jobCountToCheck parameter is new. If zero, does all. If set, will abort and logout only working partway through the list.
 	 */
 	private final void testPfswebWorkSequencePicks(String scanDirection, String[][] sortedItemLocs) throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
 		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		// we are not setting SCANPICK for this test. Only about sequencing
-		propertyService.changePropertyValue(facility,
+		propertyService.changePropertyValue(getDefaultTenant(),facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
 
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController(); // after all the parameter changes
 
@@ -810,16 +810,16 @@ public class CheProcessScanPick extends ServerTest {
 		picker.logout();
 
 		LOGGER.info("2a: Redo, but with LOCAPICK on. SCANPICK, WORKSEQR as in case 1");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 
@@ -878,23 +878,23 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSmallNoSlotFacility();
 		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		propertyService.changePropertyValue(facility,
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(getDefaultTenant(),facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController(); // after all the parameter changes
 

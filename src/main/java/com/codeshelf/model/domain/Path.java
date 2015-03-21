@@ -33,6 +33,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.TravelDirectionEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -214,7 +215,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	/**
 	 *  Create the default work area for this path.
 	 */
-	public void createDefaultWorkArea() {
+	public void createDefaultWorkArea(Tenant tenant) {
 		WorkArea tempWorkArea = this.getWorkArea();
 		if (tempWorkArea == null) {
 			tempWorkArea = new WorkArea();
@@ -222,7 +223,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			tempWorkArea.setDescription("Default work area");
 			this.setWorkArea(tempWorkArea);
 			try {
-				WorkArea.staticGetDao().store(tempWorkArea);
+				WorkArea.staticGetDao().store(tenant,tempWorkArea);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -252,7 +253,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inHead
 	 * @param inTail
 	 */
-	public PathSegment createPathSegment(final Integer inSegmentOrder,
+	public PathSegment createPathSegment(Tenant tenant,final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
 
@@ -271,7 +272,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		result.setEndPoint(inTail);
 		this.addPathSegment(result);
 		try {
-			PathSegment.staticGetDao().store(result);
+			PathSegment.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
 			LOGGER.error("Failed to store PathSegment", e);
 		}
@@ -456,7 +457,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * Delete the path and its segments. Called from the UI
 	 * @return
 	 */
-	public void deleteThisPath() {
+	public void deleteThisPath(Tenant tenant) {
 
 		for (PathSegment segment : this.getSegments()) {
 
@@ -466,19 +467,19 @@ public class Path extends DomainObjectTreeABC<Facility> {
 					LOGGER.info("clearing path segment association");
 					location.setPathSegment(null);
 					// which DAO?
-					location.getDao().store(location);
+					location.getDao().store(tenant,location);
 				}
 			}
 			// delete the segment
-			PathSegment.staticGetDao().delete(segment);
+			PathSegment.staticGetDao().delete(tenant,segment);
 		}
 
 		// delete the work area
 		WorkArea wa = this.getWorkArea();
 		if (wa != null) {
 			this.setWorkArea(null);
-			Path.staticGetDao().store(this);
-			WorkArea.staticGetDao().delete(wa);
+			Path.staticGetDao().store(tenant,this);
+			WorkArea.staticGetDao().delete(tenant,wa);
 
 			/*			
 			wa.setParent(null);
@@ -489,7 +490,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 		}
 		// then delete this path
-		Path.staticGetDao().delete(this);
+		Path.staticGetDao().delete(tenant,this);
 	}
 
 	@Override

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -152,7 +153,7 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 	
-	public void clearChe() {
+	public void clearChe(Tenant tenant) {
 		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
 
 		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
@@ -165,7 +166,7 @@ public class Che extends WirelessDeviceABC {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", getPersistentId()));
 		filterParams.add(Restrictions.in("type", wiTypes));
-		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(tenant,filterParams);
 		for (WorkInstruction wi : wis) {
 			try {
 
@@ -177,9 +178,9 @@ public class Che extends WirelessDeviceABC {
 				// detail is optional from v5
 				if (owningDetail != null) {
 					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-					owningDetail.reevaluateStatus();
+					owningDetail.reevaluateStatus(tenant);
 				}
-				WorkInstruction.staticGetDao().delete(wi);
+				WorkInstruction.staticGetDao().delete(tenant,wi);
 			} catch (DaoException e) {
 				LOGGER.error("failed to delete prior work instruction for CHE", e);
 			}

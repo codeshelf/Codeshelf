@@ -26,6 +26,7 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.BayComparable;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.TierBayComparable;
@@ -135,7 +136,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importAislesFileFromCsvStream(Reader inCsvReader,
+	public final boolean importAislesFileFromCsvStream(Tenant tenant,Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
  		boolean result = true;
@@ -157,7 +158,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
 				try {
 					// This creates one location: aisle, bay, tier; (tier also creates slots). 
-					boolean readAisleBean = aislesFileCsvBeanImport(aislesFileBean, inProcessTime, needAisleBean);
+					boolean readAisleBean = aislesFileCsvBeanImport(tenant,aislesFileBean, inProcessTime, needAisleBean);
 					// debug aid
 					if (readAisleBean)
 						readAisleBean = true;
@@ -190,10 +191,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				// if we started a new aisle, then the previous aisle is done. Do those computations and set those fields
 				// but not if we threw out of last aisle
 				if (lastAisle != null && lastAisle != mLastReadAisle && !needAisleBean) {
-					finalizeTiersInThisAisle(lastAisle);
+					finalizeTiersInThisAisle(tenant,lastAisle);
 					// Kludge!  make sure lastAisle reference is not stale
-					lastAisle = Aisle.staticGetDao().findByDomainId(mFacility, lastAisle.getDomainId());
-					finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
+					lastAisle = Aisle.staticGetDao().findByDomainId(tenant,mFacility, lastAisle.getDomainId());
+					finalizeVerticesThisAisle(tenant,lastAisle, mLastReadBayForVertices);
 					// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
 					// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
 				}
@@ -206,15 +207,15 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			// finish the last aisle read, but not if we threw out of last aisle
 			if (!needAisleBean) {
 				Aisle theAisleReference = mLastReadAisle;
-				finalizeTiersInThisAisle(theAisleReference);
+				finalizeTiersInThisAisle(tenant,theAisleReference);
 				// Kludge! make sure lastAisle reference is not stale
-				theAisleReference = Aisle.staticGetDao().findByDomainId(mFacility, theAisleReference.getDomainId());
-				finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
-				makeUnusedLocationsInactive(theAisleReference);
+				theAisleReference = Aisle.staticGetDao().findByDomainId(tenant,mFacility, theAisleReference.getDomainId());
+				finalizeVerticesThisAisle(tenant,theAisleReference, mLastReadBay);
+				makeUnusedLocationsInactive(tenant,theAisleReference);
 			}
 
 			// As an aid to the configurer, create a few LED controllers.
-			ensureLedControllers();
+			ensureLedControllers(tenant);
 
 			// archiveCheckLocationAliases(inFacility, inProcessTime);
 
@@ -294,7 +295,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inGuardLow
 	 * @param inGuardHigh
 	 */
-	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean inSlotLedsIncrease, int inGuardLow, int inGuardHigh) {
+	private void setSlotLeds(Tenant tenant,Tier inTier, short inLedCountThisTier, boolean inSlotLedsIncrease, int inGuardLow, int inGuardHigh) {
 		// If light tube extends the full length of the tier (rather than coming up a bit short), recommend inGuardLow = 2 and inGuardHigh = 1.
 		// Any remainder slot will essentially inGuardHigh += 1 until on slots until the remainder runs out.
 
@@ -393,7 +394,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
 			thisSlot.setLowerLedNearAnchor(inSlotLedsIncrease);
 			// transaction?
-			Slot.staticGetDao().store(thisSlot);
+			Slot.staticGetDao().store(tenant,thisSlot);
 
 			lastSlotEndingLed = thisSlotEndLed;
 		}
@@ -405,7 +406,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inTier
 	 * @param inLastLedNumber
 	 */
-	private short setTierLeds(Tier inTier, short inLastLedNumber) {
+	private short setTierLeds(Tenant tenant,Tier inTier, short inLastLedNumber) {
 		// would be more obvious with an inOut parameter
 		// returns the value of last led position in this tier, so that the next tier knows where to start.
 		short returnValue = 0;
@@ -417,7 +418,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		if (ledCount == 0) {
 			inTier.setFirstLedNumAlongPath((short) 0);
 			inTier.setLastLedNumAlongPath((short) 0);
-			Tier.staticGetDao().store(inTier);
+			Tier.staticGetDao().store(tenant,inTier);
 			returnValue = inLastLedNumber;
 			// Odd case: setting a null tier that a cable skips to next tier.
 			// Common case-pick: no leds installed, so just set zeros.
@@ -427,15 +428,15 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			inTier.setLastLedNumAlongPath(thisTierEndLed);
 			inTier.setLowerLedNearAnchor(inTier.isMTransientLedsIncrease());
 			// transaction?
-			Tier.staticGetDao().store(inTier);
+			Tier.staticGetDao().store(tenant,inTier);
 			returnValue = (short) (inLastLedNumber + ledCount);
 		}
 		// Now the tricky bit of setting the slot leds
 		boolean directionIncrease = inTier.isMTransientLedsIncrease();
 		if (ledCount == 32) // kludge for GoodEggs
-			setSlotLeds(inTier, ledCount, directionIncrease, 0, 0); // Guards set at low = 2 and high = 1. Could come from file.
+			setSlotLeds(tenant,inTier, ledCount, directionIncrease, 0, 0); // Guards set at low = 2 and high = 1. Could come from file.
 		else
-			setSlotLeds(inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
+			setSlotLeds(tenant,inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
 
 		return returnValue;
 	}
@@ -445,7 +446,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * For a first aisles file read, there will need to be some controllers.
 	 * Assume one controller per aisle to start. (Correct for zigzag. Maybe correct for tier aisles if separate channel per tier.)
 	 */
-	private void ensureLedControllers() {
+	private void ensureLedControllers(Tenant tenant) {
 		// If the LEDs are set, then assuming no multi-channel capability per controller, we simply need to count tiers with LED starting at 1.
 		List<Tier> tiersList = mFacility.getActiveChildrenAtLevel(Tier.class);
 		int aisleTierCount = 0;
@@ -470,7 +471,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				if (made < needToMake) {
 					String theDomainID = Integer.toString(changingRadioID);
 					if (network.getLedController(theDomainID) == null) {
-						LedController newCtlr = network.findOrCreateLedController(theDomainID, new NetGuid("0x" + theDomainID));
+						LedController newCtlr = network.findOrCreateLedController(tenant,theDomainID, new NetGuid("0x" + theDomainID));
 						if (newCtlr != null)
 							made++;
 					}
@@ -505,7 +506,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/**
 	 * @param inAisle
 	 */
-	private void finalizeVerticesThisAisle(final Aisle inAisle, Bay inLastBayThisAisle) {
+	private void finalizeVerticesThisAisle(Tenant tenant,final Aisle inAisle, Bay inLastBayThisAisle) {
 		// See Facility.createOrUpdateVertices(), which is/was private
 		// For this, we might editing existing vertices, or making new.
 		if (mFacility == null || inLastBayThisAisle == null)
@@ -533,13 +534,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point pickFacePoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, aislePickEndX, aislePickEndY, 0.0);
 		inAisle.setPickFaceEndPoint(pickFacePoint);
 		// transaction?
-		Aisle.staticGetDao().store(inAisle);
+		Aisle.staticGetDao().store(tenant,inAisle);
 
 		// do not call getNewBoundaryPoint (inAisle) because that does a translation against the anchor. Correct (for now) for bays, but not for aisle.
 		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, boundaryPointX, boundaryPointY, 0.0);
 
 		// Create, or later adjust existing vertices, if any
-		mFacility.createOrUpdateVertices(inAisle, aPoint);
+		mFacility.createOrUpdateVertices(tenant,inAisle, aPoint);
 
 		// Each bay also has vertices. The point will come from pickfaceEnd, then translate to the anchor coordinate system for the vertices.
 		List<Bay> locationList = inAisle.getActiveChildrenAtLevel(Bay.class);
@@ -549,7 +550,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		while (li.hasNext()) {
 			Bay thisBay = (Bay) li.next();
 			Point bayPoint = getNewBoundaryPoint(thisBay, depthM, isXOrientedAisle);
-			mFacility.createOrUpdateVertices(thisBay, bayPoint);
+			mFacility.createOrUpdateVertices(tenant,thisBay, bayPoint);
 		}
 	}
 
@@ -558,7 +559,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * If the aisle got smaller (fewer bays, tiers, or slots) then the missing ones will be in mAisleLocationsMapThatMayBecomeInactive.
 	 * @param inAisle
 	 */
-	private void makeUnusedLocationsInactive(final Aisle inAisle) {
+	private void makeUnusedLocationsInactive(Tenant tenant,final Aisle inAisle) {
 		Integer howManyFewerLocations = mAisleLocationsMapThatMayBecomeInactive.size();
 		if (howManyFewerLocations > 0) {
 			LOGGER.info("Aisle " + inAisle.getDomainId() + " has " + howManyFewerLocations
@@ -569,7 +570,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				LOGGER.info(deletingStr);
 				try {
 					location.setActive(false);
-					location.getDao().store(location);
+					location.getDao().store(tenant,location);
 				} catch (DaoException e) {
 					LOGGER.error("Could not makeUnusedLocationsInactive", e);
 				}
@@ -581,7 +582,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/**
 	 * @param inAisle
 	 */
-	private void finalizeTiersInThisAisle(final Aisle inAisle) {
+	private void finalizeTiersInThisAisle(Tenant tenant,final Aisle inAisle) {
 		// mTiersThisAisle has all the tiers, with their transient fields set for ledCount and ledDirection
 		// We need to sort the tiers in order, then set the first and last LED for each tier. And direction of tier for zigzag tiers
 		// And, once that is known, we can set the slot leds also
@@ -655,7 +656,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					thisTier.setMTransientLedsIncrease(zigTierDirectionIncrease); // remember this direction. Used by setTierLeds()
 				}
 
-				newLedNumber = setTierLeds(thisTier, lastLedNumber);
+				newLedNumber = setTierLeds(tenant,thisTier, lastLedNumber);
 				lastLedNumber = newLedNumber;
 				zigTierDirectionIncrease = !zigTierDirectionIncrease; // only used by zigzag bays
 			}
@@ -674,7 +675,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					lastTierDomainName = thisTierDomainName;
 				}
 
-				newLedNumber = setTierLeds(thisTier, lastLedNumber);
+				newLedNumber = setTierLeds(tenant,thisTier, lastLedNumber);
 				lastLedNumber = newLedNumber;
 			}
 
@@ -687,7 +688,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		PathSegment pathseg = inAisle.getAssociatedPathSegment();
 		if (pathseg != null) {
 			Path path = pathseg.getParent();
-			mFacility.recomputeLocationPathDistances(path);
+			mFacility.recomputeLocationPathDistances(tenant,path);
 		}
 
 	}
@@ -700,7 +701,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inSlotWidthM
 	 * ** throws EdiFileReadException 
 	 */
-	private Slot editOrCreateOneSlot(final Tier inParentTier, Integer inSlotNumber, Slot inPreviousSlot, Double inSlotWidthM) {
+	private Slot editOrCreateOneSlot(Tenant tenant,final Tier inParentTier, Integer inSlotNumber, Slot inPreviousSlot, Double inSlotWidthM) {
 
 		if (inParentTier == null || inSlotNumber < 1 || inSlotNumber > maxSlotForTier) {
 			LOGGER.error("unreasonable value to createOneSlot");
@@ -729,7 +730,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, anchorX, anchorY, 0.0);
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
 
-		Slot slot = Slot.staticGetDao().findByDomainId(inParentTier, slotId);
+		Slot slot = Slot.staticGetDao().findByDomainId(tenant,inParentTier, slotId);
 		if (slot == null) {
 			slot = inParentTier.createSlot(slotId, anchorPoint, pickFaceEndPoint);
 		} else {
@@ -751,7 +752,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		try {
 			// transaction?
-			Slot.staticGetDao().store(slot);
+			Slot.staticGetDao().store(tenant,slot);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the slot update.");
@@ -765,7 +766,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inSlotCount
 	 * ** throws EdiFileReadException  on tier before bay, unreasonable slot count, invalid tier name, or after catching DaoException
 	 */
-	private Tier editOrCreateOneTier(final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
+	private Tier editOrCreateOneTier(Tenant tenant,final String inTierId, Integer inSlotCount, short inLedsThisTier, boolean inLedsIncrease) {
 		// PickFaceEndPoint is not the same as bays. Remember the Z value. Anchor point is relative to parent Bay, so 0,0.
 
 		if (mLastReadBay == null) {
@@ -794,7 +795,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, tierFloorM);
 
 		// create or update
-		Tier tier = Tier.staticGetDao().findByDomainId(mLastReadBay, inTierId);
+		Tier tier = Tier.staticGetDao().findByDomainId(tenant,mLastReadBay, inTierId);
 		if (tier == null) {
 			tier = mLastReadBay.createTier(inTierId, anchorPoint, pickFaceEndPoint);
 		} else {
@@ -816,7 +817,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		try {
 			// transaction?
-			Tier.staticGetDao().store(tier);
+			Tier.staticGetDao().store(tenant,tier);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the tier update.");
@@ -831,7 +832,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			Double slotWidthMeters = (mBayLengthCm / CM_PER_M) / inSlotCount;
 			Slot lastSlotMadeThisTier = null;
 			for (Integer n = 1; n <= inSlotCount; n++) {
-				lastSlotMadeThisTier = editOrCreateOneSlot(tier, n, lastSlotMadeThisTier, slotWidthMeters);
+				lastSlotMadeThisTier = editOrCreateOneSlot(tenant,tier, n, lastSlotMadeThisTier, slotWidthMeters);
 			}
 		}
 
@@ -844,7 +845,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inLengthCm
 	 * ** throws EdiFileReadException 
 	 */
-	private Bay editOrCreateOneBay(final String inBayId, Integer inLengthCm) {
+	private Bay editOrCreateOneBay(Tenant tenant,final String inBayId, Integer inLengthCm) {
 		// Normal horizontal bays have an easy algorithm for anchorPoint and pickFaceEndPoint. Ys are 0 (if mIsOrientationX). First bay starts at 0 and just goes by length.
 		if (mLastReadAisle == null) {
 			LOGGER.error("null last aisle when createOneBay called");
@@ -881,7 +882,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, pickFaceEndX, pickFaceEndY, 0.0);
 
 		// Create the bay if it doesn't already exist. Easy case.
-		Bay bay = Bay.staticGetDao().findByDomainId(mLastReadAisle, inBayId);
+		Bay bay = Bay.staticGetDao().findByDomainId(tenant,mLastReadAisle, inBayId);
 		if (bay == null) {
 			bay = mLastReadAisle.createBay(inBayId, anchorPoint, pickFaceEndPoint);
 		} else {
@@ -902,7 +903,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		}
 		try {
 			// transaction?
-			Bay.staticGetDao().store(bay);
+			Bay.staticGetDao().store(tenant,bay);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 			throw new EdiFileReadException("Could not store the bay update.");
@@ -918,7 +919,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inAnchorPoint
 	 * ** throws EdiFileReadException 
 	 */
-	private Aisle editOrCreateOneAisle(final String inAisleId, Point inAnchorPoint) {
+	private Aisle editOrCreateOneAisle(Tenant tenant,final String inAisleId, Point inAnchorPoint) {
 		// PickFaceEndPoint might be calculated when the final bay for the aisle is finished. Kind of hard, so for now, just pass in what we got from aisle editor.
 
 		// We are enforcing that the aisle name has correct form, but not that the aisle numbers come in order (or even aren't duplicated).
@@ -945,14 +946,14 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		// starting a new aisle. Let's clean up (inactives) for previous aisle, if any
 		if (mLastReadAisle != null)
-			makeUnusedLocationsInactive(mLastReadAisle);
+			makeUnusedLocationsInactive(tenant,mLastReadAisle);
 
 		mAisleLocationsMapThatMayBecomeInactive.clear();
 		if (mAisleLocationsMapThatMayBecomeInactive.size() > 0)
 			LOGGER.error("Seeing this???");
 
 		// Create the aisle if it doesn't already exist.
-		Aisle aisle = Aisle.staticGetDao().findByDomainId(mFacility, inAisleId);
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(tenant,mFacility, inAisleId);
 		if (aisle == null) {
 			Point pickFaceEndPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, 0.0, 0.0, 0.0);
 			aisle = mFacility.createAisle(inAisleId, inAnchorPoint, pickFaceEndPoint);
@@ -986,7 +987,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		try {
 			// if we had added the aisle to mAisleLocationsMapThatMayBecomeInactive, we would remove it here.
 			// transaction?
-			Aisle.staticGetDao().store(aisle);
+			Aisle.staticGetDao().store(tenant,aisle);
 
 		} catch (DaoException e) {
 			LOGGER.error("editOrCreateOneAisle", e);
@@ -1001,7 +1002,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inCloneInstruction
 	 * Determine if this is a clone attempt, and return the aisle to clone from
 	 */
-	private Aisle getAisleToClone(String inCloneInstruction){
+	private Aisle getAisleToClone(Tenant tenant,String inCloneInstruction){
 		// Does this take the form of "Clone(A51)"?  DEV-618
 		if (inCloneInstruction == null || inCloneInstruction.isEmpty())
 			return null;
@@ -1014,7 +1015,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")){
 				String aisleName =  cloneInstruction.substring(6, totLength - 1);
 				// find the aisle to clone
-				return Aisle.staticGetDao().findByDomainId(mFacility, aisleName);
+				return Aisle.staticGetDao().findByDomainId(tenant,mFacility, aisleName);
 			}
 		}
 		
@@ -1027,7 +1028,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inCloneInstruction
 	 * Determine if this is a clone attempt, and return the bay to clone from
 	 */
-	private Bay getBayToClone(String inCloneInstruction){
+	private Bay getBayToClone(Tenant tenant,String inCloneInstruction){
 		// Does this take the form of "Clone(B1)"?
 		if (inCloneInstruction == null || inCloneInstruction.isEmpty())
 			return null;
@@ -1041,7 +1042,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")){
 					String aisleName =  cloneInstruction.substring(6, totLength - 1);
 					// find the aisle to clone
-					return Bay.staticGetDao().findByDomainId(mLastReadAisle, aisleName);
+					return Bay.staticGetDao().findByDomainId(tenant,this.mLastReadAisle, aisleName);
 				}
 			}
 			LOGGER.warn("Could not interpret " + inCloneInstruction + ". Nothing done.");
@@ -1056,7 +1057,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/**
 	 * @param inAisle
 	 */
-	private String getLedConfiguration(Aisle inAisle) {
+	private String getLedConfiguration(Tenant tenant,Aisle inAisle) {
 		// Not there are some corner cases that are not checked here. The default is to
 		// assume tierB1S1Side. Example corner case is if there is an aisle with two bays
 		// the first bay only has one tier and the second bay has two tiers. The aisle could
@@ -1079,7 +1080,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		
 		
 		if (bays != null && bays.size() > 0){
-			tierList = Bay.staticGetDao().findByDomainId(inAisle, "B1").getActiveChildren();
+			tierList = Bay.staticGetDao().findByDomainId(tenant,inAisle, "B1").getActiveChildren();
 			@SuppressWarnings("unchecked")
 			Collection<? extends Tier> tierCollection = (Collection<? extends Tier>) tierList;
 			tiers.addAll(tierCollection);
@@ -1134,7 +1135,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/**
 	 * @param bayToCloneFrom
 	 */
-	private boolean cloneBayTiers(Bay bayToCloneFrom){
+	private boolean cloneBayTiers(Tenant tenant,Bay bayToCloneFrom){
 		
 		// Determine LED configuration
 		boolean ledsIncrease = true;			
@@ -1173,7 +1174,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					". Memory reference of tier to clone from was not found.");
 			}
 			
-			Tier newTier = editOrCreateOneTier(tier.getDomainId(), slots.size(), ledsForTier, ledsIncrease);
+			Tier newTier = editOrCreateOneTier(tenant,tier.getDomainId(), slots.size(), ledsForTier, ledsIncrease);
 			
 			if (newTier != null){
 				mLastReadTier = newTier;
@@ -1193,7 +1194,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inCsvBean
 	 * @param inEdiProcessTime
 	 */
-	private boolean aislesFileCsvBeanImport(final AislesFileCsvBean inCsvBean,
+	private boolean aislesFileCsvBeanImport(Tenant tenant,final AislesFileCsvBean inCsvBean,
 		final Timestamp inEdiProcessTime,
 		boolean inNeedAisleBean) {
 		String errorMsg = inCsvBean.validateBean();
@@ -1221,7 +1222,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		if (binType.equalsIgnoreCase("aisle")) {
 			returnThisIsAisleBean = true;
 			
-			Aisle aisleToCloneFrom = getAisleToClone(lengthCm);
+			Aisle aisleToCloneFrom = getAisleToClone(tenant,lengthCm);
 			
 			// Check that the aisleToCloneFrom actually exists
 			if ( lengthCm.toUpperCase().contains("CLONE") && aisleToCloneFrom == null ){
@@ -1280,7 +1281,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			Point anchorPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, dAnchorX, dAnchorY, 0.0);
 
 			// Create the aisle with no pickface; It gets computed later when the bays are known.
-			Aisle newAisle = editOrCreateOneAisle(nominalDomainID, anchorPoint);
+			Aisle newAisle = editOrCreateOneAisle(tenant,nominalDomainID, anchorPoint);
 
 			if (newAisle != null) {
 				// We need to save this aisle as it is the master for the next bay line. 
@@ -1307,10 +1308,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					if (lastAisle != null && lastAisle != mLastReadAisle){
 						// Have to load the depth of the previous aisle to set correct depth when finalizing
 						mDepthCm = lastDepthCm;
-						finalizeTiersInThisAisle(lastAisle);
+						finalizeTiersInThisAisle(tenant,lastAisle);
 						// Kludge!  make sure lastAisle reference is not stale
-						lastAisle = Aisle.staticGetDao().findByDomainId(mFacility, lastAisle.getDomainId());
-						finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
+						lastAisle = Aisle.staticGetDao().findByDomainId(tenant,mFacility, lastAisle.getDomainId());
+						finalizeVerticesThisAisle(tenant,lastAisle, mLastReadBayForVertices);
 						mDepthCm = depthCm;
 					}
 
@@ -1318,7 +1319,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 					// Determine LED configuration
 					boolean ledsIncrease = true;			
-					mControllerLed = getLedConfiguration(aisleToCloneFrom);
+					mControllerLed = getLedConfiguration(tenant,aisleToCloneFrom);
 					if (!controllerLed.isEmpty() && !controllerLed.equalsIgnoreCase(mControllerLed)){
 						LOGGER.warn("Cloning does not allow change of led orientation. " 
 								+ "Using led orientation of aisle " + aisleToCloneFrom.getDomainId());
@@ -1338,7 +1339,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					}
 
 					// Check the depth
-					Vertex V3 = Vertex.staticGetDao().findByDomainId(aisleToCloneFrom, "V03");
+					Vertex V3 = Vertex.staticGetDao().findByDomainId(tenant,aisleToCloneFrom, "V03");
 					double depth = 0.0;
 					
 					if (aisleToCloneFrom.isLocationXOriented()){
@@ -1374,7 +1375,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 							mBayLengthCm = (int) Math.round((endPoint.getY() * CM_PER_M));
 						}
 						
-						Bay newBay = editOrCreateOneBay(bay.getDomainId(), mBayLengthCm);
+						Bay newBay = editOrCreateOneBay(tenant,bay.getDomainId(), mBayLengthCm);
 						
 						if (newBay != null) {
 							mLastReadBay = newBay;
@@ -1407,7 +1408,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 								mLedsPerTier = (short)(mLedsPerTier + 1);
 							}
 							
-							Tier newTier = editOrCreateOneTier(tier.getDomainId(), slots.size(), mLedsPerTier, ledsIncrease);
+							Tier newTier = editOrCreateOneTier(tenant,tier.getDomainId(), slots.size(), mLedsPerTier, ledsIncrease);
 							
 							if (newTier != null){
 								mLastReadTier = newTier;
@@ -1428,7 +1429,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			if (inNeedAisleBean) // skip this bean if we are waiting for next aisle
 				return false;
 
-			Bay bayToCloneFrom = getBayToClone(lengthCm);
+			Bay bayToCloneFrom = getBayToClone(tenant,lengthCm);
 			
 			// Check that the bayToCloneFrom actually exists
 			if ( lengthCm.toUpperCase().contains("CLONE") && bayToCloneFrom == null ){
@@ -1466,7 +1467,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				}
 			}
 			
-			Bay newBay = editOrCreateOneBay(nominalDomainID, intValueLengthCm);
+			Bay newBay = editOrCreateOneBay(tenant,nominalDomainID, intValueLengthCm);
 
 			if (newBay != null) {
 				mLastReadLocation = newBay;
@@ -1480,7 +1481,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				
 				if (bayToCloneFrom != null) {
 					LOGGER.info("Cloning bay "+ bayToCloneFrom.getDomainId() +" as specified.");
-					cloneBayTiers(bayToCloneFrom);
+					cloneBayTiers(tenant,bayToCloneFrom);
 				}
 				
 			} else {
@@ -1531,7 +1532,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				ledsIncrease = false;
 			// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
-			Tier newTier = editOrCreateOneTier(nominalDomainID, intValueSlotsDesired, mLedsPerTier, ledsIncrease);
+			Tier newTier = editOrCreateOneTier(tenant,nominalDomainID, intValueSlotsDesired, mLedsPerTier, ledsIncrease);
 
 			if (newTier != null) {
 				mLastReadTier = newTier;

@@ -33,9 +33,10 @@ public interface ITenantManagerService extends CodeshelfService {
 	Tenant getTenantByName(String name);
 	Tenant createTenant(String name,String shardName,String dbUsername);
 	Tenant updateTenant(Tenant tenant);
-	Tenant getDefaultTenant();
 	List<Tenant> getTenants();
 	void deleteTenant(Tenant tenant); // needed for testing
+
+	Tenant getInitialTenant(); // no more default tenant but there is an "initial" tenant
 
 	// roles
 	List<UserRole> getRoles();

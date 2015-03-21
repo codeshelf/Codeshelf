@@ -22,6 +22,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
 import com.codeshelf.event.EventProducer;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Che;
@@ -31,6 +32,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
@@ -53,24 +55,25 @@ public class TestingResource {
 			return errors.buildResponse();
 		}
 
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistence.beginTransaction();
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getUUID());
+			persistence.beginTransaction(tenant);
+			Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityUUID.getUUID());
 			if (facility == null) {
 				errors.addErrorUUIDDoesntExist(facilityUUID.getRawValue(), "facility");;
 				return errors.buildResponse();
 			}
-			importInventory(facility);
+			importInventory(tenant,facility);
 			long order1 = new Date().getTime() / 1000;
 			long order2 = order1 + 1;
-			createOrders(facility, order1, order2);
-			persistence.commitTransaction();
+			createOrders(tenant,facility, order1, order2);
+			persistence.commitTransaction(tenant);
 			
 			System.out.println("Orders created");
 			Thread.sleep(6000);
 			
-			persistence.beginTransaction();
-			List<Che> ches = Che.staticGetDao().getAll();
+			persistence.beginTransaction(tenant);
+			List<Che> ches = Che.staticGetDao().getAll(tenant);
 			if (ches == null || ches.isEmpty()){
 				errors.addError("Ensure that facility " + facilityUUID.getRawValue() + " has, at least, one che");
 				return errors.buildResponse();
@@ -79,16 +82,16 @@ public class TestingResource {
 			List<String> containers = new ArrayList<String>();
 			containers.add(order1 + "");
 			containers.add(order2 + "");
-			facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getUUID());
-			WorkList workList = workService.computeWorkInstructions(che, containers);
+			facility = Facility.staticGetDao().findByPersistentId(tenant,facilityUUID.getUUID());
+			WorkList workList = workService.computeWorkInstructions(tenant, che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
 			System.out.println("*****************Got " + instructions.size() + " instructions");
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 			System.out.println("Assigned to CHE");
 			
 			int i = 0;
 			for(WorkInstruction instruction : instructions) {
-				persistence.beginTransaction();
+				persistence.beginTransaction(tenant);
 				instruction.setActualQuantity(instruction.getPlanQuantity());
 				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 				instruction.setType(WorkInstructionTypeEnum.ACTUAL);
@@ -97,21 +100,21 @@ public class TestingResource {
 				} else {
 					instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
 				}
-				workService.completeWorkInstruction(che.getPersistentId(), instruction);
+				workService.completeWorkInstruction(tenant,che.getPersistentId(), instruction);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
-				persistence.commitTransaction();
+				persistence.commitTransaction(tenant);
 			}
 			return BaseResponse.buildResponse("Test orders created and ran.");
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 	
-	private void importInventory(Facility facility) throws Exception{	
+	private void importInventory(Tenant tenant, Facility facility) throws Exception{	
 		List<LocationAlias> aliases = facility.getLocationAliases();
 		if (aliases == null || aliases.isEmpty()) {
 			throw new Exception("Please add at least one location alias to the facility");
@@ -138,10 +141,10 @@ public class TestingResource {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis()); 
 		ICsvInventoryImporter importer = new InventoryCsvImporter(new EventProducer());
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);		
+		importer.importSlottedInventoryFromCsvStream(tenant, reader, facility, ediProcessTime);		
 	}
 	
-	private void createOrders(Facility facility, long order1, long order2) throws Exception{		
+	private void createOrders(Tenant tenant,Facility facility, long order1, long order2) throws Exception{		
 		String csvString2 = String.format(
 				"orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				//order1
@@ -165,6 +168,6 @@ public class TestingResource {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(new EventProducer());
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(tenant,reader2, facility, ediProcessTime2);
 	}
 }

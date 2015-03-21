@@ -34,6 +34,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
@@ -71,7 +72,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return inContainerId + "." + inTimestamp;
 	}
 
-	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
+	public static OrderHeader createEmptyOrderHeader(Tenant tenant,Facility inFacility, String inOrderId) {
 		OrderHeader header = new OrderHeader();
 		header.setDomainId(inOrderId);
 		header.setOrderType(OrderTypeEnum.OUTBOUND);
@@ -80,7 +81,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		header.setActive(Boolean.TRUE);
 		header.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addOrderHeader(header);
-		OrderHeader.staticGetDao().store(header);
+		OrderHeader.staticGetDao().store(tenant,header);
 		return header;
 	}
 
@@ -316,10 +317,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public OrderLocation addOrderLocation(Location inLocation) {
+	public OrderLocation addOrderLocation(Tenant tenant,Location inLocation) {
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
-		OrderLocation.staticGetDao().store(result);
+		OrderLocation.staticGetDao().store(tenant,result);
 		return result;
 	}
 
@@ -400,7 +401,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	/**
 	 * Reevaluate the order status based on the status of child order details
 	 */
-	public void reevaluateStatus() {
+	public void reevaluateStatus(Tenant tenant) {
 		setStatus(OrderStatusEnum.COMPLETE);
 		for (OrderDetail detail : getOrderDetails()) {
 			if (!detail.getActive()){
@@ -415,7 +416,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		try {
-			getDao().store(this);
+			getDao().store(tenant,this);
 		} catch (DaoException e) {
 			LOGGER.error("Failed to update order status", e);
 		}

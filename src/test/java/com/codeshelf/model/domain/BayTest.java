@@ -18,7 +18,7 @@ public class BayTest extends MockDaoTest {
 	
 	@Test
 	public void testOrderingOfTiers() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = getFacility();
 		Aisle aisle = getDefaultAisle(facility, "A1");
@@ -32,6 +32,6 @@ public class BayTest extends MockDaoTest {
 		List<Location> locations = bay.getSubLocationsInWorkingOrder();
 		Assert.assertEquals(ImmutableList.of(tier3, tier2, tier1), ImmutableList.copyOf(locations));
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

@@ -9,10 +9,10 @@ public class OrganizationTest extends MockDaoTest {
 	
 	@Test
 	public void testFacilityCreation() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility.createFacility("FACILITY NAME", "INDESCRIPTIONS", Point.getZeroPoint());
+		Facility.createFacility(getDefaultTenant(),"FACILITY NAME", "INDESCRIPTIONS", Point.getZeroPoint());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

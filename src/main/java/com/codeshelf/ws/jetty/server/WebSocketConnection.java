@@ -122,12 +122,13 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectAdded called after executorService shutdown");
 			return;
 		}
+		ensureUserContextExists();
 		this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
-					TenantPersistenceService.getInstance().beginTransaction();
+					TenantPersistenceService.getInstance().beginTransaction(user.getTenant());
 					List<MessageABC> responses = new ArrayList<MessageABC>();
 					synchronized(eventListeners) {
 						Collection<ObjectEventListener> listeners = eventListeners.values();
@@ -141,13 +142,19 @@ public class WebSocketConnection implements IDaoListener {
 					for(MessageABC response : responses) {
 						sendMessage(response);
 					}
-					TenantPersistenceService.getInstance().commitTransaction();
+					TenantPersistenceService.getInstance().commitTransaction(user.getTenant());
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction(user.getTenant());
 					LOGGER.error("Unable to handle object add messages", e);
 				}
 			}
 		});
+	}
+
+	private void ensureUserContextExists() {
+		if(user == null) {
+			throw new RuntimeException("tried to process WS object notification without user");
+		}
 	}
 
 	@Override
@@ -159,12 +166,13 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectUpdated called after executorService shutdown");
 			return;
 		}
+		ensureUserContextExists();
 		this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
-					TenantPersistenceService.getInstance().beginTransaction();
+					TenantPersistenceService.getInstance().beginTransaction(user.getTenant());
 					List<MessageABC> responses = new ArrayList<MessageABC>();
 					synchronized(eventListeners) {
 						Collection<ObjectEventListener> listeners = eventListeners.values();
@@ -179,9 +187,9 @@ public class WebSocketConnection implements IDaoListener {
 					for(MessageABC response : responses) {
 						sendMessage(response);						
 					}
-					TenantPersistenceService.getInstance().commitTransaction();
+					TenantPersistenceService.getInstance().commitTransaction(user.getTenant());
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction(user.getTenant());
 					LOGGER.error("Unable to handle object update", e);
 				}
 			}
@@ -195,12 +203,13 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectDeleted called after executorService shutdown");
 			return;
 		}
+		ensureUserContextExists();
 		this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
 				try {
-					TenantPersistenceService.getInstance().beginTransaction();
+					TenantPersistenceService.getInstance().beginTransaction(user.getTenant());
 					List<MessageABC> responses = new ArrayList<MessageABC>();
 					synchronized(eventListeners) {
 						Collection<ObjectEventListener> listeners = eventListeners.values();
@@ -214,9 +223,9 @@ public class WebSocketConnection implements IDaoListener {
 					for(MessageABC response : responses) {
 						sendMessage(response);
 					}
-					TenantPersistenceService.getInstance().commitTransaction();
+					TenantPersistenceService.getInstance().commitTransaction(user.getTenant());
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
+					TenantPersistenceService.getInstance().rollbackTransaction(user.getTenant());
 					LOGGER.error("Unable to handle object delete", e);
 				}
 			}
@@ -229,6 +238,7 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("registerObjectEventListener called after executorService shutdown");
 			return;
 		}
+		ensureUserContextExists();
 		String listenerId = listener.getId();
 		if (this.eventListeners.containsKey(listenerId)) {
 			LOGGER.warn("Event listener " + listenerId + " already registered");
@@ -277,7 +287,7 @@ public class WebSocketConnection implements IDaoListener {
 		// don't try to unregister listeners if we are shutting down
 		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(com.google.common.util.concurrent.Service.State.RUNNING)) {
 			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-			TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
+			TenantPersistenceService.getInstance().getEventListenerIntegrator(user.getTenant()).getChangeBroadcaster().unregisterDAOListener(this);
 			
 		}
 	}

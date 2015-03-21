@@ -39,10 +39,10 @@ public class FacilityOutlineTest extends MockDaoTest {
 
 	@Test
 	public final void testCreateVertex() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
-		Facility.staticGetDao().store(facility);
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
+		Facility.staticGetDao().store(getDefaultTenant(),facility);
 		
 		ObjectMethodRequest request = new ObjectMethodRequest();
 		request.setClassName("Facility");
@@ -86,14 +86,14 @@ public class FacilityOutlineTest extends MockDaoTest {
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
 		Assert.assertEquals(ResponseStatus.Success, updateResponse.getStatus());
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testUpdateVertex() throws JsonParseException, JsonMappingException, IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 		
 		/*
 		var anchorPoint = {'posTypeEnum': 'GPS', 'x': event.latLng.lng(), 'y': event.latLng.lat(), 'z' : 0.0};
@@ -131,6 +131,6 @@ public class FacilityOutlineTest extends MockDaoTest {
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

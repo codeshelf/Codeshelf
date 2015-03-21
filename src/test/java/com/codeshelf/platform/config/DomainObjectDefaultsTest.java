@@ -22,19 +22,19 @@ public class DomainObjectDefaultsTest extends HibernateTest {
 	public void ensureRequiredDefaultsExist() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTransaction();
+		this.tenantPersistenceService.beginTransaction(getDefaultTenant());
 		
 		// check LOCAPICK default
-		DomainObjectPropertyDefault value = cfgServ.getPropertyDefault(Facility.class.getSimpleName(), DomainObjectProperty.LOCAPICK);
+		DomainObjectPropertyDefault value = cfgServ.getPropertyDefault(getDefaultTenant(),Facility.class.getSimpleName(), DomainObjectProperty.LOCAPICK);
 		assertNotNull(value);
 		assertEquals(false,value.getBooleanValue());
 		
 		// check EACHMULT default
-		value = cfgServ.getPropertyDefault(Facility.class.getSimpleName(), DomainObjectProperty.EACHMULT);
+		value = cfgServ.getPropertyDefault(getDefaultTenant(),Facility.class.getSimpleName(), DomainObjectProperty.EACHMULT);
 		assertNotNull(value);
 		assertEquals(false,value.getBooleanValue());
 		
-		commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 	
 }

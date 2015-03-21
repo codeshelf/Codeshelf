@@ -53,7 +53,7 @@ public class PickSimulaneousWis extends ServerTest {
 		// There are two CHE called CHE1 and CHE2
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility( fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(), fName, "TEST", Point.getZeroPoint());
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
@@ -82,30 +82,30 @@ public class PickSimulaneousWis extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
 
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = facility.getAisle("A1");// Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle1 = facility.getAisle("A1");// Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(facility);
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = facility.getAisle("A2");//Aisle.staticGetDao().findByDomainId(facility, "A2");
+		Aisle aisle2 = facility.getAisle("A2");//Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Path path2 = createPathForTest(facility);
-		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(getDefaultTenant(),facility);
+		PathSegment segment02 = addPathSegmentForTest(getDefaultTenant(),path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 //		facility.getLocations().get("A2")l
-		Aisle aisle3 = facility.getAisle("A3");//Aisle.staticGetDao().findByDomainId(facility, "A3");
+		Aisle aisle3 = facility.getAisle("A3");//Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr2);
+		aisle3.associatePathSegment(getDefaultTenant(),persistStr2);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -126,40 +126,40 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
-		Che che1 = network.createChe("CHE3", new NetGuid("0x00000001"));
-		Che che2 = network.createChe("CHE4", new NetGuid("0x00000002"));
+		Che che1 = network.createChe(getDefaultTenant(),"CHE3", new NetGuid("0x00000001"));
+		Che che2 = network.createChe(getDefaultTenant(),"CHE4", new NetGuid("0x00000002"));
 
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000013"));
 		Location tier = facility.findSubLocationById("A1.B1.T1");
 		Short channel1 = 1;
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = facility.findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = facility.findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = facility.findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = facility.findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = facility.findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 
 		return facility;
 
@@ -168,12 +168,12 @@ public class PickSimulaneousWis extends ServerTest {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testPick() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility("PK01");
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		/*  From CD_0043  applied to each pick in aisle A1
 		Order 1, with two order details: A and B.
@@ -198,19 +198,19 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
-		this.getTenantPersistenceService().commitTransaction();
+		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -230,11 +230,11 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-		this.getTenantPersistenceService().commitTransaction();
+		importer2.importOrdersFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Let's find our CHE
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
@@ -242,16 +242,16 @@ public class PickSimulaneousWis extends ServerTest {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
-		workService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
-		this.getTenantPersistenceService().commitTransaction();
+		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "12004,12005,12001,12002,12003");
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		theChe = Che.staticGetDao().reload(theChe);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
 
-		List<WorkInstruction> aList = workService.getWorkInstructions(theChe, "");
+		List<WorkInstruction> aList = workService.getWorkInstructions(getDefaultTenant(),theChe, "");
 
 
 		int wiCount = aList.size();
@@ -259,20 +259,20 @@ public class PickSimulaneousWis extends ServerTest {
 
 		// All work instructions are for items in D402. So all 8 will have posAlongPath >= to the D402 value.
 		// Therefore, all 8 will be in the result of starting from D402
-		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D402");
-		this.getTenantPersistenceService().commitTransaction();
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(getDefaultTenant(),theChe, "D402");
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		propertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 8, wiCountAfterScan); // all 8 work instructions from D402 should be there.
 
 		// Check the order of the work instructions. What we are really doing is seeing if the the 2nd, 3rd, and 4th WI have group component in the group and sort.
 		// Answer: no. Not now anyway. So no simultaneous dispatch.
-		this.getTenantPersistenceService().beginTransaction();
-		WorkInstruction wi1 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(0));
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		WorkInstruction wi1 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(0));
 		Assert.assertNotNull(wi1);
 		String wi1Order = wi1.getOrderId();
 		String wi1Item = wi1.getItemId();
@@ -280,7 +280,7 @@ public class PickSimulaneousWis extends ServerTest {
 		Assert.assertEquals("0001", groupSortStr1);
 		Double wi1Pos = wi1.getPosAlongPath();
 
-		WorkInstruction wi2 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(1));
+		WorkInstruction wi2 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(1));
 		Assert.assertNotNull(wi2);
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
@@ -288,13 +288,13 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Assert.assertTrue(wi2Pos > wi1Pos);
 
-		WorkInstruction wi3 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(2));
+		WorkInstruction wi3 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(2));
 		Assert.assertNotNull(wi3);
 		String groupSortStr3 = wi3.getGroupAndSortCode();
 		Assert.assertEquals("0003", groupSortStr3);
 		Double wi3Pos = wi3.getPosAlongPath();
 
-		WorkInstruction wi4 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(3));
+		WorkInstruction wi4 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(3));
 		Assert.assertNotNull(wi4);
 		String groupSortStr4 = wi4.getGroupAndSortCode();
 		Assert.assertEquals("0004", groupSortStr4);
@@ -302,23 +302,23 @@ public class PickSimulaneousWis extends ServerTest {
 		// 2, 3 and 4 for same item, so should be equal.
 		Assert.assertEquals(wi2Pos, wi4Pos);
 
-		WorkInstruction wi5 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(4));
+		WorkInstruction wi5 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(4));
 		Assert.assertNotNull(wi5);
 		String groupSortStr5 = wi5.getGroupAndSortCode();
 		Double wi5Pos = wi5.getPosAlongPath();
 
-		WorkInstruction wi6 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(5));
+		WorkInstruction wi6 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(5));
 		Assert.assertNotNull(wi6);
 		String groupSortStr6 = wi6.getGroupAndSortCode();
 		Double wi6Pos = wi6.getPosAlongPath();
 
-		WorkInstruction wi7 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(6));
+		WorkInstruction wi7 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(6));
 		Assert.assertNotNull(wi7);
 		String groupSortStr7 = wi7.getGroupAndSortCode();
 		Assert.assertEquals("0007", groupSortStr7);
 		Double wi7Pos = wi7.getPosAlongPath();
 
-		WorkInstruction wi8 = WorkInstruction.staticGetDao().reload(wiListAfterScan.get(7));
+		WorkInstruction wi8 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wiListAfterScan.get(7));
 		Assert.assertNotNull(wi8);
 		String groupSortStr8 = wi8.getGroupAndSortCode();
 		Assert.assertEquals("0008", groupSortStr8);
@@ -332,7 +332,7 @@ public class PickSimulaneousWis extends ServerTest {
 		String wi8Item = wi8.getItemId();
 		Assert.assertEquals("1522", wi7Item);
 		Assert.assertEquals("1522", wi8Item);
-		getTenantPersistenceService().commitTransaction();
+		getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 }

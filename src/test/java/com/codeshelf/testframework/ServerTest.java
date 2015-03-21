@@ -21,6 +21,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.integration.PickSimulator;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -66,7 +67,7 @@ public abstract class ServerTest extends HibernateTest {
 		Organization organization = new Organization();
 		String oName = "O-" + inOrganizationName;
 		organization.setDomainId(oName);
-		mOrganizationDao.store(organization);
+		mOrganizationDao.store(getDefaultTenant(),organization);
 		*/
 
 		/*
@@ -105,29 +106,29 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Path path2 = createPathForTest(getFacility());
-		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment02 = addPathSegmentForTest(getDefaultTenant(),path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr2);
+		aisle3.associatePathSegment(getDefaultTenant(),persistStr2);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
@@ -150,19 +151,19 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController("3", new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),"2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),"3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		// Make sure we also got the alias
 		String tierName = tier.getPrimaryAliasId();
 		if (!tierName.equals("D301"))
@@ -171,27 +172,27 @@ public abstract class ServerTest extends HibernateTest {
 		tier = getFacility().findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A1.B3.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		tier = getFacility().findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 
 		return getFacility();
 	}
@@ -210,17 +211,17 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(aislesCsvString), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 3d, 6d, 5d, 6d);
+		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 3d, 6d, 5d, 6d);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
 		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" +
 				"A1.B1.T1,LocX24\r\n" + 
@@ -230,19 +231,19 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
+		locationAliasImporter.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"LED1", new NetGuid("0x00000011"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
+		tier.getDao().store(getDefaultTenant(),tier);
 		
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(getDefaultTenant(),getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		
 		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n" + 
 				"Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,0\r\n" + 
@@ -281,7 +282,7 @@ public abstract class ServerTest extends HibernateTest {
 	}
 
 	protected CodeshelfNetwork getNetwork() {
-		return CodeshelfNetwork.staticGetDao().findByPersistentId(this.networkPersistentId);
+		return CodeshelfNetwork.staticGetDao().findByPersistentId(getDefaultTenant(),this.networkPersistentId);
 	}
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList) {
@@ -317,36 +318,36 @@ public abstract class ServerTest extends HibernateTest {
 	protected void importInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 	}
 
 	protected void importOrdersData(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 	}
 
 	protected boolean importSlotting(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		return importer.importOrderLocationsFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 	}
 	
 	protected int importBatchData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = createCrossBatchImporter();
-		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		return importer.importCrossBatchesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 
 	}
 	
-	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
+	protected List<WorkInstruction> startWorkFromBeginning(Tenant tenant,Facility facility, String cheName, String containers) {
 		// Now ready to run the cart
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe(cheName);
 	
-		workService.setUpCheContainerFromString(theChe, containers);
+		workService.setUpCheContainerFromString(tenant,theChe, containers);
 	
-		List<WorkInstruction> wiList = workService.getWorkInstructions(theChe, ""); // This returns them in working order.
+		List<WorkInstruction> wiList = workService.getWorkInstructions(tenant,theChe, ""); // This returns them in working order.
 		logWiList(wiList);
 		return wiList;
 	
@@ -360,7 +361,7 @@ public abstract class ServerTest extends HibernateTest {
 		int count = 0;
 		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
 			count++;
-			PickSimulator picker = new PickSimulator(test, cheGuid);
+			PickSimulator picker = new PickSimulator(getDefaultTenant(),test, cheGuid);
 			existingType = picker.getProcessType();
 			if (existingType.equals(inProcessType)) {
 				LOGGER.info(count + " pickers made in waitAndGetPickerForProcessType before getting it right");
@@ -376,7 +377,7 @@ public abstract class ServerTest extends HibernateTest {
 		Callable<PickSimulator> createPickSimulator = new Callable<PickSimulator> () {
 			@Override
 			public PickSimulator call() throws Exception {
-				PickSimulator picker = new PickSimulator(test, deviceGuid);
+				PickSimulator picker = new PickSimulator(getDefaultTenant(),test, deviceGuid);
 				String type = picker.getProcessType();
 				return (type.equals(inProcessType))? picker : null;
 			}

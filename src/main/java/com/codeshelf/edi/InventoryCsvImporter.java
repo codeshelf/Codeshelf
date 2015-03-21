@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
@@ -104,14 +105,14 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importSlottedInventoryFromCsvStream(Tenant tenant,Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 
 		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
-		return importSlottedInventory(inventoryBeanList, inFacility, inProcessTime);
+		return importSlottedInventory(tenant,inventoryBeanList, inFacility, inProcessTime);
 
 	}
 
-	public boolean importSlottedInventory(List<InventorySlottedCsvBean> inventoryBeanList,
+	public boolean importSlottedInventory(Tenant tenant,List<InventorySlottedCsvBean> inventoryBeanList,
 		Facility inFacility,
 		Timestamp inProcessTime) {
 		boolean result = true;
@@ -123,7 +124,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			// Iterate over the inventory import beans.
 			for (InventorySlottedCsvBean slottedInventoryBean : inventoryBeanList) {
 				try {
-					slottedInventoryCsvBeanImport(slottedInventoryBean, inFacility, inProcessTime);
+					slottedInventoryCsvBeanImport(tenant,slottedInventoryBean, inFacility, inProcessTime);
 					produceRecordSuccessEvent(slottedInventoryBean);
 				} catch (InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, slottedInventoryBean);
@@ -215,7 +216,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @param inCsvBean
 	 * @param inFacility
 	 */
-	private void slottedInventoryCsvBeanImport(final InventorySlottedCsvBean inCsvBean,
+	private void slottedInventoryCsvBeanImport(Tenant tenant,final InventorySlottedCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) throws InputValidationException {
 
@@ -225,12 +226,12 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				throw new InputValidationException(inCsvBean, errorMsg);
 			}
 
-			UomMaster uomMaster = upsertUomMaster(inCsvBean.getUom(), inFacility);
+			UomMaster uomMaster = upsertUomMaster(tenant,inCsvBean.getUom(), inFacility);
 			
 			String theItemID = inCsvBean.getItemId();
-			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
+			ItemMaster itemMaster = updateItemMaster(tenant,theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
 			@SuppressWarnings("unused")
-			Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
+			Gtin gtinMap = upsertGtin(tenant,inFacility, itemMaster, inCsvBean, uomMaster);
 
 			String theLocationID = inCsvBean.getLocationId();
 			Location location = inFacility.findSubLocationById(theLocationID);
@@ -259,7 +260,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				inCsvBean.setCmFromLeft("0");
 			}
 			@SuppressWarnings("unused")
-			Item item = updateSlottedItem(true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
+			Item item = updateSlottedItem(tenant,true, inCsvBean, location, inEdiProcessTime, itemMaster, uomMaster);
 			
 	}
 
@@ -267,7 +268,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * Will not update a GtinMap. 
 	 * 
 	 */
-	private Gtin upsertGtin(final Facility inFacility, final ItemMaster inItemMaster, 
+	private Gtin upsertGtin(Tenant tenant,final Facility inFacility, final ItemMaster inItemMaster, 
 		final InventorySlottedCsvBean inCsvBean, UomMaster uomMaster) {
 		
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
@@ -278,7 +279,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		ItemMaster previousItemMaster = null;
 		
 		// Get existing GtinMap
-		result = Gtin.staticGetDao().findByDomainId(null, inCsvBean.getGtin());
+		result = Gtin.staticGetDao().findByDomainId(tenant,null, inCsvBean.getGtin());
 		
 		if (result != null) {
 			previousItemMaster = result.getParent();
@@ -308,7 +309,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
 
 			try {
-				Gtin.staticGetDao().store(result);
+				Gtin.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertGtinMap save", e);
 			}
@@ -325,14 +326,14 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @param inUomMaster
 	 * @return
 	 */
-	public ItemMaster updateItemMaster(final String inItemId,
+	public ItemMaster updateItemMaster(Tenant tenant,final String inItemId,
 		final String inDescription,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = ItemMaster.staticGetDao().findByDomainId(inFacility, inItemId);
+		result = ItemMaster.staticGetDao().findByDomainId(tenant,inFacility, inItemId);
 		if (result == null) {
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
@@ -347,7 +348,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
-				ItemMaster.staticGetDao().store(result);
+				ItemMaster.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("updateItemMaster", e);
 			}
@@ -361,7 +362,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @param inFacility
 	 * @return
 	 */
-	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
+	public UomMaster upsertUomMaster(Tenant tenant,final String inUomId, final Facility inFacility) {
 		DefaultErrors errors = new DefaultErrors(UomMaster.class);
 		if (Strings.emptyToNull(inUomId) == null) {
 			errors.rejectValue("uomMasterId", inUomId, ErrorCode.FIELD_REQUIRED);
@@ -378,7 +379,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			inFacility.addUomMaster(result);
 
 			try {
-				UomMaster.staticGetDao().store(result);
+				UomMaster.staticGetDao().store(tenant,result);
 			} catch (DaoException e) {
 				LOGGER.error("upsertUomMaster save", e);
 			}
@@ -437,7 +438,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	 * @param inUomMaster
 	 * @return
 	 */
-	public Item updateSlottedItem(boolean useLenientValidation,
+	public Item updateSlottedItem(Tenant tenant,boolean useLenientValidation,
 		final InventorySlottedCsvBean inCsvBean,
 		final Location inLocation,
 		final Timestamp inEdiProcessTime,
@@ -469,7 +470,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			throw new InputValidationException(errors);
 		}
 
-		Item result = inItemMaster.findOrCreateItem(inLocation, inUomMaster);
+		Item result = inItemMaster.findOrCreateItem(tenant,inLocation, inUomMaster);
 		
 		// Refine using the cm value if there is one
 		String cmFromLeftString = inCsvBean.getCmFromLeft();
@@ -500,7 +501,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 		result.setActive(true);
 		result.setUpdated(inEdiProcessTime);
 
-		Item.staticGetDao().store(result);
+		Item.staticGetDao().store(tenant,result);
 		return result;
 	}
 

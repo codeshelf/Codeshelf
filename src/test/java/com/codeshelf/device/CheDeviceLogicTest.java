@@ -36,7 +36,6 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -126,18 +125,18 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		int chePosition = 1;
 
-		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
-		this.getTenantPersistenceService().commitTransaction();
+		Facility facility = new FacilityGenerator(getDefaultTenant()).generateValid(getDefaultTenant());
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(getDefaultTenant(),facility);
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
-		this.getTenantPersistenceService().commitTransaction(); // end of transaction for this test
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant()); // end of transaction for this test
 
 		IRadioController radioController = mock(IRadioController.class);
 
@@ -182,17 +181,17 @@ public class CheDeviceLogicTest extends MockDaoTest {
 	@SuppressWarnings("unused")
 	@Test
 	public void showsNoWorkIfNothingAheadOfLocation() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		int chePosition = 1;
 
-		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
-		this.getTenantPersistenceService().commitTransaction();
+		Facility facility = new FacilityGenerator(getDefaultTenant()).generateValid(getDefaultTenant());
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
 

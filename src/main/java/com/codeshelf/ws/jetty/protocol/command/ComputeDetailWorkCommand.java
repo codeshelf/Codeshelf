@@ -31,11 +31,11 @@ public class ComputeDetailWorkCommand extends CommandABC {
 	public ResponseABC exec() {
 		GetOrderDetailWorkResponse response = null;
 		String cheId = request.getDeviceId();
-		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
+		Che che = Che.staticGetDao().findByPersistentId(getTenant(),UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			// Get the work instructions for this CHE and order detail
-			response = workService.getWorkInstructionsForOrderDetail(che, request.getOrderDetailId());
+			response = workService.getWorkInstructionsForOrderDetail(this.getTenant(),che, request.getOrderDetailId());
 			// ~bhe: check for null/empty list + handle exception?
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);

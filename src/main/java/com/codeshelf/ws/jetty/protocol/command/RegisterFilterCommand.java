@@ -76,7 +76,7 @@ public class RegisterFilterCommand extends CommandABC {
 				
 				String filterClause = request.getFilterClause();
 					
-				Filter filter = new Filter(dao, classObject, request.getMessageId());				
+				Filter filter = new Filter(getTenant(), dao, classObject, request.getMessageId());				
 				filter.setPropertyNames(request.getPropertyNames());
 				filter.setParams(processedParams);
 				filter.setCriteriaName(filterClause);

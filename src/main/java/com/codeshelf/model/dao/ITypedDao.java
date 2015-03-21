@@ -12,6 +12,7 @@ import java.util.UUID;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.IDomainObject;
 
 /**
@@ -20,36 +21,35 @@ import com.codeshelf.model.domain.IDomainObject;
  */
 public interface ITypedDao<T> {
 
-	T findByPersistentId(UUID inPersistentId);
+	T findByPersistentId(Tenant tenant,UUID inPersistentId);
 
-	T findByPersistentId(String inPersistentIdAsString);
+	T findByPersistentId(Tenant tenant,String inPersistentIdAsString);
 	
-	T reload(T domainObject);
+	T reload(Tenant tenant,T domainObject);
 
-	T findByDomainId(IDomainObject inParentObject, String inDomainId);
+	T findByDomainId(Tenant tenant,IDomainObject inParentObject, String inDomainId);
 
-	List<T> findByPersistentIdList(List<UUID> inPersistentIdList);
+	List<T> findByPersistentIdList(Tenant tenant,List<UUID> inPersistentIdList);
 
-	List<T> findByFilter(List<Criterion> inFilter);
+	List<T> findByFilter(Tenant tenant,List<Criterion> inFilter);
 
-	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs);
+	List<T> findByFilter(Tenant tenant,String criteriaName, Map<String, Object> inFilterArgs);
 
-	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs, int maxRecords);
+	List<T> findByFilter(Tenant tenant,String criteriaName, Map<String, Object> inFilterArgs, int maxRecords);
 
-	boolean matchesFilter(String criteriaName, Map<String, Object> inFilterArgs,
+	boolean matchesFilter(Tenant tenant,String criteriaName, Map<String, Object> inFilterArgs,
 		UUID persistentId);
 
 	
 	// runtime type of object should be checked by implementation:
-	void store(IDomainObject inDomainObject) throws DaoException; 
-	void delete(IDomainObject inDomainObject) throws DaoException;
+	void store(Tenant tenant,IDomainObject inDomainObject) throws DaoException; 
+	void delete(Tenant tenant,IDomainObject inDomainObject) throws DaoException;
 
-	List<T> getAll();
+	List<T> getAll(Tenant tenant);
 
 	Class<T> getDaoClass();
 
+	Criteria createCriteria(Tenant tenant);
 	List<T> findByCriteriaQuery(Criteria criteria);
-
-	Criteria createCriteria();
 	
 }

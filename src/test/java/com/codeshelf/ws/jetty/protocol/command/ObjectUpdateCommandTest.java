@@ -113,7 +113,7 @@ public class ObjectUpdateCommandTest extends HibernateTest {
 	@Test
 	public void shouldReturnErrorResponseWhenInstanceNotFound() throws JsonProcessingException, IOException {
 
-		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(null);
+		when(mockTypedDao.findByPersistentId(getDefaultTenant(),any(UUID.class))).thenReturn(null);
 
 		ObjectUpdateRequest objectUpdateRequest = createReq();
 		
@@ -126,7 +126,7 @@ public class ObjectUpdateCommandTest extends HibernateTest {
 	
 	private ResponseABC testSetterFail(String testProperty, String testValue) throws JsonParseException, JsonMappingException, IOException {
 		MockModel mockModel = new MockModel();
-		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(mockModel);
+		when(mockTypedDao.findByPersistentId(getDefaultTenant(),any(UUID.class))).thenReturn(mockModel);
 		
 		ObjectUpdateRequest objectUpdateRequest = createReqCmdJsonNode(testProperty, testValue);
 		
@@ -137,7 +137,7 @@ public class ObjectUpdateCommandTest extends HibernateTest {
 	
 	private MockModel testSetter(String testProperty, Object testValue) throws JsonParseException, JsonMappingException, IOException {
 		MockModel mockModel = new MockModel();
-		when(mockTypedDao.findByPersistentId(any(UUID.class))).thenReturn(mockModel);
+		when(mockTypedDao.findByPersistentId(getDefaultTenant(),any(UUID.class))).thenReturn(mockModel);
 		
 		ObjectUpdateRequest objectUpdateRequest = createReqCmdJsonNode(testProperty, testValue);
 		

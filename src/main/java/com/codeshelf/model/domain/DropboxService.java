@@ -31,6 +31,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.EdiDocumentStatusEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -124,7 +125,7 @@ public class DropboxService extends EdiServiceABC {
 		return !Strings.isNullOrEmpty(getProviderCredentials());
 	}
 
-	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
+	public boolean getUpdatesFromHost(Tenant tenant,ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
@@ -137,7 +138,7 @@ public class DropboxService extends EdiServiceABC {
 
 			DbxClient client = getClient();
 			if (client != null) {
-				result = checkForChangedDocuments(client,
+				result = checkForChangedDocuments(tenant,client,
 					inCsvOrderImporter,
 					inCsvOrderLocationImporter,
 					inCsvInventoryImporter,
@@ -173,7 +174,7 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inClientSession
 	 */
-	private boolean checkForChangedDocuments(DbxClient inClient,
+	private boolean checkForChangedDocuments(Tenant tenant,DbxClient inClient,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
@@ -187,7 +188,7 @@ public class DropboxService extends EdiServiceABC {
 			while ((page != null) && (page.entries.size() > 0)) {
 				// Signal that we got some deltas
 				result = true;
-				if (iteratePage(inClient,
+				if (iteratePage(tenant,inClient,
 					page,
 					inCsvOrderImporter,
 					inCsvOrderLocationImporter,
@@ -197,7 +198,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
-						DropboxService.staticGetDao().store(this);
+						DropboxService.staticGetDao().store(tenant,this);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -237,7 +238,7 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private boolean iteratePage(DbxClient inClient,
+	private boolean iteratePage(Tenant tenant,DbxClient inClient,
 		DbxDelta<DbxEntry> inPage,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -252,7 +253,7 @@ public class DropboxService extends EdiServiceABC {
 			try {
 				if (entry.metadata != null) {
 					// Add, or modify.
-					result &= processEntry(inClient,
+					result &= processEntry(tenant,inClient,
 						entry,
 						inCsvOrderImporter,
 						inCsvOrderLocationImporter,
@@ -261,7 +262,7 @@ public class DropboxService extends EdiServiceABC {
 						inCsvCrossBatchImporter,
 						inCsvAislesFileImporter);
 				} else {
-					result &= removeEntry(inClient, entry);
+					result &= removeEntry(tenant,inClient, entry);
 				}
 			} catch (RuntimeException e) {
 				LOGGER.error("", e);
@@ -422,11 +423,11 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public String startLink() {
+	public String startLink(Tenant tenant) {
 
 		try {
 			setServiceState(EdiServiceStateEnum.LINKING);
-			DropboxService.staticGetDao().store(this);
+			DropboxService.staticGetDao().store(tenant,this);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to change dropbox service state", e);
 		}
@@ -444,7 +445,7 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inAuthSession
 	 * @param inAuthInfo
 	 */
-	public boolean finishLink(final String inDbxCode) {
+	public boolean finishLink(Tenant tenant,final String inDbxCode) {
 
 		boolean result = false;
 
@@ -465,7 +466,7 @@ public class DropboxService extends EdiServiceABC {
 					setDbCursor("");
 					result = true;
 				}
-				DropboxService.staticGetDao().store(this);
+				DropboxService.staticGetDao().store(tenant,this);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to store dropboxservice change after linking", e);
 			}
@@ -480,7 +481,7 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private boolean processEntry(DbxClient inClient,
+	private boolean processEntry(Tenant tenant,DbxClient inClient,
 		DbxDelta.Entry<DbxEntry> inEntry,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -494,7 +495,7 @@ public class DropboxService extends EdiServiceABC {
 
 		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
 			if (inEntry.metadata.isFile()) {
-				handleImport(inClient,
+				handleImport(tenant,inClient,
 					inEntry,
 					inCsvOrderImporter,
 					inCsvOrderLocationImporter,
@@ -507,7 +508,7 @@ public class DropboxService extends EdiServiceABC {
 		}
 
 		if (shouldUpdateEntry) {
-			EdiDocumentLocator locator = EdiDocumentLocator.staticGetDao().findByDomainId(this, inEntry.lcPath);
+			EdiDocumentLocator locator = EdiDocumentLocator.staticGetDao().findByDomainId(tenant,this, inEntry.lcPath);
 			if (locator == null) {
 				locator = new EdiDocumentLocator();
 				locator.setReceived(new Timestamp(System.currentTimeMillis()));
@@ -518,7 +519,7 @@ public class DropboxService extends EdiServiceABC {
 
 				addEdiDocumentLocator(locator);
 				try {
-					EdiDocumentLocator.staticGetDao().store(locator);
+					EdiDocumentLocator.staticGetDao().store(tenant,locator);
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 					result = false;
@@ -576,7 +577,7 @@ public class DropboxService extends EdiServiceABC {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	private void handleImport(DbxClient inClient,
+	private void handleImport(Tenant tenant,DbxClient inClient,
 		DbxDelta.Entry<DbxEntry> inEntry,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -643,15 +644,15 @@ public class DropboxService extends EdiServiceABC {
 				if (fileMatches(filepath, IMPORT_SLOTTING_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
+					success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(tenant,reader, getParent(), ediProcessTime);
 				} else if (fileMatches(filepath, IMPORT_ORDERS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime).isSuccessful();
+					success = inCsvOrderImporter.importOrdersFromCsvStream(tenant,reader, getParent(), ediProcessTime).isSuccessful();
 				} else if (fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
+					success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(tenant,reader, getParent(), ediProcessTime);
 				}
 				// Notice that there is no distinguisher for DDC file. Following should never execute anyway. Making it more obvious.
 				// Jeff says DDC may come back.
@@ -662,16 +663,16 @@ public class DropboxService extends EdiServiceABC {
 				}*/ else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
+					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(tenant,reader, getParent(), ediProcessTime);
 				} else if (fileMatches(filepath, IMPORT_BATCHES_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					int numRecords = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
+					int numRecords = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(tenant,reader, getParent(), ediProcessTime);
 					success = (numRecords > 0);
 				} else if (fileMatches(filepath, IMPORT_AISLES_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvAislesFileImporter.importAislesFileFromCsvStream(reader, getParent(), ediProcessTime);
+					success = inCsvAislesFileImporter.importAislesFileFromCsvStream(tenant,reader, getParent(), ediProcessTime);
 				}
 				if (!processedAttempt) {
 					LOGGER.warn("Did not find importer for: " + filepath);
@@ -806,13 +807,13 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @param inEntry
 	 */
-	private boolean removeEntry(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
+	private boolean removeEntry(Tenant tenant,DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
 		boolean result = true;
 
 		EdiDocumentLocator locator = getDocumentLocatorByPath(inEntry.lcPath);
 		if (locator != null) {
 			try {
-				EdiDocumentLocator.staticGetDao().delete(locator);
+				EdiDocumentLocator.staticGetDao().delete(tenant,locator);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 				result = false;

@@ -24,6 +24,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ITypedDao;
@@ -72,11 +73,11 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return result;
 	}
 
-	public final T findByPersistentId(UUID inPersistentId) {
+	public final T findByPersistentId(Tenant tenant,UUID inPersistentId) {
 		return storageByPersistentId.get(inPersistentId);
 	}
 
-	public final T findByDomainId(IDomainObject inParentObject, String inDomainId) {
+	public final T findByDomainId(Tenant tenant,IDomainObject inParentObject, String inDomainId) {
 		String domainId = "";
 		if ((inParentObject != null)) {
 			domainId = getFullDomainId(inParentObject) + "." + inDomainId;
@@ -85,16 +86,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		return storageByDomainIdOnly.get(inDomainId);
 	}
 
-	public final List<T> findByPersistentIdList(List<UUID> inPersistentIdList) {
+	public final List<T> findByPersistentIdList(Tenant tenant,List<UUID> inPersistentIdList) {
 		throw new NotImplementedException();
 
 	}
 
-	public final List<T> findByFilter(List<Criterion> inFilter) {
+	public final List<T> findByFilter(Tenant tenant,List<Criterion> inFilter) {
 		throw new NotImplementedException();
 	}
 
-	public final void store(IDomainObject inDomainObject) {
+	public final void store(Tenant tenant,IDomainObject inDomainObject) {
 		validateClass(inDomainObject.getClass());
 		@SuppressWarnings("unchecked")
 		T inTypedObject = (T) inDomainObject;
@@ -135,7 +136,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	    }       
 	}
 	
-	public final void delete(IDomainObject inDomainObject) {
+	public final void delete(Tenant tenant,IDomainObject inDomainObject) {
 		validateClass(inDomainObject.getClass());
 		
 		storageByDomainIdOnly.remove(inDomainObject.getDomainId());
@@ -149,7 +150,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		}
 	}
 
-	public final List<T> getAll() {
+	public final List<T> getAll(Tenant tenant) {
 		return new ArrayList<T>(storageByDomainIdOnly.values());
 	}
 
@@ -157,29 +158,29 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public final List<T> findByFilter(String criteria, Map<String, Object> inFilterParams) {
+	public final List<T> findByFilter(Tenant tenant,String criteria, Map<String, Object> inFilterParams) {
 		throw new NotImplementedException();
 	}
 
 	@Override
-	public List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs, int maxRecords) {
+	public List<T> findByFilter(Tenant tenant,String criteriaName, Map<String, Object> inFilterArgs, int maxRecords) {
 		// TODO Auto-generated method stub
 		throw new NotImplementedException();
 	}
 	
 	@Override
-	public T findByPersistentId(String inPersistentIdAsString) {
+	public T findByPersistentId(Tenant tenant,String inPersistentIdAsString) {
 		UUID persistentId = UUID.fromString(inPersistentIdAsString);
-		return this.findByPersistentId(persistentId);
+		return this.findByPersistentId(tenant,persistentId);
 	}
 
 	@Override
-	public boolean matchesFilter(String criteriaName, Map<String, Object> inFilterArgs, UUID persistentId) {
+	public boolean matchesFilter(Tenant tenant,String criteriaName, Map<String, Object> inFilterArgs, UUID persistentId) {
 		throw new NotImplementedException();
 	}
 
 	@Override
-	public T reload(T domainObject) {
+	public T reload(Tenant tenant,T domainObject) {
 		return domainObject;
 		//throw new NotImplementedException();
 	}
@@ -190,7 +191,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	@Override
-	public Criteria createCriteria() {
+	public Criteria createCriteria(Tenant tenant) {
 		throw new NotImplementedException();
 	}
 

@@ -12,6 +12,7 @@ import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
@@ -48,8 +49,8 @@ public abstract class MockDaoTest extends MinimalTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return false;
 	}
-	protected static Path createPathForTest(Facility facility) {
-		return facility.createPath("");
+	protected static Path createPathForTest(Tenant tenant,Facility facility) {
+		return facility.createPath(tenant,"");
 	}
 	
 	// these two belong in ServerTest?
@@ -61,7 +62,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		return importer;
 	}
 
-	protected static PathSegment addPathSegmentForTest(final Path inPath,
+	protected static PathSegment addPathSegmentForTest(Tenant tenant,final Path inPath,
 		final Integer inSegmentOrder,
 		Double inStartX,
 		Double inStartY,
@@ -70,7 +71,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
 		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(inSegmentOrder, head, tail);
+		PathSegment returnSeg = inPath.createPathSegment(tenant,inSegmentOrder, head, tail);
 		return returnSeg;
 	}
 	
@@ -84,29 +85,29 @@ public abstract class MockDaoTest extends MinimalTest {
 	}
 
 	protected Aisle getDefaultAisle(Facility facility, String inDomainId, Point anchorPoint, Point pickFaceEndPoint) {
-		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, inDomainId);
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, inDomainId);
 		if (aisle == null) {
 			aisle = facility.createAisle(inDomainId, anchorPoint, pickFaceEndPoint);
-			Aisle.staticGetDao().store(aisle);
+			Aisle.staticGetDao().store(getDefaultTenant(),aisle);
 		}
 		return aisle;
 	}
 
 	
 	protected Bay getDefaultBay(Aisle aisle, String inDomainId) {
-		Bay bay  = Bay.staticGetDao().findByDomainId(aisle, inDomainId);
+		Bay bay  = Bay.staticGetDao().findByDomainId(getDefaultTenant(),aisle, inDomainId);
 		if (bay == null) {
 			bay = aisle.createBay(inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
-			Bay.staticGetDao().store(bay);
+			Bay.staticGetDao().store(getDefaultTenant(),bay);
 		}
 		return bay;
 	}
 
 	protected Tier getDefaultTier(Bay bay, String inDomainId) {
-		Tier tier  = Tier.staticGetDao().findByDomainId(bay, inDomainId);
+		Tier tier  = Tier.staticGetDao().findByDomainId(getDefaultTenant(),bay, inDomainId);
 		if (tier == null) {
 			tier = bay.createTier(inDomainId, Point.getZeroPoint(), Point.getZeroPoint());
-			Tier.staticGetDao().store(tier);
+			Tier.staticGetDao().store(getDefaultTenant(),tier);
 		}
 		return tier;
 	}
@@ -114,9 +115,9 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected PathSegment getDefaultPathSegment(Path path, Integer inOrder) {
 		PathSegment segment = path.getPathSegment(inOrder); 
 		if (segment == null) {
-			segment = path.createPathSegment(inOrder,  anyPoint(), anyPoint());
+			segment = path.createPathSegment(getDefaultTenant(),inOrder,  anyPoint(), anyPoint());
 			// createPathSegment() does the store
-			// PathSegment.staticGetDao().store(segment);
+			// PathSegment.staticGetDao().store(getDefaultTenant(),segment);
 		}
 		return segment;
 	}
@@ -124,17 +125,17 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected Path getDefaultPath(Facility facility, String inPathId) {
 		Path path = facility.getPath(inPathId);
 		if (path == null) {
-			path = facility.createPath(inPathId);
-			Path.staticGetDao().store(path);
+			path = facility.createPath(getDefaultTenant(),inPathId);
+			Path.staticGetDao().store(getDefaultTenant(),path);
 			// looks wrong. Does not add to facility
 		}
 		return path;
 	}
 	
 	protected LedController getDefaultController(CodeshelfNetwork network, final String inControllerDomainId) {
-		LedController controller = network.findOrCreateLedController(inControllerDomainId, new NetGuid(inControllerDomainId));
+		LedController controller = network.findOrCreateLedController(getDefaultTenant(),inControllerDomainId, new NetGuid(inControllerDomainId));
 		controller.setDomainId(inControllerDomainId);
-		LedController.staticGetDao().store(controller);
+		LedController.staticGetDao().store(getDefaultTenant(),controller);
 		return controller;
 	}
 	
@@ -148,9 +149,9 @@ public abstract class MockDaoTest extends MinimalTest {
 		Facility resultFacility = getFacility();
 		CodeshelfNetwork network = resultFacility.getNetworks().get(0);
 		
-		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
+		Che che = network.createChe(getDefaultTenant(),"WITEST", new NetGuid("0x00000001"));
 
-		LedController controller = network.findOrCreateLedController("LEDCON", new NetGuid("0x00000002"));
+		LedController controller = network.findOrCreateLedController(getDefaultTenant(),"LEDCON", new NetGuid("0x00000002"));
 
 		Aisle aisle1 = getDefaultAisle(resultFacility, "A1");
 
@@ -162,14 +163,14 @@ public abstract class MockDaoTest extends MinimalTest {
 		baya1b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya1b1);
 		baya1b1.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya1b1);
+		Bay.staticGetDao().store(getDefaultTenant(),baya1b1);
 
 		Bay baya1b2 = aisle1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya1b2.setFirstLedNumAlongPath((short) 0);
 		baya1b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya1b2);
 		baya1b2.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya1b2);
+		Bay.staticGetDao().store(getDefaultTenant(),baya1b2);
 
 		Aisle aisle2 = getDefaultAisle(resultFacility, "A2");
 
@@ -178,31 +179,31 @@ public abstract class MockDaoTest extends MinimalTest {
 		baya2b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya2b1);
 		baya2b1.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya2b1);
+		Bay.staticGetDao().store(getDefaultTenant(),baya2b1);
 
 		Bay baya2b2 = aisle2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya2b2.setFirstLedNumAlongPath((short) 0);
 		baya2b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya2b2);
 		baya2b2.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya2b2);
+		Bay.staticGetDao().store(getDefaultTenant(),baya2b2);
 
 		Path path = new Path();
 		path.setDomainId(Path.DEFAULT_FACILITY_PATH_ID);
 		path.setParent(resultFacility);
 		path.setTravelDir(TravelDirectionEnum.FORWARD);
-		Path.staticGetDao().store(path);
+		Path.staticGetDao().store(getDefaultTenant(),path);
 		resultFacility.addPath(path);
 
 		Point startPoint1 = Point.getZeroPoint().add(5.0,0.0);
-		PathSegment pathSegment1 = path.createPathSegment(0, startPoint1, Point.getZeroPoint());
-		PathSegment.staticGetDao().store(pathSegment1);
+		PathSegment pathSegment1 = path.createPathSegment(getDefaultTenant(),0, startPoint1, Point.getZeroPoint());
+		PathSegment.staticGetDao().store(getDefaultTenant(),pathSegment1);
 
 		aisle1.setPathSegment(pathSegment1);
-		Aisle.staticGetDao().store(aisle1);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle1);
 
 		aisle2.setPathSegment(pathSegment1);
-		Aisle.staticGetDao().store(aisle2);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle2);
 
 		Aisle aisle3 = getDefaultAisle(resultFacility, "A3");
 
@@ -211,14 +212,14 @@ public abstract class MockDaoTest extends MinimalTest {
 		baya3b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya3b1);
 		baya3b1.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya3b1);
+		Bay.staticGetDao().store(getDefaultTenant(),baya3b1);
 
 		Bay baya3b2 = aisle3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya3b2.setFirstLedNumAlongPath((short) 0);
 		baya3b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya3b2);
 		baya3b2.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya3b2);
+		Bay.staticGetDao().store(getDefaultTenant(),baya3b2);
 
 		Aisle aisle4 = getDefaultAisle(resultFacility, "A4");
 
@@ -227,25 +228,25 @@ public abstract class MockDaoTest extends MinimalTest {
 		baya4b1.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya4b1);
 		baya4b1.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya4b1);
+		Bay.staticGetDao().store(getDefaultTenant(),baya4b1);
 
 		Bay baya4b2 = aisle4.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		baya4b2.setFirstLedNumAlongPath((short) 0);
 		baya4b2.setLastLedNumAlongPath((short) 0);
 		controller.addLocation(baya4b2);
 		baya4b2.setLedChannel(channel1);
-		Bay.staticGetDao().store(baya4b2);
+		Bay.staticGetDao().store(getDefaultTenant(),baya4b2);
 
-		PathSegment pathSegment2 = path.createPathSegment(1, Point.getZeroPoint(), Point.getZeroPoint());
-		PathSegment.staticGetDao().store(pathSegment2);
+		PathSegment pathSegment2 = path.createPathSegment(getDefaultTenant(),1, Point.getZeroPoint(), Point.getZeroPoint());
+		PathSegment.staticGetDao().store(getDefaultTenant(),pathSegment2);
 
 		aisle3.setPathSegment(pathSegment2);
-		Aisle.staticGetDao().store(aisle3);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle3);
 
 		aisle4.setPathSegment(pathSegment2);
-		Aisle.staticGetDao().store(aisle4);
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle4);
 
-		resultFacility.recomputeLocationPathDistances(path);
+		resultFacility.recomputeLocationPathDistances(getDefaultTenant(),path);
 
 		Container container1 = createContainer("C1", resultFacility);
 		Container container2 = createContainer("C2", resultFacility);
@@ -345,7 +346,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		UomMaster uomMaster = new UomMaster();
 		uomMaster.setUomMasterId(inUom);
 		uomMaster.setParent(inFacility);
-		UomMaster.staticGetDao().store(uomMaster);
+		UomMaster.staticGetDao().store(getDefaultTenant(),uomMaster);
 		inFacility.addUomMaster(uomMaster);
 		return uomMaster;
 	}
@@ -368,7 +369,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		
 		inFacility.addContainer(result);
 		
-		Container.staticGetDao().store(result);
+		Container.staticGetDao().store(getDefaultTenant(),result);
 
 		return result;
 	}
@@ -397,8 +398,8 @@ public abstract class MockDaoTest extends MinimalTest {
 		inContainer.addContainerUse(result);
 		
 		// This one-to-one relationship needs both persisted
-		ContainerUse.staticGetDao().store(result);
-		OrderHeader.staticGetDao().store(inOrderHeader);
+		ContainerUse.staticGetDao().store(getDefaultTenant(),result);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),inOrderHeader);
 		
 		return result;
 	}
@@ -417,7 +418,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addOrderGroup(result);
-		OrderGroup.staticGetDao().store(result);
+		OrderGroup.staticGetDao().store(getDefaultTenant(),result);
 		
 		
 		return result;
@@ -442,7 +443,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setDueDate(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.staticGetDao().store(result);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),result);
 		inFacility.addOrderHeader(result);
 		if (inOrderGroup != null) {
 			inOrderGroup.addOrderHeader(result);
@@ -470,7 +471,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		
 		inOrderHeader.addOrderDetail(result);
-		OrderDetail.staticGetDao().store(result);
+		OrderDetail.staticGetDao().store(getDefaultTenant(),result);
 
 		return result;
 	}
@@ -486,7 +487,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
 		inFacility.addItemMaster(result);
-		ItemMaster.staticGetDao().store(result);
+		ItemMaster.staticGetDao().store(getDefaultTenant(),result);
 
 		return result;
 	}
@@ -500,7 +501,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setLocation(inLocation);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderLocation.staticGetDao().store(result);
+		OrderLocation.staticGetDao().store(getDefaultTenant(),result);
 		inOrderHeader.addOrderLocation(result);
 
 		return result;
@@ -516,10 +517,4 @@ public abstract class MockDaoTest extends MinimalTest {
 		return new OutboundOrderCsvImporter(this.eventProducer);
 	}
 	
-	protected void beginTransaction() {
-		tenantPersistenceService.beginTransaction();
-	}
-	protected void commitTransaction() {
-		tenantPersistenceService.commitTransaction();
-	}
 }

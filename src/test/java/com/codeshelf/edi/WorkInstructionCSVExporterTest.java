@@ -69,18 +69,18 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	public void doBefore() {
 		super.doBefore();
 		
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.createFacility(this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.createFacility(getDefaultTenant(),this.getClass().toString() + System.currentTimeMillis(), "", Point.getZeroPoint());
 		exporter  = new WorkInstructionCSVExporter();
 		
 		this.facilityId = facility.getPersistentId();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void generatesCSV() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		WorkInstruction testWi2 = generateValidCompleteWorkInstruction(facility);
@@ -104,7 +104,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 			}
 		}
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	private List<String[]> toTable(List<WorkInstruction> wiList) throws IOException {
@@ -117,8 +117,8 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	
 	@Test
 	public void dateFieldsAreISO8601UTC() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		WorkInstruction testWi2 = generateValidCompleteWorkInstruction(facility);
@@ -130,14 +130,14 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		for (String[] dataRow : ImmutableList.copyOf(dataRows)) {
 			assertEachDateField(workInstructions.next(), dataRow);
 		}		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
 	@Test
 	public void missingDateFieldsAreEmpty() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		testWi.setAssigned(null);
@@ -154,15 +154,15 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 				assertField(dataRow, dateField, "");
 			}
 		}		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
 	
 	@Test
 	public void missingUomMasterReturnsEmpty() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		String expectedValue = "TESTDOMAINID";
 		
@@ -180,14 +180,14 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "uom", "");		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 	}
 	
 	@Test
 	public void usesOrderDomainId() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		String expectedValue = "OH1";
 		
@@ -203,15 +203,15 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "orderId", expectedValue);		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
 	
 	@Test
 	public void usesOrderGroupDomainId() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		String expectedValue = "OG1";
 		
@@ -226,14 +226,14 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "orderGroupId", expectedValue);		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 	
 	@Test
 	public void orderGroupIdOptional() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
 		testWi.getOrderDetail().getParent().setOrderGroup(null);
@@ -241,17 +241,17 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		List<String[]> table = toTable(wiList);
 		String[] dataRow = table.get(1);
 		assertField(dataRow, "orderGroupId", "");		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
 	@Test
 	public void nullQuantityReturnsEmpty() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		//technically can't persist null quantities
 		testWi.setPlanMaxQuantity(null);
@@ -267,7 +267,7 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 	}
 
 	private WorkInstruction generateValidCompleteWorkInstruction(Facility facility) {
-		WorkInstruction wi =  wiGenerator.generateValid(facility);
+		WorkInstruction wi =  wiGenerator.generateValid(getDefaultTenant(),facility);
 		wi.setPickerId("PICKER");
 		return wi;
 	}

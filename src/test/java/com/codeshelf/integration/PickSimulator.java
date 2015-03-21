@@ -15,6 +15,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.IntegrationTest;
@@ -25,15 +26,18 @@ public class PickSimulator {
 
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
+	
+	Tenant tenant;
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
-	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
+	public PickSimulator(Tenant tenant,IntegrationTest test, NetGuid cheGuid) {
 		this.test = test;
 		// verify that che is in site controller's device list
 		cheDeviceLogic = (CheDeviceLogic) test.getDeviceManager().getDeviceByGuid(cheGuid);
 		Assert.assertNotNull(cheDeviceLogic);
+		this.tenant = tenant;
 	}
 
 	public void login(String pickerId) {
@@ -99,11 +103,11 @@ public class PickSimulator {
 	/*	public void simulateCommitByChangingTransaction(PersistenceService inService) {
 			// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
 			// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
-			if (inService == null || !inService.hasActiveTransaction()) {
+			if (inService == null || !inService.hasActiveTransaction(getDefaultTenant())) {
 				LOGGER.error("bad call to simulateCommitByChangingTransaction");
 			} else {
-				inService.commitTransaction();
-				inService.beginTransaction();
+				inService.commitTransaction(getDefaultTenant());
+				inService.beginTransaction(getDefaultTenant());
 			}
 		}
 	*/
@@ -257,7 +261,7 @@ public class PickSimulator {
 		List<WorkInstruction> serversList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : activeList) {
 			UUID theId = wi.getPersistentId();
-			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
+			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(tenant,theId);
 			serversList.add(fullWi);
 		}
 
@@ -273,7 +277,7 @@ public class PickSimulator {
 		List<WorkInstruction> currentList = new ArrayList<WorkInstruction>();
 		for (WorkInstruction wi : inList) {
 			UUID theId = wi.getPersistentId();
-			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
+			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(tenant,theId);
 			currentList.add(fullWi);
 		}
 		return currentList;

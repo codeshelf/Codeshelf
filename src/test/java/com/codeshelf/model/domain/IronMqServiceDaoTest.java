@@ -10,19 +10,19 @@ public class IronMqServiceDaoTest extends MockDaoTest {
 
 	@Test
 	public void updatedCredentialsAvailableToFacilityReference() throws PSQLException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		try {
 			Facility f = createFacility();
-			IronMqService ironMqService = ((IronMqService)f.getEdiExportService());
+			IronMqService ironMqService = ((IronMqService)f.getEdiExportService(getDefaultTenant()));
 			String originalCredentials = ironMqService.getProviderCredentials();
 			
-			IronMqService ironMqServiceByDao = IronMqService.staticGetDao().findByPersistentId(ironMqService.getPersistentId());
-			ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN");
-			String updatedCredentials = ((IronMqService)f.getEdiExportService()).getProviderCredentials();
+			IronMqService ironMqServiceByDao = IronMqService.staticGetDao().findByPersistentId(getDefaultTenant(),ironMqService.getPersistentId());
+			ironMqServiceByDao.storeCredentials(getDefaultTenant(),"NEWPROJ", "NEWTOKEN");
+			String updatedCredentials = ((IronMqService)f.getEdiExportService(getDefaultTenant())).getProviderCredentials();
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);
 			
 		} finally {
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		}
 	}
 	

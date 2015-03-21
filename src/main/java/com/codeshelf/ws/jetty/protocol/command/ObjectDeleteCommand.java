@@ -40,14 +40,14 @@ public class ObjectDeleteCommand extends CommandABC {
 
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
-				IDomainObject object = dao.findByPersistentId(objectIdId);
+				IDomainObject object = dao.findByPersistentId(getTenant(),objectIdId);
 				
 				// First locate an instance of the parent class.
 
 				// Execute the "set" method against the parents to return the children.
 				// (The method *must* start with "set" to ensure other methods don't get called.)
 				if (object != null) {
-					dao.delete(object);
+					dao.delete(getTenant(),object);
 					ObjectDeleteResponse response = new ObjectDeleteResponse();
 					response.setResults(object);
 					response.setStatus(ResponseStatus.Success);

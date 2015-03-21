@@ -82,25 +82,25 @@ public class CrossBatchRunTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(facility);
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T2.S5,D-1\r\n" //
@@ -151,7 +151,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.getChe("CHE1");
@@ -159,15 +159,15 @@ public class CrossBatchRunTest extends ServerTest {
 		Che che2 = network.getChe("CHE2");
 		che1.setColor(ColorEnum.MAGENTA);
 
-		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000012"));
 		Short channel1 = 1;
 		controller1.addLocation(aisle1);
 		aisle1.setLedChannel(channel1);
-		aisle1.getDao().store(aisle1);
+		aisle1.getDao().store(getDefaultTenant(),aisle1);
 		controller2.addLocation(aisle2);
 		aisle2.setLedChannel(channel1);
-		aisle2.getDao().store(aisle2);
+		aisle2.getDao().store(getDefaultTenant(),aisle2);
 
 		return facility;
 
@@ -198,7 +198,7 @@ public class CrossBatchRunTest extends ServerTest {
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),reader, inFacility, ordersEdiProcessTime);
 
 		// Slotting file
 
@@ -221,7 +221,7 @@ public class CrossBatchRunTest extends ServerTest {
 	@SuppressWarnings("unused")
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleSlottedFacility("XB01");
 		setUpGroup1OrdersAndSlotting(facility);
@@ -262,20 +262,20 @@ public class CrossBatchRunTest extends ServerTest {
 
 		// Just check a UI field. Basically looking for NPE
 		for (OrderDetail detail : order.getOrderDetails()) {
-			String theUiField = detail.getWillProduceWiUi(workService);
+			String theUiField = detail.getWillProduceWiUi(getDefaultTenant(),workService);
 		}
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
-		List<WorkInstruction> aList = startWorkFromBeginning(facility, theChe.getDomainId(), "11");
+		List<WorkInstruction> aList = startWorkFromBeginning(getDefaultTenant(),facility, theChe.getDomainId(), "11");
 
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // one product going to 2 orders
 
-		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(getDefaultTenant(),theChe, "D-36"); // this is earliest on path
 
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
 		// Just some quick log output to see it
 		logWiList(wiListAfterScan);
@@ -287,28 +287,28 @@ public class CrossBatchRunTest extends ServerTest {
 		String groupSortStr2 = wi2.getGroupAndSortCode();
 		Assert.assertEquals("0002", groupSortStr2);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void basicHousekeeping() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleSlottedFacility("XB03");
 
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		LOGGER.info("basicHousekeeping.  Set up CHE for 15,14");
 		// Make sure housekeeping is on
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "15,14"); // This returns them in working order.
+		List<WorkInstruction> aList = startWorkFromBeginning(getDefaultTenant(),facility, "CHE1", "15,14"); // This returns them in working order.
 		// Just some quick log output to see it
 		logWiList(aList);
 
@@ -329,12 +329,12 @@ public class CrossBatchRunTest extends ServerTest {
 		// We qualify for both bayChange and repeat container before wi6. But only get a baychange from version v8 and DEV-478
 		Assert.assertEquals("Bay Change", wi5Desc);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void housekeepingNegativeTest() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		// Same as basic housekeeping, but showing that no housekeeps if set to pathSegmentChange and containerAndCount
 		Facility facility = setUpSimpleSlottedFacility("XB04");
@@ -347,97 +347,97 @@ public class CrossBatchRunTest extends ServerTest {
 		// Job 3 and 4 are same container, different count. No repeate container by the parameter
 		// Job 3 and 4 are different bays on the same path. No bay change by the parameter
 		// Future proof for other kinds of housekeeps
-		propertyService.turnOffHK(facility);
-		propertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangePathSegmentChange);
-		propertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		propertyService.setBayChangeChoice(getDefaultTenant(),facility, BayChangeChoice.BayChangePathSegmentChange);
+		propertyService.setRepeatPosChoice(getDefaultTenant(),facility, RepeatPosChoice.RepeatPosContainerAndCount);
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "15,14");
-		propertyService.restoreHKDefaults(facility); // set it back
+		List<WorkInstruction> aList = startWorkFromBeginning(getDefaultTenant(),facility, "CHE1", "15,14");
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility); // set it back
 
 		Integer wiCount = aList.size();
 		Assert.assertEquals((Integer) 4, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void housekeepingContainerAndCount() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleSlottedFacility("XB05");
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("housekeepingContainerAndCount.  Set up CHE for 11,12,13");
 
 		// Future proof for other kinds of housekeeps
-		propertyService.turnOffHK(facility);
-		propertyService.setBayChangeChoice(facility, BayChangeChoice.BayChangeNone);
-		propertyService.setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosContainerAndCount);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		propertyService.setBayChangeChoice(getDefaultTenant(),facility, BayChangeChoice.BayChangeNone);
+		propertyService.setRepeatPosChoice(getDefaultTenant(),facility, RepeatPosChoice.RepeatPosContainerAndCount);
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
-		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "11,12,13");
+		List<WorkInstruction> aList = startWorkFromBeginning(getDefaultTenant(),facility, "CHE1", "11,12,13");
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		
-		this.getTenantPersistenceService().beginTransaction();
-		propertyService.restoreHKDefaults(facility); // set it back
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility); // set it back
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Integer wiCount = aList.size();
 		for(int i=0;i<wiCount; i++) {
-			aList.set(i, WorkInstruction.staticGetDao().reload(aList.get(i)));
+			aList.set(i, WorkInstruction.staticGetDao().reload(getDefaultTenant(),aList.get(i)));
 		}
 		Assert.assertEquals((Integer) 8, wiCount); // one product going to 1 order, and 1 product going to the same order and 2 more.
 		// Just some quick log output to see it
 		logWiList(aList);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		WorkInstruction wi4 = WorkInstruction.staticGetDao().reload(aList.get(3));
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		WorkInstruction wi4 = WorkInstruction.staticGetDao().reload(getDefaultTenant(),aList.get(3));
 
 		String wi4Desc = wi4.getDescription();
 
 		Assert.assertEquals("Repeat Container", wi4Desc);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void containerAssignmentTest() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		// This uses the cross batch setup because the container are convenient.
 		Facility facility = setUpSimpleSlottedFacility("XB06");
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
 		// Set up a cart for containers 11,12,13, which should generate 6 normal work instructions.
 		LOGGER.info("containerAssignmentTest.  Set up CHE for 11,12,13");
-		propertyService.turnOffHK(facility);
-		workService.setUpCheContainerFromString(theChe, "11,12,13");
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "11,12,13");
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.staticGetDao().reload(theChe);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
 		// Important: need to get theChe again from scratch. Not from theNetwork.getChe
 
 		int usesCount = theChe.getUses().size();
@@ -446,58 +446,58 @@ public class CrossBatchRunTest extends ServerTest {
 		// Alternating this a bit for hibernate branch. The new pattern is:
 		// - From the parent, add the child
 		// - Look at the parent add method. It needs to call the child's set method for the parent relationship.
-		// - Then code needs to remember to do the DAO.store(child)
+		// - Then code needs to remember to do the DAO.store(getDefaultTenant(),child)
 		ContainerUse aUse = theChe.getUses().get(0);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.staticGetDao().reload(theChe);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
 		// Adding same item. Not storing
-		theChe.addContainerUse(ContainerUse.staticGetDao().reload(aUse));
-		this.getTenantPersistenceService().commitTransaction();
+		theChe.addContainerUse(ContainerUse.staticGetDao().reload(getDefaultTenant(),aUse));
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.staticGetDao().reload(theChe);
-		theChe.addContainerUse(ContainerUse.staticGetDao().reload(aUse));
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
+		theChe.addContainerUse(ContainerUse.staticGetDao().reload(getDefaultTenant(),aUse));
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.staticGetDao().reload(theChe);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.staticGetDao().reload(theChe);
-		aUse=aUse.getDao().reload(aUse);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
+		aUse=aUse.getDao().reload(getDefaultTenant(),aUse);
 		theChe.addContainerUse(aUse);
-		aUse.getDao().store(aUse);
+		aUse.getDao().store(getDefaultTenant(),aUse);
 		usesCount = theChe.getUses().size();
 		Assert.assertTrue(usesCount == 3);
 		// We just proved that adding the same object extra times to CHE uses does not
 		// not result in duplicates in the list. Probably true for most hibernate relationships. But don't try this at home.
 
 		// Now the new part for DEV-492. Show that we remove prior run uses
-        this.getTenantPersistenceService().commitTransaction();
+        this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-        this.getTenantPersistenceService().beginTransaction();
-        facility = Facility.staticGetDao().reload(facility);
-        theChe = Che.staticGetDao().reload(theChe);
+        this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+        facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+        theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
 
-		workService.setUpCheContainerFromString(theChe, "14");
-        this.getTenantPersistenceService().commitTransaction();
+		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "14");
+        this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-        this.getTenantPersistenceService().beginTransaction();
-		theChe = Che.staticGetDao().findByDomainId(theNetwork, "CHE1");
+        this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		theChe = Che.staticGetDao().findByDomainId(getDefaultTenant(),theNetwork, "CHE1");
 		Assert.assertTrue(theChe.getUses().size() == 1);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.restoreHKDefaults(facility); // set it back
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility); // set it back
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
@@ -509,7 +509,7 @@ public class CrossBatchRunTest extends ServerTest {
 		// 2) Possible (but difficult) to get old reference and new reference to same object out of synch on the child list contents.
 		// 3) Whether you get NonUniqueObjectException is tricky.
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleSlottedFacility("XB06");
 		setUpGroup1OrdersAndSlotting(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
@@ -523,32 +523,32 @@ public class CrossBatchRunTest extends ServerTest {
 		UUID che2Uuid = che2.getPersistentId();
 		// get additional references to the same CHE
 		Che che1b = theNetwork.getChe("CHE1");
-		Che che1c = Che.staticGetDao().findByPersistentId(che1Uuid);
+		Che che1c = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1Uuid);
 
-		List<ContainerUse> aList = ContainerUse.staticGetDao().getAll();
+		List<ContainerUse> aList = ContainerUse.staticGetDao().getAll(getDefaultTenant());
 		int useCount = aList.size();
 		ContainerUse use0 = aList.get(0);
 		ContainerUse use1 = aList.get(1);
 		ContainerUse use2 = aList.get(2);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		// - Parent add method needs to call the child's set method for the parent relationship.
-		// - Then code needs to remember to do the DAO.store(child)
+		// - Then code needs to remember to do the DAO.store(getDefaultTenant(),child)
 		che1.addContainerUse(use0);
-		ContainerUse.staticGetDao().store(use0);
+		ContainerUse.staticGetDao().store(getDefaultTenant(),use0);
 		che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(che1UsesCount, 1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 1: findByPersistentId() not within a transaction. Will throw, and is caught.");
 		Che che1d = null;
 		// get only works within a transaction, and findByPersistentId does a get. But it catches the exception and returns null
 		boolean expectedCatch = false;
 		try {
-			che1d = Che.staticGetDao().findByPersistentId(che1Uuid);
+			che1d = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1Uuid);
 			Assert.assertNull("findByPersistentId returned an object without a transaction?", che1d);
 		} catch (HibernateException e) {
 			expectedCatch = true;
@@ -556,8 +556,8 @@ public class CrossBatchRunTest extends ServerTest {
 		Assert.assertTrue(expectedCatch);
 
 		LOGGER.info("Case 2: findByPersistentId() works within a transaction. And has the expected container use");
-		this.getTenantPersistenceService().beginTransaction();
-		Che che1e = Che.staticGetDao().findByPersistentId(che1Uuid);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che1e = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1Uuid);
 		che1UsesCount = che1e.getUses().size();
 		Assert.assertEquals(che1UsesCount, 1);
 
@@ -569,9 +569,9 @@ public class CrossBatchRunTest extends ServerTest {
 
 		LOGGER.info("Case 4: add to an earlier obtained reference. See if all our references have the new use");
 		che1.addContainerUse(use1);
-		ContainerUse.staticGetDao().store(use1);
+		ContainerUse.staticGetDao().store(getDefaultTenant(),use1);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		che1UsesCount = che1b.getUses().size(); // che1b reference from same time/transaction as che1
 		Assert.assertEquals(2, che1UsesCount);
@@ -582,47 +582,47 @@ public class CrossBatchRunTest extends ServerTest {
 		Assert.assertEquals(1, che1UsesCount);
 
 		LOGGER.info("Case 4b: getUses within a new transaction");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		che1UsesCount = che1e.getUses().size();
 		// Still inconsistent
 		Assert.assertEquals(1, che1UsesCount);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 4c: get the reference from the DAO again. Now the uses count is ok.");
-		this.getTenantPersistenceService().beginTransaction();
-		che1e = Che.staticGetDao().findByPersistentId(che1Uuid);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		che1e = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1Uuid);
 		che1UsesCount = che1e.getUses().size();
 		// Now ok
 		Assert.assertEquals(2, che1UsesCount);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 5: try to add the same use again. Ok. See error in log.");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		che1.addContainerUse(use0);
-		ContainerUse.staticGetDao().store(use0);
+		ContainerUse.staticGetDao().store(getDefaultTenant(),use0);
 		che1UsesCount = che1.getUses().size();
 		Assert.assertEquals(2, che1UsesCount);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 6: add a use to che2. Works fine, but this sets up for case 7.");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Assert.assertNotNull(use2);
 		che2.addContainerUse(use2);
-		ContainerUse.staticGetDao().store(use2);
+		ContainerUse.staticGetDao().store(getDefaultTenant(),use2);
 		// extra store call, just to see no trouble
-		ContainerUse.staticGetDao().store(use2);
+		ContainerUse.staticGetDao().store(getDefaultTenant(),use2);
 		int che2UsesCount = che2.getUses().size();
 		Assert.assertEquals(1, che2UsesCount);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 6b: after the transaction closes. Old che reference.");
 		che2UsesCount = che2.getUses().size();
 		Assert.assertEquals(1, che2UsesCount);
 
 		LOGGER.info("Case 6c: get the CHE reference again.");
-		this.getTenantPersistenceService().beginTransaction();
-		Che che2b = Che.staticGetDao().findByPersistentId(che2Uuid);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che2b = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che2Uuid);
 		che2UsesCount = che2b.getUses().size();
 		Assert.assertEquals(1, che2UsesCount);
 		Che che2c = use2.getCurrentChe();
@@ -634,35 +634,35 @@ public class CrossBatchRunTest extends ServerTest {
 		boolean expectedCaught = false;
 		try {
 			// store call on old reference. Nothing changed. Should this throw?
-			ContainerUse.staticGetDao().store(use2);
+			ContainerUse.staticGetDao().store(getDefaultTenant(),use2);
 		} catch (NonUniqueObjectException e) {
 			expectedCaught = true;
 		}
 		if (!expectedCaught)
 			Assert.fail("did not get the NonUniqueObjectException");
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 7b: do not get the NonUniqueObjectException for store of changed object.");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		// Uncomment these two lines uncommented will cause the store(use2); line to throw because
 		// This pulls new reference for the use into memory for that persistentId, and then we try to store the old reference.
-		// Che che2d = Che.staticGetDao().findByPersistentId(che2Uuid);
+		// Che che2d = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che2Uuid);
 		// int use2dCount = che2d.getUses().size();
 
 		boolean unExpectedCaught = false;
 		try {
 			// Same as above, but a real change. Should this throw?
 			use2.setActive(false);
-			ContainerUse.staticGetDao().store(use2);
+			ContainerUse.staticGetDao().store(getDefaultTenant(),use2);
 		} catch (NonUniqueObjectException e) {
 			unExpectedCaught = true;
 		}
 		if (unExpectedCaught)
 			Assert.fail("got a NonUniqueObjectException when not expected");
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
@@ -670,7 +670,7 @@ public class CrossBatchRunTest extends ServerTest {
 	public final void intentionalPSQLError()  throws IOException {
 		// We found out the hard way that a longer string in a VAR(255) column blows up inelegantly.
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleSlottedFacility("XB06");
 		setUpGroup1OrdersAndSlotting(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
@@ -682,7 +682,7 @@ public class CrossBatchRunTest extends ServerTest {
 		Assert.assertNotNull(che2);
 		UUID che1Uuid = che1.getPersistentId();
 		UUID che2Uuid = che2.getPersistentId();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 1: set up a too-long field. Using CHE description field. Commit the transaction. Should throw the error.");
 		String desc = "";
@@ -691,54 +691,54 @@ public class CrossBatchRunTest extends ServerTest {
 		}
 
 		try {
-			this.getTenantPersistenceService().beginTransaction();
-			che1 = Che.staticGetDao().reload(che1);
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+			che1 = Che.staticGetDao().reload(getDefaultTenant(),che1);
 			che1.setDescription(desc);
-			Che.staticGetDao().store(che1);
+			Che.staticGetDao().store(getDefaultTenant(),che1);
 			Assert.assertEquals(desc, che1.getDescription());
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 			Assert.fail("Should have thrown exception related to column width");
 		} catch (DataException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
+			this.getTenantPersistenceService().rollbackTransaction(getDefaultTenant());
 			LOGGER.debug("Exception OK  during test");
 		}
 
 		final String descript2 = "Description2";
 		LOGGER.info("Case 2: modify the description field on the other CHE in separate transaction.");
 		try {
-			this.getTenantPersistenceService().beginTransaction();
-			che2 = Che.staticGetDao().reload(che2);
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+			che2 = Che.staticGetDao().reload(getDefaultTenant(),che2);
 			che2.setDescription(descript2);
 			Assert.assertEquals(descript2, che2.getDescription());
-			Che.staticGetDao().store(che2);
-			this.getTenantPersistenceService().commitTransaction();
+			Che.staticGetDao().store(getDefaultTenant(),che2);
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		} catch(DataException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
+			this.getTenantPersistenceService().rollbackTransaction(getDefaultTenant());
 			throw e;
 		}
 
 		LOGGER.info("Case 3: get che2 in yet another transaction and check the description.");
 		try {
-			this.getTenantPersistenceService().beginTransaction();
-			Che che2b = Che.staticGetDao().findByPersistentId(che2Uuid);
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+			Che che2b = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che2Uuid);
 
 			Assert.assertEquals(descript2, che2b.getDescription());
 
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		} catch(DataException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
+			this.getTenantPersistenceService().rollbackTransaction(getDefaultTenant());
 			throw e;
 		}
 
 		LOGGER.info("Case 4: get che1 in yet another transaction and check the description.");
 		try {
-			this.getTenantPersistenceService().beginTransaction();
-			Che che1b = Che.staticGetDao().findByPersistentId(che1Uuid);
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+			Che che1b = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1Uuid);
 
 			Assert.assertEquals(che1DefaultDescription, che1b.getDescription());
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		} catch(DataException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
+			this.getTenantPersistenceService().rollbackTransaction(getDefaultTenant());
 			throw e;
 		}
 	}

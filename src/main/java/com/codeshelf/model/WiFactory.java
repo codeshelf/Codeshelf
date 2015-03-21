@@ -19,6 +19,7 @@ import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -76,7 +77,7 @@ public class WiFactory {
 	/**
 	 * The API to create housekeeping work instruction
 	 */
-	public static WorkInstruction createHouseKeepingWi(WorkInstructionTypeEnum inType,
+	public static WorkInstruction createHouseKeepingWi(Tenant tenant,WorkInstructionTypeEnum inType,
 		Facility inFacility,
 		WorkInstruction inPrevWi,
 		WorkInstruction inNextWi) {
@@ -130,7 +131,7 @@ public class WiFactory {
 		inFacility.addWorkInstruction(resultWi);
 
 		try {
-			WorkInstruction.staticGetDao().store(resultWi);
+			WorkInstruction.staticGetDao().store(tenant,resultWi);
 		} catch (DaoException e) {
 			LOGGER.error("createHouseKeepingWi", e);
 		}
@@ -149,7 +150,7 @@ public class WiFactory {
 	 * @param inPosALongPath
 	 * @return
 	 */
-	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+	public static WorkInstruction createWorkInstruction(Tenant tenant,WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Container inContainer,
@@ -157,7 +158,7 @@ public class WiFactory {
 		Location inLocation,
 		final Timestamp inTime) throws DaoException {
 
-		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
+		WorkInstruction resultWi = createWorkInstruction(tenant,inStatus, inType, inOrderDetail, inChe, inTime);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -214,7 +215,7 @@ public class WiFactory {
 			}
 		}
 		Facility facility = inOrderDetail.getParent().getFacility();
-		if (inLocation.isFacility() || facility.getUnspecifiedLocation().equals(inLocation)) {
+		if (inLocation.isFacility() || facility.getUnspecifiedLocation(tenant).equals(inLocation)) {
 			//consider inLocation.getPathSegment() == null ; Note that the getWork by location queries for > posAlongPath
 			resultWi.setPosAlongPath(0.0);
 		} else {
@@ -225,7 +226,7 @@ public class WiFactory {
 			}
 		}
 
-		WorkInstruction.staticGetDao().store(resultWi);
+		WorkInstruction.staticGetDao().store(tenant,resultWi);
 		return resultWi;
 	}
 
@@ -234,7 +235,7 @@ public class WiFactory {
 	 * Create a work instruction for and orderdetail with no location or container
 	 * @return
 	 */
-	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+	public static WorkInstruction createWorkInstruction(Tenant tenant,WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Che inChe,
@@ -312,7 +313,7 @@ public class WiFactory {
 
 			}
 
-			resultWi.setLocation(inOrderDetail.getFacility().getUnspecifiedLocation());
+			resultWi.setLocation(inOrderDetail.getFacility().getUnspecifiedLocation(tenant));
 			String preferredLocation = inOrderDetail.getPreferredLocation();
 			resultWi.setLocationId(Strings.nullToEmpty(preferredLocation));
 			resultWi.setContainer(null);
@@ -329,7 +330,7 @@ public class WiFactory {
 				resultWi.doSetPickInstruction(locStr);
 			}
 
-			WorkInstruction.staticGetDao().store(resultWi);
+			WorkInstruction.staticGetDao().store(tenant,resultWi);
 		}
 		return resultWi;
 	}

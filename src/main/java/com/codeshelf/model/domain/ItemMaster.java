@@ -33,6 +33,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -386,11 +387,11 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * (Disallow means to return an existing item, even if some details mismatch.)
 	 * Will need to modify for lots.
 	 */
-	private Item findExistingItem(Location inLocation, UomMaster inUom) {
+	private Item findExistingItem(Tenant tenant,Location inLocation, UomMaster inUom) {
 		String thisUomId = inUom.getUomMasterId();
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		Facility facility = inLocation.getFacility();
-		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
+		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(tenant,facility, DomainObjectProperty.EACHMULT);
 		if (thisItemEach && !eachMult) {
 			for (Item item : getItems()) {
 				if (UomNormalizer.isEach(item.getUomMasterId()))
@@ -432,8 +433,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/*
 	 * Huge side effect for each items. If found, and location is different, update the location. Caller must persist the change.
 	 */
-	public Item findOrCreateItem(Location inLocation, UomMaster uom) {
-		Item item = findExistingItem(inLocation, uom);
+	public Item findOrCreateItem(Tenant tenant,Location inLocation, UomMaster uom) {
+		Item item = findExistingItem(tenant,inLocation, uom);
 		if (item == null)
 			item = createStoredItem(inLocation, uom);
 		else if (!item.getStoredLocation().equals(inLocation))

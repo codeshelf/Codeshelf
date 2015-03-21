@@ -116,10 +116,6 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return this.defaultTenant;
 	}
 	@Override
-	public Tenant getDefaultTenant() {
-		return this.defaultTenant;
-	}
-	@Override
 	public List<Tenant> getTenants() {
 		List<Tenant> tenants = new ArrayList<Tenant>(1);
 		tenants.add(this.defaultTenant);
@@ -238,5 +234,9 @@ public class MockTenantManagerService implements ITenantManagerService {
 	public void deletePermission(UserPermission permission) {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public Tenant getInitialTenant() {
+		return this.defaultTenant;
 	}
 }

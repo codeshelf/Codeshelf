@@ -21,9 +21,11 @@ import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -63,17 +65,19 @@ public class ImportResource {
 		@PathParam("facilityId") String facilityId,
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+		
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistence.beginTransaction();
+			persistence.beginTransaction(tenant);
 			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
 			}
 			// process file
 			Reader reader = new InputStreamReader(fileInputStream);
-			boolean result = this.aislesFileCsvImporter.importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			boolean result = this.aislesFileCsvImporter.importAislesFileFromCsvStream(tenant,reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
 				return BaseResponse.buildResponse(null,200);				
 			}
@@ -85,7 +89,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 	
@@ -98,16 +102,17 @@ public class ImportResource {
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistence.beginTransaction();
+			persistence.beginTransaction(tenant);
 			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
 			}
 			Reader reader = new InputStreamReader(fileInputStream);
-			boolean result = this.locationAliasImporter.importLocationAliasesFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			boolean result = this.locationAliasImporter.importLocationAliasesFromCsvStream(tenant, reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
 				return BaseResponse.buildResponse(null,200);				
 			}
@@ -119,7 +124,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 
@@ -133,16 +138,17 @@ public class ImportResource {
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistence.beginTransaction();
+			persistence.beginTransaction(tenant);
 			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
 			}
 			Reader reader = new InputStreamReader(fileInputStream);
-			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(tenant,reader, facility, new Timestamp(System.currentTimeMillis()));
 			return BaseResponse.buildResponse(null,200);				
 		}
 		catch (Exception e) {
@@ -151,7 +157,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 	
@@ -164,16 +170,18 @@ public class ImportResource {
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		try {
-			persistence.beginTransaction();
+			persistence.beginTransaction(tenant);
 			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+			Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 			if (facility==null) {
 				// facility not found
 				return BaseResponse.buildResponse(null,404);
 			}
 			Reader reader = new InputStreamReader(fileInputStream);
-			boolean result = this.inventoryImporter.importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			boolean result = this.inventoryImporter.importSlottedInventoryFromCsvStream(tenant,reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
 				return BaseResponse.buildResponse(null,200);				
 			}
@@ -185,7 +193,7 @@ public class ImportResource {
 			return errors.buildResponse();
 		} 
 		finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 }

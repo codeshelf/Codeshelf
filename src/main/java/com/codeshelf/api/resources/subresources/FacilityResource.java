@@ -27,12 +27,14 @@ import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -62,16 +64,17 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkNoLocation() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			Session session = persistenceService.getSessionWithTransaction();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(persistenceService.getDefaultSchema(), session, mUUIDParam.getUUID()));
+			Session session = persistenceService.getSessionWithTransaction(tenant);
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, mUUIDParam.getUUID()));
 		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
 			return errors.buildResponse();
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 	
@@ -80,8 +83,9 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorkByItem() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			Session session = persistenceService.getSessionWithTransaction();
+			Session session = persistenceService.getSessionWithTransaction(tenant);
 			return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, mUUIDParam.getUUID()));
 		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
@@ -89,7 +93,7 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 
@@ -98,8 +102,10 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkShorts() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		try {
-			Session session = persistenceService.getSessionWithTransaction();
+			Session session = persistenceService.getSessionWithTransaction(tenant);
 			return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, mUUIDParam.getUUID(), OrderStatusEnum.SHORT));
 		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
@@ -107,7 +113,7 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 
@@ -120,9 +126,9 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-			ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), mUUIDParam.getUUID(), false);
+			ProductivitySummaryList summary = orderService.getProductivitySummary(tenant, mUUIDParam.getUUID(), false);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
 			errors.processException(e);
@@ -138,11 +144,12 @@ public class FacilityResource {
 		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
 			return errors.buildResponse();
 		}
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
-			persistenceService.beginTransaction();
-			List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
+			persistenceService.beginTransaction(tenant);
+			List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll(tenant);
 			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
 			return BaseResponse.buildResponse(summary);
 		} catch (Exception e) {
@@ -150,7 +157,7 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 
@@ -166,16 +173,17 @@ public class FacilityResource {
 		}
 
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistenceService.beginTransaction();
-			List<WorkInstruction> instructions = orderService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
+			persistenceService.beginTransaction(tenant);
+			List<WorkInstruction> instructions = orderService.getGroupShortInstructions(tenant,mUUIDParam.getUUID(), groupName);
 			return BaseResponse.buildResponse(instructions);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 
@@ -184,14 +192,15 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistenceService.beginTransaction();
-			Session session = persistenceService.getSession();
+			persistenceService.beginTransaction(tenant);
+			Session session = persistenceService.getSession(tenant);
 			Set<String> filterNames = orderService.getFilterNames(session);
 			return BaseResponse.buildResponse(filterNames);
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 
@@ -204,9 +213,10 @@ public class FacilityResource {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistenceService.beginTransaction();
-			Session session = persistenceService.getSession();
+			persistenceService.beginTransaction(tenant);
+			Session session = persistenceService.getSession(tenant);
 			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, mUUIDParam.getUUID(), aggregate, filterName);
 
 			return BaseResponse.buildResponse(summary);
@@ -215,7 +225,7 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 		finally {
-			persistenceService.commitTransaction();
+			persistenceService.commitTransaction(tenant);
 		}
 	}
 
@@ -231,8 +241,9 @@ public class FacilityResource {
 		if (!req.isValid(errors)){
 			return errors.buildResponse();
 		}
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			Facility facility = Facility.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
+			Facility facility = Facility.staticGetDao().findByPersistentId(tenant,mUUIDParam.getUUID());
 			Set<User> users = facility.getSiteControllerUsers();
 
 			//LIGHTS

@@ -152,10 +152,10 @@ public class OrderService implements IApiService {
 		return result;
 	}
 
-	public int archiveAllOrders(String facilityUUID) {
+	public int archiveAllOrders(Tenant tenant,String facilityUUID) {
 		ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
-		String schema = persistence.getDefaultSchema().getSchemaName();
-		Session session = persistence.getSession();
+		String schema = tenant.getSchemaName();
+		Session session = persistence.getSession(tenant);
 		UUID uuid = UUID.fromString(facilityUUID);
 
 		// The parent.parent traversal generates a cross join that results in invalid psql syntax
@@ -249,7 +249,7 @@ public class OrderService implements IApiService {
 		ProductivitySummaryList productivitySummary = null;
 		try {
 			Session session = TenantPersistenceService.getInstance().getSessionWithTransaction(tenant);
-			facility = Facility.staticGetDao().findByPersistentId(facilityId);
+			facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 			if (facility == null) {
 				throw new NotFoundException("Facility " + facilityId + " does not exist");
 			}
@@ -281,29 +281,29 @@ public class OrderService implements IApiService {
 		return productivitySummary;
 	}
 
-	public ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(CriteriaRegistry.ALL_BY_PARENT,
+	public ProductivityCheSummaryList getCheByGroupSummary(Tenant tenant,UUID facilityId) throws Exception {
+		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(tenant,CriteriaRegistry.ALL_BY_PARENT,
 			ImmutableMap.<String, Object> of("parentId", facilityId));
 		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
 		return summary;
 	}
 
-	public List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
+	public List<WorkInstruction> getGroupShortInstructions(Tenant tenant,UUID facilityId, String groupNameIn) throws NotFoundException {
 		//Get Facility
-		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 		if (facility == null) {
 			throw new NotFoundException("Facility " + facilityId + " does not exist");
 		}
 		//If group name provided, confirm that such group exists
 		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
 		if (!(allGroups || undefined)) {
-			OrderGroup group = OrderGroup.staticGetDao().findByDomainId(facility, groupNameIn);
+			OrderGroup group = OrderGroup.staticGetDao().findByDomainId(tenant,facility, groupNameIn);
 			if (group == null) {
 				throw new NotFoundException("Group " + groupNameIn + " had not been created");
 			}
 		}
 		//Get all instructions and filter those matching the requirements
-		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(CriteriaRegistry.ALL_BY_PARENT,
+		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(tenant,CriteriaRegistry.ALL_BY_PARENT,
 			ImmutableMap.<String, Object> of("parentId", facilityId));
 		List<WorkInstruction> filtered = new ArrayList<>();
 		for (WorkInstruction instruction : instructions) {

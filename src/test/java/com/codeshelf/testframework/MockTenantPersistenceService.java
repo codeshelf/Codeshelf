@@ -26,11 +26,6 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	MockTenantPersistenceService(Map<Class<? extends IDomainObject>,ITypedDao<?>> mockDaos) {
 		this.mockDaos = mockDaos;
 	}
-	
-	@Override
-	public Tenant getDefaultSchema() {
-		return defaultTenant;
-	}
 
 	@Override
 	public Session getSession(Tenant schema) {
@@ -82,39 +77,6 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 
 	@Override
 	public void rollbackTransaction(Tenant schema) {
-	}
-
-	@Override
-	public Transaction beginTransaction() {
-		return Mockito.mock(Transaction.class);
-	}
-
-	@Override
-	public void commitTransaction() {
-	}
-
-	@Override
-	public void rollbackTransaction() {
-	}
-
-	@Override
-	public Session getSession() {
-		return Mockito.mock(Session.class);
-	}
-
-	@Override
-	public Session getSessionWithTransaction() {
-		return Mockito.mock(Session.class);
-	}
-
-	@Override
-	public SessionFactory getSessionFactory() {
-		return Mockito.mock(SessionFactory.class);
-	}
-
-	@Override
-	public EventListenerIntegrator getEventListenerIntegrator() {
-		return new EventListenerIntegrator(Mockito.mock(ObjectChangeBroadcaster.class));
 	}
 
 	@Override

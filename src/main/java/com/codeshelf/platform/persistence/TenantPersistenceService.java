@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;
@@ -16,7 +15,7 @@ import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.IDomainObject;
 import com.google.inject.Inject;
 
-public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {
+public class TenantPersistenceService extends PersistenceService<Tenant> implements ITenantPersistenceService {
 
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
@@ -56,16 +55,11 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 		// for testing only!
 		theInstance = instance;
 	}
-	
-	@Override
-	public Tenant getDefaultSchema() {
-		return TenantManagerService.getInstance().getDefaultTenant();
-	}
 
 	@Override
 	protected void initialize(Tenant schema) {
 		Transaction t = this.beginTransaction(schema);
-		PropertyDao.getInstance().syncPropertyDefaults();
+		PropertyDao.getInstance().syncPropertyDefaults(schema);
         t.commit();		
 	}
 	

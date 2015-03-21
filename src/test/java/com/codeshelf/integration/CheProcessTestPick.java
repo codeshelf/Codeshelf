@@ -103,21 +103,21 @@ public class CheProcessTestPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
 		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T1.S1,D-96\r\n" + "A1.B1.T1.S2,D-97\r\n" + "A1.B1.T1.S3,D-98\r\n"
@@ -175,22 +175,22 @@ public class CheProcessTestPick extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"1", new NetGuid("0x00000011"));
 
 		Short channel1 = 1;
 		Location aisle1x = getFacility().findSubLocationById("A1");
 		controller1.addLocation(aisle1x);
 		aisle1x.setLedChannel(channel1);
-		aisle1x.getDao().store(aisle1x);
+		aisle1x.getDao().store(getDefaultTenant(),aisle1x);
 
 		Location aisle2x = getFacility().findSubLocationById("A2");
 		controller1.addLocation(aisle2x);
 		aisle2x.setLedChannel(channel1);
-		aisle2x.getDao().store(aisle2x);
+		aisle2x.getDao().store(getDefaultTenant(),aisle2x);
 
 		return getFacility();
 	}
@@ -267,11 +267,11 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void testStartWorkReverse() throws IOException {
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		for(Entry<String, String> entry : ThreadContext.getContext().entrySet()) {
 			LOGGER.info("ThreadContext: {} = {}",entry.getKey(),entry.getValue());
@@ -287,10 +287,10 @@ public class CheProcessTestPick extends ServerTest {
 	//@Test
 	public final void testStartWorkReverseSkipToLocation() throws IOException {
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
@@ -313,42 +313,42 @@ public class CheProcessTestPick extends ServerTest {
 		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		assertEquals(wiList.get(4).getItemId(), "1");
 
-		this.tenantPersistenceService.commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	//work items appear to be in the wrong order on normal forward
 	public final void testStartWorkForwardSkipToLocation() throws IOException {
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTransaction();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
@@ -389,31 +389,31 @@ public class CheProcessTestPick extends ServerTest {
 		assertEquals(WorkInstructionTypeEnum.HK_BAYCOMPLETE, wiList.get(3).getType());
 		assertEquals("3", wiList.get(4).getItemId());
 
-		this.tenantPersistenceService.commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	private PickSimulator startReverseWork(Facility facility) throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvString);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvString2);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Start setting up cart etc
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
@@ -435,7 +435,7 @@ public class CheProcessTestPick extends ServerTest {
 		assertEquals(wiList.get(2).getItemId(), "2");
 		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		assertEquals(wiList.get(4).getItemId(), "3");
-		this.tenantPersistenceService.commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		return picker;
 
@@ -443,15 +443,15 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public final void testPick() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -463,20 +463,20 @@ public class CheProcessTestPick extends ServerTest {
 				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -488,10 +488,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = facility.getOrderHeader("12345");
@@ -507,42 +507,42 @@ public class CheProcessTestPick extends ServerTest {
 			}
 		}
 		Assert.assertEquals(2, itemLocations.size());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Set up a cart for order 12345, which will generate work instructions
-		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
-		workService.setUpCheContainerFromString(che1, "12345");
-		this.getTenantPersistenceService().commitTransaction();
+		Che che1 = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
+		workService.setUpCheContainerFromString(getDefaultTenant(),che1, "12345");
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		che1 = Che.staticGetDao().reload(che1);
-		List<WorkInstruction> aList = workService.getWorkInstructions(che1, "");
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		che1 = Che.staticGetDao().reload(getDefaultTenant(),che1);
+		List<WorkInstruction> aList = workService.getWorkInstructions(getDefaultTenant(),che1, "");
 		int wiCount = aList.size();
 		Assert.assertEquals(2, wiCount); // 3, but one should be short. Only 1123 and 1522 find each inventory
 
 		for (WorkInstruction workInstruction : aList) {
 			Assert.assertEquals(OrderStatusEnum.INPROGRESS, workInstruction.getOrderDetail().getStatus());
 		}
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.restoreHKDefaults(facility); // set it back
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility); // set it back
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		che1 = Che.staticGetDao().reload(che1);
-		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(che1, "D402");
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		che1 = Che.staticGetDao().reload(getDefaultTenant(),che1);
+		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(getDefaultTenant(),che1, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Double posOf402 = locationD402.getPosAlongPath();
 		Double posOf403 = locationD403.getPosAlongPath();
@@ -559,12 +559,12 @@ public class CheProcessTestPick extends ServerTest {
 		WorkInstruction wi2 = wiListAfterScan.get(1);
 		Assert.assertTrue(wi2.isHousekeeping());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		che1 = Che.staticGetDao().reload(che1);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		che1 = Che.staticGetDao().reload(getDefaultTenant(),che1);
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = this.workService.workAssignedSummary(che1.getPersistentId(), facility.getPersistentId());
+		List<WiSetSummary> summaries = this.workService.workAssignedSummary(getDefaultTenant(),che1.getPersistentId(), facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set.
 		Assert.assertEquals(1, summaries.size());
@@ -578,20 +578,20 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(0, completes);
 		Assert.assertEquals(3, actives);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void testPickViaChe() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -603,20 +603,20 @@ public class CheProcessTestPick extends ServerTest {
 				+ "1522,D503,SJJ BPP,1,case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		Location locationD402 = facility.findSubLocationById("D402");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
 		// Item 1493 exists in case only. Order for each should short.
@@ -627,10 +627,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = facility.getOrderHeader("12345");
@@ -649,23 +649,23 @@ public class CheProcessTestPick extends ServerTest {
 		}
 		Assert.assertEquals(2, itemLocations.size());
 		// Turn off housekeeping work instructions for next test so as to not confuse the counts
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Set up a cart for order 12345, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.startAndSkipReview("D403", 8000, 5000);
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -701,31 +701,31 @@ public class CheProcessTestPick extends ServerTest {
 		// Case 5: Inappropriate location scan, then normal button press works");
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// perform pick operations
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		List<Container> containers = facility.getContainers();
 		Assert.assertEquals(2, containers.size());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 
 		// This brief case covers and allows retirement of CheSimulationTest.java
@@ -788,22 +788,22 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("List the work instructions as the server sees them");
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		logWiList(serverWiList);
 
 		Assert.assertEquals(7, picker.countRemainingJobs());
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
-		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		Che che1 = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
 		assertWIColor(wi, che1);
 
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		wi = WorkInstruction.staticGetDao().reload(wi);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		wi = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wi);
 		//Pos 1 should be the same
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 		//After Scanning start location of D303 we should be right next to the
@@ -824,16 +824,16 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals(6, picker.countRemainingJobs());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		LOGGER.info("Case 3: A happy-day short, with one short-ahead");
 		wi = picker.nextActiveWi();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		wi = WorkInstruction.staticGetDao().reload(wi);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		wi = WorkInstruction.staticGetDao().reload(getDefaultTenant(),wi);
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 
@@ -844,7 +844,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) button).byteValue(), (byte) 1);
 		// the third job is for 1522, which happens to be the one item going to both orders. So it should short-ahead
 		Assert.assertEquals("1522", wi.getItemId());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
@@ -910,7 +910,7 @@ public class CheProcessTestPick extends ServerTest {
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		LOGGER.info("List the work instructions as the server sees them");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
 		// In this, we see 2nd wi is user short, and third a short ahead. Item 1555 should have got an immediate short.
@@ -923,7 +923,7 @@ public class CheProcessTestPick extends ServerTest {
 		boolean done = false;
 		int count = 0;
 		while (!done && count < 200) { // 2 seconds bail. Test should fail below so don't worry.
-			WorkInstruction wi3 = WorkInstruction.staticGetDao().findByPersistentId(changingWiPersist);
+			WorkInstruction wi3 = WorkInstruction.staticGetDao().findByPersistentId(getDefaultTenant(),changingWiPersist);
 			if (wi3.getStatus() == WorkInstructionStatusEnum.COMPLETE) {
 				done = true;
 			}
@@ -933,7 +933,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// If you ask che1 for getCheWorkInstructions(), the list will throw during lazy load because the che reference came from a different transaction.
 		// But we had to change the transaction in order to see the completed work instructions.
-		Che che1b = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		Che che1b = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
 		// for (WorkInstruction cheWi : che1.getCheWorkInstructions()) {
 		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis2);
@@ -953,27 +953,27 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(shortAheadWi.getAssigned(), userShortWi.getAssigned());
 		//Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void testRouteWrap() throws IOException {
 		// create test data
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 
 		LOGGER.info("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
@@ -982,7 +982,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap.
 		picker.startAndSkipReview("D301", 5000, 3000);
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte) 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -1002,7 +1002,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
 
-		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		Che che1 = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
 		assertWIColor(wi, che1);
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
@@ -1032,25 +1032,25 @@ public class CheProcessTestPick extends ServerTest {
 		List<WorkInstruction> serverWiList2 = picker.getCurrentWorkInstructionsFromList(serverWiList);
 		logWiList(serverWiList2);
 
-		this.tenantPersistenceService.commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void testRouteWrap2() throws IOException {
 		// Reproduce bug seen during MAT for v10
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpZigzagSlottedFacility();
 		setUpBatchOrdersForZigzag(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 
 		LOGGER.info("Case 1: Scan ");
@@ -1073,7 +1073,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction wi = picker.nextActiveWi();
 
-		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		Che che1 = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
 		assertWIColor(wi, che1);
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
@@ -1112,7 +1112,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
-		this.tenantPersistenceService.commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
@@ -1120,18 +1120,18 @@ public class CheProcessTestPick extends ServerTest {
 	public final void twoChesCrossBatch() throws IOException {
 		// Reproduce DEV-592 seen during MAT for v10
 		// This test case setup similarly to testRouteWrap2
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpZigzagSlottedFacility();
 		setUpBatchOrdersForZigzag(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 
 		LOGGER.info("Set up first CHE ");
@@ -1155,7 +1155,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("First CHE walks away. Never doing anything. Set up same thing on second CHE ");
 		// This is the DEV-592 bug. Our hibernate parent-childe patterns says we cannot add WI to one CHE without first removing from the other.
 
-		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
+		PickSimulator picker2 = new PickSimulator(getDefaultTenant(),this, cheGuid2);
 		picker2.login("Picker #2");
 
 		picker2.setupContainer("2", "4");
@@ -1182,7 +1182,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//picker2.simulateCommitByChangingTransaction(this.persistenceService);
 
-		this.tenantPersistenceService.commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}
 
 	@Test
@@ -1196,7 +1196,7 @@ public class CheProcessTestPick extends ServerTest {
 		// set up data for pick scenario
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1208,12 +1208,12 @@ public class CheProcessTestPick extends ServerTest {
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
@@ -1229,17 +1229,17 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,a6,a6,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Start setting up cart etc
 		List<Container> containers = facility.getContainers();
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(5, containers.size());
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("a6", "6");
@@ -1249,7 +1249,7 @@ public class CheProcessTestPick extends ServerTest {
 			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// note no transaction active in test thread here - transactions will be opened by server during simulation
 
@@ -1376,9 +1376,9 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
-		this.getTenantPersistenceService().beginTransaction();
-		propertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	//DEV-603 test case
@@ -1386,7 +1386,7 @@ public class CheProcessTestPick extends ServerTest {
 	public final void testCartSetupFeedbackWithPreviouslyShortedWI() throws IOException {
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1398,12 +1398,12 @@ public class CheProcessTestPick extends ServerTest {
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 1 has two items in stock (Item 1 and Item 2)
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -1411,13 +1411,13 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,1,1,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		//SETUP
 		picker.login("Picker #1");
@@ -1466,8 +1466,8 @@ public class CheProcessTestPick extends ServerTest {
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		propertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
@@ -1481,14 +1481,14 @@ public class CheProcessTestPick extends ServerTest {
 		// set up data for pick scenario
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1497,10 +1497,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1508,21 +1508,21 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		List<Container> containers = facility.getContainers();
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(4, containers.size());
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
@@ -1714,22 +1714,22 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("ALL WORK COMPLETE", line1);
 		Assert.assertEquals("", line3);
 
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testContainerReassignmentDuringCHESetup() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1738,10 +1738,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1749,15 +1749,15 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Start setting up cart etc
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		picker.login("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
@@ -1774,24 +1774,24 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		propertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
 	@Test
 	public void testCheSetupErrors() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1800,10 +1800,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1811,18 +1811,18 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// Start setting up cart etc
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		picker.login("Picker #1");
 
@@ -1924,9 +1924,9 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	private void assertWIColor(WorkInstruction wi, Che che) {
@@ -1949,32 +1949,32 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public void getDefaultProcessMode() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		UiUpdateService service = new UiUpdateService();
-		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.createNetwork("WITEST");
-		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		CodeshelfNetwork network = facility.createNetwork(getDefaultTenant(),"WITEST");
+		Che che = network.createChe(getDefaultTenant(),"0x00000004", new NetGuid("0x00000004"));
 
 		//Get default mode in a facility without aisles
-		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
+		ProcessMode processMode = service.getDefaultProcessMode(getDefaultTenant(),che.getPersistentId().toString());
 		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles",
 			processMode,
 			ProcessMode.LINE_SCAN);
 
 		//Get default mode in a facility with aisles
 		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
-		Aisle.staticGetDao().store(aisle);
-		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
+		Aisle.staticGetDao().store(getDefaultTenant(),aisle);
+		processMode = service.getDefaultProcessMode(getDefaultTenant(),che.getPersistentId().toString());
 		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles",
 			processMode,
 			ProcessMode.SETUP_ORDERS);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void basicSimulPick() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
@@ -1985,21 +1985,21 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,22222,22222,Sku4,Test Item 4,1,each,LocD,3"
 				+ "\r\n1,USF314,COSTCO,11111,11111,Sku2,Test Item 2,5,each,LocC,4";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(facility,
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(getDefaultTenant(),facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		this.startSiteController(); // after all the parameter changes
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
 		picker.login("Picker #1");
@@ -2127,7 +2127,7 @@ public class CheProcessTestPick extends ServerTest {
 		final Byte kBLINK_FREQ = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		final Byte kSOLID_FREQ = PosControllerInstr.SOLID_FREQ;
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
@@ -2138,21 +2138,21 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,22222,22222,Sku1,Test Item 1,5,each,LocA,1"
 				+ "\r\n1,USF314,COSTCO,22222,22222,Sku2,Test Item 2,6,each,LocC,2";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(facility,
+		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(getDefaultTenant(),facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		this.startSiteController(); // after all the parameter changes
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 
 		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
 		picker.login("Picker #1");

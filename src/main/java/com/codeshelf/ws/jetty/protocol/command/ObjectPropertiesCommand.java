@@ -69,11 +69,11 @@ public class ObjectPropertiesCommand extends CommandABC {
 				if(dao == null) {
 					LOGGER.error("DAO is undefined for "+className);
 				} else {
-					object = dao.findByPersistentId(objectId);					
+					object = dao.findByPersistentId(getTenant(),objectId);					
 				}				
 				if (object != null) {
 					// all good. pass back object properties
-					List<DomainObjectProperty> props = PropertyDao.getInstance().getPropertiesWithDefaults(object);
+					List<DomainObjectProperty> props = PropertyDao.getInstance().getPropertiesWithDefaults(getTenant(),object);
 					// we do not want to just serialize the DomainObjectProperty persistent fields. We need to call methods to get the meta-fields					
 					// prop is a list of DomainObjectProperty. So setProperties(props) is merely a Json string of the persistent fields.
 					// unless there is a getProperties override

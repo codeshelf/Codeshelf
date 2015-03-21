@@ -7,6 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.User;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -120,10 +122,6 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		
 	}
 	
-	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
-		return TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
-	}
-	
 	@Override
 	public ResponseABC handleRequest(WebSocketConnection csSession, RequestABC request) {
 		LOGGER.info("Request received for processing: {}",request);
@@ -139,83 +137,96 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			// TODO: get rid of message type handling using if statements and type casts...
 			if (request instanceof LoginRequest) {
 				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession, loginRequest, getObjectChangeBroadcaster(), this.sessionManager);
+				command = new LoginCommand(csSession, loginRequest, this.sessionManager);
 				loginCounter.inc();
 				applicationRequestCounter.inc();
 			}
 			else if (request instanceof EchoRequest) {
 				command = new EchoCommand(csSession,(EchoRequest) request);
 				echoCounter.inc();
-			}		
-			else if (request instanceof CompleteWorkInstructionRequest) {
-				command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, serviceFactory.getServiceInstance(WorkService.class));
-				completeWiCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ComputeWorkRequest) {
-				command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
-				computeWorkCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ComputeDetailWorkRequest) {
-				command = new ComputeDetailWorkCommand(csSession,(ComputeDetailWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
-				computeWorkCounter.inc();
-				applicationRequestCounter.inc();
-			}			
-			else if (request instanceof GetWorkRequest) {
-				command = new GetWorkCommand(csSession,(GetWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
-				getWorkCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ObjectGetRequest) {
-				command = new ObjectGetCommand(csSession,(ObjectGetRequest) request);
-				objectGetCounter.inc();
-				applicationRequestCounter.inc();
-			}			
-			else if (request instanceof ObjectUpdateRequest) {
-				command = new ObjectUpdateCommand(csSession,(ObjectUpdateRequest) request);
-				objectUpdateCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ObjectDeleteRequest) {
-				command = new ObjectDeleteCommand(csSession,(ObjectDeleteRequest) request);
-				objectDeleteCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ObjectMethodRequest) {
-				command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
-				objectUpdateCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ObjectPropertiesRequest) {
-				command = new ObjectPropertiesCommand(csSession,(ObjectPropertiesRequest) request);
-				objectPropertiesCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof ServiceMethodRequest) {
-				command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request, serviceFactory, converter);
-				objectUpdateCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof RegisterFilterRequest) {
-				command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, getObjectChangeBroadcaster());
-				objectFilterCounter.inc();
-				applicationRequestCounter.inc();
-			}			
-			else if (request instanceof CreatePathRequest) {
-				command = new CreatePathCommand(csSession,(CreatePathRequest) request);
-				objectFilterCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof InventoryUpdateRequest) {
-				command = new InventoryUpdateCommand(csSession, (InventoryUpdateRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
-				inventoryUpdateRequestCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof InventoryLightRequest) {
-				command = new InventoryLightCommand(csSession, (InventoryLightRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
-				inventoryLightRequestCounter.inc();
-				applicationRequestCounter.inc();
+			} else {
+				// require user and tenant
+				if(csSession == null)
+					throw new RuntimeException("csSession was null for request "+request.getClass().getSimpleName());
+				User user = csSession.getUser(); 
+				if(user == null)
+					throw new RuntimeException("csSession.user was null for request "+request.getClass().getSimpleName());
+				Tenant tenant = user.getTenant();
+				if(tenant == null)
+					throw new RuntimeException("user.tenant was null for request "+request.getClass().getSimpleName());
+				
+				
+				if (request instanceof CompleteWorkInstructionRequest) {
+					command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+					completeWiCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ComputeWorkRequest) {
+					command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+					computeWorkCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ComputeDetailWorkRequest) {
+					command = new ComputeDetailWorkCommand(csSession,(ComputeDetailWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+					computeWorkCounter.inc();
+					applicationRequestCounter.inc();
+				}			
+				else if (request instanceof GetWorkRequest) {
+					command = new GetWorkCommand(csSession,(GetWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+					getWorkCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ObjectGetRequest) {
+					command = new ObjectGetCommand(csSession,(ObjectGetRequest) request);
+					objectGetCounter.inc();
+					applicationRequestCounter.inc();
+				}			
+				else if (request instanceof ObjectUpdateRequest) {
+					command = new ObjectUpdateCommand(csSession,(ObjectUpdateRequest) request);
+					objectUpdateCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ObjectDeleteRequest) {
+					command = new ObjectDeleteCommand(csSession,(ObjectDeleteRequest) request);
+					objectDeleteCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ObjectMethodRequest) {
+					command = new ObjectMethodCommand(csSession,(ObjectMethodRequest) request);
+					objectUpdateCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ObjectPropertiesRequest) {
+					command = new ObjectPropertiesCommand(csSession,(ObjectPropertiesRequest) request);
+					objectPropertiesCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof ServiceMethodRequest) {
+					command = new ServiceMethodCommand(csSession,(ServiceMethodRequest) request, serviceFactory, converter);
+					objectUpdateCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof RegisterFilterRequest) {
+					ObjectChangeBroadcaster ocb = TenantPersistenceService.getInstance().getEventListenerIntegrator(tenant).getChangeBroadcaster();
+					command = new RegisterFilterCommand(csSession,(RegisterFilterRequest) request, ocb);
+					objectFilterCounter.inc();
+					applicationRequestCounter.inc();
+				}			
+				else if (request instanceof CreatePathRequest) {
+					command = new CreatePathCommand(csSession,(CreatePathRequest) request);
+					objectFilterCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof InventoryUpdateRequest) {
+					command = new InventoryUpdateCommand(csSession, (InventoryUpdateRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+					inventoryUpdateRequestCounter.inc();
+					applicationRequestCounter.inc();
+				}
+				else if (request instanceof InventoryLightRequest) {
+					command = new InventoryLightCommand(csSession, (InventoryLightRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+					inventoryLightRequestCounter.inc();
+					applicationRequestCounter.inc();
+				}
 			}
 			// check if matching command was found
 			if (command==null) {
@@ -237,6 +248,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 					missingResponseCounter.inc();
 				}
 			}
+			
     	} catch (Exception e) {
     		if(e instanceof NullPointerException) {
     			LOGGER.error("Unexpected exception in ServerMessageProcessor",e);

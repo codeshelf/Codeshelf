@@ -15,6 +15,7 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectPropertiesResponse;
@@ -29,26 +30,26 @@ public class ObjectPropertyCommandTest extends HibernateTest {
 	public void testObjectPropertyCommandUsingDefault() {
 		PropertyDao cfgServ = PropertyDao.getInstance();
 
-		beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(getDefaultTenant());
 		Facility facilityx=createFacility();
 		CodeshelfNetwork network = facilityx.getNetworks().get(0);
 		
-		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(network);
+		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(getDefaultTenant(),network);
 		assertNotNull(types);
 		assertEquals(0, types.size());
-		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
+		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(getDefaultTenant(),network,"test-prop");
 		assertNull(type);
 		assertEquals(0, types.size());
-		commitTransaction();
+		TenantPersistenceService.getInstance().commitTransaction(getDefaultTenant());
 
 		// add config type
-		beginTransaction();
+		this.tenantPersistenceService.beginTransaction(getDefaultTenant());
 		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("test-prop",network.getClassName(),"Default-Value-1","Property-Description-1");
-		cfgServ.store(type1);
-		commitTransaction();
+		cfgServ.store(getDefaultTenant(),type1);
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 
 		// retrieve property via command
-		beginTransaction();
+		this.tenantPersistenceService.beginTransaction(getDefaultTenant());
 		ObjectPropertiesRequest req =  new ObjectPropertiesRequest();
 		req.setClassName(network.getClassName());
 		req.setPersistentId(network.getPersistentId().toString());
@@ -71,6 +72,6 @@ public class ObjectPropertyCommandTest extends HibernateTest {
 		assertEquals(oneResult.get("description"), "Property-Description-1");
 
 		
-		commitTransaction();
+		this.tenantPersistenceService.commitTransaction(getDefaultTenant());
 	}	
 }

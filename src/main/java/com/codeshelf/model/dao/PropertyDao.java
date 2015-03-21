@@ -9,6 +9,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.codeshelf.model.domain.IDomainObject;
@@ -38,8 +39,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 		return theInstance;
 	}
 	
-	public DomainObjectPropertyDefault store(DomainObjectPropertyDefault propertyDefault) {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public DomainObjectPropertyDefault store(Tenant tenant, DomainObjectPropertyDefault propertyDefault) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		session.saveOrUpdate(propertyDefault);
 		LOGGER.debug("Config type stored: "+propertyDefault);
 		return propertyDefault;
@@ -48,15 +49,15 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	/**
 	 * Deletes property default value for a specific tenant.
 	 */
-	public void delete(DomainObjectPropertyDefault propertyDefault) {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public void delete(Tenant tenant, DomainObjectPropertyDefault propertyDefault) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		session.delete(propertyDefault);
 		LOGGER.debug("Property default deleted: "+propertyDefault);
 	}
 		
 	@SuppressWarnings("unchecked")
-	public List<DomainObjectPropertyDefault> getPropertyDefaults(IDomainObject object) {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public List<DomainObjectPropertyDefault> getPropertyDefaults(Tenant tenant,IDomainObject object) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		String queryString = "from DomainObjectPropertyDefault where objectType = :objectType";
         Query query = session.createQuery(queryString);
         query.setParameter("objectType", object.getClassName());
@@ -64,12 +65,12 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 		return propertyDefaults;
 	}
 
-	public DomainObjectPropertyDefault getPropertyDefault(IDomainObject object, String name) {
-		return getPropertyDefault(object.getClassName(), name);
+	public DomainObjectPropertyDefault getPropertyDefault(Tenant tenant,IDomainObject object, String name) {
+		return getPropertyDefault(tenant,object.getClassName(), name);
 	}
 	
-	public DomainObjectPropertyDefault getPropertyDefault(String objectType, String name) {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public DomainObjectPropertyDefault getPropertyDefault(Tenant tenant,String objectType, String name) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		String queryString = "from DomainObjectPropertyDefault where objectType = :objectType and name = :name";
         Query query = session.createQuery(queryString);
         query.setParameter("objectType", objectType);
@@ -82,8 +83,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	 * Gets the specific objects in the database for the parent domain objects. Used by higher level API call that includes default values.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<DomainObjectProperty> getProperties(IDomainObject object) {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public List<DomainObjectProperty> getProperties(Tenant tenant,IDomainObject object) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.objectId = :objectId ";
 		Query query = session.createQuery(queryString);
         query.setParameter("objectId", object.getPersistentId());
@@ -96,10 +97,10 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	 * This is the most useful API. Gets the few in the database, usually for the facility, and creates missing ones to match the defaults. Does not save the new ones. 
 	 * New ones have persistentIds, but they are not meaningful.
 	 */
-	public List<DomainObjectProperty> getPropertiesWithDefaults(IDomainObject object) {
+	public List<DomainObjectProperty> getPropertiesWithDefaults(Tenant tenant,IDomainObject object) {
 		// get object properties and types
-        List<DomainObjectProperty> configs = getProperties(object);
-        List<DomainObjectPropertyDefault> types = getPropertyDefaults(object);
+        List<DomainObjectProperty> configs = getProperties(tenant,object);
+        List<DomainObjectPropertyDefault> types = getPropertyDefaults(tenant,object);
 
         // add missing configuration values using defaults
         for (DomainObjectPropertyDefault type : types) {
@@ -130,8 +131,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	 * Gets the specific objects in the database, for all parent domain objects. No known use case for this.
 	 */
 	@SuppressWarnings("unchecked")
-	public List<DomainObjectProperty> getAllProperties() {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public List<DomainObjectProperty> getAllProperties(Tenant tenant) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		String queryString = "from DomainObjectProperty";
         Query query = session.createQuery(queryString);
         List<DomainObjectProperty> props = query.list();
@@ -141,8 +142,8 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	/**
 	 * Get object if it exists. Often it will not.
 	 */
-	public DomainObjectProperty getProperty(IDomainObject object, String name) {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public DomainObjectProperty getProperty(Tenant tenant,IDomainObject object, String name) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		String queryString = "from DomainObjectProperty as c where c.propertyDefault.objectType = :objectType and c.propertyDefault.name = :name and c.objectId = :objectId ";
         Query query = session.createQuery(queryString);
         query.setParameter("objectId", object.getPersistentId());
@@ -155,11 +156,11 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	/**
 	 * Get object if it exists. Otherwise create one from the default. Not saved in this routine.
 	 */
-	public DomainObjectProperty getPropertyWithDefault(IDomainObject object, String name) {
-        DomainObjectProperty prop = getProperty(object, name);
+	public DomainObjectProperty getPropertyWithDefault(Tenant tenant,IDomainObject object, String name) {
+        DomainObjectProperty prop = getProperty(tenant,object, name);
         if (prop != null)
         	return prop;
-        DomainObjectPropertyDefault theDefault = getPropertyDefault(object, name);
+        DomainObjectPropertyDefault theDefault = getPropertyDefault(tenant,object, name);
         if (theDefault==null) {
         	LOGGER.warn("Failed to create property "+object.getClassName()+":"+name+": Default does not exist.");
         	//List<DomainObjectPropertyDefault> all = getAllDefaults();
@@ -175,18 +176,18 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<DomainObjectPropertyDefault> getAllDefaults() {
-		Session session = TenantPersistenceService.getInstance().getSession();
+	public List<DomainObjectPropertyDefault> getAllDefaults(Tenant tenant) {
+		Session session = TenantPersistenceService.getInstance().getSession(tenant);
 		String queryString = "from DomainObjectPropertyDefault";
         Query query = session.createQuery(queryString);
         List<DomainObjectPropertyDefault> props = query.list();
 		return props;
 	}
 	
-	public void syncPropertyDefaults() {
+	public void syncPropertyDefaults(Tenant tenant) {
 		LOGGER.trace("Checking property defaults...");
 		PropertyDao dao = PropertyDao.getInstance();
-		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults();
+		List<DomainObjectPropertyDefault> currentProperties = dao.getAllDefaults(tenant);
 		InputStream is = this.getClass().getResourceAsStream(PROPERTY_DEFAULTS_FILENAME);
 		if (is==null) {
 			is = this.getClass().getClassLoader().getResourceAsStream(PROPERTY_DEFAULTS_FILENAME);
@@ -210,13 +211,13 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 					String name = data[1];
 					String value = data[2];
 					String description = data[3];
-					DomainObjectPropertyDefault def = dao.getPropertyDefault(objectType, name);
+					DomainObjectPropertyDefault def = dao.getPropertyDefault(tenant,objectType, name);
 					if (def==null) {
 						// insert default
 						createdPropertyDefaults++;
 						LOGGER.trace("Adding property default "+objectType+":"+name+"="+value);
 						def = new DomainObjectPropertyDefault(name, objectType, value, description);
-						dao.store(def);
+						dao.store(tenant,def);
 					}
 					else {
 						// validate value and description
@@ -228,7 +229,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 							LOGGER.info("Updating property default "+objectType+":"+name+"="+value);
 							def.setDefaultValue(value);
 							def.setDescription(description);
-							dao.store(def);
+							dao.store(tenant,def);
 						}
 						// remove item from current defaults
 						for (DomainObjectPropertyDefault d : currentProperties) {
@@ -251,7 +252,7 @@ public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 		// delete properties that are not included in resource file
 		for(DomainObjectPropertyDefault def : currentProperties) {
 			LOGGER.info("Deleting obsolete property default "+def.getObjectType()+":"+def.getName()+"="+def.getDefaultValue()+" and its instances.");
-			dao.delete(def);
+			dao.delete(tenant,def);
 		}
 	}
 

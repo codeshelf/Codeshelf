@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.DropboxService;
@@ -77,7 +78,7 @@ public class DropboxRealTest extends ServerTest {
 		// Caller must use a different organization name each time this is used
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		/*
 		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
@@ -87,7 +88,7 @@ public class DropboxRealTest extends ServerTest {
 		
 		DropboxService dropboxService = facility.getDropboxService();
 		if (dropboxService == null) {
-			facility.createDropboxService();
+			facility.createDropboxService(getDefaultTenant());
 			dropboxService = facility.getDropboxService();
 			LOGGER.warn("had to createDropboxService. Unusual for this JUNIT test. Please understand why the change ");
 			;
@@ -96,7 +97,7 @@ public class DropboxRealTest extends ServerTest {
 			dropboxService.setDomainId("DB");
 			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
 			dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
-			DropboxService.staticGetDao().store(dropboxService);
+			DropboxService.staticGetDao().store(getDefaultTenant(),dropboxService);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
 		}
@@ -175,7 +176,7 @@ public class DropboxRealTest extends ServerTest {
 
 			// No file present yet
 			LOGGER.info("calling dbx getUpdatesFromHost");
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxService.getUpdatesFromHost(getDefaultTenant(),mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -196,7 +197,7 @@ public class DropboxRealTest extends ServerTest {
 			waitForDbxSynch();
 
 			LOGGER.info("second  call to getUpdatesFromHost, after new orders file written");
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxService.getUpdatesFromHost(getDefaultTenant(),mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -284,11 +285,11 @@ public class DropboxRealTest extends ServerTest {
 					return 0;
 				}
 				@Override
-				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
+				public BatchResult<Object> importOrdersFromCsvStream(Tenant tenant,Reader inCsvStreamReader,
 					Facility inFacility,
 					Timestamp inProcessTime) throws IOException {
 
-					BatchResult<Object> result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
+					BatchResult<Object> result = mCsvOrderImporter.importOrdersFromCsvStream(tenant,inCsvStreamReader, inFacility, inProcessTime);
 					LOGGER.info("Anonymous Order Importer just finished");
 					//file manipulation here
 					String csvString2 = csvString1
@@ -307,7 +308,7 @@ public class DropboxRealTest extends ServerTest {
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX02");
 			// testImporter instead of mCsvOrderImporter
-			dropboxService.getUpdatesFromHost(testImporter,
+			dropboxService.getUpdatesFromHost(getDefaultTenant(),testImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -330,7 +331,7 @@ public class DropboxRealTest extends ServerTest {
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX02 after new file came");
 			// use the normal mCsvOrderImporter as we don't want to inject a new file again
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxService.getUpdatesFromHost(getDefaultTenant(),mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -400,7 +401,7 @@ public class DropboxRealTest extends ServerTest {
 			waitForDbxSynch();
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX03");
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxService.getUpdatesFromHost(getDefaultTenant(),mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -431,7 +432,7 @@ public class DropboxRealTest extends ServerTest {
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX03 after .FAILED file came");
 			// use the normal mCsvOrderImporter as we don't want to inject a new file again
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxService.getUpdatesFromHost(getDefaultTenant(),mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,

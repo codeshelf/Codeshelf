@@ -32,6 +32,7 @@ import org.hibernate.annotations.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -161,8 +162,8 @@ public abstract class DomainObjectABC implements IDomainObject {
 		}
 	}
 
-	public void store() {
-		this.getDao().store(this);		
+	public void store(Tenant tenant) {
+		this.getDao().store(tenant,this);		
 	}
 	
 	public static Map<Class<? extends IDomainObject>,ITypedDao<?>> getDaos() {

@@ -75,7 +75,7 @@ public class ObjectMethodCommand extends CommandABC {
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
 				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);				
 				// First locate an instance of the parent class.
-				IDomainObject targetObject = dao.findByPersistentId(objectId);
+				IDomainObject targetObject = dao.findByPersistentId(getTenant(),objectId);
 
 				if (targetObject != null) {
 					return executeObjectMethodRequest(classObject, targetObject, methodName, methodArgs);

@@ -21,16 +21,16 @@ public class OrderGroupTest extends MockDaoTest {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
-		Facility facility = Facility.createFacility("F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
 		
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderGroup.staticGetDao().store(orderGroup);
+		OrderGroup.staticGetDao().store(getDefaultTenant(),orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -40,7 +40,7 @@ public class OrderGroupTest extends MockDaoTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.staticGetDao().store(order1);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),order1);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order1);
@@ -58,7 +58,7 @@ public class OrderGroupTest extends MockDaoTest {
 		order2.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2.setActive(true);
 		order2.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.staticGetDao().store(order2);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),order2);
 		
 		// Check if we can add this order.
 		orderGroup.addOrderHeader(order2);
@@ -68,21 +68,21 @@ public class OrderGroupTest extends MockDaoTest {
 		orderGroup.removeOrderHeader(order2.getOrderId());
 		Assert.assertNull(orderGroup.getOrderHeader(order2.getOrderId()));
 				
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void releaseOrderGroupTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
-		Facility facility = Facility.createFacility("F1", "test", Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "test", Point.getZeroPoint());
 
 		OrderGroup orderGroup = new OrderGroup();
 		orderGroup.setParent(facility);
 		orderGroup.setOrderGroupId("OG.2");
 		orderGroup.setActive(true);
 		orderGroup.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderGroup.staticGetDao().store(orderGroup);
+		OrderGroup.staticGetDao().store(getDefaultTenant(),orderGroup);
 		
 		OrderHeader order1 = new OrderHeader();
 		order1.setParent(facility);
@@ -93,10 +93,10 @@ public class OrderGroupTest extends MockDaoTest {
 		order1.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1.setActive(true);
 		order1.setUpdated(new Timestamp(System.currentTimeMillis()));
-		OrderHeader.staticGetDao().store(order1);
+		OrderHeader.staticGetDao().store(getDefaultTenant(),order1);
 		
 		orderGroup.addOrderHeader(order1);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

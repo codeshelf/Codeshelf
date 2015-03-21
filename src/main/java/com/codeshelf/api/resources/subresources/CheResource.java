@@ -15,12 +15,14 @@ import lombok.Setter;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
@@ -45,10 +47,11 @@ public class CheResource {
 		if (!BaseResponse.isUUIDValid(mUUIDParam, "cheId", errors)){
 			return errors.buildResponse();
 		}
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		try {
-			persistence.beginTransaction();
-			Che che = Che.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
+			persistence.beginTransaction(tenant);
+			Che che = Che.staticGetDao().findByPersistentId(tenant,mUUIDParam.getUUID());
 			if (che == null) {
 				errors.addErrorUUIDDoesntExist(mUUIDParam.getRawValue(), "che");
 				return errors.buildResponse();
@@ -58,18 +61,18 @@ public class CheResource {
 			Facility facility = che.getFacility();
 			List<String> validContainers = new ArrayList<>();
 			for (String containerId : containers) {
-				Container container = Container.staticGetDao().findByDomainId(facility, containerId);
+				Container container = Container.staticGetDao().findByDomainId(tenant,facility, containerId);
 				if (container != null) {
 					validContainers.add(containerId);
 				}
 			}
-			WorkList workList = workService.computeWorkInstructions(che, validContainers);
+			WorkList workList = workService.computeWorkInstructions(tenant,che, validContainers);
 			return BaseResponse.buildResponse(workList);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 }

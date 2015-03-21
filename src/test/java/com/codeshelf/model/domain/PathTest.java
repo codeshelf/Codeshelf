@@ -20,14 +20,14 @@ public class PathTest extends HibernateTest {
 
 	@Test
 	public final void addRemoveOrderGroupTest() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		Facility retrievedFacility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility retrievedFacility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facility.getPersistentId());
 		
 		Path path = retrievedFacility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);
@@ -44,12 +44,12 @@ public class PathTest extends HibernateTest {
 		List<Tier> tierList = path.<Tier> getLocationsByClass(Tier.class);
 		Assert.assertEquals(0, tierList.size());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void isOrderOnPath() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
@@ -60,12 +60,12 @@ public class PathTest extends HibernateTest {
 
 		Assert.assertTrue(path.isOrderOnPath(order));
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public final void computePosALongPath() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = createFacilityWithOutboundOrders();
 		Assert.assertNotNull(facility);
@@ -82,6 +82,6 @@ public class PathTest extends HibernateTest {
 		PathSegment segment2 = path.getPathSegment(1);
 		Assert.assertEquals(segment2.getStartPosAlongPath().doubleValue(), 5.0, 0.0);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

@@ -11,8 +11,8 @@ public class FacilityGenerator {
 		this.tenant = tenant;
 	}
 	
-	public Facility generateValid() {
-		Facility facility = Facility.createFacility("F1", "", Point.getZeroPoint());
+	public Facility generateValid(Tenant tenant) {
+		Facility facility = Facility.createFacility(tenant,"F1", "", Point.getZeroPoint());
 		return facility;
 	}
 }

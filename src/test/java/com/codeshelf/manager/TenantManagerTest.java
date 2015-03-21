@@ -16,8 +16,8 @@ import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.AuthResponse;
+import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.Sets;
@@ -38,7 +38,7 @@ public class TenantManagerTest extends HibernateTest {
 
 	@Test
 	public void defaultTenantExists() {
-		Tenant tenant = this.tenantManagerService.getDefaultTenant();
+		Tenant tenant = getDefaultTenant();
 		Assert.assertEquals(TenantManagerService.DEFAULT_TENANT_NAME, tenant.getName());
 		
 		Shard shard = this.tenantManagerService.getDefaultShard();

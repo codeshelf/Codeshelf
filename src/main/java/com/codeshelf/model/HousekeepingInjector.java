@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -36,8 +37,8 @@ public class HousekeepingInjector {
 
 	}
 
-	public static RepeatPosChoice getRepeatPosChoice(Facility inFacility) {
-		String repeatValue = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.RPEATPOS);		
+	public static RepeatPosChoice getRepeatPosChoice(Tenant tenant,Facility inFacility) {
+		String repeatValue = PropertyService.getInstance().getPropertyFromConfig(tenant,inFacility, DomainObjectProperty.RPEATPOS);		
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
 		if (repeatValue.equals("None"))
 			return RepeatPosChoice.RepeatPosNone;
@@ -52,8 +53,8 @@ public class HousekeepingInjector {
 	}
 
 
-	public static BayChangeChoice getBayChangeChoice(Facility inFacility) {
-		String bayValue = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.BAYCHANG);
+	public static BayChangeChoice getBayChangeChoice(Tenant tenant,Facility inFacility) {
+		String bayValue = PropertyService.getInstance().getPropertyFromConfig(tenant,inFacility, DomainObjectProperty.BAYCHANG);
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
 		if (bayValue.equals("None"))
 			return BayChangeChoice.BayChangeNone;
@@ -259,18 +260,18 @@ public class HousekeepingInjector {
 	 * @param inSortedWiList
 	 * @return
 	 */
-	public static List<WorkInstruction> addHouseKeepingAndSaveSort(Facility inFacility, List<WorkInstruction> inSortedWiList) {
+	public static List<WorkInstruction> addHouseKeepingAndSaveSort(Tenant tenant,Facility inFacility, List<WorkInstruction> inSortedWiList) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		WorkInstruction lastWi = null;
 		for (WorkInstruction wi : inSortedWiList) {
 			List<WorkInstructionTypeEnum> theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi,
 				wi,
-				getBayChangeChoice(inFacility),
-				getRepeatPosChoice(inFacility));
+				getBayChangeChoice(tenant,inFacility),
+				getRepeatPosChoice(tenant,inFacility));
 			// returns null if nothing to do. If non-null, then at lease one in the list.
 			if (theHousekeepingTypeList != null) {
 				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {
-					WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(theType, inFacility, lastWi, wi);
+					WorkInstruction houseKeepingWi = WiFactory.createHouseKeepingWi(tenant,theType, inFacility, lastWi, wi);
 					if (houseKeepingWi != null) {
 						wiResultList.add(houseKeepingWi);
 						LOGGER.info("adding housekeeping WI type " + houseKeepingWi.getDescription());
@@ -283,7 +284,7 @@ public class HousekeepingInjector {
 		}
 		// At this point, some or none added. wiResultList is ordered. Time to add the sort codes.
 		if (wiResultList.size() > 0)
-			wiResultList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(wiResultList);
+			wiResultList = WorkInstructionSequencerABC.setSortCodesByCurrentSequence(tenant,wiResultList);
 		return wiResultList;
 	}
 

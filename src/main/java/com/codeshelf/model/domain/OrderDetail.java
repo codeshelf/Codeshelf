@@ -32,6 +32,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -385,8 +386,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	/**
 	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
 	 */
-	public boolean willProduceWi(WorkService workService) {
-		return workService.willOrderDetailGetWi(this);
+	public boolean willProduceWi(Tenant tenant,WorkService workService) {
+		return workService.willOrderDetailGetWi(tenant,this);
 	}
 
 	// --------------------------------------------------------------------------
@@ -394,7 +395,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * If the order header is crossbatch, leave blank. If outbound, then Y or -. Other types not implemented. Return ??
 	 * Advanced: If already completed work instruction: C. If short and not complete yet: s
 	 */
-	public String getWillProduceWiUi(WorkService workService) {
+	public String getWillProduceWiUi(Tenant tenant,WorkService workService) {
 		OrderTypeEnum myParentType = getParentOrderType();
 		if (myParentType == OrderTypeEnum.CROSS)
 			return "";
@@ -412,7 +413,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 					foundShort = true;
 			}
 		}
-		if (willProduceWi(workService))
+		if (willProduceWi(tenant,workService))
 			return "Y";
 		else if (foundShort)
 			return "-, short";
@@ -453,7 +454,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * Revaluate the status
 	 * @return if it was changed
 	 */
-	public boolean reevaluateStatus() {
+	public boolean reevaluateStatus(Tenant tenant) {
 		OrderStatusEnum priorStatus = getStatus();
 		if(getWorkInstructions().isEmpty()) {
 			if (priorStatus == OrderStatusEnum.INPROGRESS) {
@@ -486,7 +487,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 		if (!priorStatus.equals(getStatus())) {
 			LOGGER.info("Changed status of order detai, was: " + priorStatus + ", now: " + this);
-			this.getDao().store(this);
+			this.getDao().store(tenant,this);
 			return true;
 		} else {
 			return false;

@@ -31,7 +31,7 @@ public class InventoryLightCommand extends CommandABC {
 		
 		UUID cheUUID = UUID.fromString(request.getDeviceId());
 		if (cheUUID != null ) {
-			response = inventoryService.lightInventoryByGtin(request.getGtin(), cheUUID);
+			response = inventoryService.lightInventoryByGtin(getTenant(),request.getGtin(), cheUUID);
 		} else {
 			response = new InventoryLightResponse();
 			response.setStatus(ResponseStatus.Fail);

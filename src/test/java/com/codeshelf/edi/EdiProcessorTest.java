@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
@@ -113,7 +114,7 @@ public class EdiProcessorTest extends MockDaoTest {
 				return "LINKED";
 			}
 
-			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
+			public boolean getUpdatesFromHost(Tenant tenant,ICsvOrderImporter inCsvOrdersImporter,
 				ICsvOrderLocationImporter inCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
@@ -229,7 +230,7 @@ public class EdiProcessorTest extends MockDaoTest {
 				return "UNLINKED";
 			}
 
-			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
+			public boolean getUpdatesFromHost(Tenant tenant,ICsvOrderImporter inCsvOrdersImporter,
 				ICsvOrderLocationImporter iCsvOrderLocationImporter,
 				ICsvInventoryImporter inCsvInventoryImporter,
 				ICsvLocationAliasImporter inCsvLocationsImporter,
@@ -372,7 +373,7 @@ public class EdiProcessorTest extends MockDaoTest {
 			}
 
 			@Override
-			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
+			public BatchResult<Object> importOrdersFromCsvStream(Tenant tenant,Reader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) throws IOException {
 				BatchResult<Object> result = new BatchResult<Object>();

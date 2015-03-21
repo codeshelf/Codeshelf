@@ -35,13 +35,13 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Before
 	public void initTest() throws IOException {
-		TenantPersistenceService.getInstance().beginTransaction();
+		TenantPersistenceService.getInstance().beginTransaction(getDefaultTenant());
 		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(getDefaultTenant(),createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
-		Facility facility = generator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		Facility facility = generator.generateFacilityForVirtualSlotting(getDefaultTenant(),testName.getMethodName());
 		generator.setupOrders(facility);
 		
 		this.facilityId=facility.getPersistentId();
-		TenantPersistenceService.getInstance().commitTransaction();
+		TenantPersistenceService.getInstance().commitTransaction(getDefaultTenant());
 	}
 	
 	/**
@@ -52,33 +52,33 @@ public class InventoryServiceTest extends ServerTest {
 	 */
 	@Test
 	public void testExistingItemWithEachIsMoved() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		String testUom = "each";
 		testMove(facility,testUom);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testExistingItemWithEACHAliasIsMoved() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		String testUom = "EA";
 		testMove(facility,testUom);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testEachMultiLoc() throws IOException {	
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		PropertyDao propDao = PropertyDao.getInstance();
-		DomainObjectProperty eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
+		DomainObjectProperty eachmultProp = propDao.getPropertyWithDefault(getDefaultTenant(),facility, DomainObjectProperty.EACHMULT);
 		Assert.assertNotNull(eachmultProp);
 		boolean eachMult = eachmultProp.getBooleanValue();
 		Assert.assertEquals("EACHMULT is supposed to be FALSE by default",false, eachMult);		
@@ -90,31 +90,31 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Assert.assertNotNull(locationAlias);
 		
-		Item createdItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUom, null);
+		Item createdItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUom, null);
 
 		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
 		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
 		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
 		
-		Item movedItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUom, null);
+		Item movedItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUom, null);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), movedItem.getPersistentId());
 		Location currentLocation = movedItem.getStoredLocation(); 
 		Assert.assertEquals(newItemLocation.getNominalLocationId(), currentLocation.getNominalLocationId());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		// set eachmult to true and make sure only one item exists
-		this.getTenantPersistenceService().beginTransaction();
-		eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		eachmultProp = propDao.getPropertyWithDefault(getDefaultTenant(),facility, DomainObjectProperty.EACHMULT);
 		eachmultProp.setValue(true);
-		propDao.store(eachmultProp);
+		propDao.store(getDefaultTenant(),eachmultProp);
 		itemMaster = facility.getItemMaster("10700589");
 		List<Item> items = itemMaster.getItemsOfUom(testUom);
 		Assert.assertEquals(1,items.size());
-		this.getTenantPersistenceService().commitTransaction();	
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());	
 
 		// now move the item again and ensure items are different
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 
 		itemMaster = facility.getItemMaster("10700589");
 		Assert.assertNotNull(itemMaster);
@@ -124,7 +124,7 @@ public class InventoryServiceTest extends ServerTest {
 		locationAlias = newItemLocation2.getAliases().get(0).getAlias();
 		Assert.assertNotNull(locationAlias);
 		
-		Item movedItem2 = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias2, "1", "1", testUom, null);
+		Item movedItem2 = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias2, "1", "1", testUom, null);
 		Assert.assertNotEquals("Should not have been the same item", createdItem.getPersistentId(), movedItem2.getPersistentId());
 		Location currentLocation2 = movedItem2.getStoredLocation(); 
 		Assert.assertEquals(newItemLocation2.getNominalLocationId(), currentLocation2.getNominalLocationId());
@@ -132,7 +132,7 @@ public class InventoryServiceTest extends ServerTest {
 		List<Item> items2 = itemMaster.getItemsOfUom(testUom);
 		Assert.assertEquals(2,items2.size());
 		
-		this.getTenantPersistenceService().commitTransaction();	
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());	
 	}	
 	
 	/**
@@ -142,8 +142,8 @@ public class InventoryServiceTest extends ServerTest {
 	 */
 	@Test
 	public void testNonEachItemCreatedIfDifferentLocation() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 		
 		String testUom = "case";
 		String sku = "10706961";
@@ -155,18 +155,18 @@ public class InventoryServiceTest extends ServerTest {
 
 
 		
-		Item createdItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
+		Item createdItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
 		
 		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
 		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
 		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
-		Item additionalItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, String.valueOf(testCmFromLeft), "15", testUom, null);
+		Item additionalItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, String.valueOf(testCmFromLeft), "15", testUom, null);
 
 		Assert.assertNotEquals("Should not be the same item", createdItem.getPersistentId(), additionalItem.getPersistentId());
 		Assert.assertEquals(createdItem.getUomMaster(), additionalItem.getUomMaster());
 		Assert.assertEquals(createdItem.getItemId(), additionalItem.getItemId());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 
@@ -177,8 +177,8 @@ public class InventoryServiceTest extends ServerTest {
 	 */
 	@Test
 	public void testNonEachItemIsUpdated() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		String testUom = "case";
 		String sku = "10706961";
@@ -188,13 +188,13 @@ public class InventoryServiceTest extends ServerTest {
 		ItemMaster itemMaster = facility.getItemMaster(sku);
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
-		Item createdItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
+		Item createdItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
 
-		Item updatedItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft), "15", testUom, null);
+		Item updatedItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft), "15", testUom, null);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), updatedItem.getPersistentId());
 		Assert.assertEquals(testCmFromLeft, updatedItem.getCmFromLeft());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 
@@ -204,13 +204,13 @@ public class InventoryServiceTest extends ServerTest {
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
-		Item createdItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUomUserInput, null);
+		Item createdItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUomUserInput, null);
 
 		Tier newItemLocation = (Tier) facility.findSubLocationById("A2.B1.T1");
 		String newItemLocationAlias = newItemLocation.getAliases().get(0).getAlias();
 		Assert.assertNotEquals(locationAlias, newItemLocationAlias);
 		
-		Item movedItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUomUserInput, null);
+		Item movedItem = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), newItemLocationAlias, "1", "1", testUomUserInput, null);
 		Assert.assertEquals("Should have been the same item", createdItem.getPersistentId(), movedItem.getPersistentId());
 		Location currentLocation = movedItem.getStoredLocation(); 
 		Assert.assertEquals(newItemLocation.getNominalLocationId(), currentLocation.getNominalLocationId());
@@ -219,8 +219,8 @@ public class InventoryServiceTest extends ServerTest {
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemNullLocationAlias() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -228,41 +228,41 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
 		try {
-			uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), null, "1", "1", uomMaster.getUomMasterId(), null);
+			uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), null, "1", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("storedLocation"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemEmptyLocationAlias() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		try {
-			uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), "", "1", "1", uomMaster.getUomMasterId(), null);
+			uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), "", "1", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("storedLocation"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull(tier);
@@ -273,20 +273,20 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "A", uomMaster.getUomMasterId(), null);
+			uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "A", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testUpsertItemUsingNegativeCount() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -294,21 +294,21 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "-1", uomMaster.getUomMasterId(), null);
+			uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "-1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingNegativePositionFromLeft() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -316,21 +316,21 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "-1", "1", uomMaster.getUomMasterId(), null);
+			Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "-1", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("cmFromLeft"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingAlphaPositionFromLeft() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -338,51 +338,51 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "A", "1", uomMaster.getUomMasterId(), null);
+			Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "A", "1", uomMaster.getUomMasterId(), null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.hasViolationForProperty("cmFromLeft"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testUpsertItemUsingEmptyPositionFromLeft() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
-		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId(), null);
+		Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testUpsertItemUsingNullPositionFromLeft() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
-		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId(), null);
+		Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingEmptyUom() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
@@ -390,61 +390,61 @@ public class InventoryServiceTest extends ServerTest {
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
-			Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", "", null);
+			Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", "", null);
 			Assert.fail("Should have thrown exception");
 		}
 		catch (InputValidationException e) {
 			Assert.assertTrue(e.toString(), e.hasViolationForProperty("uomMasterId"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public void testUpsertItemUsingUomDifferentCase() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
-		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH", null);
+		Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH", null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void testUpsertItemUsingNominalLocationId() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 
 		
-		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId(), null);
+		Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public void testUpsertItemUsingLocationAlias() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facility=Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
 		ItemMaster itemMaster = facility.getItemMaster("10700589");
 
 		String locationAlias = tier.getAliases().get(0).getAlias();
-		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId(), null);
+		Item item = uiUpdate.storeItem(getDefaultTenant(),facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 }

@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdPath;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
@@ -279,11 +280,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return false;
 	}
 	
-	public void updateAnchorPoint(Double x, Double y, Double z) {
+	public void updateAnchorPoint(Tenant tenant,Double x, Double y, Double z) {
 		anchorPosX = x;
 		anchorPosY = y;
 		anchorPosZ = z;
-		this.getDao().store(this);
+		this.getDao().store(tenant,this);
 	}
 
 	public Point getAnchorPoint() {
@@ -320,17 +321,17 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * this is the "delete" method. Does not delete. Merely makes inactive, along with all its children.
 	 * This does the DAO persist.
 	 */
-	public void makeInactiveAndAllChildren() {
+	public void makeInactiveAndAllChildren(Tenant tenant) {
 		this.setActive(false);
 		try {
-			this.getDao().store(this);
+			this.getDao().store(tenant,this);
 		} catch (DaoException e) {
 			LOGGER.error("unable to inactivate: " + this, e);
 		}
 
 		List<Location> childList = getActiveChildren();
 		for (Location sublocation : childList) {
-			sublocation.makeInactiveAndAllChildren();
+			sublocation.makeInactiveAndAllChildren(tenant);
 		}
 	}
 
@@ -740,13 +741,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public void removeAllVertices() {
+	public void removeAllVertices(Tenant tenant) {
 		LOGGER.info("removeNonAnchorVertices");
 		if (vertices == null || vertices.isEmpty()) {
 			return;
 		}
 		for (Vertex v : vertices) {
-			Vertex.staticGetDao().delete(v);
+			Vertex.staticGetDao().delete(tenant,v);
 		}
 		setAnchorPoint(Point.getZeroPoint());
 		vertices.clear();
@@ -1228,7 +1229,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.domain.LocationABC#computePosAlongPath(com.codeshelf.model.domain.PathSegment)
 	 */
-	public void computePosAlongPath(final PathSegment inPathSegment) {
+	public void computePosAlongPath(Tenant tenant,final PathSegment inPathSegment) {
 		if (inPathSegment == null) {
 			LOGGER.error("null pathSegment in computePosAlongPath");
 			return;
@@ -1249,7 +1250,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				LOGGER.debug(this.getFullDomainId() + " path pos: " + getPosAlongPath() + " Anchor x: "
 						+ locationAnchorPoint.getX() + " y: " + locationAnchorPoint.getY() + " Face x: ");
 				setPosAlongPath(newPosition);
-				this.getDao().store(this);
+				this.getDao().store(tenant,this);
 			} catch (DaoException e) {
 				LOGGER.error("", e);
 			}
@@ -1258,21 +1259,21 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		// Also force a recompute for all of the child locations.
 		List<Location> locations = getActiveChildren();
 		for (Location location : locations) {
-			location.computePosAlongPath(inPathSegment);
+			location.computePosAlongPath(tenant,inPathSegment);
 		}
 	}
 
 	/**
 	 * Clears controller and channel back to null state, as if they had never been set after initialization
 	 */
-	public void clearControllerChannel() {
+	public void clearControllerChannel(Tenant tenant) {
 		if (getLedController() != null || getLedChannel() != null) {
 			try {
 				LedController currentController = this.getLedController();
 				if (currentController != null)
 					currentController.removeLocation(this);
 				this.setLedChannel(null);
-				this.getDao().store(this);
+				this.getDao().store(tenant,this);
 			} catch (DaoException e) {
 				LOGGER.error("doClearControllerChannel", e);
 			}
@@ -1283,14 +1284,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * Both Aisle and Tier have setControllerChannel functions that call through to this.
 	 * Side effect adds a little complexity. If setting to a valid controller, make sure there is a channel (default 1) even if user never set it.
 	 */
-	protected void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+	protected void doSetControllerChannel(Tenant tenant,String inControllerPersistentIDStr, String inChannelStr) {
 
 		// Initially, log
 		LOGGER.debug("On " + this + ", set LED controller to " + inControllerPersistentIDStr);
 
 		// Get the LedController
 		UUID persistentId = UUID.fromString(inControllerPersistentIDStr);
-		LedController newLedController = LedController.staticGetDao().findByPersistentId(persistentId);
+		LedController newLedController = LedController.staticGetDao().findByPersistentId(tenant,persistentId);
 		if (newLedController == null)
 			throw new DaoException("Unable to set controller, controller " + inControllerPersistentIDStr + " not found");
 
@@ -1323,7 +1324,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			newLedController.addLocation(this);
 		// cannot just return on the controller stuff, because we might be saving a channel only change
 
-		this.getDao().store(this);
+		this.getDao().store(tenant,this);
 
 	}
 

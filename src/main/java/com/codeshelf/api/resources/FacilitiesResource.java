@@ -15,9 +15,11 @@ import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")
@@ -38,16 +40,17 @@ public class FacilitiesResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllFacilities() {
 		ErrorResponse errors = new ErrorResponse();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
-			persistence.beginTransaction();
-			List<Facility> facilities = Facility.staticGetDao().getAll();
+			persistence.beginTransaction(tenant);
+			List<Facility> facilities = Facility.staticGetDao().getAll(tenant);
 			List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
 			return BaseResponse.buildResponse(facilitiesShort);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		} finally {
-			persistence.commitTransaction();
+			persistence.commitTransaction(tenant);
 		}
 	}
 }

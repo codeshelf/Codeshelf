@@ -15,6 +15,7 @@ import com.codeshelf.edi.InventorySlottedCsvBean;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
@@ -42,14 +43,15 @@ public class UiUpdateService implements IApiService {
 	public UiUpdateService() {
 	}
 
-	public Item storeItem(String facilityId,
+	public Item storeItem(Tenant tenant,
+		String facilityId,
 		String itemId,
 		String storedLocationId,
 		String cmDistanceFromLeft,
 		String quantity,
 		String inUomId,
 		String orderDetailId) {
-		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 		if (facility == null) {
 			throw new InputValidationException("Facility {0} not found", facilityId);
 		}
@@ -58,7 +60,7 @@ public class UiUpdateService implements IApiService {
 
 		//TODO This is a proof of concept and needs refactor to not have a dependency out of the EDI package
 		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer());
-		UomMaster uomMaster = importer.upsertUomMaster(inUomId, facility);
+		UomMaster uomMaster = importer.upsertUomMaster(tenant,inUomId, facility);
 
 		ItemMaster itemMaster = facility.getItemMaster(itemId);
 		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
@@ -74,7 +76,7 @@ public class UiUpdateService implements IApiService {
 			throw new InputValidationException(errors);
 		}
 
-		Item returnItem = importer.updateSlottedItem(false,
+		Item returnItem = importer.updateSlottedItem(tenant,false,
 			itemBean,
 			location,
 			new Timestamp(System.currentTimeMillis()),
@@ -82,10 +84,10 @@ public class UiUpdateService implements IApiService {
 			uomMaster);
 
 		if (orderDetailId != null && !orderDetailId.isEmpty()) {
-			OrderDetail detail = OrderDetail.staticGetDao().findByPersistentId(orderDetailId);
+			OrderDetail detail = OrderDetail.staticGetDao().findByPersistentId(tenant,orderDetailId);
 			if (detail != null) {
 				detail.setPreferredLocation(storedLocationId);
-				OrderDetail.staticGetDao().store(detail);
+				OrderDetail.staticGetDao().store(tenant,detail);
 			}
 		}
 		return returnItem;
@@ -96,13 +98,14 @@ public class UiUpdateService implements IApiService {
 	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
-	public UUID addChe(final String facilityPersistentId,
+	public UUID addChe(Tenant tenant,
+		final String facilityPersistentId,
 		final String domainId,
 		final String description,
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr) {
-		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
+		Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityPersistentId);
 		Che che = new Che();
 		che.setParent(facility.getNetworks().get(0));
 		ProcessMode processMode = ProcessMode.getMode(processModeStr);
@@ -136,7 +139,7 @@ public class UiUpdateService implements IApiService {
 			LOGGER.error("Failed to set controller ID", e);
 		}
 
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(tenant,che);
 		return che.getPersistentId();
 	}
 
@@ -145,13 +148,13 @@ public class UiUpdateService implements IApiService {
 	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
-	public void updateChe(final String cheId,
+	public void updateChe(Tenant tenant,final String cheId,
 		final String domainId,
 		final String description,
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr) {
-		Che che = Che.staticGetDao().findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 
 		if (che == null) {
 			LOGGER.error("Could not find che {0}", cheId);
@@ -188,26 +191,26 @@ public class UiUpdateService implements IApiService {
 			LOGGER.error("Failed to set controller ID", e);
 		}
 
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(tenant,che);
 	}
 
-	public void deleteChe(final String cheId) {
-		Che che = Che.staticGetDao().findByPersistentId(cheId);
+	public void deleteChe(Tenant tenant,final String cheId) {
+		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 
 		if (che == null) {
 			LOGGER.error("Could not find che {0}", cheId);
 			return;
 		}
-		Che.staticGetDao().delete(che);
+		Che.staticGetDao().delete(tenant,che);
 	}
 
-	public ProcessMode getDefaultProcessMode(String cheId) {
+	public ProcessMode getDefaultProcessMode(Tenant tenant,String cheId) {
 		// an artifact of new CHE dialog is we want the process type before we have a persistent ID
 		if (cheId == null || cheId.isEmpty()) {
 			return ProcessMode.SETUP_ORDERS;
 		}
 
-		Che che = Che.staticGetDao().findByPersistentId(cheId);
+		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 		if (che == null) {
 			LOGGER.error("Could not find Che " + cheId);
 			return ProcessMode.SETUP_ORDERS;
@@ -215,7 +218,7 @@ public class UiUpdateService implements IApiService {
 		Facility facility = che.getFacility();
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
-		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(filterParams);
+		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(tenant,filterParams);
 		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
 	}
 }

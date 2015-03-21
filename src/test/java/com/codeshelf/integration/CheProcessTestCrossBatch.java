@@ -78,21 +78,21 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
 		Facility facility = getFacility();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(facility);
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T2.S5,D-1\r\n" //
@@ -143,12 +143,12 @@ public class CheProcessTestCrossBatch extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"LED1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),"LED2", new NetGuid("0x00000012"));
 
 		Che che1 = network.getChe("CHE1");
 		che1.setColor(ColorEnum.GREEN);
@@ -158,10 +158,10 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		Short channel1 = 1;
 		controller1.addLocation(aisle1);
 		aisle1.setLedChannel(channel1);
-		aisle1.getDao().store(aisle1);
+		aisle1.getDao().store(getDefaultTenant(),aisle1);
 		controller2.addLocation(aisle2);
 		aisle2.setLedChannel(channel1);
-		aisle2.getDao().store(aisle2);
+		aisle2.getDao().store(getDefaultTenant(),aisle2);
 
 		return facility;
 
@@ -200,7 +200,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
+		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),reader, inFacility, ordersEdiProcessTime);
 
 		// Slotting file
 
@@ -228,40 +228,40 @@ public class CheProcessTestCrossBatch extends ServerTest {
 	@Test
 	public final void testDataSetup() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().findByPersistentId(facId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facId);
 		Assert.assertNotNull(facility);
 
 		List<Container> containers = facility.getContainers();
 		int containerCount = containers.size(); // This can throw if  we did not re-get the facility in the new transaction boundary. Just testing that.
 		Assert.assertTrue(containerCount == 7);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 		
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().findByPersistentId(facId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facId);
 		Assert.assertNotNull(facility);
 
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 
 		LOGGER.info("Case 1: A happy-day startup. No housekeeping jobs. Two from one container.");
@@ -273,7 +273,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
 		picker.scanLocation("D-36");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
@@ -304,26 +304,26 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public final void crossBatchShorts() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
 		setUpGroup1OrdersAndSlotting(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(getDefaultTenant(),facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.startSiteController();
 		
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().findByPersistentId(facId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facId);
 		Assert.assertNotNull(facility);
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = new PickSimulator(getDefaultTenant(),this, cheGuid1);
 		picker.login("Picker #1");
 
 		LOGGER.info("Case 1: Startup. Container 11 will have 2 jobs. We can short one, and see the other short ahead. Container 15 has one job.");
@@ -337,7 +337,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.setupContainer("11", "6"); // Good one gives two work instruction
 
 		picker.startAndSkipReview("D-36", 5000, 3000);
-		propertyService.restoreHKDefaults(facility);
+		propertyService.restoreHKDefaults(getDefaultTenant(),facility);
 
 		Assert.assertEquals(3, picker.countRemainingJobs());
 		LOGGER.info("List the work instructions as the server sees them");
@@ -347,7 +347,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
-		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		Che che1 = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
 		List<WorkInstruction> cheWis = che1.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis);
 		int cheWiTotal = cheWis.size();
@@ -373,7 +373,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 

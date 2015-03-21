@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -229,16 +230,16 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public Che createChe(String inDomainId, NetGuid inGuid) {
+	public Che createChe(Tenant tenant,String inDomainId, NetGuid inGuid) {
 		// If the CHE doesn't already exist then create it.
-		Che che = Che.staticGetDao().findByDomainId(this, inGuid.getHexStringNoPrefix());
+		Che che = Che.staticGetDao().findByDomainId(tenant,this, inGuid.getHexStringNoPrefix());
 		if (che == null) {
 			che = new Che();
 			che.setDomainId(inDomainId);
 			che.setDeviceNetGuid(inGuid);
 			this.addChe(che);
 			try {
-				Che.staticGetDao().store(che);
+				Che.staticGetDao().store(tenant,che);
 			} catch (DaoException e) {
 				LOGGER.error("Couldn't store new CHE "+inDomainId, e);
 			}
@@ -252,9 +253,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 * @param inCodeshelfNetwork
 	 * @param inGUID
 	 */
-	public LedController findOrCreateLedController(String inDomainId, NetGuid inGuid) {
+	public LedController findOrCreateLedController(Tenant tenant,String inDomainId, NetGuid inGuid) {
 
-		LedController result = LedController.staticGetDao().findByDomainId(this, inDomainId);
+		LedController result = LedController.staticGetDao().findByDomainId(tenant,this, inDomainId);
 		if (result == null) {
 			// Get the first network in the list of networks.
 			result = new LedController();
@@ -264,7 +265,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			this.addLedController(result); // so that it works immediately in unit test, and not only after one rehydration cycle
 
 			try {
-				LedController.staticGetDao().store(result);
+				LedController.staticGetDao().store(tenant,result);
 			} catch (DaoException e) { 
 				LOGGER.error("Couldn't store new LED controller "+inDomainId, e);
 			}
@@ -276,11 +277,11 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return this.getParent();
 	}
 
-	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+	public void createSiteController(Tenant tenant,int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
 		String username = Integer.toString(serialNumber);
 
 		// create site controller object (or use found)
-		SiteController sitecon = SiteController.staticGetDao().findByDomainId(this,username);
+		SiteController sitecon = SiteController.staticGetDao().findByDomainId(tenant,this,username);
 		if(sitecon == null) {
 			sitecon = new SiteController();
 			sitecon.setDomainId(username);
@@ -290,7 +291,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			this.addSiteController(sitecon);
 			
 			try {
-				SiteController.staticGetDao().store(sitecon); 
+				SiteController.staticGetDao().store(tenant,sitecon); 
 			} catch (DaoException e) { 
 				LOGGER.error("Couldn't store new Site Controller "+username, e);
 				sitecon=null;

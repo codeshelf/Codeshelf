@@ -72,7 +72,7 @@ public class ObjectUpdateCommand extends CommandABC {
 				if(dao == null) {
 					LOGGER.error("got null dao for "+className);
 				} else {
-					updateObject = dao.findByPersistentId(objectId);					
+					updateObject = dao.findByPersistentId(getTenant(),objectId);					
 				}
 				
 				// Execute the "set" method against the parents to return the children.
@@ -107,7 +107,7 @@ public class ObjectUpdateCommand extends CommandABC {
 						}
 					}
 					if (failures.isEmpty()) {
-						dao.store(updateObject);	
+						dao.store(getTenant(),updateObject);	
 						// create response
 						response.setResults(updateObject);
 						response.setStatus(ResponseStatus.Success);

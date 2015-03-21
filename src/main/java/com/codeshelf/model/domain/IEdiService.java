@@ -13,6 +13,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.EdiServiceStateEnum;
 
 public interface IEdiService extends IDomainObjectTree<Facility> {
@@ -21,7 +22,8 @@ public interface IEdiService extends IDomainObjectTree<Facility> {
 
 	EdiServiceStateEnum getServiceState();
 
-	boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
+	boolean getUpdatesFromHost(Tenant tenant,
+		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,

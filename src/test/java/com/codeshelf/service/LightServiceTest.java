@@ -39,6 +39,7 @@ import com.codeshelf.edi.InventoryGenerator;
 import com.codeshelf.edi.VirtualSlottedFacilityGenerator;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -68,19 +69,19 @@ public class LightServiceTest extends ServerTest {
 	public final void checkLedChaserVirtualSlottedItems() throws IOException, InterruptedException, ExecutionException, TimeoutException {
 		
 		LOGGER.info("0: Starting test:  getting facility");
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(
 			getDefaultTenant(),
 			createAisleFileImporter(),
 			createLocationAliasImporter(),
 			createOrderImporter());
-		Facility facility = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
-		this.getTenantPersistenceService().commitTransaction();
+		Facility facility = facilityGenerator.generateFacilityForVirtualSlotting(getDefaultTenant(),testName.getMethodName());
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("1: reload facility. Get childre aisle, tiers.");
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Aisle aisle = (Aisle) facility.getChildren().get(0);
 		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
 		int itemsPerTier = 5;
@@ -88,15 +89,15 @@ public class LightServiceTest extends ServerTest {
 		
 		LOGGER.info("2: setup inventory.");
 		InventoryGenerator inventoryGenerator = new InventoryGenerator((InventoryCsvImporter) createInventoryImporter());
-		inventoryGenerator.setupVirtuallySlottedInventory(aisle, itemsPerTier);
-		this.getTenantPersistenceService().commitTransaction();
+		inventoryGenerator.setupVirtuallySlottedInventory(getDefaultTenant(),aisle, itemsPerTier);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("3: get inventory in working order for one aisle.");
-		this.getTenantPersistenceService().beginTransaction();
-		aisle = Aisle.staticGetDao().reload(aisle);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		aisle = Aisle.staticGetDao().reload(getDefaultTenant(),aisle);
 		List<Item> items = aisle.getInventoryInWorkingOrder();
 		Assert.assertNotEquals(0,  items.size());
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
 		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
@@ -107,7 +108,7 @@ public class LightServiceTest extends ServerTest {
 		serviceManager.startAsync().awaitHealthy();
 		PropertyService.setInstance(mockProp);
 		
-		when(mockProp.getPropertyAsColor(any(IDomainObject.class), anyString(), any(ColorEnum.class))).then(new Answer<ColorEnum>() {
+		when(mockProp.getPropertyAsColor(any(Tenant.class),any(IDomainObject.class), anyString(), any(ColorEnum.class))).then(new Answer<ColorEnum>() {
 		    @Override
 		    public ColorEnum answer(InvocationOnMock invocation) throws Throwable {
 		    	return ColorEnum.RED;
@@ -120,11 +121,11 @@ public class LightServiceTest extends ServerTest {
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
 		// and pass through to Future<Void> chaserLight()
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		aisle = Aisle.staticGetDao().reload(aisle);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
+		aisle = Aisle.staticGetDao().reload(getDefaultTenant(),aisle);
 		items = aisle.getInventoryInWorkingOrder();
-		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
+		Future<Void> complete = lightService.lightInventory(getDefaultTenant(),facility.getPersistentId().toString(), aisle.getLocationId());
 		complete.get();
 		
 		LOGGER.info("7: ArgumentCaptor");
@@ -142,18 +143,18 @@ public class LightServiceTest extends ServerTest {
 		
 		serviceManager.stopAsync().awaitStopped();
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 
 	@Test
 	public final void checkTierChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Location parent = facility.findSubLocationById("A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
@@ -165,19 +166,19 @@ public class LightServiceTest extends ServerTest {
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 
 	@Test
 	public final void checkZigZagBayChildLocationSequence() throws IOException, InterruptedException, ExecutionException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*whole bay*/);
@@ -189,7 +190,7 @@ public class LightServiceTest extends ServerTest {
 			assertASampleWillLightLocation(subLocationsIter.next(), message);
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	
@@ -198,17 +199,17 @@ public class LightServiceTest extends ServerTest {
 	 */
 	@Test
 	public final void lightAisleWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
-		b1t1.clearControllerChannel();
+		b1t1.clearControllerChannel(getDefaultTenant());
 		Tier b2t1 = (Tier)facility.findSubLocationById("A1.B2.T1");
-		b2t1.clearControllerChannel();
+		b2t1.clearControllerChannel(getDefaultTenant());
 		
 		
 		Location parent = facility.findSubLocationById("A1");
@@ -221,21 +222,21 @@ public class LightServiceTest extends ServerTest {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 		
 
 	@Test
 	public final void lightBayWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Tier b1t1 = (Tier)facility.findSubLocationById("A1.B1.T1");
-		b1t1.clearControllerChannel();
+		b1t1.clearControllerChannel(getDefaultTenant());
 		
 		
 		Location parent = facility.findSubLocationById("A1.B1");
@@ -248,7 +249,7 @@ public class LightServiceTest extends ServerTest {
 			}
 		}
 	
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	
@@ -257,13 +258,13 @@ public class LightServiceTest extends ServerTest {
 	 */
 	@Test
 	public final void checkChildLocationSequenceForZigZagLayoutAisle() throws IOException, InterruptedException, ExecutionException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.zigzagB1S1Side);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);
@@ -273,7 +274,7 @@ public class LightServiceTest extends ServerTest {
 			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
 		}
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	
@@ -284,7 +285,7 @@ public class LightServiceTest extends ServerTest {
 		ColorEnum color = ColorEnum.RED;
 		
 		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
-		Future<Void> complete = lightService.lightChildLocations(facility, parent, color);
+		Future<Void> complete = lightService.lightChildLocations(getDefaultTenant(),facility, parent, color);
 		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
@@ -361,25 +362,25 @@ public class LightServiceTest extends ServerTest {
 				+ "Tier,T2,,5,32,120,,\r\n"; //
 
 		String fName = "F-" + inOrganizationName;
-		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
+		Facility facility= Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(facility);
-		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
+		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(persistStr);
+		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
 
 		String csvLocationAlias = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T2.S5,D-1\r\n" //
@@ -425,7 +426,7 @@ public class LightServiceTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvLocationAlias), facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvLocationAlias), facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.getChe("CHE1");
@@ -433,23 +434,23 @@ public class LightServiceTest extends ServerTest {
 		Che che2 = network.getChe("CHE2");
 		che2.setColor(ColorEnum.MAGENTA);
 
-		LedController controller1 = network.findOrCreateLedController("0x00000011", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("0x00000012", new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"0x00000011", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),"0x00000012", new NetGuid("0x00000012"));
 		Short channel1 = 1;
 		if (controllerLayout.equals(ControllerLayout.zigzagB1S1Side)) {
 			controller1.addLocation(aisle1);
 			aisle1.setLedChannel(channel1);
-			aisle1.getDao().store(aisle1);
+			aisle1.getDao().store(getDefaultTenant(),aisle1);
 			controller2.addLocation(aisle2);
 			aisle2.setLedChannel(channel1);
-			aisle2.getDao().store(aisle2);
+			aisle2.getDao().store(getDefaultTenant(),aisle2);
 		} else if (controllerLayout.equals(ControllerLayout.tierLeft)) {
 			Tier tier1 = (Tier) facility.findSubLocationById("A1.B1.T1");
-			tier1.setControllerChannel(controller1.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
-			tier1.getDao().store(tier1);
+			tier1.setControllerChannel(getDefaultTenant(),controller1.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
+			tier1.getDao().store(getDefaultTenant(),tier1);
 			Tier tier2 = (Tier) facility.findSubLocationById("A1.B1.T2");
-			tier2.setControllerChannel(controller2.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
-			tier1.getDao().store(tier2);
+			tier2.setControllerChannel(getDefaultTenant(),controller2.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
+			tier1.getDao().store(getDefaultTenant(),tier2);
 		}
 		
 		return facility;

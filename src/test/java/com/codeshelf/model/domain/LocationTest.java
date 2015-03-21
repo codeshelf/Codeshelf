@@ -35,13 +35,13 @@ public class LocationTest extends MockDaoTest {
 	@Test
 	public final void facilityLedRangeZero() {
 		try {
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 
 			Facility facility = createFacilityWithOutboundOrders();
 			Assert.assertEquals(LedRange.zero(), facility.getFirstLastLedsForLocation());
 		} finally {
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 			
 		}
 	}
@@ -49,21 +49,21 @@ public class LocationTest extends MockDaoTest {
 	@Test
 	public final void facilityUnspecificedLocationLedRangeZero() {
 		try {
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 
 			Facility facility = createFacilityWithOutboundOrders();
-			Location location = facility.getUnspecifiedLocation();
+			Location location = facility.getUnspecifiedLocation(getDefaultTenant());
 			Assert.assertEquals(LedRange.zero(), location.getFirstLastLedsForLocation());
 		} finally {
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 			
 		}
 	}
 
 	@Test
 	public final void getLocationIdToParentLevel() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		Facility facility = createFacilityWithOutboundOrders();
 		
@@ -76,6 +76,6 @@ public class LocationTest extends MockDaoTest {
 		String facilityId = bay.getLocationIdToParentLevel(Facility.class);
 		Assert.assertEquals(facilityId, facility.getDomainId()+".A1.B1");
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

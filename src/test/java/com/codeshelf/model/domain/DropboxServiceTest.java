@@ -21,6 +21,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
@@ -40,7 +41,7 @@ public class DropboxServiceTest extends MockDaoTest {
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");
 
-		facility.createDropboxService();
+		facility.createDropboxService(getDefaultTenant());
 
 		DropboxService dropboxService = facility.getDropboxService();
 
@@ -51,7 +52,7 @@ public class DropboxServiceTest extends MockDaoTest {
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		Mockito.when(
-				orderImporter.importOrdersFromCsvStream(any(InputStreamReader.class), any(Facility.class), any(Timestamp.class)))
+				orderImporter.importOrdersFromCsvStream(any(Tenant.class),any(InputStreamReader.class), any(Facility.class), any(Timestamp.class)))
 				.thenReturn(generateFailureResult());
 
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
@@ -60,7 +61,7 @@ public class DropboxServiceTest extends MockDaoTest {
 		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
 		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
 		
-		dropboxService.getUpdatesFromHost(orderImporter,
+		dropboxService.getUpdatesFromHost(getDefaultTenant(),orderImporter,
 			orderLocationImporter,
 			inventoryImporter,
 			locationImporter,

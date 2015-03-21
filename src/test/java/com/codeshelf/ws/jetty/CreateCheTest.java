@@ -44,53 +44,53 @@ public class CreateCheTest extends MockDaoTest {
 	
 	@Test
 	public final void testCreateChe() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
-		Facility.staticGetDao().store(facility);		
+		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		UiUpdateService service = new UiUpdateService();
-		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
-		this.getTenantPersistenceService().commitTransaction();
+		UUID cheid = service.addChe(getDefaultTenant(),facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		Che che = Che.staticGetDao().findByPersistentId(cheid);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Che che = Che.staticGetDao().findByPersistentId(getDefaultTenant(),cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		Assert.assertEquals(che.getProcessMode(), ProcessMode.SETUP_ORDERS);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test
 	public final void testDeleteChe() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
-		Facility.staticGetDao().store(facility);		
+		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		UiUpdateService service = new UiUpdateService();
-		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
-		this.getTenantPersistenceService().commitTransaction();
+		UUID cheid = service.addChe(getDefaultTenant(),facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		service.deleteChe(cheid.toString());
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		service.deleteChe(getDefaultTenant(),cheid.toString());
 
-		Che che = Che.staticGetDao().findByPersistentId(cheid);
+		Che che = Che.staticGetDao().findByPersistentId(getDefaultTenant(),cheid);
 		Assert.assertNull(che);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	
 	@Test
 	// TODO: create proper mock daoProvider / set up injector /?
 	public final void testUpdateCheOK() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 				
-		Facility facility = Facility.createFacility("F1", "facilityf1", Point.getZeroPoint());
-		Facility.staticGetDao().store(facility);		
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facilityf1", Point.getZeroPoint());
+		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -98,7 +98,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(getDefaultTenant(),che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -121,22 +121,22 @@ public class CreateCheTest extends MockDaoTest {
 		Che changedChe = (Che) result;
 		Assert.assertEquals(description2, changedChe.getDescription());
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 	
 	@Test
 	public final void testCheNotFound() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 
 		//setupDaos();
 
-		Facility facility = Facility.createFacility("F1", "facf1",Point.getZeroPoint());
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1",Point.getZeroPoint());
 
-		Facility.staticGetDao().store(facility);		
+		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -144,7 +144,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(getDefaultTenant(),che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -164,21 +164,21 @@ public class CreateCheTest extends MockDaoTest {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 	
 	@Test
 	public final void testBogusCheId() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 		
 		//setupDaos();
 
-		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
-		Facility.staticGetDao().store(facility);		
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -186,7 +186,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(getDefaultTenant(),che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -205,7 +205,7 @@ public class CreateCheTest extends MockDaoTest {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 	}
 	
@@ -236,15 +236,15 @@ public class CreateCheTest extends MockDaoTest {
 	
 	@Test
 	public final void testUndefinedCheId() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String description1 = "che description";
 		String description2 = "changed che description";
 
 		//setupDaos();
 
-		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
-		Facility.staticGetDao().store(facility);		
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		
@@ -252,7 +252,7 @@ public class CreateCheTest extends MockDaoTest {
 		che.setDescription(description1);
 		che.setParent(network);
 		che.setDomainId("C1");
-		Che.staticGetDao().store(che);
+		Che.staticGetDao().store(getDefaultTenant(),che);
 		
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Che");
@@ -271,59 +271,59 @@ public class CreateCheTest extends MockDaoTest {
 		Object result = updateResponse.getResults();
 		Assert.assertNull(result);		
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void cheUpdateFromUISuccess() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Che che = createTestChe("0x00000002");
 		UiUpdateService service = new UiUpdateService();
-		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(getDefaultTenant(),che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		java.util.UUID cheid = che.getPersistentId();
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
-		this.getTenantPersistenceService().beginTransaction();
-		che = Che.staticGetDao().findByPersistentId(cheid);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		che = Che.staticGetDao().findByPersistentId(getDefaultTenant(),cheid);
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		Assert.assertEquals(che.getDescription(), "Updated Description");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		Assert.assertEquals(che.getProcessMode(), ProcessMode.SETUP_ORDERS);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	@Test
 	public void cheUpdateFromUIFail() {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Che che = createTestChe("0x00000003");
 		UiUpdateService service = new UiUpdateService();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(getDefaultTenant(),persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		//Fail to update name
-		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(getDefaultTenant(),persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(getDefaultTenant(),persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(getDefaultTenant(),persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
+		service.updateChe(getDefaultTenant(),persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		//Fail to update process mode
-		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
+		service.updateChe(getDefaultTenant(),persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	private Che createTestChe(String netGuid){
-		Facility facility = Facility.createFacility("F1", "facf1", Point.getZeroPoint());
-		CodeshelfNetwork network = facility.createNetwork("WITEST");
-		Che che = network.createChe(netGuid, new NetGuid(netGuid));
+		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
+		CodeshelfNetwork network = facility.createNetwork(getDefaultTenant(),"WITEST");
+		Che che = network.createChe(getDefaultTenant(),netGuid, new NetGuid(netGuid));
 		return che;
 	}
 

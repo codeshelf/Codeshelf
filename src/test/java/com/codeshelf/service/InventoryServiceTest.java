@@ -28,7 +28,7 @@ public class InventoryServiceTest extends ServerTest {
 	@Override
 	public void doBefore() {
 		super.doBefore();
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		facilityGenerator = new FacilityGenerator(getDefaultTenant());
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
@@ -37,11 +37,11 @@ public class InventoryServiceTest extends ServerTest {
 														createLocationAliasImporter(),
 														createOrderImporter());
 		
-		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
+		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(getDefaultTenant(),testName.getMethodName());
 		
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Override
@@ -55,8 +55,8 @@ public class InventoryServiceTest extends ServerTest {
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityForVirtualSlottingId);
 
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft,gtin\r\n" 	//
 				+ "1120,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135,100\r\n" 			//
@@ -71,16 +71,16 @@ public class InventoryServiceTest extends ServerTest {
 		che1.setColor(ColorEnum.GREEN);
 		
 		// Try moving an existing item
-		inventoryService.moveOrCreateInventory("101", "D403", che1.getPersistentId());
+		inventoryService.moveOrCreateInventory(getDefaultTenant(),"101", "D403", che1.getPersistentId());
 		Location locationD401 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD401);
 		Location locationD502 = facility.findSubLocationById("D502");
 		Assert.assertNotNull(locationD502);
 	
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
-		facility  = Facility.staticGetDao().reload(facility);
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		facility  = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		locationD401 = facility.findSubLocationById("D403");
 		Item item1121D401 = locationD401.getStoredItemFromMasterIdAndUom("1121", "EA");
 		Assert.assertNotNull(item1121D401);
@@ -88,29 +88,29 @@ public class InventoryServiceTest extends ServerTest {
 		locationD502 = facility.findSubLocationById("D502");
 		Item item1120D502 = locationD502.getStoredItemFromMasterIdAndUom("1121", "EA");
 		Assert.assertNull(item1120D502);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 		// Try creating a new item
-		inventoryService.moveOrCreateInventory("201", "D100", che1.getPersistentId());
+		inventoryService.moveOrCreateInventory(getDefaultTenant(),"201", "D100", che1.getPersistentId());
 		
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Location locationD100 = facility.findSubLocationById("D100");
 		Assert.assertNotNull(locationD100);
 		
 		Item item201D100 = locationD100.getStoredItemFromMasterIdAndUom("201", "EA");
 		Assert.assertNotNull(item201D100);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 	}
 	
 	private Facility setupInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		return facility.getDao().findByPersistentId(facility.getPersistentId());
+		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		return facility.getDao().findByPersistentId(getDefaultTenant(),facility.getPersistentId());
 	}
 }

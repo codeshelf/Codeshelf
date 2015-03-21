@@ -20,32 +20,32 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 
 	@Test
 	public void usesDifferentThreads() {
-		this.getTenantPersistenceService().beginTransaction();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator(getDefaultTenant()).getChangeBroadcaster();
 		IDaoListener listener = new DaoTestListener();
 		broadcaster.registerDAOListener(listener, Facility.class);
 		Facility facility = createFacility();
 		facility.setDomainId("A");
-		this.getTenantPersistenceService().getSession().save(facility);
-		this.getTenantPersistenceService().commitTransaction();		
+		this.getTenantPersistenceService().getSession(getDefaultTenant()).save(facility);
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());		
 	}
 	
 	@Test
 	public final void testAddNotification() throws InterruptedException {
 		// register event listener
 		DaoTestListener l = new DaoTestListener();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator(getDefaultTenant()).getChangeBroadcaster();
 		broadcaster.registerDAOListener(l, Facility.class);
 		try {
 			Assert.assertEquals(0, l.getObjectsAdded());
 			// store new organization
 			String desc = "Test-Desc";
-			Session session = tenantPersistenceService.getSession();
+			Session session = tenantPersistenceService.getSession(getDefaultTenant());
 			Transaction t = session.beginTransaction();
 			Facility facility = createFacility();
 			facility.setDomainId("LOADBY-TEST");
 			facility.setDescription(desc);
-			Facility.staticGetDao().store(facility);		
+			Facility.staticGetDao().store(getDefaultTenant(),facility);		
 			UUID id = facility.getPersistentId();
 			t.commit();
 			Thread.sleep(1000); //shame on me
@@ -60,7 +60,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 	@Test
 	public final void testUpdateNotification() throws InterruptedException {
 		DaoTestListener l = new DaoTestListener();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator(getDefaultTenant()).getChangeBroadcaster();
 		try {
 			broadcaster.registerDAOListener(l, Facility.class);
 			
@@ -70,23 +70,23 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			String orgDesc = "org-desc";
 			String updatedDesc = "updated-desc";
 			// create org
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 			Facility facility = new Facility();
 			facility.setDomainId("DELETE-TEST");
 			facility.setDescription(orgDesc);
-			Facility.staticGetDao().store(facility);
+			Facility.staticGetDao().store(getDefaultTenant(),facility);
 			UUID id = facility.getPersistentId();
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 			// make sure org exists and then update it
-			this.getTenantPersistenceService().beginTransaction();
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 			
-			Facility foundFacility = Facility.staticGetDao().findByPersistentId(id);
+			Facility foundFacility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(orgDesc,foundFacility.getDescription());
 			foundFacility.setDescription(updatedDesc);
-			Facility.staticGetDao().store(foundFacility);
-			this.getTenantPersistenceService().commitTransaction();
+			Facility.staticGetDao().store(getDefaultTenant(),foundFacility);
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 			Thread.sleep(1000); //shame on me
 								//lol
@@ -97,11 +97,11 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			Assert.assertTrue(l.getLastObjectPropertiesUpdated().contains("description"));
 
 			// make sure org exists and then update it
-			this.getTenantPersistenceService().beginTransaction();
-			foundFacility= Facility.staticGetDao().findByPersistentId(id);
+			this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
+			foundFacility= Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
 			Assert.assertNotNull(foundFacility);
 			Assert.assertEquals(updatedDesc,foundFacility.getDescription());
-			this.getTenantPersistenceService().commitTransaction();
+			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 			Thread.sleep(1000); //shame on me
 		} finally {
 			broadcaster.unregisterDAOListener(l);
@@ -111,36 +111,36 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 	@Test
 	public final void testDeleteNotification() throws InterruptedException {
 		DaoTestListener l = new DaoTestListener();
-		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
+		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator(getDefaultTenant()).getChangeBroadcaster();
 		broadcaster.registerDAOListener(l, Facility.class);
 		try {
 			Assert.assertEquals(0, l.getObjectsDeleted());
 			
 			// first transaction - create org
-			Session session = tenantPersistenceService.getSession();
+			Session session = tenantPersistenceService.getSession(getDefaultTenant());
 			Transaction t = session.beginTransaction();
 			Facility facility = new Facility();
 			facility.setDomainId("DELETE-TEST");
 			facility.setDescription("DELETE-TEST");
-			Facility.staticGetDao().store(facility);
+			Facility.staticGetDao().store(getDefaultTenant(),facility);
 			UUID id = facility.getPersistentId();
 			t.commit();
 			Thread.sleep(1000); //shame on me
 
 			// make sure org exists and then delete it
-			session = tenantPersistenceService.getSession();
+			session = tenantPersistenceService.getSession(getDefaultTenant());
 			t = session.beginTransaction();
-			Facility foundOrganization = Facility.staticGetDao().findByPersistentId(id);
+			Facility foundOrganization = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
 			Assert.assertNotNull(foundOrganization);
-			Facility.staticGetDao().delete(foundOrganization);
+			Facility.staticGetDao().delete(getDefaultTenant(),foundOrganization);
 			t.commit();
 			Assert.assertNotNull(foundOrganization);
 			Assert.assertEquals(1, l.getObjectsDeleted());
 			
 			// now try to reload it again
-			session = tenantPersistenceService.getSession();
+			session = tenantPersistenceService.getSession(getDefaultTenant());
 			t = session.beginTransaction();
-			foundOrganization = Facility.staticGetDao().findByPersistentId(id);
+			foundOrganization = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
 			Assert.assertNull(foundOrganization);
 			t.commit();
 		} finally {

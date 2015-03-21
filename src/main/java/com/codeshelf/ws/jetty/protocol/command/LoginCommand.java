@@ -33,14 +33,11 @@ public class LoginCommand extends CommandABC {
 
 	private LoginRequest			loginRequest;
 
-	private ObjectChangeBroadcaster	objectChangeBroadcaster;
-	
 	private WebSocketManagerService sessionManager;
 
-	public LoginCommand(WebSocketConnection wsConnection, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
+	public LoginCommand(WebSocketConnection wsConnection, LoginRequest loginRequest, WebSocketManagerService sessionManager) {
 		super(wsConnection);
 		this.loginRequest = loginRequest;
-		this.objectChangeBroadcaster = objectChangeBroadcaster;
 		this.sessionManager = sessionManager;
 	}
 
@@ -62,51 +59,70 @@ public class LoginCommand extends CommandABC {
 							+ wsConnection.getSessionId());
 
 					// determine if site controller
-					SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
-					CodeshelfNetwork network = null;
-					if (sitecon != null) {
-						network = TenantPersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());
+					// LoginCommand does NOT have a transaction opened by endpoint
 					
-						// send all network updates to this session for this network 
-						NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
-					} // else regular user session
-
-					// update session counters
-					this.sessionManager.updateCounters();
-
-					// generate login response
-					response.setUser(authUser);
-					response.setStatus(ResponseStatus.Success);
-					response.setOrganization(new Organization()); // just to avoid changing UI...
-					response.setNetwork(network);
-
-					// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
-					if (network != null) {
-						IPropertyService properties = PropertyService.getInstance();
+					SiteController sitecon = null;
+					CodeshelfNetwork network = null;
+					TenantPersistenceService.getInstance().beginTransaction(tenant);
+					try {
+						sitecon = SiteController.staticGetDao().findByDomainId(tenant, null, username);
+						network = null;
+						if (sitecon != null) {
+							network = sitecon.getParent();
+							
+							// our session is going to be closed by the time the response is serialized
+							// so this is to avoid lazy init errors
+							// TODO: handle this better
+							for(String cheId : network.getChes().keySet()) { network.getChes().get(cheId); }
+							for(String ledId : network.getLedControllers().keySet()) { network.getLedControllers().get(ledId); }
+							for(String scId : network.getSiteControllers().keySet()) { network.getSiteControllers().get(scId); }
+							
+							network = TenantPersistenceService.<CodeshelfNetwork>deproxify(network);
 						
-						Facility facility = network.getParent();
-						String valueStr = properties.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
-						response.setAutoShortValue(Boolean.parseBoolean(valueStr));
+							// send all network updates to this session for this network 
+							ObjectChangeBroadcaster ocb = TenantPersistenceService.getInstance().getEventListenerIntegrator(tenant).getChangeBroadcaster();
+							NetworkChangeListener.registerWithSession(tenant,ocb, wsConnection, network);
+						} // else regular user session
 
-						String pickInfo = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
-						response.setPickInfoValue(pickInfo);
-
-						String containerType = properties.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
-						response.setContainerTypeValue(containerType);
-						
-						String scanType = properties.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
-						response.setScanTypeValue(scanType);
-						
-						String sequenceKind = properties.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
-						response.setSequenceKind(sequenceKind);
-						
-						String pickMultValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKMULT);
-						response.setPickMultValue(pickMultValue);
-
-					} else {
-						response.setAutoShortValue(false); // not read by client. No need to look it up.
+						// update session counters
+						this.sessionManager.updateCounters();
+	
+						// generate login response
+						response.setUser(authUser);
+						response.setStatus(ResponseStatus.Success);
+						response.setOrganization(new Organization()); // just to avoid changing UI...
+						response.setNetwork(network);
+	
+						// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
+						if (network != null) {
+							IPropertyService properties = PropertyService.getInstance();
+							
+							Facility facility = network.getParent();
+							String valueStr = properties.getPropertyFromConfig(getTenant(),facility, DomainObjectProperty.AUTOSHRT);
+							response.setAutoShortValue(Boolean.parseBoolean(valueStr));
+	
+							String pickInfo = properties.getPropertyFromConfig(getTenant(),facility, DomainObjectProperty.PICKINFO);
+							response.setPickInfoValue(pickInfo);
+	
+							String containerType = properties.getPropertyFromConfig(getTenant(),facility, DomainObjectProperty.CNTRTYPE);
+							response.setContainerTypeValue(containerType);
+							
+							String scanType = properties.getPropertyFromConfig(getTenant(),facility, DomainObjectProperty.SCANPICK);
+							response.setScanTypeValue(scanType);
+							
+							String sequenceKind = properties.getPropertyFromConfig(getTenant(),facility, DomainObjectProperty.WORKSEQR);
+							response.setSequenceKind(sequenceKind);
+							
+							String pickMultValue = properties.getPropertyFromConfig(getTenant(),facility, DomainObjectProperty.PICKMULT);
+							response.setPickMultValue(pickMultValue);
+	
+						} else {
+							response.setAutoShortValue(false); // not read by client. No need to look it up.
+						}
+	
+					} finally {
+						TenantPersistenceService.getInstance().commitTransaction(tenant);
 					}
-
 				} finally {
 					CodeshelfSecurityManager.removeCurrentUser();
 				}

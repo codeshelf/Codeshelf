@@ -59,17 +59,17 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 	
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void networkConnectionTest() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		
 		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
-		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
+		service.storeCredentials(getDefaultTenant(),"540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		String message = "TESTMESSAGE" + System.currentTimeMillis();
 		service.sendWorkInstructionsToHost(message);
 		String[] messages = new String[0];
@@ -85,23 +85,23 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		while(messages.length > 0);
 		Assert.assertTrue("Did not find work instruction message: " + message, found);
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 	
 	
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badTokenTest() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
-		service.storeCredentials("540e1486364af100050000b4", "BAD");
+		service.storeCredentials(getDefaultTenant(),"540e1486364af100050000b4", "BAD");
 		try {
 			service.sendWorkInstructionsToHost("TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
@@ -109,22 +109,22 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 			e.printStackTrace();
 		}
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badProjectId() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
-		Facility facility = facilityGenerator.generateValid();
+		Facility facility = facilityGenerator.generateValid(getDefaultTenant());
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
-		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
+		service.storeCredentials(getDefaultTenant(),"BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		try {
 			service.sendWorkInstructionsToHost("TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
@@ -132,7 +132,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 			e.printStackTrace();
 
 		
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 }
 	}
 

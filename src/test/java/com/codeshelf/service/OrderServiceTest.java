@@ -17,7 +17,7 @@ public class OrderServiceTest extends ServerTest{
 	
 	@Test
 	public void orderdetailNoLocation() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = setUpSimpleNoSlotFacility();
 		Location exists = new LinkedList<Location>(facility.getSubLocationsInWorkingOrder()).getLast();
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,locationId"
@@ -26,12 +26,12 @@ public class OrderServiceTest extends ServerTest{
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,7,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
-		this.getTenantPersistenceService().beginTransaction();
+		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		OrderService orderService = new OrderService();
-		Session session = this.getTenantPersistenceService().getSession();
-		Collection<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(getTenantPersistenceService().getDefaultSchema(), session, facility.getPersistentId());
+		Session session = this.getTenantPersistenceService().getSession(getDefaultTenant());
+		Collection<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(getDefaultTenant(), session, facility.getPersistentId());
 		Assert.assertEquals(3, orderDetails.size());
 		int totalQuantity = 0;
 		for (OrderDetailView orderDetailView : orderDetails) {
@@ -40,6 +40,6 @@ public class OrderServiceTest extends ServerTest{
 			
 		}
 		Assert.assertEquals(15, totalQuantity);
-		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
 }

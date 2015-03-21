@@ -12,6 +12,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.CompareNullChecker;
 
@@ -61,12 +62,12 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	 * @param inWiList
 	 * @return
 	 */
-	public static List<WorkInstruction> setSortCodesByCurrentSequence(List<WorkInstruction> inWiList) {
+	public static List<WorkInstruction> setSortCodesByCurrentSequence(Tenant tenant,List<WorkInstruction> inWiList) {
 		int count = 0;
 		for (WorkInstruction wi : inWiList) {
 			count++;
 			wi.setGroupAndSortCode(String.format("%04d", count));
-			WorkInstruction.staticGetDao().store(wi);
+			WorkInstruction.staticGetDao().store(tenant,wi);
 		}
 
 		return inWiList;

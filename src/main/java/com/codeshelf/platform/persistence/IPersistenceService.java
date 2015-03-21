@@ -8,28 +8,23 @@ import com.codeshelf.service.CodeshelfService;
 
 public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends CodeshelfService {
 
-	public SCHEMA_TYPE getDefaultSchema();
+	// get a session, or one with a transaction, or a transaction
 	public Session getSession(SCHEMA_TYPE schema);
-	public SessionFactory getSessionFactory(SCHEMA_TYPE schema);
-	public EventListenerIntegrator getEventListenerIntegrator(SCHEMA_TYPE schema);
-	public void forgetInitialActions(SCHEMA_TYPE schema);
-	public boolean hasActiveTransaction(SCHEMA_TYPE schema);
-
-	public boolean hasAnyActiveTransactions();
-	public boolean rollbackAnyActiveTransactions();
-
 	public Session getSessionWithTransaction(SCHEMA_TYPE schema);
 	public Transaction beginTransaction(SCHEMA_TYPE schema);
+
+	// end transaction (& session)
 	public void commitTransaction(SCHEMA_TYPE schema);
 	public void rollbackTransaction(SCHEMA_TYPE schema);
 
-	// methods for using default schema
-	public Transaction beginTransaction();
-	public void commitTransaction();
-	public void rollbackTransaction();
-	public Session getSession();
-	public Session getSessionWithTransaction();
-	public SessionFactory getSessionFactory();
-	public EventListenerIntegrator getEventListenerIntegrator();
+	// framework methods
+	public SessionFactory getSessionFactory(SCHEMA_TYPE schema);
+	public EventListenerIntegrator getEventListenerIntegrator(SCHEMA_TYPE schema);
+
+	// test methods
+	public void forgetInitialActions(SCHEMA_TYPE schema);
+	public boolean hasAnyActiveTransactions();
+	public boolean rollbackAnyActiveTransactions();
+	public boolean hasActiveTransaction(SCHEMA_TYPE schema);
 
 }

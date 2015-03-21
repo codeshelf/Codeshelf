@@ -8,6 +8,7 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -29,10 +30,13 @@ public class NetworkChangeListener implements ObjectEventListener {
 	
 	@Getter
 	private CodeshelfNetwork network;
+	
+	private Tenant tenant;
 
-	private NetworkChangeListener(CodeshelfNetwork network,String listenerId) {
+	private NetworkChangeListener(Tenant tenant, CodeshelfNetwork network,String listenerId) {
 		this.network=network;
 		this.id=listenerId;
+		this.tenant = tenant;
 	}
 	
 	@Override
@@ -62,11 +66,11 @@ public class NetworkChangeListener implements ObjectEventListener {
 	private MessageABC onAnythingChanged(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		CodeshelfNetwork network = null;
 		if(WirelessDeviceABC.class.isAssignableFrom(domainClass)) {
-			WirelessDeviceABC object = (WirelessDeviceABC) TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(domainPersistentId);
+			WirelessDeviceABC object = (WirelessDeviceABC) TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(tenant,domainPersistentId);
 			network = object.getParent();
 			
 		} else if(CodeshelfNetwork.class.isAssignableFrom(domainClass)) {
-			network = (CodeshelfNetwork) TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(domainPersistentId);
+			network = (CodeshelfNetwork) TenantPersistenceService.getInstance().getDao(domainClass).findByPersistentId(tenant,domainPersistentId);
 		}
 		if(network != null) {
 			// if the object changed within this network, generate a new network status response
@@ -77,9 +81,9 @@ public class NetworkChangeListener implements ObjectEventListener {
 		return null;
 	}
 	
-	public static void registerWithSession(ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketConnection session, CodeshelfNetwork network) {
+	public static void registerWithSession(Tenant tenant, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketConnection session, CodeshelfNetwork network) {
 		// register network change listener
-		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
+		NetworkChangeListener listener = new NetworkChangeListener(tenant,network,"network-change-listener");
 		session.registerObjectEventListener(listener);
 		// register DAOs
 		objectChangeBroadcaster.registerDAOListener(session, Che.class);
