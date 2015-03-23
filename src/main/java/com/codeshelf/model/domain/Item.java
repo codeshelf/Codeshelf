@@ -453,10 +453,17 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public String getGtinId() {
 		UomMaster uomMaster = getUomMaster();
+		Gtin gtin = null;
 		
 		if (uomMaster != null){
-			return getParent().getGtinForUom(uomMaster).getDomainId();
+			gtin = getParent().getGtinForUom(uomMaster);
+			if (gtin != null){
+				return gtin.getDomainId();
+			} else {
+				return "";
+			}
 		} else {
+			LOGGER.error("UOM Master for {} was null.", this.getDomainId());
 			return "";
 		}
 	}

@@ -580,9 +580,16 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public String getGtinId(){
 		ItemMaster im = getItemMaster();
 		UomMaster um = orderDetail.getUomMaster();
+		Gtin gtin = null;
 		
 		if (im != null && um != null) {
-			return im.getGtinForUom(um).getDomainId();
+			gtin = im.getGtinForUom(um);
+			
+			if (gtin != null) {
+				return gtin.getDomainId();
+			} else {
+				return "";
+			}
 		} else {
 			return "";
 		}
