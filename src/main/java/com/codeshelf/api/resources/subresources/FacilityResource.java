@@ -63,34 +63,34 @@ public class FacilityResource {
 	public Response getBlockedWorkNoLocation() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
-			Session session = persistenceService.getSessionWithTransaction();
+			Session session = persistenceService.getSession();
 			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(persistenceService.getDefaultSchema(), session, mUUIDParam.getUUID()));
 		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
 			return errors.buildResponse();
 		}
-		finally {
-			persistenceService.commitTransaction();
-		}
 	}
-	
+
+    /*
+	@GET
+	@Path("/work/results")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkResults(@QueryParam("startTimestamp") String startTimestamp, @QueryParam("endTimestamp") String endTimestamp) {
+		Date startDatetime = dateTimeParser.parse(startTimestamp);
+		Date endDatetime = dateTimeParser.parse(endTimestamp);
+		List<WorkInstruction> results = this.workService.getWorkResults(mUUIDParam.getUUID(), startDatetime, endDatetime);
+		return BaseResponse.buildResponse(results);
+	}
+	*/
+
 	@GET
 	@Path("/work/topitems")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorkByItem() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		try {
-			Session session = persistenceService.getSessionWithTransaction();
-			return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, mUUIDParam.getUUID()));
-		} catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
-		}
-		finally {
-			persistenceService.commitTransaction();
-		}
+		Session session = persistenceService.getSession();
+		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, mUUIDParam.getUUID()));
 	}
 
 	@GET
@@ -98,36 +98,22 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkShorts() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		try {
-			Session session = persistenceService.getSessionWithTransaction();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, mUUIDParam.getUUID(), OrderStatusEnum.SHORT));
-		} catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
-		}
-		finally {
-			persistenceService.commitTransaction();
-		}
+		Session session = persistenceService.getSession();
+		return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, mUUIDParam.getUUID(), OrderStatusEnum.SHORT));
 	}
 
 	@GET
 	@Path("/productivity")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getProductivitySummary() {
+	public Response getProductivitySummary() throws Exception {
 		ErrorResponse errors = new ErrorResponse();
 		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
 			return errors.buildResponse();
 		}
 
-		try {
-			ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-			ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), mUUIDParam.getUUID(), false);
-			return BaseResponse.buildResponse(summary);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		}
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), mUUIDParam.getUUID(), false);
+		return BaseResponse.buildResponse(summary);
 	}
 
 	@GET
@@ -139,19 +125,9 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		try {
-			persistenceService.beginTransaction();
-			List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
-			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
-			return BaseResponse.buildResponse(summary);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		}
-		finally {
-			persistenceService.commitTransaction();
-		}
+		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
+		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
+		return BaseResponse.buildResponse(summary);
 	}
 
 
@@ -165,18 +141,8 @@ public class FacilityResource {
 			return errors.buildResponse();
 		}
 
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		try {
-			persistenceService.beginTransaction();
-			List<WorkInstruction> instructions = orderService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
-			return BaseResponse.buildResponse(instructions);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		}
-		finally {
-			persistenceService.commitTransaction();
-		}
+		List<WorkInstruction> instructions = orderService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
+		return BaseResponse.buildResponse(instructions);
 	}
 
 	@GET
@@ -184,15 +150,9 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		try {
-			persistenceService.beginTransaction();
-			Session session = persistenceService.getSession();
-			Set<String> filterNames = orderService.getFilterNames(session);
-			return BaseResponse.buildResponse(filterNames);
-		}
-		finally {
-			persistenceService.commitTransaction();
-		}
+		Session session = persistenceService.getSession();
+		Set<String> filterNames = orderService.getFilterNames(session);
+		return BaseResponse.buildResponse(filterNames);
 	}
 
 	@GET
@@ -204,19 +164,10 @@ public class FacilityResource {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		try {
-			persistenceService.beginTransaction();
-			Session session = persistenceService.getSession();
-			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, mUUIDParam.getUUID(), aggregate, filterName);
+		Session session = persistenceService.getSession();
+		ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, mUUIDParam.getUUID(), aggregate, filterName);
 
-			return BaseResponse.buildResponse(summary);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		}
-		finally {
-			persistenceService.commitTransaction();
-		}
+		return BaseResponse.buildResponse(summary);
 	}
 
 	@PUT

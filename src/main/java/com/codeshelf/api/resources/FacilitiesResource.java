@@ -25,8 +25,6 @@ public class FacilitiesResource {
 	@Context
 	private ResourceContext resourceContext;
 	
-	private ITenantPersistenceService persistence = TenantPersistenceService.getInstance();
-	
 	@Path("{id}")
 	public FacilityResource getManufacturer(@PathParam("id") UUIDParam uuidParam) throws Exception {
 		FacilityResource r = resourceContext.getResource(FacilityResource.class);
@@ -37,17 +35,8 @@ public class FacilitiesResource {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllFacilities() {
-		ErrorResponse errors = new ErrorResponse();
-		try {
-			persistence.beginTransaction();
-			List<Facility> facilities = Facility.staticGetDao().getAll();
-			List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
-			return BaseResponse.buildResponse(facilitiesShort);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		List<Facility> facilities = Facility.staticGetDao().getAll();
+		List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
+		return BaseResponse.buildResponse(facilitiesShort);
 	}
 }
