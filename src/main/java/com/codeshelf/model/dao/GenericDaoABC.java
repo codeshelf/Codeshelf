@@ -21,6 +21,7 @@ import org.hibernate.Query;
 import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,6 +138,20 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
         Criteria criteria = session.createCriteria(getDaoClass());
 		for (Criterion expression : inFilter) {
 			criteria.add(expression);
+		}
+		List<T> results = criteria.list();
+		return results;
+	}
+	
+	public final List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys) {
+		// If we have a valid filter then get the filtered objects.
+		Session session = getCurrentSession();
+        Criteria criteria = session.createCriteria(getDaoClass());
+		for (Criterion expression : inFilter) {
+			criteria.add(expression);
+		}
+		for(Order order: inOrderBys) {
+			criteria.addOrder(order);
 		}
 		List<T> results = criteria.list();
 		return results;
