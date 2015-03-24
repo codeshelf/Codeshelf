@@ -103,21 +103,21 @@ public class CheProcessTestPick extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvAisles), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle2.associatePathSegment(persistStr);
 
 		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T1.S1,D-96\r\n" + "A1.B1.T1.S2,D-97\r\n" + "A1.B1.T1.S3,D-98\r\n"
@@ -175,11 +175,11 @@ public class CheProcessTestPick extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvAliases), getFacility(), ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"1", new NetGuid("0x00000011"));
+		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
 
 		Short channel1 = 1;
 		Location aisle1x = getFacility().findSubLocationById("A1");
@@ -519,7 +519,7 @@ public class CheProcessTestPick extends ServerTest {
 		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.staticGetDao().findByPersistentId(getDefaultTenant(),che1PersistentId);
-		workService.setUpCheContainerFromString(getDefaultTenant(),che1, "12345");
+		workService.setUpCheContainerFromString(che1, "12345");
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
@@ -1953,10 +1953,10 @@ public class CheProcessTestPick extends ServerTest {
 		UiUpdateService service = new UiUpdateService();
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork(getDefaultTenant(),"WITEST");
-		Che che = network.createChe(getDefaultTenant(),"0x00000004", new NetGuid("0x00000004"));
+		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
 
 		//Get default mode in a facility without aisles
-		ProcessMode processMode = service.getDefaultProcessMode(getDefaultTenant(),che.getPersistentId().toString());
+		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
 		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles",
 			processMode,
 			ProcessMode.LINE_SCAN);
@@ -1964,7 +1964,7 @@ public class CheProcessTestPick extends ServerTest {
 		//Get default mode in a facility with aisles
 		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
 		Aisle.staticGetDao().store(getDefaultTenant(),aisle);
-		processMode = service.getDefaultProcessMode(getDefaultTenant(),che.getPersistentId().toString());
+		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
 		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles",
 			processMode,
 			ProcessMode.SETUP_ORDERS);

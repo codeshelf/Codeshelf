@@ -39,6 +39,7 @@ import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -153,7 +154,8 @@ public class IronMqService extends EdiServiceABC {
 		setProviderCredentials(json);
 	}
 
-	public void storeCredentials(Tenant tenant,String projectId,  String token) {
+	public void storeCredentials(String projectId,  String token) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		setCredentials(projectId, token);
 		if(getHasCredentials()) {
 			try {

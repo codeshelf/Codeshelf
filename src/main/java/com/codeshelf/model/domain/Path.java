@@ -39,6 +39,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -253,9 +254,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	 * @param inHead
 	 * @param inTail
 	 */
-	public PathSegment createPathSegment(Tenant tenant,final Integer inSegmentOrder,
+	public PathSegment createPathSegment(final Integer inSegmentOrder,
 		final Point inHead,
 		final Point inTail) {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		/* TODO a zero distance path segment isn't useful and unrealistic
 		if (inHead.equals(inTail)) {

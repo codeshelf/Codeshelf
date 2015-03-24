@@ -77,7 +77,7 @@ public class ImportResource {
 			}
 			// process file
 			Reader reader = new InputStreamReader(fileInputStream);
-			boolean result = this.aislesFileCsvImporter.importAislesFileFromCsvStream(tenant,reader, facility, new Timestamp(System.currentTimeMillis()));
+			boolean result = this.aislesFileCsvImporter.importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
 				return BaseResponse.buildResponse(null,200);				
 			}
@@ -112,7 +112,7 @@ public class ImportResource {
 				return BaseResponse.buildResponse(null,404);
 			}
 			Reader reader = new InputStreamReader(fileInputStream);
-			boolean result = this.locationAliasImporter.importLocationAliasesFromCsvStream(tenant, reader, facility, new Timestamp(System.currentTimeMillis()));
+			boolean result = this.locationAliasImporter.importLocationAliasesFromCsvStream( reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
 				return BaseResponse.buildResponse(null,200);				
 			}
@@ -148,7 +148,7 @@ public class ImportResource {
 				return BaseResponse.buildResponse(null,404);
 			}
 			Reader reader = new InputStreamReader(fileInputStream);
-			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(tenant,reader, facility, new Timestamp(System.currentTimeMillis()));
+			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			return BaseResponse.buildResponse(null,200);				
 		}
 		catch (Exception e) {
@@ -181,7 +181,7 @@ public class ImportResource {
 				return BaseResponse.buildResponse(null,404);
 			}
 			Reader reader = new InputStreamReader(fileInputStream);
-			boolean result = this.inventoryImporter.importSlottedInventoryFromCsvStream(tenant,reader, facility, new Timestamp(System.currentTimeMillis()));
+			boolean result = this.inventoryImporter.importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
 				return BaseResponse.buildResponse(null,200);				
 			}

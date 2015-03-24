@@ -63,15 +63,15 @@ public class LocationDeleteTest extends ServerTest {
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle2.associatePathSegment(persistStr);
 
 		readLocationAliases(facility);
 
@@ -82,8 +82,8 @@ public class LocationDeleteTest extends ServerTest {
 		Che che2 = network.getChe("CHE2");
 		che1.setColor(ColorEnum.MAGENTA);
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
 		
 		Short channel1 = 1;
 		controller1.addLocation(aisle1);
@@ -153,7 +153,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, inFacility, ediProcessTime2);		
+		importer2.importLocationAliasesFromCsvStream(reader2, inFacility, ediProcessTime2);		
 	}
 
 	private void readStandardAisleFile(Facility inFacility) {
@@ -180,7 +180,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, inFacility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
 	private void readSmallerAisleFile(Facility inFacility) {
@@ -208,7 +208,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, inFacility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
 	private void readInventory(Facility inFacility) {
@@ -226,7 +226,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, inFacility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
 	@SuppressWarnings("unused")
@@ -253,7 +253,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),reader, inFacility, ordersEdiProcessTime);
+		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
 
 		// Slotting file
 
@@ -320,7 +320,7 @@ public class LocationDeleteTest extends ServerTest {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		propertyService.turnOffHK(getDefaultTenant(),facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
-		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "11");
+		workService.setUpCheContainerFromString(theChe, "11");
 
 		List<WorkInstruction> aList = workService.getWorkInstructions(getDefaultTenant(),theChe, "");
 
@@ -344,7 +344,7 @@ public class LocationDeleteTest extends ServerTest {
 		Assert.assertTrue(aisle1.getActive());
 
 		LOGGER.info("Making aisle A1 inactive, with its children");
-		aisle1.makeInactiveAndAllChildren(getDefaultTenant());
+		aisle1.makeInactiveAndAllChildren();
 		// fetch again as the earlier reference is probably stale
 		aisle1 = (Aisle) facility.findSubLocationById("A1");
 		Assert.assertFalse(aisle1.getActive());

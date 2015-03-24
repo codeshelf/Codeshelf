@@ -43,6 +43,7 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.platform.caching.DomainObjectCache;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.validation.BatchResult;
@@ -79,9 +80,11 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final BatchResult<Object> importOrdersFromCsvStream(Tenant tenant,final Reader inCsvReader,
+	public final BatchResult<Object> importOrdersFromCsvStream(final Reader inCsvReader,
 		final Facility inFacility,
 		Timestamp inProcessTime) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		// Get our LOCAPICK configuration value. It will not change during importing one file.
 		boolean locapickValue = PropertyService.getInstance().getBooleanPropertyFromConfig(tenant,inFacility, DomainObjectProperty.LOCAPICK);
 		mEvaluationList.clear();

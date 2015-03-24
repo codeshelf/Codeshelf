@@ -47,9 +47,6 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Facility facility = createFacility();
 
-		// serializing requires a user context because it depends on tenant specific property configuration
-		this.createMockWsConnection();
-		
 		ObjectMapper mapper = new ObjectMapper();
 		ObjectNode objectNode= mapper.valueToTree(facility);
 		
@@ -73,7 +70,7 @@ public class FacilityTest extends ServerTest { // TODO: mock property service so
 		
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),id);
-		facility.removeAllVertices(getDefaultTenant());
+		facility.removeAllVertices();
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());

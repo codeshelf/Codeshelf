@@ -36,6 +36,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -153,7 +154,9 @@ public class Che extends WirelessDeviceABC {
 		}
 	}
 	
-	public void clearChe(Tenant tenant) {
+	public void clearChe() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
 
 		// This is ugly. We probably do want a housekeeping type here, but then might want subtypes not in this query
@@ -178,7 +181,7 @@ public class Che extends WirelessDeviceABC {
 				// detail is optional from v5
 				if (owningDetail != null) {
 					owningDetail.removeWorkInstruction(wi); // necessary? new from v3
-					owningDetail.reevaluateStatus(tenant);
+					owningDetail.reevaluateStatus();
 				}
 				WorkInstruction.staticGetDao().delete(tenant,wi);
 			} catch (DaoException e) {

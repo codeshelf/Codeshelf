@@ -33,6 +33,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.service.WorkService.Work;
 import com.codeshelf.validation.BatchResult;
@@ -65,11 +66,13 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final int importCrossBatchesFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
+	public final int importCrossBatchesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) {
 
 		LOGGER.debug("Begin cross batch import.");
 		List<CrossBatchCsvBean> crossBatchBeanList = toCsvBean(inCsvStreamReader, CrossBatchCsvBean.class);
 
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		
 		int importedRecords = 0;
 		Set<String> importedContainerIds = new HashSet<String>();
 		// Iterate over the put batch import beans.

@@ -92,7 +92,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer4 = createOrderImporter();
-		importer4.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString4), facility, ediProcessTime4);
+		importer4.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
 
 		order1111 = facility.getOrderHeader("01111");
 		Assert.assertNotNull(order1111);
@@ -538,7 +538,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		importer.importOrderLocationsFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
@@ -566,7 +566,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		reader = new InputStreamReader(stream);
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrderLocationsFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
 
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
@@ -673,7 +673,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		// **************
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		return importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		return importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		
 	}
 	
@@ -682,7 +682,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		boolean result = importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		boolean result = importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return result;
 	}
 

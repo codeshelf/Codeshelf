@@ -17,6 +17,6 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvOrderLocationImporter {
 
-	boolean importOrderLocationsFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importOrderLocationsFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

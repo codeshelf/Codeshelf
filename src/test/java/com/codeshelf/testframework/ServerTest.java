@@ -106,29 +106,29 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest(getDefaultTenant(),getFacility());
-		PathSegment segment02 = addPathSegmentForTest(getDefaultTenant(),path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(getFacility());
+		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(getDefaultTenant(),persistStr2);
+		aisle3.associatePathSegment(persistStr2);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
@@ -151,13 +151,13 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, getFacility(), ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),"2", new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),"3", new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController("3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -211,17 +211,17 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(aislesCsvString), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 3d, 6d, 5d, 6d);
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 3d, 6d, 5d, 6d);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" +
 				"A1.B1.T1,LocX24\r\n" + 
@@ -231,11 +231,11 @@ public abstract class ServerTest extends HibernateTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
+		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"LED1", new NetGuid("0x00000011"));
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -318,25 +318,25 @@ public abstract class ServerTest extends HibernateTest {
 	protected void importInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
 	protected void importOrdersData(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
 	protected boolean importSlotting(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		return importer.importOrderLocationsFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 	
 	protected int importBatchData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = createCrossBatchImporter();
-		return importer.importCrossBatchesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
 	}
 	
@@ -345,7 +345,7 @@ public abstract class ServerTest extends HibernateTest {
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe(cheName);
 	
-		workService.setUpCheContainerFromString(tenant,theChe, containers);
+		workService.setUpCheContainerFromString(theChe, containers);
 	
 		List<WorkInstruction> wiList = workService.getWorkInstructions(tenant,theChe, ""); // This returns them in working order.
 		logWiList(wiList);

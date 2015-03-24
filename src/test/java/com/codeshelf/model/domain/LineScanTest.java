@@ -34,8 +34,9 @@ public class LineScanTest extends ServerTest {
 	private ICsvOrderImporter importer;
 	private ServerMessageProcessor	processor;
 
-	@Before
-	public void initTest() throws IOException {
+	@Override
+	public void doBefore() {
+		super.doBefore();
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		importer = createOrderImporter();
 		Facility facility = createFacility(); 
@@ -48,7 +49,11 @@ public class LineScanTest extends ServerTest {
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10"
 				+ "\r\n11,11,10.1,SKU0005,Mars Bars,20,EA,,pick,D36,10";
-		importCsvString(facility, csvString);
+		try {
+			importCsvString(facility, csvString);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
@@ -58,7 +63,7 @@ public class LineScanTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Che che = Che.staticGetDao().getAll(getDefaultTenant()).get(0);
 
-		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(getDefaultTenant(),che, "11.1");
+		GetOrderDetailWorkResponse response = workService.getWorkInstructionsForOrderDetail(che, "11.1");
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getDescription(), "Spoon 6in.");
@@ -118,9 +123,9 @@ public class LineScanTest extends ServerTest {
 		instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 		instruction.setType(WorkInstructionTypeEnum.ACTUAL);
 		instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
-		workService.completeWorkInstruction(getDefaultTenant(),che.getPersistentId(), instruction);
+		workService.completeWorkInstruction(che.getPersistentId(), instruction);
 
-		response = workService.getWorkInstructionsForOrderDetail(getDefaultTenant(),che, "11.1"); 
+		response = workService.getWorkInstructionsForOrderDetail(che, "11.1"); 
 		instructions = response.getWorkInstructions();
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
@@ -143,7 +148,7 @@ public class LineScanTest extends ServerTest {
 	
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		BatchResult<Object> results = importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		BatchResult<Object> results = importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return results;
 	}
 }

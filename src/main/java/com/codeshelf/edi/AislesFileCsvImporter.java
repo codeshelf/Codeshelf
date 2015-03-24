@@ -43,6 +43,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -136,10 +137,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importAislesFileFromCsvStream(Tenant tenant,Reader inCsvReader,
+	public final boolean importAislesFileFromCsvStream(Reader inCsvReader,
 		Facility inFacility,
 		Timestamp inProcessTime) {
- 		boolean result = true;
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
+		boolean result = true;
 
  		mLocationsNotToClone = new HashMap<UUID, Location>();
 		mFacility = inFacility;
@@ -194,7 +197,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					finalizeTiersInThisAisle(tenant,lastAisle);
 					// Kludge!  make sure lastAisle reference is not stale
 					lastAisle = Aisle.staticGetDao().findByDomainId(tenant,mFacility, lastAisle.getDomainId());
-					finalizeVerticesThisAisle(tenant,lastAisle, mLastReadBayForVertices);
+					finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 					// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
 					// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
 				}
@@ -210,7 +213,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				finalizeTiersInThisAisle(tenant,theAisleReference);
 				// Kludge! make sure lastAisle reference is not stale
 				theAisleReference = Aisle.staticGetDao().findByDomainId(tenant,mFacility, theAisleReference.getDomainId());
-				finalizeVerticesThisAisle(tenant,theAisleReference, mLastReadBay);
+				finalizeVerticesThisAisle(theAisleReference, mLastReadBay);
 				makeUnusedLocationsInactive(tenant,theAisleReference);
 			}
 
@@ -471,7 +474,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				if (made < needToMake) {
 					String theDomainID = Integer.toString(changingRadioID);
 					if (network.getLedController(theDomainID) == null) {
-						LedController newCtlr = network.findOrCreateLedController(tenant,theDomainID, new NetGuid("0x" + theDomainID));
+						LedController newCtlr = network.findOrCreateLedController(theDomainID, new NetGuid("0x" + theDomainID));
 						if (newCtlr != null)
 							made++;
 					}
@@ -506,9 +509,11 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/**
 	 * @param inAisle
 	 */
-	private void finalizeVerticesThisAisle(Tenant tenant,final Aisle inAisle, Bay inLastBayThisAisle) {
+	private void finalizeVerticesThisAisle(final Aisle inAisle, Bay inLastBayThisAisle) {
 		// See Facility.createOrUpdateVertices(), which is/was private
 		// For this, we might editing existing vertices, or making new.
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		if (mFacility == null || inLastBayThisAisle == null)
 			return;
 
@@ -540,7 +545,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		Point aPoint = new Point(PositionTypeEnum.METERS_FROM_PARENT, boundaryPointX, boundaryPointY, 0.0);
 
 		// Create, or later adjust existing vertices, if any
-		mFacility.createOrUpdateVertices(tenant,inAisle, aPoint);
+		mFacility.createOrUpdateVertices(inAisle, aPoint);
 
 		// Each bay also has vertices. The point will come from pickfaceEnd, then translate to the anchor coordinate system for the vertices.
 		List<Bay> locationList = inAisle.getActiveChildrenAtLevel(Bay.class);
@@ -550,7 +555,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		while (li.hasNext()) {
 			Bay thisBay = (Bay) li.next();
 			Point bayPoint = getNewBoundaryPoint(thisBay, depthM, isXOrientedAisle);
-			mFacility.createOrUpdateVertices(tenant,thisBay, bayPoint);
+			mFacility.createOrUpdateVertices(thisBay, bayPoint);
 		}
 	}
 
@@ -1311,7 +1316,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 						finalizeTiersInThisAisle(tenant,lastAisle);
 						// Kludge!  make sure lastAisle reference is not stale
 						lastAisle = Aisle.staticGetDao().findByDomainId(tenant,mFacility, lastAisle.getDomainId());
-						finalizeVerticesThisAisle(tenant,lastAisle, mLastReadBayForVertices);
+						finalizeVerticesThisAisle(lastAisle, mLastReadBayForVertices);
 						mDepthCm = depthCm;
 					}
 

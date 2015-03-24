@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -105,16 +106,19 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importSlottedInventoryFromCsvStream(Tenant tenant,Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importSlottedInventoryFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 
 		List<InventorySlottedCsvBean> inventoryBeanList = toCsvBean(inCsvReader, InventorySlottedCsvBean.class);
-		return importSlottedInventory(tenant,inventoryBeanList, inFacility, inProcessTime);
+		return importSlottedInventory(inventoryBeanList, inFacility, inProcessTime);
 
 	}
 
-	public boolean importSlottedInventory(Tenant tenant,List<InventorySlottedCsvBean> inventoryBeanList,
+	public boolean importSlottedInventory(List<InventorySlottedCsvBean> inventoryBeanList,
 		Facility inFacility,
 		Timestamp inProcessTime) {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		
 		boolean result = true;
 		// TODO Auto-generated method stub
 		if (inventoryBeanList.size() > 0) {
@@ -470,7 +474,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			throw new InputValidationException(errors);
 		}
 
-		Item result = inItemMaster.findOrCreateItem(tenant,inLocation, inUomMaster);
+		Item result = inItemMaster.findOrCreateItem(inLocation, inUomMaster);
 		
 		// Refine using the cm value if there is one
 		String cmFromLeftString = inCsvBean.getCmFromLeft();

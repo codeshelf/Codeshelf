@@ -32,6 +32,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -230,7 +231,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public Che createChe(Tenant tenant,String inDomainId, NetGuid inGuid) {
+	public Che createChe(String inDomainId, NetGuid inGuid) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		// If the CHE doesn't already exist then create it.
 		Che che = Che.staticGetDao().findByDomainId(tenant,this, inGuid.getHexStringNoPrefix());
 		if (che == null) {
@@ -253,7 +256,8 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	 * @param inCodeshelfNetwork
 	 * @param inGUID
 	 */
-	public LedController findOrCreateLedController(Tenant tenant,String inDomainId, NetGuid inGuid) {
+	public LedController findOrCreateLedController(String inDomainId, NetGuid inGuid) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		LedController result = LedController.staticGetDao().findByDomainId(tenant,this, inDomainId);
 		if (result == null) {
@@ -277,7 +281,9 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return this.getParent();
 	}
 
-	public void createSiteController(Tenant tenant,int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		String username = Integer.toString(serialNumber);
 
 		// create site controller object (or use found)

@@ -373,7 +373,7 @@ public class EdiProcessorTest extends MockDaoTest {
 			}
 
 			@Override
-			public BatchResult<Object> importOrdersFromCsvStream(Tenant tenant,Reader inCsvStreamReader,
+			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
 				Facility inFacility,
 				Timestamp inProcessTime) throws IOException {
 				BatchResult<Object> result = new BatchResult<Object>();

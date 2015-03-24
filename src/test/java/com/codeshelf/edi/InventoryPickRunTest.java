@@ -90,21 +90,21 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 10.85, 48.45, 22.0, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 10.85, 48.45, 22.0, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle2.associatePathSegment(persistStr);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T2, D-26\r\n" // D-26 mainly because that is the scan location we use for good eggs tests.
@@ -127,7 +127,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 
@@ -136,20 +136,20 @@ public class InventoryPickRunTest extends ServerTest {
 		Che che2 = network.getChe("CHE2");
 		che1.setColor(ColorEnum.MAGENTA);
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000013"));
-		LedController controller4 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000014"));
+		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
+		LedController controller4 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000014"));
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26");
 		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27");
 		Tier tierA2B1T2 = (Tier) facility.findSubLocationById("D-30");
 		Tier tierA2B1T1 = (Tier) facility.findSubLocationById("D-31");
 		String channel1Str = "1";
 
-		tierA1B1T2.setControllerChannel(getDefaultTenant(),controller1.getPersistentId().toString(), channel1Str, "aisle");// ALL_TIERS_IN_AISLE is private to tier
-		tierA1B1T1.setControllerChannel(getDefaultTenant(),controller2.getPersistentId().toString(), channel1Str, "aisle");
-		tierA2B1T2.setControllerChannel(getDefaultTenant(),controller3.getPersistentId().toString(), channel1Str, "aisle");
-		tierA2B1T1.setControllerChannel(getDefaultTenant(),controller4.getPersistentId().toString(), channel1Str, "aisle");
+		tierA1B1T2.setControllerChannel(controller1.getPersistentId().toString(), channel1Str, "aisle");// ALL_TIERS_IN_AISLE is private to tier
+		tierA1B1T1.setControllerChannel(controller2.getPersistentId().toString(), channel1Str, "aisle");
+		tierA2B1T2.setControllerChannel(controller3.getPersistentId().toString(), channel1Str, "aisle");
+		tierA2B1T1.setControllerChannel(controller4.getPersistentId().toString(), channel1Str, "aisle");
 
 		return facility;
 	}
@@ -178,7 +178,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),reader2, inFacility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
 	
@@ -202,7 +202,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),reader2, inFacility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
 	
@@ -226,7 +226,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),reader2, inFacility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
 
 	}
 
@@ -259,7 +259,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, inFacility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
 	private void readInventoryWithTop(Facility inFacility) throws IOException {
@@ -297,7 +297,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, inFacility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 	
 	private void readInventoryBayDistance(Facility inFacility) throws IOException {
@@ -335,7 +335,7 @@ public class InventoryPickRunTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, inFacility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
 	}
 
 	@SuppressWarnings("unused")
@@ -423,7 +423,7 @@ public class InventoryPickRunTest extends ServerTest {
 		OrderHeader order = facility.getOrderHeader("12000");
 		Assert.assertNotNull(order);
 		for (OrderDetail detail : order.getOrderDetails()) {
-			String theUiField = detail.getWillProduceWiUi(getDefaultTenant(),workService);
+			String theUiField = detail.getWillProduceWiUi(workService);
 		}
 
 		// Now ready to run the cart
@@ -486,7 +486,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		propertyService.turnOffHK(getDefaultTenant(),facility);
 		propertyService.changePropertyValue(getDefaultTenant(),facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000.");
-		WorkList workList = workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "12000");
+		WorkList workList = workService.setUpCheContainerFromString(theChe, "12000");
 		Integer theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
@@ -494,7 +494,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Assert.assertEquals((Integer) 2, theSize); // Infer 2 shorts in there
 
 		// Set up the CHE again. DEV-609. This should delete the previous 2 immediate shorts, then make 2 new ones
-		workList = workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "12000");
+		workList = workService.setUpCheContainerFromString(theChe, "12000");
 		theSize = workList.getInstructions().size();
 		Assert.assertEquals((Integer) 8, theSize); // Would be 10 with 1123 and 1124
 		// Let's find and count the immediate shorts
@@ -538,7 +538,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
@@ -562,7 +562,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(getDefaultTenant(),facilit
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer2 = createInventoryImporter();
-		importer2.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime2);
+		importer2.importSlottedInventoryFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
@@ -582,7 +582,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(getDefaultTenant(),facilit
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer3 = createInventoryImporter();
-		importer3.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString3), facility, ediProcessTime3);
+		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");
@@ -623,23 +623,23 @@ List<WorkInstruction> wiList = startWorkFromBeginning(getDefaultTenant(),facilit
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location");
 		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertTrue(orderDetail.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertTrue(orderDetail.willProduceWi(workService));
 		
 		LOGGER.info("2. OrderDetail 102 does not have an inventory location, does not have preferred location");
 		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
 		Assert.assertNotNull(orderDetail2);
 	
-		Assert.assertFalse(orderDetail2.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertFalse(orderDetail2.willProduceWi(workService));
 		
 		LOGGER.info("3. OrderDetail 103 does not have an inventory location, has bad preferred location");
 		OrderDetail orderDetail3 = orderHeader.getOrderDetail("103");
 		Assert.assertNotNull(orderDetail3);
-		Assert.assertFalse(orderDetail3.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertFalse(orderDetail3.willProduceWi(workService));
 		
 		LOGGER.info("4. OrderDetail 104 does have an inventory location, has bad preferred location");
 		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
 		Assert.assertNotNull(orderDetail4);
-		Assert.assertTrue(orderDetail4.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertTrue(orderDetail4.willProduceWi(workService));
 		
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 	}
@@ -666,23 +666,23 @@ List<WorkInstruction> wiList = startWorkFromBeginning(getDefaultTenant(),facilit
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location, has sequence");
 		OrderDetail orderDetail = orderHeader.getOrderDetail("101");
 		Assert.assertNotNull(orderDetail);
-		Assert.assertTrue(orderDetail.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertTrue(orderDetail.willProduceWi(workService));
 		
 		LOGGER.info("2. OrderDetail 102 does not have an inventory location, does not have preferred location, no sequence");
 		OrderDetail orderDetail2 = orderHeader.getOrderDetail("102");
 		Assert.assertNotNull(orderDetail2);
 	
-		Assert.assertFalse(orderDetail2.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertFalse(orderDetail2.willProduceWi(workService));
 		
 		LOGGER.info("3. OrderDetail 103 does not have an inventory location, has bad preferred location, has sequence");
 		OrderDetail orderDetail3 = orderHeader.getOrderDetail("103");
 		Assert.assertNotNull(orderDetail3);
-		Assert.assertTrue(orderDetail3.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertTrue(orderDetail3.willProduceWi(workService));
 		
 		LOGGER.info("4. OrderDetail 104 does have an inventory location, has bad preferred location, no sequence");
 		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
 		Assert.assertNotNull(orderDetail4);
-		Assert.assertTrue(orderDetail4.willProduceWi(getDefaultTenant(),workService));
+		Assert.assertTrue(orderDetail4.willProduceWi(workService));
 		
 		
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());

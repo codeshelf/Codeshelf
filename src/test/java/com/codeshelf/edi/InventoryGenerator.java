@@ -31,7 +31,7 @@ public class InventoryGenerator {
 				inventoryRecords.add(record);
 			}
 		}
-		itemImporter.importSlottedInventory(tenant,inventoryRecords, aisle.<Facility>getParentAtLevel(Facility.class), new Timestamp(System.currentTimeMillis()));
+		itemImporter.importSlottedInventory(inventoryRecords, aisle.<Facility>getParentAtLevel(Facility.class), new Timestamp(System.currentTimeMillis()));
 	}
 
 	

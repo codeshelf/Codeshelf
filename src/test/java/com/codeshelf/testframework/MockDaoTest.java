@@ -49,8 +49,8 @@ public abstract class MockDaoTest extends MinimalTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return false;
 	}
-	protected static Path createPathForTest(Tenant tenant,Facility facility) {
-		return facility.createPath(tenant,"");
+	protected static Path createPathForTest(Facility facility) {
+		return facility.createPath("");
 	}
 	
 	// these two belong in ServerTest?
@@ -62,7 +62,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		return importer;
 	}
 
-	protected static PathSegment addPathSegmentForTest(Tenant tenant,final Path inPath,
+	protected static PathSegment addPathSegmentForTest(final Path inPath,
 		final Integer inSegmentOrder,
 		Double inStartX,
 		Double inStartY,
@@ -71,7 +71,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	
 		Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, inStartX, inStartY, 0.0);
 		Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, inEndX, inEndY, 0.0);
-		PathSegment returnSeg = inPath.createPathSegment(tenant,inSegmentOrder, head, tail);
+		PathSegment returnSeg = inPath.createPathSegment(inSegmentOrder, head, tail);
 		return returnSeg;
 	}
 	
@@ -115,7 +115,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected PathSegment getDefaultPathSegment(Path path, Integer inOrder) {
 		PathSegment segment = path.getPathSegment(inOrder); 
 		if (segment == null) {
-			segment = path.createPathSegment(getDefaultTenant(),inOrder,  anyPoint(), anyPoint());
+			segment = path.createPathSegment(inOrder,  anyPoint(), anyPoint());
 			// createPathSegment() does the store
 			// PathSegment.staticGetDao().store(getDefaultTenant(),segment);
 		}
@@ -125,7 +125,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected Path getDefaultPath(Facility facility, String inPathId) {
 		Path path = facility.getPath(inPathId);
 		if (path == null) {
-			path = facility.createPath(getDefaultTenant(),inPathId);
+			path = facility.createPath(inPathId);
 			Path.staticGetDao().store(getDefaultTenant(),path);
 			// looks wrong. Does not add to facility
 		}
@@ -133,7 +133,7 @@ public abstract class MockDaoTest extends MinimalTest {
 	}
 	
 	protected LedController getDefaultController(CodeshelfNetwork network, final String inControllerDomainId) {
-		LedController controller = network.findOrCreateLedController(getDefaultTenant(),inControllerDomainId, new NetGuid(inControllerDomainId));
+		LedController controller = network.findOrCreateLedController(inControllerDomainId, new NetGuid(inControllerDomainId));
 		controller.setDomainId(inControllerDomainId);
 		LedController.staticGetDao().store(getDefaultTenant(),controller);
 		return controller;
@@ -149,9 +149,9 @@ public abstract class MockDaoTest extends MinimalTest {
 		Facility resultFacility = getFacility();
 		CodeshelfNetwork network = resultFacility.getNetworks().get(0);
 		
-		Che che = network.createChe(getDefaultTenant(),"WITEST", new NetGuid("0x00000001"));
+		Che che = network.createChe("WITEST", new NetGuid("0x00000001"));
 
-		LedController controller = network.findOrCreateLedController(getDefaultTenant(),"LEDCON", new NetGuid("0x00000002"));
+		LedController controller = network.findOrCreateLedController("LEDCON", new NetGuid("0x00000002"));
 
 		Aisle aisle1 = getDefaultAisle(resultFacility, "A1");
 
@@ -196,7 +196,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		resultFacility.addPath(path);
 
 		Point startPoint1 = Point.getZeroPoint().add(5.0,0.0);
-		PathSegment pathSegment1 = path.createPathSegment(getDefaultTenant(),0, startPoint1, Point.getZeroPoint());
+		PathSegment pathSegment1 = path.createPathSegment(0, startPoint1, Point.getZeroPoint());
 		PathSegment.staticGetDao().store(getDefaultTenant(),pathSegment1);
 
 		aisle1.setPathSegment(pathSegment1);
@@ -237,7 +237,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		baya4b2.setLedChannel(channel1);
 		Bay.staticGetDao().store(getDefaultTenant(),baya4b2);
 
-		PathSegment pathSegment2 = path.createPathSegment(getDefaultTenant(),1, Point.getZeroPoint(), Point.getZeroPoint());
+		PathSegment pathSegment2 = path.createPathSegment(1, Point.getZeroPoint(), Point.getZeroPoint());
 		PathSegment.staticGetDao().store(getDefaultTenant(),pathSegment2);
 
 		aisle3.setPathSegment(pathSegment2);

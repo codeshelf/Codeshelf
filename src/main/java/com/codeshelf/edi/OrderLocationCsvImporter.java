@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
@@ -53,7 +54,9 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importOrderLocationsFromCsvStream(Tenant tenant,Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		boolean result = true;
 		List<OrderLocationCsvBean> orderLocationBeanList = toCsvBean(inCsvReader, OrderLocationCsvBean.class);
 		//Sort to put orders with same id together

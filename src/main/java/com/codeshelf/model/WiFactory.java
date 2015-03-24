@@ -32,6 +32,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.LightService;
 import com.codeshelf.util.SequenceNumber;
 import com.google.common.base.Strings;
@@ -150,7 +151,7 @@ public class WiFactory {
 	 * @param inPosALongPath
 	 * @return
 	 */
-	public static WorkInstruction createWorkInstruction(Tenant tenant,WorkInstructionStatusEnum inStatus,
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Container inContainer,
@@ -158,7 +159,9 @@ public class WiFactory {
 		Location inLocation,
 		final Timestamp inTime) throws DaoException {
 
-		WorkInstruction resultWi = createWorkInstruction(tenant,inStatus, inType, inOrderDetail, inChe, inTime);
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
+		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -215,7 +218,7 @@ public class WiFactory {
 			}
 		}
 		Facility facility = inOrderDetail.getParent().getFacility();
-		if (inLocation.isFacility() || facility.getUnspecifiedLocation(tenant).equals(inLocation)) {
+		if (inLocation.isFacility() || facility.getUnspecifiedLocation().equals(inLocation)) {
 			//consider inLocation.getPathSegment() == null ; Note that the getWork by location queries for > posAlongPath
 			resultWi.setPosAlongPath(0.0);
 		} else {
@@ -235,11 +238,14 @@ public class WiFactory {
 	 * Create a work instruction for and orderdetail with no location or container
 	 * @return
 	 */
-	public static WorkInstruction createWorkInstruction(Tenant tenant,WorkInstructionStatusEnum inStatus,
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Che inChe,
 		final Timestamp inTime) throws DaoException {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Facility facility = inOrderDetail.getFacility();
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
@@ -313,7 +319,7 @@ public class WiFactory {
 
 			}
 
-			resultWi.setLocation(inOrderDetail.getFacility().getUnspecifiedLocation(tenant));
+			resultWi.setLocation(inOrderDetail.getFacility().getUnspecifiedLocation());
 			String preferredLocation = inOrderDetail.getPreferredLocation();
 			resultWi.setLocationId(Strings.nullToEmpty(preferredLocation));
 			resultWi.setContainer(null);

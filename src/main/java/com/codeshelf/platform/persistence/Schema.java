@@ -59,7 +59,7 @@ public abstract class Schema extends DatabaseConnection {
 		try {
 			this.executeSQL("CREATE SCHEMA IF NOT EXISTS "+this.getSchemaName());
 		} catch (SQLException e) {
-			throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)");
+			throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)",e);
 		}
 	
 		Database appDatabase = this.getAppDatabase();

@@ -112,10 +112,6 @@ public class LedController extends WirelessDeviceABC {
 	// Therefore, see  and consider declone from Che::changeControllerId()
 	public void updateFromUI(String inNewControllerId, String inNewDeviceType) {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		update(tenant,inNewControllerId,inNewDeviceType);
-	}
-
-	public void update(Tenant tenant,String inNewControllerId, String inNewDeviceType) {
 		NetGuid currentGuid = this.getDeviceNetGuid();
 		NetGuid newGuid = null;
 		boolean modified = false;

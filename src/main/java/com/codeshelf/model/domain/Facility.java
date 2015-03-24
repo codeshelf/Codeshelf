@@ -514,7 +514,9 @@ public class Facility extends Location {
 	}
 
 	@JsonProperty("primaryChannel")
-	public void setPrimaryChannel(Tenant tenant,Short channel) {
+	public void setPrimaryChannel(Short channel) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		network.setChannel(channel);
 		network.getDao().store(tenant,network);
@@ -560,7 +562,9 @@ public class Facility extends Location {
 		return pathId;
 	}
 
-	public Path createPath(Tenant tenant,String inDomainId) {
+	public Path createPath(String inDomainId) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Path path = new Path();
 		// Start keeping the API, but not respecting the suggested domainId
 		String pathDomainId = nextPathDomainId(tenant);
@@ -576,17 +580,15 @@ public class Facility extends Location {
 		return path;
 	}
 
-	public Path createPath(String domainId, PathSegment[] pathSegments) {
-		return createPath(CodeshelfSecurityManager.getCurrentTenant(),domainId, pathSegments);
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * Create a path
 	 *
 	 */
-	public Path createPath(Tenant tenant,String inDomainId, PathSegment[] inPathSegments) {
-		Path path = createPath(tenant,inDomainId);
+	public Path createPath(String inDomainId, PathSegment[] inPathSegments) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
+		Path path = createPath(inDomainId);
 		// Started above by keeping the API, but not respecting the suggested domainId. See what domainId we actually got
 		String pathDomainId = path.getDomainId();
 		String segmentDomainId;
@@ -633,7 +635,7 @@ public class Facility extends Location {
 		for (Path path : paths.values()) {
 			for (PathSegment segment : path.getSegments()) {
 				for (Location location : segment.getLocations()) {
-					location.computePosAlongPath(tenant,segment);
+					location.computePosAlongPath(segment);
 				}
 			}
 		}
@@ -654,16 +656,8 @@ public class Facility extends Location {
 		final Double posX,
 		final Double posY,
 		final Integer drawOrder) {
-		
-		createVertex(CodeshelfSecurityManager.getCurrentTenant(),
-			domainId,posTypeByStr,posX,posY,drawOrder);
-	}
-	
-	public void createVertex(Tenant tenant,final String domainId,
-		final String posTypeByStr,
-		final Double posX,
-		final Double posY,
-		final Integer drawOrder) {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		Vertex vertex = new Vertex();
 		vertex.setDomainId(domainId);
@@ -679,10 +673,12 @@ public class Facility extends Location {
 	 * @param inLocation
 	 * @param inDimMeters
 	 */
-	public void createOrUpdateVertices(Tenant tenant,Location inLocation, Point inDimMeters) {
+	public void createOrUpdateVertices(Location inLocation, Point inDimMeters) {
 		// Change to public as this is called from aisle file reader, and later from editor
 		// change from create to createOrUpdate
 		// Maybe this should not be a facility method.
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		List<Vertex> vList = inLocation.getVerticesInOrder();
 
@@ -753,18 +749,21 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public void createDefaultContainerKind(Tenant tenant) {
+	public void createDefaultContainerKind() {
 		//ContainerKind containerKind = 
-		createContainerKind(tenant,ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
+
+		createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public ContainerKind createContainerKind(Tenant tenant,String inDomainId,
+	public ContainerKind createContainerKind(String inDomainId,
 		Double inLengthMeters,
 		Double inWidthMeters,
 		Double inHeightMeters) {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		ContainerKind result = null;
 
@@ -788,7 +787,9 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public IEdiService getEdiExportService(Tenant tenant) {
+	public IEdiService getEdiExportService() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		return IronMqService.staticGetDao().findByDomainId(tenant,this, IRONMQ_DOMAINID);
 	}
 
@@ -796,7 +797,9 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public IronMqService createIronMqService(Tenant tenant) throws PSQLException {
+	public IronMqService createIronMqService() throws PSQLException {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		// we saw the PSQL exception in staging test when the record could not be added
 		IronMqService result = null;
 
@@ -805,7 +808,7 @@ public class Facility extends Location {
 		result.setProvider(EdiProviderEnum.IRONMQ);
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 		this.addEdiService(result);
-		result.storeCredentials(tenant,"", ""); // non-null credentials
+		result.storeCredentials("", ""); // non-null credentials
 		try {
 			IronMqService.staticGetDao().store(tenant,result);
 		} catch (DaoException e) {
@@ -835,7 +838,8 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public DropboxService createDropboxService(Tenant tenant) {
+	public DropboxService createDropboxService() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		DropboxService result = null;
 
@@ -907,7 +911,8 @@ public class Facility extends Location {
 	 * After a change in DDC items we call this routine to recompute the path-relative positions of the items.
 	 *
 	 */
-	public void recomputeDdcPositions(Tenant tenant) {
+	public void recomputeDdcPositions() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		LOGGER.debug("Begin DDC position recompute");
 
@@ -1271,7 +1276,9 @@ public class Facility extends Location {
 	}
 
 	synchronized
-	public Location getUnspecifiedLocation(Tenant tenant) {
+	public Location getUnspecifiedLocation() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
 		if (unspecifiedLocation == null) {
 			unspecifiedLocation = createUnspecifiedLocation(tenant,UNSPECIFIED_LOCATION_DOMAINID);
@@ -1299,12 +1306,12 @@ public class Facility extends Location {
 
 		// Create a first Dropbox Service entry for this facility.
 		@SuppressWarnings("unused")
-		DropboxService dropboxService = facility.createDropboxService(tenant);
+		DropboxService dropboxService = facility.createDropboxService();
 
 		// Create a first IronMQ Service entry for this facility.
 		try {
 			@SuppressWarnings("unused")
-			IronMqService ironMqService = facility.createIronMqService(tenant);
+			IronMqService ironMqService = facility.createIronMqService();
 		}
 		catch (PSQLException e) {
 			LOGGER.error("failed to create ironMQ service");			
@@ -1314,17 +1321,17 @@ public class Facility extends Location {
 		CodeshelfNetwork network = facility.createNetwork(tenant,CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		// Create a site controller & associated user
-		network.createSiteController(tenant,CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
 		
 		// Create the generic container kind (for all unspecified containers)
-		facility.createDefaultContainerKind(tenant);
+		facility.createDefaultContainerKind();
 		
 		// Setup two dummy CHEs
 		for (int cheNum = 1; cheNum <= 2; cheNum++) {
 			String cheName = "CHE" + cheNum;
 			Che che = network.getChe(cheName);
 			if (che == null) {
-				che = network.createChe(tenant,cheName, new NetGuid("0x0000999" + cheNum));
+				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
 			}
 		}
 		

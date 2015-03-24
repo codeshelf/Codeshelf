@@ -38,6 +38,7 @@ import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
@@ -433,7 +434,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	/*
 	 * Huge side effect for each items. If found, and location is different, update the location. Caller must persist the change.
 	 */
-	public Item findOrCreateItem(Tenant tenant,Location inLocation, UomMaster uom) {
+	public Item findOrCreateItem(Location inLocation, UomMaster uom) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Item item = findExistingItem(tenant,inLocation, uom);
 		if (item == null)
 			item = createStoredItem(inLocation, uom);

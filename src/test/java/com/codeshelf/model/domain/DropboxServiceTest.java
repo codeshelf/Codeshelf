@@ -41,7 +41,7 @@ public class DropboxServiceTest extends MockDaoTest {
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");
 
-		facility.createDropboxService(getDefaultTenant());
+		facility.createDropboxService();
 
 		DropboxService dropboxService = facility.getDropboxService();
 
@@ -52,7 +52,7 @@ public class DropboxServiceTest extends MockDaoTest {
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		Mockito.when(
-				orderImporter.importOrdersFromCsvStream(any(Tenant.class),any(InputStreamReader.class), any(Facility.class), any(Timestamp.class)))
+				orderImporter.importOrdersFromCsvStream(any(InputStreamReader.class), any(Facility.class), any(Timestamp.class)))
 				.thenReturn(generateFailureResult());
 
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);

@@ -125,7 +125,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		this(new IEdiExportServiceProvider() {
 			@Override
 			public IEdiService getWorkInstructionExporter(Tenant tenant,Facility facility) {
-				return facility.getEdiExportService(tenant);
+				if(CodeshelfSecurityManager.getCurrentTenant() != tenant) {
+					throw new RuntimeException("Accessing wrong tenant");
+				}
+				return facility.getEdiExportService();
 			}
 		});
 	}
@@ -153,14 +156,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inContainerIdList
 	 * @return
 	 */
-	public final WorkList computeWorkInstructions(Tenant tenant,final Che inChe, final List<String> inContainerIdList) {
-		return computeWorkInstructions(tenant,inChe, inContainerIdList, false);
+	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
+		return computeWorkInstructions(inChe, inContainerIdList, false);
 	}
 
-	public final WorkList computeWorkInstructions(Tenant tenant,final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
+	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
 		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 
-		inChe.clearChe(tenant);
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
+		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
 		// DEV-492 identify previous container uses
@@ -227,7 +232,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// Get all of the CROSS work instructions.
 		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
-		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(tenant,facility, inChe, containerList, theTime);
+		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
 		workList.getInstructions().addAll(crossInstructions);
 
 		//Filter,Sort, and save actionsable WI's
@@ -248,7 +253,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 
 	// just a call through to facility, but convenient for the UI
-	public final void fakeSetupUpContainersOnChe(Tenant tenant,UUID cheId, String inContainers) {
+	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		final boolean doThrowInstead = false;
 		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 		if (che == null)
@@ -261,7 +268,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 			doIntentionalPersistenceError(tenant,che);
 		else
-			setUpCheContainerFromString(tenant,che, inContainers);
+			setUpCheContainerFromString(che, inContainers);
 	}
 
 	// --------------------------------------------------------------------------
@@ -271,7 +278,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * Testing only!  passs in as 23,46,2341a23. This yields container ID 23 in slot1, container Id 46 in slot 2, etc.
 	 *
 	 */
-	public final WorkList setUpCheContainerFromString(Tenant tenant,Che inChe, String inContainers) {
+	public final WorkList setUpCheContainerFromString(Che inChe, String inContainers) {
 		if (inChe == null)
 			return null;
 
@@ -279,14 +286,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
 
 		if (containersIdList.size() > 0) {
-			return this.computeWorkInstructions(tenant,inChe, containersIdList);
+			return this.computeWorkInstructions(inChe, containersIdList);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 		}
 		return null;
 	}
 
-	public void completeWorkInstruction(Tenant tenant,UUID cheId, WorkInstruction incomingWI) {
+	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 		if (che != null) {
 			try {
@@ -307,7 +316,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For a UI simulation
 	 * @return
 	 */
-	public final void fakeCompleteWi(Tenant tenant,String wiPersistentId, String inCompleteStr) {
+	public final void fakeCompleteWi(String wiPersistentId, String inCompleteStr) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(tenant,wiPersistentId);
 		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
 		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
@@ -331,7 +342,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		wi.setType(WorkInstructionTypeEnum.ACTUAL);
 
 		//send in in like in came from SiteController
-		completeWorkInstruction(tenant,wi.getAssignedChe().getPersistentId(), wi);
+		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
 	}
 
 	/**
@@ -340,8 +351,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inScannedOrderDetailId
 	 * @return
 	 */
-	public GetOrderDetailWorkResponse getWorkInstructionsForOrderDetail(Tenant tenant,
+	public GetOrderDetailWorkResponse getWorkInstructionsForOrderDetail(
 			final Che inChe, final String inScannedOrderDetailId) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		GetOrderDetailWorkResponse response = new GetOrderDetailWorkResponse();
 		if (inChe == null) {
@@ -373,19 +386,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		OrderDetail orderDetail = orderDetails.get(0);
-		inChe.clearChe(tenant);
+		inChe.clearChe();
 		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
 		// Pass facility as the default location of a short WI..
-		WorkInstruction aWi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.NEW,
+		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 			WorkInstructionTypeEnum.PLAN,
 			orderDetail,
 			inChe,
 			null); // Could be normal WI, or a short WI
 		if (aWi != null) {
 			wiResultList.add(aWi);
-			orderDetail.reevaluateStatus(tenant);
+			orderDetail.reevaluateStatus();
 		} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 			//As of DEV-561 we are adding completed WIs to the list in order to be able
 			//give feedback on complete orders (and differentiate a 100% complete order from
@@ -710,7 +723,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 							WorkInstruction aWi = workItem.getInstruction();
 							if (aWi != null) {
 								wiResultList.add(aWi);
-								orderDetailChanged |= orderDetail.reevaluateStatus(tenant);
+								orderDetailChanged |= orderDetail.reevaluateStatus();
 							} else if (orderDetail.getStatus() == OrderStatusEnum.COMPLETE) {
 								//As of DEV-561 we are adding completed WIs to the list in order to be able
 								//give feedback on complete orders (and differentiate a 100% complete order from
@@ -730,7 +743,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						}
 					}
 					if (orderDetailChanged) {
-						order.reevaluateStatus(tenant);
+						order.reevaluateStatus();
 					}
 
 				}
@@ -752,17 +765,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inCheLocation
 	 * @return
 	 */
-	private List<WorkInstruction> generateCrossWallInstructions(Tenant tenant,final Facility facility,
+	private List<WorkInstruction> generateCrossWallInstructions(final Facility facility,
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		List<WorkInstruction> wiList = Lists.newArrayList();
 		for (Container container : inContainerList) {
 			BatchResult<Work> result = determineWorkForContainer(facility, container);
 			for (Work work : result.getResult()) {
 				try {
-					WorkInstruction wi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.NEW,
+					WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 						WorkInstructionTypeEnum.PLAN,
 						work.getOutboundOrderDetail(),
 						work.getContainer(),
@@ -827,6 +842,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		final Facility inFacility,
 		final List<Path> paths) throws DaoException {
 
+		if(CodeshelfSecurityManager.getCurrentTenant() != tenant) {
+			throw new RuntimeException("Accessing wrong tenant");
+		}
+
 		WorkInstruction resultWi = null;
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -841,10 +860,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				if (!Strings.isNullOrEmpty(preferredLocationStr)) {
 					location = inFacility.findLocationById(preferredLocationStr);
 					if (location == null) {
-						location = inFacility.getUnspecifiedLocation(tenant);
+						location = inFacility.getUnspecifiedLocation();
 					} else if (!location.isActive()){
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
-						location = inFacility.getUnspecifiedLocation(tenant);
+						location = inFacility.getUnspecifiedLocation();
 					}					
 				} else {
 					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
@@ -879,7 +898,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list
 			if (doAutoShortInstructions()) {
 				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
-				resultWi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.SHORT,
+				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
 					inOrderDetail,
 					inContainer,
@@ -897,7 +916,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				resultWork.setDetail(inOrderDetail);
 			}
 		} else {
-			resultWi = WiFactory.createWorkInstruction(tenant,WorkInstructionStatusEnum.NEW,
+			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
 				inOrderDetail,
 				inContainer,
@@ -1153,10 +1172,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		OrderDetail orderDetail = storedWi.getOrderDetail();
 		// from v5 housekeeping WI may have null orderDetail
 		if (orderDetail != null) {
-			orderDetail.reevaluateStatus(tenant);
+			orderDetail.reevaluateStatus();
 			OrderHeader order = orderDetail.getParent();
 			if (order != null) {
-				order.reevaluateStatus(tenant);
+				order.reevaluateStatus();
 			}
 		}
 		return storedWi;
@@ -1222,7 +1241,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
 	}
 
-	public boolean willOrderDetailGetWi(Tenant tenant,OrderDetail inOrderDetail) {
+	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(tenant,inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 

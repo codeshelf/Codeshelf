@@ -32,12 +32,11 @@ public class InventoryServiceTest extends ServerTest {
 		facilityGenerator = new FacilityGenerator(getDefaultTenant());
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
-														createAisleFileImporter(),
+					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());
 		
-		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(getDefaultTenant(),testName.getMethodName());
+		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
 		
@@ -110,7 +109,7 @@ public class InventoryServiceTest extends ServerTest {
 	private Facility setupInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return facility.getDao().findByPersistentId(getDefaultTenant(),facility.getPersistentId());
 	}
 }

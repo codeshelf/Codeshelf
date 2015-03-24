@@ -69,7 +69,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
-		service.storeCredentials(getDefaultTenant(),"540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
+		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		String message = "TESTMESSAGE" + System.currentTimeMillis();
 		service.sendWorkInstructionsToHost(message);
 		String[] messages = new String[0];
@@ -101,7 +101,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
-		service.storeCredentials(getDefaultTenant(),"540e1486364af100050000b4", "BAD");
+		service.storeCredentials("540e1486364af100050000b4", "BAD");
 		try {
 			service.sendWorkInstructionsToHost("TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
@@ -124,7 +124,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
-		service.storeCredentials(getDefaultTenant(),"BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
+		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		try {
 			service.sendWorkInstructionsToHost("TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");

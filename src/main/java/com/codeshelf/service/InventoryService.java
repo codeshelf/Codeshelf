@@ -116,7 +116,7 @@ public class InventoryService implements IApiService {
 		Item result = null;
 		if (itemMaster != null ) {
 			// findOrdCreateItem determines if an item is created or moved 
-			result = itemMaster.findOrCreateItem(tenant,location, uomMaster);
+			result = itemMaster.findOrCreateItem(location, uomMaster);
 			LOGGER.info("Item: {} is in location(s): {}", result.getDomainId(), result.getParent().getItemLocations());
 		}
 		

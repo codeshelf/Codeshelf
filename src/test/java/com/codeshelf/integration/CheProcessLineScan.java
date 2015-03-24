@@ -98,29 +98,29 @@ public class CheProcessLineScan extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvAisles), getFacility(), ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),getFacility());
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest(getDefaultTenant(),getFacility());
-		PathSegment segment02 = addPathSegmentForTest(getDefaultTenant(),path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(getFacility());
+		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),getFacility(), "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(getDefaultTenant(),persistStr2);
+		aisle3.associatePathSegment(persistStr2);
 
 		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
@@ -138,13 +138,13 @@ public class CheProcessLineScan extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvAliases), getFacility(), ediProcessTime2);
+		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
 
 		CodeshelfNetwork network = getNetwork();
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),"LED1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),"LED2", new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),"LED3", new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
 		Location tier = getFacility().findSubLocationById("A1.B1.T1");
@@ -203,7 +203,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 	
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
@@ -221,7 +221,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 	
 	private void setUpLineScanOrdersNoCntrWithGtin(Facility inFacility) throws IOException {
@@ -242,7 +242,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), inFacility, ediProcessTime);
+		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
 	}
 
 	/**

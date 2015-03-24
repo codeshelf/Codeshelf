@@ -76,12 +76,12 @@ public class PutwallTest extends MockDaoTest {
 		Facility facility= Facility.createFacility(getDefaultTenant(),fName, "TEST", Point.getZeroPoint());
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		CodeshelfNetwork network = facility.getNetworks().get(0);
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),fName, new NetGuid("0x00000011"));
+		LedController controller1 = network.findOrCreateLedController(fName, new NetGuid("0x00000011"));
 		String uuid1 = controller1.getPersistentId().toString();
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
-		tier.setControllerChannel(getDefaultTenant(),uuid1, "1", "aisle");
+		tier.setControllerChannel(uuid1, "1", "aisle");
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 				
@@ -107,7 +107,7 @@ public class PutwallTest extends MockDaoTest {
 		ledController = tier.getLedController();
 		ledController.setDeviceType(DeviceType.Poscons);
 		LedController.staticGetDao().store(getDefaultTenant(),ledController);
-		tier.setPoscons(getDefaultTenant(),5);
+		tier.setPoscons(5);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		// check controller, tier and slots

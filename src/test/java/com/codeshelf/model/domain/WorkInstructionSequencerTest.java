@@ -63,22 +63,22 @@ public class WorkInstructionSequencerTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		Path aPath = createPathForTest(facility);
 		
 		// forward path b1 -> b2
 		// PathSegment segment0 = addPathSegmentForTest("F5X.1.0", aPath, 0, 12.85, 48.45, 22.00, 48.45);
 		
 		// backward path b2 -> b1
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -97,7 +97,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		return facility;
 	}	
@@ -126,7 +126,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 
 		Location locationD101 = facility.findSubLocationById("D101");
 		Location locationD102 = facility.findSubLocationById("D102");
@@ -156,7 +156,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
 		// We should have one order with 4 details 
 		OrderHeader order = facility.getOrderHeader("12345");

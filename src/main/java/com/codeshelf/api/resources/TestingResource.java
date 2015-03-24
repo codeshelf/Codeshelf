@@ -83,7 +83,7 @@ public class TestingResource {
 			containers.add(order1 + "");
 			containers.add(order2 + "");
 			facility = Facility.staticGetDao().findByPersistentId(tenant,facilityUUID.getUUID());
-			WorkList workList = workService.computeWorkInstructions(tenant, che, containers);
+			WorkList workList = workService.computeWorkInstructions(che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
 			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTransaction(tenant);
@@ -100,7 +100,7 @@ public class TestingResource {
 				} else {
 					instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
 				}
-				workService.completeWorkInstruction(tenant,che.getPersistentId(), instruction);
+				workService.completeWorkInstruction(che.getPersistentId(), instruction);
 				Thread.sleep(2000);
 				System.out.println("Complete Instruction");
 				persistence.commitTransaction(tenant);
@@ -141,7 +141,7 @@ public class TestingResource {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis()); 
 		ICsvInventoryImporter importer = new InventoryCsvImporter(new EventProducer());
-		importer.importSlottedInventoryFromCsvStream(tenant, reader, facility, ediProcessTime);		
+		importer.importSlottedInventoryFromCsvStream( reader, facility, ediProcessTime);		
 	}
 	
 	private void createOrders(Tenant tenant,Facility facility, long order1, long order2) throws Exception{		
@@ -168,6 +168,6 @@ public class TestingResource {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(new EventProducer());
-		importer2.importOrdersFromCsvStream(tenant,reader2, facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 	}
 }

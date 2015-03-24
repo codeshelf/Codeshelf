@@ -64,14 +64,12 @@ public class InventoryImporterTest extends ServerTest {
 	public void doBefore() {
 		super.doBefore();
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
-
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
-														createAisleFileImporter(),
+					new VirtualSlottedFacilityGenerator(createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());
 		
-		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(getDefaultTenant(),testName.getMethodName());
+		Facility facilityForVirtualSlotting = facilityGenerator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		
 		this.facilityForVirtualSlottingId = facilityForVirtualSlotting.getPersistentId();
 		
@@ -571,7 +569,7 @@ public class InventoryImporterTest extends ServerTest {
 	private Facility setupInventoryData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return facility.getDao().findByPersistentId(getDefaultTenant(),facility.getPersistentId());
 	}
 
@@ -621,7 +619,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvOrders), facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime2);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = facility.getOrderHeader("12345");
@@ -662,7 +660,7 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		theChe = Che.staticGetDao().reload(getDefaultTenant(),theChe);
 		// Set up a cart for order 12345, which will generate work instructions
-		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "12345");
+		workService.setUpCheContainerFromString(theChe, "12345");
 		
 		// Just checking variant case hard on ebeans. What if we immediately set up again? Answer optimistic lock exception and assorted bad behavior.
 		// facility.setUpCheContainerFromString(theChe, "12345");
@@ -706,7 +704,7 @@ public class InventoryImporterTest extends ServerTest {
 		Assert.assertEquals(facility, TenantPersistenceService.<Facility>deproxify(wiOrderHeader.getParent()));
 		
 		// Complete one of the jobs
-		workService.fakeCompleteWi(getDefaultTenant(),wi2.getPersistentId().toString(), "COMPLETE");
+		workService.fakeCompleteWi(wi2.getPersistentId().toString(), "COMPLETE");
 
 		//Test our work instruction summarizer
 		List<WiSetSummary> summaries = workService.workAssignedSummary(getDefaultTenant(),theChe.getPersistentId(),
@@ -807,7 +805,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		facility = Facility.staticGetDao().findByPersistentId(getDefaultTenant(),facilityForVirtualSlottingId);
@@ -819,7 +817,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		// Housekeeping left on. Expect 4 normal WIs and one housekeep
 		// Set up a cart for the three orders, which will generate work instructions
-		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "12000,12010,12345");
+		workService.setUpCheContainerFromString(theChe, "12000,12010,12345");
 		//Che.staticGetDao().store(getDefaultTenant(),theChe);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 

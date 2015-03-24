@@ -32,7 +32,7 @@ public class IronMqServiceTest extends MockDaoTest {
 	public void whenEmptyCredentialsThrowException() throws IOException {
 		Queue queue = mock(Queue.class);
 		IronMqService service = new IronMqService(createClientProvider("", "", queue));
-		service.storeCredentials(getDefaultTenant(),"", "");
+		service.storeCredentials("", "");
 		service.sendWorkInstructionsToHost("string");
 		Mockito.verifyZeroInteractions(queue);
 	}
@@ -52,7 +52,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		
 		
 		IronMqService service = new IronMqService(createClientProvider(projectId, token, queueForBadCredentials));
-		service.storeCredentials(getDefaultTenant(),projectId, token);
+		service.storeCredentials(projectId, token);
 		try {
 			service.sendWorkInstructionsToHost("AMESSAGE");
 			Assert.fail("should have thrown an IOException");
@@ -75,7 +75,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		
 		
 		IronMqService service = new IronMqService(provider);
-		service.storeCredentials(getDefaultTenant(),projectId, token);
+		service.storeCredentials(projectId, token);
 		service.sendWorkInstructionsToHost("AMESSAGE");
 	}
 
@@ -90,7 +90,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		IronMqService.ClientProvider provider = createClientProvider(projectId, token, queue);
 
 		IronMqService service = new IronMqService(provider);
-		service.storeCredentials(getDefaultTenant(),projectId, token);
+		service.storeCredentials(projectId, token);
 		try {
 			service.sendWorkInstructionsToHost("AMESSAGE");
 			Assert.fail("should have thrown an IOException");
@@ -111,7 +111,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		IronMqService.ClientProvider provider = createClientProvider(projectId, token, queue);
 
 		IronMqService service = new IronMqService(provider);
-		service.storeCredentials(getDefaultTenant(),projectId, token);
+		service.storeCredentials(projectId, token);
 		try {
 			service.sendWorkInstructionsToHost("AMESSAGE");
 

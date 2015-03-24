@@ -28,6 +28,7 @@ import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 //--------------------------------------------------------------------------
@@ -217,9 +218,11 @@ public class Tier extends Location {
 		return resultStr;
 	}
 
-	public void setControllerChannel(Tenant tenant, String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
+	public void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// this is for callMethod from the UI
 		// This, or all of this tier in aisle
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		doSetControllerChannel(tenant, inControllerPersistentIDStr, inChannelStr);
 		boolean allTiers = inTiersStr != null && inTiersStr.equalsIgnoreCase(ALL_TIERS_IN_AISLE);
 		// if "aisle", then the rest of tiers at same level
@@ -238,7 +241,7 @@ public class Tier extends Location {
 				// same domainID?
 				if (iterTier.getDomainId().equals(thisDomainId)) {
 					if (!iterTier.getPersistentId().equals(thisPersistId)) {
-						iterTier.setControllerChannel(tenant, inControllerPersistentIDStr, inChannelStr, THIS_TIER_ONLY);
+						iterTier.setControllerChannel(inControllerPersistentIDStr, inChannelStr, THIS_TIER_ONLY);
 					}
 				}
 
@@ -246,11 +249,13 @@ public class Tier extends Location {
 		}
 	}
 
-	public void setPoscons(Tenant tenant,int startingIndex) {
-		setPoscons(tenant,startingIndex, false);
+	public void setPoscons(int startingIndex) {
+		setPoscons(startingIndex, false);
 	}
 	
-	public void setPoscons(Tenant tenant,int startingIndex, boolean reverseOrder) {
+	public void setPoscons(int startingIndex, boolean reverseOrder) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		LedController ledController = this.getLedController();
 		if (ledController==null) {
 			LOGGER.warn("Failed to set poscons on "+this+": Tier has no LedController.");

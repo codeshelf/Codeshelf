@@ -53,7 +53,7 @@ public class LocationTest extends MockDaoTest {
 		
 
 			Facility facility = createFacilityWithOutboundOrders();
-			Location location = facility.getUnspecifiedLocation(getDefaultTenant());
+			Location location = facility.getUnspecifiedLocation();
 			Assert.assertEquals(LedRange.zero(), location.getFirstLastLedsForLocation());
 		} finally {
 			this.getTenantPersistenceService().commitTransaction(getDefaultTenant());

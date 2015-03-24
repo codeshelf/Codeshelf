@@ -38,6 +38,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.dropbox.core.DbxAccountInfo;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
@@ -423,7 +424,8 @@ public class DropboxService extends EdiServiceABC {
 	/**
 	 * @return
 	 */
-	public String startLink(Tenant tenant) {
+	public String startLink() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		try {
 			setServiceState(EdiServiceStateEnum.LINKING);
@@ -445,7 +447,8 @@ public class DropboxService extends EdiServiceABC {
 	 * @param inAuthSession
 	 * @param inAuthInfo
 	 */
-	public boolean finishLink(Tenant tenant,final String inDbxCode) {
+	public boolean finishLink(final String inDbxCode) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		boolean result = false;
 
@@ -644,15 +647,15 @@ public class DropboxService extends EdiServiceABC {
 				if (fileMatches(filepath, IMPORT_SLOTTING_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(tenant,reader, getParent(), ediProcessTime);
+					success = inCsvOrderLocationImporter.importOrderLocationsFromCsvStream(reader, getParent(), ediProcessTime);
 				} else if (fileMatches(filepath, IMPORT_ORDERS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvOrderImporter.importOrdersFromCsvStream(tenant,reader, getParent(), ediProcessTime).isSuccessful();
+					success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime).isSuccessful();
 				} else if (fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(tenant,reader, getParent(), ediProcessTime);
+					success = inCsvInventoryImporter.importSlottedInventoryFromCsvStream(reader, getParent(), ediProcessTime);
 				}
 				// Notice that there is no distinguisher for DDC file. Following should never execute anyway. Making it more obvious.
 				// Jeff says DDC may come back.
@@ -663,16 +666,16 @@ public class DropboxService extends EdiServiceABC {
 				}*/ else if (fileMatches(filepath, IMPORT_LOCATIONS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(tenant,reader, getParent(), ediProcessTime);
+					success = inCsvLocationAliasImporter.importLocationAliasesFromCsvStream(reader, getParent(), ediProcessTime);
 				} else if (fileMatches(filepath, IMPORT_BATCHES_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					int numRecords = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(tenant,reader, getParent(), ediProcessTime);
+					int numRecords = inCsvCrossBatchImporter.importCrossBatchesFromCsvStream(reader, getParent(), ediProcessTime);
 					success = (numRecords > 0);
 				} else if (fileMatches(filepath, IMPORT_AISLES_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvAislesFileImporter.importAislesFileFromCsvStream(tenant,reader, getParent(), ediProcessTime);
+					success = inCsvAislesFileImporter.importAislesFileFromCsvStream(reader, getParent(), ediProcessTime);
 				}
 				if (!processedAttempt) {
 					LOGGER.warn("Did not find importer for: " + filepath);

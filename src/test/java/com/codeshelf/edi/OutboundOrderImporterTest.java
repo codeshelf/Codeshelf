@@ -107,7 +107,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderGroup orderGroup = facility.getOrderGroup("1");
 		Assert.assertNotNull(orderGroup);
@@ -184,7 +184,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("1");
 		Assert.assertNotNull(order);
@@ -240,7 +240,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// If not specified, default to serial
 		OrderHeader order = facility.getOrderHeader("123");
@@ -266,7 +266,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,,789,3007,Dealybob,300,case,2012-09-26 11:31:02,2012-09-26 11:31:01\r\n";
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
 		Assert.assertEquals("TRUCKA", facility.getOrderHeader("123").getShipperId());
 		Assert.assertEquals("FEDEX", facility.getOrderHeader("456").getShipperId());
@@ -301,7 +301,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
@@ -348,7 +348,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// We should find order 123
 		OrderHeader order = facility.getOrderHeader("123");
@@ -398,7 +398,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		// First import a big list of orders.
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
@@ -425,7 +425,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// First import a big list of orders.
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
@@ -533,7 +533,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -571,7 +571,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -593,7 +593,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
 		OrderHeader order2 = facility.getOrderHeader("222");
 		// normal case with min and max supplied
@@ -648,7 +648,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -685,7 +685,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		InputStreamReader reader = new InputStreamReader(stream);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
@@ -730,7 +730,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		reader = new InputStreamReader(stream);
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		//Refresh facility
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
@@ -1034,7 +1034,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		OrderHeader order10 = facility.getOrderHeader("10");
 		Assert.assertNotNull(order10);
@@ -1087,7 +1087,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader4 = new InputStreamReader(stream4);
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),reader4, facility, ediProcessTime4);
+		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
 
 		ItemMaster theMaster2 = facility.getItemMaster("SKU0001");
 		Assert.assertNotNull("ItemMaster should be found", theMaster2);
@@ -1126,7 +1126,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
 
 		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString1), facility, ediProcessTime1);
+		importer.importOrdersFromCsvStream(new StringReader(csvString1), facility, ediProcessTime1);
 
 		LOGGER.info("4: Check that we got item locations for SKU0001, and SKU0004, but not SKU0003 which had unknown alias location");
 		ItemMaster master1 = facility.getItemMaster("SKU0001");
@@ -1170,7 +1170,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime2);
+		importer.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 
 		LOGGER.info("6: Check that we got new item locations for SKU0001, and moved the old one for SKU0004, ");
 		master1 = facility.getItemMaster("SKU0001");
@@ -1202,7 +1202,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString3), facility, ediProcessTime3);
+		importer.importOrdersFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
 
 		master1 = facility.getItemMaster("SKU0001");
 		items1 = master1.getItems();
@@ -1219,7 +1219,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
 
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString4), facility, ediProcessTime4);
+		importer.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
 
 		master1 = facility.getItemMaster("SKU0001");
 		items1 = master1.getItems();
@@ -1673,7 +1673,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer1 = createAisleFileImporter();
-		importer1.importAislesFileFromCsvStream(getDefaultTenant(),new StringReader(csvString1), inFacility, ediProcessTime1);
+		importer1.importAislesFileFromCsvStream(new StringReader(csvString1), inFacility, ediProcessTime1);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -1683,7 +1683,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "A2.B1, D13\r\n"; //
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString2), inFacility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), inFacility, ediProcessTime2);
 	}
 
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
@@ -1692,7 +1692,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	}
 
 	private BatchResult<Object> importCsvString(Facility facility, String csvString, Timestamp ediProcessTime) throws IOException {
-		BatchResult<Object> results = importer.importOrdersFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		BatchResult<Object> results = importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		return results;
 	}
 
@@ -1701,7 +1701,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		try {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-			return importer.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+			return importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 		} finally {
 			if(stream != null) {
 				stream.close();

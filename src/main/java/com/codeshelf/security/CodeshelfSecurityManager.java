@@ -123,7 +123,11 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		// Also used for context logging.
 		User oldUser=getCurrentUser();
 		if(oldUser != null) {
-			LOGGER.error("setCurrentUser {} called but there was already a current user {}",user,oldUser.getId());
+			if(oldUser.equals(user)) {
+				LOGGER.warn("setCurrentUser {} called twice for same user",user);
+			} else {
+				LOGGER.error("setCurrentUser {} called but there was already a different current user {}",user,oldUser.getId());
+			}
 		}
 		ThreadContext.put(THREAD_CONTEXT_USER_KEY,user);
 		org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_USER_KEY,user.getUsername());

@@ -69,7 +69,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check the aisle
 		Location aisle = facility.findLocationById("A9");
@@ -225,7 +225,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		/* getLocationIdToParentLevel gives "" for this. You might argue it should give "F1". 
 		 * Originally NPE this case, so determinant result is good. 
@@ -343,7 +343,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		// new reader, because cannot reset the old reader without handling a possible exception. Same stream, though.
 		InputStreamReader reader2 = new InputStreamReader(stream);
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 
 		// just check second aisle. Need to get it again after the reread as our old reference may not be current
 		aisle20 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A20");
@@ -411,7 +411,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A11");
@@ -529,7 +529,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A91");
@@ -642,7 +642,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A12");
@@ -721,7 +721,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A13");
@@ -846,7 +846,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A21");
@@ -926,7 +926,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got from this bad file
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A14");
@@ -976,7 +976,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(A512);
@@ -1014,7 +1014,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A15");
@@ -1050,7 +1050,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer2 = createAisleFileImporter();
-		importer2.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer2.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 
 		aisle = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A15");
 		Assert.assertNotNull(aisle);
@@ -1104,7 +1104,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer3 = createAisleFileImporter();
-		importer3.importAislesFileFromCsvStream(getDefaultTenant(),reader3, facility, ediProcessTime3);
+		importer3.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
 
 		// Check what we got
 		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A15");
@@ -1162,7 +1162,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the objects we will use
 		Aisle aisle16 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A16");
@@ -1189,7 +1189,7 @@ public class AisleImporterTest extends MockDaoTest {
 		// There are led controllers, but we will make a new one. If it exists already, no harm.
 		String cntlrId = "000026";
 		String guidId = "0x000026";
-		LedController ledController = network.findOrCreateLedController(getDefaultTenant(),cntlrId, new NetGuid(guidId));
+		LedController ledController = network.findOrCreateLedController(cntlrId, new NetGuid(guidId));
 		Assert.assertNotNull(ledController);
 		LedController aController = network.getLedController(cntlrId); // make sure we can get it as we might
 		Assert.assertNotNull(aController);
@@ -1204,7 +1204,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		// Now the real point. UI will call as follows to set all of T1 in the aisle to this controller.
 		// Side effect if channel not set is to set to channel 1 also. This was temporarily important before our current controller plus channel dialog.
-		tierB1T1.setControllerChannel(getDefaultTenant(),cntrlPersistIdStr, "0", "aisle");
+		tierB1T1.setControllerChannel(cntrlPersistIdStr, "0", "aisle");
 		Short b1T1Channel = tierB1T1.getLedChannel();
 		Short b2T1Channel = tierB2T1.getLedChannel();
 		Assert.assertTrue(b1T1Channel == (short) 1);
@@ -1233,10 +1233,10 @@ public class AisleImporterTest extends MockDaoTest {
 		// New from v8. Setting controller on aisle should clear the earlier tier set.
 		String cntlrId66 = "000066";
 		String guidId66 = "0x000066";
-		LedController ledController66 = network.findOrCreateLedController(getDefaultTenant(),cntlrId66, new NetGuid(guidId66));
+		LedController ledController66 = network.findOrCreateLedController(cntlrId66, new NetGuid(guidId66));
 		String cntlrId55 = "000055";
 		String guidId55 = "0x000055";
-		LedController ledController55 = network.findOrCreateLedController(getDefaultTenant(),cntlrId55, new NetGuid(guidId55));
+		LedController ledController55 = network.findOrCreateLedController(cntlrId55, new NetGuid(guidId55));
 		UUID cntlrPersistID55 = ledController55.getPersistentId();
 		String cntrlPersistIdStr55 = cntlrPersistID55.toString();
 
@@ -1249,7 +1249,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(tierB1T1.getLedController());
 		Assert.assertNotNull(tierB1T1.getLedChannel());
 		// set the aisle, then make sure tier got cleared and tier getEffectiveXXX() works
-		aisle16.setControllerChannel(getDefaultTenant(),cntrlPersistIdStr2, "2");
+		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
 
 		// DEV-514 investigation tierB1T1 is old reference to tier. Does it know its controller/channel immediately after the aisle set it in the same transaction space?
 		// Yes! ebean would have failed the following
@@ -1270,7 +1270,7 @@ public class AisleImporterTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		// set on the old aisle reference. Does the old tier reference know?
-		aisle16.setControllerChannel(getDefaultTenant(),cntrlPersistIdStr55, "1");
+		aisle16.setControllerChannel(cntrlPersistIdStr55, "1");
 		// These fail!
 		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
 		// Assert.assertTrue(tierB1T1.getEffectiveLedChannel() == 1);
@@ -1288,7 +1288,7 @@ public class AisleImporterTest extends MockDaoTest {
 		// Assert.assertEquals(ledController55, tierB1T1.getEffectiveLedController()); // Fails
 
 		// Set it back to pass the rest of the test.
-		aisle16.setControllerChannel(getDefaultTenant(),cntrlPersistIdStr2, "2");
+		aisle16.setControllerChannel(cntrlPersistIdStr2, "2");
 		// and the new v8 UI fields
 		// Aisle has the direct association, so no parenthesis around it. Tier is indirect via getEffective.
 		String aisleCntrlUiField = aisle16.getLedControllerIdUi();
@@ -1329,7 +1329,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Check what we got
 		Aisle aisle21 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A21");
@@ -1369,9 +1369,9 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F4X", "TEST", Point.getZeroPoint());
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.0, 12.0, 48.0);
-		PathSegment segment1 = addPathSegmentForTest(getDefaultTenant(),aPath, 1, 12.0, 48.0, 12.0, 58.0);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.0, 12.0, 48.0);
+		PathSegment segment1 = addPathSegmentForTest(aPath, 1, 12.0, 48.0, 12.0, 58.0);
 		SortedSet<PathSegment> segments = aPath.getSegments();
 		int countSegments = segments.size();
 		Assert.assertTrue(countSegments == 2);
@@ -1446,20 +1446,20 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A31
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(aisle51);
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.00, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.00, 48.45);
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle51.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle51.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should ahve position now
 		// Although the old reference to aisle before path association would not.
 
@@ -1518,7 +1518,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -1589,7 +1589,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -1668,7 +1668,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -1739,7 +1739,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -1818,7 +1818,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -1889,7 +1889,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -1968,7 +1968,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2040,7 +2040,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2114,7 +2114,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -2144,7 +2144,7 @@ public class AisleImporterTest extends MockDaoTest {
 		
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime);
 		
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -2171,7 +2171,7 @@ public class AisleImporterTest extends MockDaoTest {
 		
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader3, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime);
 		
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(aisle513);
@@ -2199,7 +2199,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A51
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2258,7 +2258,7 @@ public class AisleImporterTest extends MockDaoTest {
 		facility = Facility.staticGetDao().reload(getDefaultTenant(),facility);
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime);
 		
 		// Get A51
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2326,7 +2326,7 @@ public class AisleImporterTest extends MockDaoTest {
 		
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader3, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime);
 		
 		// Get A51
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2363,7 +2363,7 @@ public class AisleImporterTest extends MockDaoTest {
 		
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader4, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader4, facility, ediProcessTime);
 		
 		// Get A51
 		Aisle aisle514 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2405,7 +2405,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		Aisle A52 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A52");
 		Assert.assertNull(A52);
@@ -2427,7 +2427,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(A512);
@@ -2453,7 +2453,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader3, facility, ediProcessTime3);
+		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
 		
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
@@ -2484,7 +2484,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		Aisle A51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(A51);
@@ -2519,7 +2519,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
 		
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(A512);
@@ -2551,7 +2551,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A51
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2625,7 +2625,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get aisle A51 and check
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2723,7 +2723,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get aisle A51 and check
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2754,7 +2754,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		Aisle aisleA512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
 		Assert.assertNotNull(aisleA512);
@@ -2782,7 +2782,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
@@ -2811,7 +2811,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 	
 		// Check all the aisles exist
 		Aisle aisleA51 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2888,7 +2888,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 		
 		// Check if cloning a cloned bay works
 		Aisle aisleA512 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A51");
@@ -2965,7 +2965,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get A31
 		Aisle aisle31 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A31");
@@ -2994,9 +2994,9 @@ public class AisleImporterTest extends MockDaoTest {
 		// For A31, B2 will be at the start of the path. And pos along path should be about the same for pairs of slots from A31 and A32
 		// For A32, B1 will be at the start of the path
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		Path aPath = createPathForTest(facility);
 
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		// Mostly check the parent relationship these 4 lines
 		TravelDirectionEnum direction1 = aPath.getTravelDir();
@@ -3016,14 +3016,14 @@ public class AisleImporterTest extends MockDaoTest {
 		// Then we need to associate the aisles to the path segment. Use the same function as the UI does
 		String segmentId = segment0.getPersistentId().toString();
 		UUID facilityID = facility.getPersistentId();
-		aisle31.associatePathSegment(getDefaultTenant(),segmentId);
+		aisle31.associatePathSegment(segmentId);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31);
 
 		// If you step into associatePathSegment, you will see that it finds the segment by UUID, and its location count was 1 and goes to 2.
-		aisle32.associatePathSegment(getDefaultTenant(),segmentId);
+		aisle32.associatePathSegment(segmentId);
 
 		checkLocations(facilityID, retrievedPathID, "F3X.1.0", aisle31, aisle32);
 
@@ -3148,15 +3148,15 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle61 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A61");
 		Assert.assertNotNull(aisle61);
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
+		Path aPath = createPathForTest(facility);
 		// this path goes from right to left, and should easily extend beyond the aisle boundaries.
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 10.85, 48.45);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 10.85, 48.45);
 		// let's check that assumption.
 		Double segmentLeftMostX = segment0.getEndPosX();
 		Double segmentRightMostX = segment0.getStartPosX();
@@ -3171,7 +3171,7 @@ public class AisleImporterTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
-		aisle61.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle61.associatePathSegment(persistStr);
 		// This should have recomputed all positions along path.  Aisle, bay, tier, and slots should have position now
 		// Although the old reference to aisle before path association would not.
 
@@ -3242,7 +3242,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the objects we will use
 		Aisle aisle29 = Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A29");
@@ -3346,7 +3346,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 

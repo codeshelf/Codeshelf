@@ -35,7 +35,7 @@ public class ComputeDetailWorkCommand extends CommandABC {
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			// Get the work instructions for this CHE and order detail
-			response = workService.getWorkInstructionsForOrderDetail(this.getTenant(),che, request.getOrderDetailId());
+			response = workService.getWorkInstructionsForOrderDetail(che, request.getOrderDetailId());
 			// ~bhe: check for null/empty list + handle exception?
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);

@@ -32,7 +32,7 @@ public class CreatePathCommand extends CommandABC {
 				response.setStatusMessage("Facility not found");
 				return response;
 			}
-			Path path = facility.createPath(getTenant(),request.getDomainId(), request.getPathSegments());
+			Path path = facility.createPath(request.getDomainId(), request.getPathSegments());
 			response.setPath(path);
 			response.setStatus(ResponseStatus.Success);
 			return response;

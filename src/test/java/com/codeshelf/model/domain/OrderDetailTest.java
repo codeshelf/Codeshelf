@@ -50,7 +50,7 @@ public class OrderDetailTest extends MockDaoTest {
 		wi.setStatus(WorkInstructionStatusEnum.NEW);
 		subject.addWorkInstruction(wi);
 		
-		subject.reevaluateStatus(getDefaultTenant());
+		subject.reevaluateStatus();
 		
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, subject.getStatus());
 		verifyStorage();
@@ -68,7 +68,7 @@ public class OrderDetailTest extends MockDaoTest {
 		wi.setActualQuantity(testQuantity - 1);
 		subject.addWorkInstruction(wi);
 		
-		subject.reevaluateStatus(getDefaultTenant());
+		subject.reevaluateStatus();
 		
 		Assert.assertEquals(OrderStatusEnum.SHORT, subject.getStatus());
 		verifyStorage();
@@ -87,7 +87,7 @@ public class OrderDetailTest extends MockDaoTest {
 		wi.setActualQuantity(testQuantity);
 		subject.addWorkInstruction(wi);
 		
-		subject.reevaluateStatus(getDefaultTenant());
+		subject.reevaluateStatus();
 		
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, subject.getStatus());
 		verifyStorage();
@@ -104,7 +104,7 @@ public class OrderDetailTest extends MockDaoTest {
 	@Test
 	public void noWI() {
 		OrderStatusEnum priorStatus = subject.getStatus();
-		subject.reevaluateStatus(getDefaultTenant());
+		subject.reevaluateStatus();
 		
 		Assert.assertEquals(priorStatus, subject.getStatus());
 	}
@@ -127,7 +127,7 @@ public class OrderDetailTest extends MockDaoTest {
 		subject.addWorkInstruction(newWi);
 		
 		
-		subject.reevaluateStatus(getDefaultTenant());
+		subject.reevaluateStatus();
 		
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, subject.getStatus());
 		verifyStorage();
@@ -153,7 +153,7 @@ public class OrderDetailTest extends MockDaoTest {
 		subject.addWorkInstruction(completeWi);
 		
 		
-		subject.reevaluateStatus(getDefaultTenant());
+		subject.reevaluateStatus();
 		
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, subject.getStatus());
 		verifyStorage();

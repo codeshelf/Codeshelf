@@ -88,7 +88,7 @@ public class DropboxRealTest extends ServerTest {
 		
 		DropboxService dropboxService = facility.getDropboxService();
 		if (dropboxService == null) {
-			facility.createDropboxService(getDefaultTenant());
+			facility.createDropboxService();
 			dropboxService = facility.getDropboxService();
 			LOGGER.warn("had to createDropboxService. Unusual for this JUNIT test. Please understand why the change ");
 			;
@@ -285,11 +285,11 @@ public class DropboxRealTest extends ServerTest {
 					return 0;
 				}
 				@Override
-				public BatchResult<Object> importOrdersFromCsvStream(Tenant tenant,Reader inCsvStreamReader,
+				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
 					Facility inFacility,
 					Timestamp inProcessTime) throws IOException {
 
-					BatchResult<Object> result = mCsvOrderImporter.importOrdersFromCsvStream(tenant,inCsvStreamReader, inFacility, inProcessTime);
+					BatchResult<Object> result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
 					LOGGER.info("Anonymous Order Importer just finished");
 					//file manipulation here
 					String csvString2 = csvString1

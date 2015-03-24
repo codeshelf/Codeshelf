@@ -66,7 +66,7 @@ public class CheResource {
 					validContainers.add(containerId);
 				}
 			}
-			WorkList workList = workService.computeWorkInstructions(tenant,che, validContainers);
+			WorkList workList = workService.computeWorkInstructions(che, validContainers);
 			return BaseResponse.buildResponse(workList);
 		} catch (Exception e) {
 			errors.processException(e);

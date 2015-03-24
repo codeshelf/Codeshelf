@@ -294,6 +294,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (ephemeralServicesShouldStartAutomatically())
 			initializeEphemeralServiceManager();
 
+		if(!this.getFrameworkType().equals(Type.MINIMAL)) {
+			// set default user context using mock user and default tenant (except on minimal test)
+			setDefaultUser();
+		}
+			
 		LOGGER.info("------------------- Running test: " + this.testName.getMethodName() + " -------------------");
 	}
 
@@ -627,17 +632,23 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return this.tenantManagerService.getInitialTenant();
 	}
 	
-	public WebSocketConnection createMockWsConnection () {
+	public User setDefaultUser() {
 		Tenant tenant = getDefaultTenant();
-		
+
 		User user = Mockito.mock(User.class);
 		Mockito.when(user.getTenant()).thenReturn(tenant);
 
+		CodeshelfSecurityManager.setCurrentUser(user);
+
+		return user;
+	}
+	
+	public WebSocketConnection createMockWsConnection () {
+		User user = setDefaultUser();
+		
 		WebSocketConnection connection = Mockito.mock(WebSocketConnection.class);
 		Mockito.when(connection.getUser()).thenReturn(user);
 		
-		CodeshelfSecurityManager.setCurrentUser(user);
-
 		// TODO: more advanced user connection setups for tests (real/mock, roles etc)
 		
 		return connection;

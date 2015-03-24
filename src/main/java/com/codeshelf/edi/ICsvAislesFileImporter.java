@@ -17,6 +17,6 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvAislesFileImporter {
 
-	boolean importAislesFileFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importAislesFileFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

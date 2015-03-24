@@ -82,30 +82,30 @@ public class PickSimulaneousWis extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
 
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		// Get the aisle
 		Aisle aisle1 = facility.getAisle("A1");// Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getDefaultTenant(),facility);
-		PathSegment segment0 = addPathSegmentForTest(getDefaultTenant(),aPath, 0, 22.0, 48.45, 12.85, 48.45);
+		Path aPath = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle1.associatePathSegment(persistStr);
 
 		Aisle aisle2 = facility.getAisle("A2");//Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A2");
 		Assert.assertNotNull(aisle2);
-		aisle2.associatePathSegment(getDefaultTenant(),persistStr);
+		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest(getDefaultTenant(),facility);
-		PathSegment segment02 = addPathSegmentForTest(getDefaultTenant(),path2, 0, 22.0, 58.45, 12.85, 58.45);
+		Path path2 = createPathForTest(facility);
+		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
 //		facility.getLocations().get("A2")l
 		Aisle aisle3 = facility.getAisle("A3");//Aisle.staticGetDao().findByDomainId(getDefaultTenant(),facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
-		aisle3.associatePathSegment(getDefaultTenant(),persistStr2);
+		aisle3.associatePathSegment(persistStr2);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D100\r\n" //
@@ -126,15 +126,15 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
-		Che che1 = network.createChe(getDefaultTenant(),"CHE3", new NetGuid("0x00000001"));
-		Che che2 = network.createChe(getDefaultTenant(),"CHE4", new NetGuid("0x00000002"));
+		Che che1 = network.createChe("CHE3", new NetGuid("0x00000001"));
+		Che che2 = network.createChe("CHE4", new NetGuid("0x00000002"));
 
-		LedController controller1 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000012"));
-		LedController controller3 = network.findOrCreateLedController(getDefaultTenant(),inOrganizationName, new NetGuid("0x00000013"));
+		LedController controller1 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000011"));
+		LedController controller2 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000012"));
+		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
 		Location tier = facility.findSubLocationById("A1.B1.T1");
 		Short channel1 = 1;
 		controller1.addLocation(tier);
@@ -198,7 +198,7 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
@@ -230,7 +230,7 @@ public class PickSimulaneousWis extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(getDefaultTenant(),reader2, facility, ediProcessTime2);
+		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
@@ -244,7 +244,7 @@ public class PickSimulaneousWis extends ServerTest {
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		propertyService.turnOffHK(getDefaultTenant(),facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
-		workService.setUpCheContainerFromString(getDefaultTenant(),theChe, "12004,12005,12001,12002,12003");
+		workService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());

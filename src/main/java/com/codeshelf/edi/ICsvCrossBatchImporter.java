@@ -20,6 +20,6 @@ public interface ICsvCrossBatchImporter {
 	/**
 	 * @return the number of successfully imported records
 	 */
-	int importCrossBatchesFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	int importCrossBatchesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -43,14 +44,16 @@ public class UiUpdateService implements IApiService {
 	public UiUpdateService() {
 	}
 
-	public Item storeItem(Tenant tenant,
-		String facilityId,
+	public Item storeItem(String facilityId,
 		String itemId,
 		String storedLocationId,
 		String cmDistanceFromLeft,
 		String quantity,
 		String inUomId,
 		String orderDetailId) {
+		
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		
 		Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityId);
 		if (facility == null) {
 			throw new InputValidationException("Facility {0} not found", facilityId);
@@ -98,13 +101,16 @@ public class UiUpdateService implements IApiService {
 	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
-	public UUID addChe(Tenant tenant,
+	public UUID addChe(
 		final String facilityPersistentId,
 		final String domainId,
 		final String description,
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr) {
+
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();		
+		
 		Facility facility = Facility.staticGetDao().findByPersistentId(tenant,facilityPersistentId);
 		Che che = new Che();
 		che.setParent(facility.getNetworks().get(0));
@@ -148,12 +154,15 @@ public class UiUpdateService implements IApiService {
 	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
 	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
 	 */
-	public void updateChe(Tenant tenant,final String cheId,
+	public void updateChe(final String cheId,
 		final String domainId,
 		final String description,
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr) {
+		
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 
 		if (che == null) {
@@ -194,7 +203,9 @@ public class UiUpdateService implements IApiService {
 		Che.staticGetDao().store(tenant,che);
 	}
 
-	public void deleteChe(Tenant tenant,final String cheId) {
+	public void deleteChe(final String cheId) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		Che che = Che.staticGetDao().findByPersistentId(tenant,cheId);
 
 		if (che == null) {
@@ -204,7 +215,9 @@ public class UiUpdateService implements IApiService {
 		Che.staticGetDao().delete(tenant,che);
 	}
 
-	public ProcessMode getDefaultProcessMode(Tenant tenant,String cheId) {
+	public ProcessMode getDefaultProcessMode(String cheId) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		// an artifact of new CHE dialog is we want the process type before we have a persistent ID
 		if (cheId == null || cheId.isEmpty()) {
 			return ProcessMode.SETUP_ORDERS;

@@ -49,7 +49,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		Aisle aisle = getDefaultAisle(getFacility(), "A1");
 
 		Short testChannel = 8;
-		aisle.setControllerChannel(getDefaultTenant(),controller1.getPersistentId().toString(), testChannel.toString());
+		aisle.setControllerChannel(controller1.getPersistentId().toString(), testChannel.toString());
 		
 		Aisle storedAisle = Aisle.staticGetDao().findByPersistentId(getDefaultTenant(),aisle.getPersistentId());
 		assertEquals(controller1.getDomainId(), storedAisle.getLedControllerId());
@@ -60,7 +60,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		// Case 2: Cover the odd-ball case of aisle has a controller, but try to assign to a bad one.
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		try {
-			aisle.setControllerChannel(getDefaultTenant(),UUID.randomUUID().toString(),"2");
+			aisle.setControllerChannel(UUID.randomUUID().toString(),"2");
 			fail("Should have thrown an exception");
 		}
 		catch(Exception e) {			
@@ -72,7 +72,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		// Case 3: Make sure prior controller is removed
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		LedController controller2 = getDefaultController(network, "0x000FFF");
-		aisle.setControllerChannel(getDefaultTenant(),controller2.getPersistentId().toString(),"3");
+		aisle.setControllerChannel(controller2.getPersistentId().toString(),"3");
 		// verify that the change happened.
 		assertEquals(controller2.getDomainId(), storedAisle.getLedControllerId());
 		LOGGER.info("controller1: "+ controller1.getPersistentId().toString());
@@ -88,7 +88,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		Short testChannel = 8;
 		Aisle aisle = getDefaultAisle(getFacility(), "A1");
 		try {
-			aisle.setControllerChannel(getDefaultTenant(),UUID.randomUUID().toString(), testChannel.toString());
+			aisle.setControllerChannel(UUID.randomUUID().toString(), testChannel.toString());
 			fail("Should have thrown an exception");
 		}
 		catch(Exception e) {
@@ -116,7 +116,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		
 		
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
-		aisle.associatePathSegment(getDefaultTenant(),segPersistId);
+		aisle.associatePathSegment(segPersistId);
 		// Paul: please see facility.recomputeLocationPathDistances()
 		
 		
@@ -129,7 +129,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 		// Cover the odd-ball case of aisle has a path segment, but try to assign to a bad one.
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		try {
-			aisle.associatePathSegment(getDefaultTenant(),UUID.randomUUID().toString());
+			aisle.associatePathSegment(UUID.randomUUID().toString());
 			fail("Should have thrown an exception");
 		}
 		catch(Exception e) {
@@ -146,7 +146,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 
 		Aisle aisle = getDefaultAisle(getFacility(), "A1");
 		try {
-			aisle.associatePathSegment(getDefaultTenant(),UUID.randomUUID().toString());
+			aisle.associatePathSegment(UUID.randomUUID().toString());
 			fail("Should have thrown an exception");
 		}
 		catch(Exception e) {
@@ -181,7 +181,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(getDefaultTenant(),reader, facility, ediProcessTime);
+		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 

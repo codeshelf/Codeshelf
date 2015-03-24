@@ -35,7 +35,7 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 		CompleteWorkInstructionResponse response = new CompleteWorkInstructionResponse();
 		response.setWorkInstructionId(incomingWI.getPersistentId());
 		try {
-			workService.completeWorkInstruction(this.getTenant(),cheId, incomingWI);
+			workService.completeWorkInstruction(cheId, incomingWI);
 			response.setStatus(ResponseStatus.Success);	
 		} catch(Exception e) {
 			LOGGER.error("Unable to process completed work instruction: " + incomingWI, e);

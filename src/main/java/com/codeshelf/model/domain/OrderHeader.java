@@ -42,6 +42,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -317,7 +318,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
-	public OrderLocation addOrderLocation(Tenant tenant,Location inLocation) {
+	public OrderLocation addOrderLocation(Location inLocation) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		OrderLocation result = createOrderLocation(inLocation);
 		addOrderLocation(result);
 		OrderLocation.staticGetDao().store(tenant,result);
@@ -401,7 +403,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	/**
 	 * Reevaluate the order status based on the status of child order details
 	 */
-	public void reevaluateStatus(Tenant tenant) {
+	public void reevaluateStatus() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		setStatus(OrderStatusEnum.COMPLETE);
 		for (OrderDetail detail : getOrderDetails()) {
 			if (!detail.getActive()){

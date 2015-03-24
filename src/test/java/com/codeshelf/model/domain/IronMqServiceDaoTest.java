@@ -13,12 +13,12 @@ public class IronMqServiceDaoTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		try {
 			Facility f = createFacility();
-			IronMqService ironMqService = ((IronMqService)f.getEdiExportService(getDefaultTenant()));
+			IronMqService ironMqService = ((IronMqService)f.getEdiExportService());
 			String originalCredentials = ironMqService.getProviderCredentials();
 			
 			IronMqService ironMqServiceByDao = IronMqService.staticGetDao().findByPersistentId(getDefaultTenant(),ironMqService.getPersistentId());
-			ironMqServiceByDao.storeCredentials(getDefaultTenant(),"NEWPROJ", "NEWTOKEN");
-			String updatedCredentials = ((IronMqService)f.getEdiExportService(getDefaultTenant())).getProviderCredentials();
+			ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN");
+			String updatedCredentials = ((IronMqService)f.getEdiExportService()).getProviderCredentials();
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);
 			
 		} finally {

@@ -151,7 +151,7 @@ public class WorkServiceTest extends ServerTest {
 		OrderDetail priorOrderDetail = OrderDetail.staticGetDao().findByPersistentId(getDefaultTenant(),detailId);
 		Assert.assertNotEquals(OrderStatusEnum.SHORT, priorOrderDetail.getStatus());
 
-		workService.completeWorkInstruction(getDefaultTenant(),cheId,	wiToRecord);
+		workService.completeWorkInstruction(cheId,	wiToRecord);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
@@ -247,7 +247,7 @@ public class WorkServiceTest extends ServerTest {
 		when(WorkInstruction.staticGetDao().findByPersistentId((Tenant)any(),eq(wiToRecord.getPersistentId()))).thenReturn(null);
 
 		try {
-			workService.completeWorkInstruction(getDefaultTenant(),cheId, wiToRecord);
+			workService.completeWorkInstruction(cheId, wiToRecord);
 			Assert.fail("recordCompletedWorkInstruction should have thrown an exception if WI cannot be found");
 		} catch (InputValidationException e) {
 			Assert.assertNotNull(e.getErrors().getFieldErrors("persistentId"));
@@ -287,7 +287,7 @@ public class WorkServiceTest extends ServerTest {
 
 		doThrow(new DaoException("test")).when(WorkInstruction.staticGetDao()).store((Tenant)any(),eq(wiToRecord));
 
-		workService.completeWorkInstruction(getDefaultTenant(),cheId, wiToRecord);
+		workService.completeWorkInstruction(cheId, wiToRecord);
 
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
 	}

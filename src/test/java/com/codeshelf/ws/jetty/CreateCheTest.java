@@ -50,7 +50,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		UiUpdateService service = new UiUpdateService();
-		UUID cheid = service.addChe(getDefaultTenant(),facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
@@ -70,11 +70,11 @@ public class CreateCheTest extends MockDaoTest {
 		Facility.staticGetDao().store(getDefaultTenant(),facility);		
 		
 		UiUpdateService service = new UiUpdateService();
-		UUID cheid = service.addChe(getDefaultTenant(),facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
-		service.deleteChe(getDefaultTenant(),cheid.toString());
+		service.deleteChe(cheid.toString());
 
 		Che che = Che.staticGetDao().findByPersistentId(getDefaultTenant(),cheid);
 		Assert.assertNull(che);
@@ -276,7 +276,7 @@ public class CreateCheTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Che che = createTestChe("0x00000002");
 		UiUpdateService service = new UiUpdateService();
-		service.updateChe(getDefaultTenant(),che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
@@ -297,21 +297,21 @@ public class CreateCheTest extends MockDaoTest {
 		UiUpdateService service = new UiUpdateService();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		service.updateChe(getDefaultTenant(),persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		//Fail to update name
-		service.updateChe(getDefaultTenant(),persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		service.updateChe(getDefaultTenant(),persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		service.updateChe(getDefaultTenant(),persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		service.updateChe(getDefaultTenant(),persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		//Fail to update process mode
-		service.updateChe(getDefaultTenant(),persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
+		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
@@ -320,7 +320,7 @@ public class CreateCheTest extends MockDaoTest {
 	private Che createTestChe(String netGuid){
 		Facility facility = Facility.createFacility(getDefaultTenant(),"F1", "facf1", Point.getZeroPoint());
 		CodeshelfNetwork network = facility.createNetwork(getDefaultTenant(),"WITEST");
-		Che che = network.createChe(getDefaultTenant(),netGuid, new NetGuid(netGuid));
+		Che che = network.createChe(netGuid, new NetGuid(netGuid));
 		return che;
 	}
 

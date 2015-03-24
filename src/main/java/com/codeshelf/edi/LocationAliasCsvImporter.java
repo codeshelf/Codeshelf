@@ -22,6 +22,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
@@ -45,7 +46,8 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importLocationAliasesFromCsvStream(Tenant tenant,Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+	public final boolean importLocationAliasesFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 
 		boolean result = true;
 		List<LocationAliasCsvBean> locationAliasBeanList = toCsvBean(inCsvReader, LocationAliasCsvBean.class);

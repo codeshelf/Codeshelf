@@ -39,6 +39,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
@@ -386,8 +387,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	/**
 	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
 	 */
-	public boolean willProduceWi(Tenant tenant,WorkService workService) {
-		return workService.willOrderDetailGetWi(tenant,this);
+	public boolean willProduceWi(WorkService workService) {
+		return workService.willOrderDetailGetWi(this);
 	}
 
 	// --------------------------------------------------------------------------
@@ -395,7 +396,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * If the order header is crossbatch, leave blank. If outbound, then Y or -. Other types not implemented. Return ??
 	 * Advanced: If already completed work instruction: C. If short and not complete yet: s
 	 */
-	public String getWillProduceWiUi(Tenant tenant,WorkService workService) {
+	public String getWillProduceWiUi(WorkService workService) {
 		OrderTypeEnum myParentType = getParentOrderType();
 		if (myParentType == OrderTypeEnum.CROSS)
 			return "";
@@ -413,7 +414,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 					foundShort = true;
 			}
 		}
-		if (willProduceWi(tenant,workService))
+		if (willProduceWi(workService))
 			return "Y";
 		else if (foundShort)
 			return "-, short";
@@ -454,7 +455,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * Revaluate the status
 	 * @return if it was changed
 	 */
-	public boolean reevaluateStatus(Tenant tenant) {
+	public boolean reevaluateStatus() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		OrderStatusEnum priorStatus = getStatus();
 		if(getWorkInstructions().isEmpty()) {
 			if (priorStatus == OrderStatusEnum.INPROGRESS) {

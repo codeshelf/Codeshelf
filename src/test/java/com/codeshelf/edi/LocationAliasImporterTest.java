@@ -62,7 +62,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
-		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 
@@ -85,7 +85,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
-		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
 		
@@ -105,7 +105,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
-		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
 
@@ -140,7 +140,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
@@ -206,7 +206,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A3, AisleC\r\n";
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		importer.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString), facility, ediProcessTime);
+		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 		
 		LOGGER.info("2: Normal lookups by alias");
@@ -228,7 +228,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A3, AisleC\r\n";
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime2);
+		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("4: Normal lookups by the new alias found. Old not");
@@ -255,7 +255,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction(getDefaultTenant());
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer3 = createLocationAliasImporter();
-		importer3.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString2), facility, ediProcessTime3);
+		importer3.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime3);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("6: Lookups still work");
@@ -282,7 +282,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A3, AisleC\r\n";
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter importer4 = createLocationAliasImporter();
-		importer4.importLocationAliasesFromCsvStream(getDefaultTenant(),new StringReader(csvString4), facility, ediProcessTime4);
+		importer4.importLocationAliasesFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
 		this.getTenantPersistenceService().commitTransaction(getDefaultTenant());
 
 		LOGGER.info("8: See that the swapped aliases resolve correctly");

@@ -47,6 +47,7 @@ import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.StringUIConverter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -280,7 +281,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return false;
 	}
 	
-	public void updateAnchorPoint(Tenant tenant,Double x, Double y, Double z) {
+	public void updateAnchorPoint(Double x, Double y, Double z) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		anchorPosX = x;
 		anchorPosY = y;
 		anchorPosZ = z;
@@ -321,7 +323,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * this is the "delete" method. Does not delete. Merely makes inactive, along with all its children.
 	 * This does the DAO persist.
 	 */
-	public void makeInactiveAndAllChildren(Tenant tenant) {
+	public void makeInactiveAndAllChildren() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		this.setActive(false);
 		try {
 			this.getDao().store(tenant,this);
@@ -331,7 +334,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		List<Location> childList = getActiveChildren();
 		for (Location sublocation : childList) {
-			sublocation.makeInactiveAndAllChildren(tenant);
+			sublocation.makeInactiveAndAllChildren();
 		}
 	}
 
@@ -741,8 +744,9 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
-	public void removeAllVertices(Tenant tenant) {
+	public void removeAllVertices() {
 		LOGGER.info("removeNonAnchorVertices");
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		if (vertices == null || vertices.isEmpty()) {
 			return;
 		}
@@ -1229,7 +1233,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.domain.LocationABC#computePosAlongPath(com.codeshelf.model.domain.PathSegment)
 	 */
-	public void computePosAlongPath(Tenant tenant,final PathSegment inPathSegment) {
+	public void computePosAlongPath(final PathSegment inPathSegment) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		if (inPathSegment == null) {
 			LOGGER.error("null pathSegment in computePosAlongPath");
 			return;
@@ -1259,14 +1264,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		// Also force a recompute for all of the child locations.
 		List<Location> locations = getActiveChildren();
 		for (Location location : locations) {
-			location.computePosAlongPath(tenant,inPathSegment);
+			location.computePosAlongPath(inPathSegment);
 		}
 	}
 
 	/**
 	 * Clears controller and channel back to null state, as if they had never been set after initialization
 	 */
-	public void clearControllerChannel(Tenant tenant) {
+	public void clearControllerChannel() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+
 		if (getLedController() != null || getLedChannel() != null) {
 			try {
 				LedController currentController = this.getLedController();

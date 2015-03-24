@@ -458,7 +458,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(getDefaultTenant(),reader, facility, ordersEdiProcessTime);
+		orderImporter.importOrdersFromCsvStream(reader, facility, ordersEdiProcessTime);
 
 		// Make sure we imported the outbound order.
 		OrderHeader order = facility.getOrderHeader("123");

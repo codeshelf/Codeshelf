@@ -17,7 +17,7 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvInventoryImporter {
 
-	boolean importSlottedInventoryFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importSlottedInventoryFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 	//boolean importDdcInventoryFromCsvStream(InputStreamReader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 

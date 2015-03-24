@@ -17,6 +17,6 @@ import com.codeshelf.model.domain.Facility;
  */
 public interface ICsvLocationAliasImporter {
 
-	boolean importLocationAliasesFromCsvStream(Tenant tenant,Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
+	boolean importLocationAliasesFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime);
 
 }

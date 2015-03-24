@@ -44,8 +44,8 @@ public class OrderHeaderTest extends HibernateTest {
 
 		
 		OrderHeader header = createOrderHeader("Order1", OrderTypeEnum.OUTBOUND, facility, null);
-		OrderLocation loc1 = header.addOrderLocation(getDefaultTenant(),a1);
-		OrderLocation loc2 = header.addOrderLocation(getDefaultTenant(),a2);
+		OrderLocation loc1 = header.addOrderLocation(a1);
+		OrderLocation loc2 = header.addOrderLocation(a2);
 		
 		OrderLocation orderLocation = header.getFirstOrderLocationOnPath(path);
 		Assert.assertEquals(a1, orderLocation.getLocation());
@@ -102,10 +102,10 @@ public class OrderHeaderTest extends HibernateTest {
 	private Path createAssociatedPath(Aisle a1, Aisle a2) {
 		Facility facility = a1.getParentAtLevel(Facility.class);
 		
-		Path path = facility.createPath(getDefaultTenant(),a1.getDomainId() + ":" + a2.getDomainId());
-		PathSegment segment = path.createPathSegment(getDefaultTenant(),0, a1.getAnchorPoint(), a2.getAnchorPoint());
-		a1.associatePathSegment(getDefaultTenant(),segment);
-		a2.associatePathSegment(getDefaultTenant(),segment);
+		Path path = facility.createPath(a1.getDomainId() + ":" + a2.getDomainId());
+		PathSegment segment = path.createPathSegment(0, a1.getAnchorPoint(), a2.getAnchorPoint());
+		a1.associatePathSegment(segment);
+		a2.associatePathSegment(segment);
 		return path;
 	}
 }

@@ -26,6 +26,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {
@@ -34,7 +35,7 @@ public class WorkInstructionGenerator {
 		ArrayList<WorkInstruction> wiCombos = new ArrayList<>();
 		for (WorkInstructionStatusEnum statusEnum : WorkInstructionStatusEnum.values()) {
 			for (WorkInstructionTypeEnum typeEnum : WorkInstructionTypeEnum.values()) {
-				wiCombos.add(generateWithStatusAndType(tenant, facility, statusEnum, typeEnum, assignedTime));
+				wiCombos.add(generateWithStatusAndType(tenant,facility, statusEnum, typeEnum, assignedTime));
 			}
 			
 		}
@@ -58,7 +59,7 @@ public class WorkInstructionGenerator {
 		return wiCombos;
 	}
 	
-	private WorkInstruction generateWithStatusAndType(Tenant tenant, Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
+	private WorkInstruction generateWithStatusAndType(Tenant tenant,Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
 		Aisle aisle=facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
 		Aisle.staticGetDao().store(tenant,aisle);
 		
@@ -79,7 +80,7 @@ public class WorkInstructionGenerator {
 		//Che che1 = Che.staticGetDao().findByDomainId(tenant,facility.getNetworks().get(0), "CHE1");
 		Che che1 = Che.staticGetDao().findByDomainId(tenant,null, "CHE1");
 		
-		WorkInstruction workInstruction = WiFactory.createWorkInstruction(tenant,statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
+		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
 		
 		
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));

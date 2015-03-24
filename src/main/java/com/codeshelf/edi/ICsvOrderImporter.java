@@ -19,7 +19,7 @@ import com.codeshelf.validation.BatchResult;
  */
 public interface ICsvOrderImporter {
 
-	BatchResult<Object> importOrdersFromCsvStream(Tenant tenant, Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
+	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
 
 	// here for easier testablity
 	int toInteger(final String inString);
