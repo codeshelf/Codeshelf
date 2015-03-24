@@ -239,4 +239,8 @@ public class MockTenantManagerService implements ITenantManagerService {
 		// TODO Auto-generated method stub
 		
 	}
+	@Override
+	public Tenant getTenantBySchema(String schemaName) {
+		return this.getDefaultTenant();
+	}
 }

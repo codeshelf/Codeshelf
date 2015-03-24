@@ -1,5 +1,7 @@
 package com.codeshelf.testframework;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,6 +18,7 @@ import lombok.Getter;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -441,7 +444,20 @@ public abstract class FrameworkTest implements IntegrationTest {
 			} catch (TimeoutException e1) {
 				throw new RuntimeException("Could not start test services (persistence)", e1);
 			}
-
+			
+			// create default tenant schema
+			// TODO: use Liquibase instead?
+			Tenant tenant = realTenantManagerService.getDefaultTenant();
+			Connection conn;
+			try {
+				conn = tenant.getConnection();
+			} catch (SQLException e2) {
+				LOGGER.error("Failed to get connection to default tenant schema, cannot continue.",e2);
+				throw new RuntimeException(e2);
+			}
+			SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration(),conn);
+			se.create(false, true);
+			
 			// start h2 web interface for debugging
 			try {
 				org.h2.tools.Server.createWebServer("-webPort", "8082").start();
