@@ -1,6 +1,7 @@
 package com.codeshelf.manager;
 
 import java.nio.charset.Charset;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -282,7 +283,14 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		} catch (SQLException e) {
 			LOGGER.error("Truncate of tenant tables failed, falling back on SchemaExport", e);
 			// reset schema old way, hbm2ddl
-			SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration());
+			Connection conn;
+			try {
+				conn = tenant.getConnection();
+			} catch (SQLException e2) {
+				LOGGER.error("Failed to get connection to tenant schema, cannot continue.",e2);
+				throw new RuntimeException(e2);
+			}
+			SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration(),conn);
 			se.create(false, true);
 		}
 	}
@@ -432,6 +440,28 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			Session session = managerPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(Tenant.class);
 			criteria.add(Restrictions.eq("name", name));
+
+			@SuppressWarnings("unchecked")
+			List<Tenant> tenantList = criteria.list();
+
+			if (tenantList != null && tenantList.size() == 1) {
+				result = inflate(tenantList.get(0));
+			}
+		} finally {
+			managerPersistenceService.commitTransaction();
+		}
+		return result;
+	}
+
+
+	@Override
+	public Tenant getTenantBySchema(String schemaName) {
+		Tenant result = null;
+
+		try {
+			Session session = managerPersistenceService.getSessionWithTransaction();
+			Criteria criteria = session.createCriteria(Tenant.class);
+			criteria.add(Restrictions.eq("schemaName", schemaName));
 
 			@SuppressWarnings("unchecked")
 			List<Tenant> tenantList = criteria.list();

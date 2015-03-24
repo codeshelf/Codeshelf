@@ -31,14 +31,18 @@ public abstract class DatabaseConnection {
 	}
 
 	public void executeSQL(String sql) throws SQLException {
-		Connection conn = DriverManager.getConnection(
-			this.getUrl(),
-			this.getUsername(),
-			this.getPassword());
+		Connection conn = getConnection();
 		Statement stmt = conn.createStatement();
 		LOGGER.trace("Executing explicit SQL: "+sql);
 		stmt.execute(sql);
 		stmt.close();
 		conn.close();
+	}
+	
+	public Connection getConnection() throws SQLException {
+		return DriverManager.getConnection(
+			this.getUrl(),
+			this.getUsername(),
+			this.getPassword());
 	}
 }
