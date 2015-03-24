@@ -142,11 +142,12 @@ public class WiFactory {
 	/**
 	 * Create a work instruction for and order item quantity picked into a container at a location.
 	 * @param inStatus
+	 * @param inType
 	 * @param inOrderDetail
-	 * @param inQuantityToPick
 	 * @param inContainer
+	 * @param inChe
 	 * @param inLocation
-	 * @param inPosALongPath
+	 * @param inTime
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,

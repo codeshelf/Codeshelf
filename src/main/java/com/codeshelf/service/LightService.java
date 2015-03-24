@@ -198,7 +198,8 @@ public class LightService implements IApiService {
 	public static void getInstructionsForPosConRange(final Facility facility, final WorkInstruction wi, final Location theLocation, List<PosControllerInstr> instructions){
 		if (theLocation == null) {return;}
 		if (theLocation.isLightablePoscon()) {
-			String posConController = theLocation.getLedControllerId();
+			LedController controller = theLocation.getEffectiveLedController();
+			String posConController = controller == null ? "" : controller.getDeviceGuidStr();
 			int posConIndex = theLocation.getPosconIndex();
 			PosControllerInstr message = null;
 			if (wi == null) {

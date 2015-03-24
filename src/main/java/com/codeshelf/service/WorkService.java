@@ -374,12 +374,20 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
-		// Pass facility as the default location of a short WI..
-		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-			WorkInstructionTypeEnum.PLAN,
-			orderDetail,
-			inChe,
-			null); // Could be normal WI, or a short WI
+		Facility inFacility = inChe.getFacility();
+		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
+		WorkInstruction aWi = null;
+		// workItem will contain an Instruction if an item was found on some path or an OrderDetail if it was not.
+		// In LinePick, we are OK with items without a location. So, if does return with OrderDetail, just create an Instruction manually.
+		if (workItem == null || workItem.getInstruction() == null) {
+			aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+				WorkInstructionTypeEnum.PLAN,
+				orderDetail,
+				inChe,
+				null); // Could be normal WI, or a short WI
+		} else {
+			aWi = workItem.getInstruction();
+		}
 		if (aWi != null) {
 			wiResultList.add(aWi);
 			orderDetail.reevaluateStatus();
