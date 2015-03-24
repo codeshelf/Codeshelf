@@ -32,6 +32,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
 		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
+		if (inInstructions.isEmpty()) {return;}
+		
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
 			if (PosControllerInstr.POSITION_ALL.equals(instr.getPosition())) {
@@ -41,8 +43,14 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			mPosToLastSetIntrMap.put(instr.getPosition(), instr);
 		}
 
-		ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, inInstructions);
-		mRadioController.sendCommand(command, getAddress(), true);
+		int batchStart = 0, size = inInstructions.size(), batchSize = 10;
+		while (batchStart < size) {
+			List<PosControllerInstr> batch = inInstructions.subList(batchStart, Math.min(batchStart + batchSize, size));
+			ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, batch);
+			mRadioController.sendCommand(command, getAddress(), true);
+			batchStart += batchSize;
+			try {Thread.sleep(5);} catch (InterruptedException e) {}
+		}
 	}
 
 	protected void clearAllPositionControllers() {
