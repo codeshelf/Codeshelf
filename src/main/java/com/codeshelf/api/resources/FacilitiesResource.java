@@ -6,18 +6,16 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
-import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")
@@ -27,8 +25,12 @@ public class FacilitiesResource {
 	
 	@Path("{id}")
 	public FacilityResource getManufacturer(@PathParam("id") UUIDParam uuidParam) throws Exception {
+		Facility facility = Facility.staticGetDao().findByPersistentId(uuidParam.getValue());
+		if (facility == null) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
 		FacilityResource r = resourceContext.getResource(FacilityResource.class);
-	    r.setMUUIDParam(uuidParam);
+	    r.setFacility(facility);
 	    return r;
 	}
 	

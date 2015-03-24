@@ -11,6 +11,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -38,24 +39,19 @@ import com.google.inject.Inject;
 public class TestingResource {
 	private ITenantPersistenceService persistence = TenantPersistenceService.getInstance();
 	private WorkService workService;
-	
+
 	@Inject
 	public TestingResource(WorkService workService) {
 		this.workService = workService;
 	}
-	
+
 	@POST
 	@Path("/createorders")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response createTestOrders(@QueryParam("facilityId") UUIDParam facilityUUID) {
 		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(facilityUUID, "facilityId", errors)){
-			return errors.buildResponse();
-		}
-
 		try {
-			persistence.beginTransaction();
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getUUID());
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getValue());
 			if (facility == null) {
 				errors.addErrorUUIDDoesntExist(facilityUUID.getRawValue(), "facility");;
 				return errors.buildResponse();
@@ -65,10 +61,10 @@ public class TestingResource {
 			long order2 = order1 + 1;
 			createOrders(facility, order1, order2);
 			persistence.commitTransaction();
-			
+
 			System.out.println("Orders created");
 			Thread.sleep(6000);
-			
+
 			persistence.beginTransaction();
 			List<Che> ches = Che.staticGetDao().getAll();
 			if (ches == null || ches.isEmpty()){
@@ -79,13 +75,13 @@ public class TestingResource {
 			List<String> containers = new ArrayList<String>();
 			containers.add(order1 + "");
 			containers.add(order2 + "");
-			facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getUUID());
+			facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getValue());
 			WorkList workList = workService.computeWorkInstructions(che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
 			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTransaction();
 			System.out.println("Assigned to CHE");
-			
+
 			int i = 0;
 			for(WorkInstruction instruction : instructions) {
 				persistence.beginTransaction();
@@ -110,8 +106,8 @@ public class TestingResource {
 			persistence.commitTransaction();
 		}
 	}
-	
-	private void importInventory(Facility facility) throws Exception{	
+
+	private void importInventory(Facility facility) throws Exception{
 		List<LocationAlias> aliases = facility.getLocationAliases();
 		if (aliases == null || aliases.isEmpty()) {
 			throw new Exception("Please add at least one location alias to the facility");
@@ -136,12 +132,12 @@ public class TestingResource {
 		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
 		InputStreamReader reader = new InputStreamReader(stream);
 
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis()); 
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvInventoryImporter importer = new InventoryCsvImporter(new EventProducer());
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);		
+		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
 	}
-	
-	private void createOrders(Facility facility, long order1, long order2) throws Exception{		
+
+	private void createOrders(Facility facility, long order1, long order2) throws Exception{
 		String csvString2 = String.format(
 				"orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				//order1
