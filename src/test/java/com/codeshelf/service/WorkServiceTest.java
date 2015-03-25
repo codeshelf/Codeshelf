@@ -77,6 +77,16 @@ public class WorkServiceTest extends ServerTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return false; // in this test, we start services manually after defining the work service to start
 	}
+	
+	@Test
+	public void workResultActualOnly() {
+		//create order detail
+		//computeWI
+		//getWI
+		//complete
+		//query
+	}
+	
 	/*
 	@Test
 	public void workLocationConflictPreferredDoesNotExist() {

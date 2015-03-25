@@ -23,6 +23,7 @@ import lombok.Setter;
 import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
@@ -94,6 +95,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		throw new NotImplementedException();
 	}
 
+	@Override
+	public List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys) {
+		throw new NotImplementedException();
+	}
+
+	
 	public final void store(IDomainObject inDomainObject) {
 		validateClass(inDomainObject.getClass());
 		@SuppressWarnings("unchecked")
@@ -193,6 +200,7 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public Criteria createCriteria() {
 		throw new NotImplementedException();
 	}
+
 
 
 }

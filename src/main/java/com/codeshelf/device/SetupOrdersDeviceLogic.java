@@ -40,7 +40,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger					LOGGER	= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
+	private static final Logger					LOGGER						= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
 
 	// The CHE's container map.
 	private Map<String, String>					mPositionToContainerMap;
@@ -55,10 +55,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	private String								mLocationId;
-	
+
 	@Getter
 	@Setter
-	private boolean								mInventoryCommandAllowed = true;
+	private boolean								mInventoryCommandAllowed	= true;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -67,7 +67,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
-		
+
 		updateConfigurationFromManager();
 	}
 
@@ -198,7 +198,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
-					
+
 				case SCAN_GTIN:
 					if (lastScanedGTIN == null) {
 						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
@@ -221,7 +221,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void processCommandScan(final String inScanStr) {
 
 		updateInventoryCommandAccess(inScanStr);
-		
+
 		switch (inScanStr) {
 
 			case LOGOUT_COMMAND:
@@ -251,9 +251,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CLEAR_ERROR_COMMAND:
 				clearErrorCommandReceived();
 				break;
-			
+
 			case INVENTORY_COMMAND:
 				inventoryCommandReceived();
+				break;
+
+			case ORDER_WALL_COMMAND:
+				orderWallCommandReceived();
+				break;
+
+			case PUT_WALL_COMMAND:
+				putWallCommandReceived();
 				break;
 
 			default:
@@ -265,24 +273,51 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 		}
 	}
-	
+
+	protected void orderWallCommandReceived() {
+		// state sensitive. Only allow at start and finish for now.
+		switch (mCheStateEnum) {
+			case CONTAINER_SELECT:
+				// only if no container/orders at all have been set up
+				if (mPositionToContainerMap.size() == 0) {
+					setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+				} else {
+					LOGGER.warn("User: {} attempted to do ORDER_WALL after having some pick orders set up", this.getUserId());
+				}
+				break;
+
+			case PICK_COMPLETE:
+				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+				break;
+
+			default:
+				break;
+		}
+
+	}
+
+	protected void putWallCommandReceived() {
+		// state sensitive. Only allow at start and finish for now.
+
+	}
+
 	protected void resetInventoryCommandAllowed() {
 		lastScanedGTIN = null;
 		setMInventoryCommandAllowed(true);
 	}
-	
+
 	protected void updateInventoryCommandAccess(String inCommandStr) {
 		if (!inCommandStr.equals(INVENTORY_COMMAND)) {
 			setMInventoryCommandAllowed(false);
 		}
-		
-		else if ( inCommandStr.equals(LOGOUT_COMMAND)) {
+
+		else if (inCommandStr.equals(LOGOUT_COMMAND)) {
 			setMInventoryCommandAllowed(true);
 		}
 	}
 
 	protected void inventoryCommandReceived() {
-		
+
 		switch (mCheStateEnum) {
 			case CONTAINER_SELECT:
 				if (isMInventoryCommandAllowed()) {
@@ -294,9 +329,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			default:
 				break;
 		}
-		
+
 	}
-	
+
 	protected void clearErrorCommandReceived() {
 		//Split it out by state
 		switch (mCheStateEnum) {
@@ -312,6 +347,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_GTIN:
 				resetInventoryCommandAllowed();
 				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+
+			case PUT_WALL_SCAN_ORDER:
+			case PUT_WALL_SCAN_LOCATION:
+				// DEV-708 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
+				// Perhaps will need a member variable, but for now we can tell by the state of the container map
+				if (mPositionToContainerMap.size() == 0) {
+					setState(CheStateEnum.CONTAINER_SELECT);
+				} else {
+					setState(CheStateEnum.PICK_COMPLETE);
+				}
 				break;
 
 			default:
@@ -355,7 +401,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_SOMETHING_SHORT:
 				confirmSomethingShortPick(inScanStr);
 				break;
-				
+
 			case SCAN_GTIN:
 				break;
 
@@ -828,10 +874,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_SOMETHING:
 				setState(CheStateEnum.SCAN_SOMETHING_SHORT);
 				break;
-			
+
 			case SCAN_SOMETHING_SHORT:
 				break;
-			
+
 			case SCAN_GTIN:
 				break;
 
@@ -879,7 +925,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				processContainerSelectScan(COMMAND_PREFIX, SETUP_COMMAND);
 				break;
-			
+
 			case SCAN_GTIN:
 			default:
 				//DEV-577 Do nothing
@@ -991,7 +1037,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
-				
+
 			case SCAN_GTIN:
 				processGtinScan(inScanPrefixStr, inContent);
 				break;
@@ -1277,7 +1323,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					}
 				}
 				break;
-				
+
 			case SCAN_GTIN:
 				break;
 
