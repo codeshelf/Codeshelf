@@ -105,6 +105,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		NO_COMMAND								= "NO";
 	protected static final String		CLEAR_ERROR_COMMAND						= "CLEAR";
 	protected static final String		INVENTORY_COMMAND						= "INVENTORY";
+	protected static final String		ORDER_WALL_COMMAND						= "ORDER_WALL";
+	protected static final String		PUT_WALL_COMMAND						= "PUT_WALL";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"

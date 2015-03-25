@@ -55,11 +55,16 @@ public enum CheStateEnum {
 	SCAN_SOMETHING(CheStateNum.SCAN_SOMETHING, "SCAN_SOMETHING"),
 	// @EnumValue("SCAN_SOMTHING_SHORT")
 	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT"),
-	
+
 	// states used for inventory scan DEV-644
 	// @EnumValue("SCAN_GTIN")
-	SCAN_GTIN(CheStateNum.SCAN_GTIN, "SCAN_GTIN");
+	SCAN_GTIN(CheStateNum.SCAN_GTIN, "SCAN_GTIN"),
 
+	// states used for put wall DEV-708
+	// @EnumValue("PUT_WALL_SCAN_LOCATION")
+	PUT_WALL_SCAN_LOCATION(CheStateNum.PUT_WALL_SCAN_LOCATION, "PUT_WALL_SCAN_LOCATION"),
+	// @EnumValue("PUT_WALL_SCAN_ORDER")
+	PUT_WALL_SCAN_ORDER(CheStateNum.PUT_WALL_SCAN_ORDER, "PUT_WALL_SCAN_ORDER");
 
 	private int		mValue;
 	private String	mName;
@@ -132,11 +137,11 @@ public enum CheStateEnum {
 			case CheStateNum.NO_CONTAINERS_SETUP:
 				result = CheStateEnum.NO_CONTAINERS_SETUP;
 				break;
-				
+
 			case CheStateNum.SCAN_GTIN:
 				result = CheStateEnum.SCAN_GTIN;
 				break;
-				
+
 			default:
 				result = CheStateEnum.INVALID;
 				break;
@@ -185,7 +190,10 @@ public enum CheStateEnum {
 		static final byte	SCAN_SOMETHING				= 19;
 		static final byte	SCAN_SOMETHING_SHORT		= 20;
 		// states used for inventory scan
-		static final byte	SCAN_GTIN				= 23;
+		static final byte	SCAN_GTIN					= 23;
+		// states for put wall
+		static final byte	PUT_WALL_SCAN_ORDER			= 24;
+		static final byte	PUT_WALL_SCAN_LOCATION		= 25;
 
 		private CheStateNum() {
 		};
