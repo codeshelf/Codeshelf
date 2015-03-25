@@ -13,22 +13,18 @@ import javax.ws.rs.core.Response;
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
 public class CheResource {
-	private ITenantPersistenceService persistence = TenantPersistenceService.getInstance();
 
 	@Setter
-	private UUIDParam mUUIDParam;
+	private Che che;
 	
 	private WorkService workService;
 	
@@ -42,17 +38,8 @@ public class CheResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response computeWorkInstructions(@QueryParam("containers") List<String> containers) {
 		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(mUUIDParam, "cheId", errors)){
-			return errors.buildResponse();
-		}
 
 		try {
-			persistence.beginTransaction();
-			Che che = Che.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
-			if (che == null) {
-				errors.addErrorUUIDDoesntExist(mUUIDParam.getRawValue(), "che");
-				return errors.buildResponse();
-			}
 			//User picker = new User();
 			//che.setCurrentUser(currentUser);
 			Facility facility = che.getFacility();
@@ -68,8 +55,6 @@ public class CheResource {
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		} 
 	}
 }
