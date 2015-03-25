@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
@@ -124,22 +125,25 @@ public class LightServiceTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		aisle = Aisle.staticGetDao().reload(aisle);
 		items = aisle.getInventoryInWorkingOrder();
-		Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
-		complete.get();
+		//Future<Void> complete = lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
+		lightService.lightInventory(facility.getPersistentId().toString(), aisle.getLocationId());
 		
 		LOGGER.info("7: ArgumentCaptor");
 
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(webSocketManagerService, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
-		
-		LOGGER.info("8: assertWillLightItem() from messagesCaptor.getAllValues");
+		//verify(webSocketManagerService, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(webSocketManagerService, times(1)).sendMessage(any(Set.class), messagesCaptor.capture());
 		List<MessageABC> messages = messagesCaptor.getAllValues();
-		Iterator<Item> itemIterator = items.iterator();
-		for (MessageABC messageABC : messages) {
-			LightLedsMessage message = (LightLedsMessage) messageABC;
-			assertWillLightItem(itemIterator.next(), message);
+		LedInstrListMessage message = (LedInstrListMessage)messages.get(0);
+		List<LightLedsMessage> instructionsForAllControllers = message.getInstructions();
+		LightLedsMessage instructionsForFirstChannel = instructionsForAllControllers.get(0);
+
+		LOGGER.info("8: assertWillLightItem() from messagesCaptor.getAllValues");
+
+		for (Item item : items) {
+			assertWillLightItem(item, instructionsForFirstChannel);
 		}
-		
+
 		serviceManager.stopAsync().awaitStopped();
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -156,13 +160,13 @@ public class LightServiceTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
-		List<MessageABC> messages = captureLightMessages(facility, parent, sublocations.size());
+		
+		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
 
 		//Messages came in same working order
 		Iterator<Location> subLocationsIter = sublocations.iterator();
-		for (MessageABC messageABC : messages) {
-			LightLedsMessage message = (LightLedsMessage) messageABC;
-			assertASampleWillLightLocation(subLocationsIter.next(), message);
+		while (subLocationsIter.hasNext()) {
+			assertASampleWillLightLocation(subLocationsIter.next(), instructionsForFirstChannel);
 		}
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -180,13 +184,13 @@ public class LightServiceTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
-		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*whole bay*/);
 
+		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		
 		//Messages came in same working order
 		Iterator<Location> subLocationsIter = sublocations.iterator();
-		for (MessageABC messageABC : messages) {
-			LightLedsMessage message = (LightLedsMessage) messageABC;
-			assertASampleWillLightLocation(subLocationsIter.next(), message);
+		while (subLocationsIter.hasNext()) {
+			assertASampleWillLightLocation(subLocationsIter.next(), instructionsForFirstChannel);
 		}
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -213,12 +217,12 @@ public class LightServiceTest extends ServerTest {
 		
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
-		List<MessageABC> messages = captureLightMessages(facility, parent, 2 /*2 bays x 1 tiers*/);
-		
-		Iterator<MessageABC> messageIter = messages.iterator();
+
+		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+
 		for (Location bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
-			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+			assertASampleWillLightLocation(tier, instructionsForFirstChannel);
 		}
 		
 		this.getTenantPersistenceService().commitTransaction();
@@ -240,10 +244,13 @@ public class LightServiceTest extends ServerTest {
 		
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> tiers = parent.getChildrenInWorkingOrder();
-		List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*1 bays x 1 tiers*/);
-		@SuppressWarnings("unused")
-		Iterator<MessageABC> messageIter = messages.iterator();
+		
+		//List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*1 bays x 1 tiers*/);
+		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		
+		//@SuppressWarnings("unused")
 		for (Location tier : tiers) {
+			assertASampleWillLightLocation(tier, instructionsForFirstChannel);
 			if (tier.getDomainId().equals("T2")) {
 			}
 		}
@@ -266,17 +273,24 @@ public class LightServiceTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
-		List<MessageABC> messages = captureLightMessages(facility, parent, 2/*2 bays all tiers on the one controller*/);
-		Iterator<MessageABC> messageIter = messages.iterator();
+
+		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		
 		for (Location bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
-			assertASampleWillLightLocation(tier, (LightLedsMessage) messageIter.next());
+			assertASampleWillLightLocation(tier, instructionsForFirstChannel);
 		}
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	
+	private LightLedsMessage getLedInstructionsForFirstChannel(Facility facility, Location parent) throws InterruptedException, ExecutionException{
+		List<MessageABC> messages = captureLightMessagesNew(facility, parent);
+		LedInstrListMessage message = (LedInstrListMessage)messages.get(0);
+		List<LightLedsMessage> instructionsForAllControllers = message.getInstructions();
+		return instructionsForAllControllers.get(0);
+	}
+	/*
 	@SuppressWarnings("unchecked")
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent, int expectedTotal) throws InterruptedException, ExecutionException {
 		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
@@ -293,6 +307,21 @@ public class LightServiceTest extends ServerTest {
 		List<MessageABC> messages = messagesCaptor.getAllValues();
 		return messages;
 
+	}
+	*/
+	@SuppressWarnings("unchecked")
+	private List<MessageABC> captureLightMessagesNew(Facility facility, Location parent) throws InterruptedException, ExecutionException {
+		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
+		ColorEnum color = ColorEnum.RED;
+		
+		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
+		lightService.lightChildLocationsNew(facility, parent, color);
+		
+		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
+		verify(webSocketManagerService, times(1)).sendMessage(any(Set.class), messagesCaptor.capture());
+		
+		List<MessageABC> messages = messagesCaptor.getAllValues();
+		return messages;
 	}
 		
 	private void assertASampleWillLightLocation(Location location, LightLedsMessage ledMessage) {

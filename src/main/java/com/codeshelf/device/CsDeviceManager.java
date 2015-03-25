@@ -37,6 +37,7 @@ import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -708,6 +709,17 @@ public class CsDeviceManager implements
 			// By design, the LightLedsMessage broadcast to all site controllers for this facility. If this site controller does not have the mentioned device, it is an error today
 			// but may not be later when we have our multi-controller implementation.
 			LOGGER.debug("unknown GUID in lightSomeLeds");
+		}
+	}
+
+	public void lightSomeLeds(final List<LightLedsMessage> instructions) {
+		for (LightLedsMessage instruction : instructions) {
+			if (!LightLedsMessage.verifyCommandString(instruction.getLedCommands())) {
+				LOGGER.error("handleOtherMessage found bad LightLedsMessage");
+			} else {
+				LOGGER.info("Processing LightLedsMessage");
+				lightSomeLeds(new NetGuid(instruction.getNetGuidStr()), instruction.getDurationSeconds(), instruction.getLedCommands());
+			}			
 		}
 	}
 

@@ -163,6 +163,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				NetGuid theGuid = new NetGuid(guidStr);
 				this.deviceManager.lightSomeLeds(theGuid, msg.getDurationSeconds(), msg.getLedCommands());
 			}
+		} else if (message instanceof LedInstrListMessage) {
+			this.deviceManager.lightSomeLeds(((LedInstrListMessage) message).getInstructions());
 		} else if (message instanceof CheDisplayMessage) {
 			CheDisplayMessage msg = (CheDisplayMessage) message;
 			String guidStr = msg.getNetGuidStr();

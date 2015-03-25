@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstrList;
@@ -36,6 +37,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -99,7 +101,7 @@ public class LightService implements IApiService {
 		}
 
 		if (theItem.isLightable()) {
-			sendToAllSiteControllers(facility.getSiteControllerUsers(), toLedsMessage(facility, defaultLedsToLight, color, theItem));
+			sendMessage(facility.getSiteControllerUsers(), toLedsMessage(facility, defaultLedsToLight, color, theItem));
 		} else {
 			LOGGER.warn("The item is not lightable: " + theItem);
 		}
@@ -111,17 +113,17 @@ public class LightService implements IApiService {
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
-		if (theLocation.getActiveChildren().isEmpty()) {
-			lightOneLocation(facility, theLocation);
-		} else {
-			lightChildLocations(facility, theLocation, color);
-		}
+		//if (theLocation.getActiveChildren().isEmpty()) {
+		//	lightOneLocation(facility, theLocation);
+		//} else {
+		lightChildLocationsNew(facility, theLocation, color);
+		//}
 		
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		getInstructionsForPosConRange(facility, null, theLocation, instructions);
 		final PosControllerInstrList message = new PosControllerInstrList(instructions);
-		webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+		sendMessage(facility.getSiteControllerUsers(), message);
 		//Modify all POS commands to clear their POSs instead.
 		new Timer().schedule(new TimerTask() {
 			@Override
@@ -130,23 +132,23 @@ public class LightService implements IApiService {
 				for (PosControllerInstr instructions : message.getInstructions()){
 					instructions.getRemovePos().add(instructions.getPosition());
 				}
-				webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+				sendMessage(facility.getSiteControllerUsers(), message);
 			}
 		}, 20000);
 	}
 
-	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
+	public void lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
 		Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 
-		List<Set<LightLedsMessage>> messages = Lists.newArrayList();
+		List<LightLedsMessage> instructions = Lists.newArrayList();
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
 			try {
 				if (item.isLightable()) {
-					LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, item);
-					messages.add(ImmutableSet.of(message));
+					LightLedsMessage instruction = toLedsMessage(facility, defaultLedsToLight, color, item);
+					instructions.add(instruction);
 				} else {
 					LOGGER.warn("unable to light item: " + item);
 				}
@@ -155,9 +157,10 @@ public class LightService implements IApiService {
 
 			}
 		}
-		return chaserLight(facility.getSiteControllerUsers(), messages);
+		LedInstrListMessage message = new LedInstrListMessage(instructions);
+		sendMessage(facility.getSiteControllerUsers(), message);
 	}
-	
+	/*
 	public Future<Void> lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
 		Facility facility = checkFacility(facilityPersistentId);
 
@@ -177,24 +180,47 @@ public class LightService implements IApiService {
 		}
 		return chaserLight(facility.getSiteControllerUsers(), messages);
 	}
+	*/
+	public void lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
+		Facility facility = checkFacility(facilityPersistentId);
+
+		List<LightLedsMessage> messages = Lists.newArrayList();
+		for (Item item : items) {
+			try {
+				if (item.isLightable()) {
+					LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, item);
+					messages.add(message);
+				} else {
+					LOGGER.warn("unable to light item: " + item);
+				}
+			} catch (Exception e) {
+				LOGGER.warn("unable to light item: " + item, e);
+
+			}
+		}
+		LedInstrListMessage message = new LedInstrListMessage(messages);
+		sendMessage(facility.getSiteControllerUsers(), message);
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
+	/*
 	private void lightOneLocation(final Facility facility, final Location theLocation) {
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		if (theLocation.isLightableAisleController()) {
 			LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, theLocation);
-			sendToAllSiteControllers(facility.getSiteControllerUsers(), message);
+			sendMessage(facility.getSiteControllerUsers(), message);
 		} else {
 			LOGGER.warn("Unable to light location: " + theLocation);
 		}
 		
 	}
-	
+	*/
 	public static void getInstructionsForPosConRange(final Facility facility, final WorkInstruction wi, final Location theLocation, List<PosControllerInstr> instructions){
 		if (theLocation == null) {return;}
 		if (theLocation.isLightablePoscon()) {
@@ -233,10 +259,33 @@ public class LightService implements IApiService {
 	}
 
 	// --------------------------------------------------------------------------
+	
+	void lightChildLocationsNew(final Facility facility, final Location theLocation, ColorEnum color) {
+		List<Location> leaves = Lists.newArrayList(); 
+		getAllLedLightableLeaves(theLocation, leaves);
+		List<LightLedsMessage> instructions = lightAllAtOnceNew(facility, defaultLedsToLight, color, leaves);
+		LedInstrListMessage message = new LedInstrListMessage(instructions);
+		sendMessage(facility.getSiteControllerUsers(), message);
+	}
+	
+	private void getAllLedLightableLeaves(final Location theLocation, List<Location> leaves) {
+		List<Location> children = theLocation.getActiveChildren();
+		if (children.isEmpty()) {
+			if (theLocation.isLightableAisleController()) {
+				leaves.add(theLocation);
+			}
+		} else {
+			for (Location child : children) {
+				getAllLedLightableLeaves(child, leaves);
+			}
+		}
+	}
+
 	/**
 	 * Light one location transiently. Any subsequent activity on the aisle controller will wipe this away.
 	 * May be called with BLACK to clear whatever you just sent. 
 	 */
+	/*
 	Future<Void> lightChildLocations(final Facility facility, final Location theLocation, ColorEnum color) {
 
 		List<Set<LightLedsMessage>> ledMessages = Lists.newArrayList();
@@ -263,7 +312,8 @@ public class LightService implements IApiService {
 		}
 		return chaserLight(facility.getSiteControllerUsers(), ledMessages);
 	}
-
+	*/
+	/*
 	Future<Void> chaserLight(final Set<User> siteControllerUsers, final List<Set<LightLedsMessage>> messageSequence) {
 		long millisToSleep = 2250;
 		final TerminatingScheduledRunnable lightLocationRunnable = new TerminatingScheduledRunnable() {
@@ -277,16 +327,16 @@ public class LightService implements IApiService {
 					terminate();
 				} else {
 					for (LightLedsMessage message : messageSet) { //send "all at once" -> quick succession for now
-						webSocketManagerService.sendMessage(siteControllerUsers, message);
+						sendMessage(siteControllerUsers, message);
 					}
 				}
 			}
 		};
 		return scheduleChaserRunnable(lightLocationRunnable, millisToSleep, TimeUnit.MILLISECONDS);
 	}
-
-	private int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
-		return this.webSocketManagerService.sendMessage(users, message);
+	*/
+	private int sendMessage(Set<User> users, MessageABC message) {
+		return webSocketManagerService.sendMessage(users, message);
 	}
 
 	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
@@ -306,7 +356,8 @@ public class LightService implements IApiService {
 		LightLedsMessage message = getLedCmdGroupListForRange(facility, inColor, inLocation, theRange);
 		return message;
 	}
-
+	
+	/*
 	private Set<LightLedsMessage> lightAllAtOnce(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
 		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
 		for (Location child : children) {
@@ -333,6 +384,35 @@ public class LightService implements IApiService {
 
 		return Sets.newHashSet(byControllerChannel.values());
 	}
+	*/
+	
+	private List<LightLedsMessage> lightAllAtOnceNew(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
+		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
+		for (Location child : children) {
+			try {
+				if (child.isLightableAisleController()) {
+					LightLedsMessage ledMessage = toLedsMessage(facility, numLeds, diagnosticColor, child);
+					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
+
+					//merge messages per controller and key
+					LightLedsMessage messageForKey = byControllerChannel.get(key);
+					if (messageForKey != null) {
+						ledMessage = messageForKey.merge(ledMessage);
+
+					}
+
+					byControllerChannel.put(key, ledMessage);
+				} else {
+					LOGGER.warn("Unable to light location: " + child);
+				}
+			} catch (Exception e) {
+				LOGGER.warn("Unable to light location: " + child, e);
+			}
+		}
+
+		return new ArrayList<LightLedsMessage>(byControllerChannel.values());
+	}
+
 
 	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
@@ -382,7 +462,7 @@ public class LightService implements IApiService {
 			inLocationNominalId);
 		return theLocation;
 	}
-
+	/*
 	private Future<Void> scheduleChaserRunnable(final TerminatingScheduledRunnable runPerPeriod,
 		long intervalToSleep,
 		TimeUnit intervalUnit) {
@@ -430,8 +510,9 @@ public class LightService implements IApiService {
 			throw this.terminatingException;
 		}
 	}
-
-	/*	
+	*/
+	
+	/*	WAS COMMENTED OUT BEFORE CURRENT REFACTORING 
 		/*
 		public void lightAllControllers(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
 			
