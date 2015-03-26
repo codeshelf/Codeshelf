@@ -26,6 +26,7 @@ import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.manager.User;
@@ -39,7 +40,7 @@ import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -177,7 +178,8 @@ public class FacilityResource {
 				}
 
 				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
-				LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+				LightLedsInstruction instruction = new LightLedsInstruction(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+				LedInstrListMessage lightMessage = new LedInstrListMessage(instruction);
 				webSocketManagerService.sendMessage(users, lightMessage);
 			}
 

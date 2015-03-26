@@ -12,7 +12,6 @@ import com.codeshelf.ws.jetty.protocol.command.CommandABC;
 import com.codeshelf.ws.jetty.protocol.command.PingCommand;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
 import com.codeshelf.ws.jetty.protocol.request.PingRequest;
@@ -152,17 +151,6 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			NetworkStatusMessage update = (NetworkStatusMessage) message;
 			LOGGER.info("Processing Network Status update");
 			this.deviceManager.updateNetwork(update.getNetwork());
-		} else if (message instanceof LightLedsMessage) {
-			LightLedsMessage msg = (LightLedsMessage) message;
-			// check the message
-			if (!LightLedsMessage.verifyCommandString(msg.getLedCommands())) {
-				LOGGER.error("handleOtherMessage found bad LightLedsMessage");
-			} else {
-				LOGGER.info("Processing LightLedsMessage");
-				String guidStr = msg.getNetGuidStr();
-				NetGuid theGuid = new NetGuid(guidStr);
-				this.deviceManager.lightSomeLeds(theGuid, msg.getDurationSeconds(), msg.getLedCommands());
-			}
 		} else if (message instanceof LedInstrListMessage) {
 			this.deviceManager.lightSomeLeds(((LedInstrListMessage) message).getInstructions());
 		} else if (message instanceof CheDisplayMessage) {

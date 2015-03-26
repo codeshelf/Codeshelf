@@ -8,7 +8,7 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
 
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -20,15 +20,15 @@ public class LedInstrListMessage extends MessageABC{
 	@Accessors(prefix = "m")
 	@Getter @Setter @Expose
 	@SerializedName(value = "instructions")
-	List<LightLedsMessage> mInstructions;
+	List<LightLedsInstruction> mInstructions;
 
 	public LedInstrListMessage() {}
 	
-	public LedInstrListMessage(List<LightLedsMessage> instructions) {
+	public LedInstrListMessage(List<LightLedsInstruction> instructions) {
 		this.mInstructions = instructions;
 	}
 	
-	public LedInstrListMessage(LightLedsMessage instruction) {
+	public LedInstrListMessage(LightLedsInstruction instruction) {
 		this.mInstructions = Lists.newArrayList();
 		mInstructions.add(instruction);
 	}

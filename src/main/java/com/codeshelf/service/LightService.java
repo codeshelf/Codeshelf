@@ -30,7 +30,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableList;
@@ -85,7 +85,8 @@ public class LightService implements IApiService {
 		}
 
 		if (theItem.isLightable()) {
-			sendMessage(facility.getSiteControllerUsers(), toLedsMessage(facility, defaultLedsToLight, color, theItem));
+			LightLedsInstruction instrcutions = toLedsInstruction(facility, defaultLedsToLight, color, theItem);
+			sendMessage(facility.getSiteControllerUsers(), new LedInstrListMessage(instrcutions));
 		} else {
 			LOGGER.warn("The item is not lightable: " + theItem);
 		}
@@ -123,11 +124,11 @@ public class LightService implements IApiService {
 
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 
-		List<LightLedsMessage> instructions = Lists.newArrayList();
+		List<LightLedsInstruction> instructions = Lists.newArrayList();
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
 			try {
 				if (item.isLightable()) {
-					LightLedsMessage instruction = toLedsMessage(facility, defaultLedsToLight, color, item);
+					LightLedsInstruction instruction = toLedsInstruction(facility, defaultLedsToLight, color, item);
 					instructions.add(instruction);
 				} else {
 					LOGGER.warn("unable to light item: " + item);
@@ -144,11 +145,11 @@ public class LightService implements IApiService {
 	public void lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
 		Facility facility = checkFacility(facilityPersistentId);
 
-		List<LightLedsMessage> messages = Lists.newArrayList();
+		List<LightLedsInstruction> messages = Lists.newArrayList();
 		for (Item item : items) {
 			try {
 				if (item.isLightable()) {
-					LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, item);
+					LightLedsInstruction message = toLedsInstruction(facility, defaultLedsToLight, color, item);
 					messages.add(message);
 				} else {
 					LOGGER.warn("unable to light item: " + item);
@@ -204,7 +205,7 @@ public class LightService implements IApiService {
 	void lightChildLocations(final Facility facility, final Location theLocation, ColorEnum color) {
 		List<Location> leaves = Lists.newArrayList(); 
 		getAllLedLightableLeaves(theLocation, leaves);
-		List<LightLedsMessage> instructions = lightAllAtOnce(facility, defaultLedsToLight, color, leaves);
+		List<LightLedsInstruction> instructions = lightAllAtOnce(facility, defaultLedsToLight, color, leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
@@ -226,40 +227,40 @@ public class LightService implements IApiService {
 		return webSocketManagerService.sendMessage(users, message);
 	}
 
-	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
+	private LightLedsInstruction toLedsInstruction(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
 		// Use our utility function to get the leds for the item
 		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
 		Location itemLocation = inItem.getStoredLocation();
 		if (itemLocation.isLightableAisleController()) {
-			LightLedsMessage message = getLedCmdGroupListForRange(facility, inColor, itemLocation, theRange);
-			return message;
+			LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, inColor, itemLocation, theRange);
+			return instruction;
 		} else {
 			return null;
 		}
 	}
 
-	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Location inLocation) {
+	private LightLedsInstruction toLedsInstruction(Facility facility, int maxNumLeds, final ColorEnum inColor, final Location inLocation) {
 		LedRange theRange = inLocation.getFirstLastLedsForLocation().capLeds(maxNumLeds);
-		LightLedsMessage message = getLedCmdGroupListForRange(facility, inColor, inLocation, theRange);
-		return message;
+		LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, inColor, inLocation, theRange);
+		return instruction;
 	}
 
-	private List<LightLedsMessage> lightAllAtOnce(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
-		Map<ControllerChannelKey, LightLedsMessage> byControllerChannel = Maps.newHashMap();
+	private List<LightLedsInstruction> lightAllAtOnce(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
+		Map<ControllerChannelKey, LightLedsInstruction> byControllerChannel = Maps.newHashMap();
 		for (Location child : children) {
 			try {
 				if (child.isLightableAisleController()) {
-					LightLedsMessage ledMessage = toLedsMessage(facility, numLeds, diagnosticColor, child);
-					ControllerChannelKey key = new ControllerChannelKey(ledMessage.getNetGuidStr(), ledMessage.getChannel());
+					LightLedsInstruction instruction = toLedsInstruction(facility, numLeds, diagnosticColor, child);
+					ControllerChannelKey key = new ControllerChannelKey(instruction.getNetGuidStr(), instruction.getChannel());
 
 					//merge messages per controller and key
-					LightLedsMessage messageForKey = byControllerChannel.get(key);
-					if (messageForKey != null) {
-						ledMessage = messageForKey.merge(ledMessage);
+					LightLedsInstruction instructionForKey = byControllerChannel.get(key);
+					if (instructionForKey != null) {
+						instruction = instructionForKey.merge(instruction);
 
 					}
 
-					byControllerChannel.put(key, ledMessage);
+					byControllerChannel.put(key, instruction);
 				} else {
 					LOGGER.warn("Unable to light location: " + child);
 				}
@@ -268,7 +269,7 @@ public class LightService implements IApiService {
 			}
 		}
 
-		return new ArrayList<LightLedsMessage>(byControllerChannel.values());
+		return new ArrayList<LightLedsInstruction>(byControllerChannel.values());
 	}
 
 
@@ -280,7 +281,7 @@ public class LightService implements IApiService {
 	 * @param inItem
 	 * @param inColor
 	 */
-	private LightLedsMessage getLedCmdGroupListForRange(Facility facility,
+	private LightLedsInstruction getLedCmdGroupListForRange(Facility facility,
 		final ColorEnum inColor,
 		Location inLocation,
 		final LedRange ledRange) {
@@ -306,7 +307,7 @@ public class LightService implements IApiService {
 			ledSamples.add(ledSample);
 		}
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(controller.getDeviceGuidStr(), controllerChannel, firstLedPosNum, ledSamples);
-		return new LightLedsMessage(controller.getDeviceGuidStr(), controllerChannel, lightDuration, ImmutableList.of(ledCmdGroup));
+		return new LightLedsInstruction(controller.getDeviceGuidStr(), controllerChannel, lightDuration, ImmutableList.of(ledCmdGroup));
 	}
 
 	private Facility checkFacility(final String facilityPersistentId) {

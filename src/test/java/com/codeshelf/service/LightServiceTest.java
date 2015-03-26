@@ -51,7 +51,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.base.Objects;
@@ -133,8 +133,8 @@ public class LightServiceTest extends ServerTest {
 		verify(webSocketManagerService, times(1)).sendMessage(any(Set.class), messagesCaptor.capture());
 		List<MessageABC> messages = messagesCaptor.getAllValues();
 		LedInstrListMessage message = (LedInstrListMessage)messages.get(0);
-		List<LightLedsMessage> instructionsForAllControllers = message.getInstructions();
-		LightLedsMessage instructionsForFirstChannel = instructionsForAllControllers.get(0);
+		List<LightLedsInstruction> instructionsForAllControllers = message.getInstructions();
+		LightLedsInstruction instructionsForFirstChannel = instructionsForAllControllers.get(0);
 
 		LOGGER.info("8: assertWillLightItem() from messagesCaptor.getAllValues");
 
@@ -159,7 +159,7 @@ public class LightServiceTest extends ServerTest {
 		Location parent = facility.findSubLocationById("A1.B1.T2");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 		
-		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
 
 		//Messages came in same working order
 		Iterator<Location> subLocationsIter = sublocations.iterator();
@@ -183,7 +183,7 @@ public class LightServiceTest extends ServerTest {
 		Location parent = facility.findSubLocationById("A1.B1");
 		List<Location> sublocations = parent.getChildrenInWorkingOrder();
 
-		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
 		
 		//Messages came in same working order
 		Iterator<Location> subLocationsIter = sublocations.iterator();
@@ -216,7 +216,7 @@ public class LightServiceTest extends ServerTest {
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 
-		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
 
 		for (Location bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
@@ -244,7 +244,7 @@ public class LightServiceTest extends ServerTest {
 		List<Location> tiers = parent.getChildrenInWorkingOrder();
 		
 		//List<MessageABC> messages = captureLightMessages(facility, parent, 1 /*1 bays x 1 tiers*/);
-		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
 		
 		//@SuppressWarnings("unused")
 		for (Location tier : tiers) {
@@ -272,7 +272,7 @@ public class LightServiceTest extends ServerTest {
 		Location parent = facility.findSubLocationById("A1");
 		List<Location> bays = parent.getChildrenInWorkingOrder();
 
-		LightLedsMessage instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
+		LightLedsInstruction instructionsForFirstChannel = getLedInstructionsForFirstChannel(facility, parent);
 		
 		for (Location bay : bays) {
 			Tier tier = (Tier) bay.findSubLocationById("T2");
@@ -282,10 +282,10 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	private LightLedsMessage getLedInstructionsForFirstChannel(Facility facility, Location parent) throws InterruptedException, ExecutionException{
+	private LightLedsInstruction getLedInstructionsForFirstChannel(Facility facility, Location parent) throws InterruptedException, ExecutionException{
 		List<MessageABC> messages = captureLightMessages(facility, parent);
 		LedInstrListMessage message = (LedInstrListMessage)messages.get(0);
-		List<LightLedsMessage> instructionsForAllControllers = message.getInstructions();
+		List<LightLedsInstruction> instructionsForAllControllers = message.getInstructions();
 		return instructionsForAllControllers.get(0);
 	}
 
@@ -304,7 +304,7 @@ public class LightServiceTest extends ServerTest {
 		return messages;
 	}
 		
-	private void assertASampleWillLightLocation(Location location, LightLedsMessage ledMessage) {
+	private void assertASampleWillLightLocation(Location location, LightLedsInstruction ledMessage) {
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
 		boolean found = false;
 		ToStringHelper message = Objects.toStringHelper("Failed, probably lit out of order ");
@@ -326,7 +326,7 @@ public class LightServiceTest extends ServerTest {
 
 	
 
-	private void assertWillLightItem(Item item, LightLedsMessage ledMessage) {
+	private void assertWillLightItem(Item item, LightLedsInstruction ledMessage) {
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
 		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
 			Assert.assertEquals(item.getStoredLocation().getEffectiveLedController().getDeviceGuidStr(),

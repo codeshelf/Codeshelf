@@ -8,9 +8,7 @@ import javax.ws.rs.core.Response;
 
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.CheResource;
-import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Facility;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/ches")

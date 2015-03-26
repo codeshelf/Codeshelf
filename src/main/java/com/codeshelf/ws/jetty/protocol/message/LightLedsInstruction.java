@@ -15,10 +15,10 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
 @ToString
-public class LightLedsMessage extends MessageABC {
+public class LightLedsInstruction {
 	
 	@SuppressWarnings("unused")
-	private static final Logger		LOGGER									= LoggerFactory.getLogger(LightLedsMessage.class);
+	private static final Logger		LOGGER									= LoggerFactory.getLogger(LightLedsInstruction.class);
 	
 	@Getter @Setter
 	String ledCommands;
@@ -34,10 +34,10 @@ public class LightLedsMessage extends MessageABC {
 	@Getter @Setter
 	int durationSeconds;
 	
-	public LightLedsMessage() {	
+	public LightLedsInstruction() {	
 	}
 	
-	public LightLedsMessage(String inGuidStr, short inChannel, int inDurationSeconds, List<LedCmdGroup> inCommands) {	
+	public LightLedsInstruction(String inGuidStr, short inChannel, int inDurationSeconds, List<LedCmdGroup> inCommands) {	
 		ledCommands = LedCmdGroupSerializer.serializeLedCmdString(inCommands);
 		netGuidStr = inGuidStr;
 		channel = inChannel;
@@ -51,16 +51,16 @@ public class LightLedsMessage extends MessageABC {
 
 	}
 
-	public LightLedsMessage merge(LightLedsMessage ledMessage) {
-		Preconditions.checkArgument(this.netGuidStr.equals(ledMessage.netGuidStr), "controller guids not the same");
-		Preconditions.checkArgument(this.channel == ledMessage.channel, "channel not the same");
-		Preconditions.checkArgument(this.durationSeconds == ledMessage.durationSeconds, "durationSeconds not the same");
+	public LightLedsInstruction merge(LightLedsInstruction ledInstruction) {
+		Preconditions.checkArgument(this.netGuidStr.equals(ledInstruction.netGuidStr), "controller guids not the same");
+		Preconditions.checkArgument(this.channel == ledInstruction.channel, "channel not the same");
+		Preconditions.checkArgument(this.durationSeconds == ledInstruction.durationSeconds, "durationSeconds not the same");
 		List<LedCmdGroup> thisLedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledCommands);
-		List<LedCmdGroup> otherLedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.ledCommands);
+		List<LedCmdGroup> otherLedCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledInstruction.ledCommands);
 		List<LedCmdGroup> combinedGroup = Lists.newArrayList();
 		combinedGroup.addAll(thisLedCmdGroups);
 		combinedGroup.addAll(otherLedCmdGroups);
-		return new LightLedsMessage(this.netGuidStr, this.channel, this.durationSeconds, combinedGroup);
+		return new LightLedsInstruction(this.netGuidStr, this.channel, this.durationSeconds, combinedGroup);
 	}
 
 }
