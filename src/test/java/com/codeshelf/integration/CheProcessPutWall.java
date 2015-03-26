@@ -33,6 +33,9 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.InventoryService;
+import com.codeshelf.service.LightService;
+import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
 
@@ -103,6 +106,16 @@ public class CheProcessPutWall extends ServerTest {
 
 		LOGGER.info("2: Demonstrate what a put wall picker object can do.");
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getFacility();
+		/* LightService theService = ServiceFactory.getServiceInstance(LightService.class);
+		theService.lightLocation(facility.getPersistentId().toString(), "P11");
+		*/
+		
+		this.getTenantPersistenceService().commitTransaction();
+
 
 
 	}
