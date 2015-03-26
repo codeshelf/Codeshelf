@@ -7,10 +7,12 @@
 package com.codeshelf.model.domain;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +21,7 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
+import javax.validation.Validation;
 
 import lombok.Getter;
 
@@ -44,6 +47,8 @@ import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 // --------------------------------------------------------------------------
 /**
@@ -518,6 +523,47 @@ public class Facility extends Location {
 		network.getDao().store(network);
 	}
 
+	@JsonProperty("primarySiteControllerId")
+	public String getPrimarySiteControllerId() {
+		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		Collection<SiteController> siteControllers = network.getSiteControllers().values();
+		if (siteControllers.size() > 1) {
+			LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
+		} 
+		LinkedList<SiteController> list = new LinkedList<>(siteControllers);
+		SiteController first = list.getFirst();
+		if (first != null) {
+			return first.getDomainId();
+		} else {
+			return null;
+		}
+	}
+
+	@JsonProperty("primarySiteControllerId")
+	public void setPrimarySiteControllerId(String siteControllerId) {
+		if (!Strings.isNullOrEmpty(siteControllerId)) {
+			CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+			Collection<SiteController> siteControllers = network.getSiteControllers().values();
+			if (siteControllers.size() > 1) {
+				LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
+			}
+			
+			SiteController foundSiteController = null;
+			for (SiteController siteController: siteControllers) {
+				if(siteController.getDomainId().equals(String.valueOf(siteControllerId))) {
+					foundSiteController = siteController;
+				} 
+				else {
+					network.removeSiteController(siteController.getDomainId());
+					SiteController.staticGetDao().delete(siteController);
+				}
+			}
+			if (foundSiteController == null) {
+				network.createSiteController(Integer.parseInt(siteControllerId), "Default Area", false);
+			}
+		}
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inProtoBayWidthMeters
@@ -1297,7 +1343,7 @@ public class Facility extends Location {
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		// Create a site controller & associated user
-		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false, CodeshelfNetwork.DEFAULT_SITECON_PASS);
+		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false);
 		
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();

@@ -276,7 +276,7 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 		return this.getParent();
 	}
 
-	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor, String password) {
+	public void createSiteController(int serialNumber, String inDescribeLocation, Boolean inMonitor) {
 		String username = Integer.toString(serialNumber);
 
 		// create site controller object (or use found)

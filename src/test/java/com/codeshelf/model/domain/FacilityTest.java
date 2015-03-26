@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -20,6 +22,44 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *
  */
 public class FacilityTest extends ServerTest { // TODO: mock property service so that testSerializationOfExtraFields will work in MocKDao environ
+
+	@Test
+	public final void testSetSiteControllerId() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = createFacility();
+		String testId = "11312324";
+		String initialPrimarySiteControllerId = facility.getPrimarySiteControllerId();
+		Assert.assertNotEquals(testId, initialPrimarySiteControllerId);
+		
+		facility.setPrimarySiteControllerId(testId);
+		String primarySiteControllerId = facility.getPrimarySiteControllerId();
+		Assert.assertEquals(testId, primarySiteControllerId);
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	@Test
+	public final void testChangeSiteControllerId() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = createFacility();
+		String testId = "11312324";
+		String secondTestId = "222222";
+		facility.setPrimarySiteControllerId(testId);
+		String primarySiteControllerId = facility.getPrimarySiteControllerId();
+		Assert.assertEquals(testId, primarySiteControllerId);
+		
+		facility.setPrimarySiteControllerId(secondTestId);
+		String lastPrimarySiteControllerId = facility.getPrimarySiteControllerId();
+		Assert.assertEquals(secondTestId, lastPrimarySiteControllerId);
+
+		
+		Set<SiteController> siteControllers = new HashSet<SiteController>();
+
+		for (CodeshelfNetwork network : facility.getNetworks()) {
+			siteControllers.addAll(network.getSiteControllers().values());
+		}
+		Assert.assertEquals(1, siteControllers.size());
+		this.getTenantPersistenceService().commitTransaction();
+	}
 	
 	@Test
 	public final void testGetParentAtLevelWithInvalidSublevel() {
