@@ -49,11 +49,11 @@ public class AuthFilter implements Filter {
 					// offer updated token to keep session active
 					response.addCookie(authProviderService.createAuthCookie(newToken));
 				}
-				CodeshelfSecurityManager.setCurrentUser(authResponse.getUser());
+				CodeshelfSecurityManager.setContext(authResponse.getUser(),authResponse.getTenant());
 				try {
 					chain.doFilter(request, response);
 				} finally {
-					CodeshelfSecurityManager.removeCurrentUser();
+					CodeshelfSecurityManager.removeContext();
 				}
 			}
 		} else {

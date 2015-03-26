@@ -61,7 +61,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 	public void networkConnectionTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		
-		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
+		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
 		IronMqService service = new IronMqService();
@@ -93,7 +93,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 	public void badTokenTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
+		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
 		IronMqService service = new IronMqService();
@@ -116,7 +116,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 	public void badProjectId() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		FacilityGenerator facilityGenerator = new FacilityGenerator(getDefaultTenant());
+		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
 		IronMqService service = new IronMqService();

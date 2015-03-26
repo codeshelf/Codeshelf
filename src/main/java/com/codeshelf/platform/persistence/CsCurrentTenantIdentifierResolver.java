@@ -3,7 +3,6 @@ package com.codeshelf.platform.persistence;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.security.CodeshelfSecurityManager;
 
@@ -11,19 +10,16 @@ public class CsCurrentTenantIdentifierResolver implements CurrentTenantIdentifie
 
 	@Override
 	public String resolveCurrentTenantIdentifier() {
-		User user = CodeshelfSecurityManager.getCurrentUser();
-		Tenant tenant;
-		if(user != null) {
-			tenant = user.getTenant();
-		} else {
-			tenant = TenantManagerService.getInstance().getDefaultTenant();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant(); 
+		if(tenant == null) {
+			throw new RuntimeException("Tenant resolver: No current tenant");
 		}
 		return tenant.getSchemaName();
 	}
 
 	@Override
 	public boolean validateExistingCurrentSessions() {
-		return false;
+		return false; // true causes failure when cleaning up unclosed sessions
 	}
 
 }

@@ -28,14 +28,15 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.persistence.DatabaseConnection;
+import com.codeshelf.platform.persistence.DatabaseCredentials;
+import com.codeshelf.platform.persistence.DatabaseUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "shard")
 @EqualsAndHashCode(callSuper = false, of = { "name", "url", "username" })
 @ToString(of = { "id", "name" }, callSuper = false)
-public class Shard extends DatabaseConnection {
+public class Shard implements DatabaseCredentials {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Shard.class);
 
 	@Id
@@ -114,16 +115,16 @@ public class Shard extends DatabaseConnection {
 	private boolean createSchemaAndUser(Tenant newTenant) {
 		boolean result = false;
 		try {
-			if (newTenant.getSQLSyntax() == DatabaseConnection.SQLSyntax.H2) {
+			if (DatabaseUtils.getSQLSyntax(this) == DatabaseUtils.SQLSyntax.H2) {
 				// use H2 syntax
-				executeSQL("CREATE SCHEMA " + newTenant.getSchemaName());
-				executeSQL("CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
-				executeSQL("ALTER USER " + newTenant.getUsername() + " ADMIN TRUE");
+				DatabaseUtils.executeSQL(this,"CREATE SCHEMA " + newTenant.getSchemaName());
+				DatabaseUtils.executeSQL(this,"CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
+				DatabaseUtils.executeSQL(this,"ALTER USER " + newTenant.getUsername() + " ADMIN TRUE");
 			} else {
 				// assuming postgres syntax
-				executeSQL("CREATE SCHEMA IF NOT EXISTS " + newTenant.getSchemaName());
+				DatabaseUtils.executeSQL(this,"CREATE SCHEMA IF NOT EXISTS " + newTenant.getSchemaName());
 				try {
-					executeSQL("CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
+					DatabaseUtils.executeSQL(this,"CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
 				} catch (SQLException e) {
 					if (e.getMessage().equals("ERROR: role \"" + newTenant.getUsername() + "\" already exists")) {
 						LOGGER.warn("Tried to create user {} for tenant {} but already existed (assuming same password)",
@@ -132,7 +133,7 @@ public class Shard extends DatabaseConnection {
 						throw e;
 					}
 				}
-				executeSQL("GRANT ALL ON SCHEMA " + newTenant.getSchemaName() + " TO " + newTenant.getUsername());
+				DatabaseUtils.executeSQL(this,"GRANT ALL ON SCHEMA " + newTenant.getSchemaName() + " TO " + newTenant.getUsername());
 			}
 			result = true;
 		} catch (SQLException e) {
@@ -141,7 +142,7 @@ public class Shard extends DatabaseConnection {
 		return result;
 	}
 
-	public Tenant createTenant(String name, String schemaName, String username, String password) {
+	protected Tenant createTenant(String name, String schemaName, String username, String password) {
 		Tenant result = null;
 
 		// this is called to initialize default tenant while TenantManagerService is starting
@@ -173,6 +174,11 @@ public class Shard extends DatabaseConnection {
 			LOGGER.error("Tried to create tenant that already exists: " + name);
 		}
 		return result;
+	}
+
+	@Override
+	public String getSchemaName() {
+		return "invalid";
 	}
 
 }

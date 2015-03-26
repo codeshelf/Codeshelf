@@ -66,7 +66,7 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
+					new VirtualSlottedFacilityGenerator(
 														createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());

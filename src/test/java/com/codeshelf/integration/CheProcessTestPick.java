@@ -411,6 +411,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 
 		// Start setting up cart etc
 		PickSimulator picker = new PickSimulator(this, cheGuid1);

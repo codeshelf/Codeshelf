@@ -346,7 +346,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 				for (WebSocketConnection connection : connections) {
 					User contextUser = connection.getUser();
 					if(contextUser != null) {
-				    	CodeshelfSecurityManager.setCurrentUser(contextUser);
+				    	CodeshelfSecurityManager.setContext(contextUser,connection.getTenant());
 					} // might not be logged in yet, we will still ping
 					try {
 						// send ping periodically to measure latency
@@ -362,7 +362,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						updateWebSocketConnectionState(connection);
 					} finally {
 						if(contextUser != null) 
-							CodeshelfSecurityManager.removeCurrentUser();
+							CodeshelfSecurityManager.removeContext();
 					}
 					// check if keep alive needs to be sent
 				}

@@ -14,6 +14,7 @@ import org.apache.commons.lang.CharSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.security.AuthResponse.Status;
@@ -29,7 +30,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	private static final String	HMAC_ALGORITHM						= "HmacSHA1";
 
 	// token settings
-	private static final int	TOKEN_VERSION						= 2;												// increment whenever token parsing changes
+	private static final int	TOKEN_VERSION						= 3;												// increment whenever token parsing changes
 	private static final String	TOKEN_DEFAULT_XOR					= "00";
 	private byte[]				tokenXor;
 
@@ -79,38 +80,39 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 	 * @param sessionStart ****************************/
 
 	@Override
-	public String createToken(int id, Long timestamp, Long sessionStart, SessionFlags sessionFlags) {
+	public String createToken(int userId, int tenantId, Long timestamp, Long sessionStart, SessionFlags sessionFlags) {
 		if (timestamp == null)
 			timestamp = System.currentTimeMillis();
 		if (sessionStart == null)
 			sessionStart = timestamp;
 		if (sessionFlags == null)
 			sessionFlags = new SessionFlags();
-		byte[] rawHmac = createHmacBytes(id, timestamp, sessionStart, sessionFlags);
+		byte[] rawHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, sessionFlags);
 		return encodeToken(rawHmac);
 	}
 	
 	@Override
-	public String createToken(int id) {
-		return createToken(id,null,null,null);
+	public String createToken(int userId, int tenantId) {
+		return createToken(userId,tenantId,null,null,null);
 	}
 
 	@Override
 	public AuthResponse checkToken(String value) {
 		AuthResponse resp = null;
 		ByteBuffer hmac = ByteBuffer.wrap(decodeToken(value));
-		if (hmac.remaining() > (4 + 4 + 8 + 8 + 1)) {
+		if (hmac.remaining() == (4 + 4 + 4 + 8 + 8 + 1 + 20)) {
 			int version = hmac.getInt();
 			if (version == TOKEN_VERSION) {
-				int id = hmac.getInt();
+				int userId = hmac.getInt();
+				int tenantId = hmac.getInt();
 				long timestamp = hmac.getLong();
 				long sessionStart = hmac.getLong();
 				SessionFlags sessionFlags = new SessionFlags(hmac.get());
-				byte[] matchHmac = createHmacBytes(id, timestamp, sessionStart, sessionFlags);
+				byte[] matchHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, sessionFlags);
 				if (Arrays.equals(hmac.array(), matchHmac)) {
-					resp = respondToValidToken(id, timestamp, sessionStart, sessionFlags);
+					resp = respondToValidToken(userId, tenantId, timestamp, sessionStart, sessionFlags);
 				} else {
-					LOGGER.warn("Invalid HMAC for user ID {} timestamp {}", id, timestamp);
+					LOGGER.warn("Invalid HMAC for user ID {} timestamp {}", userId, timestamp);
 					resp = new AuthResponse(Status.INVALID_TOKEN);
 				}
 			} else {
@@ -118,16 +120,17 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 				resp = new AuthResponse(Status.INVALID_TOKEN);
 			}
 		} else {
-			LOGGER.warn("auth token was too short, {} bytes", hmac.remaining());
+			LOGGER.warn("auth token was wrong size, {} bytes", hmac.remaining());
 			resp = new AuthResponse(Status.INVALID_TOKEN);
 		}
 		return resp;
 	}
 
-	private byte[] createHmacBytes(int id, long timestamp, Long sessionStart, SessionFlags sessionFlags) {
-		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 8 + 8 + 1);
+	private byte[] createHmacBytes(int userId, int tenantId, long timestamp, Long sessionStart, SessionFlags sessionFlags) {
+		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 4 + 8 + 8 + 1);
 		hmac_data.putInt(TOKEN_VERSION);
-		hmac_data.putInt(id);
+		hmac_data.putInt(userId);
+		hmac_data.putInt(tenantId);
 		hmac_data.putLong(timestamp);
 		hmac_data.putLong(sessionStart);
 		hmac_data.put(sessionFlags.getPacked());
@@ -142,9 +145,10 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 		return hmac.array();
 	}
 
-	private AuthResponse respondToValidToken(int id, long timestamp, long sessionStart, SessionFlags sessionFlags) {
+	private AuthResponse respondToValidToken(int userId, int tenantId, long timestamp, long sessionStart, SessionFlags sessionFlags) {
 		AuthResponse response;
-		User user = TenantManagerService.getInstance().getUser(id);
+		User user = TenantManagerService.getInstance().getUser(userId);
+		Tenant tenant = TenantManagerService.getInstance().getTenant(tenantId);
 		if (user != null) {
 			if (user.isLoginAllowed()) {
 				long now = System.currentTimeMillis();
@@ -157,28 +161,28 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 							// session is still active
 							if (ageSeconds > this.sessionMinIdleMinutes * 60) {
 								// if token is valid but getting old, offer an updated one
-								LOGGER.info("refreshing cookie for user {}", id);
-								refreshToken = this.createToken(id, now, sessionStart, sessionFlags);
+								LOGGER.info("refreshing cookie for user {}", userId);
+								refreshToken = this.createToken(userId, tenantId, now, sessionStart, sessionFlags);
 							}
 						}
-						response = new AuthResponse(Status.ACCEPTED, user, timestamp, sessionStart, sessionFlags, refreshToken);
+						response = new AuthResponse(Status.ACCEPTED, user, tenant, timestamp, sessionStart, sessionFlags, refreshToken);
 					} else {
-						LOGGER.warn("session timed out for user {} timestamp {} sessionStart {}", id, timestamp, sessionStart);
-						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, timestamp, sessionStart, sessionFlags, null);
+						LOGGER.warn("session timed out for user {} timestamp {} sessionStart {}", userId, timestamp, sessionStart);
+						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, tenant, timestamp, sessionStart, sessionFlags, null);
 					}
 				} else {
 					LOGGER.error("ALERT - future timestamp {} authenticated HMAC for user {} sessionStart {}",
 						timestamp,
-						id,
+						userId,
 						sessionStart);
-					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, timestamp, sessionStart, sessionFlags, null);
+					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, tenant, timestamp, sessionStart, sessionFlags, null);
 				}
 			} else {
-				LOGGER.error("ALERT - login not allowed for user {}", id);
+				LOGGER.error("ALERT - login not allowed for user {}", userId);
 				response = new AuthResponse(Status.LOGIN_NOT_ALLOWED, user);
 			}
 		} else {
-			LOGGER.error("ALERT - invalid user id {} with authenticated HMAC", id);
+			LOGGER.error("ALERT - invalid user id {} with authenticated HMAC", userId);
 			response = new AuthResponse(Status.INVALID_USER_ID, null);
 		}
 		return response;
@@ -256,9 +260,11 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 					if (passwordValid) {
 						LOGGER.debug("Password valid for user {}", user);
 						long timestamp = System.currentTimeMillis();
-						String token = this.createToken(user.getId(), timestamp, timestamp, null); // create default token for new session
+						Tenant tenant = user.getTenant();
+						String token = this.createToken(user.getId(), tenant.getId(), timestamp, timestamp, null); // create default token for new session
 						response = new AuthResponse(Status.ACCEPTED,
 							user,
+							tenant,
 							timestamp, 
 							timestamp, 
 							null, // no flags specified

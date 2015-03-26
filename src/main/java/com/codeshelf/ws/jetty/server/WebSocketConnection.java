@@ -8,8 +8,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
@@ -18,11 +21,13 @@ import javax.websocket.Session;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.mina.util.ConcurrentHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
 import com.codeshelf.filter.ObjectEventListener;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -48,6 +53,9 @@ public class WebSocketConnection implements IDaoListener {
 
 	@Getter
 	User										user;
+
+	@Getter
+	Tenant										tenant;
 
 	@Getter
 	Date										sessionStart				= new Date();
@@ -80,6 +88,7 @@ public class WebSocketConnection implements IDaoListener {
 	private ConcurrentMap<String, ObjectEventListener>	eventListeners				= new ConcurrentHashMap<String, ObjectEventListener>();
 
 	private ExecutorService						executorService;
+	Set<Future<?>> pendingFutures = new ConcurrentHashSet<Future<?>>();
 
 	public WebSocketConnection(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
@@ -122,7 +131,8 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectAdded called after executorService shutdown");
 			return;
 		}
-		this.executorService.submit(new Runnable() {
+		this.cleanupFutures();
+		Future<?> future = this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
@@ -148,6 +158,7 @@ public class WebSocketConnection implements IDaoListener {
 				}
 			}
 		});
+		this.pendingFutures.add(future);
 	}
 
 	@Override
@@ -159,7 +170,8 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectUpdated called after executorService shutdown");
 			return;
 		}
-		this.executorService.submit(new Runnable() {
+		this.cleanupFutures();
+		Future<?> future = this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
@@ -186,6 +198,8 @@ public class WebSocketConnection implements IDaoListener {
 				}
 			}
 		});
+		this.pendingFutures.add(future);
+
 	}
 
 	@Override
@@ -195,7 +209,8 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectDeleted called after executorService shutdown");
 			return;
 		}
-		this.executorService.submit(new Runnable() {
+		this.cleanupFutures();
+		Future<?> future = this.executorService.submit(new Runnable() {
 
 			@Override
 			public void run() {
@@ -221,6 +236,8 @@ public class WebSocketConnection implements IDaoListener {
 				}
 			}
 		});
+		this.pendingFutures.add(future);
+
 
 	}
 
@@ -260,6 +277,7 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.error("timeout trying to stop UserSession executor");
 		}
 		*/
+		this.waitForFutures();
 
 		this.lastState = State.CLOSED;
 		if (this.user != null)
@@ -274,16 +292,41 @@ public class WebSocketConnection implements IDaoListener {
 			}
 			this.wsSession = null;
 		}
-		// don't try to unregister listeners if we are shutting down
-		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(com.google.common.util.concurrent.Service.State.RUNNING)) {
+		// don't try to unregister listeners if we are shutting down or no user is attached
+		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(com.google.common.util.concurrent.Service.State.RUNNING) && this.getUser() != null) {
 			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-			TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(this);
-			
+			String tenantIdentifier = this.getUser().getTenant().getSchemaName();
+			TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(tenantIdentifier,this);
+		}
+	}
+	
+	private void cleanupFutures() {
+		Future<?>[] futures = new Future<?>[this.pendingFutures.size()];
+		for(Future future : this.pendingFutures.toArray(futures)) {
+			if(future.isDone())
+				pendingFutures.remove(future);
+		}
+	}
+	
+	private void waitForFutures() {
+		Future<?>[] futures = new Future<?>[this.pendingFutures.size()];
+		for(Future future : this.pendingFutures.toArray(futures)) {
+			if(!future.isDone()) {
+				try {
+					future.get(10, TimeUnit.SECONDS);
+				} catch (InterruptedException e) {
+				} catch (ExecutionException e) {
+					LOGGER.error("Exception waiting for in-flight futures to return", e);
+				} catch (TimeoutException e) {
+					LOGGER.error("Timeout waiting for in-flight futures to return", e);
+				}
+			}
 		}
 	}
 
-	public void authenticated(User user) {
+	public void authenticated(User user, Tenant tenant) {
 		this.user = user;
+		this.tenant = tenant;
 		if (isSiteController()) {
 			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}

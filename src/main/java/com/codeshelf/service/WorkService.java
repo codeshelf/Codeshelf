@@ -1200,7 +1200,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	private void processExportMessage(WIMessage exportMessage) {
-		TenantPersistenceService.getInstance().beginTransaction();
+		//TenantPersistenceService.getInstance().beginTransaction();
 		try {
 			//transaction begun and closed after blocking call so that it is not held open
 			boolean sent = false;
@@ -1214,9 +1214,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					Thread.sleep(retryDelay);
 				}
 			}
-			TenantPersistenceService.getInstance().commitTransaction();
+			//TenantPersistenceService.getInstance().commitTransaction();
 		} catch (Exception e) {
-			TenantPersistenceService.getInstance().rollbackTransaction();
+			//TenantPersistenceService.getInstance().rollbackTransaction();
 			LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
 		}
 	}

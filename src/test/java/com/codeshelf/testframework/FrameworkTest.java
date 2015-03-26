@@ -24,6 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,22 +42,22 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.TcpServerInterface;
 import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.ManagerPersistenceService;
-import com.codeshelf.manager.ManagerSchema;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.platform.persistence.DatabaseUtils;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
@@ -75,6 +76,7 @@ import com.codeshelf.ws.jetty.client.MessageCoordinator;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.util.concurrent.Service;
@@ -162,6 +164,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected UUID												che1PersistentId;
 	protected UUID												che2PersistentId;
 
+	@Getter
+	private String defaultTenantId;
+	@Getter
+	private WebSocketConnection	mockWsConnection;
+	
 	private Integer												port;
 
 	public static Injector setupInjector() {
@@ -262,11 +269,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 		
 		// remove user/subject from main threadcontext 
 		// we cannot access other threads' contexts so we hope they cleaned up!
-		CodeshelfSecurityManager.removeCurrentUserIfPresent();
+		CodeshelfSecurityManager.removeContextIfPresent();
 		
 		radioController = null;
 		deviceManager = null;
-		apiServer = null;
+		apiServer = null;		
+		mockWsConnection = null;
 
 		// reset default facility
 		facilitiesGenerated = 0;
@@ -292,6 +300,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (ephemeralServicesShouldStartAutomatically())
 			initializeEphemeralServiceManager();
 
+		createMockWsConnection();
+		
 		LOGGER.info("------------------- Running test: " + this.testName.getMethodName() + " -------------------");
 	}
 
@@ -300,6 +310,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (this.getFrameworkType().equals(Type.COMPLETE_SERVER)) // complete server setup has more logs during teardown
 			LOGGER.info("------------------- Cleanup after test: " + this.testName.getMethodName() + " -------------------");
 
+		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
+			if(CodeshelfSecurityManager.getCurrentTenant() == null) {
+				LOGGER.warn("Tenant context was not present when cleaning up test, using default context to search for open transactions");
+				setDefaultUserAndTenant();
+			}
+			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
+		}
+		
 		if (staticClientConnectionManagerService != null) {
 			staticClientConnectionManagerService.setDisconnected();
 			for(int i=0;i<500 && staticWebSocketManagerService.hasAnySessions();i++) {
@@ -319,6 +337,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (apiServer != null) {
 			apiServer.stop();
 			apiServer = null;
+		}
+		
+		if(staticWebSocketManagerService.isRunning()) {
+			staticWebSocketManagerService.reset();
 		}
 
 		CsClientEndpoint.setEventListener(null);
@@ -341,10 +363,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		metricsService = null;
 		authProviderService = null;
 
-		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
-			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
-		}
-		
 		if(resetRealPersistenceDaos) {
 			realTenantPersistenceService.resetDaosForTest();
 			resetRealPersistenceDaos = false;
@@ -393,7 +411,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
 		TenantPersistenceService.setInstance(tenantPersistenceService);
 
-		tenantManagerService = new MockTenantManagerService(tenantPersistenceService.getDefaultSchema());
+		tenantManagerService = new MockTenantManagerService();
 		TenantManagerService.setInstance(tenantManagerService);
 	}
 
@@ -427,9 +445,16 @@ public abstract class FrameworkTest implements IntegrationTest {
 		setupRealPersistenceObjects();
 
 		if (persistenceServiceManager == null) {
+			// start h2 web interface for debugging
+			try {
+				org.h2.tools.Server.createWebServer("-webPort", "8082").start();
+			} catch (Exception e) {
+				// it's probably fine
+			}
+
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
-			PersistenceService<ManagerSchema> mps = ManagerPersistenceService.getMaybeRunningInstance();
+			PersistenceService mps = ManagerPersistenceService.getMaybeRunningInstance();
 
 			if (!mps.isRunning())
 				services.add(mps);
@@ -450,21 +475,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 			Tenant tenant = realTenantManagerService.getDefaultTenant();
 			Connection conn;
 			try {
-				conn = tenant.getConnection();
+				conn = DatabaseUtils.getConnection(tenant);
 			} catch (SQLException e2) {
 				LOGGER.error("Failed to get connection to default tenant schema, cannot continue.",e2);
 				throw new RuntimeException(e2);
 			}
-			SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration(),conn);
+			SchemaExport se = new SchemaExport(this.tenantPersistenceService.getHibernateConfiguration(),conn);
 			se.create(false, true);
 			
-			// start h2 web interface for debugging
-			try {
-				org.h2.tools.Server.createWebServer("-webPort", "8082").start();
-			} catch (Exception e) {
-				// it's probably fine
-			}
-
 		} else {
 			// not 1st persistence run. need to reset
 			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
@@ -475,7 +493,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 					realTenantManagerService.deleteTenant(tenant);
 				}
 			}
-			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
+			realTenantPersistenceService.forgetInitialActions(realDefaultTenant.getSchemaName());
 			realTenantManagerService.resetTenant(realDefaultTenant);
 			List<UserRole> roles = realTenantManagerService.getRoles();
 			for(UserRole role : roles) {
@@ -487,11 +505,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 			}
 		}
 
-		// make sure default properties are in the database
-		TenantPersistenceService.getInstance().beginTransaction();
-		PropertyDao.getInstance().syncPropertyDefaults();
-		TenantPersistenceService.getInstance().commitTransaction();
-	}
+		defaultTenantId = realTenantManagerService.getDefaultTenant().getSchemaName();
+}
 
 	private void startServer() {
 		if (serverServiceManager == null) {
@@ -588,7 +603,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		}
 		facilitiesGenerated++;
 
-		boolean inTransaction = this.tenantPersistenceService.hasActiveTransaction(this.getDefaultTenant());
+		boolean inTransaction = this.tenantPersistenceService.hasAnyActiveTransactions();
 		if (!inTransaction)
 			this.getTenantPersistenceService().beginTransaction();
 
@@ -634,8 +649,32 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return generateTestFacility();
 	}
 
-	protected final Tenant getDefaultTenant() {
-		return TenantPersistenceService.getInstance().getDefaultSchema();
+	public User setDefaultUserAndTenant() {
+		User user = getMockDefaultUser();
+		CodeshelfSecurityManager.setContext(user,this.getDefaultTenant());
+		return user;
+	}
+
+	public Tenant getDefaultTenant() {
+		if(realTenantManagerService.isRunning()) {
+			return realTenantManagerService.getDefaultTenant();
+		} // else 
+		return Mockito.mock(Tenant.class);
+	}
+
+	public User getMockDefaultUser() {
+		User user = Mockito.mock(User.class);
+		Mockito.when(user.getTenant()).thenReturn(getDefaultTenant());
+		return user;
+	}
+
+	private void createMockWsConnection() {
+		User user = setDefaultUserAndTenant();
+
+		this.mockWsConnection = Mockito.mock(WebSocketConnection.class);
+		Mockito.when(mockWsConnection.getUser()).thenReturn(user);
+
+		// TODO: more advanced user connection setups for tests (real/mock, roles etc)                     
 	}
 
 }

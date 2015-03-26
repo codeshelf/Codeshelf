@@ -1,35 +1,31 @@
 package com.codeshelf.platform.persistence;
 
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.service.CodeshelfService;
 
-public interface IPersistenceService<SCHEMA_TYPE extends Schema> extends CodeshelfService {
+public interface IPersistenceService extends CodeshelfService {
 
-	public SCHEMA_TYPE getDefaultSchema();
-	public Session getSession(SCHEMA_TYPE schema);
-	public SessionFactory getSessionFactory(SCHEMA_TYPE schema);
-	public EventListenerIntegrator getEventListenerIntegrator(SCHEMA_TYPE schema);
-	public void forgetInitialActions(SCHEMA_TYPE schema);
-	public boolean hasActiveTransaction(SCHEMA_TYPE schema);
+	public Configuration getHibernateConfiguration();
+
+	public void applyLiquibaseSchemaUpdates(DatabaseCredentials cred, DatabaseCredentials superCred); // superCred optional, used to create schema if doesn't exist
+
+	public String getMasterChangeLogFilename();
+	
+	public EventListenerIntegrator generateEventListenerIntegrator(); // can be null
+	public EventListenerIntegrator getEventListenerIntegrator();
 
 	public boolean hasAnyActiveTransactions();
 	public boolean rollbackAnyActiveTransactions();
 
-	public Session getSessionWithTransaction(SCHEMA_TYPE schema);
-	public Transaction beginTransaction(SCHEMA_TYPE schema);
-	public void commitTransaction(SCHEMA_TYPE schema);
-	public void rollbackTransaction(SCHEMA_TYPE schema);
-
-	// methods for using default schema
 	public Transaction beginTransaction();
 	public void commitTransaction();
 	public void rollbackTransaction();
 	public Session getSession();
 	public Session getSessionWithTransaction();
-	public SessionFactory getSessionFactory();
-	public EventListenerIntegrator getEventListenerIntegrator();
 
+	void forgetInitialActions(String tenantIdentifier);
 }

@@ -80,7 +80,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 		}		
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
@@ -126,7 +126,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 		}
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());

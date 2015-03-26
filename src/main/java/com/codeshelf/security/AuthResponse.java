@@ -4,6 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 
 @ToString
@@ -23,6 +24,8 @@ public class AuthResponse {
 	@Getter
 	private User user = null;
 	@Getter
+	private Tenant tenant = null;
+	@Getter
 	private Long tokenTimestamp = null;
 	@Getter
 	private Long sessionStartTimestamp = null;
@@ -31,9 +34,15 @@ public class AuthResponse {
 	@Getter
 	private String newToken = null;
 	
-	public AuthResponse(Status status,User user, Long tokenTimestamp, Long sessionStartTimestamp, SessionFlags sessionFlags, String newToken) {
-		this.status = status;
+	public AuthResponse(Status status, User user, Tenant tenant, Long tokenTimestamp, Long sessionStartTimestamp, SessionFlags sessionFlags, String newToken) {
+		if(user != null) {
+			if(!user.getTenant().equals(tenant)) { // validate that user can access tenant
+				throw new RuntimeException("Token validation error: user "+user.getUsername()+" cannot access tenant "+tenant.getId());
+			}
+		}
 		this.user = user;
+		this.tenant = tenant;
+		this.status = status;
 		this.tokenTimestamp = tokenTimestamp;
 		this.sessionStartTimestamp = sessionStartTimestamp;
 		this.sessionFlags = sessionFlags;
