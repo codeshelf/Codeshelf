@@ -286,7 +286,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return mSetStateStackCount > 0;
 	}
 
-	@Override
 	public String getDeviceType() {
 		LOGGER.error("getDeviceType(): Should have specific instance of this abstract type");
 		return CsDeviceManager.DEVICETYPE_CHE;

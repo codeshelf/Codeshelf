@@ -44,13 +44,13 @@ public final class CommandControlTest extends MinimalTest {
 	private static final Byte	FREQ					= 4;
 	private static final Byte	DUTYCYCLE				= 5;
 
-	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER,
-			INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE };
-	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER,
-			INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE };
+	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
+			MAX_VALUE, FREQ, DUTYCYCLE					};
+	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
+			MAX_VALUE, FREQ, DUTYCYCLE					};
 
-	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM,
-			REQ_VALUE, MIN_VALUE, MAX_VALUE, FREQ, DUTYCYCLE };
+	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
+		MAX_VALUE, FREQ, DUTYCYCLE };
 
 	protected ICommand createCommandABC() throws Exception {
 		return new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
@@ -78,12 +78,12 @@ public final class CommandControlTest extends MinimalTest {
 
 		PosControllerInstr instruction = instructions.get(0);
 
-		Assert.assertEquals(POS_NUM, instruction.getPosition());
-		Assert.assertEquals(REQ_VALUE, instruction.getReqQty());
-		Assert.assertEquals(MIN_VALUE, instruction.getMinQty());
-		Assert.assertEquals(MAX_VALUE, instruction.getMaxQty());
-		Assert.assertEquals(FREQ, instruction.getFreq());
-		Assert.assertEquals(DUTYCYCLE, instruction.getDutyCycle());
+		Assert.assertEquals(POS_NUM, (Byte) instruction.getPosition());
+		Assert.assertEquals(REQ_VALUE, (Byte) instruction.getReqQty());
+		Assert.assertEquals(MIN_VALUE, (Byte) instruction.getMinQty());
+		Assert.assertEquals(MAX_VALUE, (Byte) instruction.getMaxQty());
+		Assert.assertEquals(FREQ, (Byte) instruction.getFreq());
+		Assert.assertEquals(DUTYCYCLE, (Byte) instruction.getDutyCycle());
 	}
 
 	@Test

@@ -30,15 +30,13 @@ import com.codeshelf.testframework.MinimalTest;
  */
 public final class PacketTest extends MinimalTest {
 
-	private static final byte[]	PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05,
-			0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
-	private static final byte[]	PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05,
-			0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
+	private static final byte[]			PACKET_IN_DATA		= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05, 0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
+	private static final byte[]			PACKET_OUT_DATA		= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05, 0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
 
-	private static final String	TEST_MSG1		= "TEST1";
-	private static final String	TEST_MSG2		= "TEST2";
-	private static final String	TEST_MSG3		= "TEST3";
-	private static final String	TEST_MSG4		= "TEST4";
+	private static final String			TEST_MSG1			= "TEST1";
+	private static final String			TEST_MSG2			= "TEST2";
+	private static final String			TEST_MSG3			= "TEST3";
+	private static final String			TEST_MSG4			= "TEST4";
 
 	/**
 	 * Test method for {@link com.codeshelf.flyweightcontroller.command.Packet#Packet(com.codeshelf.flyweightcontroller.command.CommandABC, com.codeshelf.flyweightcontroller.command.NetAddress, com.codeshelf.flyweightcontroller.command.NetAddress, byte)}.
@@ -51,11 +49,7 @@ public final class PacketTest extends MinimalTest {
 		IPacket packet;
 
 		NetworkId networkId = new NetworkId((byte) 1);
-		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
-			TEST_MSG1,
-			TEST_MSG2,
-			TEST_MSG3,
-			TEST_MSG4);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 		NetAddress srcAddr = new NetAddress(IPacket.GATEWAY_ADDRESS);
 		NetAddress destAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
 
@@ -124,11 +118,7 @@ public final class PacketTest extends MinimalTest {
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 
 		// Create a new command.
-		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
-			TEST_MSG1,
-			TEST_MSG2,
-			TEST_MSG3,
-			TEST_MSG4);
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
 
 		// Create the network ID
 		NetworkId networkId = new NetworkId((byte) 1);
