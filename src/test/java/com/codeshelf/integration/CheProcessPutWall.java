@@ -33,6 +33,9 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.service.InventoryService;
+import com.codeshelf.service.LightService;
+import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
 
@@ -61,12 +64,20 @@ public class CheProcessPutWall extends ServerTest {
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
-		LOGGER.info("1b: cannot ORDER_WALL after one order is set");
+		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.scanSomething("11112");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+
+		LOGGER.info("1c: cannot ORDER_WALL after one order is set");
 		picker.setupContainer("11112", "4");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
-		LOGGER.info("1c: pick to completion");
+		LOGGER.info("1d: pick to completion");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("F21");
@@ -77,14 +88,39 @@ public class CheProcessPutWall extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
 
-		LOGGER.info("1d: ORDERWALL from complete state");
+		LOGGER.info("1e: ORDER_WALL from complete state");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
 
+		LOGGER.info("1g: Do simple actual order setup to put wall");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.scanSomething("11112");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker.scanSomething("P15");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+
+		LOGGER.info("2: Demonstrate what a put wall picker object can do.");
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getFacility();
+		/* LightService theService = ServiceFactory.getServiceInstance(LightService.class);
+		theService.lightLocation(facility.getPersistentId().toString(), "P11");
+		*/
+		
+		this.getTenantPersistenceService().commitTransaction();
+
+
+
 	}
 
+	/*
 	protected PosManagerSimulator waitAndGetPosConController(final IntegrationTest test, final NetGuid deviceGuid) {
 		Callable<PosManagerSimulator> createPosManagerSimulator = new Callable<PosManagerSimulator>() {
 			@Override
@@ -97,6 +133,7 @@ public class CheProcessPutWall extends ServerTest {
 		PosManagerSimulator managerSimulator = new WaitForResult<PosManagerSimulator>(createPosManagerSimulator).waitForResult();
 		return managerSimulator;
 	}
+	*/
 
 	protected AisleDeviceLogic waitAndGetAisleDeviceLogic(final IntegrationTest test, final NetGuid deviceGuid) {
 		Callable<AisleDeviceLogic> getAisleLogic = new Callable<AisleDeviceLogic>() {
@@ -223,7 +260,7 @@ public class CheProcessPutWall extends ServerTest {
 		wall2Tier.setLedChannel((short) 1);
 		wall2Tier.getDao().store(wall2Tier);
 
-		String[] slotNames = { "P11", "P12", "P13", "P13", "P15", "P16", "P17", "P18" };
+		String[] slotNames = { "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18" };
 		int posconIndex = 1;
 		for (String slotName : slotNames) {
 			Location slot = getFacility().findSubLocationById(slotName);

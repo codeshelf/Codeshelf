@@ -86,7 +86,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
 	protected static final String		CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	protected static final String		CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
-	
+
 	protected static final String		SCAN_GTIN								= cheLine("SCAN GTIN");
 	protected static final String		SCAN_GTIN_OR_LOCATION					= cheLine("SCAN GTIN/LOCATION");
 
@@ -95,6 +95,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
 	protected static final String		ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
 	protected static final String		ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
+
+	// For Put wall
+	protected static final String		SCAN_PUTWALL_ORDER_MSG					= cheLine("SCAN ORDER FOR");
+	protected static final String		SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
+	protected static final String		SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
 
 	public static final String			STARTWORK_COMMAND						= "START";
 	public static final String			REVERSE_COMMAND							= "REVERSE";
@@ -119,6 +124,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		SKIP_SCAN								= "SKIPSCAN";
 
 	protected static final Integer		maxCountForPositionControllerDisplay	= 99;
+
+	protected static boolean			kLogAsWarn								= true;
+	protected static boolean			kLogAsInfo								= false;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
@@ -171,10 +179,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	protected String					lastScanedGTIN;
-	
+
+	@Getter
+	@Setter
+	private String						lastPutWallOrderScan;
+
 	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-		
+
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
+			notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
 			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
 		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
 			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
@@ -184,7 +197,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		setState(CheStateEnum.SCAN_GTIN);
 	}
-	
+
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
 		UPC_SCAN_TO_VERIFY("UPC"),
@@ -383,7 +396,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		if (wiToCheck.isHousekeeping()) // they actually may match the getItemId and getPickInstruction values
 			return false;
-		
+
 		if (matchItem.equals(wiToCheck.getItemId()))
 			if (matchPickLocation.equals(wiToCheck.getPickInstruction()))
 				return true;
@@ -625,13 +638,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
 	}
-	
+
 	private void forceClearAllPosConControllersForThisCheDevice() {
 		List<PosManagerDeviceLogic> controllers = mDeviceManager.getPosConControllers();
 		for (PosManagerDeviceLogic controller : controllers) {
 			controller.removePosConInstrsForSource(getGuid());
 			controller.updatePosCons();
-		}		
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -761,7 +774,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Clean up any potential newline or carriage returns.
 		inCommandStr = inCommandStr.replaceAll("[\n\r]", "");
 
-		LOGGER.info(this + " received scan command: " + inCommandStr);
+		notifyScan(inCommandStr); // logs
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
@@ -782,7 +795,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public void buttonCommandReceived(CommandControlButton inButtonCommand) {
 		if (connectedToServer) {
 			// Send a command to clear the position, so the controller knows we've gotten the button press.
-			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue(), inButtonCommand.getPosNum());
+			processButtonPress((int) inButtonCommand.getPosNum(), (int) inButtonCommand.getValue());
 		} else {
 			LOGGER.debug("NotConnectedToServer: Ignoring button command: " + inButtonCommand);
 		}
@@ -881,10 +894,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		setState(CheStateEnum.IDLE);
 
 		forceClearAllLedsForThisCheDevice();
-		
+
 		//Clear PosConControllers
 		forceClearAllPosConControllersForThisCheDevice();
-		
+
 		clearAllPositionControllers();
 	}
 
@@ -988,7 +1001,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		//Clear PosConControllers
 		forceClearAllPosConControllersForThisCheDevice();
-		
+
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
@@ -1045,7 +1058,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				ledControllerClearLeds(ledController.getGuid());
 			}
 		}
-		
+
 		//Clear PutWall PosCons
 		forceClearAllPosConControllersForThisCheDevice();
 	}
@@ -1057,7 +1070,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * @param inQuantity
 	 * @param buttonPosition 
 	 */
-	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 		LOGGER.error("processButtonPress() needs override");
 	}
 
@@ -1102,7 +1115,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * return the button for this container ID. Mostly private use, but public for unit test convenience
 	 * we let CsDeviceManager call this generically for CheDeviceLogic
 	 */
-	public byte getPosconIndexOfWi(WorkInstruction wi)  {
+	public byte getPosconIndexOfWi(WorkInstruction wi) {
 		LOGGER.error("Inappropriate call to getPosconIndexOfWi()");
 		return 0;
 	}
@@ -1229,10 +1242,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 
 	}
-	
+
 	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
 		String wiCmdString = inFirstWi.getPosConCmdStream();
-		if (wiCmdString == null ||wiCmdString.equals("[]")) {
+		if (wiCmdString == null || wiCmdString.equals("[]")) {
 			return;
 		}
 		NetGuid cheGuid = getGuid();
@@ -1247,7 +1260,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				controllers.add(controller);
 			}
 		}
-		
+
 		for (PosManagerDeviceLogic controller : controllers) {
 			controller.updatePosCons();
 		}
@@ -1300,7 +1313,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 			// Tell aisle controller(s) what to light next
 			lightWiLocations(firstWi);
-			
+
 			forceClearAllPosConControllersForThisCheDevice();
 			lightWiPosConLocations(firstWi);
 
@@ -1322,12 +1335,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
 			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
-		byte freq = PosControllerInstr.SOLID_FREQ;		
+		byte freq = PosControllerInstr.SOLID_FREQ;
 		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		if (this.getCheStateEnum().equals(CheStateEnum.SCAN_SOMETHING)) { // a little weak feedback that the poscon button press will not work
 			brightness = PosControllerInstr.MIDDIM_DUTYCYCLE;
 		}
-		
+
 		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 		if (planQuantityForPositionController != minQuantityForPositionController
 				|| planQuantityForPositionController != maxQuantityForPositionController) {
@@ -1355,17 +1368,67 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This might get hooked up to Codeshelf Companion alerts table someday. For now, just log a WARN
+	 * These notifyXXX functions  with warn parameter might get hooked up to Codeshelf Companion tables someday. 
+	 * These log from the site controller extremely consistently. Companion should mostly log back end effects.
+	 * However, something like SKIPSCAN can only be learned of here.
+	 * 
+	 * By convention, start these string with something recognizable, to tell these notifies apart from the rest that is going on.
 	 */
-	protected void notifyWarn(final WorkInstruction inWi, String inVerb) {
+	protected void notifyWiVerb(final WorkInstruction inWi, String inVerb, boolean needWarn) {
+		if (inWi == null) {
+			LOGGER.error("bad call to notifyWarnWi"); // want stack trace?
+			return;
+		}
 		String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
 
-		String itemId = inWi.getItemId();
-		String locId = inWi.getPickInstruction();
-		String picker = this.getUserId();
+		// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
+		if (needWarn)
+			LOGGER.warn("*{} for order/cntr:{} item:{} location:{} by picker:{} device:{}",
+				inVerb,
+				orderId,
+				inWi.getItemId(),
+				inWi.getPickInstruction(),
+				getUserId(),
+				getMyGuidStr());
+		else
+			LOGGER.info("*{} for order/cntr:{} item:{} location:{} by picker:{} device:{}",
+				inVerb,
+				orderId,
+				inWi.getItemId(),
+				inWi.getPickInstruction(),
+				getUserId(),
+				getMyGuidStr());
+	}
 
-		LOGGER.warn("{} for order/cntr:{} item:{} location:{} by picker:{}", inVerb, orderId, itemId, locId, picker);
+	protected void notifyOrderToPutWall(String orderId, String locationName) {
+		LOGGER.info("*Put order/cntr:{} into put wall location:{} by picker:{} device:{}",
+			orderId,
+			locationName,
+			getUserId(),
+			getMyGuidStr());
+	}
+
+	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
+		LOGGER.info("*Inventory update for item/gtin:{} to location:{} by picker:{} device:{}",
+			itemOrGtin,
+			locationStr,
+			getUserId(),
+			getMyGuidStr());
+	}
+
+	protected void notifyButton(int buttonNum, int showingQuantity) {
+		LOGGER.info("*Button #{} pressed with quantity {} by picker:{} device:{}",
+			buttonNum,
+			showingQuantity,
+			getUserId(),
+			getMyGuidStr());
+	}
 	
+	protected void notifyScan(String theScan){
+		LOGGER.info("*Scan {} by picker:{} device:{}",
+			theScan,
+			getUserId(),
+			getMyGuidStr());
 	}
 
 	// --------------------------------------------------------------------------
@@ -1379,7 +1442,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// TODO
 		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
-			notifyWarn(inWi, "SKIPSCAN");
+			notifyWiVerb(inWi, "SKIPSCAN", kLogAsWarn);
 			return returnString;
 		}
 

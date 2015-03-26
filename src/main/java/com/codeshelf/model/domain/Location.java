@@ -73,6 +73,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public static final Double			METERS_PER_LED_POS	= 0.03125;
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(Location.class);
+	
+	public static final String			PUTWALL_USAGE		= "putwall";
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false, name = "anchor_pos_type")
@@ -245,6 +247,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@JsonProperty
 	@Column(name="poscon_index")
 	private Integer posconIndex = null;
+
+	@Column(nullable = true,name="usage")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String				usage;
 
 	public Location() {
 		active = true;
@@ -1358,6 +1366,37 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return getPickFaceEndPosY() == 0.0;
 	}
 
+	public boolean isPutWallLocation(){
+		if (isImmediatePutWallLocation()) {
+			return true;
+		}
+		Location parent = getParent();
+		return (parent == null)? false : parent.isPutWallLocation();
+	}
+	
+	private boolean isImmediatePutWallLocation(){
+		return PUTWALL_USAGE.equalsIgnoreCase(usage);
+	}
+	
+	public void setAsPutWallLocation(boolean isPutWall) {
+		setUsage(isPutWall ? PUTWALL_USAGE : null);
+	}
+	
+	public void togglePutWallLocation() {
+		setAsPutWallLocation(!isImmediatePutWallLocation());
+	}
+	
+	public String getPutWallUi() {
+		//Check if this location is PutWall
+		if (isImmediatePutWallLocation()) {
+			return "Yes";
+		}
+		//Check if any parents are PutWall 
+		//(the isPutWallLocation() looks at this location too, but we've already established that it isn't PutWall) 
+		return isPutWallLocation() ? "(Yes)" : null;
+	}
+
+	
 	// UI fields
 	public String getAnchorPosXui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosX());

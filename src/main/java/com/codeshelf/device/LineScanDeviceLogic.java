@@ -402,7 +402,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = this.getActiveWorkInstruction();
 			if (wi != null) {
-				notifyWarn(wi, "SHORT");
+				notifyWiVerb(wi, "SHORT", kLogAsWarn);
 				doShortTransaction(wi, mShortPickQty);
 
 				clearLedAndPosConControllersForWi(wi);
@@ -453,7 +453,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		LOGGER.info("Pick completed: " + inWi);
+		notifyWiVerb(inWi, "COMPLETE by button", kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 
@@ -491,9 +491,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Complete the active WI. For this process mode, only one poscon is there.
 	 * @param inButtonNum
 	 * @param inQuantity
-	 * @param buttonPosition 
 	 */
-	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 
 		// The point is, let's check our state
 		switch (mCheStateEnum) {
@@ -517,7 +516,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (wi == null) {
 			// Simply ignore button presses when there is no work instruction.
 		} else {
-			// clearOnePositionController(buttonPosition); should not need to clear. State transition should resend what is necessary.
 			String itemId = wi.getItemId();
 			String orderDetailId = wi.getOrderDetailId();
 			LOGGER.info("Button for " + orderDetailId + " / " + itemId);

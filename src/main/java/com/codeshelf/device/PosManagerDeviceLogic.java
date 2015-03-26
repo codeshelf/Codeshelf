@@ -195,4 +195,8 @@ public class PosManagerDeviceLogic extends PosConDeviceABC{
 		List<PosControllerInstr> latestCommandsList = new ArrayList<PosControllerInstr>(latestInstructionsForPosition.values());
 		sendPositionControllerInstructions(latestCommandsList);
 	}
+	
+	
+	
+	
 }
