@@ -15,8 +15,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
@@ -83,7 +81,7 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Aisle aisle = (Aisle) facility.getChildren().get(0);
-		List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
+		//List<Tier> tiers = aisle.getActiveChildrenAtLevel(Tier.class);
 		int itemsPerTier = 5;
 
 		
@@ -116,7 +114,7 @@ public class LightServiceTest extends ServerTest {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(webSocketManagerService);
 
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
@@ -285,37 +283,19 @@ public class LightServiceTest extends ServerTest {
 	}
 
 	private LightLedsMessage getLedInstructionsForFirstChannel(Facility facility, Location parent) throws InterruptedException, ExecutionException{
-		List<MessageABC> messages = captureLightMessagesNew(facility, parent);
+		List<MessageABC> messages = captureLightMessages(facility, parent);
 		LedInstrListMessage message = (LedInstrListMessage)messages.get(0);
 		List<LightLedsMessage> instructionsForAllControllers = message.getInstructions();
 		return instructionsForAllControllers.get(0);
 	}
-	/*
-	@SuppressWarnings("unchecked")
-	private List<MessageABC> captureLightMessages(Facility facility, Location parent, int expectedTotal) throws InterruptedException, ExecutionException {
-		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
-		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
-		ColorEnum color = ColorEnum.RED;
-		
-		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
-		Future<Void> complete = lightService.lightChildLocations(facility, parent, color);
-		complete.get(); //wait for completion
-		
-		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(webSocketManagerService, times(expectedTotal)).sendMessage(any(Set.class), messagesCaptor.capture());
-		
-		List<MessageABC> messages = messagesCaptor.getAllValues();
-		return messages;
 
-	}
-	*/
 	@SuppressWarnings("unchecked")
-	private List<MessageABC> captureLightMessagesNew(Facility facility, Location parent) throws InterruptedException, ExecutionException {
+	private List<MessageABC> captureLightMessages(Facility facility, Location parent) throws InterruptedException, ExecutionException {
 		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
-		lightService.lightChildLocationsNew(facility, parent, color);
+		LightService lightService = new LightService(webSocketManagerService);
+		lightService.lightChildLocations(facility, parent, color);
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
 		verify(webSocketManagerService, times(1)).sendMessage(any(Set.class), messagesCaptor.capture());
