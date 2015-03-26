@@ -86,7 +86,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
 	protected static final String		CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	protected static final String		CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
-	
+
 	protected static final String		SCAN_GTIN								= cheLine("SCAN GTIN");
 	protected static final String		SCAN_GTIN_OR_LOCATION					= cheLine("SCAN GTIN/LOCATION");
 
@@ -95,6 +95,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String		GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
 	protected static final String		ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
 	protected static final String		ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
+
+	// For Put wall
+	protected static final String		SCAN_PUTWALL_ORDER_MSG					= cheLine("SCAN ORDER FOR");
+	protected static final String		SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
+	protected static final String		SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
 
 	public static final String			STARTWORK_COMMAND						= "START";
 	public static final String			REVERSE_COMMAND							= "REVERSE";
@@ -172,8 +177,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	protected String					lastScanedGTIN;
 	
+	@Getter
+	@Setter
+	private String 						lastPutWallOrderScan;
+
 	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-		
+
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
 			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
 		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
@@ -185,6 +194,22 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		setState(CheStateEnum.SCAN_GTIN);
 	}
 	
+	protected void processPutWallOrderScan (final String inScanPrefixStr, final String inScanStr) {
+		setLastPutWallOrderScan(inScanStr);
+		setState(CheStateEnum.PUT_WALL_SCAN_LOCATION);
+	}
+	
+	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
+		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
+		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+	}
+	
+	private void sendOrderPlacementMessage(String orderId, String locationName){
+		// This will form the command and send to server. If successful, the putwall poscon feedback will be apparent.
+		LOGGER.info("to do: send put wall setup msg {} at {}", orderId, locationName);
+		
+	}
+
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
 		UPC_SCAN_TO_VERIFY("UPC"),
@@ -383,7 +408,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		if (wiToCheck.isHousekeeping()) // they actually may match the getItemId and getPickInstruction values
 			return false;
-		
+
 		if (matchItem.equals(wiToCheck.getItemId()))
 			if (matchPickLocation.equals(wiToCheck.getPickInstruction()))
 				return true;
@@ -625,13 +650,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
 	}
-	
+
 	private void forceClearAllPosConControllersForThisCheDevice() {
 		List<PosManagerDeviceLogic> controllers = mDeviceManager.getPosConControllers();
 		for (PosManagerDeviceLogic controller : controllers) {
 			controller.removePosConInstrsForSource(getGuid());
 			controller.updatePosCons();
-		}		
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -881,10 +906,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		setState(CheStateEnum.IDLE);
 
 		forceClearAllLedsForThisCheDevice();
-		
+
 		//Clear PosConControllers
 		forceClearAllPosConControllersForThisCheDevice();
-		
+
 		clearAllPositionControllers();
 	}
 
@@ -988,7 +1013,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		//Clear PosConControllers
 		forceClearAllPosConControllersForThisCheDevice();
-		
+
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
@@ -1045,7 +1070,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				ledControllerClearLeds(ledController.getGuid());
 			}
 		}
-		
+
 		//Clear PutWall PosCons
 		forceClearAllPosConControllersForThisCheDevice();
 	}
@@ -1102,7 +1127,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * return the button for this container ID. Mostly private use, but public for unit test convenience
 	 * we let CsDeviceManager call this generically for CheDeviceLogic
 	 */
-	public byte getPosconIndexOfWi(WorkInstruction wi)  {
+	public byte getPosconIndexOfWi(WorkInstruction wi) {
 		LOGGER.error("Inappropriate call to getPosconIndexOfWi()");
 		return 0;
 	}
@@ -1229,10 +1254,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 
 	}
-	
+
 	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
 		String wiCmdString = inFirstWi.getPosConCmdStream();
-		if (wiCmdString == null ||wiCmdString.equals("[]")) {
+		if (wiCmdString == null || wiCmdString.equals("[]")) {
 			return;
 		}
 		NetGuid cheGuid = getGuid();
@@ -1247,7 +1272,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				controllers.add(controller);
 			}
 		}
-		
+
 		for (PosManagerDeviceLogic controller : controllers) {
 			controller.updatePosCons();
 		}
@@ -1300,7 +1325,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 			// Tell aisle controller(s) what to light next
 			lightWiLocations(firstWi);
-			
+
 			forceClearAllPosConControllersForThisCheDevice();
 			lightWiPosConLocations(firstWi);
 
@@ -1322,12 +1347,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
 			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
-		byte freq = PosControllerInstr.SOLID_FREQ;		
+		byte freq = PosControllerInstr.SOLID_FREQ;
 		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		if (this.getCheStateEnum().equals(CheStateEnum.SCAN_SOMETHING)) { // a little weak feedback that the poscon button press will not work
 			brightness = PosControllerInstr.MIDDIM_DUTYCYCLE;
 		}
-		
+
 		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 		if (planQuantityForPositionController != minQuantityForPositionController
 				|| planQuantityForPositionController != maxQuantityForPositionController) {
@@ -1365,7 +1390,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String picker = this.getUserId();
 
 		LOGGER.warn("{} for order/cntr:{} item:{} location:{} by picker:{}", inVerb, orderId, itemId, locId, picker);
-	
+
 	}
 
 	// --------------------------------------------------------------------------

@@ -61,12 +61,20 @@ public class CheProcessPutWall extends ServerTest {
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
-		LOGGER.info("1b: cannot ORDER_WALL after one order is set");
+		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.scanSomething("11112");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+
+		LOGGER.info("1c: cannot ORDER_WALL after one order is set");
 		picker.setupContainer("11112", "4");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
-		LOGGER.info("1c: pick to completion");
+		LOGGER.info("1d: pick to completion");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("F21");
@@ -77,8 +85,18 @@ public class CheProcessPutWall extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
 
-		LOGGER.info("1d: ORDERWALL from complete state");
+		LOGGER.info("1e: ORDER_WALL from complete state");
 		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+
+		LOGGER.info("1g: Do simple actual order setup to put wall");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.scanSomething("11112");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker.scanSomething("P15");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
@@ -223,7 +241,7 @@ public class CheProcessPutWall extends ServerTest {
 		wall2Tier.setLedChannel((short) 1);
 		wall2Tier.getDao().store(wall2Tier);
 
-		String[] slotNames = { "P11", "P12", "P13", "P13", "P15", "P16", "P17", "P18" };
+		String[] slotNames = { "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18" };
 		int posconIndex = 1;
 		for (String slotName : slotNames) {
 			Location slot = getFacility().findSubLocationById(slotName);

@@ -206,6 +206,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
 					}
 					break;
+					
+				case PUT_WALL_SCAN_ORDER:
+					sendDisplayCommand(SCAN_PUTWALL_ORDER_MSG, SCAN_PUTWALL_LINE2_MSG);
+					break;
+
+				case PUT_WALL_SCAN_LOCATION:
+					sendDisplayCommand(SCAN_PUTWALL_LOCATION_MSG, SCAN_PUTWALL_LINE2_MSG);
+					break;
 
 				default:
 					break;
@@ -1040,6 +1048,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SCAN_GTIN:
 				processGtinScan(inScanPrefixStr, inContent);
+				break;
+
+			case PUT_WALL_SCAN_LOCATION:
+				processPutWallLocationScan(inScanPrefixStr, inContent);
+				break;
+
+			case PUT_WALL_SCAN_ORDER:
+				processPutWallOrderScan(inScanPrefixStr, inContent);
 				break;
 
 			default:
