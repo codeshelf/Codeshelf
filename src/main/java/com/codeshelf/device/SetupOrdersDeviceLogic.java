@@ -493,7 +493,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
 
-		notifyWarn(inWi, "SHORT");
+		notifyWiVerb(inWi, "SHORT", kLogAsWarn);
 		doShortTransaction(inWi, inPicked);
 
 		clearLedAndPosConControllersForWi(inWi); // wrong? What about any short aheads?
@@ -811,7 +811,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Finally, do all our shorts
 		for (WorkInstruction wi : toShortList) {
 			// Short aheads will always set the actual pick quantity to zero.
-			notifyWarn(wi, "SHORT_AHEAD");
+			notifyWiVerb(wi, "SHORT_AHEAD", kLogAsWarn);
 			doShortTransaction(wi, 0);
 		}
 
@@ -1412,7 +1412,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		LOGGER.info("Pick completed: " + inWi);
+		notifyWiVerb(inWi, "COMPLETE by button", kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 
@@ -1485,9 +1485,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Complete the active WI at the selected position.
 	 * @param inButtonNum
 	 * @param inQuantity
-	 * @param buttonPosition 
 	 */
-	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
 		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
 
@@ -1513,20 +1512,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.
-			//invalidScanMsg(mCheStateEnum);
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
-				//invalidScanMsg(mCheStateEnum);
 			} else {
-
-				// TODO
-				// clearOnePositionController(buttonPosition); // BUG!  if multiple flashing, we need to clear those. That is all on active job list.
-				// Now handled in processNormalPick
-
-				String itemId = wi.getItemId();
-				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
+				notifyButton(inButtonNum,inQuantity);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -1562,6 +1553,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// Then the inherited shorts part is the same
 		super.processShortPick(inWi, inQuantity);
+	}
+
+	protected void processPutWallOrderScan (final String inScanPrefixStr, final String inScanStr) {
+		setLastPutWallOrderScan(inScanStr);
+		setState(CheStateEnum.PUT_WALL_SCAN_LOCATION);
+	}
+	
+	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
+		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
+		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+	}
+	
+	private void sendOrderPlacementMessage(String orderId, String locationName){
+		// This will form the command and send to server. If successful, the putwall poscon feedback will be apparent.
+		LOGGER.info("to do: send put wall setup msg {} at {}", orderId, locationName);
+		
+		notifyOrderToPutWall(orderId, locationName);		
 	}
 
 	// --------------------------------------------------------------------------
