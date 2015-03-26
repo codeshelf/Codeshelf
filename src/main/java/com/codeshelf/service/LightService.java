@@ -27,15 +27,16 @@ import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -48,7 +49,7 @@ public class LightService implements IApiService {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
 
-	private final SessionManagerService			sessionManagerService;
+	private final WebSocketManagerService			webSocketManagerService;
 	private final ScheduledExecutorService	mExecutorService;
 	private Future<Void>					mLastChaserFuture;
 
@@ -61,12 +62,12 @@ public class LightService implements IApiService {
 	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
-	public LightService(SessionManagerService sessionManagerService) {
-		this(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+	public LightService(WebSocketManagerService webSocketManagerService) {
+		this(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
 	}
 
-	LightService(SessionManagerService sessionManagerService, ScheduledExecutorService executorService) {
-		this.sessionManagerService = sessionManagerService;
+	LightService(WebSocketManagerService webSocketManagerService, ScheduledExecutorService executorService) {
+		this.webSocketManagerService = webSocketManagerService;
 		this.mExecutorService = executorService;
 	}
 
@@ -78,6 +79,17 @@ public class LightService implements IApiService {
 		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
 		Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+
+		lightItemSpecificColor(facilityPersistentId, inItemPersistentId, color);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 */
+	public void lightItemSpecificColor(final String facilityPersistentId, final String inItemPersistentId, ColorEnum color) {
+		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
+		Facility facility = checkFacility(facilityPersistentId);
 
 		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
 		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
@@ -107,9 +119,9 @@ public class LightService implements IApiService {
 		
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		lightPosConRange(facility, theLocation, instructions);
+		getInstructionsForPosConRange(facility, null, theLocation, instructions);
 		final PosControllerInstrList message = new PosControllerInstrList(instructions);
-		sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+		webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 		//Modify all POS commands to clear their POSs instead.
 		new Timer().schedule(new TimerTask() {
 			@Override
@@ -118,12 +130,9 @@ public class LightService implements IApiService {
 				for (PosControllerInstr instructions : message.getInstructions()){
 					instructions.getRemovePos().add(instructions.getPosition());
 				}
-				sessionManagerService.sendMessage(facility.getSiteControllerUsers(), message);
+				webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), message);
 			}
 		}, 20000);
-
-		
-
 	}
 
 	public Future<Void> lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
@@ -134,6 +143,26 @@ public class LightService implements IApiService {
 
 		List<Set<LightLedsMessage>> messages = Lists.newArrayList();
 		for (Item item : theLocation.getInventoryInWorkingOrder()) {
+			try {
+				if (item.isLightable()) {
+					LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, item);
+					messages.add(ImmutableSet.of(message));
+				} else {
+					LOGGER.warn("unable to light item: " + item);
+				}
+			} catch (Exception e) {
+				LOGGER.warn("unable to light item: " + item, e);
+
+			}
+		}
+		return chaserLight(facility.getSiteControllerUsers(), messages);
+	}
+	
+	public Future<Void> lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
+		Facility facility = checkFacility(facilityPersistentId);
+
+		List<Set<LightLedsMessage>> messages = Lists.newArrayList();
+		for (Item item : items) {
 			try {
 				if (item.isLightable()) {
 					LightLedsMessage message = toLedsMessage(facility, defaultLedsToLight, color, item);
@@ -166,25 +195,39 @@ public class LightService implements IApiService {
 		
 	}
 	
-	private void lightPosConRange(final Facility facility, final Location theLocation, List<PosControllerInstr> instructions){
+	public static void getInstructionsForPosConRange(final Facility facility, final WorkInstruction wi, final Location theLocation, List<PosControllerInstr> instructions){
 		if (theLocation == null) {return;}
 		if (theLocation.isLightablePoscon()) {
-			String posConController = theLocation.getLedControllerId();
+			LedController controller = theLocation.getEffectiveLedController();
+			String posConController = controller == null ? "" : controller.getDeviceGuidStr();
 			int posConIndex = theLocation.getPosconIndex();
-			PosControllerInstr message = new PosControllerInstr(
-				posConController,
-				(byte) posConIndex,
-				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-				PosControllerInstr.BITENCODED_TRIPLE_DASH,
-				PosControllerInstr.BITENCODED_TRIPLE_DASH,
-				PosControllerInstr.BLINK_FREQ,
-				PosControllerInstr.BRIGHT_DUTYCYCLE);
+			PosControllerInstr message = null;
+			if (wi == null) {
+				 message = new PosControllerInstr(
+					posConController,
+					(byte) posConIndex,
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_TRIPLE_DASH,
+					PosControllerInstr.BITENCODED_TRIPLE_DASH,
+					PosControllerInstr.BLINK_FREQ,
+					PosControllerInstr.BRIGHT_DUTYCYCLE);
+			} else {
+				message = new PosControllerInstr(
+					posConController,
+					(byte) posConIndex,
+					wi.getPlanQuantity().byteValue(),
+					wi.getPlanMinQuantity().byteValue(),
+					wi.getPlanMaxQuantity().byteValue(),
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.BRIGHT_DUTYCYCLE);
+ 
+			}
 			instructions.add(message);
 		}
 		List<Location> children = theLocation.getActiveChildren();
 		if (!children.isEmpty()){
 			for (Location child : children) {
-				lightPosConRange(facility, child, instructions);
+				getInstructionsForPosConRange(facility, wi, child, instructions);
 			}
 		}
 	}
@@ -234,7 +277,7 @@ public class LightService implements IApiService {
 					terminate();
 				} else {
 					for (LightLedsMessage message : messageSet) { //send "all at once" -> quick succession for now
-						sessionManagerService.sendMessage(siteControllerUsers, message);
+						webSocketManagerService.sendMessage(siteControllerUsers, message);
 					}
 				}
 			}
@@ -243,7 +286,7 @@ public class LightService implements IApiService {
 	}
 
 	private int sendToAllSiteControllers(Set<User> users, LightLedsMessage message) {
-		return this.sessionManagerService.sendMessage(users, message);
+		return this.webSocketManagerService.sendMessage(users, message);
 	}
 
 	private LightLedsMessage toLedsMessage(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {

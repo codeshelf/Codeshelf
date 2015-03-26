@@ -229,6 +229,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			
 			String theItemID = inCsvBean.getItemId();
 			ItemMaster itemMaster = updateItemMaster(theItemID, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
+			@SuppressWarnings("unused")
 			Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
 			String theLocationID = inCsvBean.getLocationId();

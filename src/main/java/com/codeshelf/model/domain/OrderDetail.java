@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Cacheable;
@@ -27,6 +28,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Session;
+import org.hibernate.Query;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
@@ -495,5 +498,40 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	
 	public boolean isPreferredDetail(){
 		return getPreferredLocation() != null && getWorkSequence() != null;
+	}
+	
+	public String getGtinId(){
+		ItemMaster im = getItemMaster();
+		UomMaster um = getUomMaster();
+		Gtin gtin = null;
+		
+		if (im != null && um != null) {
+			gtin = im.getGtinForUom(um);
+			
+			if (gtin != null) {
+				return gtin.getDomainId();
+			} else {
+				return "";
+			}
+			
+		} else {
+			return "";
+		}
+	}
+	
+	public static int archiveOrderDetails(String inProcessTime){
+		TenantPersistenceService.getInstance().beginTransaction();
+		Session session = TenantPersistenceService.getInstance().getSession();
+		
+		String queryString = "update OrderDetail od SET od.active = false WHERE od.update != :processTime";
+		Query q = session.createQuery(queryString);
+		Date date = new Date();
+		date.parse(inProcessTime);
+		q.setTimestamp("processTime", date);
+		int numUpdated = q.executeUpdate();
+		
+		TenantPersistenceService.getInstance().commitTransaction();
+		
+		return numUpdated;
 	}
 }

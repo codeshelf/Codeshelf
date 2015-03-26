@@ -29,7 +29,7 @@ import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -79,8 +79,8 @@ public class FacilityOutlineTest extends MockDaoTest {
 		} catch (EncodeException e) {
 		}		
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
 		ObjectMethodResponse updateResponse = (ObjectMethodResponse) response;
@@ -125,8 +125,8 @@ public class FacilityOutlineTest extends MockDaoTest {
 			Assert.fail("Failed to seriaize request");
 		}
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC response = processor.handleRequest(Mockito.mock(UserSession.class), request);
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());

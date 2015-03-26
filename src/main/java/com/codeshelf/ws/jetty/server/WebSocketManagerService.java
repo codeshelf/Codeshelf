@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codeshelf.application.ContextLogging;
+import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.platform.multitenancy.User;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -31,9 +31,9 @@ import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class SessionManagerService extends AbstractCodeshelfScheduledService {
+public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 
-	private static final Logger	LOGGER = LoggerFactory.getLogger(SessionManagerService.class);
+	private static final Logger	LOGGER = LoggerFactory.getLogger(WebSocketManagerService.class);
 
 	@Getter @Setter
 	int periodSeconds = 1;
@@ -65,7 +65,7 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 	@Getter @Setter
 	int pingInterval = 60*1000;
 	
-	private ConcurrentMap<String,UserSession> activeSessions; 
+	private ConcurrentMap<String,WebSocketConnection> activeConnections; 
 	private ExecutorService	sharedExecutor;
 
 	private Counter activeSessionsCounter;
@@ -74,11 +74,11 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 	
 	boolean resetting = false;
 
-	public SessionManagerService() {
+	public WebSocketManagerService() {
 	}
 
-	public synchronized UserSession sessionStarted(Session session) {
-		if(this.activeSessions == null) {
+	public synchronized WebSocketConnection sessionStarted(Session session) {
+		if(this.activeConnections == null) {
 			LOGGER.warn("sessionStarted called while service is uninitialized or resetting for test");
 			return null; // this should only happen in tests
 		} else if(this.state() != State.RUNNING) {
@@ -87,11 +87,11 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		}
 
 		String sessionId = session.getId();
-		UserSession csSession = activeSessions.get(sessionId);
-		if (csSession == null) {
-			csSession = new UserSession(session, sharedExecutor);
-			csSession.setSessionId(sessionId);
-			activeSessions.put(sessionId, csSession);
+		WebSocketConnection wsConnection = activeConnections.get(sessionId);
+		if (wsConnection == null) {
+			wsConnection = new WebSocketConnection(session, sharedExecutor);
+			wsConnection.setSessionId(sessionId); // apparently just used for logging in context of connection	
+			activeConnections.put(sessionId, wsConnection);
 			LOGGER.info("Session "+session.getId()+" started");
 			updateCounters();
 			if(totalSessionsCounter != null) {
@@ -99,9 +99,9 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 			}
 		}
 		else {
-			LOGGER.warn("Unable to register session: Session with ID "+sessionId+" already registered");
+			LOGGER.warn("Unable to create WebSocketConnection for Session with ID "+sessionId+": already registered");
 		}
-		return csSession;
+		return wsConnection;
 	}
 
 	public synchronized void sessionEnded(Session session) {
@@ -110,11 +110,11 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 			return; // called while shutting down or resetting - this should only happen in tests
 		}
 		String sessionId = session.getId();
-		UserSession csSession = activeSessions.get(sessionId);
-		if (csSession!=null) {
-			csSession.disconnect();
-			activeSessions.remove(sessionId);
-			LOGGER.debug("Session "+session.getId()+" ended"); // reason should be logged by endpoint
+		WebSocketConnection wsConnection = activeConnections.get(sessionId);
+		if (wsConnection!=null) {
+			wsConnection.disconnect();
+			activeConnections.remove(sessionId);
+			LOGGER.debug("WS Connection "+session.getId()+" ended"); // reason should be logged by endpoint
 			updateCounters();
 		}
 		else {
@@ -122,7 +122,7 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 	
-	public UserSession getSession(Session session) {
+	public WebSocketConnection getWebSocketConnectionForSession(Session session) {
 		if(this.state() != State.RUNNING) {
 			LOGGER.warn("getSession(Session) called while service state is {}",this.state().toString());
 			return null; // called while shutting down or resetting - this should only happen in tests
@@ -135,15 +135,15 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		if (sessionId==null) {
 			return null;
 		}
-		return this.activeSessions.get(sessionId);
+		return this.activeConnections.get(sessionId);
 	}
 	
-	private UserSession getSession(User user) {
+	private WebSocketConnection getWebSocketConnectionForUser(User user) {
 		if(this.state() != State.RUNNING) {
 			LOGGER.warn("getSession(User) called while service state is {}",this.state().toString());
 			return null; // called while shutting down or resetting - this should only happen in tests
 		}
-		for (UserSession session : this.getSessions()) {
+		for (WebSocketConnection session : this.getWebSocketConnections()) {
 			if(session.getUser() != null && session.getUser().equals(user)) {
 				return session;
 			}
@@ -151,12 +151,12 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		return null;
 	}
 	
-	public final Collection<UserSession> getSessions() {
+	public final Collection<WebSocketConnection> getWebSocketConnections() {
 		if(this.state() != State.RUNNING) {
 			LOGGER.warn("getSessions called while service state is {}",this.state().toString());
-			return new ArrayList<UserSession>(); // called while shutting down or resetting - this should only happen in tests
+			return new ArrayList<WebSocketConnection>(); // called while shutting down or resetting - this should only happen in tests
 		}
-		return this.activeSessions.values();
+		return this.activeConnections.values();
 	}
 
 	public void messageReceived(Session session) {
@@ -165,12 +165,12 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 			return; // called while shutting down or resetting - this should only happen in tests
 		}
 		String sessionId = session.getId();
-		UserSession csSession = activeSessions.get(sessionId);
+		WebSocketConnection csSession = activeConnections.get(sessionId);
 		if (csSession!=null) {
 			csSession.setLastMessageReceived(System.currentTimeMillis());
 		}
 		else {
-			LOGGER.warn("Unable to update message received timestamp: Session with ID "+sessionId+" not found");
+			LOGGER.warn("Unable to update message received timestamp: WS connection for Session "+sessionId+" not found");
 		}		
 	}
 
@@ -181,12 +181,12 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		}
 
 		String sessionId = session.getId();
-		UserSession csSession = activeSessions.get(sessionId);
+		WebSocketConnection csSession = activeConnections.get(sessionId);
 		if (csSession!=null) {
 			csSession.setLastMessageSent(System.currentTimeMillis());
 		}
 		else {
-			LOGGER.warn("Unable to update message sent timestamp: Session with ID "+sessionId+" not found");
+			LOGGER.warn("Unable to update message sent timestamp: WS connection for Session "+sessionId+" not found");
 		}		
 	}
 	
@@ -197,8 +197,8 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		}
 
 		int activeSiteController = 0, numActiveSessions = 0;
-		for (UserSession session : activeSessions.values()) {
-			if ((session.getLastState()==UserSession.State.ACTIVE || session.getLastState()==UserSession.State.IDLE_WARNING)) {
+		for (WebSocketConnection session : activeConnections.values()) {
+			if ((session.getLastState()==WebSocketConnection.State.ACTIVE || session.getLastState()==WebSocketConnection.State.IDLE_WARNING)) {
 				numActiveSessions++;
 				if (session.isSiteController()) {
 					activeSiteController++;
@@ -225,7 +225,7 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 	}
 
 	private boolean sendMessage(User user, MessageABC message) {
-		UserSession session = getSession(user);
+		WebSocketConnection session = getWebSocketConnectionForUser(user);
 		if (session != null) {
 			session.sendMessage(message);
 			return true;
@@ -234,18 +234,18 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 
-	private void processSession(UserSession session) {
+	private void updateWebSocketConnectionState(WebSocketConnection wsConnection) {
 		if(!suppressKeepAlive) {
 			// consider sending keepalive
-			long timeSinceLastSent = System.currentTimeMillis() - session.getLastMessageSent();
+			long timeSinceLastSent = System.currentTimeMillis() - wsConnection.getLastMessageSent();
 			if (timeSinceLastSent>keepAliveInterval) {
-				if (session.getLastState()==UserSession.State.INACTIVE) {
+				if (wsConnection.getLastState()==WebSocketConnection.State.INACTIVE) {
 					// don't send keep-alives on inactive sessions
-					LOGGER.warn("Session is INACTIVE, not sending keepalives - ",session.getSessionId());
+					LOGGER.warn("WS connection is INACTIVE, not sending keepalives - ",wsConnection.getSessionId());
 				} else {
-					LOGGER.debug("Sending keep-alive on "+session.getSessionId());
+					LOGGER.debug("Sending keep-alive on WS connection "+wsConnection.getSessionId());
 					try {
-						session.sendMessage(new KeepAlive());
+						wsConnection.sendMessage(new KeepAlive());
 					} catch (Exception e) {
 						LOGGER.error("Failed to send Keepalive", e);
 					}
@@ -254,32 +254,32 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		} // else suppressing keepalives
 
 		// regardless of keepalive setting, monitor session activity state
-		UserSession.State newSessionState = determineSessionState(session);
-		if(newSessionState != session.getLastState()) {
-			LOGGER.info("Session state on "+session.getSessionId()+" changed from "+session.getLastState().toString()+" to "+newSessionState.toString());
-			session.setLastState(newSessionState);
+		WebSocketConnection.State newSessionState = determineConnectionState(wsConnection);
+		if(newSessionState != wsConnection.getLastState()) {
+			LOGGER.info("WS connection state on "+wsConnection.getSessionId()+" changed from "+wsConnection.getLastState().toString()+" to "+newSessionState.toString());
+			wsConnection.setLastState(newSessionState);
 			
-			if(killIdle && newSessionState == UserSession.State.INACTIVE) {
+			if(killIdle && newSessionState == WebSocketConnection.State.INACTIVE) {
 				// kill idle session on state change, if configured to do so
-				LOGGER.warn("Connection timed out with "+session.getSessionId()+".  Closing session.");
-				session.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+				LOGGER.warn("WS connection timed out with "+wsConnection.getSessionId()+".  Closing connection.");
+				wsConnection.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
 			}
 		}
 
 	}
 
-	private UserSession.State determineSessionState(UserSession session) {
+	private WebSocketConnection.State determineConnectionState(WebSocketConnection session) {
 		long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
 	
 		if ((session.isSiteController() && timeSinceLastReceived > siteControllerTimeout) 
 			|| (session.isAppUser() && timeSinceLastReceived > webAppTimeout)
 			|| (timeSinceLastReceived > defaultTimeout)) {
-			return UserSession.State.INACTIVE;
+			return WebSocketConnection.State.INACTIVE;
 		}//else 
 		if (timeSinceLastReceived > idleWarningTimeout) {
-			return UserSession.State.IDLE_WARNING;
+			return WebSocketConnection.State.IDLE_WARNING;
 		}//else
-		return UserSession.State.ACTIVE;
+		return WebSocketConnection.State.ACTIVE;
 	}
 	
 	public void reset() {
@@ -292,10 +292,10 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 			teardown();
 			initialize();
 		} catch (Exception e) {
-			throw new RuntimeException("failed to reset state of SessionManagerService",e);
+			throw new RuntimeException("failed to reset state of WS connection manager",e);
 		}
 		this.resetting = false;
-		LOGGER.info("reset state of SessionManagerService");
+		LOGGER.info("reset state of WS connection manager");
 	}
 	
 	@Override
@@ -311,7 +311,7 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 		ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
 		builder.setNameFormat("UserSession %s");
 		this.sharedExecutor = Executors.newCachedThreadPool(builder.build());
-		this.activeSessions = Maps.newConcurrentMap();
+		this.activeConnections = Maps.newConcurrentMap();
 		
 		suppressKeepAlive = Boolean.getBoolean("websocket.idle.suppresskeepalive");
 		killIdle = Boolean.getBoolean("websocket.idle.kill");
@@ -323,42 +323,46 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 	}
 
 	private void teardown() throws Exception {
-		LOGGER.info("shutting down session manager with {} active sessions",this.activeSessions.size());
-		Collection<UserSession> sessions = this.activeSessions.values();
-		for(UserSession session : sessions) {
+		LOGGER.info("shutting down WS connection manager with {} active sessions",this.activeConnections.size());
+		Collection<WebSocketConnection> sessions = this.activeConnections.values();
+		for(WebSocketConnection session : sessions) {
 			session.getWsSession().close(new CloseReason(CloseCodes.GOING_AWAY,""));
 		}
-		this.activeSessions = null;
+		this.activeConnections = null;
 		this.sharedExecutor.shutdown();
 		this.sharedExecutor.awaitTermination(30, TimeUnit.SECONDS);
 		this.sharedExecutor = null;
-		LOGGER.info("session manager stopped");
+		LOGGER.info("WS connection manager stopped");
 	}
 
 	@Override
 	protected synchronized void runOneIteration() throws Exception {
 		
 		try {
-			if(this.activeSessions != null) { // service is not shutting down or resetting
+			if(this.activeConnections != null) { // service is not shutting down or resetting
 				int pings = 0;
-				// check status, send keepalive etc on all sessions
-				Collection<UserSession> sessions = this.getSessions();
-				for (UserSession session : sessions) {
-					ContextLogging.setSession(session);
-					// send ping periodically to measure latency
-					if (session.isSiteController() && System.currentTimeMillis()-session.getLastPingSent()>pingInterval) {
-						// send ping
-						PingRequest request = new PingRequest();
-						long now = System.currentTimeMillis();
-						session.setLastPingSent(now);
-						LOGGER.trace("Sending ping on "+session.getSessionId());
-						session.sendMessage(request);
-						pings++;
-					}
+				// check status, send keepalive etc on all open connections
+				Collection<WebSocketConnection> connections = this.getWebSocketConnections();
+				for (WebSocketConnection connection : connections) {
+					User contextUser = connection.getUser();
+					if(contextUser != null) {
+				    	CodeshelfSecurityManager.setCurrentUser(contextUser);
+					} // might not be logged in yet, we will still ping
 					try {
-						processSession(session);
+						// send ping periodically to measure latency
+						if (connection.isSiteController() && System.currentTimeMillis()-connection.getLastPingSent()>pingInterval) {
+							// send ping
+							PingRequest request = new PingRequest();
+							long now = System.currentTimeMillis();
+							connection.setLastPingSent(now);
+							LOGGER.trace("Sending ping on "+connection.getSessionId());
+							connection.sendMessage(request);
+							pings++;
+						}
+						updateWebSocketConnectionState(connection);
 					} finally {
-						ContextLogging.clearSession();
+						if(contextUser != null) 
+							CodeshelfSecurityManager.removeCurrentUser();
 					}
 					// check if keep alive needs to be sent
 				}
@@ -367,7 +371,7 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 				}
 			}
 		} catch (Exception e) {
-			LOGGER.error("SERIOUS ERROR: Unhandled exception in SessionManager",e);
+			LOGGER.error("SERIOUS ERROR: Unhandled exception in WS connection manager",e);
 		}
 	}
 
@@ -375,5 +379,11 @@ public class SessionManagerService extends AbstractCodeshelfScheduledService {
 	protected Scheduler scheduler() {
 		//return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
+	}
+
+	public boolean hasAnySessions() {
+		if(this.activeConnections==null)
+			return false;
+		return !this.activeConnections.isEmpty();
 	}
 }

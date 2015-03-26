@@ -4,14 +4,14 @@ import com.codeshelf.ws.jetty.protocol.request.PingRequest;
 import com.codeshelf.ws.jetty.protocol.response.PingResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class PingCommand extends CommandABC {
 
 	private PingRequest request;
 	
-	public PingCommand(UserSession session, PingRequest pingRequest) {
-		super(session);
+	public PingCommand(WebSocketConnection connection, PingRequest pingRequest) {
+		super(connection);
 		this.request = pingRequest;
 	}
 

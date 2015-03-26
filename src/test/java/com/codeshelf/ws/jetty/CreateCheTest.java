@@ -25,20 +25,20 @@ import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
 public class CreateCheTest extends MockDaoTest {
-	UserSession mSession;
+	WebSocketConnection mSession;
 	
 	private ServerMessageProcessor	processor;
 
 	@Before
 	public void doBefore() {
 		super.doBefore();
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.sessionManagerService);
+		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
 	}
 
 	
@@ -212,7 +212,7 @@ public class CreateCheTest extends MockDaoTest {
 	
 	@Test
 	public final void testInvalidClass() {	
-		UserSession session = Mockito.mock(UserSession.class);
+		WebSocketConnection session = Mockito.mock(WebSocketConnection.class);
 		session.setSessionId("test-session");
 	
 		ObjectUpdateRequest req = new ObjectUpdateRequest();

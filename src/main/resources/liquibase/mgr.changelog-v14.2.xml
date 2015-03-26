@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog logicalFilePath="mgr.changelog-v14.2.xml"
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd
+		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="ivan (generated)" id="1426550884720-15">
+		<createTable tableName="permission">
+			<column name="id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="created" type="timestamp">
+				<constraints nullable="false"/>
+			</column>
+			<column name="last_modified" type="timestamp">
+				<constraints nullable="false"/>
+			</column>
+			<column name="descriptor" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-16">
+		<createTable tableName="roles_permissions">
+			<column name="user_role_id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="permissions_id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-17">
+		<createTable tableName="user_role">
+			<column name="id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="created" type="timestamp">
+				<constraints nullable="false"/>
+			</column>
+			<column name="last_modified" type="timestamp">
+				<constraints nullable="false"/>
+			</column>
+			<column name="name" type="VARCHAR(255)">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-18">
+		<createTable tableName="users_roles">
+			<column name="users_id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+			<column name="roles_id" type="INT4">
+				<constraints nullable="false"/>
+			</column>
+		</createTable>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-19">
+		<addPrimaryKey columnNames="user_role_id, permissions_id" tableName="roles_permissions"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-20">
+		<addPrimaryKey columnNames="users_id, roles_id" tableName="users_roles"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-21">
+		<addPrimaryKey columnNames="id" constraintName="permissionPK" tableName="permission"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-22">
+		<addPrimaryKey columnNames="id" constraintName="user_rolePK" tableName="user_role"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-23">
+		<addUniqueConstraint columnNames="descriptor" constraintName="UC_PERMISSIONDESCRIPTOR_COL"
+			deferrable="false" disabled="false" initiallyDeferred="false" tableName="permission"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-24">
+		<addUniqueConstraint columnNames="name" constraintName="UC_USER_ROLENAME_COL" deferrable="false"
+			disabled="false" initiallyDeferred="false" tableName="user_role"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-25">
+		<addForeignKeyConstraint baseColumnNames="users_id" baseTableName="users_roles" constraintName="FK_3b2cl2u4ck187o21r4uhp6psv"
+			deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="users"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-26">
+		<addForeignKeyConstraint baseColumnNames="roles_id" baseTableName="users_roles" constraintName="FK_60loxav507l5mreo05v0im1lq"
+			deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="user_role"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-27">
+		<addForeignKeyConstraint baseColumnNames="user_role_id" baseTableName="roles_permissions"
+			constraintName="FK_6uycl6m8vpb1hma9r59fg3d5h" deferrable="false" initiallyDeferred="false"
+			referencedColumnNames="id" referencedTableName="user_role"/>
+	</changeSet>
+	<changeSet author="ivan (generated)" id="1426550884720-28">
+		<addForeignKeyConstraint baseColumnNames="permissions_id" baseTableName="roles_permissions"
+			constraintName="FK_oll9subcln0cdjt31bp72a3uv" deferrable="false" initiallyDeferred="false"
+			referencedColumnNames="id" referencedTableName="permission"/>
+	</changeSet>
+</databaseChangeLog>

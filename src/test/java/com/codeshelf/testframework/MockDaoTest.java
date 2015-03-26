@@ -37,7 +37,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
 
-public abstract class MockDaoTest extends FrameworkTest {
+public abstract class MockDaoTest extends MinimalTest {
 
 	@Override
 	Type getFrameworkType() {

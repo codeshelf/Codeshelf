@@ -30,3 +30,4 @@ lib/dist/.DS_Store
 /local/*.properties
 /local/*.yml
 /.settings/org.eclipse.jdt.core.prefs
+/bin/

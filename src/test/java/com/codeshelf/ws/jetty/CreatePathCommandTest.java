@@ -34,7 +34,7 @@ import com.codeshelf.ws.jetty.protocol.response.CreatePathResponse;
 import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -66,7 +66,7 @@ public class CreatePathCommandTest extends HibernateTest {
 
 		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
-		UserSession viewSession = new UserSession(websocketSession, Executors.newSingleThreadExecutor());
+		WebSocketConnection viewSession = new WebSocketConnection(websocketSession, Executors.newSingleThreadExecutor());
 
 		try {
 			/* register a filter like the UI does */
@@ -85,10 +85,10 @@ public class CreatePathCommandTest extends HibernateTest {
 			request.setFacilityId(testFacility.getPersistentId().toString());
 			request.setPathSegments(segments);
 			
-			UserSession requestSession = new UserSession(mock(Session.class), Executors.newSingleThreadExecutor());
+			WebSocketConnection requestSession = new WebSocketConnection(mock(Session.class), Executors.newSingleThreadExecutor());
 			requestSession.setSessionId("test-session");
 			
-			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.sessionManagerService);
+			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
 			ResponseABC response = processor.handleRequest(requestSession, request);
 			Assert.assertTrue(response instanceof CreatePathResponse);
 		}
@@ -122,11 +122,11 @@ public class CreatePathCommandTest extends HibernateTest {
 		request.setMethodName("createPath");
 		request.setMethodArgs(args);
 		
-		UserSession session = Mockito.mock(UserSession.class);
+		WebSocketConnection session = Mockito.mock(WebSocketConnection.class);
 		session.setSessionId("test-session");
 
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.sessionManagerService);
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
 
 		ResponseABC response = processor.handleRequest(session, request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);

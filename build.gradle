@@ -15,6 +15,12 @@ eclipse {
 	}
 }
 
+compileJava {
+	sourceCompatibility = 1.7
+	targetCompatibility = 1.7
+}
+
+
 task cleanLegacy {
 	(new File('target')).deleteDir()
 	(new File('APIs')).deleteDir()
@@ -45,8 +51,8 @@ dependencies {
 			'org.apache.logging.log4j:log4j-jcl:2.1', // log4j2 implementation of commons-logging
 			'org.apache.logging.log4j:log4j-jul:2.1', // log4j2 implementation of java.util.logging
 			'org.springframework:spring-beans:4.1.4.RELEASE' // this is only to suppress a liquibase startup warning
-			
-	
+
+
 	compile		'org.apache.logging.log4j:log4j-api:2.1', // log4j2 api
 			'org.apache.logging.log4j:log4j-1.2-api:2.1', // log4j2 implementation of log4j 1.2 api
 			'commons-logging:commons-logging:1.2',	// commons-logging api
@@ -57,16 +63,18 @@ dependencies {
 			'com.google.inject.extensions:guice-servlet:3.0',
 			'com.google.guava:guava:16.0',
 			'commons-io:commons-io:1.4',
+			'commons-codec:commons-codec:1.10',
 
 			'org.eclipse.jetty.websocket:javax-websocket-server-impl:9.2.7.v20150116',
 			'org.eclipse.jetty.websocket:javax-websocket-client-impl:9.2.7.v20150116',
 			'org.eclipse.jetty:apache-jsp:9.2.7.v20150116',
-			
+
 			'com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.4.4',
 			'com.sun.jersey:jersey-servlet:1.18.1',
 			'com.sun.jersey.contribs:jersey-guice:1.18.1',
 			'com.sun.jersey.contribs:jersey-multipart:1.18.1',
-			
+			'org.secnod.shiro:shiro-jersey:0.1.0',
+
 			'org.hibernate:hibernate-entitymanager:4.3.8.Final',
 			'org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final',
 
@@ -88,18 +96,19 @@ dependencies {
 
 			'au.com.bytecode:opencsv:2.4',
 			'javax.validation:validation-api:1.1.0.Final',
+            'joda-time:joda-time:2.3',
 			'com.joestelmach:natty:0.8',
 			'org.apache.shiro:shiro-guice:1.+',
 			'com.dropbox.core:dropbox-core-sdk:1.7.6',
-			
+
 			'com.eaio.uuid:uuid:3.2',
 			'org.projectlombok:lombok:1.14.8',
-			
+
 			'org.apache.httpcomponents:httpclient:4.3.6',
 			'org.apache.httpcomponents:httpmime:4.3.6',
 
 			'org.mockito:mockito-core:1.9.5',
-			
+
 			// manually update
 			files('lib/dist/classindex-3.3.jar'), // needs to be in fixed location for eclipse annotation processing
 			files('lib/dist/JD2XX.jar') // our library for interacting with FTDI USB-Serial interface

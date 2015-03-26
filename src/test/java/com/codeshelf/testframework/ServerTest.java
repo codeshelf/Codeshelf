@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -17,10 +18,14 @@ import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.integration.PickSimulator;
+import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -28,6 +33,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
 	private final Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
@@ -189,6 +195,90 @@ public abstract class ServerTest extends HibernateTest {
 
 		return getFacility();
 	}
+	
+	protected Facility setUpOneAisleFourBaysFlatFacilityWithOrders() throws IOException{
+		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" + 
+				"Aisle,A1,,,,,zigzagB1S1Side,2.85,5,X,20\r\n" + 
+				"Bay,B1,50,,,,,,,,\r\n" + 
+				"Tier,T1,50,0,16,0,,,,,\r\n" + 
+				"Bay,B2,50,,,,,,,,\r\n" + 
+				"Tier,T1,50,0,16,0,,,,,\r\n" + 
+				"Bay,B3,50,,,,,,,,\r\n" + 
+				"Tier,T1,50,0,16,0,,,,,\r\n" + 
+				"Bay,B4,50,,,,,,,,\r\n" + 
+				"Tier,T1,50,0,16,0,,,,,\r\n"; //
+
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
+
+		// Get the aisle
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		Assert.assertNotNull(aisle1);
+
+		Path aPath = createPathForTest(getFacility());
+		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 3d, 6d, 5d, 6d);
+
+		String persistStr = segment0.getPersistentId().toString();
+		aisle1.associatePathSegment(persistStr);
+
+		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" +
+				"A1.B1.T1,LocX24\r\n" + 
+				"A1.B2.T1,LocX25\r\n" + 
+				"A1.B3.T1,LocX26\r\n" + 
+				"A1.B4.T1,LocX27\r\n";//
+
+		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
+		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
+		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
+
+		CodeshelfNetwork network = getNetwork();
+
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
+
+		Short channel1 = 1;
+		Location tier = getFacility().findSubLocationById("A1.B1.T1");
+		controller1.addLocation(tier);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
+		
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		
+		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n" + 
+				"Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,0\r\n" + 
+				"Item2,LocX24,Item Desc 2,1000,a,12/03/14 12:00,,12\r\n" + 
+				"Item3,LocX24,Item Desc 3,1000,a,12/03/14 12:00,,24\r\n" + 
+				"Item4,LocX24,Item Desc 4,1000,a,12/03/14 12:00,,36\r\n" + 
+				"Item5,LocX25,Item Desc 5,1000,a,12/03/14 12:00,,0\r\n" + 
+				"Item6,LocX25,Item Desc 6,1000,a,12/03/14 12:00,,12\r\n" + 
+				"Item7,LocX25,Item Desc 7,1000,a,12/03/14 12:00,,24\r\n" + 
+				"Item8,LocX25,Item Desc 8,1000,a,12/03/14 12:00,,36\r\n" + 
+				"Item9,LocX26,Item Desc 9,1000,a,12/03/14 12:00,,0\r\n" + 
+				"Item10,LocX26,Item Desc 10,1000,a,12/03/14 12:00,,12\r\n" + 
+				"Item11,LocX26,Item Desc 11,1000,a,12/03/14 12:00,,24\r\n" + 
+				"Item12,LocX26,Item Desc 12,1000,a,12/03/14 12:00,,36\r\n" + 
+				"Item13,LocX27,Item Desc 13,1000,a,12/03/14 12:00,,0\r\n" + 
+				"Item14,LocX27,Item Desc 14,1000,a,12/03/14 12:00,,12\r\n" + 
+				"Item15,LocX27,Item Desc 15,1000,a,12/03/14 12:00,,24\r\n" + 
+				"Item16,LocX27,Item Desc 16,1000,a,12/03/14 12:00,,36\r\n";
+		importInventoryData(getFacility(), inventory);
+		
+		String orders = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence,locationId\r\n" + 
+				"1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1,,\r\n" + 
+				"1,1,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1,,\r\n" + 
+				"1,1,347,12/03/14 12:00,12/31/14 12:00,Item11,,120,a,Group1,,\r\n" + 
+				"1,1,348,12/03/14 12:00,12/31/14 12:00,Item9,,11,a,Group1,,\r\n" + 
+				"1,1,349,12/03/14 12:00,12/31/14 12:00,Item2,,22,a,Group1,,\r\n" + 
+				"1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\r\n" + 
+				"1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,5,LocX24\r\n" +  
+				"2,2,353,12/03/14 12:00,12/31/14 12:00,Item3,,44,a,Group1,,\r\n" + 
+				"2,2,354,12/03/14 12:00,12/31/14 12:00,Item15,,55,a,Group1,,\r\n" + 
+				"2,2,355,12/03/14 12:00,12/31/14 12:00,Item2,,66,a,Group1,,\r\n" + 
+				"2,2,356,12/03/14 12:00,12/31/14 12:00,Item8,,77,a,Group1,,\r\n" + 
+				"2,2,357,12/03/14 12:00,12/31/14 12:00,Item14,,77,a,Group1,,\r\n";
+		importOrdersData(getFacility(), orders);
+		return getFacility();
+	}
 
 	protected CodeshelfNetwork getNetwork() {
 		return CodeshelfNetwork.staticGetDao().findByPersistentId(this.networkPersistentId);
@@ -236,6 +326,19 @@ public abstract class ServerTest extends HibernateTest {
 		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
+	protected boolean importSlotting(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+	
+	protected int importBatchData(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvCrossBatchImporter importer = createCrossBatchImporter();
+		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+
+	}
+	
 	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
 		// Now ready to run the cart
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
@@ -249,5 +352,66 @@ public abstract class ServerTest extends HibernateTest {
 	
 	}
 
+	protected PickSimulator waitAndGetPickerForProcessTypeX(IntegrationTest test, NetGuid cheGuid, String inProcessType) {
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		final long maxTimeToWaitMillis = 5000;
+		String existingType = "";
+		int count = 0;
+		while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
+			count++;
+			PickSimulator picker = new PickSimulator(test, cheGuid);
+			existingType = picker.getProcessType();
+			if (existingType.equals(inProcessType)) {
+				LOGGER.info(count + " pickers made in waitAndGetPickerForProcessType before getting it right");
+				return picker;
+			}
+			ThreadUtils.sleep(100); // retry every 100ms
+		}
+		Assert.fail(String.format("Process type %s not encounter in %dms after %d checks. Process type is %s", inProcessType, maxTimeToWaitMillis, count, existingType));
+		return null;
+	}
+	
+	protected PickSimulator waitAndGetPickerForProcessType(final IntegrationTest test, final NetGuid deviceGuid, final String inProcessType) {
+		Callable<PickSimulator> createPickSimulator = new Callable<PickSimulator> () {
+			@Override
+			public PickSimulator call() throws Exception {
+				PickSimulator picker = new PickSimulator(test, deviceGuid);
+				String type = picker.getProcessType();
+				return (type.equals(inProcessType))? picker : null;
+			}
+		};
+		
+		PickSimulator picker = new WaitForResult<PickSimulator>(createPickSimulator).waitForResult();
+		return picker; 
+	}
 
+	protected class WaitForResult <T>{
+		private Callable<T> logicToCall;
+		
+		public WaitForResult(Callable<T> callable) {
+			this.logicToCall = callable;
+		}
+		
+		public T waitForResult() {
+			ThreadUtils.sleep(250);
+			long start = System.currentTimeMillis();
+			final long maxTimeToWaitMillis = 5000;
+			int count = 0;
+			while (System.currentTimeMillis() - start < maxTimeToWaitMillis) {
+				count++;
+				T result = null;
+				try {
+					result = this.logicToCall.call();
+				} catch (Exception e) {e.printStackTrace();}
+				if (result != null) {
+					LOGGER.info("Desired object retrieved in " + count + " attempts");
+					return result;
+				}
+				ThreadUtils.sleep(100); // retry every 100ms
+			}
+			Assert.fail(String.format("Did not encounter requested object in %dms after %d checks.", maxTimeToWaitMillis, count));
+			return null;
+		}
+	}
 }

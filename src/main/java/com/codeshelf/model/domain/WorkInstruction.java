@@ -78,6 +78,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
 
 	// The parent is the facility
@@ -201,6 +202,12 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private String						ledCmdStream;
+
+	@Column(nullable = true,name="poscon_cmd_stream",columnDefinition="TEXT")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						posConCmdStream;
 
 	// The remote gateway controller will sort and group by this code, and then only send out one group to the radio network at a time.
 	@Column(nullable = true,name="group_and_sort_code")
@@ -530,9 +537,9 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 */
 	public void doSetPickInstruction(String inPickInstruction){
 		this.setPickInstruction(inPickInstruction);
-		if (inPickInstruction == null || inPickInstruction.isEmpty()) {
-			LOGGER.error("probable bug by caller of doSetPickInstruction");
-		}
+		// Common caller is the WiFactory.createWorkInstruction() , which is overloaded, calling each other.
+		// pickInstruction field is not nullable. Therefore, must be set to at least blank. But often, first set to blank
+		// then corrected later.  Would be nice to know if the final correction still had this as blank and report an error
 	}
 
 
@@ -567,6 +574,24 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return detail.getWorkSequence();
 		} else {
 			return null;
+		}
+	}
+	
+	public String getGtinId(){
+		ItemMaster im = getItemMaster();
+		UomMaster um = orderDetail.getUomMaster();
+		Gtin gtin = null;
+		
+		if (im != null && um != null) {
+			gtin = im.getGtinForUom(um);
+			
+			if (gtin != null) {
+				return gtin.getDomainId();
+			} else {
+				return "";
+			}
+		} else {
+			return "";
 		}
 	}
 }

@@ -41,6 +41,8 @@ import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryLightRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.google.common.base.Preconditions;
@@ -84,6 +86,7 @@ public class CsDeviceManager implements
 	private boolean										isAttachedToServer			= false;
 
 	private boolean										autoShortValue				= true;	// log on set (below)
+	private boolean										pickMultValue				= false; // log on set (below)
 
 	@Getter
 	@Setter
@@ -131,10 +134,17 @@ public class CsDeviceManager implements
 		return true;
 	}
 
-	public boolean getAutoShortValue() {
-		return this.autoShortValue;
+	public boolean getPickMultValue() {
+		return this.pickMultValue;
+	}
+	public void setPickMultValue(boolean inValue) {
+		pickMultValue = inValue;
+		LOGGER.info("Site controller setting PICKMULT value = {}", inValue);
 	}
 	
+	public boolean getAutoShortValue() {
+		return this.autoShortValue;
+	}	
 	public void setAutoShortValue(boolean inValue) {
 		autoShortValue = inValue;
 		LOGGER.info("Site controller setting AUTOSHRT value = {}", inValue);
@@ -161,6 +171,15 @@ public class CsDeviceManager implements
 		for (INetworkDevice theDevice : mDeviceMap.values()) {
 			if (theDevice instanceof AisleDeviceLogic)
 				aList.add((AisleDeviceLogic) theDevice);
+		}
+		return aList;
+	}
+	
+	public final List<PosManagerDeviceLogic> getPosConControllers() {
+		ArrayList<PosManagerDeviceLogic> aList = new ArrayList<PosManagerDeviceLogic>();
+		for (INetworkDevice theDevice : mDeviceMap.values()) {
+			if (theDevice instanceof PosManagerDeviceLogic)
+				aList.add((PosManagerDeviceLogic) theDevice);
 		}
 		return aList;
 	}
@@ -270,6 +289,26 @@ public class CsDeviceManager implements
 	public void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
+		clientEndpoint.sendMessage(req);
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final UUID inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
+	 */
+	public void inventoryUpdateScan(final UUID inPersistentId, final String inLocationId, final String inGtin) {
+		LOGGER.debug("Inventory update Scan: Che={}; Loc={}; GTIN={};", inPersistentId, inLocationId, inGtin);
+		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId);
+		clientEndpoint.sendMessage(req);
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final String inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
+	 */
+	public void inventoryLightScan(final UUID inPersistentId, final String inGtin) {
+		LOGGER.debug("Inventory light request: Che={};  GTIN={};", inPersistentId, inGtin);
+		InventoryLightRequest req = new InventoryLightRequest(inPersistentId.toString(), inGtin);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -654,6 +693,11 @@ public class CsDeviceManager implements
 
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
+	}
+	
+	public void processInventoryScanRespose(String inResponseMessage) {
+		LOGGER.info("Got inventoryscan response: {}", inResponseMessage);
+		// TODO - huffa DEV644
 	}
 
 	public void lightSomeLeds(NetGuid inGuid, int inSeconds, String inCommands) {

@@ -186,10 +186,8 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 	
 	protected void startApiServer(CsDeviceManager deviceManager, Integer port) {
 		if(port != null) {
-			boolean enableSchemaManagement = "true".equalsIgnoreCase(System.getProperty("adminserver.schemamanagement"));
-
-			LOGGER.info("Starting Admin Server on port "+port+", schema management "+(enableSchemaManagement?"enabled":"disabled"));
-			apiServer.start(port,deviceManager,this,enableSchemaManagement,System.getProperty("webapp.content.path"));
+			apiServer.start(port,deviceManager,this);
+			LOGGER.info("Starting Admin Server on port "+port);
 		}
 		// else do not start
 	}

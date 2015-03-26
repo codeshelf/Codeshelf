@@ -43,6 +43,7 @@ public class ProductivityReportingTest extends ServerTest {
 		UUID facilityId = facility.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(this.getTenantPersistenceService().getDefaultSchema(),facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
@@ -52,6 +53,7 @@ public class ProductivityReportingTest extends ServerTest {
 			String groupName = groupNames.next();
 			Assert.assertTrue(OrderGroup.UNDEFINED.equals(groupName) || "GROUP1".equals(groupName) || "GROUP2".equals(groupName));
 		}
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test

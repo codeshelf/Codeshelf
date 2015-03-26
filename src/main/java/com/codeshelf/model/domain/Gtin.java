@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.UUID;
+
 import javax.persistence.Cacheable;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -86,5 +88,39 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 	public Facility getFacility() {
 		return getParent().getFacility();
 	}
-		
+	
+	// Functions for UI
+	public String getItemDescription() {
+		ItemMaster theMaster = this.getParent();
+		if (theMaster == null)
+			return "";
+		else {
+			return theMaster.getDescription();
+		}
+	}
+	
+	public String getItemMasterId() {
+		ItemMaster master = getParent();
+		return master.getDomainId();
+	}
+	
+	public UUID getitemMasterPersistentId() {
+		ItemMaster master = getParent();
+		return master.getPersistentId();
+	}
+	
+	public String getUomMasterId() {
+		// uom is not nullable, but we see null in unit test.
+		UomMaster theUom = getUomMaster();
+		if (theUom != null) {
+			return theUom.getDomainId();
+		} else {
+			return "";
+		}
+	}
+	
+	public UUID getUomMasterPersistentId() {
+		UomMaster theUom = getUomMaster();
+		return theUom.getPersistentId();
+	}
 }

@@ -54,7 +54,7 @@ import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends ServerTest {
@@ -77,6 +77,16 @@ public class WorkServiceTest extends ServerTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return false; // in this test, we start services manually after defining the work service to start
 	}
+	
+	@Test
+	public void workResultActualOnly() {
+		//create order detail
+		//computeWI
+		//getWI
+		//complete
+		//query
+	}
+	
 	/*
 	@Test
 	public void workLocationConflictPreferredDoesNotExist() {
@@ -172,9 +182,9 @@ public class WorkServiceTest extends ServerTest {
 		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService = mock(WorkService.class);
 		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
-		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class));
-		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC responseABC = processor.handleRequest(mock(UserSession.class), request);
+		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
+		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC responseABC = processor.handleRequest(mock(WebSocketConnection.class), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
 
@@ -184,9 +194,9 @@ public class WorkServiceTest extends ServerTest {
 		request2.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkService workService2 = mock(WorkService.class);
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
-		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class));
-		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.sessionManagerService);
-		ResponseABC responseABC2 = processor2.handleRequest(mock(UserSession.class), request2);
+		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
+		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.webSocketManagerService);
+		ResponseABC responseABC2 = processor2.handleRequest(mock(WebSocketConnection.class), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
 		this.getTenantPersistenceService().commitTransaction();
@@ -239,10 +249,10 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
-		this.useCustomDao(Che.class, mock(ITypedDao.class));
+		this.<Che>useCustomDao(Che.class, mock(ITypedDao.class));
 		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
 
-		this.useCustomDao(WorkInstruction.class,mock(ITypedDao.class));
+		this.<WorkInstruction>useCustomDao(WorkInstruction.class,mock(ITypedDao.class));
 		when(WorkInstruction.staticGetDao().findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(null);
 
 		try {
@@ -270,7 +280,7 @@ public class WorkServiceTest extends ServerTest {
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
-		this.useCustomDao(Che.class, mock(ITypedDao.class));
+		this.<Che>useCustomDao(Che.class, mock(ITypedDao.class));
 		when(Che.staticGetDao().findByPersistentId(eq(cheId))).thenReturn(new Che());
 
 		UUID testId = UUID.randomUUID();
@@ -280,8 +290,8 @@ public class WorkServiceTest extends ServerTest {
 
 		ITypedDao<WorkInstruction> wiDao = mock(ITypedDao.class);
 		useCustomDao(WorkInstruction.class,wiDao);
-		useCustomDao(OrderDetail.class,mock(ITypedDao.class));
-		useCustomDao(OrderHeader.class,mock(ITypedDao.class));
+		this.<OrderDetail>useCustomDao(OrderDetail.class,mock(ITypedDao.class));
+		this.<OrderHeader>useCustomDao(OrderHeader.class,mock(ITypedDao.class));
 		when(wiDao.findByPersistentId(eq(wiToRecord.getPersistentId()))).thenReturn(existingWi);
 
 		doThrow(new DaoException("test")).when(WorkInstruction.staticGetDao()).store(eq(wiToRecord));
@@ -364,7 +374,8 @@ public class WorkServiceTest extends ServerTest {
 		long previousTimestamp = timings.remove(0);
 		for (Long timestamp : timings) {
 			long diff = timestamp - previousTimestamp;
-			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff > expectedRetryDelay);
+			// change from diff > expectedRetryDelay to diff >= expectedRetryDelay. Not necessarily accurate to the ms, but JRs Mac caught this a lot.
+			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff >= expectedRetryDelay);
 		}
 
 		this.getTenantPersistenceService().commitTransaction();

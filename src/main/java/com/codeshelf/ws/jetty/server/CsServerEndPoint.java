@@ -15,11 +15,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codeshelf.application.ContextLogging;
+import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
@@ -41,7 +42,7 @@ public class CsServerEndPoint {
 	//  This allows us to avoid trying to hook Guice into the object creation  process of javax.websocket/Jetty
 	//     but allow Guice to control object creation for these singletons
 	private static IMessageProcessor iMessageProcessor;
-	private static SessionManagerService sessionManagerService;
+	private static WebSocketManagerService webSocketManagerService;
 	
 	// time to close session after mins of inactivity
 	int idleTimeOut = 60;
@@ -55,24 +56,34 @@ public class CsServerEndPoint {
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
-		ContextLogging.setSession(sessionManagerService.getSession(session));
-		try {
-			session.setMaxIdleTimeout(1000*60*idleTimeOut);
-			LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
-			sessionManagerService.sessionStarted(session);
-		} finally {
-			ContextLogging.clearSession();
+		WebSocketConnection conn = webSocketManagerService.getWebSocketConnectionForSession(session);
+		if(conn != null) {
+			User user = conn.getUser();
+			if(user != null) {
+				throw new RuntimeException("onOpen session already had a user "+user.getId());
+			}
 		}
+		session.setMaxIdleTimeout(1000*60*idleTimeOut);
+		LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
+		webSocketManagerService.sessionStarted(session);
     }
 
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
+    	User setUserContext = null;
+    	this.getTenantPersistenceService().beginTransaction();
     	try{
-        	this.getTenantPersistenceService().beginTransaction();
-        	UserSession csSession = sessionManagerService.getSession(session);
-    		ContextLogging.setSession(csSession);
-    		sessionManagerService.messageReceived(session);
+        	WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
+        	setUserContext = csSession.getUser();
+        	if(setUserContext != null) {
+            	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
+        		LOGGER.info("Got message {}", message.getClass().getSimpleName());
+        	} else {
+        		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());
+        	}
+
+        	webSocketManagerService.messageReceived(session);
         	if (message instanceof ResponseABC) {
         		ResponseABC response = (ResponseABC) message;
                 LOGGER.debug("Received response on session "+csSession+": " + response);
@@ -84,13 +95,9 @@ public class CsServerEndPoint {
                // pass request to processor to execute command
                 ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
                 if (response!=null) {
-                	if(csSession != null) {
-                    	// send response to client
-                    	LOGGER.debug("Sending response "+response+" for request "+request);
-                    	csSession.sendMessage(response);
-                	} else {
-                		LOGGER.warn("Could not respond "+response.getStatusMessage()+" on "+message.getClass().getSimpleName()+" because csSession is null");
-                	}
+                	// send response to client
+                	LOGGER.debug("Sending response "+response+" for request "+request);
+                	csSession.sendMessage(response);
                 }
                 else {
                 	LOGGER.warn("No response generated for request "+request);
@@ -107,34 +114,34 @@ public class CsServerEndPoint {
 			LOGGER.error("Unable to persist during message handling: " + message, e);
 		}
     	finally {
-    		ContextLogging.clearSession();
+    		if(setUserContext != null) {
+    			CodeshelfSecurityManager.removeCurrentUser();
+    		}
 		}
     }
     
 	@OnClose
     public void onClose(Session session, CloseReason reason) {
-		ContextLogging.setSession(sessionManagerService.getSession(session));
+		User user = webSocketManagerService.getWebSocketConnectionForSession(session).getUser();
 		try {
-	    	LOGGER.info(String.format("WS Session %s closed because of %s", session.getId(), reason));
-			sessionManagerService.sessionEnded(session);		
+	    	LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user.toString(), reason));
+			webSocketManagerService.sessionEnded(session);		
 		} finally {
-			ContextLogging.clearSession();
+			CodeshelfSecurityManager.removeCurrentUserIfPresent();
 		}
     }
     
     @OnError
     public void onError(Session session, Throwable cause) {
-    	ContextLogging.setSession(sessionManagerService.getSession(session));
     	LOGGER.error("WebSocket error", cause);
-    	ContextLogging.clearSession();
     }
 
     //Injected see ServerMain
-	public static void setSessionManagerService(SessionManagerService instance) {
-		if (sessionManagerService != null) {
-			throw new IllegalArgumentException("SessionManager should only be initialized once");
+	public static void setWebSocketManagerService(WebSocketManagerService instance) {
+		if (webSocketManagerService != null) {
+			throw new IllegalArgumentException("WebSocketManagerService should only be initialized once");
 		}
-		sessionManagerService = instance;
+		webSocketManagerService = instance;
 	}
 
 	//Injected see ServerMain

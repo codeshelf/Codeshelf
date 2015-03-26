@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -137,12 +136,9 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@Getter
 	private List<Item>						items						= new ArrayList<Item>();
 	
-	//@OneToMany(mappedBy = "parent")
-	//@Getter
-	//private List<GtinMap>					gtinMaps					= new ArrayList<GtinMap>();
-	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
+	@Getter
 	private Map<String, Gtin>			gtins					= new HashMap<String, Gtin>();
 
 	public ItemMaster() {
@@ -380,6 +376,21 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		Collections.sort(itemLocationIds, asciiAlphanumericComparator);
 		return Joiner.on(",").join(itemLocationIds);
 	}
+	
+
+	public String getItemGtins() {
+		
+		List<String> gtinValues = new ArrayList<String>();
+		Map<String, Gtin> gtins = getGtins();
+
+		for (Gtin gtin : gtins.values()) {
+			String gtinValue= gtin.getDomainId();
+			gtinValues.add(gtinValue);
+		}
+		
+		Collections.sort(gtinValues, asciiAlphanumericComparator);
+		return Joiner.on(",").join(gtinValues);
+	}
 
 	/*
 	 * Assuming the existing item would be on its master:
@@ -440,6 +451,20 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		else if (!item.getStoredLocation().equals(inLocation))
 			inLocation.addStoredItem(item); // which removes from the prior location.
 		return item;
+	}
+	
+	private Gtin findExistingGtin(String inGtin) {
+		return gtins.get(inGtin);
+	}
+	
+	public Gtin findOrCreateGtin(String inGtin, UomMaster inUomMaster) {
+		Gtin gtin = findExistingGtin(inGtin);
+		
+		if (gtin == null){
+			gtin = createGtin(inGtin, inUomMaster);
+		}
+		
+		return gtin;
 	}
 	
 	public Gtin createGtin(String inGtin, UomMaster inUomMaster) {

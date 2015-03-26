@@ -41,6 +41,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private String				readyMsg;
+	
+	
 
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -88,6 +90,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			case CLEAR_ERROR_COMMAND:
 				clearErrorCommandReceived();
 				break;
+			
+			case INVENTORY_COMMAND:
+				inventoryScanCommandReveived();
+				break;
 
 			default:
 				break;
@@ -119,6 +125,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
+			case SCAN_GTIN:
+				processGtinScan(inScanPrefixStr, inContent);
+				break;
 			default:
 				break;
 		}
@@ -133,11 +142,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			setReadyMsg("");
+			this.setUserId(inScanStr);
 			setState(CheStateEnum.READY);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			setReadyMsg("Invalid scan");
-
 		}
 	}
 
@@ -153,7 +162,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 		setLastScanedDetailId(inScanStr); // not needed so far, but do it for completion
 		setState(CheStateEnum.ABANDON_CHECK);
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -260,6 +268,19 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			setState(CheStateEnum.READY);
 		}
 	}
+	
+	protected void inventoryScanCommandReveived() {
+		CheStateEnum currentState = getCheStateEnum();
+		
+		switch(currentState) {
+			case READY:
+				// In setup orders. Only want to respect this just after login
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+			default:
+				break;
+		}
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -290,6 +311,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 			case SCAN_SOMETHING:
 				setState(currentState);
+				break;
+			case SCAN_GTIN:
+				lastScanedGTIN = null;
+				setReadyMsg("");
+				setState(CheStateEnum.READY);
 				break;
 			default:
 				break;
@@ -376,10 +402,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = this.getActiveWorkInstruction();
 			if (wi != null) {
+				notifyWiVerb(wi, "SHORT", kLogAsWarn);
 				doShortTransaction(wi, mShortPickQty);
-				LOGGER.info("Pick shorted: " + wi);
 
-				clearLedControllersForWi(wi);
+				clearLedAndPosConControllersForWi(wi);
 				setReadyMsg("");
 				setState(CheStateEnum.READY);
 			}
@@ -405,7 +431,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				doShortTransaction(wi, 0);
 			}
 			
-			clearLedControllersForWi(wi);
+			clearLedAndPosConControllersForWi(wi);
 			setReadyMsg("");
 			setState(CheStateEnum.READY);
 		} else {
@@ -427,14 +453,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		LOGGER.info("Pick completed: " + inWi);
+		notifyWiVerb(inWi, "COMPLETE by button", kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 
 		// Skip the count stuff that setup_Orders process has
 
 		// Clear off any lit aisles for last job
-		clearLedControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi);
 
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
@@ -465,9 +491,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Complete the active WI. For this process mode, only one poscon is there.
 	 * @param inButtonNum
 	 * @param inQuantity
-	 * @param buttonPosition 
 	 */
-	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 
 		// The point is, let's check our state
 		switch (mCheStateEnum) {
@@ -491,7 +516,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (wi == null) {
 			// Simply ignore button presses when there is no work instruction.
 		} else {
-			// clearOnePositionController(buttonPosition); should not need to clear. State transition should resend what is necessary.
 			String itemId = wi.getItemId();
 			String orderDetailId = wi.getOrderDetailId();
 			LOGGER.info("Button for " + orderDetailId + " / " + itemId);
@@ -513,8 +537,9 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Very simple for line scan CHE. Send the one WI count to poscon #1.
 	 */
 	@Override
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+	protected void doPosConDisplaysforActiveWis() {
 
+		/*
 		byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
 		byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
 		byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
@@ -538,6 +563,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			maxQuantityForPositionController,
 			freq,
 			brightness);
+		*/
+		WorkInstruction firstWi = getOneActiveWorkInstruction();
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		PosControllerInstr instruction = getPosInstructionForWiAtIndex(firstWi, getPosconIndex());		
 		instructions.add(instruction);
 		sendPositionControllerInstructions(instructions);
 	}
@@ -628,6 +657,14 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
 					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					break;
+				
+				case SCAN_GTIN:
+					if (lastScanedGTIN == null) {
+						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
+					} else {
+						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
+					}
 					break;
 					
 				default:

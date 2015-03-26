@@ -14,7 +14,7 @@ import com.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectGetResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ObjectGetCommand extends CommandABC {
 
@@ -22,8 +22,8 @@ public class ObjectGetCommand extends CommandABC {
 
 	private ObjectGetRequest request;
 	
-	public ObjectGetCommand(UserSession session, ObjectGetRequest request) {
-		super(session);
+	public ObjectGetCommand(WebSocketConnection connection, ObjectGetRequest request) {
+		super(connection);
 		this.request = request;
 	}
 

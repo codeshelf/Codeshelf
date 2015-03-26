@@ -20,6 +20,7 @@ public class CriteriaRegistry {
 	private CriteriaRegistry() {
 		indexedCriteria = Maps.newHashMap();
 
+		
 		indexedCriteria.put("orderDetailByFacilityAndDomainId", 
 			new TypedCriteria("from OrderDetail where active = true and parent.parent.persistentId = :facilityId and domainId = :domainId", 
 					"facilityId", UUID.class,
@@ -107,6 +108,11 @@ public class CriteriaRegistry {
 			new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and parent.domainId = :sku",
 				"facilityId", UUID.class,
 				"sku", String.class));
+		
+		indexedCriteria.put("itemsByFacilityAndGtin",
+			new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and parent.persistentId = :itemMaster",
+				"facilityId", UUID.class,
+				"itemMaster", UUID.class).addEqualsRestriction("uomMaster.persistentId", "uomMaster", UUID.class));
 
 		indexedCriteria.put("tiersByFacility",
 			new TypedCriteria("from Tier where parent.parent.parent.persistentId = :facilityId and active = true",
@@ -128,17 +134,29 @@ public class CriteriaRegistry {
 			new TypedCriteria("from OrderDetail where parent.persistentId = :theId and active = true",
 				"theId", UUID.class)); //the UI dynamically sets the "parent" with theId
 
-		
+		indexedCriteria.put("orderHeadersByFacilityAndPartialDomainId", 
+			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and domainId LIKE :partialDomainId", 
+					"facilityId", UUID.class,
+					"partialDomainId", String.class));
+
 		indexedCriteria.put("orderHeadersByFacilityAndType",
 			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and orderType = :orderType",
 				"facilityId", UUID.class,
 				"orderType", OrderTypeEnum.class));
 		
+		indexedCriteria.put("orderGroupsByOrderHeaderId",
+			new TypedCriteria("from OrderGroup as og join fetch og.orderHeaders oh where og.active = true and og.parent.persistentId = :parentId and oh.domainId LIKE :partialDomainId",
+				"parentId", UUID.class, //the UI dynamically sets the "parent" with theId
+				"partialDomainId", String.class));
+
 		indexedCriteria.put("orderHeadersByGroupAndType",
 			new TypedCriteria("from OrderHeader where active = true and orderGroup.persistentId = :theId and orderType = :orderType",
 				"theId", UUID.class, //the UI dynamically sets the "parent" with theId
 				"orderType", OrderTypeEnum.class));
 		
+		indexedCriteria.put("gtinsByFacility",
+			new TypedCriteria("from Gtin where parent.parent.persistentId = :facilityId",
+				"facilityId", UUID.class));
 	}
 
 	public TypedCriteria findByName(String name, Class<?> selectClass) {

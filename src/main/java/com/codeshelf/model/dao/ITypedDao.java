@@ -11,6 +11,7 @@ import java.util.UUID;
 
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 
 import com.codeshelf.model.domain.IDomainObject;
 
@@ -31,8 +32,11 @@ public interface ITypedDao<T> {
 	List<T> findByPersistentIdList(List<UUID> inPersistentIdList);
 
 	List<T> findByFilter(List<Criterion> inFilter);
+	List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys);
 
 	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs);
+
+	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs, int maxRecords);
 
 	boolean matchesFilter(String criteriaName, Map<String, Object> inFilterArgs,
 		UUID persistentId);

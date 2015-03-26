@@ -54,7 +54,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.base.Objects;
 import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.util.concurrent.Service;
@@ -99,7 +99,7 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		SessionManagerService sessionManagerService = mock(SessionManagerService.class);
+		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
 		IPropertyService mockProp = Mockito.spy(new DummyPropertyService());
 		ArrayList<Service> services = new ArrayList<Service>(1);
 		services.add(mockProp);
@@ -115,7 +115,7 @@ public class LightServiceTest extends ServerTest {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
 
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
@@ -130,7 +130,7 @@ public class LightServiceTest extends ServerTest {
 		LOGGER.info("7: ArgumentCaptor");
 
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(sessionManagerService, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(webSocketManagerService, times(tiers.size() * itemsPerTier)).sendMessage(any(Set.class), messagesCaptor.capture());
 		
 		LOGGER.info("8: assertWillLightItem() from messagesCaptor.getAllValues");
 		List<MessageABC> messages = messagesCaptor.getAllValues();
@@ -280,15 +280,15 @@ public class LightServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent, int expectedTotal) throws InterruptedException, ExecutionException {
 		Assert.assertTrue(expectedTotal > 0);// test a reasonable amount
-		SessionManagerService sessionManagerService = mock(SessionManagerService.class);
+		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService(sessionManagerService, Executors.newSingleThreadScheduledExecutor());
+		LightService lightService = new LightService(webSocketManagerService, Executors.newSingleThreadScheduledExecutor());
 		Future<Void> complete = lightService.lightChildLocations(facility, parent, color);
 		complete.get(); //wait for completion
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
-		verify(sessionManagerService, times(expectedTotal)).sendMessage(any(Set.class), messagesCaptor.capture());
+		verify(webSocketManagerService, times(expectedTotal)).sendMessage(any(Set.class), messagesCaptor.capture());
 		
 		List<MessageABC> messages = messagesCaptor.getAllValues();
 		return messages;

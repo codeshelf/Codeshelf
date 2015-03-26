@@ -11,7 +11,7 @@ import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ComputeDetailWorkCommand extends CommandABC {
 	@SuppressWarnings("unused")
@@ -21,8 +21,8 @@ public class ComputeDetailWorkCommand extends CommandABC {
 
 	private WorkService	workService;
 	
-	public ComputeDetailWorkCommand(UserSession session, ComputeDetailWorkRequest request, WorkService workService) {
-		super(session);
+	public ComputeDetailWorkCommand(WebSocketConnection connection, ComputeDetailWorkRequest request, WorkService workService) {
+		super(connection);
 		this.request = request;
 		this.workService = workService;
 	}

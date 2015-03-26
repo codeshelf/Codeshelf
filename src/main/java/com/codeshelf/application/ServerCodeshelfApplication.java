@@ -6,27 +6,31 @@
 
 package com.codeshelf.application;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.EdiProcessorService;
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.ManagerPersistenceService;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends CodeshelfApplication {
@@ -36,7 +40,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private EdiProcessorService			ediProcessorService;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
-	private SessionManagerService sessionManager;
+	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
 	
 	@Inject
@@ -46,15 +50,19 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final ITenantManagerService tenantManagerService,
 			final WorkService workService,
 			final IMetricsService metricsService,
-			final SessionManagerService sessionManagerService,
-			final IPropertyService propertyService) {
+			final WebSocketManagerService webSocketManagerService,
+			final IPropertyService propertyService,
+			final AuthProviderService authService,
+			final SecurityManager securityManager) {
 			
 		super(inWebApiServer);
 	
 		ediProcessorService = inEdiProcessorService;
 		mPickDocumentGenerator = inPickDocumentGenerator;
-		sessionManager = sessionManagerService;
+		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
+		
+		SecurityUtils.setSecurityManager(securityManager);
 		
 		// if services already running e.g. in test, these will log an error and continue
 		this.registerService(tenantManagerService);
@@ -62,8 +70,9 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
 		this.registerService(workService);
 		this.registerService(metricsService);
-		this.registerService(sessionManagerService);
+		this.registerService(webSocketManagerService);
 		this.registerService(propertyService);
+		this.registerService(authService);
 
 		this.registerService(ediProcessorService);
 
@@ -116,7 +125,11 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	 */
 	protected void doInitializeApplicationData() {
 		// Recompute path positions
-		Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
+		
+		//Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
+		Collection<Tenant> tenants = new ArrayList<Tenant>(1);
+		tenants.add(TenantManagerService.getInstance().getDefaultTenant());
+
 		for(Tenant tenant : tenants) {
 			try {
 				TenantPersistenceService.getInstance().beginTransaction(tenant);

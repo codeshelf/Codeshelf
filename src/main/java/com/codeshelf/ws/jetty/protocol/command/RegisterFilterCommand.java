@@ -17,7 +17,7 @@ import com.codeshelf.ws.jetty.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectChangeResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 /*
 	Example Message:
@@ -40,7 +40,7 @@ public class RegisterFilterCommand extends CommandABC {
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 
-	public RegisterFilterCommand(UserSession session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
+	public RegisterFilterCommand(WebSocketConnection session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
 		super(session);
 		this.request = request;
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
@@ -69,7 +69,7 @@ public class RegisterFilterCommand extends CommandABC {
 			@SuppressWarnings("unchecked")
 			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				this.objectChangeBroadcaster.registerDAOListener(session, classObject);
+				this.objectChangeBroadcaster.registerDAOListener(wsConnection, classObject);
 
 				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// create listener
@@ -81,7 +81,7 @@ public class RegisterFilterCommand extends CommandABC {
 				filter.setParams(processedParams);
 				filter.setCriteriaName(filterClause);
 				List<? extends IDomainObject> objectMatchList = filter.refreshMatchList();
-				this.session.registerObjectEventListener(filter);
+				this.wsConnection.registerObjectEventListener(filter);
 
 				// generate response
 				List<Map<String, Object>> results = filter.getProperties(objectMatchList, EventType.Update);

@@ -1,26 +1,37 @@
 package com.codeshelf.testframework;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.mockito.Mockito;
 
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.Shard;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
+import com.codeshelf.manager.User;
+import com.codeshelf.manager.UserPermission;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.Shard;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService.ShutdownCleanupReq;
-import com.codeshelf.platform.multitenancy.User;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
 public class MockTenantManagerService implements ITenantManagerService {
 	Tenant defaultTenant;
+	User defaultUser;
 	MockTenantManagerService(Tenant defaultTenant) {
 		this.defaultTenant = defaultTenant;
+		
+		defaultUser = new User();
+		defaultUser.setId(0);
+		defaultUser.setTenant(defaultTenant);
+		defaultUser.setType(UserType.SUPER);
+		defaultUser.setUsername("mock");
+		defaultTenant.addUser(defaultUser); // tenant is possibly a mock and this doesn't do anything
 	}
 	@Override
 	public ListenableFuture<State> start() {
@@ -82,22 +93,18 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return false;
 	}
 	@Override
-	public User createUser(Tenant tenant, String username, String password, UserType type) {
-		return Mockito.mock(User.class);
+	public User createUser(Tenant tenant, String username, String password, UserType type, Set<UserRole> roles) {
+		return defaultUser;
 	}
 	@Override
 	public User getUser(String username) {
-		return Mockito.mock(User.class);
-	}
-	@Override
-	public User authenticate(String username, String password) {
-		return Mockito.mock(User.class);
+		return defaultUser;
 	}
 	@Override
 	public void resetTenant(Tenant tenant) {
 	}
 	@Override
-	public Tenant getTenantByUsername(String username) {
+	public Tenant getTenantByUser(User user) {
 		return this.defaultTenant;
 	}
 	@Override
@@ -113,8 +120,8 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return this.defaultTenant;
 	}
 	@Override
-	public Collection<Tenant> getTenants() {
-		Collection<Tenant> tenants = new ArrayList<Tenant>(1);
+	public List<Tenant> getTenants() {
+		List<Tenant> tenants = new ArrayList<Tenant>(1);
 		tenants.add(this.defaultTenant);
 		return tenants;
 	}
@@ -138,5 +145,98 @@ public class MockTenantManagerService implements ITenantManagerService {
 	@Override
 	public int getShutdownTimeoutSeconds() {
 		return Integer.MAX_VALUE;
+	}
+	@Override
+	public List<User> getUsers(Tenant t) {
+		List<User> list = new ArrayList<User>(1);
+		list.add(getUser(""));
+		return list;
+	}
+	@Override
+	public User getUser(Integer id) {
+		return getUser("");
+	}
+	@Override
+	public User updateUser(User user) {
+		return user;
+	}
+	@Override
+	public Tenant getTenant(Integer id) {
+		return this.defaultTenant;
+	}
+	@Override
+	public Tenant updateTenant(Tenant tenant) {
+		return tenant;
+	}
+	@Override
+	public boolean canCreateTenant(String tenantName,String schemaName) {
+		return true;
+	}
+	@Override
+	public void deleteTenant(Tenant tenant) {
+	}
+	@Override
+	public byte[] getHtpasswd() {
+		return "".getBytes();
+	}
+	@Override
+	public List<UserRole> getRoles() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole getRole(Integer id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole getRoleByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole createRole(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserRole updateRole(UserRole role) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void deleteRole(UserRole role) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public List<UserPermission> getPermissions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission getPermission(Integer id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission getPermissionByDescriptor(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission createPermission(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public UserPermission updatePermission(UserPermission permission) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void deletePermission(UserPermission permission) {
+		// TODO Auto-generated method stub
+		
 	}
 }

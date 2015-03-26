@@ -17,7 +17,7 @@ import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.google.common.base.Strings;
 
 public class ServiceMethodCommand extends CommandABC {
@@ -30,8 +30,8 @@ public class ServiceMethodCommand extends CommandABC {
 
 	private ConvertUtilsBean	converter;
 
-	public ServiceMethodCommand(UserSession session, ServiceMethodRequest request, ServiceFactory serviceFactory, ConvertUtilsBean converter) {
-		super(session);
+	public ServiceMethodCommand(WebSocketConnection connection, ServiceMethodRequest request, ServiceFactory serviceFactory, ConvertUtilsBean converter) {
+		super(connection);
 		this.request = request;
 		this.serviceFactory = serviceFactory;
 		this.converter = converter;

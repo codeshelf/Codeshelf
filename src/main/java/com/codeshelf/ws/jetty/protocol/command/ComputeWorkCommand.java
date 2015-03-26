@@ -18,7 +18,7 @@ import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ComputeWorkCommand extends CommandABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
@@ -27,8 +27,8 @@ public class ComputeWorkCommand extends CommandABC {
 
 	private WorkService	workService;
 	
-	public ComputeWorkCommand(UserSession session, ComputeWorkRequest request, WorkService workService) {
-		super(session);
+	public ComputeWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkService workService) {
+		super(connection);
 		this.request = request;
 		this.workService = workService;
 	}

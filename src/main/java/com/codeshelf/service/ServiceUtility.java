@@ -8,7 +8,7 @@ public class ServiceUtility {
 	public static final int DEFAULT_STARTUP_WAIT_SECONDS = 45;
 	public static final int DEFAULT_SHUTDOWN_WAIT_SECONDS = 45;
 
-	public static void awaitRunningOrThrow(ICodeshelfService service) {
+	public static void awaitRunningOrThrow(CodeshelfService service) {
 		try {
 			service.awaitRunning(DEFAULT_STARTUP_WAIT_SECONDS, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
@@ -16,7 +16,7 @@ public class ServiceUtility {
 		}
 	}
 
-	public static void awaitTerminatedOrThrow(ICodeshelfService service) {
+	public static void awaitTerminatedOrThrow(CodeshelfService service) {
 		try {
 			service.awaitRunning(DEFAULT_SHUTDOWN_WAIT_SECONDS, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {

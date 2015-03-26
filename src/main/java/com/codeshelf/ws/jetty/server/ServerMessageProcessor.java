@@ -12,6 +12,8 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.protocol.command.CommandABC;
@@ -21,6 +23,8 @@ import com.codeshelf.ws.jetty.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.jetty.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.jetty.protocol.command.EchoCommand;
 import com.codeshelf.ws.jetty.protocol.command.GetWorkCommand;
+import com.codeshelf.ws.jetty.protocol.command.InventoryLightCommand;
+import com.codeshelf.ws.jetty.protocol.command.InventoryUpdateCommand;
 import com.codeshelf.ws.jetty.protocol.command.LoginCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectDeleteCommand;
 import com.codeshelf.ws.jetty.protocol.command.ObjectGetCommand;
@@ -39,6 +43,8 @@ import com.codeshelf.ws.jetty.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.jetty.protocol.request.DeviceRequest;
 import com.codeshelf.ws.jetty.protocol.request.EchoRequest;
 import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryLightRequest;
+import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectDeleteRequest;
 import com.codeshelf.ws.jetty.protocol.request.ObjectGetRequest;
@@ -74,15 +80,17 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter keepAliveCounter;
 	private final Counter applicationRequestCounter;
 	private final Counter systemRequestCounter;
+	private final Counter inventoryUpdateRequestCounter;
+	private final Counter inventoryLightRequestCounter;
 	private final Timer requestProcessingTimer;
 	
 	private ServiceFactory	serviceFactory;
 	private ConvertUtilsBean	converter;
 
-	private SessionManagerService	sessionManager;
+	private WebSocketManagerService	sessionManager;
 
 	@Inject
-	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter, SessionManagerService sessionManager) {
+	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter, WebSocketManagerService sessionManager) {
 		LOGGER.debug("Creating "+this.getClass().getSimpleName());
 		this.serviceFactory = serviceFactory;
 		this.converter = converter;
@@ -106,6 +114,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		keepAliveCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.keep-alive");
 		applicationRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.application");
 		systemRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.system");
+		inventoryUpdateRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-update");
+		inventoryLightRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS,"requests.processing-time");
 		
 	}
@@ -115,8 +125,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	}
 	
 	@Override
-	public ResponseABC handleRequest(UserSession csSession, RequestABC request) {
-		LOGGER.info("Request received for processing: "+request);
+	public ResponseABC handleRequest(WebSocketConnection csSession, RequestABC request) {
+		LOGGER.info("Request received for processing: {}",request);
+
 		requestCounter.inc();
 		CommandABC command = null;
 		ResponseABC response = null;
@@ -195,12 +206,26 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				command = new CreatePathCommand(csSession,(CreatePathRequest) request);
 				objectFilterCounter.inc();
 				applicationRequestCounter.inc();
-			}			
+			}
+			else if (request instanceof InventoryUpdateRequest) {
+				command = new InventoryUpdateCommand(csSession, (InventoryUpdateRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+				inventoryUpdateRequestCounter.inc();
+				applicationRequestCounter.inc();
+			}
+			else if (request instanceof InventoryLightRequest) {
+				command = new InventoryLightCommand(csSession, (InventoryLightRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+				inventoryLightRequestCounter.inc();
+				applicationRequestCounter.inc();
+			}
 			// check if matching command was found
 			if (command==null) {
 				LOGGER.warn("Unable to find matching command for request "+request+". Ignoring request.");
 		        timerContext.stop();
 			} else {
+				
+				// throw exception if not authorized
+				CodeshelfSecurityManager.authorizeAnnotatedClass(command.getClass());
+				
 				// execute command and generate response to be sent to client
 				response = command.exec();
 				if (response!=null) {
@@ -213,6 +238,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				}
 			}
     	} catch (Exception e) {
+    		if(e instanceof NullPointerException) {
+    			LOGGER.error("Unexpected exception in ServerMessageProcessor",e);
+    		}
     		response = new FailureResponse(ExceptionUtils.getMessage(e));
     		response.setRequestId(request.getMessageId());
     		if (request instanceof DeviceRequest) {
@@ -228,13 +256,13 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(UserSession session, ResponseABC response) {
+	public void handleResponse(WebSocketConnection session, ResponseABC response) {
 		responseCounter.inc();
 		LOGGER.warn("Unexpected response received on session "+session+": "+response);
 	}
 
 	@Override
-	public void handleMessage(UserSession session, MessageABC message) {
+	public void handleMessage(WebSocketConnection session, MessageABC message) {
 		if (message instanceof KeepAlive) {
 			keepAliveCounter.inc();
 			systemRequestCounter.inc();

@@ -2,7 +2,7 @@ package com.codeshelf.service;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 
-public abstract class AbstractCodeshelfIdleService extends AbstractIdleService implements ICodeshelfService
+public abstract class AbstractCodeshelfIdleService extends AbstractIdleService implements CodeshelfService
 {
 	private boolean started = false;
 	

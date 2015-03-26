@@ -18,7 +18,7 @@ import com.codeshelf.model.domain.WirelessDeviceABC;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class NetworkChangeListener implements ObjectEventListener {
 	
@@ -77,7 +77,7 @@ public class NetworkChangeListener implements ObjectEventListener {
 		return null;
 	}
 	
-	public static void registerWithSession(ObjectChangeBroadcaster objectChangeBroadcaster, UserSession session, CodeshelfNetwork network) {
+	public static void registerWithSession(ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketConnection session, CodeshelfNetwork network) {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);

@@ -7,6 +7,7 @@ package com.codeshelf.application;
 
 import static org.mockito.Mockito.mock;
 
+import org.apache.shiro.mgt.AuthorizingSecurityManager;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,18 +19,21 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.dao.Result;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.testframework.MockDaoTest;
+import com.codeshelf.testframework.ServerTest;
 
 /**
  * @author jeffw
  *
  */
-public class CodeshelfApplicationTest extends MockDaoTest { 
+public class CodeshelfApplicationTest extends ServerTest {
+	// could be MockDaoTest, but if it runs first it would 
+	// try to instantiate/own TenantPersistence before test framework
+	
 	/**
 	 * Test method for {@link com.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
@@ -57,11 +61,13 @@ public class CodeshelfApplicationTest extends MockDaoTest {
 			ediProcessorService,
 			pickDocumentGenerator,
 			adminServer,
-			TenantManagerService.getMaybeRunningInstance(),
+			this.tenantManagerService,
 			new WorkService(),
 			this.metricsService,
-			this.sessionManagerService,
-			new DummyPropertyService());
+			this.webSocketManagerService,
+			new DummyPropertyService(),
+			mock(AuthProviderService.class),
+			mock(AuthorizingSecurityManager.class));
 
 		final Result checkAppRunning = new Result();
 

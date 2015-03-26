@@ -21,6 +21,7 @@ import org.hibernate.Query;
 import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,8 @@ import com.google.inject.Inject;
 public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDao<T> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
+
+	private static final Integer NO_MAX_RECORDS	= null; // indicates no maximum records
 
 	private ConvertUtilsBean converter;
 
@@ -140,6 +143,20 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return results;
 	}
 	
+	public final List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys) {
+		// If we have a valid filter then get the filtered objects.
+		Session session = getCurrentSession();
+        Criteria criteria = session.createCriteria(getDaoClass());
+		for (Criterion expression : inFilter) {
+			criteria.add(expression);
+		}
+		for(Order order: inOrderBys) {
+			criteria.addOrder(order);
+		}
+		List<T> results = criteria.list();
+		return results;
+	}
+	
 	@Override
 	public boolean matchesFilter(String inCriteriaName, Map<String, Object> inArgs, UUID inPersistentId) {
 		String parameterName = "persistentIdToMatch";
@@ -149,7 +166,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		
 		HashMap<String, Object> newArgs = Maps.newHashMap(inArgs);
 		newArgs.put(parameterName, inPersistentId);
-		return (findByCriteria(singleObjectCriteria, newArgs).isEmpty() == false);
+		return (findByCriteria(singleObjectCriteria, newArgs, NO_MAX_RECORDS).isEmpty() == false);
 	}
 	
 	// --------------------------------------------------------------------------
@@ -160,10 +177,21 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		// create criteria using look-up table
 		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
 		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
-		return findByCriteria(criteria, inArgs);
+		return findByCriteria(criteria, inArgs, NO_MAX_RECORDS);
+	}
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
+	 */
+	public List<T> findByFilter(String inCriteriaName, Map<String, Object> inArgs, int maxRecords) {
+		// create criteria using look-up table
+		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
+		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
+		return findByCriteria(criteria, inArgs, maxRecords);
 	}
 
-	protected List<T> findByCriteria(TypedCriteria criteria, Map<String, Object> inArgs) {
+	protected List<T> findByCriteria(TypedCriteria criteria, Map<String, Object> inArgs, Integer maxRecords) {
 		Session session = getCurrentSession();
 		Query query = session.createQuery(criteria.getQuery());
 		for (Entry<String, Object> argument : inArgs.entrySet()) {
@@ -184,8 +212,17 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 				throw new QueryParameterException("argument could not be found in query: " + name, criteria.getQuery(), e);
 			}
 		}		
-		List<T> results = query.list();
-		return results;
+		if (maxRecords != null) {
+			;
+			List<T> results = query.setMaxResults(maxRecords).list();
+			if (results.size() == maxRecords) {
+				LOGGER.warn("Filter {} for {} reached max filter records: {}", criteria, inArgs, maxRecords);
+			}
+			return results;
+		} else {
+			List<T> results = query.list();
+			return results;
+		}
 	}
 	
 	// --------------------------------------------------------------------------

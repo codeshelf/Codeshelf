@@ -19,7 +19,8 @@ import lombok.Setter;
 import org.hibernate.Session;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.BaseResponse.EndDateParam;
+import com.codeshelf.api.BaseResponse.StartDateParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
@@ -27,104 +28,116 @@ import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.manager.User;
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.multitenancy.User;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 public class FacilityResource {
 
-	private final ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+	private final WorkService	workService;
 	private final OrderService orderService;
-	private final SessionManagerService sessionManagerService;
+	private final WebSocketManagerService webSocketManagerService;
 
 	@Setter
-	private UUIDParam mUUIDParam;
+	private Facility facility;
 
 	@Inject
-	public FacilityResource(OrderService orderService, SessionManagerService sessionManagerService) {
+	public FacilityResource(WorkService workService, OrderService orderService, WebSocketManagerService webSocketManagerService) {
 		this.orderService = orderService;
-		this.sessionManagerService = sessionManagerService;
+		this.workService = workService;
+		this.webSocketManagerService = webSocketManagerService;
+	}
+
+	@GET
+	@Path("/blockedwork/nolocation")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getBlockedWorkNoLocation() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		try {
+			Session session = persistenceService.getSession();
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(persistenceService.getDefaultSchema(), session, facility.getPersistentId()));
+		} catch (Exception e) {
+			ErrorResponse errors = new ErrorResponse();
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+	}
+
+    @GET
+	@Path("/work/results")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkResults(@QueryParam("startTimestamp") StartDateParam startTimestamp, @QueryParam("endTimestamp") EndDateParam endTimestamp) {
+    	List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(), startTimestamp.getValue(), endTimestamp.getValue());
+		return BaseResponse.buildResponse(results);
+	}
+	
+
+	@GET
+	@Path("/work/topitems")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getWorkByItem() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Session session = persistenceService.getSession();
+		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
+	}
+
+	@GET
+	@Path("/blockedwork/shorts")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getBlockedWorkShorts() {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Session session = persistenceService.getSession();
+		return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, facility.getPersistentId(), OrderStatusEnum.SHORT));
 	}
 
 	@GET
 	@Path("/productivity")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getProductivitySummary() {
-		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
-			return errors.buildResponse();
-		}
-
-		try {
-			ProductivitySummaryList summary = orderService.getProductivitySummary(persistence.getDefaultSchema(), mUUIDParam.getUUID(), false);
-			return BaseResponse.buildResponse(summary);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		} 
+	public Response getProductivitySummary() throws Exception {
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), facility.getPersistentId(), false);
+		return BaseResponse.buildResponse(summary);
 	}
 
 	@GET
 	@Path("/chesummary")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getCheSummary() {
-		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
-			return errors.buildResponse();
-		}
-
-		try {
-			persistence.beginTransaction();
-			List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
-			ProductivityCheSummaryList summary = new ProductivityCheSummaryList(mUUIDParam.getUUID(), instructions);
-			return BaseResponse.buildResponse(summary);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
+		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facility.getPersistentId(), instructions);
+		return BaseResponse.buildResponse(summary);
 	}
+
+
 
 	@GET
 	@Path("/groupinstructions")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getGroupInstructions(@QueryParam("group") String groupName) {
-		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
-			return errors.buildResponse();
-		}
-
-		try {
-			persistence.beginTransaction();
-			List<WorkInstruction> instructions = orderService.getGroupShortInstructions(mUUIDParam.getUUID(), groupName);
-			return BaseResponse.buildResponse(instructions);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		List<WorkInstruction> instructions = orderService.getGroupShortInstructions(facility.getPersistentId(), groupName);
+		return BaseResponse.buildResponse(instructions);
 	}
 
 	@GET
 	@Path("filters")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
-		Session session = persistence.getSessionWithTransaction();
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Session session = persistenceService.getSession();
 		Set<String> filterNames = orderService.getFilterNames(session);
-		persistence.commitTransaction();
 		return BaseResponse.buildResponse(filterNames);
 	}
 
@@ -132,76 +145,63 @@ public class FacilityResource {
 	@Path("/statussummary/{aggregate}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderStatusSummary(@PathParam("aggregate") String aggregate, @QueryParam("filterName") String filterName) {
-		ErrorResponse errors = new ErrorResponse();
+		//ErrorResponse errors = new ErrorResponse();
 		if (Strings.isNullOrEmpty(filterName)) {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
-		try {
-			Session session = persistence.getSessionWithTransaction();
-			ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, aggregate, filterName);
+		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Session session = persistenceService.getSession();
+		ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, facility.getPersistentId(), aggregate, filterName);
 
-			return BaseResponse.buildResponse(summary);
-		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}
+		return BaseResponse.buildResponse(summary);
 	}
-	
+
 	@PUT
 	@Path("hardware")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response performHardwareAction(HardwareRequest req) {
 		ErrorResponse errors = new ErrorResponse();
-		if (!BaseResponse.isUUIDValid(mUUIDParam, "facilityId", errors)){
-			return errors.buildResponse();
-		}
 		if (!req.isValid(errors)){
 			return errors.buildResponse();
 		}
 		try {
-			persistence.beginTransaction();
-			Facility facility = Facility.staticGetDao().findByPersistentId(mUUIDParam.getUUID());
 			Set<User> users = facility.getSiteControllerUsers();
-			
+
 			//LIGHTS
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
-			
+
 			if (req.getLights() != null) {
 				for (LightRequest light :req.getLights()){
-					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));				
+					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));
 				}
-				
+
 				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
 				LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
-				sessionManagerService.sendMessage(users, lightMessage);
+				webSocketManagerService.sendMessage(users, lightMessage);
 			}
-			
+
 			//CHE MESSAGES
 			if (req.getCheMessages() != null) {
 				for (CheDisplayRequest cheReq : req.getCheMessages()) {
 					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
-					sessionManagerService.sendMessage(users, cheMessage);
+					webSocketManagerService.sendMessage(users, cheMessage);
 				}
 			}
-			
+
 			//POSCON MESSAGES
 			if (req.getPosConInstructions() != null) {
 				for (PosControllerInstr posInstr : req.getPosConInstructions()) {
 					posInstr.prepareObject();
 					Thread.sleep(1000);
-					sessionManagerService.sendMessage(users, posInstr);
+					webSocketManagerService.sendMessage(users, posInstr);
 				}
 			}
-			
+
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
-		} finally {
-			persistence.commitTransaction();
-		}		
+		}
 	}
 }

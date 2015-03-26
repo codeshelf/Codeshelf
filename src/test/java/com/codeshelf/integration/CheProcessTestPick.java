@@ -13,25 +13,27 @@ import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.UUID;
 
+import org.apache.logging.log4j.ThreadContext;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
@@ -39,6 +41,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -66,7 +69,6 @@ public class CheProcessTestPick extends ServerTest {
 
 	}
 
-	@SuppressWarnings("unused")
 	private Facility setUpZigzagSlottedFacility() {
 		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
 		// This is the zigzag/cross-batch portion of the MAT as of v10
@@ -178,7 +180,6 @@ public class CheProcessTestPick extends ServerTest {
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
-		LedController controller2 = network.findOrCreateLedController("2", new NetGuid("0x00000012"));
 
 		Short channel1 = 1;
 		Location aisle1x = getFacility().findSubLocationById("A1");
@@ -252,10 +253,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "1001dry,D-31\r\n" + "1001dry,D-32\r\n" + "1001dry,D-33\r\n" + "1001dry,D-34\r\n"
 				+ "1001dry,D-35\r\n"
 				+ "1003dry,D-22\r\n" + "1006dry,D-100\r\n" + "1016dry,D-76\r\n" + "1007dry,D-99\r\n";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		boolean result = importer.importOrderLocationsFromCsvStream(new StringReader(csvSlotting), inFacility, ediProcessTime);
+		boolean result = importSlotting(inFacility, csvSlotting);
 
 		// Batches file. Only containers 2,3,7,11
 		String csvBatch = "itemId,orderGroupId,containerId,description,quantity,uom\r\n" //
@@ -263,31 +261,9 @@ public class CheProcessTestPick extends ServerTest {
 				+ "53a8a03ab38e3c0200000330,5/26/14,3,vitalvittles Organic Flax-Seed Oat Bread,1,loaf\r\n" //
 				+ "50916c6dd136890200000311,5/26/14,7,blackjet Crack*a*Roons,2,cookies\r\n" //
 				+ "5266bd1e4d5eed0200000155,5/26/14,11,firebrand Pretzel Croutons,7,bag\r\n";//
-
-		Timestamp thirdEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvCrossBatchImporter batchImporter = createCrossBatchImporter();
-		batchImporter.importCrossBatchesFromCsvStream(new StringReader(csvBatch), inFacility, thirdEdiProcessTime);
-
+		importBatchData(inFacility, csvBatch);
 	}
 
-	@SuppressWarnings("unused")
-	@Test
-	public final void testDataSetup() throws IOException {
-
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = setUpSimpleNoSlotFacility();
-		UUID facId = facility.getPersistentId();
-		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
-
-		List<Container> containers = facility.getContainers();
-		this.getTenantPersistenceService().commitTransaction();
-	}
-	
 	@Test
 	public final void testStartWorkReverse() throws IOException {
 		// set up data for pick scenario
@@ -296,15 +272,18 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		this.getTenantPersistenceService().commitTransaction();
-		
+
+		for(Entry<String, String> entry : ThreadContext.getContext().entrySet()) {
+			LOGGER.info("ThreadContext: {} = {}",entry.getKey(),entry.getValue());
+		}
 		this.startSiteController();
-		
+
 		//For this data set
 		//Forward ordering is 3,2,1
 		// Reverse ordering is 1,2,3
 		startReverseWork(facility);
 	}
-	
+
 	//@Test
 	public final void testStartWorkReverseSkipToLocation() throws IOException {
 		// set up data for pick scenario
@@ -314,9 +293,9 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
-		PickSimulator picker = 		startReverseWork(facility);
-		
+
+		PickSimulator picker = startReverseWork(facility);
+
 		//Then skip to location
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
@@ -334,11 +313,11 @@ public class CheProcessTestPick extends ServerTest {
 		assertEquals(wiList.get(3).getType(), WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		assertEquals(wiList.get(4).getItemId(), "1");
 
-		
 		this.tenantPersistenceService.commitTransaction();
-	}	
-	
-	@Test //work items appear to be in the wrong order on normal forward
+	}
+
+	@Test
+	//work items appear to be in the wrong order on normal forward
 	public final void testStartWorkForwardSkipToLocation() throws IOException {
 		// set up data for pick scenario
 		this.getTenantPersistenceService().beginTransaction();
@@ -387,15 +366,14 @@ public class CheProcessTestPick extends ServerTest {
 		//Check Total WI size
 		assertTrue(wiList.size() == 5);
 
-
 		//Check each WI
 
-		assertEquals( "3"                                    ,wiList.get(0).getItemId());
-		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(1).getType());
-		assertEquals( "2"                                    ,wiList.get(2).getItemId());
-		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(3).getType());
-		assertEquals( "1"                                    ,wiList.get(4).getItemId());
-		
+		assertEquals("3", wiList.get(0).getItemId());
+		assertEquals(WorkInstructionTypeEnum.HK_BAYCOMPLETE, wiList.get(1).getType());
+		assertEquals("2", wiList.get(2).getItemId());
+		assertEquals(WorkInstructionTypeEnum.HK_BAYCOMPLETE, wiList.get(3).getType());
+		assertEquals("1", wiList.get(4).getItemId());
+
 		//Start at item 2
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
@@ -405,15 +383,14 @@ public class CheProcessTestPick extends ServerTest {
 		//Check Total WI size
 		assertTrue(wiList.size() == 5);
 		//Check each WI
-		assertEquals( "2"                                    ,wiList.get(0).getItemId());
-		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(1).getType());
-		assertEquals( "1"                                    ,wiList.get(2).getItemId());
-		assertEquals( WorkInstructionTypeEnum.HK_BAYCOMPLETE ,wiList.get(3).getType());
-		assertEquals( "3"                                    ,wiList.get(4).getItemId());
+		assertEquals("2", wiList.get(0).getItemId());
+		assertEquals(WorkInstructionTypeEnum.HK_BAYCOMPLETE, wiList.get(1).getType());
+		assertEquals("1", wiList.get(2).getItemId());
+		assertEquals(WorkInstructionTypeEnum.HK_BAYCOMPLETE, wiList.get(3).getType());
+		assertEquals("3", wiList.get(4).getItemId());
 
 		this.tenantPersistenceService.commitTransaction();
 	}
-
 
 	private PickSimulator startReverseWork(Facility facility) throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -463,8 +440,7 @@ public class CheProcessTestPick extends ServerTest {
 		return picker;
 
 	}
-	
-	@SuppressWarnings({ "unused" })
+
 	@Test
 	public final void testPick() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -473,7 +449,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
@@ -494,8 +470,6 @@ public class CheProcessTestPick extends ServerTest {
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
-		Location locationD502 = facility.findSubLocationById("D502");
-		Location locationD503 = facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
@@ -590,8 +564,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		che1 = Che.staticGetDao().reload(che1);
 		// New from v4. Test our work instruction summarizer
-		List<WiSetSummary> summaries = this.workService.workAssignedSummary(che1.getPersistentId(),
-			facility.getPersistentId());
+		List<WiSetSummary> summaries = this.workService.workAssignedSummary(che1.getPersistentId(), facility.getPersistentId());
 
 		// as this test, this facility only set up this one che, there should be only one wi set.
 		Assert.assertEquals(1, summaries.size());
@@ -600,17 +573,14 @@ public class CheProcessTestPick extends ServerTest {
 		WiSetSummary theSummary = summaries.get(0);
 		// So, how many shorts, how many active? None complete yet.
 		int actives = theSummary.getActiveCount();
-		int shorts = theSummary.getShortCount();
+		// int shorts = theSummary.getShortCount();
 		int completes = theSummary.getCompleteCount();
 		Assert.assertEquals(0, completes);
 		Assert.assertEquals(3, actives);
-		//Auto-shorting functionality disabled 02/03/2015
-		//Assert.assertEquals(0, shorts);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testPickViaChe() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -619,7 +589,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
@@ -638,10 +608,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
-		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
-		Location locationD502 = facility.findSubLocationById("D502");
-		Location locationD503 = facility.findSubLocationById("D503");
 
 		Item item1123Loc402EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123Loc402EA);
@@ -723,8 +690,8 @@ public class CheProcessTestPick extends ServerTest {
 		picker.logout();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
+	@SuppressWarnings("unused")
 	public final void testCheProcess1() throws IOException {
 		// Test cases:
 		// 1) If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)
@@ -739,10 +706,9 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		UUID facId = facility.getPersistentId();
 		setUpSmallInventoryAndOrders(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -971,7 +937,6 @@ public class CheProcessTestPick extends ServerTest {
 		// for (WorkInstruction cheWi : che1.getCheWorkInstructions()) {
 		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis2);
-		int cheWiTotal2 = cheWis2.size();
 
 		for (WorkInstruction cheWi : cheWis2) {
 			if (cheWi.getItemMasterId().equals("1555"))
@@ -1002,7 +967,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
@@ -1079,7 +1044,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
@@ -1161,7 +1126,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		// perform pick operation
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
@@ -1220,7 +1185,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.tenantPersistenceService.commitTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testCartSetupFeedback() throws IOException {
 		// Test cases:
@@ -1235,7 +1199,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		Facility facility = setUpSimpleNoSlotFacility();
-		UUID facId = facility.getPersistentId();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1248,7 +1211,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
@@ -1438,7 +1401,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
@@ -1507,7 +1470,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testCartRunFeedback() throws IOException {
 		// Test cases:
@@ -1524,9 +1486,8 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
-		UUID facId = facility.getPersistentId();
 		facility = Facility.staticGetDao().reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
@@ -1592,13 +1553,13 @@ public class CheProcessTestPick extends ServerTest {
 
 		//Make sure position 1 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
-		
+
 		// Look at the screen
 		String line1 = picker.getLastCheDisplayString(1);
 		String line2 = picker.getLastCheDisplayString(2);
 		String line3 = picker.getLastCheDisplayString(3);
 		String line4 = picker.getLastCheDisplayString(4);
-		
+
 		Assert.assertEquals("D301", line1);
 		Assert.assertEquals("1", line2);
 		Assert.assertEquals("QTY 1", line3); // This may change soon. Just update this line.
@@ -1632,14 +1593,13 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
-		
+
 		// Look at the screen
 		line1 = picker.getLastCheDisplayString(1);
-		line3 = picker.getLastCheDisplayString(3);	
+		line3 = picker.getLastCheDisplayString(3);
 		Assert.assertEquals("D302", line1);
 		// Important: this next line shows DEV-691 result. Two picks in a row from same spot, so total for that SKU is 2, not 1.
 		Assert.assertEquals("QTY 2", line3); // This may change soon. Just update this line.
-
 
 		/**
 		 * Now we will do a short pick and cancel it and make sure we never lose feedback.
@@ -1747,13 +1707,12 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
-		
+
 		// Look at the screen
 		line1 = picker.getLastCheDisplayString(1);
-		line3 = picker.getLastCheDisplayString(3);	
+		line3 = picker.getLastCheDisplayString(3);
 		Assert.assertEquals("ALL WORK COMPLETE", line1);
-		Assert.assertEquals("", line3); 
-
+		Assert.assertEquals("", line3);
 
 		propertyService.restoreHKDefaults(facility);
 
@@ -1768,7 +1727,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1830,7 +1789,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// We are going to put everything in A1 and A2 since they are on the same path.
@@ -1970,7 +1929,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	
 	private void assertWIColor(WorkInstruction wi, Che che) {
 		List<LedCmdGroup> cmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(wi.getLedCmdStream());
 		Assert.assertEquals(1, cmdGroups.size());
@@ -1987,7 +1945,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerMaxQty(position) == PosControllerInstr.BITENCODED_LED_BLANK);
 		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
-	}	
+	}
 
 	@Test
 	public void getDefaultProcessMode() {
@@ -1999,15 +1957,336 @@ public class CheProcessTestPick extends ServerTest {
 
 		//Get default mode in a facility without aisles
 		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles", processMode, ProcessMode.LINE_SCAN);
-		
+		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles",
+			processMode,
+			ProcessMode.LINE_SCAN);
+
 		//Get default mode in a facility with aisles
 		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
 		Aisle.staticGetDao().store(aisle);
 		processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles", processMode, ProcessMode.SETUP_ORDERS);
+		Assert.assertEquals("Expected Setup_Orers as default process mode in a facility with aisles",
+			processMode,
+			ProcessMode.SETUP_ORDERS);
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
+	@Test
+	public final void basicSimulPick() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku3,Test Item 3,1,each,LocB,2"
+				+ "\r\n1,USF314,COSTCO,22222,22222,Sku2,Test Item 2,4,each,LocC,4"
+				+ "\r\n1,USF314,COSTCO,44444,44444,Sku1,Test Item 1,2,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,22222,22222,Sku4,Test Item 4,1,each,LocD,3"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku2,Test Item 2,5,each,LocC,4";
+		importOrdersData(facility, csvOrders);
+		this.getTenantPersistenceService().commitTransaction();
+
+		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(facility,
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+		propertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+		this.startSiteController(); // after all the parameter changes
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("44444", "2");
+		picker.setupOrderIdAsContainer("22222", "3");
+
+		/*
+		 * 6 order lines above will yield 6 work instructions
+		 * Simultaneous sequence 1, Sku1 in LocA. Count 1 on poscon 1. Count 2 on poscon 2.
+		 * Sequence 2 is Sku3 in LocB. Count 1 on poscon 1.
+		 * Sequence 3 is Sku4 in LocD. Count 1 on poscon 3.
+		 * Simultaneous sequence 4, Sku2 in LocC. Count 4 on poscon 3. Count 5 on poscon 1.
+		 */
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("1c: Screen shows the location, SKU, and total to pick");
+		String line1 = picker.getLastCheDisplayString(1);
+		String line2 = picker.getLastCheDisplayString(2);
+		String line3 = picker.getLastCheDisplayString(3);
+		String line4 = picker.getLastCheDisplayString(4);
+
+		Assert.assertEquals("LocA", line1);
+		Assert.assertEquals("Sku1", line2);
+		Assert.assertEquals("QTY 3", line3);
+		Assert.assertEquals("", line4);
+
+		LOGGER.info("1d: see that both poscons show their pick count: 1 and 2");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+
+		// bug was here
+		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+
+		LOGGER.info("2a: Complete the second poscon first");
+		picker.pick(2, 2);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("2b: see that poscons 1 count remains, and 2 is now oc. 3 still null/blank");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_O);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+
+		LOGGER.info("2c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocA", line1);
+		Assert.assertEquals("Sku1", line2);
+		Assert.assertEquals("QTY 1", line3);
+
+		LOGGER.info("3a: Complete the first poscon");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("3b: Poscon 1 gets the next job, poscon 2 remains oc. 3 still null/blank");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+
+		LOGGER.info("3c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocB", line1);
+		Assert.assertEquals("Sku3", line2);
+		Assert.assertEquals("QTY 1", line3);
+
+		LOGGER.info("4a: Complete the job on first poscon");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("4b: 3 gets the next jobs, poscon 2 remains oc. 1 is blank");
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+
+		LOGGER.info("4c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocD", line1);
+		Assert.assertEquals("Sku4", line2);
+		Assert.assertEquals("QTY 1", line3);
+
+		LOGGER.info("5a: Complete the job on first poscon. Now 1 is blank. Next job on 3");
+		picker.pick(1, 5);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+
+		LOGGER.info("5b: Complete the job on poscon3. Last jobs are simultaneous 1,3");
+		picker.pick(3, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("6a: Poscon 1 and 3 gets the next jobs, poscon 2 remains oc.");
+		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		// same bug was here
+		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+
+		LOGGER.info("6b: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocC", line1);
+		Assert.assertEquals("Sku2", line2);
+		Assert.assertEquals("QTY 9", line3);
+	}
+
+	@Test
+	public final void simulPickShort() throws IOException {
+		// Bug?  should be BLINK_FREQ
+		final Byte kBLINK_FREQ = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		final Byte kSOLID_FREQ = PosControllerInstr.SOLID_FREQ;
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku2,Test Item 2,4,each,LocC,2"
+				+ "\r\n1,USF314,COSTCO,44444,44444,Sku1,Test Item 1,2,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,44444,44444,Sku2,Test Item 2,3,each,LocC,2"
+				+ "\r\n1,USF314,COSTCO,22222,22222,Sku1,Test Item 1,5,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,22222,22222,Sku2,Test Item 2,6,each,LocC,2";
+		importOrdersData(facility, csvOrders);
+		this.getTenantPersistenceService().commitTransaction();
+
+		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(facility,
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+		propertyService.turnOffHK(facility);
+		this.getTenantPersistenceService().commitTransaction();
+		this.startSiteController(); // after all the parameter changes
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("44444", "2");
+		picker.setupOrderIdAsContainer("22222", "3");
+
+		/*
+		 * 6 order lines above will yield 6 work instructions in 2 simulpick groups of 3
+		 * Simultaneous sequence 1, Sku1 in LocA. Count 1 on poscon 1. Count 2 on poscon 2. Count 5 on poscon 3.
+		 * Simultaneous sequence 2, Sku2 in LocC. Count 4 on poscon 1. Count 3 on poscon 2. Count 6 on poscon 3.
+		 */
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("1c: Screen shows the location, SKU, and total to pick");
+		String line1 = picker.getLastCheDisplayString(1);
+		String line2 = picker.getLastCheDisplayString(2);
+		String line3 = picker.getLastCheDisplayString(3);
+		String line4 = picker.getLastCheDisplayString(4);
+
+		Assert.assertEquals("LocA", line1);
+		Assert.assertEquals("Sku1", line2);
+		Assert.assertEquals("QTY 8", line3);
+		Assert.assertEquals("", line4);
+
+		LOGGER.info("1d: see that both poscons show their pick count: 1 and 2");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+
+		LOGGER.info("2a: SHORT now. This should make all 3 poscons flash on their number");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
+
+		LOGGER.info("2c: Screen shows the location, SKU, and total to pick");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocA", line1);
+		Assert.assertEquals("Sku1", line2);
+		Assert.assertEquals("QTY 8", line3);
+
+		LOGGER.info("3a: Complete the first poscon with the full count. State should still be short pick");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+
+		LOGGER.info("3b: Poscon 1 goes out. 2 and 3 still flashing.");
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
+
+		LOGGER.info("3c: Screen shows same location, SKU. Total counts down.");
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+
+		Assert.assertEquals("LocA", line1);
+		Assert.assertEquals("Sku1", line2);
+		Assert.assertEquals("QTY 7", line3);
+
+		LOGGER.info("4a: Short poscon 3. What do poscons show then? Counts there? Still flashing?");
+		picker.pick(3, 3);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		// 3 went out. 2 also went out. Otherwise misleading to user.
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
+
+		LOGGER.info("4b: Say no to confirm. Should be back at DO_PICK. Nothing flashing");
+		line2 = picker.getLastCheDisplayString(2);
+		Assert.assertEquals(line2, CheDeviceLogic.YES_NO_MSG);
+		picker.scanCommand("NO");
+		// Comes to DO_PICK. One could argue it should remain at SHORT_PICK. but behavior is consistent with single short case.
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
+
+		LOGGER.info("5a: This time short and confirm");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		picker.pick(3, 3);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("5b: Poscon 3 job should have shorted. Poscon 2 should have shorted ahead. We should be on to the next simultaneous jobs");
+		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(3, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
+		Assert.assertEquals(6, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		line1 = picker.getLastCheDisplayString(1);
+		line2 = picker.getLastCheDisplayString(2);
+		line3 = picker.getLastCheDisplayString(3);
+		Assert.assertEquals("LocC", line1);
+		Assert.assertEquals("Sku2", line2);
+		Assert.assertEquals("QTY 13", line3);
+
+		LOGGER.info("6a: Just work these off");
+		picker.pick(2, 3);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		// brief diversion to see poscon states. 2 should be -- now. 1 and 3 with active picks
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+		Assert.assertEquals(6, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
+		picker.pick(1, 4);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pick(3, 6);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+
+		LOGGER.info("6b: See if the shorted and shorted-ahead poscons show --, and the one good one is oc");
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+
+	}
 
 }

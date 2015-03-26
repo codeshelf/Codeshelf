@@ -43,9 +43,14 @@ import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.RadioServlet;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.ServiceStatusHealthCheck;
+import com.codeshelf.security.AuthFilter;
+import com.codeshelf.security.AuthServlet;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.api.core.ResourceConfig;
+import com.sun.jersey.spi.container.servlet.ServletContainer;
 
 public class WebApiServer {
 
@@ -58,7 +63,13 @@ public class WebApiServer {
 		this.server = new Server();
 	}
 
-	public final void start(int port, CsDeviceManager deviceManager, CodeshelfApplication application, boolean enableSchemaManagement, String staticContentPath) {
+	public final void start(int port, CsDeviceManager deviceManager, CodeshelfApplication application) {
+		boolean enableSchemaManagement = Boolean.getBoolean("adminserver.schemamanagement");
+		boolean enableApi = Boolean.getBoolean("adminserver.api.enable");
+		boolean enableManagerApi = Boolean.getBoolean("adminserver.manager.enable");
+		boolean enableWebSockets = Boolean.getBoolean("adminserver.websockets.enable");
+		String staticContentPath = System.getProperty("webapp.content.path");
+
 		try {
 			NetworkTrafficServerConnector connector = new NetworkTrafficServerConnector(server);
 			connector.setPort(port);
@@ -74,24 +85,37 @@ public class WebApiServer {
 			if (deviceManager == null) {
 				// server only:
 
-				// rest API
-				contexts.addHandler(this.createRestApiHandler());
+				if(enableManagerApi) {
+					// manager API
+					contexts.addHandler(this.createManagerApiHandler());
+					contexts.addHandler(this.createAuthHandler());
+				}
 
-		        // websocket API
-				ServletContextHandler wscontext = new ServletContextHandler(ServletContextHandler.SESSIONS);
-				wscontext.setContextPath("/ws");
-				contexts.addHandler(wscontext);
-		        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
-		        wscontainer.addEndpoint(CsServerEndPoint.class);
+				if(enableApi) {
+					// rest API
+					// needs a better name
+					contexts.addHandler(this.createRestApiHandler());
+				}
+
+				if(enableWebSockets) {
+			        // websocket API
+					ServletContextHandler wscontext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+					wscontext.setContextPath("/ws");
+					contexts.addHandler(wscontext);
+			        ServerContainer wscontainer = WebSocketServerContainerInitializer.configureContext(wscontext);
+			        wscontainer.addEndpoint(CsServerEndPoint.class);
+				}
 
 		        // embedded static content web server
-				ResourceHandler resourceHandler = new ResourceHandler();
-				resourceHandler.setDirectoriesListed(false);
-				resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
-				resourceHandler.setResourceBase(staticContentPath);
-				ContextHandler resourceContextHandler=new ContextHandler("/");
-				resourceContextHandler.setHandler(resourceHandler);
-				contexts.addHandler(resourceContextHandler);				
+		        if(staticContentPath != null) {
+					ResourceHandler resourceHandler = new ResourceHandler();
+					resourceHandler.setDirectoriesListed(false);
+					resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
+					resourceHandler.setResourceBase(staticContentPath);
+					ContextHandler resourceContextHandler=new ContextHandler("/");
+					resourceContextHandler.setHandler(resourceHandler);
+					contexts.addHandler(resourceContextHandler);				
+		        }
 			}
 
 			server.start();
@@ -167,9 +191,6 @@ public class WebApiServer {
 			//////////////////////////
 			// only for server
 			//////////////////////////
-			
-			// user manager sql generator (temporary)
-			contextHandler.addServlet(new ServletHolder(new UsersServlet()),"/users");
 
 			// admin JSP handler
 			try {
@@ -198,16 +219,44 @@ public class WebApiServer {
 	}
 
 	private Handler createRestApiHandler() {
-		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS); // why sessions? -ivan
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		restApiContext.addFilter(TransactionFilter.class , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 		//restApiContext.setSecurityHandler(createRestApiSecurityHandler());
 
 		return restApiContext;
+	}
+	
+	private Handler createManagerApiHandler() {
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+		
+		context.setContextPath("/mgr");
+		// can't seem to inject both APIs, Guice gets confused.. hm
+		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
+		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		//context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
+		//context.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
+
+		ResourceConfig rc = new PackagesResourceConfig("com.codeshelf.manager.api");
+		String[] filters = new String[]{"org.secnod.shiro.jersey.ShiroResourceFilterFactory"};
+		rc.getProperties().put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES, filters);
+		ServletContainer container = new ServletContainer(rc);
+		context.addServlet(new ServletHolder(container), "/*");
+		return context;
+	}
+	
+	private Handler createAuthHandler() {
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);		
+		context.setContextPath("/auth");
+		context.addServlet(new ServletHolder(new AuthServlet()),"/");
+		return context;
 	}
 	
 	/*

@@ -6,12 +6,8 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
-import java.util.Map;
-
 import org.apache.commons.beanutils.ConvertUtilsBean;
-import org.apache.shiro.authc.credential.CredentialsMatcher;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
-import org.apache.shiro.crypto.hash.Md5Hash;
+import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,15 +24,18 @@ import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
+import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
@@ -44,7 +43,7 @@ import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -52,7 +51,6 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.name.Names;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.sun.jersey.api.core.PackagesResourceConfig;
@@ -90,7 +88,7 @@ public final class ServerMain {
 
 		application.startServices(); // this includes persistence and such, probably has to start before anything else
 
-		CsServerEndPoint.setSessionManagerService(dynamicInjector.getInstance(SessionManagerService.class));
+		CsServerEndPoint.setWebSocketManagerService(dynamicInjector.getInstance(WebSocketManagerService.class));
 		CsServerEndPoint.setMessageProcessor(dynamicInjector.getInstance(ServerMessageProcessor.class));
 		
 		application.startApplication();
@@ -110,7 +108,8 @@ public final class ServerMain {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
-				bind(ITenantManagerService.class).toInstance(TenantManagerService.getNonRunningInstance());
+				requestStaticInjection(TenantManagerService.class);
+				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
 				
 				requestStaticInjection(TenantPersistenceService.class);
 				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
@@ -120,8 +119,6 @@ public final class ServerMain {
 
 				requestStaticInjection(PropertyService.class);
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
-
-				//bind(EdiProcessor.class).to(EdiProcessor.class).in(Singleton.class);
 
 				bind(GuiceFilter.class);
 				
@@ -142,11 +139,11 @@ public final class ServerMain {
 				bind(ConvertUtilsBean.class).toProvider(ConverterProvider.class);
 				
 				// Shiro modules
+				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
 				bind(Realm.class).to(CodeshelfRealm.class);
-				bind(CredentialsMatcher.class).to(HashedCredentialsMatcher.class);
-				bind(HashedCredentialsMatcher.class);
-				bindConstant().annotatedWith(Names.named("shiro.hashAlgorithmName")).to(Md5Hash.ALGORITHM_NAME);
-				
+
+				requestStaticInjection(HmacAuthService.class);
+				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
 			
 			@Provides
@@ -158,17 +155,33 @@ public final class ServerMain {
 
 			@Provides
 			@Singleton
-			public SessionManagerService createSessionManagerService() {
-				SessionManagerService sessionManagerService = new SessionManagerService();
-				return sessionManagerService;				
+			public WebSocketManagerService createWebSocketManagerService() {
+				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
+				return webSocketManagerService;				
 			}
 			
-		}, createGuiceServletModule());
+		}, /*createShiroModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
 
 		return injector;
 	}
-	
-	private static ServletModule createGuiceServletModule() {
+/*	
+	private static ShiroModule createShiroModule() {
+		return new ShiroModule() {
+
+			@Override
+			protected void configureShiro() {
+				bindRealm().to(CodeshelfRealm.class).asEagerSingleton();
+			}
+
+			@Override
+			protected void bindSecurityManager(AnnotatedBindingBuilder<? super SecurityManager> bind) {
+	            bind.to(CodeshelfSecurityManager.class).asEagerSingleton();
+			}
+			
+		};
+	}
+	*/
+	private static ServletModule createGuiceServletModuleForApi() {
 		return new ServletModule() {
 		    @Override
 		    protected void configureServlets() {
@@ -188,4 +201,25 @@ public final class ServerMain {
 		    }
 		};
 	}
+
+/*	private static ServletModule createGuiceServletModuleForManager() {
+		return new ServletModule() {
+		    @Override
+		    protected void configureServlets() {
+		        // bind resource classes here
+		    	ResourceConfig rc = new PackagesResourceConfig( "com.codeshelf.manager.api" );
+		    	for ( Class<?> resource : rc.getClasses() ) {
+		    		bind( resource );	
+		    	}
+		    	
+		        // hook JerseyContainer into Guice Servlet
+		        bind(GuiceContainer.class);
+
+		        // hook Jackson into Jersey as the POJO <-> JSON mapper
+		        bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
+
+		        serve("/*").with(GuiceContainer.class);
+		    }
+		};
+	}*/
 }

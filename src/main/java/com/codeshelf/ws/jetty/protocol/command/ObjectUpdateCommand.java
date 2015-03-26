@@ -16,7 +16,7 @@ import com.codeshelf.ws.jetty.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public class ObjectUpdateCommand extends CommandABC {
 
@@ -26,8 +26,8 @@ public class ObjectUpdateCommand extends CommandABC {
 	
 	private PropertyUtilsBean propertyUtil = new PropertyUtilsBean();
 	
-	public ObjectUpdateCommand(UserSession session, ObjectUpdateRequest request) {
-		super(session);
+	public ObjectUpdateCommand(WebSocketConnection connection, ObjectUpdateRequest request) {
+		super(connection);
 		this.request = request;
 	}
 	
@@ -35,12 +35,6 @@ public class ObjectUpdateCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		ObjectUpdateResponse response = new ObjectUpdateResponse();
-		
-		// CRITICAL SECUTIRY CONCEPT.
-		// The remote end can NEVER get object results outside of it's own scope.
-		// Today, the scope is set by the user's ORGANIZATION.
-		// That means we can never return objects not part of the current (logged in) user's organization.
-		// THAT MEANS WE MUST ALWAYS ADD A WHERE CLAUSE HERE THAT LOCKS US INTO THIS.
 
 		// extract UUID
 		String className = request.getClassName();

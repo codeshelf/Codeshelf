@@ -15,9 +15,9 @@ public abstract class DatabaseConnection {
 		H2,POSTGRES,OTHER;
 	}
 	
-	public abstract String getUrl();
-	public abstract String getUsername();
-	public abstract String getPassword();
+	protected abstract String getUrl();
+	protected abstract String getUsername();
+	protected abstract String getPassword();
 
 	public SQLSyntax getSQLSyntax() {
 		String url = this.getUrl();

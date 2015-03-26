@@ -1,11 +1,9 @@
 package com.codeshelf.testframework;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -15,6 +13,9 @@ import javax.websocket.WebSocketContainer;
 
 import lombok.Getter;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.realm.Realm;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,6 +36,13 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.TcpServerInterface;
+import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.ManagerPersistenceService;
+import com.codeshelf.manager.ManagerSchema;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.UserPermission;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
@@ -46,15 +54,15 @@ import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.multitenancy.ITenantManagerService;
-import com.codeshelf.platform.multitenancy.ManagerPersistenceService;
-import com.codeshelf.platform.multitenancy.ManagerSchema;
-import com.codeshelf.platform.multitenancy.Tenant;
-import com.codeshelf.platform.multitenancy.TenantManagerService;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.AuthProviderService;
+import com.codeshelf.security.CodeshelfRealm;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
@@ -64,7 +72,7 @@ import com.codeshelf.ws.jetty.client.MessageCoordinator;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.server.CsServerEndPoint;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.SessionManagerService;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
@@ -98,10 +106,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static ServiceManager								siteconServiceManager		= null;
 
 	// app server static (reused) services
-	private static SessionManagerService						staticSessionManagerService;
+	private static WebSocketManagerService						staticWebSocketManagerService;
 	private static IMetricsService								staticMetricsService;
 	private static IPropertyService								staticPropertyService;
 	private static ServerMessageProcessor						staticServerMessageProcessor;
+	private static AuthProviderService							staticAuthProviderService;
 
 	// real non-mock instances
 	private static ITenantPersistenceService					realTenantPersistenceService;
@@ -126,16 +135,20 @@ public abstract class FrameworkTest implements IntegrationTest {
 	// instance services
 	protected ServiceManager									ephemeralServiceManager;
 	protected WorkService										workService;
+	protected InventoryService									inventoryService;
 	protected EventProducer										eventProducer				= new EventProducer();
 	protected WebApiServer										apiServer;
 
 	@Getter
 	protected ITenantPersistenceService							tenantPersistenceService;
+	protected ITenantManagerService								tenantManagerService;
+
 	@Getter
 	protected CsDeviceManager									deviceManager;
-	protected SessionManagerService								sessionManagerService;
+	protected WebSocketManagerService								webSocketManagerService;
 	protected IPropertyService									propertyService;
 	protected IMetricsService									metricsService;
+	protected AuthProviderService										authProviderService;
 
 	protected IRadioController									radioController;
 
@@ -159,6 +172,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 				requestStaticInjection(TenantPersistenceService.class);
 				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
 
+				requestStaticInjection(TenantManagerService.class);
+				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
+
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(DummyMetricsService.class).in(Singleton.class);
 
@@ -166,13 +182,20 @@ public abstract class FrameworkTest implements IntegrationTest {
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
 
 				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
+				
+				requestStaticInjection(HmacAuthService.class);
+				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
+				
+				// Shiro modules
+				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
+				bind(Realm.class).to(CodeshelfRealm.class);
 			}
 
 			@Provides
 			@Singleton
-			public SessionManagerService createSessionManagerService() {
-				SessionManagerService sessionManagerService = new SessionManagerService();
-				return sessionManagerService;
+			public WebSocketManagerService createWebSocketManagerService() {
+				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
+				return webSocketManagerService;
 			}
 
 			@Provides
@@ -190,17 +213,23 @@ public abstract class FrameworkTest implements IntegrationTest {
 		LOGGER = LoggerFactory.getLogger(FrameworkTest.class);
 
 		Injector injector = setupInjector();
-
+		
+		//staticSecurityManagerService = injector.getInstance(SecurityManager.class);
+		//SecurityUtils.setSecurityManager(staticSecurityManagerService);
+		
 		realTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
 		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
 
 		staticMetricsService = injector.getInstance(IMetricsService.class);
 		staticMetricsService.startAsync(); // always running, outside of service manager
 		ServiceUtility.awaitRunningOrThrow(staticMetricsService); 
+		staticAuthProviderService = injector.getInstance(AuthProviderService.class);
+		staticAuthProviderService.startAsync();
+		ServiceUtility.awaitRunningOrThrow(staticAuthProviderService); 
 
 		staticPropertyService = injector.getInstance(IPropertyService.class);
 
-		staticSessionManagerService = injector.getInstance(SessionManagerService.class);
+		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
 
 		// site controller services
@@ -219,12 +248,19 @@ public abstract class FrameworkTest implements IntegrationTest {
 			LOGGER.info("******************* Setting up test: " + this.testName.getMethodName() + " *******************");
 
 		// reset all services to defaults 
-		sessionManagerService = staticSessionManagerService;
+		webSocketManagerService = staticWebSocketManagerService;
 		propertyService = staticPropertyService;
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
-
+		authProviderService = staticAuthProviderService;
+		HmacAuthService.setInstance(staticAuthProviderService);
+		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
+		
+		// remove user/subject from main threadcontext 
+		// we cannot access other threads' contexts so we hope they cleaned up!
+		CodeshelfSecurityManager.removeCurrentUserIfPresent();
+		
 		radioController = null;
 		deviceManager = null;
 		apiServer = null;
@@ -235,6 +271,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		networkPersistentId = null;
 		che1PersistentId = null;
 		che2PersistentId = null;
+
+		if (staticWebSocketManagerService.hasAnySessions())
+			staticWebSocketManagerService.reset();
 
 		if (this.getFrameworkType().equals(Type.MINIMAL)) {
 			disablePersistence();
@@ -260,6 +299,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		if (staticClientConnectionManagerService != null) {
 			staticClientConnectionManagerService.setDisconnected();
+			for(int i=0;i<500 && staticWebSocketManagerService.hasAnySessions();i++) {
+				ThreadUtils.sleep(2);;
+			}
 		}
 		if (radioController != null) {
 			radioController.stopController();
@@ -291,9 +333,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 			ephemeralServiceManager = null;
 		}
 
-		sessionManagerService = null;
+		webSocketManagerService = null;
 		propertyService = null;
 		metricsService = null;
+		authProviderService = null;
 
 		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
 			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
@@ -316,7 +359,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	private void disablePersistence() {
 		this.tenantPersistenceService = null;
+		this.tenantManagerService = null;
 		TenantPersistenceService.setInstance(null);
+		TenantManagerService.setInstance(null);
 	}
 
 	private Map<Class<? extends IDomainObject>, ITypedDao<?>> createMockDaos() {
@@ -332,19 +377,21 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	private void setupRealPersistenceObjects() {
-		TenantManagerService.setInstance(realTenantManagerService);
-		
 		this.tenantPersistenceService = realTenantPersistenceService;
 		TenantPersistenceService.setInstance(tenantPersistenceService);
+
+		this.tenantManagerService = realTenantManagerService;
+		TenantManagerService.setInstance(tenantManagerService);
 	}
 
 	private void setDummyPersistence() {
 		Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = this.createMockDaos();
 
 		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
-
-		TenantManagerService.setInstance(new MockTenantManagerService(tenantPersistenceService.getDefaultSchema()));
 		TenantPersistenceService.setInstance(tenantPersistenceService);
+
+		tenantManagerService = new MockTenantManagerService(tenantPersistenceService.getDefaultSchema());
+		TenantManagerService.setInstance(tenantManagerService);
 	}
 
 	protected final void startSiteController() {
@@ -379,13 +426,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (persistenceServiceManager == null) {
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
-			ITenantManagerService tms = TenantManagerService.getMaybeRunningInstance();
 			PersistenceService<ManagerSchema> mps = ManagerPersistenceService.getMaybeRunningInstance();
 
-			if (!tms.isRunning())
-				services.add(tms);
 			if (!mps.isRunning())
 				services.add(mps);
+			if (!realTenantManagerService.isRunning())
+				services.add(realTenantManagerService);
 			if (!realTenantPersistenceService.isRunning())
 				services.add(realTenantPersistenceService);
 
@@ -406,8 +452,23 @@ public abstract class FrameworkTest implements IntegrationTest {
 		} else {
 			// not 1st persistence run. need to reset
 			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
+			// destroy any non-default tenants we created
+			List<Tenant> tenants = realTenantManagerService.getTenants();
+			for(Tenant tenant : tenants) {
+				if(!tenant.equals(realDefaultTenant)) {
+					realTenantManagerService.deleteTenant(tenant);
+				}
+			}
 			realTenantPersistenceService.forgetInitialActions(realDefaultTenant);
 			realTenantManagerService.resetTenant(realDefaultTenant);
+			List<UserRole> roles = realTenantManagerService.getRoles();
+			for(UserRole role : roles) {
+				realTenantManagerService.deleteRole(role);
+			}
+			List<UserPermission> permissions = realTenantManagerService.getPermissions();
+			for(UserPermission perm : permissions) {
+				realTenantManagerService.deletePermission(perm);
+			}
 		}
 
 		// make sure default properties are in the database
@@ -417,13 +478,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	private void startServer() {
-		if (staticSessionManagerService.isRunning())
-			staticSessionManagerService.reset();
-
 		if (serverServiceManager == null) {
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
-			services.add(staticSessionManagerService);
+			services.add(staticWebSocketManagerService);
 			services.add(staticPropertyService);
 
 			serverServiceManager = new ServiceManager(services);
@@ -436,14 +494,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		// [re]set up server endpoint 
 		try {
-			CsServerEndPoint.setSessionManagerService(staticSessionManagerService);
+			CsServerEndPoint.setWebSocketManagerService(staticWebSocketManagerService);
 			CsServerEndPoint.setMessageProcessor(staticServerMessageProcessor);
 		} catch (Exception e) {
 			LOGGER.debug("Exception setting session manager / message processor: " + e.toString());
 		}
 
 		apiServer = new WebApiServer();
-		apiServer.start(port, null, null, false, "./");
+		apiServer.start(port, null, null);
 	}
 
 	private void awaitConnection() {

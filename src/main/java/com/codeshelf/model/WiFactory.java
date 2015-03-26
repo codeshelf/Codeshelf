@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
@@ -29,6 +31,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.LightService;
 import com.codeshelf.util.SequenceNumber;
 import com.google.common.base.Strings;
 
@@ -139,11 +142,12 @@ public class WiFactory {
 	/**
 	 * Create a work instruction for and order item quantity picked into a container at a location.
 	 * @param inStatus
+	 * @param inType
 	 * @param inOrderDetail
-	 * @param inQuantityToPick
 	 * @param inContainer
+	 * @param inChe
 	 * @param inLocation
-	 * @param inPosALongPath
+	 * @param inTime
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
@@ -154,7 +158,6 @@ public class WiFactory {
 		Location inLocation,
 		final Timestamp inTime) throws DaoException {
 
-
 		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
 		if (resultWi == null) { //no more work to do
 			return null;
@@ -164,7 +167,7 @@ public class WiFactory {
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
-		if (inOrderDetail.isPreferredDetail()){
+		if (inOrderDetail.isPreferredDetail()) {
 			resultWi.doSetPickInstruction(inOrderDetail.getPreferredLocation());
 		} else if (locAlias != null) {
 			resultWi.doSetPickInstruction(locAlias.getAlias());
@@ -187,6 +190,7 @@ public class WiFactory {
 					inLocation,
 					inOrderDetail.getUomMasterId(),
 					cheColor);
+				setPosConInstructions(resultWi, inLocation);
 			} else {
 				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
 				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
@@ -202,9 +206,11 @@ public class WiFactory {
 						inOrderDetail.getItemMasterId(),
 						inOrderDetail.getUomMasterId(),
 						cheColor);
+					setPosConInstructions(resultWi, inLocation);
 				} else {
 					// The cross batch situation. We want the leds for the order location(s)
 					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
+					setPosConInstructions(resultWi, passedInDetailParent.getActiveOrderLocations());
 				}
 			}
 		}
@@ -273,7 +279,6 @@ public class WiFactory {
 				isNewWi = true;
 			}
 
-
 			// Update the WI
 			long seq = SequenceNumber.generate();
 			String wiDomainId = Long.toString(seq);
@@ -297,16 +302,14 @@ public class WiFactory {
 			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
 
 			if (!isNewWi) {
-			// remove and add? Or just add? Not too elegant
+				// remove and add? Or just add? Not too elegant
 				Che oldChe = resultWi.getAssignedChe();
 				if (oldChe != null && !oldChe.equals(inChe)) {
 					oldChe.removeWorkInstruction(resultWi);
 					inChe.addWorkInstruction(resultWi);
-				}
-				else if (oldChe == null || !oldChe.equals(inChe)){
+				} else if (oldChe == null || !oldChe.equals(inChe)) {
 					inChe.addWorkInstruction(resultWi);
 				}
-
 
 			}
 
@@ -321,8 +324,9 @@ public class WiFactory {
 				// If LOCAPICK was true, the inventory was made at the preferred location, so the wi location works normally
 				// If LOCAPICK was false, use the preferred location for the pick instruction, even though there is no such location.
 				String locStr = resultWi.getLocationId();
-				if (locStr.isEmpty() && preferredLocation != null) 
+				if (locStr.isEmpty() && preferredLocation != null)
 					locStr = preferredLocation;
+				// pickInstruction is not nullable, so must set to something, even if still blank.
 				resultWi.doSetPickInstruction(locStr);
 			}
 
@@ -330,7 +334,6 @@ public class WiFactory {
 		}
 		return resultWi;
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -360,6 +363,29 @@ public class WiFactory {
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocationList(inOrder.getActiveOrderLocations(), inColor);
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+	}
+
+	private static void setPosConInstructions(WorkInstruction wi, List<OrderLocation> locations) {
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		for (OrderLocation location : locations) {
+			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location.getLocation(), instructions);
+		}
+		setPosConInstructionsHelper(wi, instructions);
+	}
+
+	private static void setPosConInstructions(WorkInstruction wi, Location location) {
+		if (location.isLightablePoscon()) {
+			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions);
+			setPosConInstructionsHelper(wi, instructions);
+		}
+	}
+
+	private static void setPosConInstructionsHelper(WorkInstruction wi, List<PosControllerInstr> instructions) {
+		if (!instructions.isEmpty()) {
+			String instrStr = PosConInstrGroupSerializer.serializePosConInstrString(instructions);
+			wi.setPosConCmdStream(instrStr);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -402,7 +428,7 @@ public class WiFactory {
 		Double posAlongPath = null;
 		Item theItem = inLocation.getStoredItemFromMasterIdAndUom(inItemMasterId, inUomId);
 		if (theItem == null) {
-			//The below warding was removed due to DEV-695. The error was firing needlessly when LOCAPICK was off but the preferred location was specified.
+			//The below warning was removed due to DEV-695. The error was firing needlessly when LOCAPICK was off but the preferred location was specified.
 			//In the future, we'll need to handle moving preferred location whenever users move the Item in the UI
 			//LOGGER.warn("did not find item in setOutboundWorkInstructionLedPatternFromInventoryItem using location" );
 			posAlongPath = inLocation.getPosAlongPath();
@@ -421,7 +447,8 @@ public class WiFactory {
 		// if the location does not have controller associated, we would NPE below. Might as well check now.
 		LedController theLedController = inLocation.getEffectiveLedController();
 		if (theLedController == null) {
-			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for location " + inLocation.getPrimaryAliasId());
+			LOGGER.warn("Cannot set LED pattern on new pick WorkInstruction because no aisle controller for location "
+					+ inLocation.getPrimaryAliasId());
 			// Note that is aisles are created with 0 LEDs, then this error is not hit. This denotes an intent to light, but probably forgot to assign controller.
 			return;
 		}

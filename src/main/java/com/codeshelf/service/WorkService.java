@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +82,7 @@ import com.google.common.collect.Lists;
 public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
 	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
-	private static final String			SHUTDOWN_MESSAGE	= "*****SHTUDOWN*****";
+	private static final String			SHUTDOWN_MESSAGE	= "*****SHUTDOWN*****";
 	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
 	private static Double				BAY_ALIGNMENT_FUDGE			= 0.25;
 
@@ -139,6 +141,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		this.capacity = DEFAULT_CAPACITY;
 	}
 
+	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
+		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
+		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
+		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion>of(
+				Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL),
+				Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.ge("completed", new Timestamp(startDate.getTime())),
+				Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
+			ImmutableList.of(Order.asc("completed")));
+			
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -327,6 +341,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		wi.setStarted(startTime);
 		wi.setStatus(newStatus);
 		wi.setType(WorkInstructionTypeEnum.ACTUAL);
+		wi.setPickerId("SIMULATED");
 
 		//send in in like in came from SiteController
 		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
@@ -374,12 +389,20 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		@SuppressWarnings("unused")
 		Timestamp theTime = now();
 
-		// Pass facility as the default location of a short WI..
-		WorkInstruction aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
-			WorkInstructionTypeEnum.PLAN,
-			orderDetail,
-			inChe,
-			null); // Could be normal WI, or a short WI
+		Facility inFacility = inChe.getFacility();
+		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
+		WorkInstruction aWi = null;
+		// workItem will contain an Instruction if an item was found on some path or an OrderDetail if it was not.
+		// In LinePick, we are OK with items without a location. So, if does return with OrderDetail, just create an Instruction manually.
+		if (workItem == null || workItem.getInstruction() == null) {
+			aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+				WorkInstructionTypeEnum.PLAN,
+				orderDetail,
+				inChe,
+				null); // Could be normal WI, or a short WI
+		} else {
+			aWi = workItem.getInstruction();
+		}
 		if (aWi != null) {
 			wiResultList.add(aWi);
 			orderDetail.reevaluateStatus();

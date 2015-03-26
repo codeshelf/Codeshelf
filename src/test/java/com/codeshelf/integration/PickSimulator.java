@@ -26,6 +26,7 @@ public class PickSimulator {
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
 	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
@@ -154,11 +155,7 @@ public class PickSimulator {
 	}
 
 	public void buttonPress(int inPosition, int inQuantity) {
-		// Caller's responsibility to get the quantity correct. Normally match the planQuantity. Normally only lower after SHORT command.
-		CommandControlButton buttonCommand = new CommandControlButton();
-		buttonCommand.setPosNum((byte) inPosition);
-		buttonCommand.setValue((byte) inQuantity);
-		cheDeviceLogic.buttonCommandReceived(buttonCommand);
+		cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
 	}
 
 	// Useful, primitive methods for checking the result after some actions
@@ -193,7 +190,7 @@ public class PickSimulator {
 		// returns 0 if none
 		if (!getActivePickList().contains(inWorkInstruction))
 			return 0;
-		byte button = cheDeviceLogic.buttonFromContainer(inWorkInstruction.getContainerId());
+		byte button = cheDeviceLogic.getPosconIndexOfWi(inWorkInstruction);
 		return button;
 	}
 
@@ -296,56 +293,23 @@ public class PickSimulator {
 	}
 
 	public Byte getLastSentPositionControllerDisplayValue(byte position) {
-		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getReqQty();
-		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getReqQty();
-		} else {
-			return null;
-		}
-
+		return cheDeviceLogic.getLastSentPositionControllerDisplayValue(position);
 	}
 
 	public Byte getLastSentPositionControllerDisplayFreq(byte position) {
-		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getFreq();
-		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getFreq();
-		} else {
-			return null;
-		}
+		return cheDeviceLogic.getLastSentPositionControllerDisplayFreq(position);
 	}
 
 	public Byte getLastSentPositionControllerDisplayDutyCycle(byte position) {
-		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getDutyCycle();
-		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getDutyCycle();
-		} else {
-			return null;
-		}
+		return cheDeviceLogic.getLastSentPositionControllerDisplayDutyCycle(position);
 	}
 
 	public Byte getLastSentPositionControllerMinQty(byte position) {
-		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getMinQty();
-		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getMinQty();
-		} else {
-			return null;
-		}
-
+		return cheDeviceLogic.getLastSentPositionControllerMinQty(position);
 	}
 
 	public Byte getLastSentPositionControllerMaxQty(byte position) {
-		if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(position).getMaxQty();
-		} else if (cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
-			return cheDeviceLogic.getPosToLastSetIntrMap().get(PosControllerInstr.POSITION_ALL).getMaxQty();
-		} else {
-			return null;
-		}
-
+		return cheDeviceLogic.getLastSentPositionControllerMaxQty(position);
 	}
 
 	/**

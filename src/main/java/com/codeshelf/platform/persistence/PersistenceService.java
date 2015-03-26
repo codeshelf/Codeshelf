@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 
 public abstract class PersistenceService<SCHEMA_TYPE extends Schema> extends AbstractCodeshelfIdleService implements IPersistenceService<SCHEMA_TYPE> {
-	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceServiceImpl.class);
+	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
 
 	// define behavior of service
 	@Override

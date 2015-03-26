@@ -2,24 +2,24 @@ package com.codeshelf.metrics;
 
 import java.util.Collection;
 
-import com.codeshelf.ws.jetty.server.SessionManagerService;
-import com.codeshelf.ws.jetty.server.UserSession;
-import com.codeshelf.ws.jetty.server.UserSession.State;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
+import com.codeshelf.ws.jetty.server.WebSocketConnection.State;
+import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 
 public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
 
-	SessionManagerService sessionManager;
+	WebSocketManagerService sessionManager;
 	
-	public ActiveSiteControllerHealthCheck(SessionManagerService sessionManager) {
+	public ActiveSiteControllerHealthCheck(WebSocketManagerService sessionManager) {
 		super("Active Site Controllers");
 		this.sessionManager = sessionManager;
 	}
 	
     @Override
     protected Result check() throws Exception {
-    	Collection<UserSession> sessions = sessionManager.getSessions();
+    	Collection<WebSocketConnection> sessions = sessionManager.getWebSocketConnections();
     	int c=0;
-    	for (UserSession session : sessions) {
+    	for (WebSocketConnection session : sessions) {
     		if (session.getLastState()==State.ACTIVE && session.isSiteController()) {
     			c++;
     		}

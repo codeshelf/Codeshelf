@@ -1,7 +1,6 @@
 package com.codeshelf.device;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,10 +22,11 @@ import com.codeshelf.ws.jetty.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
 import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.jetty.protocol.response.GetWorkResponse;
+import com.codeshelf.ws.jetty.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.LoginResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.google.inject.Inject;
 
 public class SiteControllerMessageProcessor implements IMessageProcessor {
@@ -46,7 +46,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public void handleResponse(UserSession session, ResponseABC response) {
+	public void handleResponse(WebSocketConnection session, ResponseABC response) {
 		LOGGER.debug("Response received:" + response);
 		if (response.getStatus() != ResponseStatus.Success) {
 			LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
@@ -65,6 +65,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					// DEV-582 hook up to AUTOSHRT parameter
 					deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
+					String pickMult = loginResponse.getPickMultValue();
+					deviceManager.setPickMultValue(Boolean.parseBoolean(pickMult));
 					deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
 					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 					deviceManager.setSequenceKind(loginResponse.getSequenceKind());
@@ -121,6 +123,15 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
 			}
 		}
+		//////////////////////////////////////////
+		// Handler for Get Order Detail Work-- LINE_SCAN work flow
+		else if (response instanceof InventoryUpdateResponse) {
+			InventoryUpdateResponse inventoryScanResponse = (InventoryUpdateResponse) response;
+			if (response.getStatus() == ResponseStatus.Success) {
+				this.deviceManager.processInventoryScanRespose(inventoryScanResponse.getStatusMessage());
+			}
+		}
+		
 		// Handle server-side errors
 		else if (response instanceof FailureResponse) {
 			FailureResponse failureResponse = (FailureResponse) response;
@@ -134,7 +145,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public void handleMessage(UserSession session, MessageABC message) {
+	public void handleMessage(WebSocketConnection session, MessageABC message) {
 		//////////////////////////////////////////
 		// Handler for Network Update
 		if (message instanceof NetworkStatusMessage) {
@@ -167,7 +178,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	}
 
 	@Override
-	public ResponseABC handleRequest(UserSession session, RequestABC request) {
+	public ResponseABC handleRequest(WebSocketConnection session, RequestABC request) {
 		LOGGER.info("Request received for processing: " + request);
 		CommandABC command = null;
 		ResponseABC response = null;

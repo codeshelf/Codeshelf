@@ -2,16 +2,16 @@ package com.codeshelf.ws.jetty.protocol.message;
 
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.codeshelf.ws.jetty.server.UserSession;
+import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 public interface IMessageProcessor {
 	
 //	@Setter
 //	MessageCoordinator messageCoordinator;
 	
-	ResponseABC handleRequest(UserSession session, RequestABC request);
+	ResponseABC handleRequest(WebSocketConnection session, RequestABC request);
 
-	void handleResponse(UserSession session, ResponseABC response);
+	void handleResponse(WebSocketConnection session, ResponseABC response);
 
-	void handleMessage(UserSession session, MessageABC message);
+	void handleMessage(WebSocketConnection session, MessageABC message);
 }

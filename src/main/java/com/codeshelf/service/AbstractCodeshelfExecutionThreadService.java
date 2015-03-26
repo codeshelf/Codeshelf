@@ -2,7 +2,7 @@ package com.codeshelf.service;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 
-public abstract class AbstractCodeshelfExecutionThreadService extends AbstractExecutionThreadService implements ICodeshelfService {
+public abstract class AbstractCodeshelfExecutionThreadService extends AbstractExecutionThreadService implements CodeshelfService {
 
 	private boolean started = false;
 

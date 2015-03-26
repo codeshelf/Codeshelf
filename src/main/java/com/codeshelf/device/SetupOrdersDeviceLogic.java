@@ -17,6 +17,7 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.apache.commons.lang.StringUtils;
@@ -39,7 +40,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger					LOGGER	= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
+	private static final Logger					LOGGER						= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
 
 	// The CHE's container map.
 	private Map<String, String>					mPositionToContainerMap;
@@ -54,6 +55,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	private String								mLocationId;
+
+	@Getter
+	@Setter
+	private boolean								mInventoryCommandAllowed	= true;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -110,9 +115,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1, OR_SCAN_LOCATION, OR_SCAN_START, SHOWING_WI_COUNTS);
 					else
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
-						LOCATION_SELECT_REVIEW_MSG_LINE_2,
-						LOCATION_SELECT_REVIEW_MSG_LINE_3,
-						SHOWING_WI_COUNTS);
+							LOCATION_SELECT_REVIEW_MSG_LINE_2,
+							LOCATION_SELECT_REVIEW_MSG_LINE_3,
+							SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 
@@ -194,6 +199,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					this.showCartSetupFeedback();
 					break;
 
+				case SCAN_GTIN:
+					if (lastScanedGTIN == null) {
+						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
+					} else {
+						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
+					}
+					break;
+					
+				case PUT_WALL_SCAN_ORDER:
+					sendDisplayCommand(SCAN_PUTWALL_ORDER_MSG, SCAN_PUTWALL_LINE2_MSG);
+					break;
+
+				case PUT_WALL_SCAN_LOCATION:
+					sendDisplayCommand(SCAN_PUTWALL_LOCATION_MSG, SCAN_PUTWALL_LINE2_MSG);
+					break;
+
 				default:
 					break;
 			}
@@ -206,6 +227,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Command scans are split out by command then state because they are more likely to be state independent
 	 */
 	protected void processCommandScan(final String inScanStr) {
+
+		updateInventoryCommandAccess(inScanStr);
 
 		switch (inScanStr) {
 
@@ -237,6 +260,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				clearErrorCommandReceived();
 				break;
 
+			case INVENTORY_COMMAND:
+				inventoryCommandReceived();
+				break;
+
+			case ORDER_WALL_COMMAND:
+				orderWallCommandReceived();
+				break;
+
+			case PUT_WALL_COMMAND:
+				putWallCommandReceived();
+				break;
+
 			default:
 
 				//Legacy Behavior
@@ -245,6 +280,64 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				break;
 		}
+	}
+
+	protected void orderWallCommandReceived() {
+		// state sensitive. Only allow at start and finish for now.
+		switch (mCheStateEnum) {
+			case CONTAINER_SELECT:
+				// only if no container/orders at all have been set up
+				if (mPositionToContainerMap.size() == 0) {
+					setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+				} else {
+					LOGGER.warn("User: {} attempted to do ORDER_WALL after having some pick orders set up", this.getUserId());
+				}
+				break;
+
+			case PICK_COMPLETE:
+				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+				break;
+
+			default:
+				break;
+		}
+
+	}
+
+	protected void putWallCommandReceived() {
+		// state sensitive. Only allow at start and finish for now.
+
+	}
+
+	protected void resetInventoryCommandAllowed() {
+		lastScanedGTIN = null;
+		setMInventoryCommandAllowed(true);
+	}
+
+	protected void updateInventoryCommandAccess(String inCommandStr) {
+		if (!inCommandStr.equals(INVENTORY_COMMAND)) {
+			setMInventoryCommandAllowed(false);
+		}
+
+		else if (inCommandStr.equals(LOGOUT_COMMAND)) {
+			setMInventoryCommandAllowed(true);
+		}
+	}
+
+	protected void inventoryCommandReceived() {
+
+		switch (mCheStateEnum) {
+			case CONTAINER_SELECT:
+				if (isMInventoryCommandAllowed()) {
+					setState(CheStateEnum.SCAN_GTIN);
+				} else {
+					LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
+				}
+				break;
+			default:
+				break;
+		}
+
 	}
 
 	protected void clearErrorCommandReceived() {
@@ -258,6 +351,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case NO_CONTAINERS_SETUP:
 				clearAllPositionControllers();
 				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+			case SCAN_GTIN:
+				resetInventoryCommandAllowed();
+				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
+
+			case PUT_WALL_SCAN_ORDER:
+			case PUT_WALL_SCAN_LOCATION:
+				// DEV-708 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
+				// Perhaps will need a member variable, but for now we can tell by the state of the container map
+				if (mPositionToContainerMap.size() == 0) {
+					setState(CheStateEnum.CONTAINER_SELECT);
+				} else {
+					setState(CheStateEnum.PICK_COMPLETE);
+				}
 				break;
 
 			default:
@@ -300,6 +408,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SCAN_SOMETHING_SHORT:
 				confirmSomethingShortPick(inScanStr);
+				break;
+
+			case SCAN_GTIN:
 				break;
 
 			default:
@@ -352,6 +463,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// CheDeviceLogic does the main shorting transactions
 		super.doShortTransaction(inWi, inActualPickQuantity);
 
+		// See that doNormalPick will remove from activePickList; therefore, any short should as well.
+		if (mActivePickWiList.contains(inWi))
+			mActivePickWiList.remove(inWi);
+
 		// Extra stuff for setup_orders is keeping track of poscon feedback information
 		//Decrement count as short
 		if (!inWi.isHousekeeping()) {
@@ -360,40 +475,42 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 			count.decrementGoodCountAndIncrementShortCount();
 
-			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
-			Byte position = null;
-			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
-				if (containerMapEntry.getValue().equals(containerId)) {
-					position = Byte.valueOf(containerMapEntry.getKey());
-					break;
-				}
+			// TODO
+			// Bug? This may have shorted ahead, so need to do more feedback
+
+			Byte position = getPosconIndexOfContainerId(containerId);
+			if (!position.equals(0)) {
+				this.showCartRunFeedbackIfNeeded(position);
 			}
-			this.showCartRunFeedbackIfNeeded(position);
-		}
+
+		} else
+			LOGGER.error("unexpected housekeep in doShortTransaction");
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Process the Yes after a short. P
+	 * Process the Yes after a short. Very complicated for simultaneous picks
 	 */
 	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
-		// HACK HACK HACK
-		// StitchFix is the first client and they only pick one item at a time - ever.
-		// When we have h/w that picks more than one item we'll address this.
+
+		notifyWiVerb(inWi, "SHORT", kLogAsWarn);
 		doShortTransaction(inWi, inPicked);
 
-		LOGGER.info("Pick shorted: " + inWi);
+		clearLedAndPosConControllersForWi(inWi); // wrong? What about any short aheads?
 
-		clearLedControllersForWi(inWi);
-
-		// DEV-582 hook up to AUTOSHRT parameter
-		if (mDeviceManager.getAutoShortValue())
+		// Depends on AUTOSHRT parameter
+		boolean autoShortOn = mDeviceManager.getAutoShortValue();
+		if (autoShortOn) {
 			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+		}
 
+		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
-			// This is tricky. Simultaneous work instructions: which was short? All of them?
-			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in confirmShortPick");
+			if (autoShortOn) {
+				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick");
+				LOGGER.error("wi = {}", mActivePickWiList.get(0)); // log the first to help understand
+			}
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
@@ -425,25 +542,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void confirmSomethingShortPick(final String inScanStr) {
 		if (inScanStr.equals(YES_COMMAND)) {
-			List<WorkInstruction> wiList = this.getActivePickWiList();
-			WorkInstruction wi = null;
-			if (wiList.size() > 0)
-				wi = wiList.get(0);
-
+			WorkInstruction wi = mShortPickWi;
 			if (wi != null) {
-					
-				// Need to clear poscon
-				String containerId = wi.getContainerId();
-				if (containerId != null) {
-					for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-						if (containerId.equals(entry.getValue())){
-							Byte position = Byte.valueOf(entry.getKey());
-							clearOnePositionController(position);
-						}
-					}
-				}
-				
-				processShortPickYes(wi, 0);
+				processShortPickYes(wi, mShortPickQty);
 			}
 		} else {
 			// Just return to showing the active picks.
@@ -505,9 +606,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	private boolean selectNextActivePicks() {
-		final boolean kDoMultipleWiPicks = false;
+		boolean doMultipleWiPicks = mDeviceManager.getPickMultValue(); // DEV-451
 
 		boolean result = false;
+
+		mActivePickWiList.clear(); // repopulate from mAllPicksWiList.
 
 		// Loop through each container to see if there is a WI for that container at the next location.
 		// The "next location" is the first location we find for the next pick.
@@ -515,30 +618,36 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if (mPositionToContainerMap.values().isEmpty()) {
-				LOGGER.warn(this + " assigned work but no containers assigned");
+			if (getPosconIndexOfWi(wi) == 0) {
+				LOGGER.error("{} not in container map", wi.getContainerId());
+				break;
 			}
-			for (String containerId : mPositionToContainerMap.values()) {
-				// If the WI is for this container then consider it.
-				if (wi.getContainerId().equals(containerId)) {
-					// If the WI is INPROGRESS or NEW then consider it.
-					if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
-							|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
-						if ((firstLocationId == null) || (firstLocationId.equals(wi.getLocationId()))) {
-							if ((firstItemId == null) || (firstItemId.equals(wi.getItemId()))) {
-								firstLocationId = wi.getLocationId();
-								firstItemId = wi.getItemId();
-								wi.setStarted(new Timestamp(System.currentTimeMillis()));
-								mActivePickWiList.add(wi);
-								result = true;
-								if (!kDoMultipleWiPicks)
-									return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
-							}
-						}
+
+			// If the WI is INPROGRESS or NEW then consider it.
+			if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
+					|| (wi.getStatus().equals(WorkInstructionStatusEnum.INPROGRESS))) {
+				// if we did not have one yet, make sure we add the first. Using firstItemId == null as our test
+				if (firstItemId == null || wiMatchesItemLocation(firstItemId, firstLocationId, wi)) {
+					firstLocationId = wi.getPickInstruction();
+					firstItemId = wi.getItemId();
+					wi.setStarted(new Timestamp(System.currentTimeMillis()));
+
+					// Temporary
+					if (mActivePickWiList.contains(wi)) {
+						LOGGER.error("Not adding work instruction to active list again {}", wi);
+					} else {
+						mActivePickWiList.add(wi);
 					}
+
+					result = true;
+					if (!doMultipleWiPicks)
+						return true; // bail here instead of continuing to next wi in mAllPicksWiList, looking for location/item match
 				}
 			}
 		}
+		/*
+			}
+		} */
 
 		return result;
 	}
@@ -575,7 +684,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return false;
 		}
 		if (shortId.compareTo(proposedId) == 0) {
-			LOGGER.info("SHORT AHEAD " + inProposedWi);
 			return true;
 		}
 
@@ -631,9 +739,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// - So track the previous work instruction as we iterate. If there is a housekeep right before a short ahead, we assume it is not needed.
 		// - Repeat: definitely not needed. Baychange: maybe not needed. Better to over-remove than leave a final bay change at the end of the list.
 
+		// Warning: for simultaneous work instructions, "short ahead" might actually be behind in the sequence. So we need to iterate the activePickList always.
+
 		Integer laterCount = 0;
 		Integer toShortCount = 0;
 		Integer removeHousekeepCount = 0;
+
+		/* old Algorithm
 		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
 		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
 		WorkInstruction prevWi = null;
@@ -642,21 +754,65 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				laterCount++;
 				if (sameProductLotEtc(wi, inShortWi)) {
 					// When simultaneous pick work instructions return, we must not short ahead within the simultaneous pick. See CD_0043 for details.
-					if (!mActivePickWiList.contains(wi)) {
+					// if (!mActivePickWiList.contains(wi)) {
+					toShortCount++;
+					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
+					if (unCompletedUnneededHousekeep(prevWi)) {
+						if (mActivePickWiList.contains(prevWi))
+							LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
+						removeHousekeepCount++;
+						doCompleteUnneededHousekeep(prevWi);
+					}
+					// Short aheads will always set the actual pick quantity to zero.
+					doShortTransaction(wi, 0);
+					// }
+				}
+			}
+			prevWi = wi;
+		}
+		*/
+
+		// New algorithm. Assemble what we want to short
+		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
+		// Find short aheads from the active picks first, which might have lower sort values.
+		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
+		for (WorkInstruction wi : getActivePickWiList()) {
+			if (wi.isHousekeeping()) {
+				LOGGER.error("unanticipated housekeeping WI in mActivePickWiList in doShortAheads");
+			}
+			if (!wi.equals(inShortWi))
+				if (sameProductLotEtc(wi, inShortWi)) {
+					toShortCount++;
+					toShortList.add(wi);
+				}
+		}
+		// Now look for later work instructions to short, and remove housekeeps as necessary.
+		WorkInstruction prevWi = null;
+		for (WorkInstruction wi : mAllPicksWiList) {
+			if (laterWi(wi, inShortWi)) {
+				laterCount++;
+				if (sameProductLotEtc(wi, inShortWi)) {
+					// might be already in the list from above
+					if (!toShortList.contains(wi)) {
 						toShortCount++;
-						// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
-						if (unCompletedUnneededHousekeep(prevWi)) {
-							if (mActivePickWiList.contains(prevWi))
-								LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
-							removeHousekeepCount++;
-							doCompleteUnneededHousekeep(prevWi);
-						}
-						// Short aheads will always set the actual pick quantity to zero.
-						doShortTransaction(wi, 0);
+						toShortList.add(wi);
+					}
+					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
+					if (unCompletedUnneededHousekeep(prevWi)) {
+						if (mActivePickWiList.contains(prevWi))
+							LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
+						removeHousekeepCount++;
+						doCompleteUnneededHousekeep(prevWi);
 					}
 				}
 			}
 			prevWi = wi;
+		}
+		// Finally, do all our shorts
+		for (WorkInstruction wi : toShortList) {
+			// Short aheads will always set the actual pick quantity to zero.
+			notifyWiVerb(wi, "SHORT_AHEAD", kLogAsWarn);
+			doShortTransaction(wi, 0);
 		}
 
 		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
@@ -681,17 +837,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
-
 			// Check to see if this container is already setup in a position.
-			Iterator<Entry<String, String>> setIterator = mPositionToContainerMap.entrySet().iterator();
-			while (setIterator.hasNext()) {
-				Entry<String, String> entry = setIterator.next();
-				if (entry.getValue().equals(mContainerInSetup)) {
-					setIterator.remove();
-					this.clearOnePositionController(Byte.valueOf(entry.getKey()));
-					break;
-				}
+
+			byte currentAssignment = getPosconIndexOfContainerId(mContainerInSetup);
+			if (currentAssignment != 0) {
+				// careful: 0 also equals PosControllerInstr.POSITION_ALL
+				clearContainerAssignmentAtIndex(currentAssignment);
+				this.clearOnePositionController(currentAssignment);
 			}
+
 			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
 			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
 			// this is a "ride along" error. Would be nice if the user could see it immediately.
@@ -728,7 +882,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_SOMETHING:
 				setState(CheStateEnum.SCAN_SOMETHING_SHORT);
 				break;
+
 			case SCAN_SOMETHING_SHORT:
+				break;
+
+			case SCAN_GTIN:
 				break;
 
 			//Anywhere else we can start work if there's anything setup
@@ -739,7 +897,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (wi.isHousekeeping())
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					else
-						setState(CheStateEnum.SHORT_PICK); // Used to be SHORT_PICK_CONFIRM
+						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
 				} else {
 					// Stay in the same state - the scan made no sense.
 					invalidScanMsg(mCheStateEnum);
@@ -776,6 +934,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerSelectScan(COMMAND_PREFIX, SETUP_COMMAND);
 				break;
 
+			case SCAN_GTIN:
 			default:
 				//DEV-577 Do nothing
 				break;
@@ -793,6 +952,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			clearAllPositionControllers();
+			this.setUserId(inScanStr);
 			setState(CheStateEnum.CONTAINER_SELECT);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
@@ -809,8 +969,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
-		
-		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), inLocationStr, getMReversePickOrder(), reverseOrderFromLastTime);
+
+		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
+			getPersistentId(),
+			inLocationStr,
+			getMReversePickOrder(),
+			reverseOrderFromLastTime);
 		setState(CheStateEnum.GET_WORK);
 	}
 
@@ -880,6 +1044,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.
 				processVerifyScan(inScanPrefixStr, inContent);
+				break;
+
+			case SCAN_GTIN:
+				processGtinScan(inScanPrefixStr, inContent);
+				break;
+
+			case PUT_WALL_SCAN_LOCATION:
+				processPutWallLocationScan(inScanPrefixStr, inContent);
+				break;
+
+			case PUT_WALL_SCAN_ORDER:
+				processPutWallOrderScan(inScanPrefixStr, inContent);
 				break;
 
 			default:
@@ -1017,7 +1193,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
-				LOGGER.info("Position Feedback: Poisition {} Counts {}", position, wiCount);
+				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
 					if (wiCount.hasBadCounts()) {
@@ -1062,7 +1238,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		sendPositionControllerInstructions(instructions);
 	}
 
-	/** Shows the count feedback on the position controller during the cart run
+	/** Shows the count feedback on the position controller during the cart run.
+	 * If called for a specific position, will clear the position if there was no feedback. Avoids complex logic elsewhere.
 	 */
 	protected void showCartRunFeedbackIfNeeded(Byte inPosition) {
 		if (inPosition == null) {
@@ -1070,9 +1247,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 
+		// Temporary
+		LOGGER.info("showCartRunFeedbackIfNeeded posconIndex {} called", inPosition);
+
 		//Generate position controller commands
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
+		boolean specificPositionCalled = false;
 		if (PosControllerInstr.POSITION_ALL == inPosition) {
 			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 				String containerId = containerMapEntry.getValue();
@@ -1084,6 +1265,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 		} else {
+			specificPositionCalled = true;
 			String containerId = mPositionToContainerMap.get(inPosition.toString());
 			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 			PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, inPosition);
@@ -1092,9 +1274,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 
-		//Show counts on position controllers
+		//Show counts on position controllers. Or, if was called specifically, clears the poscon if there is no feedback to show.
 		if (!instructions.isEmpty()) {
 			sendPositionControllerInstructions(instructions);
+		} else if (specificPositionCalled) {
+			clearOnePositionController(inPosition);
 		}
 	}
 
@@ -1156,6 +1340,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				break;
 
+			case SCAN_GTIN:
+				break;
+
 			//Anywhere else we can start work if there's anything setup
 			case CONTAINER_SELECT:
 			default:
@@ -1180,7 +1367,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void startWork(final String inScanedPickDirections) {
 		boolean isReverse = inScanedPickDirections.equals(REVERSE_COMMAND);
-		
+
 		clearAllPositionControllers();
 		mContainerInSetup = "";
 		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
@@ -1225,7 +1412,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		LOGGER.info("Pick completed: " + inWi);
+		notifyWiVerb(inWi, "COMPLETE by button", kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 
@@ -1235,22 +1422,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 			count.decrementGoodCountAndIncrementCompleteCount();
 
-			//We can optionally change the containers map to a BiMap to avoid this reverse lookup
-			Byte position = null;
-			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
-				if (containerMapEntry.getValue().equals(containerId)) {
-					position = Byte.valueOf(containerMapEntry.getKey());
-					break;
-				}
+			Byte position = getPosconIndexOfContainerId(containerId);
+			// TODO unnecessary?
+			if (!position.equals(0)) {
+				this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific on if no feedback
 			}
-			this.showCartRunFeedbackIfNeeded(position);
 		}
 
-		clearLedControllersForWi(inWi);
+		clearLedAndPosConControllersForWi(inWi); // includes putwall poscons, not CHE poscons
 
+		// If PICKMULT if on, there still might be other jobs in active pick list. If off, there should not be
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
-			LOGGER.error("Simulataneous work instructions turned off currently, so unexpected case in processNormalPick");
+			if (!mDeviceManager.getPickMultValue()) {
+				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in processNormalPick");
+				// let's log the first just for fun
+				LOGGER.error("wi = {}", mActivePickWiList.get(0));
+			}
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
@@ -1265,6 +1453,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private String getContainerIdFromButtonNum(Integer inButtonNum) {
 		return mPositionToContainerMap.get(Integer.toString(inButtonNum));
+	}
+
+	private void clearContainerAssignmentAtIndex(byte posconIndex) {
+		// careful: POSITION_ALL is zero
+		if (PosControllerInstr.POSITION_ALL.equals(posconIndex))
+			LOGGER.error("Incorrect use of clearContainerAssignmentAtIndex"); // did you really intend mPositionToContainerMap.clear()?
+		else
+			mPositionToContainerMap.remove(Integer.toString(posconIndex));
 	}
 
 	// --------------------------------------------------------------------------
@@ -1289,9 +1485,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Complete the active WI at the selected position.
 	 * @param inButtonNum
 	 * @param inQuantity
-	 * @param buttonPosition 
 	 */
-	protected void processButtonPress(Integer inButtonNum, Integer inQuantity, Byte buttonPosition) {
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
 		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
 
@@ -1317,16 +1512,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
 			// Simply ignore button presses when there is no container.
-			//invalidScanMsg(mCheStateEnum);
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
-				//invalidScanMsg(mCheStateEnum);
 			} else {
-				clearOnePositionController(buttonPosition);
-				String itemId = wi.getItemId();
-				LOGGER.info("Button #" + inButtonNum + " for " + containerId + " / " + itemId);
+				notifyButton(inButtonNum,inQuantity);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -1334,11 +1525,51 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					Integer planQuantity = wi.getPlanQuantity();
 					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
 						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
-					else
+					else {
 						processShortPick(wi, inQuantity);
+					}
 				}
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inWi
+	 * @param inQuantity
+	 */
+	@Override
+	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
+		// This should be a corollary of processNormalPick, which has side effects of clearing the poscon for the pressed button if there is more work,
+		// Or not clearing, and just going to feedback
+
+		// For short, we are always going to go to shortPickConfirm stage. User must scan. We put out the poscon the user pressed as feedback that something happened.
+		// If PICKMULT, there may be many lit poscons. All should be put out as we don't want to imply that the user can decrement and press others.
+		for (WorkInstruction wi : this.getActivePickWiList()) {
+			byte position = getPosconIndexOfWi(wi);
+			if (position != 0)
+				clearOnePositionController(position);
+		}
+
+		// Then the inherited shorts part is the same
+		super.processShortPick(inWi, inQuantity);
+	}
+
+	protected void processPutWallOrderScan (final String inScanPrefixStr, final String inScanStr) {
+		setLastPutWallOrderScan(inScanStr);
+		setState(CheStateEnum.PUT_WALL_SCAN_LOCATION);
+	}
+	
+	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
+		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
+		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
+	}
+	
+	private void sendOrderPlacementMessage(String orderId, String locationName){
+		// This will form the command and send to server. If successful, the putwall poscon feedback will be apparent.
+		LOGGER.info("to do: send put wall setup msg {} at {}", orderId, locationName);
+		
+		notifyOrderToPutWall(orderId, locationName);		
 	}
 
 	// --------------------------------------------------------------------------
@@ -1354,12 +1585,31 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.error("misunderstanding in sendHousekeepingDisplay");
 			else {
 				WorkInstructionTypeEnum theEnum = wi.getType();
-				if (theEnum == WorkInstructionTypeEnum.HK_BAYCOMPLETE) {
+				if (WorkInstructionTypeEnum.HK_BAYCOMPLETE.equals(theEnum)) {
 					returnBool = true;
 					showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, wi.getContainerId());
-				} else if (theEnum == WorkInstructionTypeEnum.HK_REPEATPOS) {
+				} else if (WorkInstructionTypeEnum.HK_REPEATPOS.equals(theEnum)) {
 					returnBool = true;
 					showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, wi.getContainerId());
+				}
+			}
+		} else if (mActivePickWiList.size() > 1) {
+			// temporary debugging. Should never hit the error case.
+			boolean foundHousekeep = false;
+			for (WorkInstruction aWi : getActivePickWiList()) {
+				if (aWi.isHousekeeping()) {
+					foundHousekeep = true;
+				}
+			}
+			// list out what is in the active list
+			if (foundHousekeep) {
+				LOGGER.error("+++++ ACTIVE WI LIST  +++++");
+				for (WorkInstruction aWi : mActivePickWiList) {
+					LOGGER.error("WI in active list {}", aWi);
+				}
+				LOGGER.error("+++++ FROM TOTAL LIST +++++");
+				for (WorkInstruction aWi2 : getAllPicksWiList()) {
+					LOGGER.error("WI in all picks list {}", aWi2);
 				}
 			}
 		}
@@ -1370,43 +1620,33 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
 	 */
 	@Override
-	protected void doPosConDisplaysforWi(WorkInstruction firstWi) {
+	protected void doPosConDisplaysforActiveWis() {
 
 		// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
 		if (!sendHousekeepingDisplay()) {
-			byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
-			byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
-			byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
-			if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
-				minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
-
-			// Also pretty easy. Light the position controllers on this CHE
-			byte freq = PosControllerInstr.SOLID_FREQ;
-			byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			// blink is a weak indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
-			if (planQuantityForPositionController != minQuantityForPositionController
-					|| planQuantityForPositionController != maxQuantityForPositionController) {
-				freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
-				brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			}
 
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
 			for (WorkInstruction wi : mActivePickWiList) {
-				for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
-					if (mapEntry.getValue().equals(wi.getContainerId())) {
-						Byte posconIndex = Byte.valueOf(mapEntry.getKey());
-						PosControllerInstr instruction = new PosControllerInstr(posconIndex,
-							planQuantityForPositionController,
-							minQuantityForPositionController,
-							maxQuantityForPositionController,
-							freq,
-							brightness);
-						instructions.add(instruction);
-					}
-				}
+				Byte theIndex = getPosconIndexOfWi(wi);
+				if (theIndex > 0) {
+					PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexOfWi(wi));
+					instructions.add(instruction);
+				} else
+					LOGGER.error("unexpected missing poscon index for work instruction");
 			}
+
 			sendPositionControllerInstructions(instructions);
+
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/** What poscon does this wi belong to?
+	 */
+	public byte getPosconIndexOfWi(WorkInstruction wi) {
+		String cntrId = wi.getContainerId();
+		return getPosconIndexOfContainerId(cntrId);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1444,9 +1684,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * return the button for this container ID. Mostly private use, but public for unit test convenience
+	 * return the button for this container ID. Return 0 if not found, or for invalid input.
+	 * This is the main lookup function. Many calling contexts
+	 * careful: 0 also equals PosControllerInstr.POSITION_ALL
 	 */
-	public byte buttonFromContainer(String inContainerId) {
+	private byte getPosconIndexOfContainerId(String inContainerId) {
+		if (inContainerId == null || inContainerId.isEmpty())
+			return 0;
+
 		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
@@ -1461,21 +1706,42 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void logout() {
 		super.logout();
+		resetInventoryCommandAllowed();
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
-
 	}
 
 	/**
-	 * Setup the CHE by clearing all the datastructures
+	 * Setup the CHE by clearing all the data structures
 	 */
 	protected void setupChe() {
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
 		super.setupChe();
+	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Attempt to guess if we already must have scanned this one.
+	 * For DEV-692.  Our allPicksList should be sorted and still have recently completed work.
+	 */
+	@Override
+	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
+		String matchSku = inWi.getItemId();
+		String matchPickLocation = inWi.getPickInstruction();
+		for (WorkInstruction wi : getAllPicksWiList()) {
+			if (!wi.equals(inWi))
+				if (wiMatchesItemLocation(matchSku, matchPickLocation, wi)) {
+					WorkInstructionStatusEnum theStatus = wi.getStatus();
+					// Short or complete must have been scanned.
+					if (theStatus.equals(WorkInstructionStatusEnum.COMPLETE) || theStatus.equals(WorkInstructionStatusEnum.SHORT))
+						return true;
+
+				}
+		}
+		return false;
 	}
 
 }
