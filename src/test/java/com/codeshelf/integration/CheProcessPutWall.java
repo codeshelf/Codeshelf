@@ -101,8 +101,13 @@ public class CheProcessPutWall extends ServerTest {
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
 
+		LOGGER.info("2: Demonstrate what a put wall picker object can do.");
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+
+
 	}
 
+	/*
 	protected PosManagerSimulator waitAndGetPosConController(final IntegrationTest test, final NetGuid deviceGuid) {
 		Callable<PosManagerSimulator> createPosManagerSimulator = new Callable<PosManagerSimulator>() {
 			@Override
@@ -115,6 +120,7 @@ public class CheProcessPutWall extends ServerTest {
 		PosManagerSimulator managerSimulator = new WaitForResult<PosManagerSimulator>(createPosManagerSimulator).waitForResult();
 		return managerSimulator;
 	}
+	*/
 
 	protected AisleDeviceLogic waitAndGetAisleDeviceLogic(final IntegrationTest test, final NetGuid deviceGuid) {
 		Callable<AisleDeviceLogic> getAisleLogic = new Callable<AisleDeviceLogic>() {
