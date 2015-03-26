@@ -9,8 +9,8 @@ public interface AuthProviderService extends CodeshelfService {
 	
 	// tokens
 	AuthResponse checkToken(final String value);
-	String createToken(int id, Long timestamp, Long sessionStart, SessionFlags sessionFlags);
-	String createToken(int id);
+	String createToken(int userId, int tenantId, Long timestamp, Long sessionStart, SessionFlags sessionFlags);
+	String createToken(int userId, int tenantId);
 
 	// tokens wrapped in cookies
 	String getCookieName();

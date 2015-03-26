@@ -36,7 +36,6 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -130,7 +129,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		int chePosition = 1;
 
-		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
+		Facility facility = new FacilityGenerator().generateValid();
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -186,7 +185,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		int chePosition = 1;
 
-		Facility facility = new FacilityGenerator(TenantManagerService.getInstance().getDefaultTenant()).generateValid();
+		Facility facility = new FacilityGenerator().generateValid();
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();

@@ -56,7 +56,7 @@ public class SessionManagerTest extends MinimalTest {
 
 		User user = mockUser(tenant, 1, "testuser");
 		WebSocketConnection csSession = sessionManager.sessionStarted(session);
-		csSession.authenticated(user);
+		csSession.authenticated(user,tenant);
 
 		User userToSend = mockUser(tenant, 1, "testuser");
 		Assert.assertEquals(user, userToSend);

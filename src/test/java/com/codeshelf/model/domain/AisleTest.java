@@ -102,7 +102,7 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 	public final void associatePathSegment() {
 		this.getTenantPersistenceService().beginTransaction();
 		IDaoListener listener = Mockito.mock(IDaoListener.class);
-		this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster().registerDAOListener(listener, Aisle.class);
+		this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster().registerDAOListener(this.getDefaultTenantId(),listener, Aisle.class);
 		
 		String aisleDomainId = "A1";
 		

@@ -65,7 +65,7 @@ public class WorkServiceTest extends ServerTest {
 	@Override
 	public void doBefore() {
 		super.doBefore();
-		facilityGenerator = new FacilityGenerator(getDefaultTenant());
+		facilityGenerator = new FacilityGenerator();
 	}
 
 	@Override
@@ -183,8 +183,11 @@ public class WorkServiceTest extends ServerTest {
 		WorkService workService = mock(WorkService.class);
 		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory = new ServiceFactory(workService, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
+		this.getTenantPersistenceService().commitTransaction();
+		
+		
 		IMessageProcessor processor = new ServerMessageProcessor(factory, new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC responseABC = processor.handleRequest(mock(WebSocketConnection.class), request);
+		ResponseABC responseABC = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(responseABC instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC.isSuccess());
 
@@ -196,10 +199,9 @@ public class WorkServiceTest extends ServerTest {
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary>emptyList());
 		ServiceFactory factory2 = new ServiceFactory(workService2, mock(LightService.class), mock(DummyPropertyService.class), mock(UiUpdateService.class), mock(OrderService.class), mock(InventoryService.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2, new ConverterProvider().get(), this.webSocketManagerService);
-		ResponseABC responseABC2 = processor2.handleRequest(mock(WebSocketConnection.class), request2);
+		ResponseABC responseABC2 = processor2.handleRequest(this.getMockWsConnection(), request2);
 		Assert.assertTrue(responseABC2 instanceof ServiceMethodResponse);
 		Assert.assertTrue(responseABC2.isSuccess());
-		this.getTenantPersistenceService().commitTransaction();
 
 	}
 	

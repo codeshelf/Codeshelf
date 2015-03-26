@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
@@ -32,11 +33,11 @@ public class LoginTest extends HibernateTest {
 
 	@Test
 	public final void testLoginSucceed() {
-		this.getTenantPersistenceService().beginTransaction();
+		CodeshelfSecurityManager.removeContextIfPresent();
 		
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(tenantManagerService.getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
 
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());
@@ -50,7 +51,6 @@ public class LoginTest extends HibernateTest {
 		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
 		Assert.assertEquals(user.getUsername(), loginResponse.getUser().getUsername());
 		
-		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -60,7 +60,7 @@ public class LoginTest extends HibernateTest {
 
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(tenantManagerService.getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
 		
 		LoginRequest request = new LoginRequest();
 		request.setUserId("user@invalid.com");
@@ -82,7 +82,7 @@ public class LoginTest extends HibernateTest {
 
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(tenantManagerService.getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
 		
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());

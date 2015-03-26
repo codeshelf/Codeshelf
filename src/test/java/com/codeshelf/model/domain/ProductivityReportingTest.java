@@ -44,7 +44,7 @@ public class ProductivityReportingTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(this.getTenantPersistenceService().getDefaultSchema(),facilityId, true);
+		ProductivitySummaryList productivitySummary = orderService.getProductivitySummary(facilityId, true);
 		Assert.assertNotNull(productivitySummary);
 		HashMap<String, StatusSummary> groups = productivitySummary.getGroups();
 		Assert.assertEquals(3, groups.size());

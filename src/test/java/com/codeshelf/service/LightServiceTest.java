@@ -71,7 +71,6 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator = new VirtualSlottedFacilityGenerator(
-			getDefaultTenant(),
 			createAisleFileImporter(),
 			createLocationAliasImporter(),
 			createOrderImporter());

@@ -1,9 +1,11 @@
 package com.codeshelf.platform.persistence;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,17 +15,22 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.inject.Inject;
 
-public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {
+public class TenantPersistenceService extends PersistenceService implements ITenantPersistenceService {
+	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 
 	@SuppressWarnings("unused")
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
 	@Inject
 	private static ITenantPersistenceService theInstance;
-	
+
+	Configuration hibernateConfiguration;
 	private Map<Class<? extends IDomainObject>,ITypedDao<?>> daos;
 
 	@Inject
@@ -58,19 +65,7 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	}
 	
 	@Override
-	public Tenant getDefaultSchema() {
-		return TenantManagerService.getInstance().getDefaultTenant();
-	}
-
-	@Override
-	protected void initialize(Tenant schema) {
-		Transaction t = this.beginTransaction(schema);
-		PropertyDao.getInstance().syncPropertyDefaults();
-        t.commit();		
-	}
-	
-	@Override
-	protected EventListenerIntegrator generateEventListenerIntegrator() {
+	public EventListenerIntegrator generateEventListenerIntegrator() {
 		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
 	}
 
@@ -101,5 +96,61 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	@Override
 	public <T extends IDomainObject> void setDaoForTest(Class<T> domainType, ITypedDao<T> testDao) {
 		this.daos.put(domainType,testDao);
+	}
+
+	@Override
+	public Configuration getHibernateConfiguration() {
+		if(hibernateConfiguration == null) {
+			
+			hibernateConfiguration = new Configuration().configure(getHibernateConfigurationFilename());
+			// not tenant specific - our connection provider will add database URL and credentials
+		}
+		return hibernateConfiguration;
+	}
+
+	@Override
+	public String getMasterChangeLogFilename() {
+		return TENANT_CHANGELOG_FILENAME;
+	}
+
+	@Override
+	public String getHibernateConfigurationFilename() {
+		return "hibernate/"+System.getProperty("tenant.hibernateconfig");
+	}
+
+	@Override
+	public void initializeTenant() {
+		Transaction t = this.beginTransaction();
+
+		List<Facility> facilities = Facility.staticGetDao().getAll();
+		
+		for (Facility facility : facilities) {
+			for (Path path : facility.getPaths()) {
+				// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+				facility.recomputeLocationPathDistances(path);
+			}
+		}
+        t.commit();
+
+        t = this.beginTransaction();
+        // create or update tenant default settings
+        PropertyDao.getInstance().syncPropertyDefaults();
+        t.commit();
+	}
+
+	@Override
+	public String getCurrentTenantIdentifier() {
+		return CodeshelfSecurityManager.getCurrentTenant().getSchemaName();
+	}
+
+	@Override
+	protected DatabaseCredentials getDatabaseCredentials(String tenantIdentifier) {
+		return TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
+	}
+
+	@Override
+	protected DatabaseCredentials getSuperDatabaseCredentials(String tenantIdentifier) {
+		Tenant tenant = TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
+		return tenant.getShard();
 	}
 }

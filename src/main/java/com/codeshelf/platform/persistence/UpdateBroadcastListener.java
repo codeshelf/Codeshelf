@@ -35,7 +35,8 @@ public class UpdateBroadcastListener implements PostCommitUpdateEventListener {
 		Object[] currentState = event.getState();
 		String[] allPropertyNames = event.getPersister().getPropertyNames();
 		int[] dirtyPropertyIndexes = event.getDirtyProperties();
-	
+		
+		String tenantIdentifier = event.getSession().getTenantIdentifier();
 		if (entity instanceof DomainObjectABC) {
 			// update domain object
 			Set<String> changedProperties = new HashSet<String>();
@@ -53,7 +54,7 @@ public class UpdateBroadcastListener implements PostCommitUpdateEventListener {
 				if (changedProperties.size()>0) {
 					@SuppressWarnings("unchecked")
 					Class<? extends IDomainObject> clazz = Hibernate.getClass(domainObject);
-					this.objectChangeBroadcaster.broadcastUpdate(clazz, domainObject.getPersistentId(), changedProperties);
+					this.objectChangeBroadcaster.broadcastUpdate(tenantIdentifier,clazz, domainObject.getPersistentId(), changedProperties);
 				}
 			}
 		}

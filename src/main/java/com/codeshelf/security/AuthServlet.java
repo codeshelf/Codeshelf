@@ -50,7 +50,7 @@ public class AuthServlet extends HttpServlet {
 			if (auth.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
 				User user = auth.getUser();
 				// auth succeeds, generate token
-				String token = authProviderService.createToken(user.getId());
+				String token = authProviderService.createToken(user.getId(), user.getTenant().getId());
 				Cookie cookie = authProviderService.createAuthCookie(token);
 				// redirect to requested location
 				resp.addCookie(cookie);

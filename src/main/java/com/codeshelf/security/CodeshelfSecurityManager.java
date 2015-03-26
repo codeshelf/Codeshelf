@@ -31,6 +31,7 @@ import org.apache.shiro.util.ThreadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.google.inject.Inject;
 
@@ -42,6 +43,7 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	Realm oneRealm;
     protected SubjectFactory subjectFactory;
 	public static final String	THREAD_CONTEXT_USER_KEY	= "user";
+	public static final String	THREAD_CONTEXT_TENANT_KEY	= "tenant";
 
 	@Inject
 	public CodeshelfSecurityManager(Realm realm) {
@@ -106,35 +108,62 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		return user;
 	}
 
-	public static void setCurrentUser(User user) {
-		if(user == null)
-			throw new NullPointerException("Attempt to set current user to null");
+	public static Tenant getCurrentTenant() {
+		Tenant tenant = null;
+		Object uObj = ThreadContext.get(THREAD_CONTEXT_TENANT_KEY);
+		if(uObj != null) {
+			if(uObj instanceof Tenant) {
+				tenant = (Tenant) uObj;
+			} else {
+				LOGGER.error("Value {} on ThreadContext was not a Tenant but a {}",THREAD_CONTEXT_TENANT_KEY,
+					uObj.getClass().getCanonicalName());
+			}
+		}
+		return tenant;
+	}
+
+	public static void setContext(User user, Tenant tenant) {
+		if(tenant == null)
+			throw new NullPointerException("Attempt to set current tenant to null");
+		
+		// TODO: require that user not be null - use "system" user
+		
 		
 		// Shiro will call the SecurityManager to get the current subject, which will determine it from this key
 		// Also used for context logging.
 		User oldUser=getCurrentUser();
-		if(oldUser != null) {
-			LOGGER.error("setCurrentUser {} called but there was already a current user {}",user,oldUser.getId());
+		if(oldUser != null && !oldUser.equals(user)) {
+			LOGGER.error("setContext {} called but there was already a current user {}",user,oldUser.getId());
+		}
+		Tenant oldTenant = getCurrentTenant();
+		if(oldTenant != null && !oldTenant.equals(tenant)) {
+			LOGGER.error("setContext {} called but there was already a current tenant {}",tenant,oldTenant.getId());
 		}
 		ThreadContext.put(THREAD_CONTEXT_USER_KEY,user);
-		org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_USER_KEY,user.getUsername());
+		ThreadContext.put(THREAD_CONTEXT_TENANT_KEY,tenant);
+		if(user != null) {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_USER_KEY,user.getUsername());
+		}
 	}
 
-	public static void removeCurrentUser() {
+	public static void removeContext() {
 		// Remove both the User and Shiro Subject from ThreadContext.
-		// It is an error if there is no User present.
-		if(getCurrentUser() == null) {
-			LOGGER.error("removeCurrentUser called but no current user existed");
+		// It is an error if there is no Tenant present (but OK if no user)
+		
+		if(getCurrentTenant() == null) {
+			LOGGER.error("removeContext called but no current tenant existed");
 		}
 		ThreadContext.remove(ThreadContext.SUBJECT_KEY); // TODO: merge User and Subject somehow
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
+		ThreadContext.remove(THREAD_CONTEXT_TENANT_KEY);
 		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 
-	public static void removeCurrentUserIfPresent() {
+	public static void removeContextIfPresent() {
 		// Remove both the User and Shiro Subject from ThreadContext if present.
 		ThreadContext.remove(ThreadContext.SUBJECT_KEY);
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
+		ThreadContext.remove(THREAD_CONTEXT_TENANT_KEY);
 		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 

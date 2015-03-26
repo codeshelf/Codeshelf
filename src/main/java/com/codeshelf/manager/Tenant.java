@@ -31,8 +31,10 @@ import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.platform.persistence.DatabaseCredentials;
+import com.codeshelf.platform.persistence.DatabaseUtils;
+import com.codeshelf.platform.persistence.DatabaseUtils.SQLSyntax;
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.Schema;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -45,8 +47,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @EqualsAndHashCode(callSuper = false, of={"name","schemaName","username"})
 @ToString(of={"id","name","shard","schemaName"},callSuper=false)
-public class Tenant extends Schema {
-	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
+public class Tenant implements DatabaseCredentials {
 
 	public static final int SCHEMA_NAME_MAX_LENGTH = 16;
 	private static final Pattern SCHEMA_NAME_PATTERN = Pattern.compile("^[a-z0-9]{1,16}$");
@@ -96,18 +97,18 @@ public class Tenant extends Schema {
 	@JsonProperty
 	String schemaName;
 
-	@Getter(AccessLevel.PROTECTED)
+	@Getter
 	@NonNull
 	@Column(nullable=false,length=16,name="username")
 	String username;
 
-	@Getter(AccessLevel.PROTECTED)
+	@Getter
 	@NonNull
 	@Column(nullable=false,length=36,name="password")
 	String password = UUID.randomUUID().toString();
 
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter(AccessLevel.PROTECTED)
+	@Getter
 	@NonNull
 	//@JsonProperty
 	Shard shard;
@@ -137,11 +138,6 @@ public class Tenant extends Schema {
 		this.password = password;
 		this.shard = shard;
 	}
-
-	@Override
-	public String getHibernateConfigurationFilename() {
-		return ("hibernate/"+System.getProperty("tenant.hibernateconfig"));
-	}
 	
 	public void addUser(User u) {
 		u.setTenant(this);
@@ -155,12 +151,14 @@ public class Tenant extends Schema {
 
 	@Override
 	public String getUrl() {
-		return shard.getUrl();
-	}
+		String url = shard.getUrl();
 
-	@Override
-	public String getChangeLogName() {
-		return Tenant.TENANT_CHANGELOG_FILENAME;
+		// schema setting for H2
+		if(DatabaseUtils.getSQLSyntax(url).equals(SQLSyntax.H2)) {
+			url += ";schema="+this.getSchemaName();
+		}
+
+		return url;
 	}
 	
 	public static boolean isValidSchemaName(String name) {

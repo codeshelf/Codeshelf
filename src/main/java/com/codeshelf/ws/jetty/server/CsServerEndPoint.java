@@ -28,7 +28,7 @@ import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
-@ServerEndpoint(value="/",encoders={JsonEncoder.class},decoders={JsonDecoder.class})
+@ServerEndpoint(value="/",encoders={JsonEncoder.class},decoders={JsonDecoder.class},configurator=WebSocketConfigurator.class)
 public class CsServerEndPoint {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsServerEndPoint.class);
@@ -56,28 +56,30 @@ public class CsServerEndPoint {
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
+		String url = session.getRequestURI().toASCIIString();
 		WebSocketConnection conn = webSocketManagerService.getWebSocketConnectionForSession(session);
 		if(conn != null) {
+			LOGGER.error("onOpen webSocketManager already had a connection for this session");
 			User user = conn.getUser();
 			if(user != null) {
-				throw new RuntimeException("onOpen session already had a user "+user.getId());
+				throw new RuntimeException("onOpen connection already had a user "+user.getId());
 			}
 		}
 		session.setMaxIdleTimeout(1000*60*idleTimeOut);
 		LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
-		webSocketManagerService.sessionStarted(session);
+		
+		webSocketManagerService.sessionStarted(session); // this will create WebSocketConnection for session
     }
 
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
     	User setUserContext = null;
-    	this.getTenantPersistenceService().beginTransaction();
     	try{
         	WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
         	setUserContext = csSession.getUser();
         	if(setUserContext != null) {
-            	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
+            	CodeshelfSecurityManager.setContext(csSession.getUser(),csSession.getTenant());
         		LOGGER.info("Got message {}", message.getClass().getSimpleName());
         	} else {
         		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());
@@ -108,14 +110,11 @@ public class CsServerEndPoint {
             	LOGGER.debug("Received message on session "+csSession+": "+message);
             	iMessageProcessor.handleMessage(csSession, message);
         	}
-			this.getTenantPersistenceService().commitTransaction();
 		} catch (RuntimeException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
-			LOGGER.error("Unable to persist during message handling: " + message, e);
-		}
-    	finally {
+			LOGGER.error("Unexpected exception during message handling: " + message, e);
+		} finally {
     		if(setUserContext != null) {
-    			CodeshelfSecurityManager.removeCurrentUser();
+    			CodeshelfSecurityManager.removeContext();
     		}
 		}
     }
@@ -127,7 +126,7 @@ public class CsServerEndPoint {
 	    	LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user.toString(), reason));
 			webSocketManagerService.sessionEnded(session);		
 		} finally {
-			CodeshelfSecurityManager.removeCurrentUserIfPresent();
+			CodeshelfSecurityManager.removeContextIfPresent();
 		}
     }
     

@@ -68,34 +68,28 @@ public class CreatePathCommandTest extends HibernateTest {
 		Session websocketSession = mock(Session.class);
 		WebSocketConnection viewSession = new WebSocketConnection(websocketSession, Executors.newSingleThreadExecutor());
 
-		try {
-			/* register a filter like the UI does */
-			viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
-			objectChangeBroadcaster.registerDAOListener(viewSession,  PathSegment.class);
-			
-			
-			
-			Path noPath = Path.staticGetDao().findByDomainId(testFacility, testPathDomainId);
-			Assert.assertNull(noPath);
-			
-			PathSegment[] segments = createPathSegment(numberOfSegments);
-			
-			CreatePathRequest request = new CreatePathRequest();
-			request.setDomainId(testPathDomainId);
-			request.setFacilityId(testFacility.getPersistentId().toString());
-			request.setPathSegments(segments);
-			
-			WebSocketConnection requestSession = new WebSocketConnection(mock(Session.class), Executors.newSingleThreadExecutor());
-			requestSession.setSessionId("test-session");
-			
-			ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
-			ResponseABC response = processor.handleRequest(requestSession, request);
-			Assert.assertTrue(response instanceof CreatePathResponse);
-		}
-		finally {
-			objectChangeBroadcaster.unregisterDAOListener(viewSession);
-			this.getTenantPersistenceService().commitTransaction();
-		}
+		/* register a filter like the UI does */
+		viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
+		objectChangeBroadcaster.registerDAOListener(getDefaultTenantId(),viewSession,  PathSegment.class);
+		
+		
+		
+		Path noPath = Path.staticGetDao().findByDomainId(testFacility, testPathDomainId);
+		Assert.assertNull(noPath);
+		
+		PathSegment[] segments = createPathSegment(numberOfSegments);
+		
+		CreatePathRequest request = new CreatePathRequest();
+		request.setDomainId(testPathDomainId);
+		request.setFacilityId(testFacility.getPersistentId().toString());
+		request.setPathSegments(segments);
+		
+		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
+		this.getTenantPersistenceService().commitTransaction();
+
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
+		Assert.assertTrue(response instanceof CreatePathResponse);
+		objectChangeBroadcaster.unregisterDAOListener(getDefaultTenantId(),viewSession);
 
 	}
 	
@@ -122,23 +116,22 @@ public class CreatePathCommandTest extends HibernateTest {
 		request.setMethodName("createPath");
 		request.setMethodArgs(args);
 		
-		WebSocketConnection session = Mockito.mock(WebSocketConnection.class);
-		session.setSessionId("test-session");
-
-		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
+		this.getTenantPersistenceService().commitTransaction();
 
-		ResponseABC response = processor.handleRequest(session, request);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
+		this.getTenantPersistenceService().beginTransaction();
+		testFacility = Facility.staticGetDao().reload(testFacility);
 		List<Path> pathList = testFacility.getPaths();
 		Path createdPath1 = pathList.get(0);
 		// Why is facility F1? Passed in DOMID above.
 		Assert.assertEquals(testFacility.getDomainId()+".1", createdPath1.getDomainId());	
 		
 		Assert.assertEquals(numberOfSegments, createdPath1.getSegments().size());
-
 		this.getTenantPersistenceService().commitTransaction();
+
 	}
 	
 	private PathSegment[] createPathSegment(int numberOfSegments) {

@@ -28,12 +28,14 @@ import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -66,9 +68,10 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkNoLocation() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
 			Session session = persistenceService.getSession();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(persistenceService.getDefaultSchema(), session, facility.getPersistentId()));
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, mUUIDParam.getUUID()));
 		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
@@ -107,8 +110,7 @@ public class FacilityResource {
 	@Path("/productivity")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getProductivitySummary() throws Exception {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), facility.getPersistentId(), false);
+		ProductivitySummaryList summary = orderService.getProductivitySummary(mUUIDParam.getUUID(), false);
 		return BaseResponse.buildResponse(summary);
 	}
 
@@ -145,7 +147,8 @@ public class FacilityResource {
 	@Path("/statussummary/{aggregate}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderStatusSummary(@PathParam("aggregate") String aggregate, @QueryParam("filterName") String filterName) {
-		//ErrorResponse errors = new ErrorResponse();
+		@SuppressWarnings("unused")
+		ErrorResponse errors = new ErrorResponse();
 		if (Strings.isNullOrEmpty(filterName)) {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}

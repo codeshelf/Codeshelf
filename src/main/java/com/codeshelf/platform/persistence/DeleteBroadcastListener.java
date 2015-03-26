@@ -33,6 +33,7 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 	@Override
 	public void onPostDelete(PostDeleteEvent event) {
 		Object entity = event.getEntity();
+		String tenantIdentifier = event.getSession().getTenantIdentifier();
 		if (DomainObjectABC.class.isAssignableFrom(entity.getClass())) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
 
@@ -46,7 +47,7 @@ public class DeleteBroadcastListener implements PostCommitDeleteEventListener {
 					parentId = childObject.getParentPersistentId();
 				}
 			}
-			this.objectChangeBroadcaster.broadcastDelete(Hibernate.getClass(domainObject), domainObject.getPersistentId(),
+			this.objectChangeBroadcaster.broadcastDelete(tenantIdentifier, Hibernate.getClass(domainObject), domainObject.getPersistentId(),
 				parentClass, parentId);
 		}
 	}

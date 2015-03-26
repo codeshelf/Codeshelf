@@ -22,8 +22,9 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.persistence.DatabaseConnection;
+import com.codeshelf.platform.persistence.DatabaseUtils;
 import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
@@ -54,7 +55,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	private static ITenantManagerService		theInstance;
 	
 	private AuthProviderService					authProviderService;
-	private PersistenceService<ManagerSchema>	managerPersistenceService;
+	private PersistenceService					managerPersistenceService;
 
 	@Inject
 	private TenantManagerService(AuthProviderService authProviderService) {
@@ -279,25 +280,25 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		}
 		sql += "SET REFERENTIAL_INTEGRITY TRUE";
 		try {
-			tenant.executeSQL(sql);
+			DatabaseUtils.executeSQL(tenant,sql);
 		} catch (SQLException e) {
 			LOGGER.error("Truncate of tenant tables failed, falling back on SchemaExport", e);
 			// reset schema old way, hbm2ddl
 			Connection conn;
 			try {
-				conn = tenant.getConnection();
+				conn = DatabaseUtils.getConnection(tenant);
 			} catch (SQLException e2) {
 				LOGGER.error("Failed to get connection to tenant schema, cannot continue.",e2);
 				throw new RuntimeException(e2);
 			}
-			SchemaExport se = new SchemaExport(tenant.getHibernateConfiguration(),conn);
+			SchemaExport se = new SchemaExport(TenantPersistenceService.getInstance().getHibernateConfiguration(),conn);
 			se.create(false, true);
 		}
 	}
 
 	public Set<String> getTableNames(Tenant tenant) {
 		Set<String> tableNames = new HashSet<String>();
-		Iterator<org.hibernate.mapping.Table> tables = tenant.getHibernateConfiguration().getTableMappings();
+		Iterator<org.hibernate.mapping.Table> tables = TenantPersistenceService.getInstance().getHibernateConfiguration().getTableMappings();
 		while (tables.hasNext()) {
 			org.hibernate.mapping.Table table = tables.next();
 			tableNames.add(table.getName());
@@ -455,7 +456,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 
 	@Override
-	public Tenant getTenantBySchema(String schemaName) {
+	public Tenant getTenantBySchemaName(String schemaName) {
 		Tenant result = null;
 
 		try {
@@ -555,14 +556,14 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				Tenant tenant = defaultTenant;
 				String schemaName = tenant.getSchemaName();
 				LOGGER.warn("Deleting all orders and work instructions from schema " + schemaName);
-				tenant.executeSQL("UPDATE " + schemaName + ".order_header SET container_use_persistentid=null");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".container_use");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".work_instruction");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".container");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".order_location");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".order_detail");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".order_header");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".order_group");
+				DatabaseUtils.executeSQL(tenant,"UPDATE " + schemaName + ".order_header SET container_use_persistentid=null");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".container_use");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".work_instruction");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".container");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".order_location");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".order_detail");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".order_header");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".order_group");
 			} catch (SQLException e) {
 				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
 			}
@@ -576,9 +577,9 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				String schemaName = tenant.getSchemaName();
 				this.deleteDefaultOrdersWis();
 				LOGGER.warn("Deleting itemMasters and gtin maps ");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".gtin_map");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".item");
-				tenant.executeSQL("DELETE FROM " + schemaName + ".item_master");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".gtin_map");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".item");
+				DatabaseUtils.executeSQL(tenant,"DELETE FROM " + schemaName + ".item_master");
 			} catch (SQLException e) {
 				LOGGER.error("Caught SQL exception trying to do shutdown database cleanup step", e);
 			}
@@ -595,8 +596,8 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			String schemaName = tenant.getSchemaName();
 			LOGGER.warn("Deleting tenant schema " + schemaName);
-			tenant.executeSQL("DROP SCHEMA " + schemaName
-					+ ((tenant.getSQLSyntax() == DatabaseConnection.SQLSyntax.H2) ? "" : " CASCADE"));
+			DatabaseUtils.executeSQL(tenant,"DROP SCHEMA " + schemaName
+					+ ((DatabaseUtils.getSQLSyntax(tenant) == DatabaseUtils.SQLSyntax.H2) ? "" : " CASCADE"));
 		} catch (SQLException e) {
 			LOGGER.error("Caught SQL exception trying to do database cleanup", e);
 		}
@@ -610,7 +611,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Override
 	protected void shutDown() throws Exception {
-		if (!this.shutdownCleanupRequest.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
+		if (!this.shutdownCleanupRequest.equals(ShutdownCleanupReq.NONE)) {
 			switch (shutdownCleanupRequest) {
 				case DROP_SCHEMA:
 					dropDefaultSchema();
