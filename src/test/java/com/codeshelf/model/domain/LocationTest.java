@@ -96,7 +96,7 @@ public class LocationTest extends MockDaoTest {
 		bay.setAsPutWallLocation(true);
 		Assert.assertEquals(false, aisle.isPutWallLocation());
 		Assert.assertEquals(true, bay.isPutWallLocation());
-		Assert.assertEquals("", aisle.getPutWallUi());
+		Assert.assertEquals(null, aisle.getPutWallUi());
 		Assert.assertEquals("Yes", bay.getPutWallUi());
 
 
